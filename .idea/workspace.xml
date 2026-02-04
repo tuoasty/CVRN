@@ -5,9 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/lib/supabase/server-public.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/repository/matchRepository.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/repository/matchRepository.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/MatchList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/MatchList.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,7 +100,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1770187665459</updated>
-      <workItem from="1770187668270" duration="6800000" />
+      <workItem from="1770187668270" duration="7133000" />
     </task>
     <servers />
   </component>
