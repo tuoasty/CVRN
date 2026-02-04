@@ -5,52 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/app/admin/home/page.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/components/MatchList.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/components/ui/ErrorDisplay.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/repository/matchRepository.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/result.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/service/matchService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/types/match.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/confirm/route.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/error/page.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/forgot-password/page.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/login/page.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/sign-up-success/page.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/sign-up/page.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/update-password/page.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/opengraph-image.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/protected/layout.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/protected/page.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/twitter-image.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/auth-button.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/deploy-button.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/env-var-warning.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/forgot-password-form.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/hero.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/login-form.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/logout-button.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/next-logo.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/sign-up-form.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/supabase-logo.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/theme-switcher.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/tutorial/code-block.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/tutorial/connect-supabase-steps.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/tutorial/fetch-data-steps.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/tutorial/sign-up-user-steps.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/tutorial/tutorial-step.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ui/badge.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ui/button.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ui/card.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ui/checkbox.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ui/dropdown-menu.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ui/input.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ui/label.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/update-password-form.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/supabase/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/supabase/proxy.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/repository/matchRepository.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/repository/matchRepository.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,6 +23,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "tuoasty"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/tuoasty/CVRN.git",
+    "accountId": "34f13ed6-9d08-4dde-82ba-347b6679fd4c"
+  }
+}]]></component>
   <component name="ProjectColorInfo"><![CDATA[{
   "customColor": "",
   "associatedIndex": 5
@@ -85,7 +52,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "main",
     "js.debugger.nextJs.config.created.client": "true",
     "js.debugger.nextJs.config.created.server": "true",
     "last_opened_file_path": "D:/KEVIN/BINUS/Sem 4/HCI/FitFuel-V2",
@@ -132,7 +99,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1770187665459</updated>
-      <workItem from="1770187668270" duration="4617000" />
+      <workItem from="1770187668270" duration="4884000" />
     </task>
     <servers />
   </component>

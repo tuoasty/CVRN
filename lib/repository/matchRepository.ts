@@ -1,6 +1,6 @@
 import {createClient} from "@/lib/supabase/server";
 import {Match} from "@/lib/types/match";
-import {Err, Ok} from "@/lib/result";
+import {Err, Ok, Result} from "@/lib/result";
 
 export async function findAllMatches(): Promise<Result<Match[]>>{
     try {
