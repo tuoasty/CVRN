@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/app/admin/home/page.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/MatchList.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/ui/ErrorDisplay.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/repository/matchRepository.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/result.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/service/matchService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/types/match.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/confirm/route.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/error/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/forgot-password/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/login/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/sign-up-success/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/sign-up/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/update-password/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/opengraph-image.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/protected/layout.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/protected/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/twitter-image.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/auth-button.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/deploy-button.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/env-var-warning.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/forgot-password-form.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/hero.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/login-form.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/logout-button.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/next-logo.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/sign-up-form.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/supabase-logo.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/theme-switcher.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/tutorial/code-block.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/tutorial/connect-supabase-steps.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/tutorial/fetch-data-steps.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/tutorial/sign-up-user-steps.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/tutorial/tutorial-step.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/badge.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/button.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/card.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/checkbox.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/dropdown-menu.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/input.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/label.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/update-password-form.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/supabase/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/supabase/proxy.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 5
+}]]></component>
+  <component name="ProjectId" id="39C6NJYA3LmPGiSDOfnQ2cHjjKR" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
+    "js.debugger.nextJs.config.created.client": "true",
+    "js.debugger.nextJs.config.created.server": "true",
+    "last_opened_file_path": "D:/KEVIN/BINUS/Sem 4/HCI/FitFuel-V2",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "ts.external.directory.path": "D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\app" />
+    </key>
+  </component>
+  <component name="RunManager" selected="npm.Next.js: server-side">
+    <configuration name="Next.js: debug client-side" type="JavascriptDebugType" uri="http://localhost:3000/">
+      <method v="2" />
+    </configuration>
+    <configuration name="Next.js: server-side" type="js.build_tools.npm">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-WS-251.25410.117" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="" />
+      <created>1770187665459</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1770187665459</updated>
+      <workItem from="1770187668270" duration="4617000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>
