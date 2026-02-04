@@ -7,7 +7,7 @@ export async function getMatches(): Promise<Result<Match[]>>{
 
     if(!result.ok){
         console.log("failed to fetch matches: ", result.error);
-        return result;
+        throw new Error("Failed to fetch matches");
     }
 
     return result;

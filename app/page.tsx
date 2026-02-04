@@ -1,5 +1,6 @@
 import {Suspense} from "react";
 import MatchList from "@/components/MatchList";
+import RobloxPlayerSearch from "@/components/RobloxPlayerSearch";
 
 export default async function PublicHome(){
     return(
@@ -8,6 +9,7 @@ export default async function PublicHome(){
             <Suspense fallback={<div>Loading...</div>}>
                 <MatchList/>
             </Suspense>
+            <RobloxPlayerSearch></RobloxPlayerSearch>
         </>
     )
 }

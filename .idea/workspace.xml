@@ -5,8 +5,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/components/RobloxPlayerSearch.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/withConnection.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/api/roblox.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/error/serializeableError.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/repository/robloxRepository.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/service/robloxService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/types/robloxThumbnail.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/types/robloxUser.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/types/robloxUserWithAvatar.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/components/MatchList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/MatchList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/repository/matchRepository.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/repository/matchRepository.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/result.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/result.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/service/matchService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/service/matchService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/types/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/types/db.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,22 +42,22 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "tuoasty"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;tuoasty&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/tuoasty/CVRN.git",
-    "accountId": "34f13ed6-9d08-4dde-82ba-347b6679fd4c"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/tuoasty/CVRN.git&quot;,
+    &quot;accountId&quot;: &quot;34f13ed6-9d08-4dde-82ba-347b6679fd4c&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 5
-}]]></component>
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 5
+}</component>
   <component name="ProjectId" id="39C6NJYA3LmPGiSDOfnQ2cHjjKR" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
@@ -48,24 +66,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "js.debugger.nextJs.config.created.client": "true",
-    "js.debugger.nextJs.config.created.server": "true",
-    "last_opened_file_path": "D:/KEVIN/BINUS/Sem 4/HCI/FitFuel-V2",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "ts.external.directory.path": "D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
+    &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/KEVIN/BINUS/Sem 4/HCI/FitFuel-V2&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app" />
@@ -100,7 +118,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1770187665459</updated>
-      <workItem from="1770187668270" duration="7133000" />
+      <workItem from="1770187668270" duration="7688000" />
+      <workItem from="1770215313537" duration="6884000" />
     </task>
     <servers />
   </component>
