@@ -1,9 +1,8 @@
 import {getMatches} from "@/lib/service/matchService";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
-import { connection } from "next/server";
+import {withConnection} from "@/components/withConnection";
 
-export default async function MatchList(){
-    await connection();
+async function MatchList(){
     const result = await getMatches();
 
     if(!result.ok){
@@ -18,3 +17,5 @@ export default async function MatchList(){
         </ul>
     )
 }
+
+export default withConnection(MatchList);
