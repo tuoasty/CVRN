@@ -2,8 +2,8 @@
 
 import React, {useState} from "react";
 import Image from "next/image";
-import {getUsersByName} from "@/server/services/player.service";
 import {RobloxUserWithAvatar} from "@/shared/types/roblox";
+import {searchPlayersAction} from "@/app/actions/player.actions";
 
 export default function RobloxPlayerSearch(){
     const [username, setUsername] = useState("");
@@ -21,7 +21,7 @@ export default function RobloxPlayerSearch(){
         setError(null);
         setUsers([]);
 
-        const result = await getUsersByName(username);
+        const result = await searchPlayersAction(username);
         setLoading(false);
         if(!result.ok){
             setError(result.error.message);
