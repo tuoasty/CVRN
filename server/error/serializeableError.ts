@@ -18,3 +18,11 @@ export function serializeError(error: unknown): SerializableError {
         name: "UnknownError"
     };
 }
+
+export function createError(message:string, code?:string, statusCode?:number):SerializableError{
+    return {
+        message,
+        code,
+        statusCode
+    }
+}

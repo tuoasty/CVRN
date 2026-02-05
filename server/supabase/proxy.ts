@@ -43,22 +43,44 @@ export async function updateSession(request: NextRequest) {
   const { data: {user} } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
 
-  const isAuthRoute = pathname.startsWith("/auth");
   const isAdminRoute = pathname.startsWith("/admin");
-  const isRegisterRoute = pathname.startsWith("/auth/register");
+  const isLoginRoute = pathname === "/auth/login";
+  const isInviteRoute = pathname === "/auth/invite";
 
-  if(isRegisterRoute){
+  if(isLoginRoute){
     return supabaseResponse;
   }
 
-  if(isAuthRoute && user && !isRegisterRoute){
-    const {data: roleData} = await supabase.from("user_roles").select("role").eq("user_id", user.id).single()
-
-    if(roleData?.role){
-      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-    } else {
-      return NextResponse.redirect(new URL("/pending", request.url));
+  if (isInviteRoute) {
+    if (!user) {
+      const url = new URL("/auth/login", request.url);
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
     }
+
+    const { data, error } = await supabase
+        .from("user_roles")
+        .select("*");
+
+    console.log("DATA:", data);
+    console.log("ERROR:", error);
+
+    const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+    console.log("ROLE DATA")
+    console.log(roleData)
+
+    if (roleData?.role !== "super_admin") {
+      return NextResponse.redirect(
+          new URL("/admin/dashboard", request.url)
+      );
+    }
+
+    return supabaseResponse;
   }
 
   if(isAdminRoute){
@@ -76,10 +98,11 @@ export async function updateSession(request: NextRequest) {
 
     const userRole = roleData.role as keyof typeof ROLE_ROUTES;
     const allowedRoutes = ROLE_ROUTES[userRole] || [];
-    const hasAccess = allowedRoutes.some(route => pathname.startsWith(route));
-    if(!hasAccess){
-      //change with default admin route
-      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+
+    if (!allowedRoutes.some(route => pathname.startsWith(route))) {
+      return NextResponse.redirect(
+          new URL("/admin/dashboard", request.url)
+      );
     }
 
     //super admin check
