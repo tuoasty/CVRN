@@ -4,14 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="mode switcher">
-      <change afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="authentication middleware">
+      <change afterPath="$PROJECT_DIR$/app/actions/auth.actions.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/auth/login/page.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/services/auth.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/supabase/admin.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(admin)/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/error/serializeableError.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/error/serializeableError.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/supabase/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/proxy.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/supabase/server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/server.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,8 +21,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript JSX File" />
         <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
       </list>
     </option>
   </component>
@@ -114,7 +114,7 @@
       <workItem from="1770215313537" duration="7205000" />
       <workItem from="1770223116055" duration="739000" />
       <workItem from="1770264736453" duration="5362000" />
-      <workItem from="1770270204648" duration="6586000" />
+      <workItem from="1770270204648" duration="12422000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -140,7 +140,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770272955602</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="authentication middleware">
+      <option name="closed" value="true" />
+      <created>1770279120107</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1770279120107</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -153,7 +161,8 @@
     <MESSAGE value="refactor structure" />
     <MESSAGE value="frontend layout config and theme fix" />
     <MESSAGE value="mode switcher" />
-    <option name="LAST_COMMIT_MESSAGE" value="mode switcher" />
+    <MESSAGE value="authentication middleware" />
+    <option name="LAST_COMMIT_MESSAGE" value="authentication middleware" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
