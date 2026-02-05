@@ -1,0 +1,23 @@
+import { Suspense } from "react";
+import MatchList from "@/app/features/matches/MatchList";
+import RobloxPlayerSearch from "@/app/features/players/RobloxPlayerSearch";
+
+export default async function PublicHome() {
+    return (
+        <main className="min-h-screen bg-background text-foreground p-6 space-y-6">
+            <h1 className="text-2xl font-semibold">
+                Public Page
+            </h1>
+
+            <div className="rounded-lg border border-border bg-card p-4">
+                <Suspense fallback={<div className="text-muted-foreground">Loading...</div>}>
+                    <MatchList />
+                </Suspense>
+            </div>
+
+            <div className="rounded-lg border border-border bg-card p-4">
+                <RobloxPlayerSearch />
+            </div>
+        </main>
+    );
+}

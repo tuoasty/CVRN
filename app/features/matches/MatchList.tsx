@@ -1,9 +1,9 @@
 import ErrorDisplay from "@/app/components/ui/ErrorDisplay";
-import {withConnection} from "@/app/components/withConnection";
-import {getMatches} from "@/server/services/match.service";
+import {withConnection} from "@/app/components/providers/withConnection";
+import {getMatchesAction} from "@/app/actions/match.actions";
 
 async function MatchList(){
-    const result = await getMatches();
+    const result = await getMatchesAction();
 
     if(!result.ok){
         return <ErrorDisplay message="Failed to load matches. Please try again later." />;
