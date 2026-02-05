@@ -2,19 +2,21 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "@/lib/utils";
 
+const ROLE_ROUTES = {
+  super_admin: ['/admin', '/admin/dashboard'],
+  // admin: ['/admin', '/admin/content'],
+  // stat_tracker: ['/admin', '/admin/stats'],
+};
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
 
-  // If the env vars are not set, skip proxy check. You can remove this
-  // once you setup the project.
   if (!hasEnvVars) {
     return supabaseResponse;
   }
 
-  // With Fluid compute, don't put this client in a global environment
-  // variable. Always create a new one on each request.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -38,40 +40,55 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Do not run code between createServerClient and
-  // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
+  const { data: {user} } = await supabase.auth.getUser();
+  const pathname = request.nextUrl.pathname;
 
-  // IMPORTANT: If you remove getClaims() and you use server-side rendering
-  // with the Supabase client, your users may be randomly logged out.
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  const isAuthRoute = pathname.startsWith("/auth");
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isRegisterRoute = pathname.startsWith("/auth/register");
 
-  const adminEmails = ["admin@admin.com"];
+  if(isRegisterRoute){
+    return supabaseResponse;
+  }
 
-  // const publicRoutes = ["/"];
-  // const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))
+  if(isAuthRoute && user && !isRegisterRoute){
+    const {data: roleData} = await supabase.from("user_roles").select("role").eq("user_id", user.id).single()
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-
-  if(isAdminRoute) {
-    if(!user || !adminEmails.includes(user.email as string)){
-      return NextResponse.redirect(new URL("/", request.url))
+    if(roleData?.role){
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    } else {
+      return NextResponse.redirect(new URL("/pending", request.url));
     }
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is.
-  // If you're creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
+  if(isAdminRoute){
+    if(!user){
+      const url = new URL("/", request.url);
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
+
+    const {data: roleData} = await supabase
+        .from("user_roles").select("role").eq("user_id", user.id).single();
+    if(!roleData?.role){
+      return NextResponse.redirect(new URL("/pending", request.url));
+    }
+
+    const userRole = roleData.role as keyof typeof ROLE_ROUTES;
+    const allowedRoutes = ROLE_ROUTES[userRole] || [];
+    const hasAccess = allowedRoutes.some(route => pathname.startsWith(route));
+    if(!hasAccess){
+      //change with default admin route
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
+
+    //super admin check
+    if(pathname.startsWith("/admin/users") || pathname.startsWith("/admin/roles")){
+      if(roleData.role !== 'super_admin'){
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      }
+    }
+  }
 
   return supabaseResponse;
 }
