@@ -1,6 +1,6 @@
 import {Suspense} from "react";
-import MatchList from "@/components/MatchList";
-import RobloxPlayerSearch from "@/components/RobloxPlayerSearch";
+import MatchList from "@/app/components/MatchList";
+import RobloxPlayerSearch from "@/app/components/RobloxPlayerSearch";
 
 export default async function PublicHome(){
     return(

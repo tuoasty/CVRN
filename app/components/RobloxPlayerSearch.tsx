@@ -1,9 +1,9 @@
 "use client"
 
 import React, {useState} from "react";
-import {getRobloxUsers} from "@/lib/service/robloxService";
-import {RobloxUserWithAvatar} from "@/lib/types/robloxUserWithAvatar";
 import Image from "next/image";
+import {getUsersByName} from "@/server/services/player.service";
+import {RobloxUserWithAvatar} from "@/shared/types/roblox";
 
 export default function RobloxPlayerSearch(){
     const [username, setUsername] = useState("");
@@ -11,7 +11,7 @@ export default function RobloxPlayerSearch(){
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleSearch = async (e: React.FormEvent) => {
+    const handleSearch = async (e: React.SubmitEvent) => {
         e.preventDefault();
         if(!username.trim()){
             return;
@@ -21,7 +21,7 @@ export default function RobloxPlayerSearch(){
         setError(null);
         setUsers([]);
 
-        const result = await getRobloxUsers(username);
+        const result = await getUsersByName(username);
         setLoading(false);
         if(!result.ok){
             setError(result.error.message);

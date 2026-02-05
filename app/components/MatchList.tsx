@@ -1,6 +1,6 @@
-import {getMatches} from "@/lib/service/matchService";
-import ErrorDisplay from "@/components/ui/ErrorDisplay";
-import {withConnection} from "@/components/withConnection";
+import ErrorDisplay from "@/app/components/ui/ErrorDisplay";
+import {withConnection} from "@/app/components/withConnection";
+import {getMatches} from "@/server/services/match.service";
 
 async function MatchList(){
     const result = await getMatches();

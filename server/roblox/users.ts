@@ -1,12 +1,11 @@
 "use server";
 
-import { Err, Ok, Result } from "@/lib/result";
-import {RobloxUser} from "@/lib/types/robloxUser";
-import {robloxThumbnailsApi, robloxUsersApi} from "@/lib/api/roblox";
-import {RobloxThumbnail} from "@/lib/types/robloxThumbnail";
-import {serializeError} from "@/lib/error/serializeableError";
+import {Err, Ok, Result} from "@/shared/types/result";
+import {robloxThumbnailsApi, robloxUsersApi} from "@/server/roblox/client";
+import {serializeError} from "@/server/error/serializeableError";
+import {RobloxThumbnail, RobloxUser} from "@/shared/types/roblox";
 
-export async function findUsersByName(username: string): Promise<Result<RobloxUser[]>> {
+export async function getRobloxUserByName(username: string): Promise<Result<RobloxUser[]>> {
     try {
         const {data} = await robloxUsersApi.post<{data: RobloxUser[]}>(
             `/v1/usernames/users`,
@@ -22,7 +21,7 @@ export async function findUsersByName(username: string): Promise<Result<RobloxUs
     }
 }
 
-export async function findAvatarsByIds(userIds: bigint[]): Promise<Result<RobloxThumbnail[]>>{
+export async function getRobloxAvatarsById(userIds: bigint[]): Promise<Result<RobloxThumbnail[]>>{
     try {
         const {data} = await robloxThumbnailsApi.get<{data: RobloxThumbnail[]}>(
             "/v1/users/avatar-headshot", {
