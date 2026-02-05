@@ -1,9 +1,9 @@
-import * as repository from "@/lib/repository/robloxRepository";
-import {Err, Ok, Result} from "@/lib/result";
-import {RobloxUserWithAvatar} from "@/lib/types/robloxUserWithAvatar";
+import {getRobloxAvatarsById, getRobloxUserByName} from "@/server/roblox/users";
+import {Err, Ok, Result} from "@/shared/types/result";
+import {RobloxUserWithAvatar} from "@/shared/types/roblox";
 
-export async function getRobloxUsers(username: string): Promise<Result<RobloxUserWithAvatar[]>>{
-    const result = await repository.findUsersByName(username);
+export async function getUsersByName(username: string): Promise<Result<RobloxUserWithAvatar[]>>{
+    const result = await getRobloxUserByName(username);
 
     if(!result.ok){
         console.error("failed to fetch user, ", result.error);
@@ -17,7 +17,7 @@ export async function getRobloxUsers(username: string): Promise<Result<RobloxUse
     }
 
     const userIds = users.map(user => user.id);
-    const avatarsResult = await repository.findAvatarsByIds(userIds);
+    const avatarsResult = await getRobloxAvatarsById(userIds);
 
     if(!avatarsResult.ok){
         console.error("failed to fetch avatars, ", avatarsResult.error);

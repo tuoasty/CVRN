@@ -5,26 +5,32 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/components/RobloxPlayerSearch.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/components/withConnection.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/api/roblox.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/error/serializeableError.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/repository/robloxRepository.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/service/robloxService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/types/robloxThumbnail.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/types/robloxUser.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/types/robloxUserWithAvatar.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/api/roblox/users/route.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/roblox/users.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/favicon.ico" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/MatchList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/MatchList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/repository/matchRepository.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/repository/matchRepository.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/result.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/result.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/service/matchService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/service/matchService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/types/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/types/db.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/MatchList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/MatchList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/RobloxPlayerSearch.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/RobloxPlayerSearch.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/ui/ErrorDisplay.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/ui/ErrorDisplay.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/withConnection.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/withConnection.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/api/roblox.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/roblox/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/error/serializeableError.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/error/serializeableError.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/repository/matchRepository.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/repository/robloxRepository.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/result.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/result.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/service/matchService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/service/robloxService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/supabase/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/supabase/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/proxy.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/supabase/server-public.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/server-public.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/supabase/server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/types/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/db.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/types/robloxThumbnail.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/roblox.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/types/robloxUser.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/types/robloxUserWithAvatar.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/utils/utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/proxy.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,6 +92,10 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\utils" />
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\shared\types" />
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\shared" />
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\server\roblox" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app" />
     </key>
   </component>
@@ -119,7 +129,9 @@
       <option name="presentableId" value="Default" />
       <updated>1770187665459</updated>
       <workItem from="1770187668270" duration="7688000" />
-      <workItem from="1770215313537" duration="6884000" />
+      <workItem from="1770215313537" duration="7205000" />
+      <workItem from="1770223116055" duration="739000" />
+      <workItem from="1770264736453" duration="2538000" />
     </task>
     <servers />
   </component>

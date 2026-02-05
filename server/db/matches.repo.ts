@@ -1,6 +1,6 @@
-import {createPublicClient} from "@/lib/supabase/server-public";
-import {Err, Ok, Result} from "@/lib/result";
-import {Match} from "@/lib/types/db";
+import {Match} from "@/shared/types/db";
+import {Err, Ok, Result} from "@/shared/types/result";
+import {createPublicClient} from "@/server/supabase/server-public";
 
 export async function findAllMatches(): Promise<Result<Match[]>>{
     try {
