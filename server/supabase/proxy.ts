@@ -45,15 +45,25 @@ export async function updateSession(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith("/admin");
   const isLoginRoute = pathname === "/auth/login";
-  const isInviteRoute = pathname === "/auth/invite";
+  const isInviteRoute = pathname === "/admin/invite";
+  const isAuthRoute = pathname.startsWith("/auth");
 
   if(isLoginRoute){
     return supabaseResponse;
   }
 
+  if (isAuthRoute) {
+    if (!user) {
+      const url = new URL("/", request.url);
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse
+  }
+
   if (isInviteRoute) {
     if (!user) {
-      const url = new URL("/auth/login", request.url);
+      const url = new URL("/", request.url);
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
