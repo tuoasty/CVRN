@@ -1,5 +1,6 @@
+"use server"
+
 import ErrorDisplay from "@/app/components/ui/ErrorDisplay";
-import {withConnection} from "@/app/components/providers/withConnection";
 import {getMatchesAction} from "@/app/actions/match.actions";
 
 async function MatchList(){
@@ -18,4 +19,4 @@ async function MatchList(){
     )
 }
 
-export default withConnection(MatchList);
+export default MatchList;

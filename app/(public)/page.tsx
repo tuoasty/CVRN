@@ -1,11 +1,15 @@
-import { Suspense } from "react";
+import {Suspense} from "react";
 import MatchList from "@/app/features/matches/MatchList";
 import RobloxPlayerSearch from "@/app/features/players/RobloxPlayerSearch";
 import {ModeToggle} from "@/app/components/ui/ModeToggle";
+import RedirectCleaner from "@/app/components/providers/RedirectCleaner";
 
-export default async function PublicHome() {
+export default function PublicHome() {
     return (
         <main className="min-h-screen bg-background text-foreground p-6 space-y-6">
+            <Suspense fallback={null}>
+                <RedirectCleaner/>
+            </Suspense>
             <ModeToggle/>
             <h1 className="text-2xl font-semibold">
                 Public Page

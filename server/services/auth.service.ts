@@ -47,6 +47,19 @@ export async function signIn(
     }
 }
 
+export async function signOut(): Promise<Result<void, SerializableError>>{
+    try {
+        const supabase = await createClient();
+        const {error} = await supabase.auth.signOut();
+        if(error){
+            return Err(serializeError(error))
+        }
+        return Ok(undefined)
+    } catch (error){
+        return Err(serializeError(error))
+    }
+}
+
 export async function inviteUser(
     email:string,
     role:"admin" | "super_admin" | "stat_tracker",

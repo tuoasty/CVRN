@@ -1,11 +1,14 @@
 "use server"
 
-import {inviteUser, signIn} from "@/server/services/auth.service";
+import {inviteUser, signIn, signOut} from "@/server/services/auth.service";
 import {createClient} from "@/server/supabase/server";
-import {NextResponse} from "next/server";
 
 export async function loginAction(email:string, password:string){
     return signIn(email, password)
+}
+
+export async function logoutAction(){
+    return signOut()
 }
 
 export async function inviteUserAction(email:string, role:"super_admin"|"admin"|"stat_tracker"){
