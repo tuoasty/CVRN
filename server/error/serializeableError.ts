@@ -2,6 +2,8 @@ export interface SerializableError {
     message: string;
     name?: string;
     stack?: string;
+    code?: string;
+    statusCode?: number;
 }
 
 export function serializeError(error: unknown): SerializableError {
@@ -19,10 +21,15 @@ export function serializeError(error: unknown): SerializableError {
     };
 }
 
-export function createError(message:string, code?:string, statusCode?:number):SerializableError{
+export function createError(
+    message: string,
+    code?: string,
+    statusCode?: number
+): SerializableError {
     return {
         message,
+        name: "Error",
         code,
         statusCode
-    }
+    };
 }
