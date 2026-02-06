@@ -4,17 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="fix serialize error">
-      <change afterPath="$PROJECT_DIR$/app/actions/admin.actions.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/admin/invite/page.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/auth/callback/page.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/auth/set-password/page.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/db/admin.repo.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/services/admin.service.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="invite user and set password">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/auth.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/auth.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/error/serializeableError.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/error/serializeableError.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/auth.service.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/supabase/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/proxy.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -120,7 +111,7 @@
       <workItem from="1770264736453" duration="5362000" />
       <workItem from="1770270204648" duration="12666000" />
       <workItem from="1770340777868" duration="3982000" />
-      <workItem from="1770383129331" duration="6975000" />
+      <workItem from="1770383129331" duration="8156000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -178,7 +169,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770355925045</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="invite user and set password">
+      <option name="closed" value="true" />
+      <created>1770392768402</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1770392768402</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -206,7 +205,8 @@
     <MESSAGE value="service role and policies" />
     <MESSAGE value="fix redirection" />
     <MESSAGE value="fix serialize error" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix serialize error" />
+    <MESSAGE value="invite user and set password" />
+    <option name="LAST_COMMIT_MESSAGE" value="invite user and set password" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

@@ -73,7 +73,7 @@ export async function updateSession(request: NextRequest) {
   if (isSetPassword) {
     if (!user) {
       return NextResponse.redirect(
-          new URL("/auth/login", request.url)
+          new URL("/", request.url)
       );
     }
 
@@ -83,7 +83,7 @@ export async function updateSession(request: NextRequest) {
   if (isAdmin) {
     if (!user) {
       return NextResponse.redirect(
-          new URL("/auth/login", request.url)
+          new URL("/", request.url)
       );
     }
 
