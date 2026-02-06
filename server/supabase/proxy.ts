@@ -40,40 +40,52 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const { data: {user} } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const pathname = request.nextUrl.pathname;
 
-  const isAdminRoute = pathname.startsWith("/admin");
-  const isLoginRoute = pathname === "/auth/login";
-  const isInviteRoute = pathname === "/admin/invite";
-  const isAuthRoute = pathname.startsWith("/auth");
+  const isHome = pathname === "/";
+  const isLogin = pathname === "/auth/login";
+  const isCallback = pathname === "/auth/callback"
+  const isSetPassword = pathname === "/auth/set-password";
 
-  if(isLoginRoute){
+  const isAdmin = pathname.startsWith("/admin");
+  const isInvite = pathname === "/admin/invite";
+
+  console.log(user)
+
+  if (isHome || isCallback) {
     return supabaseResponse;
   }
 
-  if (isAuthRoute) {
-    if (!user) {
-      const url = new URL("/", request.url);
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+  if (isLogin) {
+    if (user) {
+      return NextResponse.redirect(
+          new URL("/admin/dashboard", request.url)
+      );
     }
-    return supabaseResponse
+
+    return supabaseResponse;
   }
 
-  if (isInviteRoute) {
+  if (isSetPassword) {
     if (!user) {
-      const url = new URL("/", request.url);
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(
+          new URL("/auth/login", request.url)
+      );
     }
 
-    const { data, error } = await supabase
-        .from("user_roles")
-        .select("*");
+    return supabaseResponse;
+  }
 
-    console.log("DATA:", data);
-    console.log("ERROR:", error);
+  if (isAdmin) {
+    if (!user) {
+      return NextResponse.redirect(
+          new URL("/auth/login", request.url)
+      );
+    }
 
     const { data: roleData } = await supabase
         .from("user_roles")
@@ -81,46 +93,19 @@ export async function updateSession(request: NextRequest) {
         .eq("user_id", user.id)
         .single();
 
-    console.log("ROLE DATA")
-    console.log(roleData)
+    if (!roleData?.role) {
+      return NextResponse.redirect(
+          new URL("/auth/set-password", request.url)
+      );
+    }
 
-    if (roleData?.role !== "super_admin") {
+    if (isInvite && roleData.role !== "super_admin") {
       return NextResponse.redirect(
           new URL("/admin/dashboard", request.url)
       );
     }
 
     return supabaseResponse;
-  }
-
-  if(isAdminRoute){
-    if(!user){
-      const url = new URL("/", request.url);
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
-    }
-
-    const {data: roleData} = await supabase
-        .from("user_roles").select("role").eq("user_id", user.id).single();
-    if(!roleData?.role){
-      return NextResponse.redirect(new URL("/pending", request.url));
-    }
-
-    const userRole = roleData.role as keyof typeof ROLE_ROUTES;
-    const allowedRoutes = ROLE_ROUTES[userRole] || [];
-
-    if (!allowedRoutes.some(route => pathname.startsWith(route))) {
-      return NextResponse.redirect(
-          new URL("/admin/dashboard", request.url)
-      );
-    }
-
-    //super admin check
-    if(pathname.startsWith("/admin/users") || pathname.startsWith("/admin/roles")){
-      if(roleData.role !== 'super_admin'){
-        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-      }
-    }
   }
 
   return supabaseResponse;
