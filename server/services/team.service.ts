@@ -3,7 +3,7 @@ import {BUCKETS, STORAGE_PATHS} from "@/server/storage/storage.paths";
 import {getFileExtension} from "@/server/utils/fileExtension";
 import {deleteFile, uploadFile} from "@/server/storage/storage.service";
 import {Err, Ok, Result} from "@/shared/types/result";
-import {insertTeam} from "@/server/db/teams.repo";
+import {findAllTeams, insertTeam} from "@/server/db/teams.repo";
 import {SerializableError, serializeError} from "@/server/utils/serializeableError";
 import {Team} from "@/shared/types/db";
 
@@ -67,5 +67,25 @@ export async function createTeam(p:{
                 path: uploadedPath
             })
         }
+    }
+}
+
+export async function getAllTeams():Promise<Result<Team[],SerializableError>> {
+    try {
+        const { data, error } = await findAllTeams()
+        if(error){
+            return Err(serializeError(error))
+        }
+
+        if(!data){
+            return Err({
+                message:"Failed to fetch teams",
+                name:"FetchError"
+            })
+        }
+
+        return Ok(data)
+    } catch (error){
+        return Err(serializeError(error))
     }
 }

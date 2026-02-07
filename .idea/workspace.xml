@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Test use client">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix match list to use client and use effect">
+      <change afterPath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/MatchList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -112,7 +116,7 @@
       <workItem from="1770270204648" duration="12666000" />
       <workItem from="1770340777868" duration="3982000" />
       <workItem from="1770383129331" duration="8217000" />
-      <workItem from="1770437659427" duration="11712000" />
+      <workItem from="1770437659427" duration="12228000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -226,7 +230,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770454509678</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Fix match list to use client and use effect">
+      <option name="closed" value="true" />
+      <created>1770454571632</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1770454571632</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -261,7 +273,8 @@
     <MESSAGE value="Fix import error" />
     <MESSAGE value="Fix impoort again" />
     <MESSAGE value="Test use client" />
-    <option name="LAST_COMMIT_MESSAGE" value="Test use client" />
+    <MESSAGE value="Fix match list to use client and use effect" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix match list to use client and use effect" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
