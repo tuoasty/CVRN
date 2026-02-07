@@ -27,6 +27,7 @@ export async function createTeam(p:{
         });
 
         if(!uploadRes.ok){
+            console.log(uploadRes)
             return Err({
                 message:"Failed to upload team logo",
                 name:"UploadError"
