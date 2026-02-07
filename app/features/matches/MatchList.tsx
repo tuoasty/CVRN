@@ -1,4 +1,4 @@
-"use server"
+"use client"
 
 import ErrorDisplay from "@/app/components/ui/ErrorDisplay";
 import {getMatchesAction} from "@/app/actions/match.actions";
