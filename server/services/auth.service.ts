@@ -1,4 +1,4 @@
-import {createError, SerializableError, serializeError} from "@/server/error/serializeableError";
+import {createError, SerializableError, serializeError} from "@/server/utils/serializeableError";
 import {createClient} from "@/server/supabase/server";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {finalizeInvitedUser} from "@/server/services/admin.service";

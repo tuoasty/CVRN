@@ -4,9 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="invite user and set password">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix proxy redirect">
+      <change afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/storage/storage.paths.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/storage/storage.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/utils/fileExtension.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/supabase/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/proxy.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/error/serializeableError.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/utils/serializeableError.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/roblox/users.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/roblox/users.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/admin.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/admin.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/auth.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,32 +57,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
-    &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/KEVIN/BINUS/Sem 4/HCI/FitFuel-V2&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "js.debugger.nextJs.config.created.client": "true",
+    "js.debugger.nextJs.config.created.server": "true",
+    "last_opened_file_path": "D:/KEVIN/BINUS/Sem 4/HCI/FitFuel-V2",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "editor.preferences.completion",
+    "ts.external.directory.path": "D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\server" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\components\ui" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\features\players" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\features\matches" />
-      <recent name="D:\KEVIN\0SLC\Random\cvrn\app\components\providers" />
     </key>
   </component>
   <component name="RunManager" selected="npm.Next.js: server-side">
@@ -111,7 +120,8 @@
       <workItem from="1770264736453" duration="5362000" />
       <workItem from="1770270204648" duration="12666000" />
       <workItem from="1770340777868" duration="3982000" />
-      <workItem from="1770383129331" duration="8156000" />
+      <workItem from="1770383129331" duration="8217000" />
+      <workItem from="1770437659427" duration="9233000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -177,7 +187,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770392768402</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Fix proxy redirect">
+      <option name="closed" value="true" />
+      <created>1770393834560</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1770393834560</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -206,7 +224,8 @@
     <MESSAGE value="fix redirection" />
     <MESSAGE value="fix serialize error" />
     <MESSAGE value="invite user and set password" />
-    <option name="LAST_COMMIT_MESSAGE" value="invite user and set password" />
+    <MESSAGE value="Fix proxy redirect" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix proxy redirect" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

@@ -1,7 +1,7 @@
 import {Err, Ok, Result} from "@/shared/types/result";
-import {SerializableError, serializeError} from "@/server/error/serializeableError";
 import {supabaseAdmin} from "@/server/supabase/admin";
 import {deletePendingUser, findPendingUsersByEmail, insertUserRole} from "@/server/db/admin.repo";
+import {SerializableError, serializeError} from "@/server/utils/serializeableError";
 
 
 export async function inviteUser(

@@ -2,7 +2,7 @@
 
 import {Err, Ok, Result} from "@/shared/types/result";
 import {robloxThumbnailsApi, robloxUsersApi} from "@/server/roblox/client";
-import {serializeError} from "@/server/error/serializeableError";
+import {serializeError} from "@/server/utils/serializeableError";
 import {RobloxThumbnail, RobloxUser} from "@/shared/types/roblox";
 
 export async function getRobloxUserByName(username: string): Promise<Result<RobloxUser[]>> {
