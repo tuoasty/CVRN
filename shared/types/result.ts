@@ -1,4 +1,4 @@
-import {SerializableError} from "@/server/error/serializeableError";
+import {SerializableError} from "@/server/utils/serializeableError";
 
 export type Result<T, E = SerializableError> = | { ok: true; value: T}
 | {ok: false; error: E};
