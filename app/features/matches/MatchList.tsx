@@ -1,22 +1,50 @@
 "use client"
 
+import { useEffect, useState } from "react";
 import ErrorDisplay from "@/app/components/ui/ErrorDisplay";
-import {getMatchesAction} from "@/app/actions/match.actions";
+import { getMatchesAction } from "@/app/actions/match.actions";
 
-async function MatchList(){
-    const result = await getMatchesAction();
+function MatchList() {
+    const [matches, setMatches] = useState<any[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    if(!result.ok){
-        return <ErrorDisplay message="Failed to load matches. Please try again later." />;
+    useEffect(() => {
+        async function fetchMatches() {
+            try {
+                const result = await getMatchesAction();
+
+                if (!result.ok) {
+                    setError("Failed to load matches. Please try again later.");
+                } else {
+                    setMatches(result.value);
+                }
+            } catch (error) {
+                console.log(error)
+                setError("Failed to load matches. Please try again later.");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchMatches();
+    }, []);
+
+    if (loading) {
+        return <div>Loading matches...</div>;
+    }
+
+    if (error) {
+        return <ErrorDisplay message={error} />;
     }
 
     return (
         <ul>
-            {result.value.map((match) => (
+            {matches.map((match) => (
                 <li key={match.id}>{match.name}</li>
             ))}
         </ul>
-    )
+    );
 }
 
 export default MatchList;
