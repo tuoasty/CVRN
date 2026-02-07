@@ -1,5 +1,6 @@
 import {LogoutButton} from "@/app/components/ui/LogoutButton";
 import CreateTeamForm from "@/app/features/teams/CreateTeamAction";
+import TeamsList from "@/app/features/teams/TeamsList";
 
 export default function AdminHome(){
     return (
@@ -7,6 +8,7 @@ export default function AdminHome(){
             <h1>Admin Dashboard</h1>
             <LogoutButton></LogoutButton>
             <CreateTeamForm></CreateTeamForm>
+            <TeamsList></TeamsList>
         </>
     )
 }
