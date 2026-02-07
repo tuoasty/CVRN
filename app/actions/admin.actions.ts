@@ -2,7 +2,7 @@
 
 import {createClient} from "@/server/supabase/server";
 import {Err} from "@/shared/types/result";
-import {createError} from "@/server/error/serializeableError";
+import {createError} from "@/server/utils/serializeableError";
 import {inviteUser} from "@/server/services/admin.service";
 
 export async function inviteUserAction(email:string, role:"super_admin"|"admin"|"stat_tracker"){
