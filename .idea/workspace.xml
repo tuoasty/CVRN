@@ -4,8 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix import error">
-      <change beforePath="$PROJECT_DIR$/shared/types/result.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/result.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix impoort again">
+      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/MatchList.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,7 +111,7 @@
       <workItem from="1770270204648" duration="12666000" />
       <workItem from="1770340777868" duration="3982000" />
       <workItem from="1770383129331" duration="8217000" />
-      <workItem from="1770437659427" duration="11440000" />
+      <workItem from="1770437659427" duration="11657000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -209,7 +209,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770454219683</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Fix impoort again">
+      <option name="closed" value="true" />
+      <created>1770454300621</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1770454300621</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -242,7 +250,8 @@
     <MESSAGE value="create team" />
     <MESSAGE value="create team success" />
     <MESSAGE value="Fix import error" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix import error" />
+    <MESSAGE value="Fix impoort again" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix impoort again" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
