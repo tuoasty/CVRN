@@ -4,18 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix proxy redirect">
-      <change afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/storage/storage.paths.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/storage/storage.service.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/utils/fileExtension.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="create team">
+      <change afterPath="$PROJECT_DIR$/app/features/teams/CreateTeamAction.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/error/serializeableError.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/utils/serializeableError.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/roblox/users.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/roblox/users.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/admin.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/admin.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/auth.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/supabase/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/proxy.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,8 +20,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript JSX File" />
         <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
       </list>
     </option>
   </component>
@@ -121,7 +116,7 @@
       <workItem from="1770270204648" duration="12666000" />
       <workItem from="1770340777868" duration="3982000" />
       <workItem from="1770383129331" duration="8217000" />
-      <workItem from="1770437659427" duration="9233000" />
+      <workItem from="1770437659427" duration="11178000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -195,7 +190,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770393834560</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="create team">
+      <option name="closed" value="true" />
+      <created>1770450665174</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1770450665174</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -225,7 +228,8 @@
     <MESSAGE value="fix serialize error" />
     <MESSAGE value="invite user and set password" />
     <MESSAGE value="Fix proxy redirect" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix proxy redirect" />
+    <MESSAGE value="create team" />
+    <option name="LAST_COMMIT_MESSAGE" value="create team" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

@@ -54,8 +54,6 @@ export async function updateSession(request: NextRequest) {
   const isAdmin = pathname.startsWith("/admin");
   const isInvite = pathname === "/admin/invite";
 
-  console.log(user)
-
   if (isHome || isCallback) {
     return supabaseResponse;
   }
