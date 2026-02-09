@@ -1,39 +1,34 @@
-import {createClient} from "@/server/supabase/server";
+import {DBClient} from "@/shared/types/db";
 
-export async function findAllTeams(){
-    const supabase = await createClient();
+export async function findAllTeams(supabase: DBClient){
     return supabase.from("teams").select("*")
 }
 
-export async function findTeamById(id:string){
-    const supabase = await createClient()
+export async function findTeamById(supabase: DBClient, id:string){
     return supabase.from("teams").select("*").eq("id", id).single()
 }
 
-export async function insertTeam(data: {
+export async function insertTeam(supabase: DBClient, p: {
     id?: string;
-    name?: string;
-    logoUrl?: string;
+    name: string;
+    logoUrl: string;
 }) {
-    const supabase = await createClient();
     return supabase.from("teams").insert({
-        ...(data.id && { id: data.id }),
-        name: data.name,
-        logo_url: data.logoUrl
+        ...(p.id && { id: p.id }),
+        name: p.name,
+        logo_url: p.logoUrl
     }).select().single()
 }
 
-export async function updateTeamById(id:string, data: {
+export async function updateTeamById(supabase: DBClient, id:string, p: {
     name?:string, logoUrl?:string
 }){
-    const supabase = await createClient()
     return supabase.from("teams").update({
-        ...(data.name && {name:data.name}),
-            ...(data.logoUrl && {logo_url:data.logoUrl})
+        ...(p.name && {name:p.name}),
+            ...(p.logoUrl && {logo_url:p.logoUrl})
     }).eq("id", id).select().single()
 }
 
-export async function deleteTeamById(id:string){
-    const supabase = await createClient()
+export async function deleteTeamById(supabase: DBClient, id:string){
     return supabase.from("teams").delete().eq("id", id)
 }

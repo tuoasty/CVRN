@@ -1,7 +1,7 @@
 import {createError, SerializableError, serializeError} from "@/server/utils/serializeableError";
-import {createClient} from "@/server/supabase/server";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {finalizeInvitedUser} from "@/server/services/admin.service";
+import {DBClient} from "@/shared/types/db";
 
 export interface AuthUser {
     id: string;
@@ -15,12 +15,11 @@ export interface AuthResponse {
 }
 
 export async function signIn(
+    supabase: DBClient,
     email:string,
     password:string
 ): Promise<Result<AuthResponse, SerializableError>>{
     try {
-        const supabase = await createClient();
-
         const {data, error} = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -47,9 +46,8 @@ export async function signIn(
     }
 }
 
-export async function signOut(): Promise<Result<void, SerializableError>>{
+export async function signOut(supabase: DBClient): Promise<Result<void, SerializableError>>{
     try {
-        const supabase = await createClient();
         const {error} = await supabase.auth.signOut();
         if(error){
             return Err(serializeError(error))
@@ -61,11 +59,10 @@ export async function signOut(): Promise<Result<void, SerializableError>>{
 }
 
 export async function setUserPassword(
+    supabase: DBClient,
     password:string
 ):Promise<Result<null, SerializableError>>{
     try {
-        const supabase = await createClient()
-
         const {
             data: {user},
         } = await supabase.auth.getUser();
@@ -97,10 +94,10 @@ export async function setUserPassword(
 }
 
 export async function processAuthCallback(
+    supabase: DBClient,
     url:string
 ): Promise<Result<null, SerializableError>>{
     try {
-        const supabase = await createClient()
         const hash = url.split("#")[1];
 
         if(!hash){
@@ -139,4 +136,24 @@ export async function processAuthCallback(
     } catch (error) {
         return Err(serializeError(error))
     }
+}
+
+export async function getUserRole(supabase: DBClient, userId:string){
+    const {data} = await supabase.from("user_roles").select("role").eq("user_id", userId).single()
+    return data?.role || null;
+}
+
+export async function getUserWithRole(supabase: DBClient){
+    const {data: {user}} = await supabase.auth.getUser();
+    if(!user) return null;
+
+    const {data: roleData} = await supabase.from("user_roles").select("*").eq("user_id", user.id).single();
+    return {
+        user, role: roleData?.role || null, roleData
+    };
+}
+
+export async function hasRole(supabase: DBClient, userId:string): Promise<boolean>{
+    const {data} = await supabase.from("user_roles").select("user_id").eq("user_id", userId).single();
+    return !!data
 }

@@ -5,9 +5,9 @@ import {deleteFile, uploadFile} from "@/server/storage/storage.service";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {findAllTeams, insertTeam} from "@/server/db/teams.repo";
 import {SerializableError, serializeError} from "@/server/utils/serializeableError";
-import {Team} from "@/shared/types/db";
+import {DBClient, Team} from "@/shared/types/db";
 
-export async function createTeam(p:{
+export async function createTeam(supabase:DBClient, p:{
     name:string;
     logoFile:File
 }):Promise<Result<Team, SerializableError>>{
@@ -19,7 +19,7 @@ export async function createTeam(p:{
         const ext = getFileExtension(p.logoFile)
         const path = STORAGE_PATHS.teamLogo(teamId, ext);
 
-        const uploadRes = await uploadFile({
+        const uploadRes = await uploadFile(supabase, {
             bucket: BUCKETS.PUBLIC,
             path,
             file:p.logoFile,
@@ -35,13 +35,13 @@ export async function createTeam(p:{
         }
 
         uploadedPath = path
-        const {data, error} = await insertTeam({
+        const {data, error} = await insertTeam(supabase, {
             id: teamId,
             name: p.name,
             logoUrl: uploadRes.value.url
         })
         if(error || !data){
-            await deleteFile({
+            await deleteFile(supabase, {
                 bucket:BUCKETS.PUBLIC,
                 path,
             })
@@ -62,7 +62,7 @@ export async function createTeam(p:{
         return Err(serializeError(error))
     } finally {
         if(!success && uploadedPath){
-            await deleteFile({
+            await deleteFile(supabase, {
                 bucket: BUCKETS.PUBLIC,
                 path: uploadedPath
             })
@@ -70,9 +70,9 @@ export async function createTeam(p:{
     }
 }
 
-export async function getAllTeams():Promise<Result<Team[],SerializableError>> {
+export async function getAllTeams(supabase: DBClient):Promise<Result<Team[],SerializableError>> {
     try {
-        const { data, error } = await findAllTeams()
+        const { data, error } = await findAllTeams(supabase)
         if(error){
             return Err(serializeError(error))
         }
