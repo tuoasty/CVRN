@@ -1,19 +1,24 @@
 "use server"
 
 import {processAuthCallback, setUserPassword, signIn, signOut} from "@/server/services/auth.service";
+import {createServerSupabase} from "@/server/supabase/server";
 
 export async function loginAction(email:string, password:string){
-    return signIn(email, password)
+    const supabase = await createServerSupabase()
+    return signIn(supabase, email, password)
 }
 
 export async function logoutAction(){
-    return signOut()
+    const supabase = await createServerSupabase()
+    return signOut(supabase)
 }
 
 export async function setPasswordAction(password:string){
-    return setUserPassword(password)
+    const supabase = await createServerSupabase()
+    return setUserPassword(supabase, password)
 }
 
 export async function authCallbackAction(url:string){
-    return processAuthCallback(url)
+    const supabase = await createServerSupabase()
+    return processAuthCallback(supabase, url)
 }

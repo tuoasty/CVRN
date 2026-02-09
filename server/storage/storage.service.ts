@@ -1,8 +1,8 @@
 import {Err, Ok, Result} from "@/shared/types/result";
 import {SerializableError, serializeError} from "@/server/utils/serializeableError";
-import {createClient} from "@/server/supabase/server";
+import {DBClient} from "@/shared/types/db";
 
-export async function uploadFile(p: {
+export async function uploadFile(supabase: DBClient, p: {
     bucket:string;
     path:string;
     file:File | Blob;
@@ -10,8 +10,6 @@ export async function uploadFile(p: {
     upsert?:boolean;
 }): Promise<Result<{ url:string;path:string }, SerializableError>> {
     try {
-        const supabase = await createClient();
-
         const {data, error} = await supabase.storage.from(p.bucket).upload(p.path, p.file, {
             contentType:p.contentType,
             upsert:p.upsert ?? true,
@@ -37,12 +35,11 @@ export async function uploadFile(p: {
     }
 }
 
-export async function deleteFile(p:{
+export async function deleteFile(supabase: DBClient, p:{
     bucket:string;
     path:string
 }): Promise<Result<null, SerializableError>>{
     try {
-        const supabase = await createClient()
         const {error} = await supabase.storage.from(p.bucket).remove([p.path])
         if(error) {
             return Err(serializeError(error))
@@ -53,13 +50,12 @@ export async function deleteFile(p:{
     }
 }
 
-export async function createSignedUrl(p: {
+export async function createSignedUrl(supabase: DBClient, p: {
     bucket:string;
     path:string;
     expiresIn:number;
 }): Promise<Result<string, SerializableError>> {
     try {
-        const supabase =  await createClient();
         const { data, error } = await supabase.storage
             .from(p.bucket)
             .createSignedUrl(p.path, p.expiresIn)

@@ -4,13 +4,27 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix match list to use client and use effect">
-      <change afterPath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Display teams">
+      <change afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/admin.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/admin.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/auth.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/auth.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/player.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/player.actions.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/proxy.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/auth.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/storage/storage.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/storage/storage.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/supabase/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/browser.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/supabase/proxy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/middleware.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/supabase/server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/server.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/types/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/db.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,8 +34,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript File" />
         <option value="TypeScript JSX File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -52,25 +66,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "js.debugger.nextJs.config.created.client": "true",
-    "js.debugger.nextJs.config.created.server": "true",
-    "last_opened_file_path": "D:/KEVIN/BINUS/Sem 4/HCI/FitFuel-V2",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "editor.preferences.completion",
-    "ts.external.directory.path": "D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
+    &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/KEVIN/BINUS/Sem 4/HCI/FitFuel-V2&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.completion&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\KEVIN\0SLC\Random\cvrn\server" />
@@ -116,7 +130,8 @@
       <workItem from="1770270204648" duration="12666000" />
       <workItem from="1770340777868" duration="3982000" />
       <workItem from="1770383129331" duration="8217000" />
-      <workItem from="1770437659427" duration="12228000" />
+      <workItem from="1770437659427" duration="13005000" />
+      <workItem from="1770627533842" duration="5637000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -238,7 +253,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770454571632</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Display teams">
+      <option name="closed" value="true" />
+      <created>1770455142869</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1770455142869</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -274,7 +297,8 @@
     <MESSAGE value="Fix impoort again" />
     <MESSAGE value="Test use client" />
     <MESSAGE value="Fix match list to use client and use effect" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix match list to use client and use effect" />
+    <MESSAGE value="Display teams" />
+    <option name="LAST_COMMIT_MESSAGE" value="Display teams" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

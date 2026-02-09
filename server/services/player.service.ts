@@ -1,8 +1,9 @@
 import {getRobloxAvatarsById, getRobloxUserByName} from "@/server/roblox/users";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {RobloxUserWithAvatar} from "@/shared/types/roblox";
+import {DBClient} from "@/shared/types/db";
 
-export async function getUsersByName(username: string): Promise<Result<RobloxUserWithAvatar[]>>{
+export async function getUsersByName(supabase: DBClient, username: string): Promise<Result<RobloxUserWithAvatar[]>>{
     const result = await getRobloxUserByName(username);
 
     if(!result.ok){
