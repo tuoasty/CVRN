@@ -4,23 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="save player service functions">
-      <change afterPath="$PROJECT_DIR$/app/(public)/teams/[region]/[teamName]/page.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/admin/teams/[region]/[teamName]/page.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/features/players/AddPlayerToTeam.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/dto/team.dto.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="add player to team">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/player.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/player.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/CreateTeamAction.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/CreateTeamAction.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/dto/player.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/player.dto.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -132,7 +120,7 @@
       <workItem from="1770437659427" duration="13005000" />
       <workItem from="1770627533842" duration="7979000" />
       <workItem from="1770966806216" duration="677000" />
-      <workItem from="1771043403039" duration="7839000" />
+      <workItem from="1771043403039" duration="9038000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -278,7 +266,15 @@
       <option name="project" value="LOCAL" />
       <updated>1770637952899</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="add player to team">
+      <option name="closed" value="true" />
+      <created>1771053706265</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1771053706265</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -317,7 +313,8 @@
     <MESSAGE value="Display teams" />
     <MESSAGE value="refactor arch" />
     <MESSAGE value="save player service functions" />
-    <option name="LAST_COMMIT_MESSAGE" value="save player service functions" />
+    <MESSAGE value="add player to team" />
+    <option name="LAST_COMMIT_MESSAGE" value="add player to team" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

@@ -4,8 +4,10 @@ import {RobloxUserWithAvatar} from "@/shared/types/roblox";
 import {DBClient, Player} from "@/shared/types/db";
 import {GetTeamPlayers, SavePlayerInput} from "@/server/dto/player.dto";
 import {serializeError} from "@/server/utils/serializeableError";
-import {findAllTeams, findTeamById} from "@/server/db/teams.repo";
-import {findAllTeamPlayers, upsertPlayer} from "@/server/db/players.repo";
+import {findTeamById} from "@/server/db/teams.repo";
+import {findAllTeamPlayers, updatePlayer, upsertPlayer} from "@/server/db/players.repo";
+
+const SYNC_INTERVAL = 1000 * 60 * 60;
 
 export async function getUsersByName(supabase: DBClient, username: string): Promise<Result<RobloxUserWithAvatar[]>>{
     const result = await getRobloxUserByName(username);
@@ -91,8 +93,73 @@ export async function getTeamPlayers(
             })
         }
 
-        return Ok(data)
+        const syncedPlayers: Player[] = [];
+
+        for (const player of data) {
+            const result = await lazySyncPlayer(supabase, player);
+
+            if (result.ok) {
+                syncedPlayers.push(result.value);
+            } else {
+                syncedPlayers.push(player);
+            }
+        }
+
+        return Ok(syncedPlayers);
     } catch (error){
         return Err(serializeError(error))
     }
+}
+
+export async function lazySyncPlayer(
+    supabase: DBClient,
+    player: Player
+): Promise<Result<Player>> {
+    try {
+        if (!needsSync(player.last_synced_at)) {
+            return Ok(player);
+        }
+
+        console.log("Lazy syncing player:", player.username);
+
+        const userResult = await getRobloxUserByName(player.username);
+
+        if (!userResult.ok || userResult.value.length === 0) {
+            return Ok(player);
+        }
+
+        const user = userResult.value[0];
+
+        const avatarResult = await getRobloxAvatarsById([user.id]);
+
+        let avatarUrl = player.avatar_url;
+
+        if (avatarResult.ok) {
+            const avatar = avatarResult.value.find(
+                a => a.targetId === user.id
+            );
+
+            avatarUrl = avatar?.imageUrl ?? avatarUrl;
+        }
+
+        const { data, error } = await updatePlayer(supabase, {user, avatarUrl})
+
+        if (error || !data) {
+            return Err(serializeError(error));
+        }
+
+        return Ok(data);
+
+    } catch (err) {
+        return Err(serializeError(err));
+    }
+}
+
+function needsSync(lastSynced: string | null){
+    if(!lastSynced) return true;
+
+    const last = new Date(lastSynced).getTime()
+    const now = Date.now()
+
+    return now - last > SYNC_INTERVAL
 }
