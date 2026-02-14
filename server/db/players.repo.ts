@@ -1,9 +1,9 @@
 import {DBClient} from "@/shared/types/db";
-import {AddPlayerToTeamInput} from "@/server/dto/player.dto";
+import {GetTeamPlayers, SavePlayerInput} from "@/server/dto/player.dto";
 
 export async function upsertPlayer(
     supabase:DBClient,
-    p:AddPlayerToTeamInput
+    p:SavePlayerInput
 ){
     return supabase.from("players")
         .upsert(
@@ -20,4 +20,13 @@ export async function upsertPlayer(
         )
         .select()
         .single()
+}
+
+export async function findAllTeamPlayers(
+    supabase:DBClient,
+    p:GetTeamPlayers
+) {
+    return supabase.from("players")
+        .select("*")
+        .eq("team_id", p.teamId)
 }

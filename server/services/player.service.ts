@@ -2,10 +2,10 @@ import {getRobloxAvatarsById, getRobloxUserByName} from "@/server/roblox/users";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {RobloxUserWithAvatar} from "@/shared/types/roblox";
 import {DBClient, Player} from "@/shared/types/db";
-import {AddPlayerToTeamInput} from "@/server/dto/player.dto";
-import {SerializableError, serializeError} from "@/server/utils/serializeableError";
-import {findTeamById} from "@/server/db/teams.repo";
-import {upsertPlayer} from "@/server/db/players.repo";
+import {GetTeamPlayers, SavePlayerInput} from "@/server/dto/player.dto";
+import {serializeError} from "@/server/utils/serializeableError";
+import {findAllTeams, findTeamById} from "@/server/db/teams.repo";
+import {findAllTeamPlayers, upsertPlayer} from "@/server/db/players.repo";
 
 export async function getUsersByName(supabase: DBClient, username: string): Promise<Result<RobloxUserWithAvatar[]>>{
     const result = await getRobloxUserByName(username);
@@ -43,7 +43,7 @@ export async function getUsersByName(supabase: DBClient, username: string): Prom
 
 export async function savePlayer(
     supabase: DBClient,
-    p: AddPlayerToTeamInput
+    p: SavePlayerInput
 ): Promise<Result<Player>> {
     try {
         if(p.teamId){
@@ -65,6 +65,29 @@ export async function savePlayer(
             return Err({
                 name:"UpsertError",
                 message:"Failed to save player"
+            })
+        }
+
+        return Ok(data)
+    } catch (error){
+        return Err(serializeError(error))
+    }
+}
+
+export async function getTeamPlayers(
+    supabase: DBClient,
+    p:GetTeamPlayers
+) : Promise<Result<Player[]>>{
+    try {
+        const { data, error } = await findAllTeamPlayers(supabase, p)
+        if(error){
+            return Err(serializeError(error))
+        }
+
+        if(!data){
+            return Err({
+                message:"Failed to fetch team players",
+                name:"FetchError"
             })
         }
 
