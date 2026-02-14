@@ -1,6 +1,6 @@
 // lib/supabase/server-public.ts
 import { createServerClient } from "@supabase/ssr";
-import type { Database } from "@/database.types";
+import {Database} from "@/shared/types/db.override";
 
 export function createPublicClient() {
     return createServerClient<Database>(

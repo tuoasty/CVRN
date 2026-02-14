@@ -4,8 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix update player repo function">
-      <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="fix user repo function change bigint to string">
+      <change afterPath="$PROJECT_DIR$/shared/types/db.override.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/supabase/browser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/browser.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/supabase/middleware.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/middleware.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/supabase/server-public.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/server-public.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/supabase/server.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/server.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -117,7 +122,7 @@
       <workItem from="1770437659427" duration="13005000" />
       <workItem from="1770627533842" duration="7979000" />
       <workItem from="1770966806216" duration="677000" />
-      <workItem from="1771043403039" duration="9918000" />
+      <workItem from="1771043403039" duration="10904000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -295,7 +300,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771055610024</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="fix user repo function change bigint to string">
+      <option name="closed" value="true" />
+      <created>1771055750639</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1771055750639</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -338,7 +351,8 @@
     <MESSAGE value="lazy sync" />
     <MESSAGE value="Fix admin actions" />
     <MESSAGE value="Fix update player repo function" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix update player repo function" />
+    <MESSAGE value="fix user repo function change bigint to string" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix user repo function change bigint to string" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
