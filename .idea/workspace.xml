@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="add player to team">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="lazy sync">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/dto/player.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/player.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/admin.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/admin.actions.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -120,7 +118,7 @@
       <workItem from="1770437659427" duration="13005000" />
       <workItem from="1770627533842" duration="7979000" />
       <workItem from="1770966806216" duration="677000" />
-      <workItem from="1771043403039" duration="9038000" />
+      <workItem from="1771043403039" duration="9634000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -274,7 +272,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771053706265</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="lazy sync">
+      <option name="closed" value="true" />
+      <created>1771054943093</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1771054943093</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -314,7 +320,8 @@
     <MESSAGE value="refactor arch" />
     <MESSAGE value="save player service functions" />
     <MESSAGE value="add player to team" />
-    <option name="LAST_COMMIT_MESSAGE" value="add player to team" />
+    <MESSAGE value="lazy sync" />
+    <option name="LAST_COMMIT_MESSAGE" value="lazy sync" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
