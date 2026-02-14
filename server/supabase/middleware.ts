@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "@/lib/utils";
-import {Database} from "@/database.types";
+import {Database} from "@/shared/types/db.override";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
