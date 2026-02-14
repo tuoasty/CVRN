@@ -1,4 +1,4 @@
-import type {Database} from "@/database.types";
+import type {Database} from "@/shared/types/db.override";
 import {SupabaseClient} from "@supabase/supabase-js";
 
 export type Match =
