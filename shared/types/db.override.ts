@@ -1,4 +1,4 @@
-import type { Database as GeneratedDB } from "./database.types";
+import type {Database as GeneratedDB} from "@/database.types";
 
 type FixBigInt<T> = {
     [K in keyof T]: T[K] extends number
