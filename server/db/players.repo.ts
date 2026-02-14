@@ -8,7 +8,7 @@ export async function upsertPlayer(
     return supabase.from("players")
         .upsert(
             {
-                roblox_user_id:p.robloxUserId,
+                roblox_user_id:String(p.robloxUserId),
                 username:p.username,
                 display_name:p.displayName ?? null,
                 avatar_url:p.avatarUrl ?? null,

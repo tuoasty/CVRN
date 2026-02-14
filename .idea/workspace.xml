@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="database override fix">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/types/db.override.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/db.override.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/types/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/db.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="fix import">
+      <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -119,7 +117,7 @@
       <workItem from="1770437659427" duration="13005000" />
       <workItem from="1770627533842" duration="7979000" />
       <workItem from="1770966806216" duration="677000" />
-      <workItem from="1771043403039" duration="11143000" />
+      <workItem from="1771043403039" duration="11250000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -321,7 +319,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771057639990</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="fix import">
+      <option name="closed" value="true" />
+      <created>1771057747086</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1771057747086</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -341,7 +347,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="refactor structure" />
     <MESSAGE value="frontend layout config and theme fix" />
     <MESSAGE value="mode switcher" />
     <MESSAGE value="authentication middleware" />
@@ -366,7 +371,8 @@
     <MESSAGE value="fix user repo function change bigint to string" />
     <MESSAGE value="Database override" />
     <MESSAGE value="database override fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="database override fix" />
+    <MESSAGE value="fix import" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix import" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
