@@ -13,6 +13,9 @@ export interface GetTeamPlayers {
 }
 
 export interface UpdatePlayerInput {
-    user: RobloxUser,
-    avatarUrl: string
+    robloxUserId: string;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    lastSyncedAt: string;
 }
