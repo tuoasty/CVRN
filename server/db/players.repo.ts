@@ -44,7 +44,7 @@ export async function updatePlayer(
             avatar_url: p.avatarUrl,
             last_synced_at: new Date().toISOString(),
         })
-        .eq("roblox_user_id", p.user.id)
+        .eq("roblox_user_id", p.user.id.toString())
         .select()
         .single();
 }
