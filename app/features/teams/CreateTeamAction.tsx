@@ -7,6 +7,7 @@ import { createTeamAction } from "@/app/actions/team.actions";
 export default function CreateTeamForm() {
     const [name, setName] = useState("");
     const [file, setFile] = useState<File | null>(null);
+    const [region, setRegion] = useState("");
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -26,8 +27,8 @@ export default function CreateTeamForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!name.trim() || !file) {
-            setError("Team name and logo are required");
+        if (!name.trim() || !file || !region.trim()) {
+            setError("Team name, logo and region are required");
             return;
         }
 
@@ -36,7 +37,7 @@ export default function CreateTeamForm() {
         setSuccess(null);
 
         try {
-            const result = await createTeamAction(name, file);
+            const result = await createTeamAction(name, file, region);
 
             if (!result.ok) {
                 setError(result.error.message);
@@ -78,6 +79,16 @@ export default function CreateTeamForm() {
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
+                        disabled={loading}
+                    />
+                </div>
+
+                <div>
+                    <input
+                        type="text"
+                        placeholder="Region (AS / NA / EU)"
+                        value={region}
+                        onChange={(e) => setRegion(e.target.value)}
                         disabled={loading}
                     />
                 </div>

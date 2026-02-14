@@ -5,3 +5,7 @@ export interface SavePlayerInput {
     avatarUrl?: string | null;
     teamId?: string | null;
 }
+
+export interface GetTeamPlayers {
+    teamId: string
+}

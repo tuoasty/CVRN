@@ -4,11 +4,13 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { getAllTeamsAction } from "@/app/actions/team.actions";
 import { Team } from "@/shared/types/db";
+import {useRouter} from "next/navigation";
 
 export default function TeamsList() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const router = useRouter()
 
     useEffect(() => {
         loadTeams();
@@ -34,6 +36,12 @@ export default function TeamsList() {
             setLoading(false);
         }
     };
+
+    const handleTeamClick= (team: Team) => {
+        const region = (team.region || "Unknown").toLowerCase();
+        const teamName = team.name.toLowerCase();
+        router.push(`/admin/teams/${encodeURIComponent(region)}/${encodeURIComponent(teamName)}`)
+    }
 
     if (loading) {
         return <div>Loading teams...</div>;
@@ -67,6 +75,7 @@ export default function TeamsList() {
                             borderRadius: "8px",
                             textAlign: "center",
                         }}
+                        onClick={() => handleTeamClick(team)}
                     >
                         {team.logo_url && (
                             <Image
