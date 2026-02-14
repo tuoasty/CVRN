@@ -3,10 +3,10 @@
 import {Err} from "@/shared/types/result";
 import {createError} from "@/server/utils/serializeableError";
 import {inviteUser} from "@/server/services/admin.service";
-import {createClientServer} from "@/server/supabase/server";
+import {createServerSupabase} from "@/server/supabase/server";
 
 export async function inviteUserAction(email:string, role:"super_admin"|"admin"|"stat_tracker"){
-    const supabase = await createClientServer()
+    const supabase = await createServerSupabase()
     const {
         data: {user},
     } = await supabase.auth.getUser();
