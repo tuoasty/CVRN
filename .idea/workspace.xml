@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix admin actions" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix update player repo function">
+      <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -115,7 +117,7 @@
       <workItem from="1770437659427" duration="13005000" />
       <workItem from="1770627533842" duration="7979000" />
       <workItem from="1770966806216" duration="677000" />
-      <workItem from="1771043403039" duration="9777000" />
+      <workItem from="1771043403039" duration="9918000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -285,7 +287,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771055458455</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Fix update player repo function">
+      <option name="closed" value="true" />
+      <created>1771055610024</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1771055610024</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -327,7 +337,8 @@
     <MESSAGE value="add player to team" />
     <MESSAGE value="lazy sync" />
     <MESSAGE value="Fix admin actions" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix admin actions" />
+    <MESSAGE value="Fix update player repo function" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix update player repo function" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
