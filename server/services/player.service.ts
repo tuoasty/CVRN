@@ -116,36 +116,55 @@ export async function lazySyncPlayer(
     player: Player
 ): Promise<Result<Player>> {
     try {
-        if (!needsSync(player.last_synced_at)) {
+
+        if (!needsSync(player.last_synced_at ?? null)) {
+            return Ok(player);
+        }
+
+        if (!player.username) {
             return Ok(player);
         }
 
         console.log("Lazy syncing player:", player.username);
-
         const userResult = await getRobloxUserByName(player.username);
-
         if (!userResult.ok || userResult.value.length === 0) {
             return Ok(player);
         }
 
         const user = userResult.value[0];
+        if (!user?.id) {
+            return Ok(player);
+        }
 
         const avatarResult = await getRobloxAvatarsById([user.id]);
-
-        let avatarUrl = player.avatar_url;
-
+        let avatarUrl: string | null = player.avatar_url;
         if (avatarResult.ok) {
             const avatar = avatarResult.value.find(
                 a => a.targetId === user.id
             );
 
-            avatarUrl = avatar?.imageUrl ?? avatarUrl;
+            if (avatar?.imageUrl) {
+                avatarUrl = avatar.imageUrl;
+            }
         }
 
-        const { data, error } = await updatePlayer(supabase, {user, avatarUrl})
+        const { data, error } = await updatePlayer(supabase, {
+            robloxUserId: String(user.id),
+            username: user.name,
+            displayName: user.displayName ?? null,
+            avatarUrl,
+            lastSyncedAt: new Date().toISOString(),
+        });
 
-        if (error || !data) {
+        if (error) {
             return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Err({
+                name: "UpdateError",
+                message: "Failed to update player"
+            });
         }
 
         return Ok(data);
@@ -154,6 +173,7 @@ export async function lazySyncPlayer(
         return Err(serializeError(err));
     }
 }
+
 
 function needsSync(lastSynced: string | null){
     if(!lastSynced) return true;
