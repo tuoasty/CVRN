@@ -1,7 +1,7 @@
 import {RobloxUser} from "@/shared/types/roblox";
 
 export interface SavePlayerInput {
-    robloxUserId:number;
+    robloxUserId:string;
     username:string;
     displayName?:string | null;
     avatarUrl?: string | null;
@@ -10,6 +10,10 @@ export interface SavePlayerInput {
 
 export interface GetTeamPlayers {
     teamId: string
+}
+
+export interface GetPlayerByRoblox {
+    robloxUserId:string
 }
 
 export interface UpdatePlayerInput {

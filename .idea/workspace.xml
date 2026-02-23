@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="fix typing">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="fix update player repo">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/dto/player.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/player.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -118,7 +121,8 @@
       <workItem from="1770627533842" duration="7979000" />
       <workItem from="1770966806216" duration="677000" />
       <workItem from="1771043403039" duration="11495000" />
-      <workItem from="1771058125625" duration="831000" />
+      <workItem from="1771058125625" duration="1323000" />
+      <workItem from="1771821915146" duration="1353000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -344,7 +348,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771059181440</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="fix update player repo">
+      <option name="closed" value="true" />
+      <created>1771059263132</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1771059263132</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -364,7 +376,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="authentication middleware" />
     <MESSAGE value="service role and policies" />
     <MESSAGE value="fix redirection" />
     <MESSAGE value="fix serialize error" />
@@ -389,7 +400,8 @@
     <MESSAGE value="fix import" />
     <MESSAGE value="Fix robloxUserId to string" />
     <MESSAGE value="fix typing" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix typing" />
+    <MESSAGE value="fix update player repo" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix update player repo" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
