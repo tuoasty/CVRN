@@ -7,8 +7,8 @@ import Image from "next/image";
 import { Player, Team } from "@/shared/types/db";
 import { getTeamPlayersAction } from "@/app/actions/player.actions";
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
-import {getTeamByNameAndRegion} from "@/server/services/team.service";
 import {getTeamByNameAndRegionAction} from "@/app/actions/team.actions";
+import PlayerCard from "@/app/features/players/PlayerCard";
 
 export default function TeamDetailPage() {
     const params = useParams();
@@ -159,43 +159,11 @@ export default function TeamDetailPage() {
                     }}
                 >
                     {players.map((player) => (
-                        <div
+                        <PlayerCard
                             key={player.id}
-                            style={{
-                                border: "1px solid #ccc",
-                                padding: "1rem",
-                                borderRadius: "8px",
-                                textAlign: "center",
-                            }}
-                        >
-                            {player.avatar_url && (
-                                <Image
-                                    src={player.avatar_url}
-                                    alt={player.username || ""}
-                                    width={100}
-                                    height={100}
-                                    style={{ objectFit: "contain" }}
-                                />
-                            )}
-
-                            <h4
-                                style={{
-                                    margin: "0.5rem 0 0.25rem 0",
-                                }}
-                            >
-                                {player.display_name || player.username}
-                            </h4>
-
-                            <p
-                                style={{
-                                    fontSize: "0.9rem",
-                                    color: "#666",
-                                    margin: 0,
-                                }}
-                            >
-                                @{player.username}
-                            </p>
-                        </div>
+                            player={player}
+                            onRemoved={loadTeamData}
+                        />
                     ))}
                 </div>
             )}
