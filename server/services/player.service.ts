@@ -5,7 +5,7 @@ import {DBClient, Player} from "@/shared/types/db";
 import {GetTeamPlayers, SavePlayerInput} from "@/server/dto/player.dto";
 import {serializeError} from "@/server/utils/serializeableError";
 import {findTeamById} from "@/server/db/teams.repo";
-import {findAllTeamPlayers, updatePlayer, upsertPlayer} from "@/server/db/players.repo";
+import {findAllTeamPlayers, findPlayerByRobloxId, updatePlayer, upsertPlayer} from "@/server/db/players.repo";
 
 const SYNC_INTERVAL = 1000 * 60 * 60;
 
@@ -54,6 +54,14 @@ export async function savePlayer(
                 return Err({
                     name:"TeamNotFound",
                     message:"Team does not exist"
+                })
+            }
+
+            const {data: existingPlayer} = await findPlayerByRobloxId(supabase, {robloxUserId: p.robloxUserId})
+            if(existingPlayer?.team_id && existingPlayer.team_id !== p.teamId){
+                return Err({
+                    name:"PlayerAlreadyInTeam",
+                    message:"Player is already a member of another team"
                 })
             }
         }
