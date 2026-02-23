@@ -1,8 +1,8 @@
 "use server"
 
-import {savePlayer, getUsersByName, getTeamPlayers} from "@/server/services/player.service";
+import {savePlayer, getUsersByName, getTeamPlayers, removePlayerFromTeam} from "@/server/services/player.service";
 import {createServerSupabase} from "@/server/supabase/server";
-import {GetTeamPlayers, SavePlayerInput} from "@/server/dto/player.dto";
+import {GetPlayerByRoblox, GetTeamPlayers, SavePlayerInput} from "@/server/dto/player.dto";
 
 export async function searchPlayersAction(username:string){
     const supabase = await createServerSupabase()
@@ -12,6 +12,11 @@ export async function searchPlayersAction(username:string){
 export async function savePlayerToTeamAction(input:SavePlayerInput){
     const supabase = await createServerSupabase();
     return savePlayer(supabase, input)
+}
+
+export async function removePlayerFromTeamAction(input:GetPlayerByRoblox){
+    const supabase = await createServerSupabase()
+    return removePlayerFromTeam(supabase, input)
 }
 
 export async function getTeamPlayersAction(input:GetTeamPlayers){

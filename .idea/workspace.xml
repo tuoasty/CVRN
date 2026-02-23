@@ -4,11 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="fix update player repo">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat: Validation check player in team">
+      <change afterPath="$PROJECT_DIR$/app/features/players/PlayerCard.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/player.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/player.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/players/AddPlayerToTeam.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/players/AddPlayerToTeam.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/dto/player.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/player.dto.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/types/roblox.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/roblox.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,8 +23,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript JSX File" />
         <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
       </list>
     </option>
   </component>
@@ -122,7 +127,7 @@
       <workItem from="1770966806216" duration="677000" />
       <workItem from="1771043403039" duration="11495000" />
       <workItem from="1771058125625" duration="1323000" />
-      <workItem from="1771821915146" duration="1353000" />
+      <workItem from="1771821915146" duration="7606000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -356,7 +361,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771059263132</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="Feat: Validation check player in team">
+      <option name="closed" value="true" />
+      <created>1771823550802</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1771823550802</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -376,7 +389,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="service role and policies" />
     <MESSAGE value="fix redirection" />
     <MESSAGE value="fix serialize error" />
     <MESSAGE value="invite user and set password" />
@@ -401,7 +413,8 @@
     <MESSAGE value="Fix robloxUserId to string" />
     <MESSAGE value="fix typing" />
     <MESSAGE value="fix update player repo" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix update player repo" />
+    <MESSAGE value="Feat: Validation check player in team" />
+    <option name="LAST_COMMIT_MESSAGE" value="Feat: Validation check player in team" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

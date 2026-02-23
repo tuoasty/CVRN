@@ -16,7 +16,7 @@ export interface RobloxUser {
 export interface RobloxUserWithAvatar {
     requestedUsername: string;
     hasVerifiedBadge: boolean;
-    id: bigint;
+    id: string;
     name: string;
     displayName: string;
     avatarUrl: string;

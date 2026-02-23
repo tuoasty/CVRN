@@ -41,19 +41,19 @@ export async function findAllTeamPlayers(
         .eq("team_id", p.teamId)
 }
 
-export async function updatePlayer(
-    supabase: DBClient,
-    p: UpdatePlayerInput
-) {
+export async function updatePlayer(supabase: DBClient, p: UpdatePlayerInput) {
+    const updates: Record<string, unknown> = {}
+
+    if (p.username !== undefined) updates.username = p.username
+    if (p.displayName !== undefined) updates.display_name = p.displayName
+    if (p.avatarUrl !== undefined) updates.avatar_url = p.avatarUrl
+    if (p.lastSyncedAt !== undefined) updates.last_synced_at = p.lastSyncedAt
+    if (p.teamId !== undefined) updates.team_id = p.teamId
+
     return supabase
         .from("players")
-        .update({
-            username: p.username,
-            display_name: p.displayName,
-            avatar_url: p.avatarUrl,
-            last_synced_at: p.lastSyncedAt,
-        })
+        .update(updates)
         .eq("roblox_user_id", p.robloxUserId)
         .select()
-        .single();
+        .single()
 }
