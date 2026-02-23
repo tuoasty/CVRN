@@ -1,12 +1,13 @@
 import {randomUUID} from "node:crypto";
-import {BUCKETS, STORAGE_PATHS} from "@/server/storage/storage.paths";
+import {BUCKETS, extractStoragePath, STORAGE_PATHS} from "@/server/storage/storage.paths";
 import {getFileExtension} from "@/server/utils/fileExtension";
 import {deleteFile, uploadFile} from "@/server/storage/storage.service";
 import {Err, Ok, Result} from "@/shared/types/result";
-import {findAllTeams, findTeamByNameAndRegion, insertTeam} from "@/server/db/teams.repo";
+import {deleteTeamById, findAllTeams, findTeamById, findTeamByNameAndRegion, insertTeam} from "@/server/db/teams.repo";
 import {SerializableError, serializeError} from "@/server/utils/serializeableError";
 import {DBClient, Team} from "@/shared/types/db";
-import {GetTeamByNameRegion} from "@/server/dto/team.dto";
+import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
+import {removeAllPlayersFromTeam} from "@/server/db/players.repo";
 
 export async function createTeam(supabase:DBClient, p:{
     name:string;
@@ -109,6 +110,39 @@ export async function getTeamByNameAndRegion(supabase: DBClient, p:GetTeamByName
 
         return Ok(data)
     } catch (error){
+        return Err(serializeError(error))
+    }
+}
+
+export async function deleteTeam(supabase: DBClient, p:TeamIdInput): Promise<Result<void>> {
+    try {
+        const { data: team } = await findTeamById(supabase, p.teamId)
+        if (!team) {
+            return Err({
+                name: "TeamNotFound",
+                message: "Team does not exist"
+            })
+        }
+
+        const { error: playersError } = await removeAllPlayersFromTeam(supabase, p.teamId)
+        if (playersError) {
+            return Err(serializeError(playersError))
+        }
+
+        const { error } = await deleteTeamById(supabase, p.teamId)
+        if (error) {
+            return Err(serializeError(error))
+        }
+
+        if (team.logo_url) {
+            await deleteFile(supabase, {
+                bucket: BUCKETS.PUBLIC,
+                path: extractStoragePath(team.logo_url, BUCKETS.PUBLIC)
+            })
+        }
+
+        return Ok(undefined)
+    } catch (error) {
         return Err(serializeError(error))
     }
 }

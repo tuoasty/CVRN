@@ -1,14 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import Image from "next/image";
 
 import { Player, Team } from "@/shared/types/db";
 import { getTeamPlayersAction } from "@/app/actions/player.actions";
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
-import {getTeamByNameAndRegionAction} from "@/app/actions/team.actions";
+import {deleteTeamAction, getTeamByNameAndRegionAction} from "@/app/actions/team.actions";
 import PlayerCard from "@/app/features/players/PlayerCard";
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/app/components/ui/alert-dialog";
+import {Button} from "@/app/components/ui/button";
 
 export default function TeamDetailPage() {
     const params = useParams();
@@ -26,6 +39,8 @@ export default function TeamDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         if (!region || !teamName) return;
@@ -80,90 +95,85 @@ export default function TeamDetailPage() {
         loadTeamData();
     };
 
+    const handleDeleteTeam = async () => {
+        if (!team?.id) return;
+        const result = await deleteTeamAction({ teamId: team.id });
+        if (!result.ok) {
+            setError(result.error.message);
+            return;
+        }
+        router.push("/admin/dashboard");
+    //     @TODO Change the push to correct admin teams page
+    };
+
     if (loading) {
-        return <div>Loading team...</div>;
+        return <div className="p-4 text-muted-foreground">Loading team...</div>;
     }
 
     if (error) {
-        return <div style={{ color: "red" }}>{error}</div>;
+        return <div className="p-4 text-destructive">{error}</div>;
     }
 
     if (!team) {
-        return <div>Team not found</div>;
+        return <div className="p-4 text-muted-foreground">Team not found</div>;
     }
 
     return (
-        <div>
-            <div style={{ marginBottom: "0.5rem" }}>
-        <span style={{ color: "#666", fontSize: "0.9rem" }}>
-          {team.region}
-        </span>
-            </div>
+        <div className="p-4 space-y-4">
+            <span className="text-sm text-muted-foreground">{team.region}</span>
 
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "1rem",
-                    marginBottom: "1rem",
-                }}
-            >
+            <div className="flex items-center gap-4">
                 {team.logo_url && (
                     <Image
                         src={team.logo_url}
                         alt={team.name || ""}
                         width={150}
                         height={150}
-                        style={{ objectFit: "contain" }}
+                        className="object-contain"
                     />
                 )}
-
                 <div>
-                    <h2 style={{ margin: 0 }}>{team.name}</h2>
-
-                    <p
-                        style={{
-                            margin: "0.25rem 0 0 0",
-                            color: "#666",
-                        }}
-                    >
-                        {players.length}{" "}
-                        {players.length === 1 ? "player" : "players"}
+                    <h2 className="text-2xl font-bold">{team.name}</h2>
+                    <p className="text-sm text-muted-foreground">
+                        {players.length} {players.length === 1 ? "player" : "players"}
                     </p>
                 </div>
             </div>
 
-            <button onClick={() => setShowAddForm(!showAddForm)}>
-                {showAddForm ? "Cancel" : "Add Player"}
-            </button>
+            <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowAddForm(!showAddForm)}>
+                    {showAddForm ? "Cancel" : "Add Player"}
+                </Button>
+
+                <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive">Delete Team</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete {team.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteTeam}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
 
             {showAddForm && (
-                <AddPlayerToTeam
-                    teamId={team.id}
-                    onSuccess={handlePlayerAdded}
-                />
+                <AddPlayerToTeam teamId={team.id} onSuccess={handlePlayerAdded} />
             )}
 
             {players.length === 0 ? (
-                <div style={{ marginTop: "1rem" }}>
-                    No players in this team yet
-                </div>
+                <p className="text-muted-foreground">No players in this team yet</p>
             ) : (
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                            "repeat(auto-fill, minmax(150px, 1fr))",
-                        gap: "1rem",
-                        marginTop: "1rem",
-                    }}
-                >
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
                     {players.map((player) => (
-                        <PlayerCard
-                            key={player.id}
-                            player={player}
-                            onRemoved={loadTeamData}
-                        />
+                        <PlayerCard key={player.id} player={player} onRemoved={loadTeamData} />
                     ))}
                 </div>
             )}

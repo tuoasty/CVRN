@@ -8,7 +8,7 @@ export async function uploadFile(supabase: DBClient, p: {
     file:File | Blob;
     contentType?:string;
     upsert?:boolean;
-}): Promise<Result<{ url:string;path:string }, SerializableError>> {
+}): Promise<Result<{ url:string;path:string }>> {
     try {
         const {data, error} = await supabase.storage.from(p.bucket).upload(p.path, p.file, {
             contentType:p.contentType,
@@ -38,7 +38,7 @@ export async function uploadFile(supabase: DBClient, p: {
 export async function deleteFile(supabase: DBClient, p:{
     bucket:string;
     path:string
-}): Promise<Result<null, SerializableError>>{
+}): Promise<Result<null>>{
     try {
         const {error} = await supabase.storage.from(p.bucket).remove([p.path])
         if(error) {
@@ -54,7 +54,7 @@ export async function createSignedUrl(supabase: DBClient, p: {
     bucket:string;
     path:string;
     expiresIn:number;
-}): Promise<Result<string, SerializableError>> {
+}): Promise<Result<string>> {
     try {
         const { data, error } = await supabase.storage
             .from(p.bucket)

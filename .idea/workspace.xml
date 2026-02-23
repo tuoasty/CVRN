@@ -4,16 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat: Validation check player in team">
-      <change afterPath="$PROJECT_DIR$/app/features/players/PlayerCard.tsx" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat : remove player">
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/actions/player.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/player.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/players/AddPlayerToTeam.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/players/AddPlayerToTeam.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/components/ui/button.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/players/PlayerCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/players/PlayerCard.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components.json" beforeDir="false" afterPath="$PROJECT_DIR$/components.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/dto/player.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/player.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/dto/team.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/team.dto.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/types/roblox.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/roblox.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/storage/storage.paths.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/storage/storage.paths.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/storage/storage.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/storage/storage.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,25 +61,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
-    &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/KEVIN/0SLC/Random/cvrn/app/admin/teams/[region]/[teamName]&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;settings.typescriptcompiler&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "js.debugger.nextJs.config.created.client": "true",
+    "js.debugger.nextJs.config.created.server": "true",
+    "last_opened_file_path": "D:/KEVIN/0SLC/Random/cvrn/app/admin/teams/[region]/[teamName]",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.standard": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.standard": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "Errors",
+    "ts.external.directory.path": "D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin\teams\[region]\[teamName]" />
@@ -127,7 +136,8 @@
       <workItem from="1770966806216" duration="677000" />
       <workItem from="1771043403039" duration="11495000" />
       <workItem from="1771058125625" duration="1323000" />
-      <workItem from="1771821915146" duration="7606000" />
+      <workItem from="1771821915146" duration="9799000" />
+      <workItem from="1771839344930" duration="990000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -369,7 +379,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771823550802</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="Feat : remove player">
+      <option name="closed" value="true" />
+      <created>1771837214229</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1771837214229</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -389,7 +407,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="fix redirection" />
     <MESSAGE value="fix serialize error" />
     <MESSAGE value="invite user and set password" />
     <MESSAGE value="Fix proxy redirect" />
@@ -414,7 +431,8 @@
     <MESSAGE value="fix typing" />
     <MESSAGE value="fix update player repo" />
     <MESSAGE value="Feat: Validation check player in team" />
-    <option name="LAST_COMMIT_MESSAGE" value="Feat: Validation check player in team" />
+    <MESSAGE value="Feat : remove player" />
+    <option name="LAST_COMMIT_MESSAGE" value="Feat : remove player" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
