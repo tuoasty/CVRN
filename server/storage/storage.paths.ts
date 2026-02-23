@@ -7,3 +7,9 @@ export const STORAGE_PATHS = {
         return `teams/${teamId}.${ext}`
     }
 }
+
+export function extractStoragePath(url: string, bucket: string): string {
+    const marker = `/object/public/${bucket}/`
+    const idx = url.indexOf(marker)
+    return idx !== -1 ? url.slice(idx + marker.length) : url
+}

@@ -4,6 +4,8 @@ import Image from "next/image"
 import { useState } from "react"
 import { Player } from "@/shared/types/db"
 import { removePlayerFromTeamAction } from "@/app/actions/player.actions"
+import { Card, CardContent } from "@/app/components/ui/card"
+import { Button } from "@/app/components/ui/button"
 
 interface Props {
     player: Player
@@ -32,39 +34,36 @@ export default function PlayerCard({ player, onRemoved }: Props) {
     }
 
     return (
-        <div style={{
-            border: "1px solid #ccc",
-            padding: "1rem",
-            borderRadius: "8px",
-            textAlign: "center",
-        }}>
-            {player.avatar_url && (
-                <Image
-                    src={player.avatar_url}
-                    alt={player.username || ""}
-                    width={100}
-                    height={100}
-                    style={{ objectFit: "contain" }}
-                />
-            )}
+        <Card className="text-center w-fit">
+            <CardContent className="flex flex-col items-center gap-2 p-4">
+                {player.avatar_url && (
+                    <Image
+                        src={player.avatar_url}
+                        alt={player.username || ""}
+                        width={100}
+                        height={100}
+                        className="object-contain"
+                    />
+                )}
 
-            <h4 style={{ margin: "0.5rem 0 0.25rem 0" }}>
-                {player.display_name || player.username}
-            </h4>
+                <div>
+                    <h4 className="font-medium text-sm">
+                        {player.display_name || player.username}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">@{player.username}</p>
+                </div>
 
-            <p style={{ fontSize: "0.9rem", color: "#666", margin: 0 }}>
-                @{player.username}
-            </p>
+                {error && <p className="text-xs text-destructive">{error}</p>}
 
-            {error && <p style={{ color: "red", fontSize: "0.8rem" }}>{error}</p>}
-
-            <button
-                onClick={handleRemove}
-                disabled={removing}
-                style={{ marginTop: "0.5rem" }}
-            >
-                {removing ? "Removing..." : "Remove"}
-            </button>
-        </div>
+                <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleRemove}
+                    disabled={removing}
+                >
+                    {removing ? "Removing..." : "Remove"}
+                </Button>
+            </CardContent>
+        </Card>
     )
 }

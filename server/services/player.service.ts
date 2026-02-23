@@ -2,10 +2,11 @@ import {getRobloxAvatarsById, getRobloxUserByName} from "@/server/roblox/users";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {RobloxUserWithAvatar} from "@/shared/types/roblox";
 import {DBClient, Player} from "@/shared/types/db";
-import {GetPlayerByRoblox, GetTeamPlayers, SavePlayerInput} from "@/server/dto/player.dto";
+import {RobloxUserIdInput, SavePlayerInput} from "@/server/dto/player.dto";
 import {serializeError} from "@/server/utils/serializeableError";
 import {findTeamById} from "@/server/db/teams.repo";
 import {findAllTeamPlayers, findPlayerByRobloxId, updatePlayer, upsertPlayer} from "@/server/db/players.repo";
+import {TeamIdInput} from "@/server/dto/team.dto";
 
 const SYNC_INTERVAL = 1000 * 60 * 60;
 
@@ -58,7 +59,7 @@ export async function savePlayer(
                 })
             }
 
-            const {data: existingPlayer} = await findPlayerByRobloxId(supabase, {robloxUserId: p.robloxUserId})
+            const {data: existingPlayer} = await findPlayerByRobloxId(supabase, p.robloxUserId)
             console.log(existingPlayer)
             if(existingPlayer?.team_id){
                 if(existingPlayer?.team_id === p.teamId){
@@ -73,17 +74,6 @@ export async function savePlayer(
                     })
                 }
             }
-            // if(existingPlayer?.team_id && existingPlayer?.team_id !== p.teamId){
-            //     return Err({
-            //         name:"PlayerAlreadyInTeam",
-            //         message:"Player is already a member of another team"
-            //     })
-            // } else if(existingPlayer?.team_id === p.teamId){
-            //     return Err({
-            //         name:"PlayerAlreadyInTeam",
-            //         message:"Player is already a member of this team"
-            //     })
-            // }
         }
 
         const {data, error} = await upsertPlayer(supabase, p)
@@ -104,9 +94,9 @@ export async function savePlayer(
     }
 }
 
-export async function removePlayerFromTeam(supabase:DBClient, p:GetPlayerByRoblox) : Promise<Result<Player>>{
+export async function removePlayerFromTeam(supabase:DBClient, p:RobloxUserIdInput) : Promise<Result<Player>>{
     try {
-        const { data: existingPlayer } = await findPlayerByRobloxId(supabase, { robloxUserId: p.robloxUserId})
+        const { data: existingPlayer } = await findPlayerByRobloxId(supabase, p.robloxUserId)
         if (!existingPlayer) {
             return Err({
                 name:"PlayerNotFound",
@@ -145,10 +135,10 @@ export async function removePlayerFromTeam(supabase:DBClient, p:GetPlayerByRoblo
 
 export async function getTeamPlayers(
     supabase: DBClient,
-    p:GetTeamPlayers
+    p:TeamIdInput
 ) : Promise<Result<Player[]>>{
     try {
-        const { data, error } = await findAllTeamPlayers(supabase, p)
+        const { data, error } = await findAllTeamPlayers(supabase, p.teamId)
         if(error){
             return Err(serializeError(error))
         }

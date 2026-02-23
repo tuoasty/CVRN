@@ -1,5 +1,5 @@
 import {DBClient} from "@/shared/types/db";
-import {GetPlayerByRoblox, GetTeamPlayers, SavePlayerInput, UpdatePlayerInput} from "@/server/dto/player.dto";
+import {SavePlayerInput, UpdatePlayerInput} from "@/server/dto/player.dto";
 
 export async function upsertPlayer(
     supabase:DBClient,
@@ -25,20 +25,25 @@ export async function upsertPlayer(
 
 export async function findPlayerByRobloxId(
     supabase:DBClient,
-    p:GetPlayerByRoblox
+    robloxUserId:string
 ) {
     return supabase.from("players")
         .select("*")
-        .eq("roblox_user_id", p.robloxUserId).maybeSingle()
+        .eq("roblox_user_id", robloxUserId).maybeSingle()
 }
 
 export async function findAllTeamPlayers(
     supabase:DBClient,
-    p:GetTeamPlayers
+    teamId:string
 ) {
     return supabase.from("players")
         .select("*")
-        .eq("team_id", p.teamId)
+        .eq("team_id", teamId)
+}
+
+export async function removeAllPlayersFromTeam(supabase: DBClient, teamId:string){
+    return supabase.from("players")
+        .update({team_id: null}).eq("team_id", teamId)
 }
 
 export async function updatePlayer(supabase: DBClient, p: UpdatePlayerInput) {
