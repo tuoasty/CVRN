@@ -3,32 +3,44 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { getAllTeamsAction } from "@/app/actions/team.actions";
-import { Team } from "@/shared/types/db";
-import {useRouter} from "next/navigation";
+import { getAllRegionsAction } from "@/app/actions/region.actions";
+import { Team, Region } from "@/shared/types/db";
+import { useRouter } from "next/navigation";
+import { Card, CardContent } from "@/app/components/ui/card";
 
 export default function TeamsList() {
     const [teams, setTeams] = useState<Team[]>([]);
+    const [regions, setRegions] = useState<Region[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const router = useRouter()
+    const router = useRouter();
 
     useEffect(() => {
-        loadTeams();
+        loadData();
     }, []);
 
-    const loadTeams = async () => {
+    const loadData = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const result = await getAllTeamsAction();
+            const [teamsResult, regionsResult] = await Promise.all([
+                getAllTeamsAction(),
+                getAllRegionsAction(),
+            ]);
 
-            if (!result.ok) {
-                setError(result.error.message);
+            if (!teamsResult.ok) {
+                setError(teamsResult.error.message);
                 return;
             }
 
-            setTeams(result.value);
+            if (!regionsResult.ok) {
+                setError(regionsResult.error.message);
+                return;
+            }
+
+            setTeams(teamsResult.value);
+            setRegions(regionsResult.value);
         } catch (error) {
             console.log(error);
             setError("Failed to load teams");
@@ -37,57 +49,58 @@ export default function TeamsList() {
         }
     };
 
-    const handleTeamClick= (team: Team) => {
-        const region = (team.region || "Unknown").toLowerCase();
+    const getRegionCode = (regionId: string | null): string => {
+        if (!regionId) return "unknown";
+        const region = regions.find((r) => r.id === regionId);
+        return region?.code.toLowerCase() || "unknown";
+    };
+
+    const handleTeamClick = (team: Team) => {
+        if (!team.region_id) return;
+        const regionCode = getRegionCode(team.region_id);
         const teamName = team.name.toLowerCase();
-        router.push(`/admin/teams/${encodeURIComponent(region)}/${encodeURIComponent(teamName)}`)
-    }
+        router.push(`/admin/teams/${encodeURIComponent(regionCode)}/${encodeURIComponent(teamName)}`);
+    };
 
     if (loading) {
-        return <div>Loading teams...</div>;
+        return <div className="p-4 text-muted-foreground">Loading teams...</div>;
     }
 
     if (error) {
-        return <div style={{ color: "red" }}>{error}</div>;
+        return <div className="p-4 text-destructive">{error}</div>;
     }
 
     if (teams.length === 0) {
-        return <div>No teams found</div>;
+        return <div className="p-4 text-muted-foreground">No teams found</div>;
     }
 
     return (
-        <div>
-            <h2>Teams</h2>
+        <div className="p-4 space-y-4">
+            <h2 className="text-2xl font-bold">Teams</h2>
 
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                    gap: "1rem",
-                }}
-            >
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
                 {teams.map((team) => (
-                    <div
+                    <Card
                         key={team.id}
-                        style={{
-                            border: "1px solid #ccc",
-                            padding: "1rem",
-                            borderRadius: "8px",
-                            textAlign: "center",
-                        }}
+                        className={`${team.region_id ? 'cursor-pointer hover:border-primary' : 'opacity-50'} transition-colors`}
                         onClick={() => handleTeamClick(team)}
                     >
-                        {team.logo_url && (
-                            <Image
-                                src={team.logo_url}
-                                alt={team.name || ""}
-                                width={150}
-                                height={150}
-                                style={{ objectFit: "contain" }}
-                            />
-                        )}
-                        <h3>{team.name}</h3>
-                    </div>
+                        <CardContent className="p-4 text-center">
+                            {team.logo_url && (
+                                <Image
+                                    src={team.logo_url}
+                                    alt={team.name || ""}
+                                    width={150}
+                                    height={150}
+                                    className="object-contain mx-auto"
+                                />
+                            )}
+                            <h3 className="font-semibold mt-2">{team.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                                {team.region_id ? getRegionCode(team.region_id).toUpperCase() : "No Region"}
+                            </p>
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
         </div>

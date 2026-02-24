@@ -1,6 +1,6 @@
 export interface GetTeamByNameRegion {
-    name:string,
-    region:string
+    name: string;
+    regionId: string;
 }
 
 export interface TeamIdInput {

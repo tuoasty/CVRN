@@ -4,12 +4,12 @@ import {createTeam, deleteTeam, getAllTeams, getTeamByNameAndRegion} from "@/ser
 import {createServerSupabase} from "@/server/supabase/server";
 import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
 
-export async function createTeamAction(name:string, file:File, region:string){
+export async function createTeamAction(name:string, file:File, regionId:string){
     const supabase = await createServerSupabase();
     return createTeam(supabase, {
         name,
         logoFile:file,
-        region: region
+        regionId: regionId
     })
 }
 

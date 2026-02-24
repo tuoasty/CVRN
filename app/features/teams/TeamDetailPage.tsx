@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {useParams, useRouter} from "next/navigation";
 import Image from "next/image";
 
-import { Player, Team } from "@/shared/types/db";
+import {Player, Region, Team} from "@/shared/types/db";
 import { getTeamPlayersAction } from "@/app/actions/player.actions";
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
 import {deleteTeamAction, getTeamByNameAndRegionAction} from "@/app/actions/team.actions";
@@ -22,6 +22,7 @@ import {
     AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
 import {Button} from "@/app/components/ui/button";
+import {getRegionByCodeAction} from "@/app/actions/region.actions";
 
 export default function TeamDetailPage() {
     const params = useParams();
@@ -40,6 +41,7 @@ export default function TeamDetailPage() {
     const [error, setError] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [regionData, setRegionData] = useState<Region | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -53,8 +55,18 @@ export default function TeamDetailPage() {
         setError(null);
 
         try {
+            const regionResult = await getRegionByCodeAction(region);
+
+            if (!regionResult.ok) {
+                setError(regionResult.error.message);
+                return;
+            }
+
+            const foundRegion = regionResult.value;
+            setRegionData(foundRegion);
+
             const teamResult = await getTeamByNameAndRegionAction({
-                region,
+                regionId: foundRegion.id,
                 name: teamName,
             });
 
@@ -120,7 +132,9 @@ export default function TeamDetailPage() {
 
     return (
         <div className="p-4 space-y-4">
-            <span className="text-sm text-muted-foreground">{team.region}</span>
+            <span className="text-sm text-muted-foreground">
+                {regionData ? `${regionData.code} - ${regionData.name}` : team.region_id}
+            </span>
 
             <div className="flex items-center gap-4">
                 {team.logo_url && (
