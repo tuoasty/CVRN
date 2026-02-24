@@ -10,4 +10,7 @@ export type Team =
 export type Player =
     Database["public"]["Tables"]["players"]["Row"];
 
+export type Region =
+    Database["public"]["Tables"]["regions"]["Row"];
+
 export type DBClient = SupabaseClient<Database>;

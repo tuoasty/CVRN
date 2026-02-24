@@ -4,7 +4,7 @@ import {getFileExtension} from "@/server/utils/fileExtension";
 import {deleteFile, uploadFile} from "@/server/storage/storage.service";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {deleteTeamById, findAllTeams, findTeamById, findTeamByNameAndRegion, insertTeam} from "@/server/db/teams.repo";
-import {SerializableError, serializeError} from "@/server/utils/serializeableError";
+import {serializeError} from "@/server/utils/serializeableError";
 import {DBClient, Team} from "@/shared/types/db";
 import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
 import {removeAllPlayersFromTeam} from "@/server/db/players.repo";
@@ -12,8 +12,8 @@ import {removeAllPlayersFromTeam} from "@/server/db/players.repo";
 export async function createTeam(supabase:DBClient, p:{
     name:string;
     logoFile:File;
-    region:string;
-}):Promise<Result<Team, SerializableError>>{
+    regionId:string;
+}):Promise<Result<Team>>{
     let uploadedPath: string | null = null
     let success = false;
 
@@ -42,7 +42,7 @@ export async function createTeam(supabase:DBClient, p:{
             id: teamId,
             name: p.name,
             logoUrl: uploadRes.value.url,
-            region: p.region
+            regionId: p.regionId
         })
         if(error || !data){
             await deleteFile(supabase, {

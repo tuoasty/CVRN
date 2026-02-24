@@ -10,20 +10,20 @@ export async function findTeamById(supabase: DBClient, id:string){
 }
 
 export async function findTeamByNameAndRegion(supabase: DBClient, p: GetTeamByNameRegion){
-    return supabase.from("teams").select("*").ilike("name", p.name).ilike("region", p.region).single()
+    return supabase.from("teams").select("*").ilike("name", p.name).eq("region_id", p.regionId).single()
 }
 
 export async function insertTeam(supabase: DBClient, p: {
     id?: string;
     name: string;
     logoUrl: string;
-    region: string;
+    regionId: string;
 }) {
     return supabase.from("teams").insert({
         ...(p.id && { id: p.id }),
         name: p.name,
         logo_url: p.logoUrl,
-        region: p.region
+        region_id: p.regionId
     }).select().single()
 }
 
