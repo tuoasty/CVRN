@@ -8,13 +8,13 @@ import {
     findAllTeams, findAllTeamsWithRegions,
     findTeamById,
     findTeamByNameAndRegion,
-    findTeamBySlugAndRegion,
+    findTeamBySlugAndRegion, findTeamBySlugAndRegionWithRegion,
     insertTeam
 } from "@/server/db/teams.repo";
 import {serializeError} from "@/server/utils/serializeableError";
 import {DBClient, Team} from "@/shared/types/db";
-import {GetTeamByNameRegion, TeamIdInput, TeamWithRegion} from "@/server/dto/team.dto";
-import {removeAllPlayersFromTeam} from "@/server/db/players.repo";
+import {GetTeamByNameRegion, TeamIdInput, TeamWithRegion, TeamWithRegionAndPlayers} from "@/server/dto/team.dto";
+import {findAllTeamPlayers, removeAllPlayersFromTeam} from "@/server/db/players.repo";
 
 function generateSlug(name: string): string {
     return name
@@ -203,6 +203,39 @@ export async function getTeamBySlugAndRegion(supabase: DBClient, p: {
 
         return Ok(data)
     } catch (error){
+        return Err(serializeError(error))
+    }
+}
+
+export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
+    slug: string;
+    regionId: string;
+}): Promise<Result<TeamWithRegionAndPlayers>> {
+    try {
+        const { data: teamData, error: teamError } = await findTeamBySlugAndRegionWithRegion(supabase, p)
+
+        if (teamError) {
+            return Err(serializeError(teamError))
+        }
+
+        if (!teamData) {
+            return Err({
+                message: "Team not found",
+                name: "NotFoundError"
+            })
+        }
+
+        const { data: playersData, error: playersError } = await findAllTeamPlayers(supabase, teamData.id)
+
+        if (playersError) {
+            return Err(serializeError(playersError))
+        }
+
+        return Ok({
+            team: teamData as TeamWithRegion,
+            players: playersData || []
+        })
+    } catch (error) {
         return Err(serializeError(error))
     }
 }

@@ -60,3 +60,21 @@ export async function findTeamBySlugAndRegion(supabase: DBClient, p: {
 }) {
     return supabase.from("teams").select("*").eq("slug", p.slug).eq("region_id", p.regionId).single()
 }
+
+export async function findTeamBySlugAndRegionWithRegion(supabase: DBClient, p: {
+    slug: string;
+    regionId: string;
+}) {
+    return supabase
+        .from("teams")
+        .select(`
+            *,
+            regions:region_id (
+                code,
+                name
+            )
+        `)
+        .eq("slug", p.slug)
+        .eq("region_id", p.regionId)
+        .single()
+}

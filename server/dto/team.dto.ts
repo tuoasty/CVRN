@@ -1,3 +1,5 @@
+import {Player} from "@/shared/types/db";
+
 export interface GetTeamByNameRegion {
     name: string;
     regionId: string;
@@ -18,4 +20,9 @@ export interface TeamWithRegion {
         code: string;
         name: string;
     } | null;
+}
+
+export interface TeamWithRegionAndPlayers {
+    team: TeamWithRegion;
+    players: Player[];
 }

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {useParams, useRouter} from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
-import {Player, Region, Team} from "@/shared/types/db";
-import { getTeamPlayersAction } from "@/app/actions/player.actions";
+import { Player } from "@/shared/types/db";
+import { TeamWithRegion } from "@/server/dto/team.dto";
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
-import {deleteTeamAction, getTeamBySlugAndRegionAction} from "@/app/actions/team.actions";
+import { deleteTeamAction, getTeamWithRegionAndPlayersAction } from "@/app/actions/team.actions";
 import PlayerCard from "@/app/features/players/PlayerCard";
 
 import {
@@ -21,8 +21,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
-import {Button} from "@/app/components/ui/button";
-import {getRegionByCodeAction} from "@/app/actions/region.actions";
+import { Button } from "@/app/components/ui/button";
 
 export default function TeamDetailPage() {
     const params = useParams();
@@ -35,13 +34,12 @@ export default function TeamDetailPage() {
         String(params.teamName || "")
     ).toLowerCase();
 
-    const [team, setTeam] = useState<Team | null>(null);
+    const [team, setTeam] = useState<TeamWithRegion | null>(null);
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [regionData, setRegionData] = useState<Region | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -55,45 +53,18 @@ export default function TeamDetailPage() {
         setError(null);
 
         try {
-            const regionResult = await getRegionByCodeAction(region);
-
-            if (!regionResult.ok) {
-                setError(regionResult.error.message);
-                return;
-            }
-
-            const foundRegion = regionResult.value;
-            setRegionData(foundRegion);
-
-            const teamResult = await getTeamBySlugAndRegionAction({
-                regionId: foundRegion.id,
+            const result = await getTeamWithRegionAndPlayersAction({
                 slug: teamName,
+                regionCode: region
             });
 
-            if (!teamResult.ok) {
-                setError(teamResult.error.message);
+            if (!result.ok) {
+                setError(result.error.message);
                 return;
             }
 
-            const foundTeam = teamResult.value;
-
-            if (!foundTeam) {
-                setError("Team not found");
-                return;
-            }
-
-            setTeam(foundTeam);
-
-            const playersResult = await getTeamPlayersAction({
-                teamId: foundTeam.id,
-            });
-
-            if (!playersResult.ok) {
-                setError(playersResult.error.message);
-                return;
-            }
-
-            setPlayers(playersResult.value);
+            setTeam(result.value.team);
+            setPlayers(result.value.players);
         } catch (err) {
             console.error(err);
             setError("Failed to load team data");
@@ -115,7 +86,6 @@ export default function TeamDetailPage() {
             return;
         }
         router.push("/admin/dashboard");
-    //     @TODO Change the push to correct admin teams page
     };
 
     if (loading) {
@@ -133,18 +103,21 @@ export default function TeamDetailPage() {
     return (
         <div className="p-4 space-y-4">
             <span className="text-sm text-muted-foreground">
-                {regionData ? `${regionData.code} - ${regionData.name}` : team.region_id}
+                {team.regions ? `${team.regions.code.toUpperCase()} - ${team.regions.name}` : "No Region"}
             </span>
 
             <div className="flex items-center gap-4">
                 {team.logo_url && (
-                    <Image
-                        src={team.logo_url}
-                        alt={team.name || ""}
-                        width={150}
-                        height={150}
-                        className="object-contain"
-                    />
+                    <div className="relative w-[150px] h-[150px]">
+                        <Image
+                            src={team.logo_url}
+                            alt={team.name || ""}
+                            fill
+                            sizes="150px"
+                            className="object-contain"
+                            priority
+                        />
+                    </div>
                 )}
                 <div>
                     <h2 className="text-2xl font-bold">{team.name}</h2>
