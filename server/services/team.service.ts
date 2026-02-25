@@ -5,7 +5,7 @@ import {deleteFile, uploadFile} from "@/server/storage/storage.service";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {
     deleteTeamById,
-    findAllTeams,
+    findAllTeams, findAllTeamsWithRegions,
     findTeamById,
     findTeamByNameAndRegion,
     findTeamBySlugAndRegion,
@@ -13,7 +13,7 @@ import {
 } from "@/server/db/teams.repo";
 import {serializeError} from "@/server/utils/serializeableError";
 import {DBClient, Team} from "@/shared/types/db";
-import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
+import {GetTeamByNameRegion, TeamIdInput, TeamWithRegion} from "@/server/dto/team.dto";
 import {removeAllPlayersFromTeam} from "@/server/db/players.repo";
 
 function generateSlug(name: string): string {
@@ -107,6 +107,26 @@ export async function getAllTeams(supabase: DBClient):Promise<Result<Team[]>> {
 
         return Ok(data)
     } catch (error){
+        return Err(serializeError(error))
+    }
+}
+
+export async function getAllTeamsWithRegions(supabase: DBClient): Promise<Result<TeamWithRegion[]>> {
+    try {
+        const { data, error } = await findAllTeamsWithRegions(supabase)
+        if (error) {
+            return Err(serializeError(error))
+        }
+
+        if (!data) {
+            return Err({
+                message: "Failed to fetch teams with regions",
+                name: "FetchError"
+            })
+        }
+
+        return Ok(data as TeamWithRegion[])
+    } catch (error) {
         return Err(serializeError(error))
     }
 }

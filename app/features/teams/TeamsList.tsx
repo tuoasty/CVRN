@@ -2,15 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { getAllTeamsAction } from "@/app/actions/team.actions";
-import { getAllRegionsAction } from "@/app/actions/region.actions";
-import { Team, Region } from "@/shared/types/db";
+import { getAllTeamsWithRegionsAction } from "@/app/actions/team.actions";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/app/components/ui/card";
+import { TeamWithRegion } from "@/server/dto/team.dto";
 
 export default function TeamsList() {
-    const [teams, setTeams] = useState<Team[]>([]);
-    const [regions, setRegions] = useState<Region[]>([]);
+    const [teams, setTeams] = useState<TeamWithRegion[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
@@ -24,23 +22,14 @@ export default function TeamsList() {
         setError(null);
 
         try {
-            const [teamsResult, regionsResult] = await Promise.all([
-                getAllTeamsAction(),
-                getAllRegionsAction(),
-            ]);
+            const teamsResult = await getAllTeamsWithRegionsAction();
 
             if (!teamsResult.ok) {
                 setError(teamsResult.error.message);
                 return;
             }
 
-            if (!regionsResult.ok) {
-                setError(regionsResult.error.message);
-                return;
-            }
-
             setTeams(teamsResult.value);
-            setRegions(regionsResult.value);
         } catch (error) {
             console.log(error);
             setError("Failed to load teams");
@@ -49,15 +38,9 @@ export default function TeamsList() {
         }
     };
 
-    const getRegionCode = (regionId: string | null): string => {
-        if (!regionId) return "unknown";
-        const region = regions.find((r) => r.id === regionId);
-        return region?.code.toLowerCase() || "unknown";
-    };
-
-    const handleTeamClick = (team: Team) => {
-        if (!team.region_id) return;
-        const regionCode = getRegionCode(team.region_id);
+    const handleTeamClick = (team: TeamWithRegion) => {
+        if (!team.regions || !team.slug) return;
+        const regionCode = team.regions.code.toLowerCase();
         router.push(`/admin/teams/${regionCode}/${team.slug}`);
     };
 
@@ -78,10 +61,10 @@ export default function TeamsList() {
             <h2 className="text-2xl font-bold">Teams</h2>
 
             <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-                {teams.map((team) => (
+                {teams.map((team, index) => (
                     <Card
                         key={team.id}
-                        className={`${team.region_id ? 'cursor-pointer hover:border-primary' : 'opacity-50'} transition-colors`}
+                        className={`${team.regions ? 'cursor-pointer hover:border-primary' : 'opacity-50'} transition-colors`}
                         onClick={() => handleTeamClick(team)}
                     >
                         <CardContent className="p-4 text-center">
@@ -92,14 +75,14 @@ export default function TeamsList() {
                                         alt={team.name || ""}
                                         fill
                                         sizes="150px"
-                                        priority
                                         className="object-contain"
+                                        priority={index < 6}
                                     />
                                 </div>
                             )}
                             <h3 className="font-semibold mt-2">{team.name}</h3>
                             <p className="text-sm text-muted-foreground">
-                                {team.region_id ? getRegionCode(team.region_id).toUpperCase() : "No Region"}
+                                {team.regions ? team.regions.code.toUpperCase() : "No Region"}
                             </p>
                         </CardContent>
                     </Card>

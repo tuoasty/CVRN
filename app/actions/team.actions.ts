@@ -3,7 +3,7 @@
 import {
     createTeam,
     deleteTeam,
-    getAllTeams,
+    getAllTeams, getAllTeamsWithRegions,
     getTeamByNameAndRegion,
     getTeamBySlugAndRegion
 } from "@/server/services/team.service";
@@ -23,6 +23,11 @@ export async function createTeamAction(name:string, file:File, regionId:string){
 export async function getAllTeamsAction(){
     const supabase = await createServerSupabase();
     return getAllTeams(supabase)
+}
+
+export async function getAllTeamsWithRegionsAction() {
+    const supabase = await createServerSupabase();
+    return getAllTeamsWithRegions(supabase)
 }
 
 export async function getTeamByNameAndRegionAction(input: GetTeamByNameRegion) {

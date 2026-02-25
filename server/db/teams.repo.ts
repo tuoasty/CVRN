@@ -5,6 +5,18 @@ export async function findAllTeams(supabase: DBClient){
     return supabase.from("teams").select("*")
 }
 
+export async function findAllTeamsWithRegions(supabase: DBClient) {
+    return supabase
+        .from("teams")
+        .select(`
+            *,
+            regions:region_id (
+                code,
+                name
+            )
+        `)
+}
+
 export async function findTeamById(supabase: DBClient, id:string){
     return supabase.from("teams").select("*").eq("id", id).single()
 }
