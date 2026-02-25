@@ -86,13 +86,16 @@ export default function TeamsList() {
                     >
                         <CardContent className="p-4 text-center">
                             {team.logo_url && (
-                                <Image
-                                    src={team.logo_url}
-                                    alt={team.name || ""}
-                                    width={150}
-                                    height={150}
-                                    className="object-contain mx-auto"
-                                />
+                                <div className="relative w-[150px] h-[150px] mx-auto">
+                                    <Image
+                                        src={team.logo_url}
+                                        alt={team.name || ""}
+                                        fill
+                                        sizes="150px"
+                                        priority
+                                        className="object-contain"
+                                    />
+                                </div>
                             )}
                             <h3 className="font-semibold mt-2">{team.name}</h3>
                             <p className="text-sm text-muted-foreground">
