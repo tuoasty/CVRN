@@ -5,11 +5,12 @@ import {
     deleteTeam,
     getAllTeams, getAllTeamsWithRegions,
     getTeamByNameAndRegion,
-    getTeamBySlugAndRegion
+    getTeamBySlugAndRegion, getTeamWithRegionAndPlayers
 } from "@/server/services/team.service";
 import {createServerSupabase} from "@/server/supabase/server";
 import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
 import {createClient} from "@supabase/supabase-js";
+import {getRegionByCode} from "@/server/services/region.service";
 
 export async function createTeamAction(name:string, file:File, regionId:string){
     const supabase = await createServerSupabase();
@@ -46,4 +47,22 @@ export async function getTeamBySlugAndRegionAction(p: {
 }) {
     const supabase = await createServerSupabase();
     return getTeamBySlugAndRegion(supabase, p);
+}
+
+export async function getTeamWithRegionAndPlayersAction(p: {
+    slug: string;
+    regionCode: string;
+}) {
+    const supabase = await createServerSupabase();
+
+    const regionResult = await getRegionByCode(supabase, p.regionCode);
+
+    if (!regionResult.ok) {
+        return regionResult;
+    }
+
+    return getTeamWithRegionAndPlayers(supabase, {
+        slug: p.slug,
+        regionId: regionResult.value.id
+    });
 }

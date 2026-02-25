@@ -14,9 +14,10 @@ export const metadata: Metadata = {
 };
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  display: "swap",
-  subsets: ["latin"],
+    variable: "--font-geist-sans",
+    display: "swap",
+    subsets: ["latin"],
+    preload: false,
 });
 
 export default function RootLayout({
