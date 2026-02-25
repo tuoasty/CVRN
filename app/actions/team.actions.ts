@@ -1,8 +1,15 @@
 "use server";
 
-import {createTeam, deleteTeam, getAllTeams, getTeamByNameAndRegion} from "@/server/services/team.service";
+import {
+    createTeam,
+    deleteTeam,
+    getAllTeams,
+    getTeamByNameAndRegion,
+    getTeamBySlugAndRegion
+} from "@/server/services/team.service";
 import {createServerSupabase} from "@/server/supabase/server";
 import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
+import {createClient} from "@supabase/supabase-js";
 
 export async function createTeamAction(name:string, file:File, regionId:string){
     const supabase = await createServerSupabase();
@@ -26,4 +33,12 @@ export async function getTeamByNameAndRegionAction(input: GetTeamByNameRegion) {
 export async function deleteTeamAction(input: TeamIdInput){
     const supabase = await createServerSupabase();
     return deleteTeam(supabase, input)
+}
+
+export async function getTeamBySlugAndRegionAction(p: {
+    slug: string;
+    regionId: string;
+}) {
+    const supabase = await createServerSupabase();
+    return getTeamBySlugAndRegion(supabase, p);
 }

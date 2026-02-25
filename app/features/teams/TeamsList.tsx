@@ -58,8 +58,7 @@ export default function TeamsList() {
     const handleTeamClick = (team: Team) => {
         if (!team.region_id) return;
         const regionCode = getRegionCode(team.region_id);
-        const teamName = team.name.toLowerCase();
-        router.push(`/admin/teams/${encodeURIComponent(regionCode)}/${encodeURIComponent(teamName)}`);
+        router.push(`/admin/teams/${regionCode}/${team.slug}`);
     };
 
     if (loading) {
