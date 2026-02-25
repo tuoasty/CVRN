@@ -4,10 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { Player } from "@/shared/types/db";
 import { TeamWithRegion } from "@/server/dto/team.dto";
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
-import { deleteTeamAction, getTeamWithRegionAndPlayersAction } from "@/app/actions/team.actions";
 import PlayerCard from "@/app/features/players/PlayerCard";
 
 import {
@@ -22,6 +20,8 @@ import {
     AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
 import { Button } from "@/app/components/ui/button";
+import {useTeamStore} from "@/app/stores/teamStore";
+import {usePlayersStore} from "@/app/stores/playersStore";
 
 export default function TeamDetailPage() {
     const params = useParams();
@@ -34,13 +34,12 @@ export default function TeamDetailPage() {
         String(params.teamName || "")
     ).toLowerCase();
 
-    const [team, setTeam] = useState<TeamWithRegion | null>(null);
-    const [players, setPlayers] = useState<Player[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const router = useRouter();
+    const { fetchTeamBySlug, deleteTeam, isLoading, error: teamError } = useTeamStore();
+    const { fetchPlayersForTeam, getPlayersByTeam } = usePlayersStore();
+    const [team, setTeam] = useState<TeamWithRegion | null>(null);
 
     useEffect(() => {
         if (!region || !teamName) return;
@@ -49,46 +48,33 @@ export default function TeamDetailPage() {
     }, [region, teamName]);
 
     const loadTeamData = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const result = await getTeamWithRegionAndPlayersAction({
-                slug: teamName,
-                regionCode: region
-            });
-
-            if (!result.ok) {
-                setError(result.error.message);
-                return;
-            }
-
-            setTeam(result.value.team);
-            setPlayers(result.value.players);
-        } catch (err) {
-            console.error(err);
-            setError("Failed to load team data");
-        } finally {
-            setLoading(false);
+        const fetchedTeam = await fetchTeamBySlug(region, teamName);
+        if (fetchedTeam) {
+            setTeam(fetchedTeam);
+            await fetchPlayersForTeam(fetchedTeam.id);
         }
     };
 
-    const handlePlayerAdded = () => {
+    const players = team ? getPlayersByTeam(team.id) : [];
+    const error = teamError;
+
+    const handlePlayerAdded = async () => {
         setShowAddForm(false);
-        loadTeamData();
+        if (team) {
+            await fetchPlayersForTeam(team.id, { force: true });
+        }
     };
 
     const handleDeleteTeam = async () => {
         if (!team?.id) return;
-        const result = await deleteTeamAction({ teamId: team.id });
-        if (!result.ok) {
-            setError(result.error.message);
-            return;
+        const result = await deleteTeam(team.id);
+        if (result.ok) {
+            router.push("/admin/dashboard");
+            // TODO change to relative path
         }
-        router.push("/admin/dashboard");
     };
 
-    if (loading) {
+    if (isLoading) {
         return <div className="p-4 text-muted-foreground">Loading team...</div>;
     }
 

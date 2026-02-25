@@ -1,42 +1,20 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
-import { getAllTeamsWithRegionsAction } from "@/app/actions/team.actions";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { TeamWithRegion } from "@/server/dto/team.dto";
+import {useTeamStore} from "@/app/stores/teamStore";
 
 export default function TeamsList() {
-    const [teams, setTeams] = useState<TeamWithRegion[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
+    const { teamsById, isLoading, error, fetchAllTeams } = useTeamStore();
+    const teams = Array.from(teamsById.values());
 
     useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const teamsResult = await getAllTeamsWithRegionsAction();
-
-            if (!teamsResult.ok) {
-                setError(teamsResult.error.message);
-                return;
-            }
-
-            setTeams(teamsResult.value);
-        } catch (error) {
-            console.log(error);
-            setError("Failed to load teams");
-        } finally {
-            setLoading(false);
-        }
-    };
+        fetchAllTeams();
+    }, [fetchAllTeams]);
 
     const handleTeamClick = (team: TeamWithRegion) => {
         if (!team.regions || !team.slug) return;
@@ -44,7 +22,7 @@ export default function TeamsList() {
         router.push(`/admin/teams/${regionCode}/${team.slug}`);
     };
 
-    if (loading) {
+    if (isLoading) {
         return <div className="p-4 text-muted-foreground">Loading teams...</div>;
     }
 

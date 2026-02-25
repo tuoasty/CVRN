@@ -6,7 +6,7 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {
     deleteTeamById,
     findAllTeams, findAllTeamsWithRegions,
-    findTeamById,
+    findTeamById, findTeamByIdWithRegion,
     findTeamByNameAndRegion,
     findTeamBySlugAndRegion, findTeamBySlugAndRegionWithRegion,
     insertTeam
@@ -28,7 +28,7 @@ export async function createTeam(supabase:DBClient, p:{
     name:string;
     logoFile:File;
     regionId:string;
-}):Promise<Result<Team>>{
+}):Promise<Result<TeamWithRegion>>{
     let uploadedPath: string | null = null
     let success = false;
 
@@ -77,8 +77,17 @@ export async function createTeam(supabase:DBClient, p:{
             })
         }
 
+        const { data: teamWithRegion, error: fetchError } = await findTeamByIdWithRegion(supabase, teamId)
+
+        if (fetchError || !teamWithRegion) {
+            return Err({
+                message: "Failed to fetch created team with region",
+                name: "FetchError"
+            })
+        }
+
         success = true
-        return Ok(data)
+        return Ok(teamWithRegion as TeamWithRegion)
     } catch(error){
         return Err(serializeError(error))
     } finally {

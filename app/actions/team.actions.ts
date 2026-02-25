@@ -3,42 +3,48 @@
 import {
     createTeam,
     deleteTeam,
-    getAllTeams, getAllTeamsWithRegions,
+    getAllTeams,
+    getAllTeamsWithRegions,
     getTeamByNameAndRegion,
-    getTeamBySlugAndRegion, getTeamWithRegionAndPlayers
+    getTeamBySlugAndRegion,
+    getTeamWithRegionAndPlayers
 } from "@/server/services/team.service";
 import {createServerSupabase} from "@/server/supabase/server";
 import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
-import {createClient} from "@supabase/supabase-js";
 import {getRegionByCode} from "@/server/services/region.service";
 
-export async function createTeamAction(name:string, file:File, regionId:string){
+export async function createTeamAction(formData: FormData){
     const supabase = await createServerSupabase();
+
+    const name = formData.get('name') as string;
+    const file = formData.get('logo') as File;
+    const regionId = formData.get('regionId') as string;
+
     return createTeam(supabase, {
         name,
-        logoFile:file,
-        regionId: regionId
-    })
+        logoFile: file,
+        regionId
+    });
 }
 
 export async function getAllTeamsAction(){
     const supabase = await createServerSupabase();
-    return getAllTeams(supabase)
+    return getAllTeams(supabase);
 }
 
 export async function getAllTeamsWithRegionsAction() {
     const supabase = await createServerSupabase();
-    return getAllTeamsWithRegions(supabase)
+    return getAllTeamsWithRegions(supabase);
 }
 
 export async function getTeamByNameAndRegionAction(input: GetTeamByNameRegion) {
     const supabase = await createServerSupabase();
-    return getTeamByNameAndRegion(supabase, input)
+    return getTeamByNameAndRegion(supabase, input);
 }
 
 export async function deleteTeamAction(input: TeamIdInput){
     const supabase = await createServerSupabase();
-    return deleteTeam(supabase, input)
+    return deleteTeam(supabase, input);
 }
 
 export async function getTeamBySlugAndRegionAction(p: {
