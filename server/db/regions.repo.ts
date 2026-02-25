@@ -5,5 +5,5 @@ export async function findAllRegions(supabase: DBClient){
 }
 
 export async function findRegionByCode(supabase: DBClient, code: string){
-    return supabase.from("regions").select("*").eq("code", code).single()
+    return supabase.from("regions").select("*").ilike("code", code).single()
 }
