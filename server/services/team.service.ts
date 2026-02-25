@@ -3,11 +3,26 @@ import {BUCKETS, extractStoragePath, STORAGE_PATHS} from "@/server/storage/stora
 import {getFileExtension} from "@/server/utils/fileExtension";
 import {deleteFile, uploadFile} from "@/server/storage/storage.service";
 import {Err, Ok, Result} from "@/shared/types/result";
-import {deleteTeamById, findAllTeams, findTeamById, findTeamByNameAndRegion, insertTeam} from "@/server/db/teams.repo";
+import {
+    deleteTeamById,
+    findAllTeams,
+    findTeamById,
+    findTeamByNameAndRegion,
+    findTeamBySlugAndRegion,
+    insertTeam
+} from "@/server/db/teams.repo";
 import {serializeError} from "@/server/utils/serializeableError";
 import {DBClient, Team} from "@/shared/types/db";
 import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
 import {removeAllPlayersFromTeam} from "@/server/db/players.repo";
+
+function generateSlug(name: string): string {
+    return name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
 
 export async function createTeam(supabase:DBClient, p:{
     name:string;
@@ -19,6 +34,7 @@ export async function createTeam(supabase:DBClient, p:{
 
     try {
         const teamId = randomUUID()
+        const slug = generateSlug(p.name);
         const ext = getFileExtension(p.logoFile)
         const path = STORAGE_PATHS.teamLogo(teamId, ext);
 
@@ -41,6 +57,7 @@ export async function createTeam(supabase:DBClient, p:{
         const {data, error} = await insertTeam(supabase, {
             id: teamId,
             name: p.name,
+            slug,
             logoUrl: uploadRes.value.url,
             regionId: p.regionId
         })
@@ -143,6 +160,29 @@ export async function deleteTeam(supabase: DBClient, p:TeamIdInput): Promise<Res
 
         return Ok(undefined)
     } catch (error) {
+        return Err(serializeError(error))
+    }
+}
+
+export async function getTeamBySlugAndRegion(supabase: DBClient, p: {
+    slug: string;
+    regionId: string;
+}) {
+    try {
+        const { data, error } = await findTeamBySlugAndRegion(supabase, p)
+        if(error){
+            return Err(serializeError(error))
+        }
+
+        if(!data){
+            return Err({
+                message:"Failed to fetch team",
+                name:"FetchError"
+            })
+        }
+
+        return Ok(data)
+    } catch (error){
         return Err(serializeError(error))
     }
 }

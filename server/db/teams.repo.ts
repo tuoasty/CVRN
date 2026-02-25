@@ -16,12 +16,14 @@ export async function findTeamByNameAndRegion(supabase: DBClient, p: GetTeamByNa
 export async function insertTeam(supabase: DBClient, p: {
     id?: string;
     name: string;
+    slug: string;
     logoUrl: string;
     regionId: string;
 }) {
     return supabase.from("teams").insert({
         ...(p.id && { id: p.id }),
         name: p.name,
+        slug: p.slug,
         logo_url: p.logoUrl,
         region_id: p.regionId
     }).select().single()
@@ -38,4 +40,11 @@ export async function updateTeamById(supabase: DBClient, id:string, p: {
 
 export async function deleteTeamById(supabase: DBClient, id:string){
     return supabase.from("teams").delete().eq("id", id)
+}
+
+export async function findTeamBySlugAndRegion(supabase: DBClient, p: {
+    slug: string;
+    regionId: string;
+}) {
+    return supabase.from("teams").select("*").eq("slug", p.slug).eq("region_id", p.regionId).single()
 }

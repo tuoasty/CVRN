@@ -7,7 +7,7 @@ import Image from "next/image";
 import {Player, Region, Team} from "@/shared/types/db";
 import { getTeamPlayersAction } from "@/app/actions/player.actions";
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
-import {deleteTeamAction, getTeamByNameAndRegionAction} from "@/app/actions/team.actions";
+import {deleteTeamAction, getTeamBySlugAndRegionAction} from "@/app/actions/team.actions";
 import PlayerCard from "@/app/features/players/PlayerCard";
 
 import {
@@ -65,9 +65,9 @@ export default function TeamDetailPage() {
             const foundRegion = regionResult.value;
             setRegionData(foundRegion);
 
-            const teamResult = await getTeamByNameAndRegionAction({
+            const teamResult = await getTeamBySlugAndRegionAction({
                 regionId: foundRegion.id,
-                name: teamName,
+                slug: teamName,
             });
 
             if (!teamResult.ok) {

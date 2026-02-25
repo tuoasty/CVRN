@@ -4,21 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat : remove player">
-      <change afterPath="$PROJECT_DIR$/app/actions/region.actions.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/db/regions.repo.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/services/region.service.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat: updated team database and schema.&#10;&#10;TODO: Fix load team error, teams are loaded with notre%20dame for spaces. Perhaps add a seperate string for team urls, with underscore etc">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/CreateTeamAction.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/CreateTeamForm.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/dto/team.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/team.dto.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/types/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/db.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -141,7 +134,8 @@
       <workItem from="1771902020347" duration="3177000" />
       <workItem from="1771914379252" duration="1808000" />
       <workItem from="1771919975207" duration="2378000" />
-      <workItem from="1771925686970" duration="1262000" />
+      <workItem from="1771925686970" duration="1365000" />
+      <workItem from="1771985675567" duration="1858000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -391,7 +385,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771837214229</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="Feat: updated team database and schema.&#10;&#10;TODO: Fix load team error, teams are loaded with notre%20dame for spaces. Perhaps add a seperate string for team urls, with underscore etc">
+      <option name="closed" value="true" />
+      <created>1771927050732</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1771927050732</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -411,7 +413,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="fix serialize error" />
     <MESSAGE value="invite user and set password" />
     <MESSAGE value="Fix proxy redirect" />
     <MESSAGE value="create team" />
@@ -436,7 +437,8 @@
     <MESSAGE value="fix update player repo" />
     <MESSAGE value="Feat: Validation check player in team" />
     <MESSAGE value="Feat : remove player" />
-    <option name="LAST_COMMIT_MESSAGE" value="Feat : remove player" />
+    <MESSAGE value="Feat: updated team database and schema.&#10;&#10;TODO: Fix load team error, teams are loaded with notre%20dame for spaces. Perhaps add a seperate string for team urls, with underscore etc" />
+    <option name="LAST_COMMIT_MESSAGE" value="Feat: updated team database and schema.&#10;&#10;TODO: Fix load team error, teams are loaded with notre%20dame for spaces. Perhaps add a seperate string for team urls, with underscore etc" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
