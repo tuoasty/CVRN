@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { createTeamAction } from "@/app/actions/team.actions";
 import { getAllRegionsAction } from "@/app/actions/region.actions";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -15,6 +14,7 @@ import {
     SelectValue,
 } from "@/app/components/ui/select";
 import { Region } from "@/shared/types/db";
+import {useTeamStore} from "@/app/stores/teamStore";
 
 export default function CreateTeamForm() {
     const [name, setName] = useState("");
@@ -22,9 +22,9 @@ export default function CreateTeamForm() {
     const [regionId, setRegionId] = useState("");
     const [regions, setRegions] = useState<Region[]>([]);
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const { createTeam, isLoading, error: storeError } = useTeamStore();
     const [success, setSuccess] = useState<string | null>(null);
+    const error = storeError;
 
     const [preview, setPreview] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -87,34 +87,24 @@ export default function CreateTeamForm() {
         e.preventDefault();
 
         if (!name.trim() || !file || !regionId) {
-            setError("Team name, logo and region are required");
             return;
         }
 
-        setLoading(true);
-        setError(null);
         setSuccess(null);
 
-        try {
-            const result = await createTeamAction(name, file, regionId);
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('logo', file);
+        formData.append('regionId', regionId);
 
-            if (!result.ok) {
-                setError(result.error.message);
-                return;
-            }
+        const result = await createTeam(formData);
 
+        if (result.ok) {
             setSuccess("Team created successfully!");
-
             setName("");
             setFile(null);
             setRegionId("");
             setPreview(null);
-
-        } catch (error) {
-            console.log(error)
-            setError("Something went wrong");
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -131,7 +121,7 @@ export default function CreateTeamForm() {
                         placeholder="Team name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        disabled={loading}
+                        disabled={isLoading}
                     />
                 </div>
 
@@ -165,7 +155,7 @@ export default function CreateTeamForm() {
                             type="file"
                             accept="image/*"
                             onChange={handleFileChange}
-                            disabled={loading}
+                            disabled={isLoading}
                             className="mt-2"
                         />
                     </div>
@@ -173,7 +163,7 @@ export default function CreateTeamForm() {
 
                 <div>
                     <Label htmlFor="region">Region</Label>
-                    <Select value={regionId} onValueChange={setRegionId} disabled={loading}>
+                    <Select value={regionId} onValueChange={setRegionId} disabled={isLoading}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select region" />
                         </SelectTrigger>
@@ -187,8 +177,8 @@ export default function CreateTeamForm() {
                     </Select>
                 </div>
 
-                <Button type="submit" disabled={loading}>
-                    {loading ? "Creating..." : "Create Team"}
+                <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Creating..." : "Create Team"}
                 </Button>
             </form>
 

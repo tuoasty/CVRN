@@ -6,6 +6,7 @@ import { Player } from "@/shared/types/db"
 import { removePlayerFromTeamAction } from "@/app/actions/player.actions"
 import { Card, CardContent } from "@/app/components/ui/card"
 import { Button } from "@/app/components/ui/button"
+import {usePlayersStore} from "@/app/stores/playersStore";
 
 interface Props {
     player: Player
@@ -13,25 +14,16 @@ interface Props {
 }
 
 export default function PlayerCard({ player, onRemoved }: Props) {
-    const [removing, setRemoving] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
+    const { removePlayerFromTeam, isLoading, error } = usePlayersStore();
     const handleRemove = async () => {
-        setRemoving(true)
-        setError(null)
+        if (!player.team_id) return;
 
-        const result = await removePlayerFromTeamAction({
-            robloxUserId: player.roblox_user_id
-        })
+        const result = await removePlayerFromTeam(player.roblox_user_id, player.team_id);
 
-        if (!result.ok) {
-            setError(result.error.message)
-            setRemoving(false)
-            return
+        if (result.ok) {
+            onRemoved();
         }
-
-        onRemoved()
-    }
+    };
 
     return (
         <Card className="text-center w-fit">
@@ -59,9 +51,9 @@ export default function PlayerCard({ player, onRemoved }: Props) {
                     variant="destructive"
                     size="sm"
                     onClick={handleRemove}
-                    disabled={removing}
+                    disabled={isLoading}
                 >
-                    {removing ? "Removing..." : "Remove"}
+                    {isLoading ? "Removing..." : "Remove"}
                 </Button>
             </CardContent>
         </Card>
