@@ -4,10 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix: use slug instead of name">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="fix: image load optimization">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/regions.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/regions.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/dto/team.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/team.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -131,7 +134,7 @@
       <workItem from="1771914379252" duration="1808000" />
       <workItem from="1771919975207" duration="2378000" />
       <workItem from="1771925686970" duration="1365000" />
-      <workItem from="1771985675567" duration="3388000" />
+      <workItem from="1771985675567" duration="4873000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -397,7 +400,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771987718190</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="fix: image load optimization">
+      <option name="closed" value="true" />
+      <created>1771989299197</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1771989299197</updated>
+    </task>
+    <option name="localTasksCounter" value="35" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -417,7 +428,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Fix proxy redirect" />
     <MESSAGE value="create team" />
     <MESSAGE value="create team success" />
     <MESSAGE value="Fix import error" />
@@ -442,7 +452,8 @@
     <MESSAGE value="Feat : remove player" />
     <MESSAGE value="Feat: updated team database and schema.&#10;&#10;TODO: Fix load team error, teams are loaded with notre%20dame for spaces. Perhaps add a seperate string for team urls, with underscore etc" />
     <MESSAGE value="Fix: use slug instead of name" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix: use slug instead of name" />
+    <MESSAGE value="fix: image load optimization" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: image load optimization" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
