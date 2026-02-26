@@ -7,6 +7,7 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {findTeamById} from "@/server/db/teams.repo";
 import {findAllTeamPlayers, findPlayerByRobloxId, updatePlayer, upsertPlayer} from "@/server/db/players.repo";
 import {TeamIdInput} from "@/server/dto/team.dto";
+import {logger} from "@/server/utils/logger";
 
 const SYNC_INTERVAL = 1000 * 60 * 60;
 
@@ -14,7 +15,7 @@ export async function getUsersByName(supabase: DBClient, username: string): Prom
     const result = await getRobloxUserByName(username);
 
     if(!result.ok){
-        console.error("failed to fetch user, ", result.error);
+        logger.error({username, error: result.error}, "Failed to fetch Roblox user by name");
         return Err(result.error);
     }
 
@@ -28,7 +29,7 @@ export async function getUsersByName(supabase: DBClient, username: string): Prom
     const avatarsResult = await getRobloxAvatarsById(userIds);
 
     if(!avatarsResult.ok){
-        console.error("failed to fetch avatars, ", avatarsResult.error);
+        logger.error({userIds, error: avatarsResult.error}, "Failed to fetch Roblox avatars");
         return Err(avatarsResult.error);
     }
 
@@ -53,6 +54,7 @@ export async function savePlayer(
         if(p.teamId){
             const {data:team} = await findTeamById(supabase, p.teamId)
             if(!team){
+                logger.error({teamId: p.teamId, robloxUserId: p.robloxUserId}, "Team not found when saving player");
                 return Err({
                     name:"TeamNotFound",
                     message:"Team does not exist"
@@ -60,14 +62,15 @@ export async function savePlayer(
             }
 
             const {data: existingPlayer} = await findPlayerByRobloxId(supabase, p.robloxUserId)
-            console.log(existingPlayer)
             if(existingPlayer?.team_id){
                 if(existingPlayer?.team_id === p.teamId){
+                    logger.warn({robloxUserId: p.robloxUserId, teamId: p.teamId}, "Player already in this team");
                     return Err({
                         name:"PlayerAlreadyInTeam",
                         message:"Player is already a member of this team"
                     })
                 } else {
+                    logger.warn({robloxUserId: p.robloxUserId, currentTeamId: existingPlayer.team_id, requestedTeamId: p.teamId}, "Player already in another team");
                     return Err({
                         name:"PlayerAlreadyInTeam",
                         message:"Player is already a member of another team"
@@ -78,6 +81,7 @@ export async function savePlayer(
 
         const {data, error} = await upsertPlayer(supabase, p)
         if(error){
+            logger.error({robloxUserId: p.robloxUserId, error}, "Failed to upsert player");
             return Err(serializeError(error))
         }
 
@@ -90,6 +94,7 @@ export async function savePlayer(
 
         return Ok(data)
     } catch (error){
+        logger.error({error}, "Unexpected error saving player");
         return Err(serializeError(error))
     }
 }
@@ -98,6 +103,7 @@ export async function removePlayerFromTeam(supabase:DBClient, p:RobloxUserIdInpu
     try {
         const { data: existingPlayer } = await findPlayerByRobloxId(supabase, p.robloxUserId)
         if (!existingPlayer) {
+            logger.error({robloxUserId: p.robloxUserId}, "Player not found when removing from team");
             return Err({
                 name:"PlayerNotFound",
                 message:"Player does not exist"
@@ -105,6 +111,7 @@ export async function removePlayerFromTeam(supabase:DBClient, p:RobloxUserIdInpu
         }
 
         if (!existingPlayer.team_id) {
+            logger.warn({robloxUserId: p.robloxUserId}, "Attempted to remove player not in a team");
             return Err({
                 name: "PlayerNotInTeam",
                 message: "Player is not in a team"
@@ -117,6 +124,7 @@ export async function removePlayerFromTeam(supabase:DBClient, p:RobloxUserIdInpu
         })
 
         if (error) {
+            logger.error({robloxUserId: p.robloxUserId, error}, "Failed to update player when removing from team");
             return Err(serializeError(error))
         }
 
@@ -129,6 +137,7 @@ export async function removePlayerFromTeam(supabase:DBClient, p:RobloxUserIdInpu
 
         return Ok(data)
     } catch (error) {
+        logger.error({error}, "Unexpected error removing player from team");
         return Err(serializeError(error))
     }
 }
@@ -140,6 +149,7 @@ export async function getTeamPlayers(
     try {
         const { data, error } = await findAllTeamPlayers(supabase, p.teamId)
         if(error){
+            logger.error({teamId: p.teamId, error}, "Failed to fetch team players");
             return Err(serializeError(error))
         }
 
@@ -164,6 +174,7 @@ export async function getTeamPlayers(
 
         return Ok(syncedPlayers);
     } catch (error){
+        logger.error({error}, "Unexpected error fetching team players");
         return Err(serializeError(error))
     }
 }
@@ -182,9 +193,9 @@ export async function lazySyncPlayer(
             return Ok(player);
         }
 
-        console.log("Lazy syncing player:", player.username);
         const userResult = await getRobloxUserByName(player.username);
         if (!userResult.ok || userResult.value.length === 0) {
+            logger.error({username: player.username, error: userResult.ok ? null : userResult.error}, "Failed to fetch Roblox user during lazy sync");
             return Ok(player);
         }
 
@@ -203,6 +214,8 @@ export async function lazySyncPlayer(
             if (avatar?.imageUrl) {
                 avatarUrl = avatar.imageUrl;
             }
+        } else {
+            logger.error({userId: user.id, error: avatarResult.error}, "Failed to fetch avatar during lazy sync");
         }
 
         const { data, error } = await updatePlayer(supabase, {
@@ -214,6 +227,7 @@ export async function lazySyncPlayer(
         });
 
         if (error) {
+            logger.error({robloxUserId: String(user.id), error}, "Failed to update player during lazy sync");
             return Err(serializeError(error));
         }
 
@@ -227,6 +241,7 @@ export async function lazySyncPlayer(
         return Ok(data);
 
     } catch (err) {
+        logger.error({error: err}, "Unexpected error during lazy sync");
         return Err(serializeError(err));
     }
 }

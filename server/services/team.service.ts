@@ -3,6 +3,8 @@ import {BUCKETS, extractStoragePath, STORAGE_PATHS} from "@/server/storage/stora
 import {getFileExtension} from "@/server/utils/fileExtension";
 import {deleteFile, uploadFile} from "@/server/storage/storage.service";
 import {Err, Ok, Result} from "@/shared/types/result";
+import { logger } from "@/server/utils/logger";
+
 import {
     deleteTeamById,
     findAllTeams, findAllTeamsWithRegions,
@@ -46,7 +48,7 @@ export async function createTeam(supabase:DBClient, p:{
         });
 
         if(!uploadRes.ok){
-            console.log(uploadRes)
+            logger.error({ teamId, error: uploadRes.error }, "Failed to upload team logo");
             return Err({
                 message:"Failed to upload team logo",
                 name:"UploadError"
@@ -62,6 +64,7 @@ export async function createTeam(supabase:DBClient, p:{
             regionId: p.regionId
         })
         if(error || !data){
+            logger.error({ teamId, error }, "Failed to insert team, cleaning up uploaded file");
             await deleteFile(supabase, {
                 bucket:BUCKETS.PUBLIC,
                 path,
@@ -80,6 +83,7 @@ export async function createTeam(supabase:DBClient, p:{
         const { data: teamWithRegion, error: fetchError } = await findTeamByIdWithRegion(supabase, teamId)
 
         if (fetchError || !teamWithRegion) {
+            logger.error({ teamId, error: fetchError }, "Failed to fetch created team with region");
             return Err({
                 message: "Failed to fetch created team with region",
                 name: "FetchError"
@@ -104,6 +108,7 @@ export async function getAllTeams(supabase: DBClient):Promise<Result<Team[]>> {
     try {
         const { data, error } = await findAllTeams(supabase)
         if(error){
+            logger.error({ error }, "Failed to fetch all teams");
             return Err(serializeError(error))
         }
 
@@ -124,6 +129,7 @@ export async function getAllTeamsWithRegions(supabase: DBClient): Promise<Result
     try {
         const { data, error } = await findAllTeamsWithRegions(supabase)
         if (error) {
+            logger.error({ error }, "Failed to fetch teams with regions");
             return Err(serializeError(error))
         }
 
@@ -144,6 +150,7 @@ export async function getTeamByNameAndRegion(supabase: DBClient, p:GetTeamByName
     try {
         const { data, error } = await findTeamByNameAndRegion(supabase, p)
         if(error){
+            logger.error({ name: p.name, regionId: p.regionId, error }, "Failed to fetch team by name and region");
             return Err(serializeError(error))
         }
 
@@ -164,6 +171,7 @@ export async function deleteTeam(supabase: DBClient, p:TeamIdInput): Promise<Res
     try {
         const { data: team } = await findTeamById(supabase, p.teamId)
         if (!team) {
+            logger.warn({ teamId: p.teamId }, "Attempted to delete non-existent team");
             return Err({
                 name: "TeamNotFound",
                 message: "Team does not exist"
@@ -172,11 +180,13 @@ export async function deleteTeam(supabase: DBClient, p:TeamIdInput): Promise<Res
 
         const { error: playersError } = await removeAllPlayersFromTeam(supabase, p.teamId)
         if (playersError) {
+            logger.error({ teamId: p.teamId, error: playersError }, "Failed to remove players from team during deletion");
             return Err(serializeError(playersError))
         }
 
         const { error } = await deleteTeamById(supabase, p.teamId)
         if (error) {
+            logger.error({ teamId: p.teamId, error }, "Failed to delete team");
             return Err(serializeError(error))
         }
 
@@ -200,9 +210,9 @@ export async function getTeamBySlugAndRegion(supabase: DBClient, p: {
     try {
         const { data, error } = await findTeamBySlugAndRegion(supabase, p)
         if(error){
+            logger.error({ slug: p.slug, regionId: p.regionId, error }, "Failed to fetch team by slug and region");
             return Err(serializeError(error))
         }
-
         if(!data){
             return Err({
                 message:"Failed to fetch team",
@@ -224,6 +234,7 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
         const { data: teamData, error: teamError } = await findTeamBySlugAndRegionWithRegion(supabase, p)
 
         if (teamError) {
+            logger.error({ slug: p.slug, regionId: p.regionId, error: teamError }, "Failed to fetch team with region");
             return Err(serializeError(teamError))
         }
 
@@ -237,6 +248,7 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
         const { data: playersData, error: playersError } = await findAllTeamPlayers(supabase, teamData.id)
 
         if (playersError) {
+            logger.error({ teamId: teamData.id, error: playersError }, "Failed to fetch team players");
             return Err(serializeError(playersError))
         }
 

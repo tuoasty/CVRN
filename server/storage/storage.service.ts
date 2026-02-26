@@ -1,6 +1,7 @@
 import {Err, Ok, Result} from "@/shared/types/result";
 import {SerializableError, serializeError} from "@/server/utils/serializeableError";
 import {DBClient} from "@/shared/types/db";
+import {logger} from "@/server/utils/logger";
 
 export async function uploadFile(supabase: DBClient, p: {
     bucket:string;
@@ -16,9 +17,11 @@ export async function uploadFile(supabase: DBClient, p: {
         });
 
         if(error){
+            logger.error({bucket: p.bucket, path: p.path, contentType: p.contentType, error}, "Failed to upload file");
             return Err(serializeError(error))
         }
         if(!data){
+            logger.error({bucket: p.bucket, path: p.path}, "Upload succeeded but no data returned");
             return Err({
                 message:"Failed to insert data",
                 name:"ImageInsertFailed"
@@ -31,6 +34,7 @@ export async function uploadFile(supabase: DBClient, p: {
             path:data.path
         })
     } catch (error) {
+        logger.error({error}, "Unexpected error uploading file");
         return Err(serializeError(error))
     }
 }
@@ -42,10 +46,12 @@ export async function deleteFile(supabase: DBClient, p:{
     try {
         const {error} = await supabase.storage.from(p.bucket).remove([p.path])
         if(error) {
+            logger.error({bucket: p.bucket, path: p.path, error}, "Failed to delete file");
             return Err(serializeError(error))
         }
         return Ok(null)
     } catch (error){
+        logger.error({error}, "Unexpected error deleting file");
         return Err(serializeError(error))
     }
 }
@@ -61,9 +67,11 @@ export async function createSignedUrl(supabase: DBClient, p: {
             .createSignedUrl(p.path, p.expiresIn)
 
         if(error){
+            logger.error({bucket: p.bucket, path: p.path, expiresIn: p.expiresIn, error}, "Failed to create signed URL");
             return Err(serializeError(error))
         }
         if(!data){
+            logger.error({bucket: p.bucket, path: p.path}, "Signed URL creation succeeded but no data returned");
             return Err({
                 message:"Failed to create signed url",
                 name:"SignedUrlFailure"
@@ -72,6 +80,7 @@ export async function createSignedUrl(supabase: DBClient, p: {
 
         return Ok(data.signedUrl)
     } catch (error) {
+        logger.error({error}, "Unexpected error creating signed URL");
         return Err(serializeError(error))
     }
 }

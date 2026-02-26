@@ -4,19 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Reset zustand">
-      <change afterPath="$PROJECT_DIR$/app/utils/clientLogger.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/utils/logger.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Zustand teamStore">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/players/PlayerCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/players/PlayerCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/CreateTeamForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/CreateTeamForm.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/playersStore.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/storeUtils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/storeUtils.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/teamStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/teamStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/admin.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/admin.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/auth.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/region.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/region.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/supabase/middleware.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/supabase/middleware.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -142,7 +138,7 @@
       <workItem from="1771925686970" duration="1365000" />
       <workItem from="1771985675567" duration="9526000" />
       <workItem from="1772001984559" duration="1473000" />
-      <workItem from="1772086171768" duration="4520000" />
+      <workItem from="1772086171768" duration="5203000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -448,7 +444,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772089091009</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="Zustand teamStore">
+      <option name="closed" value="true" />
+      <created>1772090900830</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1772090900830</updated>
+    </task>
+    <option name="localTasksCounter" value="40" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -468,7 +472,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Test use client" />
     <MESSAGE value="Fix match list to use client and use effect" />
     <MESSAGE value="Display teams" />
     <MESSAGE value="refactor arch" />
@@ -493,7 +496,8 @@
     <MESSAGE value="fix: optimized team detail page loading" />
     <MESSAGE value="Zustand stores. Hopefully all are good" />
     <MESSAGE value="Reset zustand" />
-    <option name="LAST_COMMIT_MESSAGE" value="Reset zustand" />
+    <MESSAGE value="Zustand teamStore" />
+    <option name="LAST_COMMIT_MESSAGE" value="Zustand teamStore" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
