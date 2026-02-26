@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { createTeamAction } from "@/app/actions/team.actions";
 import { getAllRegionsAction } from "@/app/actions/region.actions";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -14,17 +15,19 @@ import {
     SelectValue,
 } from "@/app/components/ui/select";
 import { Region } from "@/shared/types/db";
-import {useTeamStore} from "@/app/stores/teamStore";
+import {useTeamsStore} from "@/app/stores/teamStore";
 
 export default function CreateTeamForm() {
+    const { addTeamToCache } = useTeamsStore();
+
     const [name, setName] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [regionId, setRegionId] = useState("");
     const [regions, setRegions] = useState<Region[]>([]);
 
-    const { createTeam, isLoading, error: storeError } = useTeamStore();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-    const error = storeError;
 
     const [preview, setPreview] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -87,24 +90,41 @@ export default function CreateTeamForm() {
         e.preventDefault();
 
         if (!name.trim() || !file || !regionId) {
+            setError("Team name, logo and region are required");
             return;
         }
 
+        setLoading(true);
+        setError(null);
         setSuccess(null);
 
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('logo', file);
-        formData.append('regionId', regionId);
+        try {
+            const formData = new FormData();
+            formData.append("name", name);
+            formData.append("logo", file);
+            formData.append("regionId", regionId);
 
-        const result = await createTeam(formData);
+            const result = await createTeamAction(formData);
 
-        if (result.ok) {
+            if (!result.ok) {
+                setError(result.error.message);
+                return;
+            }
+
+            addTeamToCache(result.value);
+
             setSuccess("Team created successfully!");
+
             setName("");
             setFile(null);
             setRegionId("");
             setPreview(null);
+
+        } catch (error) {
+            console.log(error)
+            setError("Something went wrong");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -121,7 +141,7 @@ export default function CreateTeamForm() {
                         placeholder="Team name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        disabled={isLoading}
+                        disabled={loading}
                     />
                 </div>
 
@@ -155,7 +175,7 @@ export default function CreateTeamForm() {
                             type="file"
                             accept="image/*"
                             onChange={handleFileChange}
-                            disabled={isLoading}
+                            disabled={loading}
                             className="mt-2"
                         />
                     </div>
@@ -163,7 +183,7 @@ export default function CreateTeamForm() {
 
                 <div>
                     <Label htmlFor="region">Region</Label>
-                    <Select value={regionId} onValueChange={setRegionId} disabled={isLoading}>
+                    <Select value={regionId} onValueChange={setRegionId} disabled={loading}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select region" />
                         </SelectTrigger>
@@ -177,8 +197,8 @@ export default function CreateTeamForm() {
                     </Select>
                 </div>
 
-                <Button type="submit" disabled={isLoading}>
-                    {isLoading ? "Creating..." : "Create Team"}
+                <Button type="submit" disabled={loading}>
+                    {loading ? "Creating..." : "Create Team"}
                 </Button>
             </form>
 

@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import Image from "next/image";
 
-import { TeamWithRegion } from "@/server/dto/team.dto";
+import {Player, Region, Team} from "@/shared/types/db";
+import { getTeamPlayersAction } from "@/app/actions/player.actions";
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
+import {deleteTeamAction, getTeamBySlugAndRegionAction} from "@/app/actions/team.actions";
 import PlayerCard from "@/app/features/players/PlayerCard";
 
 import {
@@ -19,9 +21,8 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
-import { Button } from "@/app/components/ui/button";
-import {useTeamStore} from "@/app/stores/teamStore";
-import {usePlayersStore} from "@/app/stores/playersStore";
+import {Button} from "@/app/components/ui/button";
+import {getRegionByCodeAction} from "@/app/actions/region.actions";
 
 export default function TeamDetailPage() {
     const params = useParams();
@@ -34,12 +35,14 @@ export default function TeamDetailPage() {
         String(params.teamName || "")
     ).toLowerCase();
 
-    const router = useRouter();
+    const [team, setTeam] = useState<Team | null>(null);
+    const [players, setPlayers] = useState<Player[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const { fetchTeamBySlug, deleteTeam, isLoading, error: teamError } = useTeamStore();
-    const { fetchPlayersForTeam, getPlayersByTeam } = usePlayersStore();
-    const [team, setTeam] = useState<TeamWithRegion | null>(null);
+    const [regionData, setRegionData] = useState<Region | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         if (!region || !teamName) return;
@@ -48,33 +51,74 @@ export default function TeamDetailPage() {
     }, [region, teamName]);
 
     const loadTeamData = async () => {
-        const fetchedTeam = await fetchTeamBySlug(region, teamName);
-        if (fetchedTeam) {
-            setTeam(fetchedTeam);
-            await fetchPlayersForTeam(fetchedTeam.id);
+        setLoading(true);
+        setError(null);
+
+        try {
+            const regionResult = await getRegionByCodeAction(region);
+
+            if (!regionResult.ok) {
+                setError(regionResult.error.message);
+                return;
+            }
+
+            const foundRegion = regionResult.value;
+            setRegionData(foundRegion);
+
+            const teamResult = await getTeamBySlugAndRegionAction({
+                regionId: foundRegion.id,
+                slug: teamName,
+            });
+
+            if (!teamResult.ok) {
+                setError(teamResult.error.message);
+                return;
+            }
+
+            const foundTeam = teamResult.value;
+
+            if (!foundTeam) {
+                setError("Team not found");
+                return;
+            }
+
+            setTeam(foundTeam);
+
+            const playersResult = await getTeamPlayersAction({
+                teamId: foundTeam.id,
+            });
+
+            if (!playersResult.ok) {
+                setError(playersResult.error.message);
+                return;
+            }
+
+            setPlayers(playersResult.value);
+        } catch (err) {
+            console.error(err);
+            setError("Failed to load team data");
+        } finally {
+            setLoading(false);
         }
     };
 
-    const players = team ? getPlayersByTeam(team.id) : [];
-    const error = teamError;
-
-    const handlePlayerAdded = async () => {
+    const handlePlayerAdded = () => {
         setShowAddForm(false);
-        if (team) {
-            await fetchPlayersForTeam(team.id, { force: true });
-        }
+        loadTeamData();
     };
 
     const handleDeleteTeam = async () => {
         if (!team?.id) return;
-        const result = await deleteTeam(team.id);
-        if (result.ok) {
-            router.push("/admin/dashboard");
-            // TODO change to relative path
+        const result = await deleteTeamAction({ teamId: team.id });
+        if (!result.ok) {
+            setError(result.error.message);
+            return;
         }
+        router.push("/admin/dashboard");
+        //     @TODO Change the push to correct admin teams page
     };
 
-    if (isLoading) {
+    if (loading) {
         return <div className="p-4 text-muted-foreground">Loading team...</div>;
     }
 
@@ -89,21 +133,18 @@ export default function TeamDetailPage() {
     return (
         <div className="p-4 space-y-4">
             <span className="text-sm text-muted-foreground">
-                {team.regions ? `${team.regions.code.toUpperCase()} - ${team.regions.name}` : "No Region"}
+                {regionData ? `${regionData.code} - ${regionData.name}` : team.region_id}
             </span>
 
             <div className="flex items-center gap-4">
                 {team.logo_url && (
-                    <div className="relative w-[150px] h-[150px]">
-                        <Image
-                            src={team.logo_url}
-                            alt={team.name || ""}
-                            fill
-                            sizes="150px"
-                            className="object-contain"
-                            priority
-                        />
-                    </div>
+                    <Image
+                        src={team.logo_url}
+                        alt={team.name || ""}
+                        width={150}
+                        height={150}
+                        className="object-contain"
+                    />
                 )}
                 <div>
                     <h2 className="text-2xl font-bold">{team.name}</h2>

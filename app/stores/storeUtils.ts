@@ -1,77 +1,56 @@
-export const STALE_TIME = 5 * 60 * 1000;
-export const EVICTION_TTL = 15 * 60 * 1000;
+import {clientLogger} from "@/app/utils/clientLogger";
 
-export function isStale(lastFetched: number | null): boolean {
-    return !lastFetched || Date.now() - lastFetched > STALE_TIME;
-}
-
-export function shouldRefetch(
-    hasData: boolean,
-    lastFetched: number | null,
-    force?: boolean
-): "skip" | "background" | "loading" {
-    if (force) {
-        return hasData ? "background" : "loading";
-    }
-
-    if (!hasData) return "loading";
-
-    const stale = isStale(lastFetched);
-    if (!stale) return "skip";
-
-    return "background";
-}
-
-interface CachedItem<T> {
+export type CacheEntry<T> = {
     data: T;
-    cachedAt: number;
-}
+    timestamp: number;
+    ttl: number;
+};
 
-export function createCache<T>() {
-    return new Map<string, CachedItem<T>>();
-}
+type CacheMap<T> = Map<string, CacheEntry<T>>;
 
-export function getCached<T>(
-    cache: Map<string, CachedItem<T>>,
-    key: string
-): T | null {
-    const item = cache.get(key);
-    if (!item) return null;
-
-    if (Date.now() - item.cachedAt > EVICTION_TTL) {
-        cache.delete(key);
-        return null;
+export function isCacheValid<T>(entry: CacheEntry<T> | undefined): boolean {
+    if (!entry) {
+        clientLogger.debug('Cache', 'Entry not found');
+        return false;
     }
-
-    return item.data;
+    const ageSeconds = Math.floor((Date.now() - entry.timestamp) / 1000);
+    const isValid = Date.now() - entry.timestamp < entry.ttl;
+    clientLogger.debug('Cache', 'Validation check', { isValid, ageSeconds, ttlSeconds: entry.ttl / 1000 });
+    return isValid;
 }
 
-export function setCached<T>(
-    cache: Map<string, CachedItem<T>>,
-    key: string,
-    data: T
-): void {
-    cache.set(key, { data, cachedAt: Date.now() });
+export function createCacheEntry<T>(data: T, ttl: number): CacheEntry<T> {
+    return {
+        data,
+        timestamp: Date.now(),
+        ttl,
+    };
 }
 
-export function evictStale<T>(cache: Map<string, CachedItem<T>>): number {
+export function evictStaleEntries<T>(cache: CacheMap<T>): void {
     const now = Date.now();
-    let evicted = 0;
+    const keysToDelete: string[] = [];
 
-    for (const [key, item] of cache.entries()) {
-        if (now - item.cachedAt > EVICTION_TTL) {
-            cache.delete(key);
-            evicted++;
+    cache.forEach((entry, key) => {
+        if (now - entry.timestamp >= entry.ttl) {
+            keysToDelete.push(key);
         }
+    });
+
+    if (keysToDelete.length > 0) {
+        clientLogger.info('Cache', 'Evicting stale entries', { count: keysToDelete.length, keys: keysToDelete });
     }
 
-    return evicted;
+    keysToDelete.forEach((key) => cache.delete(key));
 }
 
-export function invalidateCache<T>(cache: Map<string, CachedItem<T>>): void {
-    cache.clear();
-}
+export function setupAutoEviction<T>(
+    cache: CacheMap<T>,
+    intervalMs: number = 60000
+): () => void {
+    const interval = setInterval(() => {
+        evictStaleEntries(cache);
+    }, intervalMs);
 
-export function shouldEvict(cachedAt: number): boolean {
-    return Date.now() - cachedAt > EVICTION_TTL;
+    return () => clearInterval(interval);
 }
