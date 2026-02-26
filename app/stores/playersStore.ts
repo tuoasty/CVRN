@@ -32,6 +32,8 @@ interface PlayersState {
     getPlayersByTeam: (teamId: string) => Player[];
     getPlayerById: (playerId: string) => Player | undefined;
     clearPlayersForTeam: (teamId: string) => void;
+    invalidateTeam: (teamId: string) => void;
+    // evictStaleEntries: () => void;
     clearError: () => void;
 }
 
@@ -143,7 +145,9 @@ export const usePlayersStore = create<PlayersState>((set, get) => ({
 
             const newPlayerIdsByTeam = new Map(state.playerIdsByTeam);
             const existing = newPlayerIdsByTeam.get(teamId) || [];
-            newPlayerIdsByTeam.set(teamId, [...existing, newPlayer.id]);
+            if (!existing.includes(newPlayer.id)) {
+                newPlayerIdsByTeam.set(teamId, [...existing, newPlayer.id]);
+            }
 
             return {
                 playersById: newPlayersById,
@@ -168,17 +172,21 @@ export const usePlayersStore = create<PlayersState>((set, get) => ({
 
         set((state) => {
             const newPlayersById = new Map(state.playersById);
-            const updatedPlayer = { ...result.value, team_id: null };
-            newPlayersById.set(result.value.id, updatedPlayer);
-
             const newPlayerIdsByTeam = new Map(state.playerIdsByTeam);
+
             const existing = newPlayerIdsByTeam.get(teamId) || [];
+            const removedPlayerId = existing.find((id) => {
+                const player = newPlayersById.get(id);
+                return player?.roblox_user_id === robloxUserId;
+            });
+
+            if (removedPlayerId) {
+                newPlayersById.delete(removedPlayerId);
+            }
+
             newPlayerIdsByTeam.set(
                 teamId,
-                existing.filter((id) => {
-                    const player = newPlayersById.get(id);
-                    return player?.roblox_user_id !== robloxUserId;
-                })
+                existing.filter((id) => id !== removedPlayerId)
             );
 
             return {
@@ -223,5 +231,44 @@ export const usePlayersStore = create<PlayersState>((set, get) => ({
         });
     },
 
+    invalidateTeam: (teamId: string) => {
+        set((state) => {
+            const newLastFetchedByTeam = new Map(state.lastFetchedByTeam);
+            newLastFetchedByTeam.delete(teamId);
+            return { lastFetchedByTeam: newLastFetchedByTeam };
+        });
+    },
+
+    // evictStaleEntries: () => {
+    //     const { playersById, playerIdsByTeam } = get();
+    //     const cache = createCache<Player>();
+    //
+    //     playersById.forEach((player, id) => {
+    //         setCached(cache, id, player);
+    //     });
+    //
+    //     evictStale(cache);
+    //
+    //     const freshPlayerIds = new Set(Array.from(cache.keys()));
+    //     const newPlayersById = new Map(
+    //         Array.from(cache.entries()).map(([id, item]) => [id, item.data])
+    //     );
+    //
+    //     const newPlayerIdsByTeam = new Map(playerIdsByTeam);
+    //     for (const [teamId, playerIds] of newPlayerIdsByTeam.entries()) {
+    //         const filtered = playerIds.filter((id) => freshPlayerIds.has(id));
+    //         if (filtered.length === 0) {
+    //             newPlayerIdsByTeam.delete(teamId);
+    //         } else {
+    //             newPlayerIdsByTeam.set(teamId, filtered);
+    //         }
+    //     }
+    //
+    //     set({
+    //         playersById: newPlayersById,
+    //         playerIdsByTeam: newPlayerIdsByTeam,
+    //     });
+    // },
+    //
     clearError: () => set({ error: null }),
 }));
