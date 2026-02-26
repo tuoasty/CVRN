@@ -1,11 +1,14 @@
-import {TeamWithRegion} from "@/server/dto/team.dto";
-import {create} from "zustand/react";
+"use client";
+
+import { TeamWithRegion } from "@/server/dto/team.dto";
+import { create } from "zustand";
 import {
-    createTeamAction, deleteTeamAction,
+    createTeamAction,
+    deleteTeamAction,
     getAllTeamsWithRegionsAction,
-    getTeamWithRegionAndPlayersAction
+    getTeamWithRegionAndPlayersAction,
 } from "@/app/actions/team.actions";
-import {shouldRefetch} from "@/app/stores/storeUtils";
+import {shouldEvict, shouldRefetch} from "@/app/stores/storeUtils";
 
 function indexTeamsByRegion(teams: TeamWithRegion[]): {
     teamsById: Map<string, TeamWithRegion>;
@@ -61,6 +64,9 @@ interface TeamsState {
     deleteTeam: (teamId: string) => Promise<{ ok: boolean; error?: string }>;
     getTeamById: (teamId: string) => TeamWithRegion | undefined;
     getTeamsByRegion: (regionCode: string) => TeamWithRegion[];
+    getAllTeams: () => TeamWithRegion[];
+    invalidate: () => void;
+    evictStaleEntries: () => void;
     clearError: () => void;
 }
 
@@ -85,6 +91,7 @@ export const useTeamStore = create<TeamsState>((set, get) => ({
                     teamsById: indexed.teamsById,
                     teamsByRegion: indexed.teamsByRegion,
                     lastFetched: Date.now(),
+                    error: null,
                 });
             }
             return;
@@ -216,5 +223,36 @@ export const useTeamStore = create<TeamsState>((set, get) => ({
         return teamIds.map((id) => teamsById.get(id)).filter((t): t is TeamWithRegion => t !== undefined);
     },
 
+    getAllTeams: () => {
+        return Array.from(get().teamsById.values());
+    },
+
+    invalidate: () => {
+        set({ lastFetched: null });
+    },
+
+    evictStaleEntries: () => {
+        const { teamsById, teamsByRegion, lastFetched } = get();
+
+        if (!lastFetched || !shouldEvict(lastFetched)) {
+            return;
+        }
+
+        const newTeamsById = new Map<string, TeamWithRegion>();
+        const newTeamsByRegion = new Map<string, string[]>();
+
+        teamsById.forEach((team, id) => {
+            newTeamsById.set(id, team);
+        });
+
+        const indexed = indexTeamsByRegion(Array.from(newTeamsById.values()));
+
+        set({
+            teamsById: indexed.teamsById,
+            teamsByRegion: indexed.teamsByRegion,
+            lastFetched: Date.now(),
+        });
+    },
+
     clearError: () => set({ error: null }),
-}))
+}));
