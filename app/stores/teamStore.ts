@@ -1,258 +1,141 @@
-"use client";
+import { create } from 'zustand';
+import { TeamWithRegion, TeamWithRegionAndPlayers } from '@/server/dto/team.dto';
+import { getAllTeamsWithRegionsAction, getTeamWithRegionAndPlayersAction } from '@/app/actions/team.actions';
+import {CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction} from './storeUtils';
+import {clientLogger} from "@/app/utils/clientLogger";
 
-import { TeamWithRegion } from "@/server/dto/team.dto";
-import { create } from "zustand";
-import {
-    createTeamAction,
-    deleteTeamAction,
-    getAllTeamsWithRegionsAction,
-    getTeamWithRegionAndPlayersAction,
-} from "@/app/actions/team.actions";
-import {shouldEvict, shouldRefetch} from "@/app/stores/storeUtils";
-
-function indexTeamsByRegion(teams: TeamWithRegion[]): {
-    teamsById: Map<string, TeamWithRegion>;
-    teamsByRegion: Map<string, string[]>;
-} {
-    const teamsById = new Map(teams.map((t) => [t.id, t]));
-    const teamsByRegion = new Map<string, string[]>();
-
-    teams.forEach((team) => {
-        if (team.regions) {
-            const regionCode = team.regions.code;
-            const existing = teamsByRegion.get(regionCode) || [];
-            teamsByRegion.set(regionCode, [...existing, team.id]);
-        }
-    });
-
-    return { teamsById, teamsByRegion };
-}
-
-function addTeamToIndex(
-    team: TeamWithRegion,
-    teamsById: Map<string, TeamWithRegion>,
-    teamsByRegion: Map<string, string[]>
-): {
-    teamsById: Map<string, TeamWithRegion>;
-    teamsByRegion: Map<string, string[]>;
-} {
-    const newTeamsById = new Map(teamsById);
-    newTeamsById.set(team.id, team);
-
-    const newTeamsByRegion = new Map(teamsByRegion);
-    if (team.regions) {
-        const regionCode = team.regions.code;
-        const existing = newTeamsByRegion.get(regionCode) || [];
-        if (!existing.includes(team.id)) {
-            newTeamsByRegion.set(regionCode, [...existing, team.id]);
-        }
-    }
-
-    return { teamsById: newTeamsById, teamsByRegion: newTeamsByRegion };
-}
-
-interface TeamsState {
-    teamsById: Map<string, TeamWithRegion>;
-    teamsByRegion: Map<string, string[]>;
-    isLoading: boolean;
+type TeamsState = {
+    allTeamsCache: CacheEntry<TeamWithRegion[]> | undefined;
+    teamDetailsCache: Map<string, CacheEntry<TeamWithRegionAndPlayers>>;
+    loading: boolean;
     error: string | null;
-    lastFetched: number | null;
 
-    fetchAllTeams: (options?: { force?: boolean }) => Promise<void>;
-    fetchTeamBySlug: (regionCode: string, slug: string) => Promise<TeamWithRegion | null>;
-    createTeam: (data: FormData) => Promise<{ ok: boolean; error?: string; teamId?: string }>;
-    deleteTeam: (teamId: string) => Promise<{ ok: boolean; error?: string }>;
-    getTeamById: (teamId: string) => TeamWithRegion | undefined;
-    getTeamsByRegion: (regionCode: string) => TeamWithRegion[];
-    getAllTeams: () => TeamWithRegion[];
-    invalidate: () => void;
-    evictStaleEntries: () => void;
-    clearError: () => void;
-}
+    fetchAllTeams: () => Promise<void>;
+    fetchTeamDetails: (slug: string, regionCode: string) => Promise<void>;
+    addTeamToCache: (team: TeamWithRegion) => void;
+    removeTeamFromCache: (teamId: string) => void;
+    clearCache: () => void;
+};
 
-export const useTeamStore = create<TeamsState>((set, get) => ({
-    teamsById: new Map(),
-    teamsByRegion: new Map(),
-    isLoading: false,
+const TEAMS_LIST_TTL = 5 * 60 * 1000;
+const TEAM_DETAILS_TTL = 5 * 60 * 1000;
+
+const teamDetailsCache = new Map<string, CacheEntry<TeamWithRegionAndPlayers>>();
+
+const cleanupInterval = setupAutoEviction(teamDetailsCache, 60000);
+
+const createTeamCacheKey = (slug: string, regionCode: string) => `${slug}-${regionCode}`;
+
+export const useTeamsStore = create<TeamsState>((set, get) => ({
+    allTeamsCache: undefined,
+    teamDetailsCache,
+    loading: false,
     error: null,
-    lastFetched: null,
 
-    fetchAllTeams: async (options) => {
-        const { lastFetched, teamsById } = get();
-        const strategy = shouldRefetch(teamsById.size > 0, lastFetched, options?.force);
+    fetchAllTeams: async () => {
+        const { allTeamsCache } = get();
 
-        if (strategy === "skip") return;
+        if (isCacheValid(allTeamsCache)) {
+            clientLogger.info('TeamsStore', 'Using cached teams list', { count: allTeamsCache?.data.length });
+            return;
+        }
 
-        if (strategy === "background") {
+        if (isCacheValid(allTeamsCache)) {
+            return;
+        }
+        clientLogger.info('TeamsStore', 'Fetching teams from server');
+        set({ loading: true, error: null });
+
+        try {
             const result = await getAllTeamsWithRegionsAction();
-            if (result.ok) {
-                const indexed = indexTeamsByRegion(result.value);
-                set({
-                    teamsById: indexed.teamsById,
-                    teamsByRegion: indexed.teamsByRegion,
-                    lastFetched: Date.now(),
-                    error: null,
-                });
+
+            if (!result.ok) {
+                clientLogger.error('TeamsStore', 'Failed to fetch teams', { error: result.error });
+                set({ error: result.error.message, loading: false });
+                return;
             }
+            clientLogger.info('TeamsStore', 'Teams fetched successfully', { count: result.value.length });
+            set({
+                allTeamsCache: createCacheEntry(result.value, TEAMS_LIST_TTL),
+                loading: false,
+            });
+        } catch (error) {
+            clientLogger.error('TeamsStore', 'Exception during fetch', { error });
+            set({ error: 'Failed to fetch teams', loading: false });
+        }
+    },
+
+    fetchTeamDetails: async (slug: string, regionCode: string) => {
+        const { teamDetailsCache } = get();
+        const cacheKey = createTeamCacheKey(slug, regionCode);
+        const cached = teamDetailsCache.get(cacheKey);
+
+        if (isCacheValid(cached)) {
+            clientLogger.info('TeamsStore', 'Using cached team details', { slug, regionCode });
             return;
         }
 
-        set({ isLoading: true, error: null });
+        clientLogger.info('TeamsStore', 'Fetching team details', { slug, regionCode });
+        set({ loading: true, error: null });
 
-        const result = await getAllTeamsWithRegionsAction();
+        try {
+            const result = await getTeamWithRegionAndPlayersAction({ slug, regionCode });
 
-        if (!result.ok) {
-            set({ isLoading: false, error: result.error.message });
-            return;
-        }
-
-        const indexed = indexTeamsByRegion(result.value);
-
-        set({
-            teamsById: indexed.teamsById,
-            teamsByRegion: indexed.teamsByRegion,
-            isLoading: false,
-            error: null,
-            lastFetched: Date.now(),
-        });
-    },
-
-    fetchTeamBySlug: async (regionCode: string, slug: string) => {
-        const { teamsById } = get();
-
-        const cachedTeam = Array.from(teamsById.values()).find(
-            (t) => t.slug === slug && t.regions?.code.toLowerCase() === regionCode.toLowerCase()
-        );
-
-        if (cachedTeam) {
-            return cachedTeam;
-        }
-
-        set({ isLoading: true, error: null });
-
-        const result = await getTeamWithRegionAndPlayersAction({ slug, regionCode });
-
-        if (!result.ok) {
-            set({ isLoading: false, error: result.error.message });
-            return null;
-        }
-
-        const team = result.value.team;
-
-        set((state) => {
-            const indexed = addTeamToIndex(team, state.teamsById, state.teamsByRegion);
-            return {
-                teamsById: indexed.teamsById,
-                teamsByRegion: indexed.teamsByRegion,
-                isLoading: false,
-                error: null,
-            };
-        });
-
-        return team;
-    },
-
-    createTeam: async (data: FormData) => {
-        set({ isLoading: true, error: null });
-
-        const result = await createTeamAction(data);
-
-        if (!result.ok) {
-            set({ isLoading: false, error: result.error.message });
-            return { ok: false, error: result.error.message };
-        }
-
-        const newTeam = result.value;
-
-        set((state) => {
-            const indexed = addTeamToIndex(newTeam, state.teamsById, state.teamsByRegion);
-            return {
-                teamsById: indexed.teamsById,
-                teamsByRegion: indexed.teamsByRegion,
-                isLoading: false,
-                error: null,
-            };
-        });
-
-        return { ok: true, teamId: newTeam.id };
-    },
-
-    deleteTeam: async (teamId: string) => {
-        set({ isLoading: true, error: null });
-
-        const result = await deleteTeamAction({ teamId });
-
-        if (!result.ok) {
-            set({ isLoading: false, error: result.error.message });
-            return { ok: false, error: result.error.message };
-        }
-
-        set((state) => {
-            const newTeamsById = new Map(state.teamsById);
-            const team = newTeamsById.get(teamId);
-            newTeamsById.delete(teamId);
-
-            const newTeamsByRegion = new Map(state.teamsByRegion);
-            if (team?.regions) {
-                const regionCode = team.regions.code;
-                const existing = newTeamsByRegion.get(regionCode) || [];
-                newTeamsByRegion.set(
-                    regionCode,
-                    existing.filter((id) => id !== teamId)
-                );
+            if (!result.ok) {
+                clientLogger.error('TeamsStore', 'Failed to fetch team details', { slug, regionCode, error: result.error });
+                set({ error: result.error.message, loading: false });
+                return;
             }
 
-            return {
-                teamsById: newTeamsById,
-                teamsByRegion: newTeamsByRegion,
-                isLoading: false,
-                error: null,
-            };
+            teamDetailsCache.set(cacheKey, createCacheEntry(result.value, TEAM_DETAILS_TTL));
+            clientLogger.info('TeamsStore', 'Team details fetched successfully', { slug, regionCode });
+            set({ teamDetailsCache, loading: false });
+        } catch (error) {
+            clientLogger.error('TeamsStore', 'Exception fetching team details', { slug, regionCode, error });
+            set({ error: 'Failed to fetch team details', loading: false });
+        }
+    },
+
+    addTeamToCache: (team: TeamWithRegion) => {
+        const { allTeamsCache } = get();
+
+        if (!allTeamsCache){
+            clientLogger.warn('TeamsStore', 'Cannot add team - cache not initialized');
+            return
+        }
+
+        clientLogger.info('TeamsStore', 'Adding team to cache', { teamId: team.id, teamName: team.name });
+        const updatedTeams = [...allTeamsCache.data, team];
+
+        set({
+            allTeamsCache: createCacheEntry(updatedTeams, TEAMS_LIST_TTL),
         });
-
-        return { ok: true };
     },
 
-    getTeamById: (teamId: string) => {
-        return get().teamsById.get(teamId);
-    },
+    removeTeamFromCache: (teamId: string) => {
+        const { allTeamsCache } = get();
 
-    getTeamsByRegion: (regionCode: string) => {
-        const { teamsById, teamsByRegion } = get();
-        const teamIds = teamsByRegion.get(regionCode) || [];
-        return teamIds.map((id) => teamsById.get(id)).filter((t): t is TeamWithRegion => t !== undefined);
-    },
-
-    getAllTeams: () => {
-        return Array.from(get().teamsById.values());
-    },
-
-    invalidate: () => {
-        set({ lastFetched: null });
-    },
-
-    evictStaleEntries: () => {
-        const { teamsById, teamsByRegion, lastFetched } = get();
-
-        if (!lastFetched || !shouldEvict(lastFetched)) {
+        if (!allTeamsCache) {
+            clientLogger.warn('TeamsStore', 'Cannot remove team - cache not initialized');
             return;
         }
 
-        const newTeamsById = new Map<string, TeamWithRegion>();
-        const newTeamsByRegion = new Map<string, string[]>();
-
-        teamsById.forEach((team, id) => {
-            newTeamsById.set(id, team);
-        });
-
-        const indexed = indexTeamsByRegion(Array.from(newTeamsById.values()));
+        clientLogger.info('TeamsStore', 'Removing team from cache', { teamId });
+        const updatedTeams = allTeamsCache.data.filter(t => t.id !== teamId);
 
         set({
-            teamsById: indexed.teamsById,
-            teamsByRegion: indexed.teamsByRegion,
-            lastFetched: Date.now(),
+            allTeamsCache: createCacheEntry(updatedTeams, TEAMS_LIST_TTL),
         });
     },
 
-    clearError: () => set({ error: null }),
+    clearCache: () => {
+        teamDetailsCache.clear();
+        set({ allTeamsCache: undefined, error: null });
+    },
 }));
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', () => {
+        cleanupInterval();
+    });
+}

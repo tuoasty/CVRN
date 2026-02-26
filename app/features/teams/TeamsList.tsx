@@ -2,50 +2,43 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { getAllTeamsAction } from "@/app/actions/team.actions";
 import { getAllRegionsAction } from "@/app/actions/region.actions";
-import { Team, Region } from "@/shared/types/db";
+import { Region } from "@/shared/types/db";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/app/components/ui/card";
+import { TeamWithRegion } from "@/server/dto/team.dto";
+import {useTeamsStore} from "@/app/stores/teamStore";
+import {clientLogger} from "@/app/utils/clientLogger";
 
 export default function TeamsList() {
-    const [teams, setTeams] = useState<Team[]>([]);
+    const { allTeamsCache, loading, error, fetchAllTeams } = useTeamsStore();
     const [regions, setRegions] = useState<Region[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [regionsLoading, setRegionsLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
-        loadData();
+        console.log('[TeamsList] Component mounted, fetching teams...');
+        fetchAllTeams();
+        loadRegions();
     }, []);
 
-    const loadData = async () => {
-        setLoading(true);
-        setError(null);
+    const loadRegions = async () => {
+        setRegionsLoading(true);
 
         try {
-            const [teamsResult, regionsResult] = await Promise.all([
-                getAllTeamsAction(),
-                getAllRegionsAction(),
-            ]);
-
-            if (!teamsResult.ok) {
-                setError(teamsResult.error.message);
-                return;
-            }
+            const regionsResult = await getAllRegionsAction();
 
             if (!regionsResult.ok) {
-                setError(regionsResult.error.message);
+                clientLogger.error('TeamsList', 'Failed to fetch regions', { error: regionsResult.error });
                 return;
             }
 
-            setTeams(teamsResult.value);
+            clientLogger.info('TeamsList', 'Regions fetched', { count: regionsResult.value.length });
             setRegions(regionsResult.value);
         } catch (error) {
-            console.log(error);
-            setError("Failed to load teams");
+            clientLogger.error('TeamsList', 'Exception fetching regions', { error });
         } finally {
-            setLoading(false);
+            setRegionsLoading(false);
         }
     };
 
@@ -55,11 +48,17 @@ export default function TeamsList() {
         return region?.code.toLowerCase() || "unknown";
     };
 
-    const handleTeamClick = (team: Team) => {
+    const handleTeamClick = (team: TeamWithRegion) => {
         if (!team.region_id) return;
-        const regionCode = getRegionCode(team.region_id);
+        const regionCode = team.regions?.code.toLowerCase() || "unknown";
         router.push(`/admin/teams/${regionCode}/${team.slug}`);
     };
+
+    const teams = allTeamsCache?.data || [];
+
+    if (loading || regionsLoading) {
+        return <div className="p-4 text-muted-foreground">Loading teams...</div>;
+    }
 
     if (loading) {
         return <div className="p-4 text-muted-foreground">Loading teams...</div>;
@@ -81,7 +80,7 @@ export default function TeamsList() {
                 {teams.map((team) => (
                     <Card
                         key={team.id}
-                        className={`${team.region_id ? 'cursor-pointer hover:border-primary' : 'opacity-50'} transition-colors`}
+                        className={`${team.regions ? 'cursor-pointer hover:border-primary' : 'opacity-50'} transition-colors`}
                         onClick={() => handleTeamClick(team)}
                     >
                         <CardContent className="p-4 text-center">
@@ -99,7 +98,7 @@ export default function TeamsList() {
                             )}
                             <h3 className="font-semibold mt-2">{team.name}</h3>
                             <p className="text-sm text-muted-foreground">
-                                {team.region_id ? getRegionCode(team.region_id).toUpperCase() : "No Region"}
+                                {team.regions ? getRegionCode(team.regions.code.toUpperCase()) : "No Region"}
                             </p>
                         </CardContent>
                     </Card>
