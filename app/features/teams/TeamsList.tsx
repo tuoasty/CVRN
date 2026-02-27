@@ -98,7 +98,7 @@ export default function TeamsList() {
                             )}
                             <h3 className="font-semibold mt-2">{team.name}</h3>
                             <p className="text-sm text-muted-foreground">
-                                {team.regions ? getRegionCode(team.regions.code.toUpperCase()) : "No Region"}
+                                {team.regions ? `${team.regions.code.toUpperCase()} - ${team.regions.name}` : "No Region"}
                             </p>
                         </CardContent>
                     </Card>

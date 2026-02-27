@@ -1,16 +1,21 @@
 "use client"
 
-import {useState} from "react";
-import {RobloxUserWithAvatar} from "@/shared/types/roblox";
-import {savePlayerToTeamAction, searchPlayersAction} from "@/app/actions/player.actions";
+import { useState } from "react";
 import Image from "next/image";
+import { RobloxUserWithAvatar } from "@/shared/types/roblox";
+import { savePlayerToTeamAction, searchPlayersAction } from "@/app/actions/player.actions";
+import { clientLogger } from "@/app/utils/clientLogger";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
+import { Badge } from "@/app/components/ui/badge";
 
 interface Props {
     teamId: string;
     onSuccess: () => void;
 }
 
-export default function AddPlayerToTeam({teamId, onSuccess}: Props){
+export default function AddPlayerToTeam({ teamId, onSuccess }: Props) {
     const [username, setUsername] = useState("");
     const [users, setUsers] = useState<RobloxUserWithAvatar[]>([]);
     const [loading, setLoading] = useState(false);
@@ -35,6 +40,7 @@ export default function AddPlayerToTeam({teamId, onSuccess}: Props){
             const result = await searchPlayersAction(username);
 
             if (!result.ok) {
+                clientLogger.error('AddPlayerToTeam', 'Search failed', { username, error: result.error });
                 setError(result.error.message);
                 return;
             }
@@ -45,7 +51,7 @@ export default function AddPlayerToTeam({teamId, onSuccess}: Props){
                 setError("No users found");
             }
         } catch (error) {
-            console.log(error);
+            clientLogger.error('AddPlayerToTeam', 'Exception during search', { username, error });
             setError("Search failed");
         } finally {
             setLoading(false);
@@ -67,10 +73,12 @@ export default function AddPlayerToTeam({teamId, onSuccess}: Props){
             });
 
             if (!result.ok) {
+                clientLogger.error('AddPlayerToTeam', 'Failed to add player', { userId: user.id, teamId, error: result.error });
                 setError(result.error.message);
                 return;
             }
 
+            clientLogger.info('AddPlayerToTeam', 'Player added successfully', { userId: user.id, teamId });
             setSuccess(`${user.displayName} added successfully!`);
             setUsername("");
             setUsers([]);
@@ -79,7 +87,7 @@ export default function AddPlayerToTeam({teamId, onSuccess}: Props){
                 onSuccess();
             }, 1000);
         } catch (error) {
-            console.log(error);
+            clientLogger.error('AddPlayerToTeam', 'Exception adding player', { userId: user.id, teamId, error });
             setError("Failed to add player");
         } finally {
             setAdding(false);
@@ -87,86 +95,72 @@ export default function AddPlayerToTeam({teamId, onSuccess}: Props){
     };
 
     return (
-        <div style={{
-            marginTop: "1rem",
-            padding: "1rem",
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            backgroundColor: "#f9f9f9"
-        }}>
-            <h3 style={{ margin: "0 0 1rem 0" }}>Search Roblox Player</h3>
-
-            <form onSubmit={handleSearch} style={{ marginBottom: "1rem" }}>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <input
+        <Card>
+            <CardHeader>
+                <CardTitle>Search Roblox Player</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <form onSubmit={handleSearch} className="flex gap-2">
+                    <Input
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="Enter Roblox username"
                         disabled={loading || adding}
-                        style={{ flex: 1 }}
+                        className="flex-1"
                     />
-                    <button type="submit" disabled={loading || adding}>
+                    <Button type="submit" disabled={loading || adding}>
                         {loading ? "Searching..." : "Search"}
-                    </button>
-                </div>
-            </form>
+                    </Button>
+                </form>
 
-            {error && <div style={{ color: "red", marginBottom: "0.5rem" }}>{error}</div>}
-            {success && <div style={{ color: "green", marginBottom: "0.5rem" }}>{success}</div>}
+                {error && <div className="text-sm text-destructive">{error}</div>}
+                {success && <div className="text-sm text-green-600">{success}</div>}
 
-            {users.length > 0 && (
-                <div>
-                    <h4 style={{ margin: "0 0 0.5rem 0" }}>Found {users.length} user(s):</h4>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                        {users.map((user) => (
-                            <div
-                                key={user.id.toString()}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "1rem",
-                                    padding: "0.75rem",
-                                    border: "1px solid #ddd",
-                                    borderRadius: "4px",
-                                    backgroundColor: "white",
-                                }}
-                            >
-                                <Image
-                                    src={user.avatarUrl}
-                                    alt={user.name}
-                                    width={60}
-                                    height={60}
-                                    style={{ objectFit: "contain", borderRadius: "4px" }}
-                                />
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: "bold" }}>
-                                        {user.displayName}
-                                        {user.hasVerifiedBadge && (
-                                            <span style={{ color: "#0066cc", marginLeft: "0.25rem" }}>
-                                                ✓
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div style={{ fontSize: "0.9rem", color: "#666" }}>
-                                        @{user.name}
-                                    </div>
-                                    <div style={{ fontSize: "0.8rem", color: "#999" }}>
-                                        ID: {user.id.toString()}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handleAddPlayer(user)}
-                                    disabled={adding}
-                                    style={{ whiteSpace: "nowrap" }}
-                                >
-                                    {adding ? "Adding..." : "Add to Team"}
-                                </button>
-                            </div>
-                        ))}
+                {users.length > 0 && (
+                    <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Found {users.length} user(s):</h4>
+                        <div className="space-y-2">
+                            {users.map((user) => (
+                                <Card key={user.id.toString()}>
+                                    <CardContent className="flex items-center gap-4 p-4">
+                                        <Image
+                                            src={user.avatarUrl}
+                                            alt={user.name}
+                                            width={60}
+                                            height={60}
+                                            className="w-[60px] h-auto rounded object-contain"
+                                        />
+                                        <div className="flex-1 space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-semibold">{user.displayName}</span>
+                                                {user.hasVerifiedBadge && (
+                                                    <Badge variant="secondary" className="text-blue-600">
+                                                        ✓
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <div className="text-sm text-muted-foreground">
+                                                @{user.name}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                ID: {user.id.toString()}
+                                            </div>
+                                        </div>
+                                        <Button
+                                            onClick={() => handleAddPlayer(user)}
+                                            disabled={adding}
+                                            variant="outline"
+                                        >
+                                            {adding ? "Adding..." : "Add to Team"}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }

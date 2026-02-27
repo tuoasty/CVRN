@@ -203,12 +203,12 @@ export async function deleteTeam(supabase: DBClient, p:TeamIdInput): Promise<Res
     }
 }
 
-export async function getTeamBySlugAndRegion(supabase: DBClient, p: {
+export async function getTeamBySlugAndRegionWithRegion(supabase: DBClient, p: {
     slug: string;
     regionId: string;
 }) {
     try {
-        const { data, error } = await findTeamBySlugAndRegion(supabase, p)
+        const { data, error } = await findTeamBySlugAndRegionWithRegion(supabase, p)
         if(error){
             logger.error({ slug: p.slug, regionId: p.regionId, error }, "Failed to fetch team by slug and region");
             return Err(serializeError(error))

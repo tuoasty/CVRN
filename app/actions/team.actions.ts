@@ -6,7 +6,7 @@ import {
     getAllTeams,
     getAllTeamsWithRegions,
     getTeamByNameAndRegion,
-    getTeamBySlugAndRegion,
+    getTeamBySlugAndRegionWithRegion,
     getTeamWithRegionAndPlayers
 } from "@/server/services/team.service";
 import {createServerSupabase} from "@/server/supabase/server";
@@ -52,7 +52,7 @@ export async function getTeamBySlugAndRegionAction(p: {
     regionId: string;
 }) {
     const supabase = await createServerSupabase();
-    return getTeamBySlugAndRegion(supabase, p);
+    return getTeamBySlugAndRegionWithRegion(supabase, p);
 }
 
 export async function getTeamWithRegionAndPlayersAction(p: {
