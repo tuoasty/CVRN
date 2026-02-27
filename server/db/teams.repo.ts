@@ -1,5 +1,5 @@
 import {DBClient} from "@/shared/types/db";
-import {GetTeamByNameRegion} from "@/server/dto/team.dto";
+import {GetTeamByNameRegion, InsertTeamDto} from "@/server/dto/team.dto";
 
 export async function findAllTeams(supabase: DBClient){
     return supabase.from("teams").select("*")
@@ -25,19 +25,15 @@ export async function findTeamByNameAndRegion(supabase: DBClient, p: GetTeamByNa
     return supabase.from("teams").select("*").ilike("name", p.name).eq("region_id", p.regionId).single()
 }
 
-export async function insertTeam(supabase: DBClient, p: {
-    id?: string;
-    name: string;
-    slug: string;
-    logoUrl: string;
-    regionId: string;
-}) {
+export async function insertTeam(supabase: DBClient, p: InsertTeamDto) {
     return supabase.from("teams").insert({
         ...(p.id && { id: p.id }),
         name: p.name,
         slug: p.slug,
         logo_url: p.logoUrl,
-        region_id: p.regionId
+        region_id: p.regionId,
+        brick_number: p.brickNumber,
+        brick_color: p.brickColor
     }).select().single()
 }
 

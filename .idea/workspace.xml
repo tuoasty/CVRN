@@ -4,15 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Regions Store and PLayers Store">
-      <change afterPath="$PROJECT_DIR$/server/db/roles.repo.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/utils/rateLimiter.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="badge shadcn">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/teams/CreateTeamForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/CreateTeamForm.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/dto/team.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/team.dto.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/storage/storage.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/storage/storage.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -139,7 +138,7 @@
       <workItem from="1771985675567" duration="9526000" />
       <workItem from="1772001984559" duration="1473000" />
       <workItem from="1772086171768" duration="5490000" />
-      <workItem from="1772158756115" duration="7669000" />
+      <workItem from="1772158756115" duration="8977000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -469,7 +468,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772163257533</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="input validation and rate limiting">
+      <option name="closed" value="true" />
+      <created>1772175742064</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1772175742064</updated>
+    </task>
+    <task id="LOCAL-00043" summary="badge shadcn">
+      <option name="closed" value="true" />
+      <created>1772175749499</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1772175749499</updated>
+    </task>
+    <option name="localTasksCounter" value="44" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -489,8 +504,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="refactor arch" />
-    <MESSAGE value="save player service functions" />
     <MESSAGE value="add player to team" />
     <MESSAGE value="lazy sync" />
     <MESSAGE value="Fix admin actions" />
@@ -514,7 +527,9 @@
     <MESSAGE value="Zustand teamStore" />
     <MESSAGE value="Pino logger" />
     <MESSAGE value="Regions Store and PLayers Store" />
-    <option name="LAST_COMMIT_MESSAGE" value="Regions Store and PLayers Store" />
+    <MESSAGE value="input validation and rate limiting" />
+    <MESSAGE value="badge shadcn" />
+    <option name="LAST_COMMIT_MESSAGE" value="badge shadcn" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

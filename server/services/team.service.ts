@@ -15,7 +15,13 @@ import {
 } from "@/server/db/teams.repo";
 import {serializeError} from "@/server/utils/serializeableError";
 import {DBClient, Team} from "@/shared/types/db";
-import {GetTeamByNameRegion, TeamIdInput, TeamWithRegion, TeamWithRegionAndPlayers} from "@/server/dto/team.dto";
+import {
+    CreateTeamInput,
+    GetTeamByNameRegion,
+    TeamIdInput,
+    TeamWithRegion,
+    TeamWithRegionAndPlayers
+} from "@/server/dto/team.dto";
 import {findAllTeamPlayers, removeAllPlayersFromTeam} from "@/server/db/players.repo";
 
 function generateSlug(name: string): string {
@@ -26,12 +32,7 @@ function generateSlug(name: string): string {
         .replace(/^-+|-+$/g, '');
 }
 
-export async function createTeam(supabase:DBClient, p:{
-    name:string;
-    logoFile:File;
-    regionId:string;
-    userId:string;
-}):Promise<Result<TeamWithRegion>>{
+export async function createTeam(supabase:DBClient, p:CreateTeamInput):Promise<Result<TeamWithRegion>>{
     let uploadedPath: string | null = null
     let success = false;
 
@@ -64,7 +65,9 @@ export async function createTeam(supabase:DBClient, p:{
             name: p.name,
             slug,
             logoUrl: uploadRes.value.url,
-            regionId: p.regionId
+            regionId: p.regionId,
+            brickNumber: p.brickNumber,
+            brickColor: p.brickColor
         })
         if(error || !data){
             logger.error({ teamId, error }, "Failed to insert team, cleaning up uploaded file");
