@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { createTeamAction } from "@/app/actions/team.actions";
-import { getAllRegionsAction } from "@/app/actions/region.actions";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -14,16 +13,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/components/ui/select";
-import { Region } from "@/shared/types/db";
 import {useTeamsStore} from "@/app/stores/teamStore";
+import {useRegionsStore} from "@/app/stores/regionStore";
 
 export default function CreateTeamForm() {
     const { addTeamToCache } = useTeamsStore();
+    const { allRegionsCache, loading: regionsLoading, fetchAllRegions } = useRegionsStore();
 
     const [name, setName] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [regionId, setRegionId] = useState("");
-    const [regions, setRegions] = useState<Region[]>([]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -33,14 +32,10 @@ export default function CreateTeamForm() {
     const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
-        async function loadRegions() {
-            const result = await getAllRegionsAction();
-            if (result.ok) {
-                setRegions(result.value);
-            }
-        }
-        loadRegions();
+        fetchAllRegions();
     }, []);
+
+    const regions = allRegionsCache?.data || [];
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selected = e.target.files?.[0];
@@ -183,7 +178,7 @@ export default function CreateTeamForm() {
 
                 <div>
                     <Label htmlFor="region">Region</Label>
-                    <Select value={regionId} onValueChange={setRegionId} disabled={loading}>
+                    <Select value={regionId} onValueChange={setRegionId} disabled={loading || regionsLoading}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select region" />
                         </SelectTrigger>
@@ -197,7 +192,7 @@ export default function CreateTeamForm() {
                     </Select>
                 </div>
 
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading || regionsLoading}>
                     {loading ? "Creating..." : "Create Team"}
                 </Button>
             </form>

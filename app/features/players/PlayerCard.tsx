@@ -42,10 +42,9 @@ export default function PlayerCard({ player, onRemoved }: Props) {
                         alt={player.username || ""}
                         width={100}
                         height={100}
-                        className="object-contain"
+                        className="w-[100px] h-auto object-contain rounded"
                     />
                 )}
-
                 <div>
                     <h4 className="font-medium text-sm">
                         {player.display_name || player.username}

@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {useParams, useRouter} from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
-import {Player, Region, Team} from "@/shared/types/db";
-import { getTeamPlayersAction } from "@/app/actions/player.actions";
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
-import {deleteTeamAction, getTeamBySlugAndRegionAction} from "@/app/actions/team.actions";
+import { deleteTeamAction } from "@/app/actions/team.actions";
 import PlayerCard from "@/app/features/players/PlayerCard";
 
 import {
@@ -21,133 +19,120 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
-import {Button} from "@/app/components/ui/button";
-import {getRegionByCodeAction} from "@/app/actions/region.actions";
+import { Button } from "@/app/components/ui/button";
+import { clientLogger } from "@/app/utils/clientLogger";
+import {useTeamsStore} from "@/app/stores/teamStore";
+import {usePlayersStore} from "@/app/stores/playerStore";
 
 export default function TeamDetailPage() {
     const params = useParams();
-
-    const region = decodeURIComponent(
-        String(params.region || "")
-    ).toLowerCase();
-
-    const teamName = decodeURIComponent(
-        String(params.teamName || "")
-    ).toLowerCase();
-
-    const [team, setTeam] = useState<Team | null>(null);
-    const [players, setPlayers] = useState<Player[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [regionData, setRegionData] = useState<Region | null>(null);
     const router = useRouter();
 
+    const region = decodeURIComponent(String(params.region || "")).toLowerCase();
+    const teamSlug = decodeURIComponent(String(params.teamName || "")).toLowerCase();
+
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const teamsStore = useTeamsStore();
+    const playersStore = usePlayersStore();
+
+    const teamCacheKey = `${teamSlug}-${region}`;
+    const teamData = teamsStore.teamDetailsCache.get(teamCacheKey)?.data;
+    const players = teamData?.id ? playersStore.playersByTeamCache.get(teamData.id)?.data ?? [] : [];
+
     useEffect(() => {
-        if (!region || !teamName) return;
+        if (!region || !teamSlug) return;
 
-        loadTeamData();
-    }, [region, teamName]);
+        loadTeam();
+    }, []);
 
-    const loadTeamData = async () => {
-        setLoading(true);
+    useEffect(() => {
+        if (teamData?.id) {
+            playersStore.fetchTeamPlayers(teamData.id);
+        }
+    }, [teamData?.id]);
+
+    const loadTeam = async () => {
         setError(null);
 
         try {
-            const regionResult = await getRegionByCodeAction(region);
+            await teamsStore.fetchTeamDetails(teamSlug, region);
 
-            if (!regionResult.ok) {
-                setError(regionResult.error.message);
-                return;
+            if (teamsStore.error) {
+                setError(teamsStore.error);
             }
-
-            const foundRegion = regionResult.value;
-            setRegionData(foundRegion);
-
-            const teamResult = await getTeamBySlugAndRegionAction({
-                regionId: foundRegion.id,
-                slug: teamName,
-            });
-
-            if (!teamResult.ok) {
-                setError(teamResult.error.message);
-                return;
-            }
-
-            const foundTeam = teamResult.value;
-
-            if (!foundTeam) {
-                setError("Team not found");
-                return;
-            }
-
-            setTeam(foundTeam);
-
-            const playersResult = await getTeamPlayersAction({
-                teamId: foundTeam.id,
-            });
-
-            if (!playersResult.ok) {
-                setError(playersResult.error.message);
-                return;
-            }
-
-            setPlayers(playersResult.value);
         } catch (err) {
-            console.error(err);
+            clientLogger.error('TeamDetailPage', 'Exception loading team data', { error: err });
             setError("Failed to load team data");
-        } finally {
-            setLoading(false);
         }
     };
 
     const handlePlayerAdded = () => {
         setShowAddForm(false);
-        loadTeamData();
+        if (teamData?.id) {
+            playersStore.clearCache();
+            playersStore.fetchTeamPlayers(teamData.id);
+        }
+    };
+
+    const handlePlayerRemoved = () => {
+        if (teamData?.id) {
+            playersStore.clearCache();
+            playersStore.fetchTeamPlayers(teamData.id);
+        }
     };
 
     const handleDeleteTeam = async () => {
-        if (!team?.id) return;
-        const result = await deleteTeamAction({ teamId: team.id });
+        if (!teamData?.id) return;
+
+        const result = await deleteTeamAction({ teamId: teamData.id });
+
         if (!result.ok) {
+            clientLogger.error('TeamDetailPage', 'Failed to delete team', { teamId: teamData.id, error: result.error });
             setError(result.error.message);
             return;
         }
+
+        teamsStore.removeTeamFromCache(teamData.id);
         router.push("/admin/dashboard");
-        //     @TODO Change the push to correct admin teams page
     };
 
-    if (loading) {
+    const loading = teamsStore.loading || playersStore.loading;
+    const displayError = error || teamsStore.error || playersStore.error;
+
+    if (loading && !teamData) {
         return <div className="p-4 text-muted-foreground">Loading team...</div>;
     }
 
-    if (error) {
-        return <div className="p-4 text-destructive">{error}</div>;
+    if (displayError) {
+        return <div className="p-4 text-destructive">{displayError}</div>;
     }
 
-    if (!team) {
+    if (!teamData) {
         return <div className="p-4 text-muted-foreground">Team not found</div>;
     }
 
     return (
         <div className="p-4 space-y-4">
             <span className="text-sm text-muted-foreground">
-                {regionData ? `${regionData.code} - ${regionData.name}` : team.region_id}
+                {teamData.regions ? `${teamData.regions.code} - ${teamData.regions.name}` : teamData.region_id}
             </span>
 
             <div className="flex items-center gap-4">
-                {team.logo_url && (
+                {teamData.logo_url && (
                     <Image
-                        src={team.logo_url}
-                        alt={team.name || ""}
+                        src={teamData.logo_url}
+                        alt={teamData.name || ""}
                         width={150}
                         height={150}
-                        className="object-contain"
+                        loading="eager"
+                        className="w-[150px] h-auto object-contain"
                     />
                 )}
                 <div>
-                    <h2 className="text-2xl font-bold">{team.name}</h2>
+                    <h2 className="text-2xl font-bold">{teamData.name}</h2>
                     <p className="text-sm text-muted-foreground">
                         {players.length} {players.length === 1 ? "player" : "players"}
                     </p>
@@ -165,7 +150,7 @@ export default function TeamDetailPage() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Delete {team.name}?</AlertDialogTitle>
+                            <AlertDialogTitle>Delete {teamData.name}?</AlertDialogTitle>
                             <AlertDialogDescription>
                                 This action cannot be undone.
                             </AlertDialogDescription>
@@ -179,7 +164,7 @@ export default function TeamDetailPage() {
             </div>
 
             {showAddForm && (
-                <AddPlayerToTeam teamId={team.id} onSuccess={handlePlayerAdded} />
+                <AddPlayerToTeam teamId={teamData.id} onSuccess={handlePlayerAdded} />
             )}
 
             {players.length === 0 ? (
@@ -187,7 +172,7 @@ export default function TeamDetailPage() {
             ) : (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
                     {players.map((player) => (
-                        <PlayerCard key={player.id} player={player} onRemoved={loadTeamData} />
+                        <PlayerCard key={player.id} player={player} onRemoved={handlePlayerRemoved} />
                     ))}
                 </div>
             )}

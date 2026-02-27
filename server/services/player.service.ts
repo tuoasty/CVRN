@@ -51,6 +51,8 @@ export async function savePlayer(
     p: SavePlayerInput
 ): Promise<Result<Player>> {
     try {
+        let regionId = p.regionId ?? null;
+
         if(p.teamId){
             const {data:team} = await findTeamById(supabase, p.teamId)
             if(!team){
@@ -60,6 +62,8 @@ export async function savePlayer(
                     message:"Team does not exist"
                 })
             }
+
+            regionId = team.region_id
 
             const {data: existingPlayer} = await findPlayerByRobloxId(supabase, p.robloxUserId)
             if(existingPlayer?.team_id){
@@ -79,7 +83,7 @@ export async function savePlayer(
             }
         }
 
-        const {data, error} = await upsertPlayer(supabase, p)
+        const {data, error} = await upsertPlayer(supabase, {...p, regionId:regionId})
         if(error){
             logger.error({robloxUserId: p.robloxUserId, error}, "Failed to upsert player");
             return Err(serializeError(error))

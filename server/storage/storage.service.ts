@@ -1,5 +1,5 @@
 import {Err, Ok, Result} from "@/shared/types/result";
-import {SerializableError, serializeError} from "@/server/utils/serializeableError";
+import {serializeError} from "@/server/utils/serializeableError";
 import {DBClient} from "@/shared/types/db";
 import {logger} from "@/server/utils/logger";
 

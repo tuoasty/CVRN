@@ -1,12 +1,15 @@
 import { create } from 'zustand';
-import { TeamWithRegion, TeamWithRegionAndPlayers } from '@/server/dto/team.dto';
-import { getAllTeamsWithRegionsAction, getTeamWithRegionAndPlayersAction } from '@/app/actions/team.actions';
+import { TeamWithRegion } from '@/server/dto/team.dto';
+import {
+    getAllTeamsWithRegionsAction, getTeamBySlugAndRegionAction,
+} from '@/app/actions/team.actions';
 import {CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction} from './storeUtils';
 import {clientLogger} from "@/app/utils/clientLogger";
+import { useRegionsStore } from './regionStore';
 
 type TeamsState = {
     allTeamsCache: CacheEntry<TeamWithRegion[]> | undefined;
-    teamDetailsCache: Map<string, CacheEntry<TeamWithRegionAndPlayers>>;
+    teamDetailsCache: Map<string, CacheEntry<TeamWithRegion>>;
     loading: boolean;
     error: string | null;
 
@@ -20,7 +23,7 @@ type TeamsState = {
 const TEAMS_LIST_TTL = 5 * 60 * 1000;
 const TEAM_DETAILS_TTL = 5 * 60 * 1000;
 
-const teamDetailsCache = new Map<string, CacheEntry<TeamWithRegionAndPlayers>>();
+const teamDetailsCache = new Map<string, CacheEntry<TeamWithRegion>>();
 
 const cleanupInterval = setupAutoEviction(teamDetailsCache, 60000);
 
@@ -79,7 +82,21 @@ export const useTeamsStore = create<TeamsState>((set, get) => ({
         set({ loading: true, error: null });
 
         try {
-            const result = await getTeamWithRegionAndPlayersAction({ slug, regionCode });
+            const regionsStore = useRegionsStore.getState();
+            await regionsStore.fetchRegionByCode(regionCode);
+
+            const region = regionsStore.regionByCodeCache.get(regionCode.toLowerCase())?.data;
+
+            if (!region) {
+                clientLogger.error('TeamsStore', 'Region not found', { regionCode });
+                set({ error: 'Region not found', loading: false });
+                return;
+            }
+
+            const result = await getTeamBySlugAndRegionAction({
+                slug,
+                regionId: region.id
+            });
 
             if (!result.ok) {
                 clientLogger.error('TeamsStore', 'Failed to fetch team details', { slug, regionCode, error: result.error });
