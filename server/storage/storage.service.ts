@@ -2,6 +2,73 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {DBClient} from "@/shared/types/db";
 import {logger} from "@/server/utils/logger";
+import sharp from 'sharp';
+import {getUserRole} from "@/server/db/roles.repo";
+import {checkUploadRateLimit} from "@/server/utils/rateLimiter";
+
+const IMAGE_VALIDATION = {
+    MAX_FILE_SIZE: 2 * 1024 * 1024,
+    MAX_DIMENSION: 512,
+    ALLOWED_TYPES: ['image/png', 'image/jpeg', 'image/webp'] as string[],
+    COMPRESSION_QUALITY: 85,
+} as const;
+
+async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buffer: Buffer; contentType: string }>> {
+    try {
+        if (file.size > IMAGE_VALIDATION.MAX_FILE_SIZE) {
+            return Err({
+                message: `File size exceeds ${IMAGE_VALIDATION.MAX_FILE_SIZE / 1024 / 1024}MB`,
+                name: "FileSizeExceeded"
+            });
+        }
+
+        const fileType = file instanceof File ? file.type : 'unknown';
+        if (fileType !== 'unknown' && !IMAGE_VALIDATION.ALLOWED_TYPES.includes(fileType)) {
+            return Err({
+                message: `Invalid file type. Allowed: ${IMAGE_VALIDATION.ALLOWED_TYPES.join(', ')}`,
+                name: "InvalidFileType"
+            });
+        }
+
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const image = sharp(buffer);
+        const metadata = await image.metadata();
+
+        if (!metadata.width || !metadata.height) {
+            return Err({
+                message: "Unable to read image dimensions",
+                name: "InvalidImage"
+            });
+        }
+
+        const resized = image.resize(IMAGE_VALIDATION.MAX_DIMENSION, IMAGE_VALIDATION.MAX_DIMENSION, {
+            fit: 'inside',
+            withoutEnlargement: true
+        });
+
+        let compressed: Buffer;
+        let outputType: string;
+
+        if (metadata.format === 'png') {
+            compressed = await resized.png({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
+            outputType = 'image/png';
+        } else if (metadata.format === 'webp') {
+            compressed = await resized.webp({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
+            outputType = 'image/webp';
+        } else {
+            compressed = await resized.jpeg({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
+            outputType = 'image/jpeg';
+        }
+
+        return Ok({ buffer: compressed, contentType: outputType });
+    } catch (error) {
+        logger.error({ error }, "Failed to validate and compress image");
+        return Err({
+            message: "Failed to process image",
+            name: "ImageProcessingError"
+        });
+    }
+}
 
 export async function uploadFile(supabase: DBClient, p: {
     bucket:string;
@@ -9,15 +76,46 @@ export async function uploadFile(supabase: DBClient, p: {
     file:File | Blob;
     contentType?:string;
     upsert?:boolean;
+    compress?: boolean;
+    userId: string;
 }): Promise<Result<{ url:string;path:string }>> {
     try {
-        const {data, error} = await supabase.storage.from(p.bucket).upload(p.path, p.file, {
-            contentType:p.contentType,
-            upsert:p.upsert ?? true,
+        const roleResult = await getUserRole(supabase, p.userId);
+        if (!roleResult.ok) {
+            return Err(roleResult.error);
+        }
+
+        const role = roleResult.value || 'admin';
+        const rateLimitCheck = checkUploadRateLimit(p.userId, role);
+
+        if (!rateLimitCheck.allowed) {
+            const resetDate = new Date(rateLimitCheck.resetAt!);
+            logger.warn({ userId: p.userId, resetAt: resetDate }, "Upload rate limit exceeded");
+            return Err({
+                message: `Upload rate limit exceeded. Try again after ${resetDate.toISOString()}`,
+                name: "RateLimitExceeded"
+            });
+        }
+
+        let fileToUpload: File | Blob | Buffer = p.file;
+        let contentType = p.contentType;
+
+        if (p.compress) {
+            const compressionResult = await validateAndCompressImage(p.file);
+            if (!compressionResult.ok) {
+                return Err(compressionResult.error);
+            }
+            fileToUpload = compressionResult.value.buffer;
+            contentType = compressionResult.value.contentType;
+        }
+
+        const {data, error} = await supabase.storage.from(p.bucket).upload(p.path, fileToUpload, {
+            contentType: contentType,
+            upsert: p.upsert ?? true,
         });
 
         if(error){
-            logger.error({bucket: p.bucket, path: p.path, contentType: p.contentType, error}, "Failed to upload file");
+            logger.error({bucket: p.bucket, path: p.path, contentType: contentType, error}, "Failed to upload file");
             return Err(serializeError(error))
         }
         if(!data){

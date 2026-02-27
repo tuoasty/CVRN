@@ -10,7 +10,7 @@ import {
     findAllTeams, findAllTeamsWithRegions,
     findTeamById, findTeamByIdWithRegion,
     findTeamByNameAndRegion,
-    findTeamBySlugAndRegion, findTeamBySlugAndRegionWithRegion,
+    findTeamBySlugAndRegionWithRegion,
     insertTeam
 } from "@/server/db/teams.repo";
 import {serializeError} from "@/server/utils/serializeableError";
@@ -30,6 +30,7 @@ export async function createTeam(supabase:DBClient, p:{
     name:string;
     logoFile:File;
     regionId:string;
+    userId:string;
 }):Promise<Result<TeamWithRegion>>{
     let uploadedPath: string | null = null
     let success = false;
@@ -44,7 +45,9 @@ export async function createTeam(supabase:DBClient, p:{
             bucket: BUCKETS.PUBLIC,
             path,
             file:p.logoFile,
-            contentType:p.logoFile.type
+            contentType:p.logoFile.type,
+            compress: true,
+            userId: p.userId
         });
 
         if(!uploadRes.ok){

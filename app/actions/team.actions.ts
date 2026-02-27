@@ -12,6 +12,7 @@ import {
 import {createServerSupabase} from "@/server/supabase/server";
 import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
 import {getRegionByCode} from "@/server/services/region.service";
+import {Err} from "@/shared/types/result";
 
 export async function createTeamAction(formData: FormData){
     const supabase = await createServerSupabase();
@@ -19,11 +20,19 @@ export async function createTeamAction(formData: FormData){
     const name = formData.get('name') as string;
     const file = formData.get('logo') as File;
     const regionId = formData.get('regionId') as string;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return Err({
+            message: "User not authenticated",
+            name: "AuthError"
+        });
+    }
 
     return createTeam(supabase, {
         name,
         logoFile: file,
-        regionId
+        regionId,
+        userId: user.id
     });
 }
 
