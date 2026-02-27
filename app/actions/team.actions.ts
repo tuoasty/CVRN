@@ -20,6 +20,8 @@ export async function createTeamAction(formData: FormData){
     const name = formData.get('name') as string;
     const file = formData.get('logo') as File;
     const regionId = formData.get('regionId') as string;
+    const brickNumber = formData.get('brickNumber') as string;
+    const brickColor = formData.get('brickColor') as string;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         return Err({
@@ -32,7 +34,9 @@ export async function createTeamAction(formData: FormData){
         name,
         logoFile: file,
         regionId,
-        userId: user.id
+        userId: user.id,
+        brickNumber: brickNumber.trim(),
+        brickColor: brickColor.toUpperCase()
     });
 }
 

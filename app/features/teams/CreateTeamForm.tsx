@@ -23,6 +23,8 @@ export default function CreateTeamForm() {
     const [name, setName] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [regionId, setRegionId] = useState("");
+    const [brickNumber, setBrickNumber] = useState("");
+    const [brickColor, setBrickColor] = useState("");
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -84,8 +86,13 @@ export default function CreateTeamForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!name.trim() || !file || !regionId) {
-            setError("Team name, logo and region are required");
+        if (!name.trim() || !file || !regionId || !brickNumber.trim() || !brickColor.trim()) {
+            setError("All fields are required");
+            return;
+        }
+
+        if (!/^#[0-9A-Fa-f]{6}$/.test(brickColor)) {
+            setError("Brick color must be in #RRGGBB format (e.g., #FF0000)");
             return;
         }
 
@@ -98,6 +105,8 @@ export default function CreateTeamForm() {
             formData.append("name", name);
             formData.append("logo", file);
             formData.append("regionId", regionId);
+            formData.append("brickNumber", brickNumber.trim());
+            formData.append("brickColor", brickColor.toUpperCase());
 
             const result = await createTeamAction(formData);
 
@@ -114,6 +123,8 @@ export default function CreateTeamForm() {
             setFile(null);
             setRegionId("");
             setPreview(null);
+            setBrickNumber("");
+            setBrickColor("");
 
         } catch (error) {
             console.log(error)
@@ -190,6 +201,31 @@ export default function CreateTeamForm() {
                             ))}
                         </SelectContent>
                     </Select>
+                </div>
+
+                <div>
+                    <Label htmlFor="brickNumber">Brick Number</Label>
+                    <Input
+                        id="brickNumber"
+                        type="text"
+                        placeholder="e.g., 1, 21, 1032"
+                        value={brickNumber}
+                        onChange={(e) => setBrickNumber(e.target.value)}
+                        disabled={loading}
+                    />
+                </div>
+
+                <div>
+                    <Label htmlFor="brickColor">Brick Color (Hex)</Label>
+                    <Input
+                        id="brickColor"
+                        type="text"
+                        placeholder="#FF0000"
+                        value={brickColor}
+                        onChange={(e) => setBrickColor(e.target.value)}
+                        disabled={loading}
+                        maxLength={7}
+                    />
                 </div>
 
                 <Button type="submit" disabled={loading || regionsLoading}>

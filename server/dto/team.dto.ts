@@ -26,3 +26,22 @@ export interface TeamWithRegionAndPlayers {
     team: TeamWithRegion;
     players: Player[];
 }
+
+export interface InsertTeamDto {
+    id?: string;
+    name: string;
+    slug: string;
+    logoUrl: string;
+    regionId: string;
+    brickNumber: string;
+    brickColor: string;
+}
+
+export interface CreateTeamInput {
+    name: string;
+    logoFile: File;
+    regionId: string;
+    userId: string;
+    brickNumber: string;
+    brickColor: string;
+}
