@@ -4,14 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="badge shadcn">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Team brick color and hex">
+      <change afterPath="$PROJECT_DIR$/server/db/matchOfficial.repo.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/db/official.repo.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/db/seasons.repo.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/dto/match.dto.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/dto/matchOfficial.dto.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/dto/official.dto.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/dto/season.dto.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/services/matchOfficial.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/services/official.service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/services/season.service.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/CreateTeamForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/CreateTeamForm.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/dto/team.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/team.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/types/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/db.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -138,7 +146,8 @@
       <workItem from="1771985675567" duration="9526000" />
       <workItem from="1772001984559" duration="1473000" />
       <workItem from="1772086171768" duration="5490000" />
-      <workItem from="1772158756115" duration="8977000" />
+      <workItem from="1772158756115" duration="8990000" />
+      <workItem from="1772252525389" duration="6574000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -484,7 +493,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772175749499</updated>
     </task>
-    <option name="localTasksCounter" value="44" />
+    <task id="LOCAL-00044" summary="Team brick color and hex">
+      <option name="closed" value="true" />
+      <created>1772176862969</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1772176862969</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -504,7 +521,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="add player to team" />
     <MESSAGE value="lazy sync" />
     <MESSAGE value="Fix admin actions" />
     <MESSAGE value="Fix update player repo function" />
@@ -529,7 +545,8 @@
     <MESSAGE value="Regions Store and PLayers Store" />
     <MESSAGE value="input validation and rate limiting" />
     <MESSAGE value="badge shadcn" />
-    <option name="LAST_COMMIT_MESSAGE" value="badge shadcn" />
+    <MESSAGE value="Team brick color and hex" />
+    <option name="LAST_COMMIT_MESSAGE" value="Team brick color and hex" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
