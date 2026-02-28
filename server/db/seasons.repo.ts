@@ -10,6 +10,8 @@ export async function insertSeason(supabase: DBClient, p: InsertSeasonDto) {
             region_id: p.regionId,
             start_date: p.startDate,
             end_date: p.endDate,
+            slug: p.slug,
+            theme: p.theme ?? null,
             is_active: p.isActive
         })
         .select()
@@ -56,6 +58,8 @@ export async function updateSeasonById(
         startDate?: string;
         endDate?: string;
         isActive?: boolean;
+        slug?: string;
+        theme?: string | null;
     }
 ) {
     const payload: Record<string, unknown> = {};
@@ -64,6 +68,8 @@ export async function updateSeasonById(
     if (updates.startDate !== undefined) payload.start_date = updates.startDate;
     if (updates.endDate !== undefined) payload.end_date = updates.endDate;
     if (updates.isActive !== undefined) payload.is_active = updates.isActive;
+    if (updates.slug !== undefined) payload.slug = updates.slug;
+    if (updates.theme !== undefined) payload.theme = updates.theme;
 
     return supabase
         .from("seasons")
@@ -78,4 +84,17 @@ export async function deleteSeasonById(supabase: DBClient, seasonId: string) {
         .from("seasons")
         .delete()
         .eq("id", seasonId);
+}
+
+export async function findSeasonBySlugAndRegion(
+    supabase: DBClient,
+    slug: string,
+    regionId: string
+) {
+    return supabase
+        .from("seasons")
+        .select("*")
+        .eq("slug", slug)
+        .eq("region_id", regionId)
+        .single();
 }
