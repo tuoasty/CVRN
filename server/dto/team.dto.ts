@@ -1,8 +1,8 @@
 import {Player} from "@/shared/types/db";
 
-export interface GetTeamByNameRegion {
+export interface GetTeamByNameSeason {
     name: string;
-    regionId: string;
+    seasonId: string;
 }
 
 export interface TeamIdInput {
@@ -14,12 +14,19 @@ export interface TeamWithRegion {
     name: string;
     slug: string;
     logo_url: string | null;
-    region_id: string | null;
+    season_id: string;
+    deleted_at: string | null;
     created_at: string;
-    regions: {
-        code: string;
+    seasons: {
+        id: string;
         name: string;
-    } | null;
+        slug: string;
+        regions: {
+            id: string;
+            code: string;
+            name: string;
+        };
+    };
 }
 
 export interface TeamWithRegionAndPlayers {
@@ -32,7 +39,7 @@ export interface InsertTeamDto {
     name: string;
     slug: string;
     logoUrl: string;
-    regionId: string;
+    seasonId: string;
     brickNumber: string;
     brickColor: string;
 }
@@ -40,7 +47,7 @@ export interface InsertTeamDto {
 export interface CreateTeamInput {
     name: string;
     logoFile: File;
-    regionId: string;
+    seasonId: string;
     userId: string;
     brickNumber: string;
     brickColor: string;

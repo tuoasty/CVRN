@@ -1,5 +1,5 @@
 import {DBClient} from "@/shared/types/db";
-import {GetTeamByNameRegion, InsertTeamDto} from "@/server/dto/team.dto";
+import {InsertTeamDto} from "@/server/dto/team.dto";
 
 export async function findAllTeams(supabase: DBClient){
     return supabase.from("teams").select("*")
@@ -10,19 +10,34 @@ export async function findAllTeamsWithRegions(supabase: DBClient) {
         .from("teams")
         .select(`
             *,
-            regions:region_id (
-                code,
-                name
+            seasons!inner (
+                id,
+                name,
+                slug,
+                regions!inner (
+                    id,
+                    code,
+                    name
+                )
             )
         `)
+        .is("deleted_at", null)
 }
-
 export async function findTeamById(supabase: DBClient, id:string){
     return supabase.from("teams").select("*").eq("id", id).single()
 }
 
-export async function findTeamByNameAndRegion(supabase: DBClient, p: GetTeamByNameRegion){
-    return supabase.from("teams").select("*").ilike("name", p.name).eq("region_id", p.regionId).single()
+export async function findTeamByNameAndSeason(supabase: DBClient, p: {
+    name: string;
+    seasonId: string;
+}) {
+    return supabase
+        .from("teams")
+        .select("*")
+        .ilike("name", p.name)
+        .eq("season_id", p.seasonId)
+        .is("deleted_at", null)
+        .single()
 }
 
 export async function insertTeam(supabase: DBClient, p: InsertTeamDto) {
@@ -31,7 +46,7 @@ export async function insertTeam(supabase: DBClient, p: InsertTeamDto) {
         name: p.name,
         slug: p.slug,
         logo_url: p.logoUrl,
-        region_id: p.regionId,
+        season_id: p.seasonId,
         brick_number: p.brickNumber,
         brick_color: p.brickColor
     }).select().single()
@@ -50,28 +65,41 @@ export async function deleteTeamById(supabase: DBClient, id:string){
     return supabase.from("teams").delete().eq("id", id)
 }
 
-export async function findTeamBySlugAndRegion(supabase: DBClient, p: {
+export async function findTeamBySlugAndSeason(supabase: DBClient, p: {
     slug: string;
-    regionId: string;
+    seasonId: string;
 }) {
-    return supabase.from("teams").select("*").eq("slug", p.slug).eq("region_id", p.regionId).single()
+    return supabase
+        .from("teams")
+        .select("*")
+        .eq("slug", p.slug)
+        .eq("season_id", p.seasonId)
+        .is("deleted_at", null)
+        .single()
 }
 
-export async function findTeamBySlugAndRegionWithRegion(supabase: DBClient, p: {
+export async function findTeamBySlugAndSeasonWithRegion(supabase: DBClient, p: {
     slug: string;
-    regionId: string;
+    seasonId: string;
 }) {
     return supabase
         .from("teams")
         .select(`
             *,
-            regions:region_id (
-                code,
-                name
+            seasons!inner (
+                id,
+                name,
+                slug,
+                regions!inner (
+                    id,
+                    code,
+                    name
+                )
             )
         `)
         .eq("slug", p.slug)
-        .eq("region_id", p.regionId)
+        .eq("season_id", p.seasonId)
+        .is("deleted_at", null)
         .single()
 }
 
@@ -80,11 +108,26 @@ export async function findTeamByIdWithRegion(supabase: DBClient, teamId: string)
         .from('teams')
         .select(`
             *,
-            regions (
-                code,
-                name
+            seasons!inner (
+                id,
+                name,
+                slug,
+                regions!inner (
+                    id,
+                    code,
+                    name
+                )
             )
         `)
         .eq('id', teamId)
+        .is("deleted_at", null)
         .single();
+}
+
+export async function softDeleteTeamById(supabase: DBClient, id: string) {
+    return supabase
+        .from("teams")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id)
+        .is("deleted_at", null)
 }
