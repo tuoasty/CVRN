@@ -13,7 +13,6 @@ export async function upsertPlayer(
                 display_name:p.displayName ?? null,
                 avatar_url:p.avatarUrl ?? null,
                 team_id:p.teamId,
-                region_id:p.regionId,
                 last_synced_at: new Date().toISOString()
             },
             {
@@ -55,7 +54,6 @@ export async function updatePlayer(supabase: DBClient, p: UpdatePlayerInput) {
     if (p.avatarUrl !== undefined) updates.avatar_url = p.avatarUrl
     if (p.lastSyncedAt !== undefined) updates.last_synced_at = p.lastSyncedAt
     if (p.teamId !== undefined) updates.team_id = p.teamId
-    if (p.regionId !== undefined) updates.region_id = p.regionId
 
     return supabase
         .from("players")

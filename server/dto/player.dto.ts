@@ -8,7 +8,6 @@ export interface SavePlayerInput {
     displayName?:string | null;
     avatarUrl?: string | null;
     teamId?: string | null;
-    regionId?: string | null;
 }
 
 export interface UpdatePlayerInput {
@@ -18,5 +17,4 @@ export interface UpdatePlayerInput {
     avatarUrl?: string | null
     lastSyncedAt?: string
     teamId?: string | null
-    regionId?: string | null
 }

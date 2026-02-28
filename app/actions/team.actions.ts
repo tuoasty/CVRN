@@ -5,13 +5,14 @@ import {
     deleteTeam,
     getAllTeams,
     getAllTeamsWithRegions,
-    getTeamByNameAndRegion,
-    getTeamBySlugAndRegionWithRegion,
+    getTeamByNameAndSeason,
+    getTeamBySlugAndSeasonWithRegion,
     getTeamWithRegionAndPlayers
 } from "@/server/services/team.service";
 import {createServerSupabase} from "@/server/supabase/server";
-import {GetTeamByNameRegion, TeamIdInput} from "@/server/dto/team.dto";
+import {GetTeamByNameSeason, TeamIdInput} from "@/server/dto/team.dto";
 import {getRegionByCode} from "@/server/services/region.service";
+import {getSeasonBySlugAndRegion} from "@/server/services/season.service";
 import {Err} from "@/shared/types/result";
 
 export async function createTeamAction(formData: FormData){
@@ -19,7 +20,7 @@ export async function createTeamAction(formData: FormData){
 
     const name = formData.get('name') as string;
     const file = formData.get('logo') as File;
-    const regionId = formData.get('regionId') as string;
+    const seasonId = formData.get('seasonId') as string;
     const brickNumber = formData.get('brickNumber') as string;
     const brickColor = formData.get('brickColor') as string;
     const { data: { user } } = await supabase.auth.getUser();
@@ -33,7 +34,7 @@ export async function createTeamAction(formData: FormData){
     return createTeam(supabase, {
         name,
         logoFile: file,
-        regionId,
+        seasonId,
         userId: user.id,
         brickNumber: brickNumber.trim(),
         brickColor: brickColor.toUpperCase()
@@ -50,9 +51,9 @@ export async function getAllTeamsWithRegionsAction() {
     return getAllTeamsWithRegions(supabase);
 }
 
-export async function getTeamByNameAndRegionAction(input: GetTeamByNameRegion) {
+export async function getTeamByNameAndSeasonAction(input: GetTeamByNameSeason) {
     const supabase = await createServerSupabase();
-    return getTeamByNameAndRegion(supabase, input);
+    return getTeamByNameAndSeason(supabase, input);
 }
 
 export async function deleteTeamAction(input: TeamIdInput){
@@ -60,16 +61,17 @@ export async function deleteTeamAction(input: TeamIdInput){
     return deleteTeam(supabase, input);
 }
 
-export async function getTeamBySlugAndRegionAction(p: {
+export async function getTeamBySlugAndSeasonAction(p: {
     slug: string;
-    regionId: string;
+    seasonId: string;
 }) {
     const supabase = await createServerSupabase();
-    return getTeamBySlugAndRegionWithRegion(supabase, p);
+    return getTeamBySlugAndSeasonWithRegion(supabase, p);
 }
 
 export async function getTeamWithRegionAndPlayersAction(p: {
     slug: string;
+    seasonSlug: string;
     regionCode: string;
 }) {
     const supabase = await createServerSupabase();
@@ -80,8 +82,14 @@ export async function getTeamWithRegionAndPlayersAction(p: {
         return regionResult;
     }
 
+    const seasonResult = await getSeasonBySlugAndRegion(supabase, p.seasonSlug, regionResult.value.id);
+
+    if (!seasonResult.ok) {
+        return seasonResult;
+    }
+
     return getTeamWithRegionAndPlayers(supabase, {
         slug: p.slug,
-        regionId: regionResult.value.id
+        seasonId: seasonResult.value.id
     });
 }
