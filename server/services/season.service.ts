@@ -1,6 +1,6 @@
 import {DBClient, Season} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
-import {serializeError, SerializableError} from "@/server/utils/serializeableError";
+import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {
     insertSeason,
@@ -9,7 +9,7 @@ import {
     findSeasonsByRegion,
     findActiveSeasonByRegion,
     updateSeasonById,
-    deleteSeasonById
+    deleteSeasonById, findSeasonBySlugAndRegion
 } from "@/server/db/seasons.repo";
 import {CreateSeasonInput, SeasonIdInput, UpdateSeasonInput} from "@/server/dto/season.dto";
 import {randomUUID} from "node:crypto";
@@ -17,7 +17,7 @@ import {randomUUID} from "node:crypto";
 export async function createSeason(
     supabase: DBClient,
     p: CreateSeasonInput
-): Promise<Result<Season, SerializableError>> {
+): Promise<Result<Season>> {
     try {
         const seasonId = randomUUID();
 
@@ -27,7 +27,9 @@ export async function createSeason(
             regionId: p.regionId,
             startDate: p.startDate,
             endDate: p.endDate ?? null,
-            isActive: false
+            isActive: false,
+            slug: p.slug,
+            theme: p.theme ?? null
         });
 
         if (error) {
@@ -51,7 +53,7 @@ export async function createSeason(
 
 export async function getAllSeasons(
     supabase: DBClient
-): Promise<Result<Season[], SerializableError>> {
+): Promise<Result<Season[]>> {
     try {
         const {data, error} = await findAllSeasons(supabase);
 
@@ -77,7 +79,7 @@ export async function getAllSeasons(
 export async function getSeasonById(
     supabase: DBClient,
     p: SeasonIdInput
-): Promise<Result<Season, SerializableError>> {
+): Promise<Result<Season>> {
     try {
         const {data, error} = await findSeasonById(supabase, p.seasonId);
 
@@ -103,7 +105,7 @@ export async function getSeasonById(
 export async function getSeasonsByRegion(
     supabase: DBClient,
     regionId: string
-): Promise<Result<Season[], SerializableError>> {
+): Promise<Result<Season[]>> {
     try {
         const {data, error} = await findSeasonsByRegion(supabase, regionId);
 
@@ -129,7 +131,7 @@ export async function getSeasonsByRegion(
 export async function getActiveSeasonByRegion(
     supabase: DBClient,
     regionId: string
-): Promise<Result<Season, SerializableError>> {
+): Promise<Result<Season>> {
     try {
         const {data, error} = await findActiveSeasonByRegion(supabase, regionId);
 
@@ -155,13 +157,15 @@ export async function getActiveSeasonByRegion(
 export async function updateSeason(
     supabase: DBClient,
     p: UpdateSeasonInput
-): Promise<Result<Season, SerializableError>> {
+): Promise<Result<Season>> {
     try {
         const {data, error} = await updateSeasonById(supabase, p.seasonId, {
             name: p.name,
             startDate: p.startDate,
             endDate: p.endDate,
-            isActive: p.isActive
+            isActive: p.isActive,
+            slug: p.slug,
+            theme: p.theme
         });
 
         if (error) {
@@ -186,7 +190,7 @@ export async function updateSeason(
 export async function deleteSeason(
     supabase: DBClient,
     p: SeasonIdInput
-): Promise<Result<void, SerializableError>> {
+): Promise<Result<void>> {
     try {
         const {data: season} = await findSeasonById(supabase, p.seasonId);
 
@@ -208,6 +212,33 @@ export async function deleteSeason(
         return Ok(undefined);
     } catch (error) {
         logger.error({error}, "Unexpected error deleting season");
+        return Err(serializeError(error));
+    }
+}
+
+export async function getSeasonBySlugAndRegion(
+    supabase: DBClient,
+    slug: string,
+    regionId: string
+): Promise<Result<Season>> {
+    try {
+        const {data, error} = await findSeasonBySlugAndRegion(supabase, slug, regionId);
+
+        if (error) {
+            logger.error({slug, regionId, error}, "Failed to fetch season by slug and region");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Err({
+                message: "Season not found",
+                name: "NotFoundError"
+            });
+        }
+
+        return Ok(data);
+    } catch (error) {
+        logger.error({error}, "Unexpected error fetching season by slug and region");
         return Err(serializeError(error));
     }
 }

@@ -3,6 +3,8 @@ export interface CreateSeasonInput {
     regionId: string;
     startDate: string;
     endDate?: string | null;
+    slug: string;
+    theme?: string | null;
 }
 
 export interface UpdateSeasonInput {
@@ -11,6 +13,8 @@ export interface UpdateSeasonInput {
     startDate?: string;
     endDate?: string;
     isActive?: boolean;
+    slug?: string;
+    theme?: string | null;
 }
 
 export interface SeasonIdInput {
@@ -22,6 +26,8 @@ export interface InsertSeasonDto {
     name: string;
     regionId: string;
     startDate: string;
+    slug: string;
+    theme?: string | null;
     endDate?: string | null;
     isActive: boolean;
 }
