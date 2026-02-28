@@ -4,11 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="season changes to include slug and theme">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Teams service and repo fixed">
+      <change afterPath="$PROJECT_DIR$/app/actions/season.actions.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/stores/seasonStore.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/dto/team.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/team.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(public)/teams/[region]/[teamName]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/teams/[region]/[season]/[teamName]/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/teams/[region]/[teamName]/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/teams/CreateTeamForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/CreateTeamForm.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamsList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/stores/teamStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/teamStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/dto/player.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/player.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,11 +87,11 @@
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin\teams\[region]\[teamName]" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin\teams\[region]\[season]" />
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\app\(public)\teams\[region]\[season]" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\server" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\components\ui" />
-      <recent name="D:\KEVIN\0SLC\Random\cvrn\app\features\players" />
-      <recent name="D:\KEVIN\0SLC\Random\cvrn\app\features\matches" />
     </key>
   </component>
   <component name="RunManager" selected="npm.Next.js: server-side">
@@ -136,7 +146,7 @@
       <workItem from="1772001984559" duration="1473000" />
       <workItem from="1772086171768" duration="5490000" />
       <workItem from="1772158756115" duration="8990000" />
-      <workItem from="1772252525389" duration="7970000" />
+      <workItem from="1772252525389" duration="10165000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -506,7 +516,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772263875182</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="Teams service and repo fixed">
+      <option name="closed" value="true" />
+      <created>1772264260344</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1772264260344</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -526,7 +544,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Fix update player repo function" />
     <MESSAGE value="fix user repo function change bigint to string" />
     <MESSAGE value="Database override" />
     <MESSAGE value="database override fix" />
@@ -551,7 +568,8 @@
     <MESSAGE value="Team brick color and hex" />
     <MESSAGE value="Added multiple service and repo functions" />
     <MESSAGE value="season changes to include slug and theme" />
-    <option name="LAST_COMMIT_MESSAGE" value="season changes to include slug and theme" />
+    <MESSAGE value="Teams service and repo fixed" />
+    <option name="LAST_COMMIT_MESSAGE" value="Teams service and repo fixed" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

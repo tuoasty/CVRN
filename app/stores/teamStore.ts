@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { TeamWithRegion } from '@/server/dto/team.dto';
 import {
-    getAllTeamsWithRegionsAction, getTeamBySlugAndRegionAction,
+    getAllTeamsWithRegionsAction, getTeamBySlugAndSeasonAction,
 } from '@/app/actions/team.actions';
 import {CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction} from './storeUtils';
 import {clientLogger} from "@/app/utils/clientLogger";
 import { useRegionsStore } from './regionStore';
+import { useSeasonsStore } from './seasonStore';
 
 type TeamsState = {
     allTeamsCache: CacheEntry<TeamWithRegion[]> | undefined;
@@ -14,7 +15,7 @@ type TeamsState = {
     error: string | null;
 
     fetchAllTeams: () => Promise<void>;
-    fetchTeamDetails: (slug: string, regionCode: string) => Promise<void>;
+    fetchTeamDetails: (teamSlug: string, seasonSlug: string, regionCode: string) => Promise<void>;
     addTeamToCache: (team: TeamWithRegion) => void;
     removeTeamFromCache: (teamId: string) => void;
     clearCache: () => void;
@@ -27,7 +28,7 @@ const teamDetailsCache = new Map<string, CacheEntry<TeamWithRegion>>();
 
 const cleanupInterval = setupAutoEviction(teamDetailsCache, 60000);
 
-const createTeamCacheKey = (slug: string, regionCode: string) => `${slug}-${regionCode}`;
+const createTeamCacheKey = (teamSlug: string, seasonSlug: string) => `${teamSlug}-${seasonSlug}`;
 
 export const useTeamsStore = create<TeamsState>((set, get) => ({
     allTeamsCache: undefined,
@@ -43,9 +44,6 @@ export const useTeamsStore = create<TeamsState>((set, get) => ({
             return;
         }
 
-        if (isCacheValid(allTeamsCache)) {
-            return;
-        }
         clientLogger.info('TeamsStore', 'Fetching teams from server');
         set({ loading: true, error: null });
 
@@ -68,17 +66,17 @@ export const useTeamsStore = create<TeamsState>((set, get) => ({
         }
     },
 
-    fetchTeamDetails: async (slug: string, regionCode: string) => {
+    fetchTeamDetails: async (teamSlug: string, seasonSlug: string, regionCode: string) => {
         const { teamDetailsCache } = get();
-        const cacheKey = createTeamCacheKey(slug, regionCode);
+        const cacheKey = createTeamCacheKey(teamSlug, seasonSlug);
         const cached = teamDetailsCache.get(cacheKey);
 
         if (isCacheValid(cached)) {
-            clientLogger.info('TeamsStore', 'Using cached team details', { slug, regionCode });
+            clientLogger.info('TeamsStore', 'Using cached team details', { teamSlug, seasonSlug });
             return;
         }
 
-        clientLogger.info('TeamsStore', 'Fetching team details', { slug, regionCode });
+        clientLogger.info('TeamsStore', 'Fetching team details', { teamSlug, seasonSlug, regionCode });
         set({ loading: true, error: null });
 
         try {
@@ -93,22 +91,33 @@ export const useTeamsStore = create<TeamsState>((set, get) => ({
                 return;
             }
 
-            const result = await getTeamBySlugAndRegionAction({
-                slug,
-                regionId: region.id
+            const seasonsStore = useSeasonsStore.getState();
+            await seasonsStore.fetchSeasonBySlugAndRegion(seasonSlug, region.id);
+
+            const season = seasonsStore.seasonBySlugCache.get(`${seasonSlug}-${region.id}`)?.data;
+
+            if (!season) {
+                clientLogger.error('TeamsStore', 'Season not found', { seasonSlug, regionId: region.id });
+                set({ error: 'Season not found', loading: false });
+                return;
+            }
+
+            const result = await getTeamBySlugAndSeasonAction({
+                slug: teamSlug,
+                seasonId: season.id
             });
 
             if (!result.ok) {
-                clientLogger.error('TeamsStore', 'Failed to fetch team details', { slug, regionCode, error: result.error });
+                clientLogger.error('TeamsStore', 'Failed to fetch team details', { teamSlug, seasonSlug, error: result.error });
                 set({ error: result.error.message, loading: false });
                 return;
             }
 
             teamDetailsCache.set(cacheKey, createCacheEntry(result.value, TEAM_DETAILS_TTL));
-            clientLogger.info('TeamsStore', 'Team details fetched successfully', { slug, regionCode });
+            clientLogger.info('TeamsStore', 'Team details fetched successfully', { teamSlug, seasonSlug });
             set({ teamDetailsCache, loading: false });
         } catch (error) {
-            clientLogger.error('TeamsStore', 'Exception fetching team details', { slug, regionCode, error });
+            clientLogger.error('TeamsStore', 'Exception fetching team details', { teamSlug, seasonSlug, error });
             set({ error: 'Failed to fetch team details', loading: false });
         }
     },

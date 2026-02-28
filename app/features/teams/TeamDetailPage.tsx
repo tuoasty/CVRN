@@ -28,7 +28,8 @@ export default function TeamDetailPage() {
     const params = useParams();
     const router = useRouter();
 
-    const region = decodeURIComponent(String(params.region || "")).toLowerCase();
+    const regionCode = decodeURIComponent(String(params.region || "")).toLowerCase();
+    const seasonSlug = decodeURIComponent(String(params.season || "")).toLowerCase();
     const teamSlug = decodeURIComponent(String(params.teamName || "")).toLowerCase();
 
     const [showAddForm, setShowAddForm] = useState(false);
@@ -38,15 +39,15 @@ export default function TeamDetailPage() {
     const teamsStore = useTeamsStore();
     const playersStore = usePlayersStore();
 
-    const teamCacheKey = `${teamSlug}-${region}`;
+    const teamCacheKey = `${teamSlug}-${seasonSlug}`;
     const teamData = teamsStore.teamDetailsCache.get(teamCacheKey)?.data;
     const players = teamData?.id ? playersStore.playersByTeamCache.get(teamData.id)?.data ?? [] : [];
 
     useEffect(() => {
-        if (!region || !teamSlug) return;
+        if (!regionCode || !seasonSlug || !teamSlug) return;
 
         loadTeam();
-    }, []);
+    }, [regionCode, seasonSlug, teamSlug]);
 
     useEffect(() => {
         if (teamData?.id) {
@@ -58,7 +59,7 @@ export default function TeamDetailPage() {
         setError(null);
 
         try {
-            await teamsStore.fetchTeamDetails(teamSlug, region);
+            await teamsStore.fetchTeamDetails(teamSlug, seasonSlug, regionCode);
 
             if (teamsStore.error) {
                 setError(teamsStore.error);
@@ -114,10 +115,14 @@ export default function TeamDetailPage() {
         return <div className="p-4 text-muted-foreground">Team not found</div>;
     }
 
+    const regionName = teamData.seasons?.regions?.name || "Unknown Region";
+    const regionCodeDisplay = teamData.seasons?.regions?.code?.toUpperCase() || "??";
+    const seasonName = teamData.seasons?.name || "Unknown Season";
+
     return (
         <div className="p-4 space-y-4">
             <span className="text-sm text-muted-foreground">
-                {teamData.regions ? `${teamData.regions.code} - ${teamData.regions.name}` : teamData.region_id}
+                {regionCodeDisplay} - {regionName} / {seasonName}
             </span>
 
             <div className="flex items-center gap-4">
