@@ -1,17 +1,19 @@
 import { create } from 'zustand';
 import { Match, Team } from '@/shared/types/db';
-import { getAllMatchesAction, getAvailableTeamsForWeekAction } from '@/app/actions/match.actions';
+import { getAllMatchesAction, getAvailableTeamsForWeekAction, getMatchesForWeekAction } from '@/app/actions/match.actions';
 import { CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction } from './storeUtils';
 import { clientLogger } from "@/app/utils/clientLogger";
 
 type MatchesState = {
     matchesCache: CacheEntry<Match[]> | undefined;
     availableTeamsCache: Map<string, CacheEntry<Team[]>>;
+    matchesForWeekCache: Map<string, CacheEntry<Match[]>>;
     loading: boolean;
     error: string | null;
 
     fetchAllMatches: () => Promise<void>;
     fetchAvailableTeams: (seasonId: string, week: number) => Promise<void>;
+    fetchMatchesForWeek: (seasonId: string, week: number) => Promise<void>;
     clearCache: () => void;
 };
 
@@ -19,12 +21,15 @@ const MATCHES_TTL = 2 * 60 * 1000;
 const AVAILABLE_TEAMS_TTL = 60 * 1000;
 
 const availableTeamsCache = new Map<string, CacheEntry<Team[]>>();
+const matchesForWeekCache = new Map<string, CacheEntry<Match[]>>();
 
 const cleanupInterval = setupAutoEviction(availableTeamsCache, 60000);
+const matchesCleanupInterval = setupAutoEviction(matchesForWeekCache, 60000);
 
 export const useMatchesStore = create<MatchesState>((set, get) => ({
     matchesCache: undefined,
     availableTeamsCache,
+    matchesForWeekCache,
     loading: false,
     error: null,
 
@@ -90,8 +95,40 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
         }
     },
 
+    fetchMatchesForWeek: async (seasonId: string, week: number) => {
+        const cacheKey = `${seasonId}-${week}`;
+        const { matchesForWeekCache } = get();
+        const cached = matchesForWeekCache.get(cacheKey);
+
+        if (cached && isCacheValid(cached)) {
+            clientLogger.info('MatchesStore', 'Using cached matches for week', { seasonId, week, count: cached.data.length });
+            return;
+        }
+
+        clientLogger.info('MatchesStore', 'Fetching matches for week', { seasonId, week });
+        set({ loading: true, error: null });
+
+        try {
+            const result = await getMatchesForWeekAction({ seasonId, week });
+
+            if (!result.ok) {
+                clientLogger.error('MatchesStore', 'Failed to fetch matches for week', { seasonId, week, error: result.error });
+                set({ error: result.error.message, loading: false });
+                return;
+            }
+
+            matchesForWeekCache.set(cacheKey, createCacheEntry(result.value, MATCHES_TTL));
+            clientLogger.info('MatchesStore', 'Matches for week fetched successfully', { seasonId, week, count: result.value.length });
+            set({ matchesForWeekCache, loading: false });
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception fetching matches for week', { seasonId, week, error });
+            set({ error: 'Failed to fetch matches for week', loading: false });
+        }
+    },
+
     clearCache: () => {
         availableTeamsCache.clear();
+        matchesForWeekCache.clear();
         clientLogger.info('MatchesStore', 'Cache cleared');
         set({ matchesCache: undefined, error: null });
     },
@@ -100,5 +137,6 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
 if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', () => {
         cleanupInterval();
+        matchesCleanupInterval();
     });
 }
