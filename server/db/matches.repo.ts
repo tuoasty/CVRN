@@ -8,7 +8,6 @@ export async function insertMatches(
     const rows = matches.map(m => ({
         ...(m.id && { id: m.id }),
         season_id: m.seasonId,
-        region_id: m.regionId,
         home_team_id: m.homeTeamId,
         away_team_id: m.awayTeamId,
         week: m.week,

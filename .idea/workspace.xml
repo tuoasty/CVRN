@@ -4,22 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat; Update frontend to adjust to seasons instead of regions">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat: player join table">
+      <change afterPath="$PROJECT_DIR$/app/features/matches/CreateMatchesForm.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/stores/matchStore.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(public)/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(public)/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/player.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/player.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/MatchList.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/players/PlayerCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/players/PlayerCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/playerStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/playerStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/matches/create/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/dto/player.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/player.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/roblox/users.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/roblox/users.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/types/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/db.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/types/roblox.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/roblox.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/dto/match.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/match.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,8 +24,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript JSX File" />
         <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
       </list>
     </option>
   </component>
@@ -149,7 +144,8 @@
       <workItem from="1772158756115" duration="8990000" />
       <workItem from="1772252525389" duration="11083000" />
       <workItem from="1772345874243" duration="1904000" />
-      <workItem from="1772347819511" duration="55000" />
+      <workItem from="1772347819511" duration="90000" />
+      <workItem from="1772360175459" duration="8364000" />
     </task>
     <task id="LOCAL-00001" summary="refactor structure">
       <option name="closed" value="true" />
@@ -535,7 +531,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772267026019</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="Feat: player join table">
+      <option name="closed" value="true" />
+      <created>1772347899589</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1772347899589</updated>
+    </task>
+    <option name="localTasksCounter" value="50" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -555,7 +559,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Database override" />
     <MESSAGE value="database override fix" />
     <MESSAGE value="fix import" />
     <MESSAGE value="Fix robloxUserId to string" />
@@ -580,7 +583,8 @@
     <MESSAGE value="season changes to include slug and theme" />
     <MESSAGE value="Teams service and repo fixed" />
     <MESSAGE value="Feat; Update frontend to adjust to seasons instead of regions" />
-    <option name="LAST_COMMIT_MESSAGE" value="Feat; Update frontend to adjust to seasons instead of regions" />
+    <MESSAGE value="Feat: player join table" />
+    <option name="LAST_COMMIT_MESSAGE" value="Feat: player join table" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
