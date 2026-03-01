@@ -131,3 +131,23 @@ export async function softDeleteTeamById(supabase: DBClient, id: string) {
         .eq("id", id)
         .is("deleted_at", null)
 }
+
+export async function findTeamsByIds(supabase: DBClient, teamIds: string[]) {
+    return supabase
+        .from("teams")
+        .select(`
+            *,
+            seasons!inner(
+                id,
+                name,
+                slug,
+                regions!inner(
+                    id,
+                    code,
+                    name
+                )
+            )
+        `)
+        .in("id", teamIds)
+        .is("deleted_at", null);
+}

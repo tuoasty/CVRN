@@ -6,7 +6,7 @@ import {
     getAllTeams,
     getAllTeamsWithRegions,
     getTeamByNameAndSeason,
-    getTeamBySlugAndSeasonWithRegion,
+    getTeamBySlugAndSeasonWithRegion, getTeamsByIds,
     getTeamWithRegionAndPlayers
 } from "@/server/services/team.service";
 import {createServerSupabase} from "@/server/supabase/server";
@@ -92,4 +92,9 @@ export async function getTeamWithRegionAndPlayersAction(p: {
         slug: p.slug,
         seasonId: seasonResult.value.id
     });
+}
+
+export async function getTeamsByIdsAction(teamIds: string[]) {
+    const supabase = await createServerSupabase();
+    return await getTeamsByIds(supabase, teamIds);
 }
