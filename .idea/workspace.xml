@@ -4,17 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat: player join table">
-      <change afterPath="$PROJECT_DIR$/app/features/matches/CreateMatchesForm.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/stores/matchStore.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Create matches">
+      <change afterPath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/features/seasons/SeasonWeekPicker.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(public)/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(public)/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/matches/create/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/dto/match.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/match.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/team.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/team.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/stores/teamStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/teamStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/teams.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/teams.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/team.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/team.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -145,15 +143,7 @@
       <workItem from="1772252525389" duration="11083000" />
       <workItem from="1772345874243" duration="1904000" />
       <workItem from="1772347819511" duration="90000" />
-      <workItem from="1772360175459" duration="8364000" />
-    </task>
-    <task id="LOCAL-00001" summary="refactor structure">
-      <option name="closed" value="true" />
-      <created>1770267396460</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1770267396460</updated>
+      <workItem from="1772360175459" duration="9746000" />
     </task>
     <task id="LOCAL-00002" summary="frontend layout config and theme fix">
       <option name="closed" value="true" />
@@ -539,7 +529,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772347899589</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="Create matches">
+      <option name="closed" value="true" />
+      <created>1772380698401</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1772380698402</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -559,7 +557,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="database override fix" />
     <MESSAGE value="fix import" />
     <MESSAGE value="Fix robloxUserId to string" />
     <MESSAGE value="fix typing" />
@@ -584,7 +581,8 @@
     <MESSAGE value="Teams service and repo fixed" />
     <MESSAGE value="Feat; Update frontend to adjust to seasons instead of regions" />
     <MESSAGE value="Feat: player join table" />
-    <option name="LAST_COMMIT_MESSAGE" value="Feat: player join table" />
+    <MESSAGE value="Create matches" />
+    <option name="LAST_COMMIT_MESSAGE" value="Create matches" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

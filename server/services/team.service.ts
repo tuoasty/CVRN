@@ -7,7 +7,7 @@ import { logger } from "@/server/utils/logger";
 
 import {
     findAllTeams, findAllTeamsWithRegions,
-    findTeamById, findTeamByIdWithRegion, findTeamByNameAndSeason, findTeamBySlugAndSeasonWithRegion,
+    findTeamById, findTeamByIdWithRegion, findTeamByNameAndSeason, findTeamBySlugAndSeasonWithRegion, findTeamsByIds,
     insertTeam, softDeleteTeamById
 } from "@/server/db/teams.repo";
 import {serializeError} from "@/server/utils/serializeableError";
@@ -271,5 +271,39 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
         })
     } catch (error) {
         return Err(serializeError(error))
+    }
+}
+
+export async function getTeamsByIds(
+    supabase: DBClient,
+    teamIds: string[]
+): Promise<Result<TeamWithRegion[]>> {
+    try {
+        if (teamIds.length === 0) {
+            return Ok([]);
+        }
+
+        const { data, error } = await findTeamsByIds(supabase, teamIds);
+
+        if (error) {
+            logger.error({ teamIds, error }, "Failed to fetch teams by IDs");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Err({
+                message: "Failed to fetch teams",
+                name: "FetchError"
+            });
+        }
+
+        const teamsWithRegions = data.map(team => ({
+            ...team,
+            region: team.seasons.regions
+        }));
+
+        return Ok(teamsWithRegions as TeamWithRegion[]);
+    } catch (error) {
+        return Err(serializeError(error));
     }
 }
