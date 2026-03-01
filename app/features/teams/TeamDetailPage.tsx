@@ -41,19 +41,8 @@ export default function TeamDetailPage() {
 
     const teamCacheKey = `${teamSlug}-${seasonSlug}`;
     const teamData = teamsStore.teamDetailsCache.get(teamCacheKey)?.data;
-    const players = teamData?.id ? playersStore.playersByTeamCache.get(teamData.id)?.data ?? [] : [];
-
-    useEffect(() => {
-        if (!regionCode || !seasonSlug || !teamSlug) return;
-
-        loadTeam();
-    }, [regionCode, seasonSlug, teamSlug]);
-
-    useEffect(() => {
-        if (teamData?.id) {
-            playersStore.fetchTeamPlayers(teamData.id);
-        }
-    }, [teamData?.id]);
+    const playersCacheKey = teamData?.id && teamData?.season_id ? `${teamData.id}-${teamData.season_id}` : null;
+    const players = playersCacheKey ? playersStore.playersByTeamCache.get(playersCacheKey)?.data ?? [] : [];
 
     const loadTeam = async () => {
         setError(null);
@@ -70,18 +59,30 @@ export default function TeamDetailPage() {
         }
     };
 
+    useEffect(() => {
+        if (!regionCode || !seasonSlug || !teamSlug) return;
+
+        loadTeam();
+    }, [regionCode, seasonSlug, teamSlug]);
+
+    useEffect(() => {
+        if (teamData?.id && teamData?.season_id) {
+            playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
+        }
+    }, [teamData?.id, teamData?.season_id]);
+
     const handlePlayerAdded = () => {
         setShowAddForm(false);
-        if (teamData?.id) {
+        if (teamData?.id && teamData?.season_id) {
             playersStore.clearCache();
-            playersStore.fetchTeamPlayers(teamData.id);
+            playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
         }
     };
 
     const handlePlayerRemoved = () => {
-        if (teamData?.id) {
+        if (teamData?.id && teamData?.season_id) {
             playersStore.clearCache();
-            playersStore.fetchTeamPlayers(teamData.id);
+            playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
         }
     };
 
@@ -177,7 +178,12 @@ export default function TeamDetailPage() {
             ) : (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
                     {players.map((player) => (
-                        <PlayerCard key={player.id} player={player} onRemoved={handlePlayerRemoved} />
+                        <PlayerCard
+                            key={player.id}
+                            player={player}
+                            seasonId={teamData.season_id}
+                            onRemoved={handlePlayerRemoved}
+                        />
                     ))}
                 </div>
             )}

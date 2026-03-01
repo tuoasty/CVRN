@@ -1,26 +1,25 @@
 "use server";
 
-import {savePlayer, getUsersByName, getTeamPlayers, removePlayerFromTeam} from "@/server/services/player.service";
+import {savePlayerToTeam, getUsersByName, getTeamPlayers, removePlayerFromTeamService} from "@/server/services/player.service";
 import {createServerSupabase} from "@/server/supabase/server";
-import {RobloxUserIdInput, SavePlayerInput} from "@/server/dto/player.dto";
-import {TeamIdInput} from "@/server/dto/team.dto";
+import {SavePlayerToTeamInput, RemovePlayerFromTeamInput, TeamPlayersInput} from "@/server/dto/player.dto";
 
 export async function searchPlayersAction(username:string){
     const supabase = await createServerSupabase();
     return getUsersByName(supabase, username);
 }
 
-export async function savePlayerToTeamAction(input:SavePlayerInput){
+export async function savePlayerToTeamAction(input:SavePlayerToTeamInput){
     const supabase = await createServerSupabase();
-    return savePlayer(supabase, input)
+    return savePlayerToTeam(supabase, input)
 }
 
-export async function removePlayerFromTeamAction(input:RobloxUserIdInput){
+export async function removePlayerFromTeamAction(input:RemovePlayerFromTeamInput){
     const supabase = await createServerSupabase();
-    return removePlayerFromTeam(supabase, input)
+    return removePlayerFromTeamService(supabase, input)
 }
 
-export async function getTeamPlayersAction(input:TeamIdInput){
+export async function getTeamPlayersAction(input:TeamPlayersInput){
     const supabase = await createServerSupabase();
     return getTeamPlayers(supabase, input)
 }

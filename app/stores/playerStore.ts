@@ -9,7 +9,7 @@ type PlayersState = {
     loading: boolean;
     error: string | null;
 
-    fetchTeamPlayers: (teamId: string) => Promise<void>;
+    fetchTeamPlayers: (teamId: string, seasonId: string) => Promise<void>;
     clearCache: () => void;
 };
 
@@ -24,32 +24,33 @@ export const usePlayersStore = create<PlayersState>((set, get) => ({
     loading: false,
     error: null,
 
-    fetchTeamPlayers: async (teamId: string) => {
+    fetchTeamPlayers: async (teamId: string, seasonId: string) => {
+        const cacheKey = `${teamId}-${seasonId}`;
         const { playersByTeamCache } = get();
-        const cached = playersByTeamCache.get(teamId);
+        const cached = playersByTeamCache.get(cacheKey);
 
         if (isCacheValid(cached)) {
-            clientLogger.info('PlayersStore', 'Using cached team players', { teamId, count: cached?.data.length });
+            clientLogger.info('PlayersStore', 'Using cached team players', { teamId, seasonId, count: cached?.data.length });
             return;
         }
 
-        clientLogger.info('PlayersStore', 'Fetching team players', { teamId });
+        clientLogger.info('PlayersStore', 'Fetching team players', { teamId, seasonId });
         set({ loading: true, error: null });
 
         try {
-            const result = await getTeamPlayersAction({ teamId });
+            const result = await getTeamPlayersAction({ teamId, seasonId });
 
             if (!result.ok) {
-                clientLogger.error('PlayersStore', 'Failed to fetch team players', { teamId, error: result.error });
+                clientLogger.error('PlayersStore', 'Failed to fetch team players', { teamId, seasonId, error: result.error });
                 set({ error: result.error.message, loading: false });
                 return;
             }
 
-            playersByTeamCache.set(teamId, createCacheEntry(result.value, TEAM_PLAYERS_TTL));
-            clientLogger.info('PlayersStore', 'Team players fetched successfully', { teamId, count: result.value.length });
+            playersByTeamCache.set(cacheKey, createCacheEntry(result.value, TEAM_PLAYERS_TTL));
+            clientLogger.info('PlayersStore', 'Team players fetched successfully', { teamId, seasonId, count: result.value.length });
             set({ playersByTeamCache, loading: false });
         } catch (error) {
-            clientLogger.error('PlayersStore', 'Exception fetching team players', { teamId, error });
+            clientLogger.error('PlayersStore', 'Exception fetching team players', { teamId, seasonId, error });
             set({ error: 'Failed to fetch team players', loading: false });
         }
     },

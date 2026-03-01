@@ -1,34 +1,49 @@
 import {getRobloxAvatarsById, getRobloxUserByName} from "@/server/roblox/users";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {RobloxUserWithAvatar} from "@/shared/types/roblox";
-import {DBClient, Player} from "@/shared/types/db";
-import {RobloxUserIdInput, SavePlayerInput} from "@/server/dto/player.dto";
+import {DBClient, Player, PlayerTeamSeason} from "@/shared/types/db";
+import {
+    SavePlayerToTeamInput,
+    RemovePlayerFromTeamInput,
+    TeamPlayersInput, SavePlayerInput
+} from "@/server/dto/player.dto";
 import {serializeError} from "@/server/utils/serializeableError";
 import {findTeamById} from "@/server/db/teams.repo";
-import {findAllTeamPlayers, findPlayerByRobloxId, updatePlayer, upsertPlayer} from "@/server/db/players.repo";
-import {TeamIdInput} from "@/server/dto/team.dto";
+import {
+    findPlayerByRobloxId,
+    upsertPlayer,
+    findAllTeamPlayers,
+    findPlayerCurrentTeam,
+    addPlayerToTeam,
+    removePlayerFromTeam,
+    updatePlayer,
+    findPlayerById
+} from "@/server/db/players.repo";
 import {logger} from "@/server/utils/logger";
 
 const SYNC_INTERVAL = 1000 * 60 * 60;
 
-export async function getUsersByName(supabase: DBClient, username: string): Promise<Result<RobloxUserWithAvatar[]>>{
+export async function getUsersByName(
+    supabase: DBClient,
+    username: string
+): Promise<Result<RobloxUserWithAvatar[]>> {
     const result = await getRobloxUserByName(username);
 
-    if(!result.ok){
+    if (!result.ok) {
         logger.error({username, error: result.error}, "Failed to fetch Roblox user by name");
         return Err(result.error);
     }
 
     const users = result.value;
 
-    if(users.length === 0){
+    if (users.length === 0) {
         return Ok([]);
     }
 
     const userIds = users.map(user => user.id);
     const avatarsResult = await getRobloxAvatarsById(userIds);
 
-    if(!avatarsResult.ok){
+    if (!avatarsResult.ok) {
         logger.error({userIds, error: avatarsResult.error}, "Failed to fetch Roblox avatars");
         return Err(avatarsResult.error);
     }
@@ -38,7 +53,6 @@ export async function getUsersByName(supabase: DBClient, username: string): Prom
 
         return {
             ...user,
-            id: String(user.id),
             avatarUrl: avatar?.imageUrl || ""
         };
     });
@@ -46,136 +60,186 @@ export async function getUsersByName(supabase: DBClient, username: string): Prom
     return Ok(usersWithAvatars);
 }
 
-export async function savePlayer(
+export async function savePlayerToTeam(
     supabase: DBClient,
-    p: SavePlayerInput
-): Promise<Result<Player>> {
+    p: SavePlayerToTeamInput
+): Promise<Result<{player: Player, teamSeason: PlayerTeamSeason}>> {
     try {
-        if(p.teamId){
-            const {data:team} = await findTeamById(supabase, p.teamId)
-            if(!team){
-                logger.error({teamId: p.teamId, robloxUserId: p.robloxUserId}, "Team not found when saving player");
-                return Err({
-                    name:"TeamNotFound",
-                    message:"Team does not exist"
-                })
-            }
+        const {data: team} = await findTeamById(supabase, p.teamId);
+        if (!team) {
+            logger.error({teamId: p.teamId}, "Team not found when saving player to team");
+            return Err({
+                name: "TeamNotFound",
+                message: "Team does not exist"
+            });
+        }
 
-            const {data: existingPlayer} = await findPlayerByRobloxId(supabase, p.robloxUserId)
-            if(existingPlayer?.team_id){
-                if(existingPlayer?.team_id === p.teamId){
-                    logger.warn({robloxUserId: p.robloxUserId, teamId: p.teamId}, "Player already in this team");
+        const seasonId = team.season_id;
+
+        const {data: existingPlayer} = await findPlayerByRobloxId(supabase, p.robloxUserId);
+
+        if (existingPlayer) {
+            const {data: currentTeamSeason} = await findPlayerCurrentTeam(
+                supabase,
+                existingPlayer.id,
+                seasonId
+            );
+
+            if (currentTeamSeason) {
+                if (currentTeamSeason.team_id === p.teamId) {
+                    logger.warn({robloxUserId: p.robloxUserId, teamId: p.teamId, seasonId}, "Player already in this team for this season");
                     return Err({
-                        name:"PlayerAlreadyInTeam",
-                        message:"Player is already a member of this team"
-                    })
+                        name: "PlayerAlreadyInTeam",
+                        message: "Player is already a member of this team for this season"
+                    });
                 } else {
-                    logger.warn({robloxUserId: p.robloxUserId, currentTeamId: existingPlayer.team_id, requestedTeamId: p.teamId}, "Player already in another team");
+                    logger.warn({
+                        robloxUserId: p.robloxUserId,
+                        currentTeamId: currentTeamSeason.team_id,
+                        requestedTeamId: p.teamId,
+                        seasonId
+                    }, "Player already in another team for this season");
                     return Err({
-                        name:"PlayerAlreadyInTeam",
-                        message:"Player is already a member of another team"
-                    })
+                        name: "PlayerAlreadyInTeam",
+                        message: "Player is already a member of another team for this season"
+                    });
                 }
             }
         }
 
-        const {data, error} = await upsertPlayer(supabase, p)
-        if(error){
-            logger.error({robloxUserId: p.robloxUserId, error}, "Failed to upsert player");
-            return Err(serializeError(error))
+        const playerInput: SavePlayerInput = {
+            robloxUserId: p.robloxUserId,
+            username: p.username,
+            displayName: p.displayName ?? null,
+            avatarUrl: p.avatarUrl ?? null
+        };
+
+        const {data: player, error: playerError} = await upsertPlayer(supabase, playerInput);
+
+        if (playerError) {
+            logger.error({robloxUserId: p.robloxUserId, error: playerError}, "Failed to upsert player");
+            return Err(serializeError(playerError));
         }
 
-        if(!data){
+        if (!player) {
             return Err({
-                name:"UpsertError",
-                message:"Failed to save player"
-            })
+                name: "UpsertError",
+                message: "Failed to save player"
+            });
         }
 
-        return Ok(data)
-    } catch (error){
-        logger.error({error}, "Unexpected error saving player");
-        return Err(serializeError(error))
+        const {data: teamSeason, error: teamSeasonError} = await addPlayerToTeam(supabase, {
+            playerId: player.id,
+            teamId: p.teamId,
+            seasonId
+        });
+
+        if (teamSeasonError) {
+            logger.error({playerId: player.id, teamId: p.teamId, seasonId, error: teamSeasonError}, "Failed to add player to team");
+            return Err(serializeError(teamSeasonError));
+        }
+
+        if (!teamSeason) {
+            return Err({
+                name: "AddToTeamError",
+                message: "Failed to add player to team"
+            });
+        }
+
+        return Ok({player, teamSeason});
+    } catch (error) {
+        logger.error({error}, "Unexpected error saving player to team");
+        return Err(serializeError(error));
     }
 }
 
-export async function removePlayerFromTeam(supabase:DBClient, p:RobloxUserIdInput) : Promise<Result<Player>>{
+export async function removePlayerFromTeamService(
+    supabase: DBClient,
+    p: RemovePlayerFromTeamInput
+): Promise<Result<PlayerTeamSeason>> {
     try {
-        const { data: existingPlayer } = await findPlayerByRobloxId(supabase, p.robloxUserId)
-        if (!existingPlayer) {
-            logger.error({robloxUserId: p.robloxUserId}, "Player not found when removing from team");
+        const {data: player} = await findPlayerById(supabase, p.playerId);
+        if (!player) {
+            logger.error({playerId: p.playerId}, "Player not found when removing from team");
             return Err({
-                name:"PlayerNotFound",
-                message:"Player does not exist"
-            })
+                name: "PlayerNotFound",
+                message: "Player does not exist"
+            });
         }
 
-        if (!existingPlayer.team_id) {
-            logger.warn({robloxUserId: p.robloxUserId}, "Attempted to remove player not in a team");
+        const {data: currentTeamSeason} = await findPlayerCurrentTeam(
+            supabase,
+            p.playerId,
+            p.seasonId
+        );
+
+        if (!currentTeamSeason) {
+            logger.warn({playerId: p.playerId, seasonId: p.seasonId}, "Attempted to remove player not in a team for this season");
             return Err({
                 name: "PlayerNotInTeam",
-                message: "Player is not in a team"
-            })
+                message: "Player is not in a team for this season"
+            });
         }
 
-        const { data, error } = await updatePlayer(supabase, {
-            robloxUserId: p.robloxUserId,
-            teamId: null
-        })
+        const {data, error} = await removePlayerFromTeam(supabase, p);
 
         if (error) {
-            logger.error({robloxUserId: p.robloxUserId, error}, "Failed to update player when removing from team");
-            return Err(serializeError(error))
+            logger.error({playerId: p.playerId, seasonId: p.seasonId, error}, "Failed to remove player from team");
+            return Err(serializeError(error));
         }
 
         if (!data) {
             return Err({
-                name: "UpdateError",
+                name: "RemoveError",
                 message: "Failed to remove player from team"
-            })
+            });
         }
 
-        return Ok(data)
+        return Ok(data);
     } catch (error) {
         logger.error({error}, "Unexpected error removing player from team");
-        return Err(serializeError(error))
+        return Err(serializeError(error));
     }
 }
 
 export async function getTeamPlayers(
     supabase: DBClient,
-    p:TeamIdInput
-) : Promise<Result<Player[]>>{
+    p: TeamPlayersInput
+): Promise<Result<Player[]>> {
     try {
-        const { data, error } = await findAllTeamPlayers(supabase, p.teamId)
-        if(error){
-            logger.error({teamId: p.teamId, error}, "Failed to fetch team players");
-            return Err(serializeError(error))
+        const {data, error} = await findAllTeamPlayers(supabase, p.teamId, p.seasonId);
+        if (error) {
+            logger.error({teamId: p.teamId, seasonId: p.seasonId, error}, "Failed to fetch team players");
+            return Err(serializeError(error));
         }
 
-        if(!data){
+        if (!data) {
             return Err({
-                message:"Failed to fetch team players",
-                name:"FetchError"
-            })
+                message: "Failed to fetch team players",
+                name: "FetchError"
+            });
         }
 
         const syncedPlayers: Player[] = [];
 
-        for (const player of data) {
-            const result = await lazySyncPlayer(supabase, player);
+        for (const record of data) {
+            if (!record.player) {
+                continue;
+            }
+
+            const result = await lazySyncPlayer(supabase, record.player);
 
             if (result.ok) {
                 syncedPlayers.push(result.value);
             } else {
-                syncedPlayers.push(player);
+                syncedPlayers.push(record.player);
             }
         }
 
         return Ok(syncedPlayers);
-    } catch (error){
+    } catch (error) {
         logger.error({error}, "Unexpected error fetching team players");
-        return Err(serializeError(error))
+        return Err(serializeError(error));
     }
 }
 
@@ -184,7 +248,6 @@ export async function lazySyncPlayer(
     player: Player
 ): Promise<Result<Player>> {
     try {
-
         if (!needsSync(player.last_synced_at ?? null)) {
             return Ok(player);
         }
@@ -218,7 +281,7 @@ export async function lazySyncPlayer(
             logger.error({userId: user.id, error: avatarResult.error}, "Failed to fetch avatar during lazy sync");
         }
 
-        const { data, error } = await updatePlayer(supabase, {
+        const {data, error} = await updatePlayer(supabase, {
             robloxUserId: String(user.id),
             username: user.name,
             displayName: user.displayName ?? null,
@@ -246,12 +309,11 @@ export async function lazySyncPlayer(
     }
 }
 
+function needsSync(lastSynced: string | null) {
+    if (!lastSynced) return true;
 
-function needsSync(lastSynced: string | null){
-    if(!lastSynced) return true;
+    const last = new Date(lastSynced).getTime();
+    const now = Date.now();
 
-    const last = new Date(lastSynced).getTime()
-    const now = Date.now()
-
-    return now - last > SYNC_INTERVAL
+    return now - last > SYNC_INTERVAL;
 }

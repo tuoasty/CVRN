@@ -22,6 +22,9 @@ export type MatchOfficial =
 export type Season =
     Database["public"]["Tables"]["seasons"]["Row"];
 
+export type PlayerTeamSeason =
+    Database["public"]["Tables"]["player_team_seasons"]["Row"];
+
 
 
 

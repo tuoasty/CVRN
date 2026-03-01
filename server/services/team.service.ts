@@ -18,7 +18,7 @@ import {
     TeamWithRegion,
     TeamWithRegionAndPlayers
 } from "@/server/dto/team.dto";
-import {findAllTeamPlayers, removeAllPlayersFromTeam} from "@/server/db/players.repo";
+import {findAllTeamPlayers, removePlayerFromTeam} from "@/server/db/players.repo";
 
 function generateSlug(name: string): string {
     return name
@@ -180,10 +180,25 @@ export async function deleteTeam(supabase: DBClient, p: TeamIdInput): Promise<Re
             })
         }
 
-        const { error: playersError } = await removeAllPlayersFromTeam(supabase, p.teamId)
-        if (playersError) {
-            logger.error({ teamId: p.teamId, error: playersError }, "Failed to remove players from team during deletion");
-            return Err(serializeError(playersError))
+        const { data: activePlayersResult, error: checkError } = await findAllTeamPlayers(supabase, p.teamId, team.season_id)
+        if (checkError) {
+            logger.error({ teamId: p.teamId, error: checkError }, "Failed to check team players during deletion");
+            return Err(serializeError(checkError))
+        }
+
+        if (activePlayersResult && activePlayersResult.length > 0) {
+            for (const record of activePlayersResult) {
+                if (record.player) {
+                    const { error: removeError } = await removePlayerFromTeam(supabase, {
+                        playerId: record.player.id,
+                        seasonId: team.season_id
+                    })
+                    if (removeError) {
+                        logger.error({ teamId: p.teamId, playerId: record.player.id, error: removeError }, "Failed to remove player from team during deletion");
+                        return Err(serializeError(removeError))
+                    }
+                }
+            }
         }
 
         const { error } = await softDeleteTeamById(supabase, p.teamId)
@@ -197,6 +212,7 @@ export async function deleteTeam(supabase: DBClient, p: TeamIdInput): Promise<Re
         return Err(serializeError(error))
     }
 }
+
 
 export async function getTeamBySlugAndSeasonWithRegion(supabase: DBClient, p: {
     slug: string;
@@ -240,16 +256,18 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
             })
         }
 
-        const { data: playersData, error: playersError } = await findAllTeamPlayers(supabase, teamData.id)
+        const { data: playersData, error: playersError } = await findAllTeamPlayers(supabase, teamData.id, p.seasonId)
 
         if (playersError) {
-            logger.error({ teamId: teamData.id, error: playersError }, "Failed to fetch team players");
+            logger.error({ teamId: teamData.id, seasonId: p.seasonId, error: playersError }, "Failed to fetch team players");
             return Err(serializeError(playersError))
         }
 
+        const players = playersData?.map(record => record.player).filter(Boolean) || []
+
         return Ok({
             team: teamData as TeamWithRegion,
-            players: playersData || []
+            players
         })
     } catch (error) {
         return Err(serializeError(error))

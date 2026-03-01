@@ -1,9 +1,9 @@
 "use server"
 
-import {getMatches} from "@/server/services/match.service";
+import {getAllMatches} from "@/server/services/match.service";
 import {createServerSupabase} from "@/server/supabase/server";
 
-export async function getMatchesAction(){
+export async function getAllMatchesAction(){
     const supabase = await createServerSupabase()
-    return getMatches(supabase);
+    return getAllMatches(supabase);
 }
