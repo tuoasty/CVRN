@@ -1,5 +1,5 @@
 import {Suspense} from "react";
-import MatchList from "@/app/features/matches/MatchList";
+import MatchList from "@/app/features/matches/CreateMatchesForm";
 import RobloxPlayerSearch from "@/app/features/players/RobloxPlayerSearch";
 import {ModeToggle} from "@/app/components/ui/ModeToggle";
 import RedirectCleaner from "@/app/components/providers/RedirectCleaner";

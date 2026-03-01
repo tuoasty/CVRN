@@ -6,7 +6,6 @@ export interface CreateMatchInput {
 
 export interface CreateMatchesInput {
     seasonId: string;
-    regionId: string;
     week: number;
     matches: CreateMatchInput[];
 }
@@ -18,7 +17,6 @@ export interface MatchIdInput {
 export interface InsertMatchDto {
     id?: string;
     seasonId: string;
-    regionId: string;
     homeTeamId: string;
     awayTeamId: string;
     week: number;
