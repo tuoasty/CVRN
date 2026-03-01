@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import SeasonWeekPicker from "@/app/features/seasons/SeasonWeekPicker";
 import CreateMatchesPanel from "@/app/features/matches/CreateMatchesPanel";
+import SchedulePanel from "@/app/features/matches/SchedulePanel";
+
 export default function MatchManagementPage() {
     const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
     const [selectedWeek, setSelectedWeek] = useState<number>(1);
@@ -19,10 +21,17 @@ export default function MatchManagementPage() {
             />
 
             {selectedSeasonId && (
-                <CreateMatchesPanel
-                    seasonId={selectedSeasonId}
-                    week={selectedWeek}
-                />
+                <>
+                    <SchedulePanel
+                        seasonId={selectedSeasonId}
+                        week={selectedWeek}
+                    />
+
+                    <CreateMatchesPanel
+                        seasonId={selectedSeasonId}
+                        week={selectedWeek}
+                    />
+                </>
             )}
         </div>
     );
