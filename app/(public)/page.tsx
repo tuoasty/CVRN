@@ -1,5 +1,4 @@
 import {Suspense} from "react";
-import MatchList from "@/app/features/matches/CreateMatchesForm";
 import RobloxPlayerSearch from "@/app/features/players/RobloxPlayerSearch";
 import {ModeToggle} from "@/app/components/ui/ModeToggle";
 import RedirectCleaner from "@/app/components/providers/RedirectCleaner";
@@ -14,12 +13,6 @@ export default function PublicHome() {
             <h1 className="text-2xl font-semibold">
                 Public Page
             </h1>
-
-            <div className="rounded-lg border border-border bg-card p-4">
-                <Suspense fallback={<div className="text-muted-foreground">Loading...</div>}>
-                    <MatchList />
-                </Suspense>
-            </div>
 
             <div className="rounded-lg border border-border bg-card p-4">
                 <RobloxPlayerSearch />
