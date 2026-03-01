@@ -4,13 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Remove create matches form">
-      <change afterPath="$PROJECT_DIR$/app/features/matches/SchedulePanel.tsx" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Show week schedule">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/matchStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/matchStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/stores/teamStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/teamStore.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -141,15 +138,7 @@
       <workItem from="1772252525389" duration="11083000" />
       <workItem from="1772345874243" duration="1904000" />
       <workItem from="1772347819511" duration="90000" />
-      <workItem from="1772360175459" duration="11156000" />
-    </task>
-    <task id="LOCAL-00004" summary="authentication middleware">
-      <option name="closed" value="true" />
-      <created>1770279120107</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1770279120107</updated>
+      <workItem from="1772360175459" duration="11640000" />
     </task>
     <task id="LOCAL-00005" summary="service role and policies">
       <option name="closed" value="true" />
@@ -535,7 +524,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772382371101</updated>
     </task>
-    <option name="localTasksCounter" value="53" />
+    <task id="LOCAL-00053" summary="Show week schedule">
+      <option name="closed" value="true" />
+      <created>1772383673025</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1772383673025</updated>
+    </task>
+    <option name="localTasksCounter" value="54" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -555,7 +552,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="fix typing" />
     <MESSAGE value="fix update player repo" />
     <MESSAGE value="Feat: Validation check player in team" />
     <MESSAGE value="Feat : remove player" />
@@ -580,7 +576,8 @@
     <MESSAGE value="Create matches" />
     <MESSAGE value="Seperate concerns between season week picker and create matches" />
     <MESSAGE value="Remove create matches form" />
-    <option name="LAST_COMMIT_MESSAGE" value="Remove create matches form" />
+    <MESSAGE value="Show week schedule" />
+    <option name="LAST_COMMIT_MESSAGE" value="Show week schedule" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
