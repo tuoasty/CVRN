@@ -1,5 +1,5 @@
 export interface RobloxThumbnail {
-    targetId: bigint,
+    targetId: string,
     state: string,
     imageUrl: string,
     version: string,
@@ -8,7 +8,7 @@ export interface RobloxThumbnail {
 export interface RobloxUser {
     requestedUsername: string,
     hasVerifiedBadge: boolean,
-    id: bigint,
+    id: string,
     name: string,
     displayName: string
 }

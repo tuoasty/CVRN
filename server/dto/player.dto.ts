@@ -1,13 +1,12 @@
 export interface RobloxUserIdInput {
-    robloxUserId:string
+    robloxUserId: string
 }
 
 export interface SavePlayerInput {
-    robloxUserId:string;
-    username:string;
-    displayName?:string | null;
-    avatarUrl?: string | null;
-    teamId?: string | null;
+    robloxUserId: string
+    username: string
+    displayName?: string | null
+    avatarUrl?: string | null
 }
 
 export interface UpdatePlayerInput {
@@ -16,5 +15,33 @@ export interface UpdatePlayerInput {
     displayName?: string | null
     avatarUrl?: string | null
     lastSyncedAt?: string
-    teamId?: string | null
+}
+
+export interface AddPlayerToTeamInput {
+    playerId: string
+    teamId: string
+    seasonId: string
+}
+
+export interface RemovePlayerFromTeamInput {
+    playerId: string
+    seasonId: string
+}
+
+export interface TeamPlayersInput {
+    teamId: string
+    seasonId: string
+}
+
+export interface PlayerCurrentTeamInput {
+    playerId: string
+    seasonId: string
+}
+
+export interface SavePlayerToTeamInput {
+    robloxUserId: string
+    username: string
+    displayName?: string | null
+    avatarUrl?: string | null
+    teamId: string
 }

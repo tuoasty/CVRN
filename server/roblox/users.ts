@@ -21,12 +21,12 @@ export async function getRobloxUserByName(username: string): Promise<Result<Robl
     }
 }
 
-export async function getRobloxAvatarsById(userIds: bigint[]): Promise<Result<RobloxThumbnail[]>>{
+export async function getRobloxAvatarsById(userIds: string[]): Promise<Result<RobloxThumbnail[]>>{
     try {
         const {data} = await robloxThumbnailsApi.get<{data: RobloxThumbnail[]}>(
             "/v1/users/avatar-headshot", {
                 params:{
-                    userIds:userIds.map(id => Number(id)).join(","),
+                    userIds: userIds.join(","),
                     size:"150x150",
                     format:"Png",
                     isCircular:false,

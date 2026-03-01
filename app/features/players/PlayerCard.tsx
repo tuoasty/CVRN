@@ -9,10 +9,11 @@ import { Button } from "@/app/components/ui/button"
 
 interface Props {
     player: Player
+    seasonId: string
     onRemoved: () => void
 }
 
-export default function PlayerCard({ player, onRemoved }: Props) {
+export default function PlayerCard({ player, seasonId, onRemoved }: Props) {
     const [removing, setRemoving] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -21,7 +22,8 @@ export default function PlayerCard({ player, onRemoved }: Props) {
         setError(null)
 
         const result = await removePlayerFromTeamAction({
-            robloxUserId: player.roblox_user_id
+            playerId: player.id,
+            seasonId: seasonId
         })
 
         if (!result.ok) {
