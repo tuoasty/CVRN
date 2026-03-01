@@ -22,6 +22,7 @@ type TeamsState = {
     addTeamToCache: (team: TeamWithRegion) => void;
     removeTeamFromCache: (teamId: string) => void;
     clearCache: () => void;
+    getTeamBySlugAndSeason: (teamSlug: string, seasonSlug: string) => TeamWithRegion | undefined;
 };
 
 const TEAMS_LIST_TTL = 5 * 60 * 1000;
@@ -207,6 +208,21 @@ export const useTeamsStore = create<TeamsState>((set, get) => ({
             allTeamsCache: createCacheEntry(updatedTeams, TEAMS_LIST_TTL),
             teamsCache,
         });
+    },
+
+    getTeamBySlugAndSeason: (teamSlug: string, seasonSlug: string) => {
+        const { teamsCache } = get();
+
+        for (const entry of teamsCache.values()) {
+            if (isCacheValid(entry)) {
+                const team = entry.data;
+                if (team.slug === teamSlug && team.seasons?.slug === seasonSlug) {
+                    return team;
+                }
+            }
+        }
+
+        return undefined;
     },
 
     clearCache: () => {

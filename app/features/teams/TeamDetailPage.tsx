@@ -38,9 +38,8 @@ export default function TeamDetailPage() {
 
     const teamsStore = useTeamsStore();
     const playersStore = usePlayersStore();
-
-    const teamCacheKey = `${teamSlug}-${seasonSlug}`;
-    const teamData = teamsStore.teamDetailsCache.get(teamCacheKey)?.data;
+    
+    const teamData = teamsStore.getTeamBySlugAndSeason(teamSlug, seasonSlug);
     const playersCacheKey = teamData?.id && teamData?.season_id ? `${teamData.id}-${teamData.season_id}` : null;
     const players = playersCacheKey ? playersStore.playersByTeamCache.get(playersCacheKey)?.data ?? [] : [];
 
