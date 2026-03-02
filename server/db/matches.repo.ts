@@ -59,3 +59,16 @@ export async function findMatchesByRegionAndSeason(
         .eq("season_id", seasonId)
         .order("week", { ascending: true });
 }
+
+export async function updateMatchSchedule(
+    supabase: DBClient,
+    matchId: string,
+    scheduledAt: string | null
+) {
+    return supabase
+        .from("matches")
+        .update({ scheduled_at: scheduledAt })
+        .eq("id", matchId)
+        .select()
+        .single();
+}

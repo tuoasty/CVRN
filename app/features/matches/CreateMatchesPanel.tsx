@@ -14,11 +14,18 @@ import {
 import { Team } from "@/shared/types/db";
 import { clientLogger } from "@/app/utils/clientLogger";
 import Image from "next/image";
+import { Input } from "@/app/components/ui/input";
+import {timezoneOptions} from "@/app/utils/timezoneOptions";
 
 interface MatchPair {
     id: string;
     homeTeamId: string;
     awayTeamId: string;
+    schedule?: {
+        date: string;
+        time: string;
+        timezone: string;
+    }
 }
 
 interface CreateMatchesPanelProps {
@@ -27,11 +34,20 @@ interface CreateMatchesPanelProps {
 }
 
 export default function CreateMatchesPanel({ seasonId, week }: CreateMatchesPanelProps) {
-    const { fetchAvailableTeams, availableTeamsCache, loading } = useMatchesStore();
+    const { fetchAvailableTeams, availableTeamsCache, fetchMatchesForWeek, matchesForWeekCache, loading } = useMatchesStore();
 
     const [matchPairs, setMatchPairs] = useState<MatchPair[]>([]);
     const [availableTeams, setAvailableTeams] = useState<Team[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [defaultSchedule, setDefaultSchedule] = useState<{
+        date: string;
+        time: string;
+        timezone: string;
+    }>({
+        date: "",
+        time: "",
+        timezone: "Asia/Singapore"
+    });
 
     useEffect(() => {
         if (seasonId) {
@@ -128,10 +144,15 @@ export default function CreateMatchesPanel({ seasonId, week }: CreateMatchesPane
             const result = await createMatchesAction({
                 seasonId,
                 week,
+                defaultScheduledDate: defaultSchedule?.date,
+                defaultScheduledTime: defaultSchedule?.time,
+                defaultTimezone: defaultSchedule?.timezone,
                 matches: validPairs.map(m => ({
                     homeId: m.homeTeamId,
                     awayId: m.awayTeamId,
-                    proposedScheduledAt: null
+                    scheduledDate: m.schedule?.date,
+                    scheduledTime: m.schedule?.time,
+                    timezone: m.schedule?.timezone,
                 }))
             });
 
@@ -142,15 +163,27 @@ export default function CreateMatchesPanel({ seasonId, week }: CreateMatchesPane
             }
 
             clientLogger.info("CreateMatchesPanel", "Matches created successfully", { count: result.value.length });
-            alert(`${result.value.length} matches created successfully`);
+
             setMatchPairs([]);
+            setDefaultSchedule({
+                date: "",
+                time: "",
+                timezone: "Asia/Singapore"
+            })
+
             const cacheKey = `${seasonId}-${week}`;
             availableTeamsCache.delete(cacheKey);
+            matchesForWeekCache.delete(cacheKey);
+
             await fetchAvailableTeams(seasonId, week);
+            await fetchMatchesForWeek(seasonId, week);
+
             const cached = availableTeamsCache.get(cacheKey);
             if (cached) {
                 setAvailableTeams(cached.data);
             }
+
+            alert(`${result.value.length} matches created successfully`);
 
         } catch (error) {
             clientLogger.error("CreateMatchesPanel", "Exception creating matches", { error });
@@ -158,6 +191,30 @@ export default function CreateMatchesPanel({ seasonId, week }: CreateMatchesPane
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const updateMatchSchedule = (id: string, field: "date" | "time" | "timezone", value: string) => {
+        setMatchPairs(prev =>
+            prev.map(m => {
+                if (m.id === id) {
+                    return {
+                        ...m,
+                        schedule: {
+                            date: field === "date" ? value : m.schedule?.date || "",
+                            time: field === "time" ? value : m.schedule?.time || "",
+                            timezone: field === "timezone" ? value : m.schedule?.timezone || "",
+                        }
+                    };
+                }
+                return m;
+            })
+        );
+    };
+
+    const clearMatchSchedule = (id: string) => {
+        setMatchPairs(prev =>
+            prev.map(m => m.id === id ? { ...m, schedule: undefined } : m)
+        );
     };
 
     const canAddMore = availableTeams.length >= 2;
@@ -180,6 +237,77 @@ export default function CreateMatchesPanel({ seasonId, week }: CreateMatchesPane
                 >
                     {submitting ? "Creating..." : "Create All Matches"}
                 </Button>
+            </div>
+
+            <div className="border p-4 rounded-lg space-y-4 bg-muted/30">
+                <h3 className="font-medium">Default Schedule (Optional)</h3>
+                <p className="text-sm text-muted-foreground">
+                    Set a default date and time for all matches in this week
+                </p>
+
+                <div className="grid grid-cols-3 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Timezone</label>
+                        <Select
+                            value={defaultSchedule?.timezone || ""}
+                            onValueChange={v => setDefaultSchedule(prev => ({
+                                date: prev?.date || "",
+                                time: prev?.time || "",
+                                timezone: v
+                            }))}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select timezone" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {timezoneOptions.map(tz => (
+                                    <SelectItem key={tz.value} value={tz.value}>
+                                        {tz.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Date</label>
+                        <Input
+                            type="date"
+                            value={defaultSchedule?.date || ""}
+                            onChange={e => setDefaultSchedule(prev => ({
+                                date: e.target.value,
+                                time: prev?.time || "",
+                                timezone: prev?.timezone || ""
+                            }))}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">Time</label>
+                        <Input
+                            type="time"
+                            value={defaultSchedule?.time || ""}
+                            onChange={e => setDefaultSchedule(prev => ({
+                                date: prev?.date || "",
+                                time: e.target.value,
+                                timezone: prev?.timezone || ""
+                            }))}
+                        />
+                    </div>
+                </div>
+
+                {defaultSchedule.date && defaultSchedule.time && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDefaultSchedule({
+                            date: "",
+                            time: "",
+                            timezone: "Asia/Singapore"
+                        })}
+                    >
+                        Clear Default Schedule
+                    </Button>
+                )}
             </div>
 
             {!canAddMore && matchPairs.length === 0 && (
@@ -354,6 +482,62 @@ export default function CreateMatchesPanel({ seasonId, week }: CreateMatchesPane
                                         ))}
                                 </SelectContent>
                             </Select>
+                        </div>
+                    </div>
+
+                    <div className="border-t pt-4 mt-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <label className="text-sm font-medium">Individual Schedule (Optional)</label>
+                            {pair.schedule && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => clearMatchSchedule(pair.id)}
+                                >
+                                    Clear
+                                </Button>
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">
+                            Override default schedule for this match
+                        </p>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium mb-1">Timezone</label>
+                                <Select
+                                    value={pair.schedule?.timezone || ""}
+                                    onValueChange={v => updateMatchSchedule(pair.id, "timezone", v)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {timezoneOptions.map(tz => (
+                                            <SelectItem key={tz.value} value={tz.value}>
+                                                {tz.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium mb-1">Date</label>
+                                <Input
+                                    type="date"
+                                    value={pair.schedule?.date || ""}
+                                    onChange={e => updateMatchSchedule(pair.id, "date", e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium mb-1">Time</label>
+                                <Input
+                                    type="time"
+                                    value={pair.schedule?.time || ""}
+                                    onChange={e => updateMatchSchedule(pair.id, "time", e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

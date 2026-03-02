@@ -2,9 +2,10 @@ import {DBClient, Match, Team} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {CreateMatchesInput} from "@/server/dto/match.dto";
-import {insertMatches, findAllMatches, findMatchesBySeasonAndWeek} from "@/server/db/matches.repo";
+import {CreateMatchesInput, UpdateMatchScheduleInput} from "@/server/dto/match.dto";
+import {insertMatches, findAllMatches, findMatchesBySeasonAndWeek, updateMatchSchedule} from "@/server/db/matches.repo";
 import {randomUUID} from "node:crypto";
+import {convertToUTC, isValidTimezone} from "@/server/utils/timezone";
 
 export async function createMatches(
     supabase: DBClient,
@@ -32,16 +33,55 @@ export async function createMatches(
             teamIds.add(match.awayId);
         }
 
-        const matchRows = p.matches.map(m => ({
-            id: randomUUID(),
-            seasonId: p.seasonId,
-            homeTeamId: m.homeId,
-            awayTeamId: m.awayId,
-            week: p.week,
-            scheduledAt: m.proposedScheduledAt ?? null,
-            status: "pending" as const,
-            matchType: "season" as const,
-        }));
+        if (p.defaultTimezone && !isValidTimezone(p.defaultTimezone)) {
+            return Err({
+                name: "ValidationError",
+                message: "Invalid default timezone"
+            });
+        }
+
+        let defaultScheduledAt: string | null = null;
+        if (p.defaultScheduledDate && p.defaultScheduledTime && p.defaultTimezone) {
+            defaultScheduledAt = convertToUTC(
+                p.defaultScheduledDate,
+                p.defaultScheduledTime,
+                p.defaultTimezone
+            );
+
+            if (!defaultScheduledAt) {
+                return Err({
+                    name: "ValidationError",
+                    message: "Invalid default date/time/timezone combination"
+                });
+            }
+        }
+
+        const matchRows = p.matches.map(m => {
+            let scheduledAt: string | null = null;
+
+            if (m.scheduledDate && m.scheduledTime && m.timezone) {
+                if (!isValidTimezone(m.timezone)) {
+                    throw new Error(`Invalid timezone for match: ${m.timezone}`);
+                }
+                scheduledAt = convertToUTC(m.scheduledDate, m.scheduledTime, m.timezone);
+                if (!scheduledAt) {
+                    throw new Error(`Invalid date/time/timezone for match`);
+                }
+            } else if (defaultScheduledAt) {
+                scheduledAt = defaultScheduledAt;
+            }
+
+            return {
+                id: randomUUID(),
+                seasonId: p.seasonId,
+                homeTeamId: m.homeId,
+                awayTeamId: m.awayId,
+                week: p.week,
+                scheduledAt: scheduledAt,
+                status: "pending" as const,
+                matchType: "season" as const,
+            };
+        });
 
         const {data, error} = await insertMatches(supabase, matchRows);
 
@@ -160,6 +200,56 @@ export async function getMatchesForWeek(
         return Ok(data as Match[]);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching matches for week");
+        return Err(serializeError(error));
+    }
+}
+
+export async function updateMatchScheduleService(
+    supabase: DBClient,
+    p: UpdateMatchScheduleInput
+): Promise<Result<Match>> {
+    try {
+        let scheduledAt: string | null = null;
+
+        if (p.scheduledDate && p.scheduledTime && p.timezone) {
+            if (!isValidTimezone(p.timezone)) {
+                return Err({
+                    name: "ValidationError",
+                    message: "Invalid timezone"
+                });
+            }
+
+            scheduledAt = convertToUTC(p.scheduledDate, p.scheduledTime, p.timezone);
+
+            if (!scheduledAt) {
+                return Err({
+                    name: "ValidationError",
+                    message: "Invalid date/time/timezone combination"
+                });
+            }
+        }
+
+        const { data, error } = await updateMatchSchedule(
+            supabase,
+            p.matchId,
+            scheduledAt
+        );
+
+        if (error) {
+            logger.error({ matchId: p.matchId, error }, "Failed to update match schedule");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Err({
+                name: "UpdateError",
+                message: "Failed to update match schedule"
+            });
+        }
+
+        return Ok(data as Match);
+    } catch (error) {
+        logger.error({ error }, "Unexpected error updating match schedule");
         return Err(serializeError(error));
     }
 }

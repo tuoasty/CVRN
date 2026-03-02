@@ -6,17 +6,42 @@ import { useTeamsStore } from "@/app/stores/teamStore";
 import { clientLogger } from "@/app/utils/clientLogger";
 import Image from "next/image";
 import { TeamWithRegion } from "@/server/dto/team.dto";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/app/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/app/components/ui/dialog";
+import { getRegionTimezone, formatDateInTimezone, timezoneOptions } from "@/app/utils/timezoneOptions";
 
 interface SchedulePanelProps {
     seasonId: string;
     week: number;
+    regionCode?: string;
 }
 
-export default function SchedulePanel({ seasonId, week }: SchedulePanelProps) {
+export default function SchedulePanel({ seasonId, week, regionCode }: SchedulePanelProps) {
     const { fetchMatchesForWeek, matchesForWeekCache, loading } = useMatchesStore();
     const { fetchTeamsByIds } = useTeamsStore();
 
     const [teams, setTeams] = useState<Map<string, TeamWithRegion>>(new Map());
+
+    const [editingMatch, setEditingMatch] = useState<string | null>(null);
+    const [editSchedule, setEditSchedule] = useState<{
+        date: string;
+        time: string;
+        timezone: string;
+    } | null>(null);
 
     useEffect(() => {
         if (seasonId) {
@@ -48,6 +73,78 @@ export default function SchedulePanel({ seasonId, week }: SchedulePanelProps) {
         }
     };
 
+    const handleUpdateSchedule = async (matchId: string) => {
+        if (!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone) {
+            alert("Please fill in all schedule fields");
+            return;
+        }
+
+        const { updateMatchSchedule } = useMatchesStore.getState();
+
+        clientLogger.info("SchedulePanel", "Updating match schedule", { matchId });
+
+        const success = await updateMatchSchedule({
+            matchId,
+            scheduledDate: editSchedule.date,
+            scheduledTime: editSchedule.time,
+            timezone: editSchedule.timezone,
+        });
+
+        if (success) {
+            clientLogger.info("SchedulePanel", "Schedule updated successfully", { matchId });
+            setEditingMatch(null);
+            setEditSchedule(null);
+            await loadSchedule();
+        } else {
+            alert("Failed to update schedule");
+        }
+    };
+
+    const handleClearSchedule = async (matchId: string) => {
+        const { updateMatchSchedule } = useMatchesStore.getState();
+
+        clientLogger.info("SchedulePanel", "Clearing match schedule", { matchId });
+
+        const success = await updateMatchSchedule({
+            matchId,
+            scheduledDate: null,
+            scheduledTime: null,
+            timezone: null,
+        });
+
+        if (success) {
+            clientLogger.info("SchedulePanel", "Schedule cleared successfully", { matchId });
+            await loadSchedule();
+        } else {
+            alert("Failed to clear schedule");
+        }
+    };
+
+    const openEditDialog = (matchId: string, scheduledAt: string | null) => {
+        setEditingMatch(matchId);
+
+        if (scheduledAt) {
+            const date = new Date(scheduledAt);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            setEditSchedule({
+                date: `${year}-${month}-${day}`,
+                time: `${hours}:${minutes}`,
+                timezone: "Asia/Singapore"
+            });
+        } else {
+            setEditSchedule({
+                date: "",
+                time: "",
+                timezone: ""
+            });
+        }
+    };
+
     if (!seasonId) {
         return (
             <div className="text-sm text-gray-500">
@@ -71,6 +168,8 @@ export default function SchedulePanel({ seasonId, week }: SchedulePanelProps) {
             </div>
         );
     }
+
+    const regionTimezone = regionCode ? getRegionTimezone(regionCode) : undefined;
 
     return (
         <div className="space-y-4">
@@ -127,11 +226,101 @@ export default function SchedulePanel({ seasonId, week }: SchedulePanelProps) {
                                 </div>
                             </div>
 
-                            <div className="text-sm text-muted-foreground">
-                                {match.scheduled_at
-                                    ? new Date(match.scheduled_at).toLocaleString()
-                                    : "Time TBD"
-                                }
+                            <div className="flex items-center gap-3">
+                                <div className="text-sm text-muted-foreground">
+                                    {regionTimezone
+                                        ? formatDateInTimezone(match.scheduled_at, regionTimezone)
+                                        : match.scheduled_at
+                                            ? new Date(match.scheduled_at).toLocaleString()
+                                            : "Time TBD"
+                                    }
+                                </div>
+
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => openEditDialog(match.id, match.scheduled_at)}
+                                        >
+                                            Set Time
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Update Match Schedule</DialogTitle>
+                                        </DialogHeader>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Timezone</label>
+                                                <Select
+                                                    value={editSchedule?.timezone || ""}
+                                                    onValueChange={v => setEditSchedule(prev => ({
+                                                        date: prev?.date || "",
+                                                        time: prev?.time || "",
+                                                        timezone: v
+                                                    }))}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select timezone" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {timezoneOptions.map(tz => (
+                                                            <SelectItem key={tz.value} value={tz.value}>
+                                                                {tz.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Date</label>
+                                                <Input
+                                                    type="date"
+                                                    value={editSchedule?.date || ""}
+                                                    onChange={e => setEditSchedule(prev => ({
+                                                        date: e.target.value,
+                                                        time: prev?.time || "",
+                                                        timezone: prev?.timezone || ""
+                                                    }))}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Time</label>
+                                                <Input
+                                                    type="time"
+                                                    value={editSchedule?.time || ""}
+                                                    onChange={e => setEditSchedule(prev => ({
+                                                        date: prev?.date || "",
+                                                        time: e.target.value,
+                                                        timezone: prev?.timezone || ""
+                                                    }))}
+                                                />
+                                            </div>
+
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    onClick={() => editingMatch && handleUpdateSchedule(editingMatch)}
+                                                    disabled={!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone}
+                                                    className="flex-1"
+                                                >
+                                                    Update Schedule
+                                                </Button>
+
+                                                {match.scheduled_at && (
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => handleClearSchedule(match.id)}
+                                                    >
+                                                        Clear
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
                             </div>
                         </div>
                     </div>
