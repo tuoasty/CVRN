@@ -4,10 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Show week schedule">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix teamdetail store usage">
+      <change afterPath="$PROJECT_DIR$/app/utils/timezoneOptions.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/utils/timezone.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/teamStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/teamStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/SchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/SchedulePanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/stores/matchStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/matchStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/dto/match.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/match.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -17,8 +25,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript File" />
         <option value="TypeScript JSX File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -138,15 +146,8 @@
       <workItem from="1772252525389" duration="11083000" />
       <workItem from="1772345874243" duration="1904000" />
       <workItem from="1772347819511" duration="90000" />
-      <workItem from="1772360175459" duration="11640000" />
-    </task>
-    <task id="LOCAL-00005" summary="service role and policies">
-      <option name="closed" value="true" />
-      <created>1770285054047</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1770285054047</updated>
+      <workItem from="1772360175459" duration="12180000" />
+      <workItem from="1772442104280" duration="4294000" />
     </task>
     <task id="LOCAL-00006" summary="fix redirection">
       <option name="closed" value="true" />
@@ -532,7 +533,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772383673025</updated>
     </task>
-    <option name="localTasksCounter" value="54" />
+    <task id="LOCAL-00054" summary="Fix teamdetail store usage">
+      <option name="closed" value="true" />
+      <created>1772384260998</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1772384260998</updated>
+    </task>
+    <option name="localTasksCounter" value="55" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -552,7 +561,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="fix update player repo" />
     <MESSAGE value="Feat: Validation check player in team" />
     <MESSAGE value="Feat : remove player" />
     <MESSAGE value="Feat: updated team database and schema.&#10;&#10;TODO: Fix load team error, teams are loaded with notre%20dame for spaces. Perhaps add a seperate string for team urls, with underscore etc" />
@@ -577,7 +585,8 @@
     <MESSAGE value="Seperate concerns between season week picker and create matches" />
     <MESSAGE value="Remove create matches form" />
     <MESSAGE value="Show week schedule" />
-    <option name="LAST_COMMIT_MESSAGE" value="Show week schedule" />
+    <MESSAGE value="Fix teamdetail store usage" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix teamdetail store usage" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

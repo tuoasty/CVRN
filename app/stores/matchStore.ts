@@ -3,6 +3,8 @@ import { Match, Team } from '@/shared/types/db';
 import { getAllMatchesAction, getAvailableTeamsForWeekAction, getMatchesForWeekAction } from '@/app/actions/match.actions';
 import { CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction } from './storeUtils';
 import { clientLogger } from "@/app/utils/clientLogger";
+import { updateMatchScheduleAction } from '@/app/actions/match.actions';
+import { UpdateMatchScheduleInput } from '@/server/dto/match.dto';
 
 type MatchesState = {
     matchesCache: CacheEntry<Match[]> | undefined;
@@ -14,6 +16,7 @@ type MatchesState = {
     fetchAllMatches: () => Promise<void>;
     fetchAvailableTeams: (seasonId: string, week: number) => Promise<void>;
     fetchMatchesForWeek: (seasonId: string, week: number) => Promise<void>;
+    updateMatchSchedule: (input: UpdateMatchScheduleInput) => Promise<boolean>;
     clearCache: () => void;
 };
 
@@ -131,6 +134,58 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
         matchesForWeekCache.clear();
         clientLogger.info('MatchesStore', 'Cache cleared');
         set({ matchesCache: undefined, error: null });
+    },
+
+    updateMatchSchedule: async (input: UpdateMatchScheduleInput) => {
+        clientLogger.info('MatchesStore', 'Updating match schedule', { matchId: input.matchId });
+        set({ loading: true, error: null });
+
+        try {
+            const result = await updateMatchScheduleAction(input);
+
+            if (!result.ok) {
+                clientLogger.error('MatchesStore', 'Failed to update match schedule', {
+                    matchId: input.matchId,
+                    error: result.error
+                });
+                set({ error: result.error.message, loading: false });
+                return false;
+            }
+
+            const updatedMatch = result.value;
+            clientLogger.info('MatchesStore', 'Match schedule updated successfully', {
+                matchId: input.matchId
+            });
+
+            const { matchesCache, matchesForWeekCache } = get();
+
+            if (matchesCache) {
+                const updatedMatches = matchesCache.data.map(m =>
+                    m.id === updatedMatch.id ? updatedMatch : m
+                );
+                set({
+                    matchesCache: createCacheEntry(updatedMatches, MATCHES_TTL),
+                    loading: false
+                });
+            }
+
+            matchesForWeekCache.forEach((cache, key) => {
+                const updatedWeekMatches = cache.data.map(m =>
+                    m.id === updatedMatch.id ? updatedMatch : m
+                );
+                matchesForWeekCache.set(key, createCacheEntry(updatedWeekMatches, MATCHES_TTL));
+            });
+
+            set({ matchesForWeekCache, loading: false });
+            return true;
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception updating match schedule', {
+                matchId: input.matchId,
+                error
+            });
+            set({ error: 'Failed to update match schedule', loading: false });
+            return false;
+        }
     },
 }));
 
