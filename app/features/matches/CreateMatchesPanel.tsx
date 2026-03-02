@@ -506,7 +506,7 @@ export default function CreateMatchesPanel({ seasonId, week }: CreateMatchesPane
                             <div>
                                 <label className="block text-xs font-medium mb-1">Timezone</label>
                                 <Select
-                                    value={pair.schedule?.timezone || ""}
+                                    value={pair.schedule?.timezone || "Asia/Singapore"}
                                     onValueChange={v => updateMatchSchedule(pair.id, "timezone", v)}
                                 >
                                     <SelectTrigger>

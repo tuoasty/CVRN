@@ -4,18 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix teamdetail store usage">
-      <change afterPath="$PROJECT_DIR$/app/utils/timezoneOptions.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/utils/timezone.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Time scheduling for matches">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/matches/SchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/SchedulePanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/matchStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/matchStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/dto/match.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/match.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,15 +139,7 @@
       <workItem from="1772345874243" duration="1904000" />
       <workItem from="1772347819511" duration="90000" />
       <workItem from="1772360175459" duration="12180000" />
-      <workItem from="1772442104280" duration="4294000" />
-    </task>
-    <task id="LOCAL-00006" summary="fix redirection">
-      <option name="closed" value="true" />
-      <created>1770342745837</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1770342745837</updated>
+      <workItem from="1772442104280" duration="4419000" />
     </task>
     <task id="LOCAL-00007" summary="fix serialize error">
       <option name="closed" value="true" />
@@ -541,7 +525,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772384260998</updated>
     </task>
-    <option name="localTasksCounter" value="55" />
+    <task id="LOCAL-00055" summary="Time scheduling for matches">
+      <option name="closed" value="true" />
+      <created>1772446461894</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1772446461894</updated>
+    </task>
+    <option name="localTasksCounter" value="56" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -561,7 +553,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Feat: Validation check player in team" />
     <MESSAGE value="Feat : remove player" />
     <MESSAGE value="Feat: updated team database and schema.&#10;&#10;TODO: Fix load team error, teams are loaded with notre%20dame for spaces. Perhaps add a seperate string for team urls, with underscore etc" />
     <MESSAGE value="Fix: use slug instead of name" />
@@ -586,7 +577,8 @@
     <MESSAGE value="Remove create matches form" />
     <MESSAGE value="Show week schedule" />
     <MESSAGE value="Fix teamdetail store usage" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix teamdetail store usage" />
+    <MESSAGE value="Time scheduling for matches" />
+    <option name="LAST_COMMIT_MESSAGE" value="Time scheduling for matches" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
