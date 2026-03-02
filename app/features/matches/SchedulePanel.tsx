@@ -255,7 +255,7 @@ export default function SchedulePanel({ seasonId, week, regionCode }: SchedulePa
                                             <div>
                                                 <label className="block text-sm font-medium mb-2">Timezone</label>
                                                 <Select
-                                                    value={editSchedule?.timezone || ""}
+                                                    value={editSchedule?.timezone || "Asia/Singapore"}
                                                     onValueChange={v => setEditSchedule(prev => ({
                                                         date: prev?.date || "",
                                                         time: prev?.time || "",
