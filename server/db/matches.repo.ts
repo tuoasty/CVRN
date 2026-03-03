@@ -65,9 +65,20 @@ export async function updateMatchSchedule(
     matchId: string,
     scheduledAt: string | null
 ) {
+    const updateData: {
+        scheduled_at: string | null;
+        status?: "pending" | "scheduled" | "completed"
+    } = {
+        scheduled_at: scheduledAt
+    };
+
+    if (scheduledAt) {
+        updateData.status = "scheduled";
+    }
+
     return supabase
         .from("matches")
-        .update({ scheduled_at: scheduledAt })
+        .update(updateData)
         .eq("id", matchId)
         .select()
         .single();

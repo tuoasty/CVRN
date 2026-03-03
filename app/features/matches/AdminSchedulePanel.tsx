@@ -32,6 +32,19 @@ interface SchedulePanelProps {
     regionCode?: string;
 }
 
+const getStatusConfig = (status: string) => {
+    switch (status) {
+        case 'pending':
+            return { label: 'Pending', color: 'bg-amber-100 text-amber-800 border-amber-200' };
+        case 'scheduled':
+            return { label: 'Scheduled', color: 'bg-blue-100 text-blue-800 border-blue-200' };
+        case 'completed':
+            return { label: 'Completed', color: 'bg-green-100 text-green-800 border-green-200' };
+        default:
+            return { label: 'Unknown', color: 'bg-gray-100 text-gray-800 border-gray-200' };
+    }
+};
+
 export default function AdminSchedulePanel({ seasonId, week, regionCode }: SchedulePanelProps) {
     const { fetchMatchesForWeek, matchesForWeekCache, loading } = useMatchesStore();
     const { fetchMatchOfficials, matchOfficialsCache } = useOfficialStore();
@@ -293,9 +306,14 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                <span className="text-sm font-medium text-muted-foreground">
-                                    Match {index + 1}
-                                </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-muted-foreground">
+                                            Match {index + 1}
+                                        </span>
+                                                                            <span className={`text-xs font-medium px-2 py-1 rounded-md border ${getStatusConfig(match.status).color}`}>
+                                            {getStatusConfig(match.status).label}
+                                        </span>
+                                    </div>
 
                                     <div className="flex items-center gap-3">
                                         {homeTeam && (
