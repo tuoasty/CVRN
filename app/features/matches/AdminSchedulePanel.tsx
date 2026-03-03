@@ -42,7 +42,8 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
         referees: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
         media: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
     }>>(new Map());
-    const [criticalDataLoaded, setCriticalDataLoaded] = useState(false);
+    const [teamsLoaded, setTeamsLoaded] = useState(false);
+    const [officialsLoading, setOfficialsLoading] = useState(false);
 
     const [editingMatch, setEditingMatch] = useState<string | null>(null);
     const [editSchedule, setEditSchedule] = useState<{
@@ -51,6 +52,8 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
         timezone: string;
     } | null>(null);
 
+    const [loadingAbortController, setLoadingAbortController] = useState<AbortController | null>(null);
+
     useEffect(() => {
         if (seasonId) {
             loadSchedule();
@@ -58,68 +61,101 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
     }, [seasonId, week]);
 
     const loadSchedule = async () => {
-        setCriticalDataLoaded(false);
+        if (loadingAbortController) {
+            loadingAbortController.abort();
+        }
 
-        await fetchMatchesForWeek(seasonId, week);
+        const abortController = new AbortController();
+        setLoadingAbortController(abortController);
 
-        const cacheKey = `${seasonId}-${week}`;
-        const cached = matchesForWeekCache.get(cacheKey);
+        setTeamsLoaded(false);
+        setOfficialsLoading(true);
 
-        if (cached) {
-            const teamIds = new Set<string>();
-            cached.data.forEach(match => {
-                teamIds.add(match.home_team_id);
-                teamIds.add(match.away_team_id);
-            });
+        try {
+            await fetchMatchesForWeek(seasonId, week);
 
-            const fetchedTeams = await fetchTeamsByIds(Array.from(teamIds));
-            const teamsMap = new Map(fetchedTeams.map(t => [t.id, t]));
-            setTeams(teamsMap);
+            if (abortController.signal.aborted) {
+                clientLogger.info("SchedulePanel", "Request aborted", { seasonId, week });
+                return;
+            }
 
-            setCriticalDataLoaded(true);
+            const cacheKey = `${seasonId}-${week}`;
+            const cached = matchesForWeekCache.get(cacheKey);
 
-            clientLogger.info("SchedulePanel", "Critical data loaded", {
-                matchCount: cached.data.length,
-                teamCount: fetchedTeams.length
-            });
+            if (cached) {
+                const teamIds = new Set<string>();
+                cached.data.forEach(match => {
+                    teamIds.add(match.home_team_id);
+                    teamIds.add(match.away_team_id);
+                });
 
-            const officialsFetchPromises = cached.data.map(async (match) => {
-                await fetchMatchOfficials(match.id);
-                const officialsCached = matchOfficialsCache.get(match.id);
+                const fetchedTeams = await fetchTeamsByIds(Array.from(teamIds));
 
-                if (officialsCached) {
-                    const referees = officialsCached.data
-                        .filter(mo => mo.official_type === "referee")
-                        .map(mo => ({
-                            id: mo.official.id,
-                            username: mo.official.username,
-                            display_name: mo.official.display_name,
-                            avatar_url: mo.official.avatar_url
-                        }));
-                    const media = officialsCached.data
-                        .filter(mo => mo.official_type === "media")
-                        .map(mo => ({
-                            id: mo.official.id,
-                            username: mo.official.username,
-                            display_name: mo.official.display_name,
-                            avatar_url: mo.official.avatar_url
-                        }));
-                    return { matchId: match.id, referees, media };
+                if (abortController.signal.aborted) {
+                    clientLogger.info("SchedulePanel", "Request aborted after teams fetch", { seasonId, week });
+                    return;
                 }
-                return { matchId: match.id, referees: [], media: [] };
-            });
 
-            const officialsResults = await Promise.all(officialsFetchPromises);
+                const teamsMap = new Map(fetchedTeams.map(t => [t.id, t]));
+                setTeams(teamsMap);
+                setTeamsLoaded(true);
 
-            const officialsMap = new Map(
-                officialsResults.map(result => [result.matchId, { referees: result.referees, media: result.media }])
-            );
+                clientLogger.info("SchedulePanel", "Teams loaded", {
+                    matchCount: cached.data.length,
+                    teamCount: fetchedTeams.length
+                });
 
-            setMatchOfficials(officialsMap);
+                const officialsResults = await Promise.all(
+                    cached.data.map(async (match) => {
+                        await fetchMatchOfficials(match.id);
+                        const officialsCached = matchOfficialsCache.get(match.id);
 
-            clientLogger.info("SchedulePanel", "Officials loaded", {
-                matchesWithOfficials: officialsResults.filter(r => r.referees.length > 0 || r.media.length > 0).length
-            });
+                        if (officialsCached) {
+                            const referees = officialsCached.data
+                                .filter(mo => mo.official_type === "referee")
+                                .map(mo => ({
+                                    id: mo.official.id,
+                                    username: mo.official.username,
+                                    display_name: mo.official.display_name,
+                                    avatar_url: mo.official.avatar_url
+                                }));
+                            const media = officialsCached.data
+                                .filter(mo => mo.official_type === "media")
+                                .map(mo => ({
+                                    id: mo.official.id,
+                                    username: mo.official.username,
+                                    display_name: mo.official.display_name,
+                                    avatar_url: mo.official.avatar_url
+                                }));
+                            return { matchId: match.id, referees, media };
+                        }
+                        return { matchId: match.id, referees: [], media: [] };
+                    })
+                );
+
+                if (abortController.signal.aborted) {
+                    clientLogger.info("SchedulePanel", "Request aborted before setting officials", { seasonId, week });
+                    return;
+                }
+
+                const officialsMap = new Map(
+                    officialsResults.map(result => [result.matchId, { referees: result.referees, media: result.media }])
+                );
+
+                setMatchOfficials(officialsMap);
+                setOfficialsLoading(false);
+
+                clientLogger.info("SchedulePanel", "Officials loaded", {
+                    matchesWithOfficials: officialsResults.filter(r => r.referees.length > 0 || r.media.length > 0).length
+                });
+            }
+        } catch (error) {
+            if (!abortController.signal.aborted) {
+                clientLogger.error("SchedulePanel", "Error loading schedule", { error });
+            }
+            setOfficialsLoading(false);
+        } finally {
+            setLoadingAbortController(null);
         }
     };
 
@@ -225,7 +261,7 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
     const cached = matchesForWeekCache.get(cacheKey);
     const matches = cached?.data || [];
 
-    if (loading || !criticalDataLoaded) {
+    if (loading || !teamsLoaded) {
         return (
             <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -250,6 +286,7 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
             {matches.map((match, index) => {
                 const homeTeam = teams.get(match.home_team_id);
                 const awayTeam = teams.get(match.away_team_id);
+                const officials = matchOfficials.get(match.id);
 
                 return (
                     <div key={match.id} className="border p-6 rounded-lg">
@@ -299,13 +336,18 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                                     </div>
                                 </div>
 
-                                {matchOfficials.get(match.id) && (
+                                {officialsLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                                        <span className="text-xs text-muted-foreground">Loading officials...</span>
+                                    </div>
+                                ) : officials && (officials.referees.length > 0 || officials.media.length > 0) ? (
                                     <div className="flex flex-col gap-2">
-                                        {matchOfficials.get(match.id)!.referees.length > 0 && (
+                                        {officials.referees.length > 0 && (
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs text-muted-foreground w-16">Referees:</span>
                                                 <div className="flex gap-2 flex-wrap">
-                                                    {matchOfficials.get(match.id)!.referees.map((official) => (
+                                                    {officials.referees.map((official) => (
                                                         <div
                                                             key={official.id}
                                                             className="flex items-center gap-1.5"
@@ -322,18 +364,18 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                                                                 </div>
                                                             )}
                                                             <span className="text-xs">
-                                    {official.display_name || official.username || "Unknown"}
-                                </span>
+                                                            {official.display_name || official.username || "Unknown"}
+                                                        </span>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
                                         )}
-                                        {matchOfficials.get(match.id)!.media.length > 0 && (
+                                        {officials.media.length > 0 && (
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs text-muted-foreground w-16">Media:</span>
                                                 <div className="flex gap-2 flex-wrap">
-                                                    {matchOfficials.get(match.id)!.media.map((official) => (
+                                                    {officials.media.map((official) => (
                                                         <div
                                                             key={official.id}
                                                             className="flex items-center gap-1.5"
@@ -350,130 +392,136 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                                                                 </div>
                                                             )}
                                                             <span className="text-xs">
-                                    {official.display_name || official.username || "Unknown"}
-                                </span>
+                                                            {official.display_name || official.username || "Unknown"}
+                                                        </span>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
                                         )}
                                     </div>
-                                )}
+                                ) : null}
 
-                               <div className="flex items-center gap-3">
-                                   <div className="flex items-center gap-3">
-                                       <div className="text-sm text-muted-foreground">
-                                           {regionTimezone
-                                               ? formatDateInTimezone(match.scheduled_at, regionTimezone)
-                                               : match.scheduled_at
-                                                   ? new Date(match.scheduled_at).toLocaleString()
-                                                   : "Time TBD"
-                                           }
-                                       </div>
+                                <div className="flex items-center gap-3">
+                                    {officialsLoading ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="text-sm text-muted-foreground">
+                                                {regionTimezone
+                                                    ? formatDateInTimezone(match.scheduled_at, regionTimezone)
+                                                    : match.scheduled_at
+                                                        ? new Date(match.scheduled_at).toLocaleString()
+                                                        : "Time TBD"
+                                                }
+                                            </div>
 
-                                       <Dialog>
-                                           <DialogTrigger asChild>
-                                               <Button
-                                                   variant="outline"
-                                                   size="sm"
-                                                   onClick={() => openEditDialog(match.id, match.scheduled_at)}
-                                               >
-                                                   Manage
-                                               </Button>
-                                           </DialogTrigger>
-                                           <DialogContent>
-                                               <DialogHeader>
-                                                   <DialogTitle>Manage Match</DialogTitle>
-                                               </DialogHeader>
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => openEditDialog(match.id, match.scheduled_at)}
+                                                    >
+                                                        Manage
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent>
+                                                    <DialogHeader>
+                                                        <DialogTitle>Manage Match</DialogTitle>
+                                                    </DialogHeader>
 
-                                               <div className="space-y-4">
-                                                   <div>
-                                                       <label className="block text-sm font-medium mb-2">Timezone</label>
-                                                       <Select
-                                                           value={editSchedule?.timezone || "Asia/Singapore"}
-                                                           onValueChange={v => setEditSchedule(prev => ({
-                                                               date: prev?.date || "",
-                                                               time: prev?.time || "",
-                                                               timezone: v
-                                                           }))}
-                                                       >
-                                                           <SelectTrigger>
-                                                               <SelectValue placeholder="Select timezone" />
-                                                           </SelectTrigger>
-                                                           <SelectContent>
-                                                               {timezoneOptions.map(tz => (
-                                                                   <SelectItem key={tz.value} value={tz.value}>
-                                                                       {tz.label}
-                                                                   </SelectItem>
-                                                               ))}
-                                                           </SelectContent>
-                                                       </Select>
-                                                   </div>
-                                                   <div>
-                                                       <label className="block text-sm font-medium mb-2">Date</label>
-                                                       <Input
-                                                           type="date"
-                                                           value={editSchedule?.date || ""}
-                                                           onChange={e => setEditSchedule(prev => ({
-                                                               date: e.target.value,
-                                                               time: prev?.time || "",
-                                                               timezone: prev?.timezone || ""
-                                                           }))}
-                                                       />
-                                                   </div>
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium mb-2">Timezone</label>
+                                                            <Select
+                                                                value={editSchedule?.timezone || "Asia/Singapore"}
+                                                                onValueChange={v => setEditSchedule(prev => ({
+                                                                    date: prev?.date || "",
+                                                                    time: prev?.time || "",
+                                                                    timezone: v
+                                                                }))}
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select timezone" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {timezoneOptions.map(tz => (
+                                                                        <SelectItem key={tz.value} value={tz.value}>
+                                                                            {tz.label}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium mb-2">Date</label>
+                                                            <Input
+                                                                type="date"
+                                                                value={editSchedule?.date || ""}
+                                                                onChange={e => setEditSchedule(prev => ({
+                                                                    date: e.target.value,
+                                                                    time: prev?.time || "",
+                                                                    timezone: prev?.timezone || ""
+                                                                }))}
+                                                            />
+                                                        </div>
 
-                                                   <div>
-                                                       <label className="block text-sm font-medium mb-2">Time</label>
-                                                       <Input
-                                                           type="time"
-                                                           value={editSchedule?.time || ""}
-                                                           onChange={e => setEditSchedule(prev => ({
-                                                               date: prev?.date || "",
-                                                               time: e.target.value,
-                                                               timezone: prev?.timezone || ""
-                                                           }))}
-                                                       />
-                                                   </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium mb-2">Time</label>
+                                                            <Input
+                                                                type="time"
+                                                                value={editSchedule?.time || ""}
+                                                                onChange={e => setEditSchedule(prev => ({
+                                                                    date: prev?.date || "",
+                                                                    time: e.target.value,
+                                                                    timezone: prev?.timezone || ""
+                                                                }))}
+                                                            />
+                                                        </div>
 
-                                                   <div className="border-t pt-4 mt-4">
-                                                       <h3 className="text-sm font-semibold mb-4">Officials</h3>
-                                                       <div className="space-y-4">
-                                                           <MatchOfficialSection
-                                                               matchId={match.id}
-                                                               officialType="referee"
-                                                               title="Referees"
-                                                           />
-                                                           <MatchOfficialSection
-                                                               matchId={match.id}
-                                                               officialType="media"
-                                                               title="Media"
-                                                           />
-                                                       </div>
-                                                   </div>
+                                                        <div className="border-t pt-4 mt-4">
+                                                            <h3 className="text-sm font-semibold mb-4">Officials</h3>
+                                                            <div className="space-y-4">
+                                                                <MatchOfficialSection
+                                                                    matchId={match.id}
+                                                                    officialType="referee"
+                                                                    title="Referees"
+                                                                />
+                                                                <MatchOfficialSection
+                                                                    matchId={match.id}
+                                                                    officialType="media"
+                                                                    title="Media"
+                                                                />
+                                                            </div>
+                                                        </div>
 
-                                                   <div className="flex gap-2">
-                                                       <Button
-                                                           onClick={() => editingMatch && handleUpdateSchedule(editingMatch)}
-                                                           disabled={!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone}
-                                                           className="flex-1"
-                                                       >
-                                                           Update Schedule
-                                                       </Button>
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                onClick={() => editingMatch && handleUpdateSchedule(editingMatch)}
+                                                                disabled={!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone}
+                                                                className="flex-1"
+                                                            >
+                                                                Update Schedule
+                                                            </Button>
 
-                                                       {match.scheduled_at && (
-                                                           <Button
-                                                               variant="outline"
-                                                               onClick={() => handleClearSchedule(match.id)}
-                                                           >
-                                                               Clear
-                                                           </Button>
-                                                       )}
-                                                   </div>
-                                               </div>
-                                           </DialogContent>
-                                       </Dialog>
-                                   </div>
-                               </div>
+                                                            {match.scheduled_at && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    onClick={() => handleClearSchedule(match.id)}
+                                                                >
+                                                                    Clear
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
