@@ -198,6 +198,7 @@ export async function lazySyncOfficial(
         const {data, error} = await updateOfficial(supabase, {
             robloxUserId: String(user.id),
             username: user.name,
+            displayName: user.displayName ?? null,
             avatarUrl,
             lastSyncedAt: new Date().toISOString(),
         });
