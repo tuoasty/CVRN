@@ -25,7 +25,7 @@ type OfficialState = {
     error: string | null;
 
     searchOfficials: (username: string) => Promise<RobloxUserWithAvatar[]>;
-    saveOfficial: (robloxUserId: string, username: string, avatarUrl: string) => Promise<Official | null>;
+    saveOfficial: (robloxUserId: string, username: string, avatarUrl: string, displayName: string) => Promise<Official | null>;
     fetchAllOfficials: () => Promise<void>;
     fetchMatchOfficials: (matchId: string) => Promise<void>;
     fetchMatchOfficialsByType: (matchId: string, officialType: OfficialType) => Promise<MatchOfficialWithDetails[]>;
@@ -85,8 +85,8 @@ export const useOfficialStore = create<OfficialState>((set, get) => ({
         }
     },
 
-    saveOfficial: async (robloxUserId: string, username: string, avatarUrl: string) => {
-        clientLogger.info('OfficialStore', 'Saving official', { robloxUserId, username });
+    saveOfficial: async (robloxUserId: string, username: string, avatarUrl: string, displayName?: string) => {
+        clientLogger.info('OfficialStore', 'Saving official', { robloxUserId, username, displayName });
         set({ loading: true, error: null });
 
         try {
@@ -94,6 +94,7 @@ export const useOfficialStore = create<OfficialState>((set, get) => ({
                 robloxUserId,
                 username,
                 avatarUrl,
+                displayName: displayName ?? null,
             });
 
             if (!result.ok) {
