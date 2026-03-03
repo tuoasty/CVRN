@@ -30,7 +30,7 @@ interface SchedulePanelProps {
     regionCode?: string;
 }
 
-export default function SchedulePanel({ seasonId, week, regionCode }: SchedulePanelProps) {
+export default function AdminSchedulePanel({ seasonId, week, regionCode }: SchedulePanelProps) {
     const { fetchMatchesForWeek, matchesForWeekCache, loading } = useMatchesStore();
     const { fetchTeamsByIds } = useTeamsStore();
 
