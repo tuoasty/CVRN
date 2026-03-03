@@ -62,7 +62,14 @@ export async function saveOfficial(
         const {data: existingOfficial} = await findOfficialByRobloxId(supabase, p.robloxUserId);
 
         if (existingOfficial) {
-            logger.warn({robloxUserId: p.robloxUserId}, "Official already exists");
+            logger.info({robloxUserId: p.robloxUserId}, "Official already exists, syncing latest data");
+
+            const syncResult = await lazySyncOfficial(supabase, existingOfficial);
+
+            if (syncResult.ok) {
+                return Ok(syncResult.value);
+            }
+
             return Ok(existingOfficial);
         }
 

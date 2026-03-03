@@ -62,7 +62,7 @@ export default function OfficialSearchDialog({
             officialType,
         });
 
-        const official = await saveOfficial(user.id, user.name, user.avatarUrl);
+        const official = await saveOfficial(user.id, user.name, user.avatarUrl, user.displayName);
 
         if (!official) {
             alert("Failed to save official");
