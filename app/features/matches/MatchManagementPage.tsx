@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import SeasonWeekPicker from "@/app/features/seasons/SeasonWeekPicker";
 import CreateMatchesPanel from "@/app/features/matches/CreateMatchesPanel";
-import SchedulePanel from "@/app/features/matches/SchedulePanel";
+import AdminSchedulePanel from "@/app/features/matches/AdminSchedulePanel";
 import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { useRegionsStore } from "@/app/stores/regionStore";
 
@@ -40,7 +40,7 @@ export default function MatchManagementPage() {
 
             {selectedSeasonId && (
                 <>
-                    <SchedulePanel
+                    <AdminSchedulePanel
                         seasonId={selectedSeasonId}
                         week={selectedWeek}
                         regionCode={regionCode}
