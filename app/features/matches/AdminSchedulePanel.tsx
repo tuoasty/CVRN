@@ -42,6 +42,7 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
         referees: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
         media: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
     }>>(new Map());
+    const [criticalDataLoaded, setCriticalDataLoaded] = useState(false);
 
     const [editingMatch, setEditingMatch] = useState<string | null>(null);
     const [editSchedule, setEditSchedule] = useState<{
@@ -57,6 +58,8 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
     }, [seasonId, week]);
 
     const loadSchedule = async () => {
+        setCriticalDataLoaded(false);
+
         await fetchMatchesForWeek(seasonId, week);
 
         const cacheKey = `${seasonId}-${week}`;
@@ -73,12 +76,14 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
             const teamsMap = new Map(fetchedTeams.map(t => [t.id, t]));
             setTeams(teamsMap);
 
-            const officialsMap = new Map<string, {
-                referees: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
-                media: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
-            }>();
+            setCriticalDataLoaded(true);
 
-            for (const match of cached.data) {
+            clientLogger.info("SchedulePanel", "Critical data loaded", {
+                matchCount: cached.data.length,
+                teamCount: fetchedTeams.length
+            });
+
+            const officialsFetchPromises = cached.data.map(async (match) => {
                 await fetchMatchOfficials(match.id);
                 const officialsCached = matchOfficialsCache.get(match.id);
 
@@ -99,15 +104,21 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                             display_name: mo.official.display_name,
                             avatar_url: mo.official.avatar_url
                         }));
-                    officialsMap.set(match.id, { referees, media });
+                    return { matchId: match.id, referees, media };
                 }
-            }
+                return { matchId: match.id, referees: [], media: [] };
+            });
+
+            const officialsResults = await Promise.all(officialsFetchPromises);
+
+            const officialsMap = new Map(
+                officialsResults.map(result => [result.matchId, { referees: result.referees, media: result.media }])
+            );
 
             setMatchOfficials(officialsMap);
 
-            clientLogger.info("SchedulePanel", "Schedule loaded", {
-                matchCount: cached.data.length,
-                teamCount: fetchedTeams.length
+            clientLogger.info("SchedulePanel", "Officials loaded", {
+                matchesWithOfficials: officialsResults.filter(r => r.referees.length > 0 || r.media.length > 0).length
             });
         }
     };
@@ -214,8 +225,12 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
     const cached = matchesForWeekCache.get(cacheKey);
     const matches = cached?.data || [];
 
-    if (loading) {
-        return <div className="text-sm text-gray-500">Loading schedule...</div>;
+    if (loading || !criticalDataLoaded) {
+        return (
+            <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+        );
     }
 
     if (matches.length === 0) {
@@ -237,216 +252,228 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                 const awayTeam = teams.get(match.away_team_id);
 
                 return (
-                    <div key={match.id} className="border p-4 rounded-lg">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                    <div key={match.id} className="border p-6 rounded-lg">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
                                 <span className="text-sm font-medium text-muted-foreground">
                                     Match {index + 1}
                                 </span>
 
-                                <div className="flex items-center gap-3">
-                                    {homeTeam && (
-                                        <div className="flex items-center gap-2">
-                                            {homeTeam.logo_url && (
-                                                <div className="relative w-8 h-8">
-                                                    <Image
-                                                        src={homeTeam.logo_url}
-                                                        alt={homeTeam.name}
-                                                        fill
-                                                        sizes="32px"
-                                                        className="object-contain"
-                                                    />
-                                                </div>
-                                            )}
-                                            <span className="font-medium">{homeTeam.name}</span>
-                                        </div>
-                                    )}
-
-                                    <span className="text-muted-foreground">vs</span>
-
-                                    {awayTeam && (
-                                        <div className="flex items-center gap-2">
-                                            {awayTeam.logo_url && (
-                                                <div className="relative w-8 h-8">
-                                                    <Image
-                                                        src={awayTeam.logo_url}
-                                                        alt={awayTeam.name}
-                                                        fill
-                                                        sizes="32px"
-                                                        className="object-contain"
-                                                    />
-                                                </div>
-                                            )}
-                                            <span className="font-medium">{awayTeam.name}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {matchOfficials.get(match.id) && (
-                                <div className="space-y-1">
-                                    {matchOfficials.get(match.id)!.referees.length > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-muted-foreground w-16">Referees:</span>
-                                            <div className="flex gap-1">
-                                                {matchOfficials.get(match.id)!.referees.map((official) => (
-                                                    <div
-                                                        key={official.id}
-                                                        className="relative w-6 h-6 rounded-full overflow-hidden"
-                                                        title={official.display_name || official.username || ""}
-                                                    >
-                                                        {official.avatar_url && (
-                                                            <Image
-                                                                src={official.avatar_url}
-                                                                alt={official.username || "Official"}
-                                                                fill
-                                                                sizes="24px"
-                                                                className="object-cover"
-                                                            />
-                                                        )}
+                                    <div className="flex items-center gap-3">
+                                        {homeTeam && (
+                                            <div className="flex items-center gap-2">
+                                                {homeTeam.logo_url && (
+                                                    <div className="relative w-8 h-8">
+                                                        <Image
+                                                            src={homeTeam.logo_url}
+                                                            alt={homeTeam.name}
+                                                            fill
+                                                            sizes="32px"
+                                                            className="object-contain"
+                                                        />
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {matchOfficials.get(match.id)!.media.length > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-muted-foreground w-16">Media:</span>
-                                            <div className="flex gap-1">
-                                                {matchOfficials.get(match.id)!.media.map((official) => (
-                                                    <div
-                                                        key={official.id}
-                                                        className="relative w-6 h-6 rounded-full overflow-hidden"
-                                                        title={official.display_name || official.username || ""}
-                                                    >
-                                                        {official.avatar_url && (
-                                                            <Image
-                                                                src={official.avatar_url}
-                                                                alt={official.username || "Official"}
-                                                                fill
-                                                                sizes="24px"
-                                                                className="object-cover"
-                                                            />
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="flex items-center gap-3">
-                                <div className="text-sm text-muted-foreground">
-                                    {regionTimezone
-                                        ? formatDateInTimezone(match.scheduled_at, regionTimezone)
-                                        : match.scheduled_at
-                                            ? new Date(match.scheduled_at).toLocaleString()
-                                            : "Time TBD"
-                                    }
-                                </div>
-
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => openEditDialog(match.id, match.scheduled_at)}
-                                        >
-                                            Manage
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Manage Match</DialogTitle>
-                                        </DialogHeader>
-
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Timezone</label>
-                                                <Select
-                                                    value={editSchedule?.timezone || "Asia/Singapore"}
-                                                    onValueChange={v => setEditSchedule(prev => ({
-                                                        date: prev?.date || "",
-                                                        time: prev?.time || "",
-                                                        timezone: v
-                                                    }))}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select timezone" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {timezoneOptions.map(tz => (
-                                                            <SelectItem key={tz.value} value={tz.value}>
-                                                                {tz.label}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Date</label>
-                                                <Input
-                                                    type="date"
-                                                    value={editSchedule?.date || ""}
-                                                    onChange={e => setEditSchedule(prev => ({
-                                                        date: e.target.value,
-                                                        time: prev?.time || "",
-                                                        timezone: prev?.timezone || ""
-                                                    }))}
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Time</label>
-                                                <Input
-                                                    type="time"
-                                                    value={editSchedule?.time || ""}
-                                                    onChange={e => setEditSchedule(prev => ({
-                                                        date: prev?.date || "",
-                                                        time: e.target.value,
-                                                        timezone: prev?.timezone || ""
-                                                    }))}
-                                                />
-                                            </div>
-
-                                            <div className="border-t pt-4 mt-4">
-                                                <h3 className="text-sm font-semibold mb-4">Officials</h3>
-                                                <div className="space-y-4">
-                                                    <MatchOfficialSection
-                                                        matchId={match.id}
-                                                        officialType="referee"
-                                                        title="Referees"
-                                                    />
-                                                    <MatchOfficialSection
-                                                        matchId={match.id}
-                                                        officialType="media"
-                                                        title="Media"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    onClick={() => editingMatch && handleUpdateSchedule(editingMatch)}
-                                                    disabled={!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone}
-                                                    className="flex-1"
-                                                >
-                                                    Update Schedule
-                                                </Button>
-
-                                                {match.scheduled_at && (
-                                                    <Button
-                                                        variant="outline"
-                                                        onClick={() => handleClearSchedule(match.id)}
-                                                    >
-                                                        Clear
-                                                    </Button>
                                                 )}
+                                                <span className="font-medium">{homeTeam.name}</span>
                                             </div>
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
+                                        )}
+
+                                        <span className="text-muted-foreground">vs</span>
+
+                                        {awayTeam && (
+                                            <div className="flex items-center gap-2">
+                                                {awayTeam.logo_url && (
+                                                    <div className="relative w-8 h-8">
+                                                        <Image
+                                                            src={awayTeam.logo_url}
+                                                            alt={awayTeam.name}
+                                                            fill
+                                                            sizes="32px"
+                                                            className="object-contain"
+                                                        />
+                                                    </div>
+                                                )}
+                                                <span className="font-medium">{awayTeam.name}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {matchOfficials.get(match.id) && (
+                                    <div className="flex flex-col gap-2">
+                                        {matchOfficials.get(match.id)!.referees.length > 0 && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-muted-foreground w-16">Referees:</span>
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {matchOfficials.get(match.id)!.referees.map((official) => (
+                                                        <div
+                                                            key={official.id}
+                                                            className="flex items-center gap-1.5"
+                                                        >
+                                                            {official.avatar_url && (
+                                                                <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
+                                                                    <Image
+                                                                        src={official.avatar_url}
+                                                                        alt={official.username || "Official"}
+                                                                        fill
+                                                                        sizes="20px"
+                                                                        className="object-cover"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <span className="text-xs">
+                                    {official.display_name || official.username || "Unknown"}
+                                </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {matchOfficials.get(match.id)!.media.length > 0 && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-muted-foreground w-16">Media:</span>
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {matchOfficials.get(match.id)!.media.map((official) => (
+                                                        <div
+                                                            key={official.id}
+                                                            className="flex items-center gap-1.5"
+                                                        >
+                                                            {official.avatar_url && (
+                                                                <div className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
+                                                                    <Image
+                                                                        src={official.avatar_url}
+                                                                        alt={official.username || "Official"}
+                                                                        fill
+                                                                        sizes="20px"
+                                                                        className="object-cover"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <span className="text-xs">
+                                    {official.display_name || official.username || "Unknown"}
+                                </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                               <div className="flex items-center gap-3">
+                                   <div className="flex items-center gap-3">
+                                       <div className="text-sm text-muted-foreground">
+                                           {regionTimezone
+                                               ? formatDateInTimezone(match.scheduled_at, regionTimezone)
+                                               : match.scheduled_at
+                                                   ? new Date(match.scheduled_at).toLocaleString()
+                                                   : "Time TBD"
+                                           }
+                                       </div>
+
+                                       <Dialog>
+                                           <DialogTrigger asChild>
+                                               <Button
+                                                   variant="outline"
+                                                   size="sm"
+                                                   onClick={() => openEditDialog(match.id, match.scheduled_at)}
+                                               >
+                                                   Manage
+                                               </Button>
+                                           </DialogTrigger>
+                                           <DialogContent>
+                                               <DialogHeader>
+                                                   <DialogTitle>Manage Match</DialogTitle>
+                                               </DialogHeader>
+
+                                               <div className="space-y-4">
+                                                   <div>
+                                                       <label className="block text-sm font-medium mb-2">Timezone</label>
+                                                       <Select
+                                                           value={editSchedule?.timezone || "Asia/Singapore"}
+                                                           onValueChange={v => setEditSchedule(prev => ({
+                                                               date: prev?.date || "",
+                                                               time: prev?.time || "",
+                                                               timezone: v
+                                                           }))}
+                                                       >
+                                                           <SelectTrigger>
+                                                               <SelectValue placeholder="Select timezone" />
+                                                           </SelectTrigger>
+                                                           <SelectContent>
+                                                               {timezoneOptions.map(tz => (
+                                                                   <SelectItem key={tz.value} value={tz.value}>
+                                                                       {tz.label}
+                                                                   </SelectItem>
+                                                               ))}
+                                                           </SelectContent>
+                                                       </Select>
+                                                   </div>
+                                                   <div>
+                                                       <label className="block text-sm font-medium mb-2">Date</label>
+                                                       <Input
+                                                           type="date"
+                                                           value={editSchedule?.date || ""}
+                                                           onChange={e => setEditSchedule(prev => ({
+                                                               date: e.target.value,
+                                                               time: prev?.time || "",
+                                                               timezone: prev?.timezone || ""
+                                                           }))}
+                                                       />
+                                                   </div>
+
+                                                   <div>
+                                                       <label className="block text-sm font-medium mb-2">Time</label>
+                                                       <Input
+                                                           type="time"
+                                                           value={editSchedule?.time || ""}
+                                                           onChange={e => setEditSchedule(prev => ({
+                                                               date: prev?.date || "",
+                                                               time: e.target.value,
+                                                               timezone: prev?.timezone || ""
+                                                           }))}
+                                                       />
+                                                   </div>
+
+                                                   <div className="border-t pt-4 mt-4">
+                                                       <h3 className="text-sm font-semibold mb-4">Officials</h3>
+                                                       <div className="space-y-4">
+                                                           <MatchOfficialSection
+                                                               matchId={match.id}
+                                                               officialType="referee"
+                                                               title="Referees"
+                                                           />
+                                                           <MatchOfficialSection
+                                                               matchId={match.id}
+                                                               officialType="media"
+                                                               title="Media"
+                                                           />
+                                                       </div>
+                                                   </div>
+
+                                                   <div className="flex gap-2">
+                                                       <Button
+                                                           onClick={() => editingMatch && handleUpdateSchedule(editingMatch)}
+                                                           disabled={!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone}
+                                                           className="flex-1"
+                                                       >
+                                                           Update Schedule
+                                                       </Button>
+
+                                                       {match.scheduled_at && (
+                                                           <Button
+                                                               variant="outline"
+                                                               onClick={() => handleClearSchedule(match.id)}
+                                                           >
+                                                               Clear
+                                                           </Button>
+                                                       )}
+                                                   </div>
+                                               </div>
+                                           </DialogContent>
+                                       </Dialog>
+                                   </div>
+                               </div>
                             </div>
                         </div>
                     </div>

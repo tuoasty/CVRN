@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Match officials setup">
-      <change afterPath="$PROJECT_DIR$/app/features/officials/MatchOfficialSection.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Match official display and management">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/utils/timezoneOptions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/utils/timezoneOptions.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -142,15 +139,7 @@
       <workItem from="1772347819511" duration="90000" />
       <workItem from="1772360175459" duration="12180000" />
       <workItem from="1772442104280" duration="4452000" />
-      <workItem from="1772502136110" duration="3912000" />
-    </task>
-    <task id="LOCAL-00009" summary="Fix proxy redirect">
-      <option name="closed" value="true" />
-      <created>1770393834560</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1770393834560</updated>
+      <workItem from="1772502136110" duration="5057000" />
     </task>
     <task id="LOCAL-00010" summary="create team">
       <option name="closed" value="true" />
@@ -536,7 +525,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772506004607</updated>
     </task>
-    <option name="localTasksCounter" value="58" />
+    <task id="LOCAL-00058" summary="Match official display and management">
+      <option name="closed" value="true" />
+      <created>1772507255899</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1772507255900</updated>
+    </task>
+    <option name="localTasksCounter" value="59" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -556,7 +553,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Fix: use slug instead of name" />
     <MESSAGE value="fix: image load optimization" />
     <MESSAGE value="fix: optimized teamslist, fetch teams with region" />
     <MESSAGE value="fix: optimized team detail page loading" />
@@ -581,7 +577,8 @@
     <MESSAGE value="Time scheduling for matches" />
     <MESSAGE value="Fix default scheduling to gmt +8" />
     <MESSAGE value="Match officials setup" />
-    <option name="LAST_COMMIT_MESSAGE" value="Match officials setup" />
+    <MESSAGE value="Match official display and management" />
+    <option name="LAST_COMMIT_MESSAGE" value="Match official display and management" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
