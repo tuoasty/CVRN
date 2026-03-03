@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Match official display and management">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Added loading, TODO fix official caching">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
     </list>
@@ -139,15 +139,7 @@
       <workItem from="1772347819511" duration="90000" />
       <workItem from="1772360175459" duration="12180000" />
       <workItem from="1772442104280" duration="4452000" />
-      <workItem from="1772502136110" duration="5057000" />
-    </task>
-    <task id="LOCAL-00010" summary="create team">
-      <option name="closed" value="true" />
-      <created>1770450665174</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1770450665174</updated>
+      <workItem from="1772502136110" duration="6027000" />
     </task>
     <task id="LOCAL-00011" summary="create team success">
       <option name="closed" value="true" />
@@ -533,7 +525,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772507255900</updated>
     </task>
-    <option name="localTasksCounter" value="59" />
+    <task id="LOCAL-00059" summary="Added loading, TODO fix official caching">
+      <option name="closed" value="true" />
+      <created>1772508359678</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1772508359678</updated>
+    </task>
+    <option name="localTasksCounter" value="60" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -553,7 +553,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="fix: image load optimization" />
     <MESSAGE value="fix: optimized teamslist, fetch teams with region" />
     <MESSAGE value="fix: optimized team detail page loading" />
     <MESSAGE value="Zustand stores. Hopefully all are good" />
@@ -578,7 +577,8 @@
     <MESSAGE value="Fix default scheduling to gmt +8" />
     <MESSAGE value="Match officials setup" />
     <MESSAGE value="Match official display and management" />
-    <option name="LAST_COMMIT_MESSAGE" value="Match official display and management" />
+    <MESSAGE value="Added loading, TODO fix official caching" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added loading, TODO fix official caching" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
