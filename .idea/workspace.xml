@@ -4,12 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix default scheduling to gmt +8">
-      <change afterPath="$PROJECT_DIR$/app/actions/matchOfficial.actions.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/stores/officialStore.ts" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Match officials setup">
+      <change afterPath="$PROJECT_DIR$/app/features/officials/MatchOfficialSection.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/SchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/utils/timezoneOptions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/utils/timezoneOptions.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,8 +19,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript JSX File" />
         <option value="TypeScript File" />
+        <option value="TypeScript JSX File" />
       </list>
     </option>
   </component>
@@ -142,15 +142,7 @@
       <workItem from="1772347819511" duration="90000" />
       <workItem from="1772360175459" duration="12180000" />
       <workItem from="1772442104280" duration="4452000" />
-      <workItem from="1772502136110" duration="2736000" />
-    </task>
-    <task id="LOCAL-00008" summary="invite user and set password">
-      <option name="closed" value="true" />
-      <created>1770392768402</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1770392768402</updated>
+      <workItem from="1772502136110" duration="3912000" />
     </task>
     <task id="LOCAL-00009" summary="Fix proxy redirect">
       <option name="closed" value="true" />
@@ -536,7 +528,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772446605015</updated>
     </task>
-    <option name="localTasksCounter" value="57" />
+    <task id="LOCAL-00057" summary="Match officials setup">
+      <option name="closed" value="true" />
+      <created>1772506004606</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1772506004607</updated>
+    </task>
+    <option name="localTasksCounter" value="58" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -556,7 +556,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Feat: updated team database and schema.&#10;&#10;TODO: Fix load team error, teams are loaded with notre%20dame for spaces. Perhaps add a seperate string for team urls, with underscore etc" />
     <MESSAGE value="Fix: use slug instead of name" />
     <MESSAGE value="fix: image load optimization" />
     <MESSAGE value="fix: optimized teamslist, fetch teams with region" />
@@ -581,7 +580,8 @@
     <MESSAGE value="Fix teamdetail store usage" />
     <MESSAGE value="Time scheduling for matches" />
     <MESSAGE value="Fix default scheduling to gmt +8" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix default scheduling to gmt +8" />
+    <MESSAGE value="Match officials setup" />
+    <option name="LAST_COMMIT_MESSAGE" value="Match officials setup" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
