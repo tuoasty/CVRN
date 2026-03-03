@@ -1,3 +1,5 @@
+import {clientLogger} from "@/app/utils/clientLogger";
+
 export const timezoneOptions = [
     { value: "America/New_York", label: "EST (GMT-5)" },
     { value: "Asia/Singapore", label: "SGT (GMT+8)" },
@@ -31,9 +33,10 @@ export function formatDateInTimezone(
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            hour12: true,
+            hour12: false,
         });
     } catch (error) {
+        clientLogger.error("Timezone Options", "Timezone formatting error", {error})
         return "Invalid date";
     }
 }

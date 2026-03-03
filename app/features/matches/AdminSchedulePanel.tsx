@@ -23,6 +23,8 @@ import {
     DialogTrigger,
 } from "@/app/components/ui/dialog";
 import { getRegionTimezone, formatDateInTimezone, timezoneOptions } from "@/app/utils/timezoneOptions";
+import MatchOfficialSection from "@/app/features/officials/MatchOfficialSection";
+import {useOfficialStore} from "@/app/stores/officialStore";
 
 interface SchedulePanelProps {
     seasonId: string;
@@ -32,9 +34,14 @@ interface SchedulePanelProps {
 
 export default function AdminSchedulePanel({ seasonId, week, regionCode }: SchedulePanelProps) {
     const { fetchMatchesForWeek, matchesForWeekCache, loading } = useMatchesStore();
+    const { fetchMatchOfficials, matchOfficialsCache } = useOfficialStore();
     const { fetchTeamsByIds } = useTeamsStore();
 
     const [teams, setTeams] = useState<Map<string, TeamWithRegion>>(new Map());
+    const [matchOfficials, setMatchOfficials] = useState<Map<string, {
+        referees: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
+        media: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
+    }>>(new Map());
 
     const [editingMatch, setEditingMatch] = useState<string | null>(null);
     const [editSchedule, setEditSchedule] = useState<{
@@ -65,6 +72,38 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
             const fetchedTeams = await fetchTeamsByIds(Array.from(teamIds));
             const teamsMap = new Map(fetchedTeams.map(t => [t.id, t]));
             setTeams(teamsMap);
+
+            const officialsMap = new Map<string, {
+                referees: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
+                media: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>;
+            }>();
+
+            for (const match of cached.data) {
+                await fetchMatchOfficials(match.id);
+                const officialsCached = matchOfficialsCache.get(match.id);
+
+                if (officialsCached) {
+                    const referees = officialsCached.data
+                        .filter(mo => mo.official_type === "referee")
+                        .map(mo => ({
+                            id: mo.official.id,
+                            username: mo.official.username,
+                            display_name: mo.official.display_name,
+                            avatar_url: mo.official.avatar_url
+                        }));
+                    const media = officialsCached.data
+                        .filter(mo => mo.official_type === "media")
+                        .map(mo => ({
+                            id: mo.official.id,
+                            username: mo.official.username,
+                            display_name: mo.official.display_name,
+                            avatar_url: mo.official.avatar_url
+                        }));
+                    officialsMap.set(match.id, { referees, media });
+                }
+            }
+
+            setMatchOfficials(officialsMap);
 
             clientLogger.info("SchedulePanel", "Schedule loaded", {
                 matchCount: cached.data.length,
@@ -124,23 +163,41 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
         setEditingMatch(matchId);
 
         if (scheduledAt) {
+            const tz = regionCode ? getRegionTimezone(regionCode) : "Asia/Singapore";
             const date = new Date(scheduledAt);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
 
-            setEditSchedule({
-                date: `${year}-${month}-${day}`,
-                time: `${hours}:${minutes}`,
-                timezone: "Asia/Singapore"
+            const localDateString = date.toLocaleString('en-US', {
+                timeZone: tz,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
             });
+
+            const parts = localDateString.match(/(\d{2})\/(\d{2})\/(\d{4}),\s(\d{2}):(\d{2})/);
+
+            if (parts) {
+                const [, month, day, year, hours, minutes] = parts;
+
+                setEditSchedule({
+                    date: `${year}-${month}-${day}`,
+                    time: `${hours}:${minutes}`,
+                    timezone: tz
+                });
+            } else {
+                setEditSchedule({
+                    date: "",
+                    time: "",
+                    timezone: tz
+                });
+            }
         } else {
             setEditSchedule({
                 date: "",
                 time: "",
-                timezone: ""
+                timezone: regionCode ? getRegionTimezone(regionCode) : ""
             });
         }
     };
@@ -226,6 +283,59 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                                 </div>
                             </div>
 
+                            {matchOfficials.get(match.id) && (
+                                <div className="space-y-1">
+                                    {matchOfficials.get(match.id)!.referees.length > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-muted-foreground w-16">Referees:</span>
+                                            <div className="flex gap-1">
+                                                {matchOfficials.get(match.id)!.referees.map((official) => (
+                                                    <div
+                                                        key={official.id}
+                                                        className="relative w-6 h-6 rounded-full overflow-hidden"
+                                                        title={official.display_name || official.username || ""}
+                                                    >
+                                                        {official.avatar_url && (
+                                                            <Image
+                                                                src={official.avatar_url}
+                                                                alt={official.username || "Official"}
+                                                                fill
+                                                                sizes="24px"
+                                                                className="object-cover"
+                                                            />
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {matchOfficials.get(match.id)!.media.length > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-muted-foreground w-16">Media:</span>
+                                            <div className="flex gap-1">
+                                                {matchOfficials.get(match.id)!.media.map((official) => (
+                                                    <div
+                                                        key={official.id}
+                                                        className="relative w-6 h-6 rounded-full overflow-hidden"
+                                                        title={official.display_name || official.username || ""}
+                                                    >
+                                                        {official.avatar_url && (
+                                                            <Image
+                                                                src={official.avatar_url}
+                                                                alt={official.username || "Official"}
+                                                                fill
+                                                                sizes="24px"
+                                                                className="object-cover"
+                                                            />
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="flex items-center gap-3">
                                 <div className="text-sm text-muted-foreground">
                                     {regionTimezone
@@ -243,12 +353,12 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                                             size="sm"
                                             onClick={() => openEditDialog(match.id, match.scheduled_at)}
                                         >
-                                            Set Time
+                                            Manage
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle>Update Match Schedule</DialogTitle>
+                                            <DialogTitle>Manage Match</DialogTitle>
                                         </DialogHeader>
 
                                         <div className="space-y-4">
@@ -298,6 +408,22 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                                                         timezone: prev?.timezone || ""
                                                     }))}
                                                 />
+                                            </div>
+
+                                            <div className="border-t pt-4 mt-4">
+                                                <h3 className="text-sm font-semibold mb-4">Officials</h3>
+                                                <div className="space-y-4">
+                                                    <MatchOfficialSection
+                                                        matchId={match.id}
+                                                        officialType="referee"
+                                                        title="Referees"
+                                                    />
+                                                    <MatchOfficialSection
+                                                        matchId={match.id}
+                                                        officialType="media"
+                                                        title="Media"
+                                                    />
+                                                </div>
                                             </div>
 
                                             <div className="flex gap-2">
