@@ -246,46 +246,35 @@ export default function ManageMatchDialog({
                                 </div>
                             </div>
 
-                            <div className="flex gap-2">
+                            {scheduledAt && (
                                 <Button
-                                    onClick={handleUpdateSchedule}
-                                    disabled={!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone || updating}
+                                    variant="outline"
+                                    onClick={handleClearSchedule}
+                                    disabled={updating}
                                     className="rounded-sm"
                                 >
-                                    {updating ? "Updating..." : "Update Schedule"}
+                                    Clear Schedule
                                 </Button>
-
-                                {scheduledAt && (
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleClearSchedule}
-                                        disabled={updating}
-                                        className="rounded-sm"
-                                    >
-                                        Clear Schedule
-                                    </Button>
-                                )}
-                            </div>
+                            )}
                         </div>
 
-                        {!isCompleted && (
-                            <div className="space-y-4 pt-4 border-t border-border">
-                                <h3 className="font-semibold">Officials</h3>
+                        {/* Always show officials section, not just for non-completed matches */}
+                        <div className="space-y-4 pt-4 border-t border-border">
+                            <h3 className="font-semibold">Officials</h3>
 
-                                <div className="space-y-4">
-                                    <MatchOfficialSection
-                                        matchId={matchId}
-                                        officialType="referee"
-                                        title="Referees"
-                                    />
-                                    <MatchOfficialSection
-                                        matchId={matchId}
-                                        officialType="media"
-                                        title="Media"
-                                    />
-                                </div>
+                            <div className="space-y-4">
+                                <MatchOfficialSection
+                                    matchId={matchId}
+                                    officialType="referee"
+                                    title="Referees"
+                                />
+                                <MatchOfficialSection
+                                    matchId={matchId}
+                                    officialType="media"
+                                    title="Media"
+                                />
                             </div>
-                        )}
+                        </div>
 
                         {isCompleted && (
                             <div className="space-y-4 pt-4 border-t border-border border-destructive/20">
@@ -303,6 +292,17 @@ export default function ManageMatchDialog({
                                 </Button>
                             </div>
                         )}
+
+                        {/* Save Changes button at the bottom */}
+                        <div className="pt-4 border-t border-border">
+                            <Button
+                                onClick={handleUpdateSchedule}
+                                disabled={!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone || updating}
+                                className="w-full rounded-sm"
+                            >
+                                {updating ? "Saving..." : "Save Changes"}
+                            </Button>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
