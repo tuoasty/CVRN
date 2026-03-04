@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix suspense usage">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="force-dynamic">
       <change beforePath="$PROJECT_DIR$/app/admin/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/layout.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -140,15 +140,7 @@
       <workItem from="1772442104280" duration="4452000" />
       <workItem from="1772502136110" duration="7155000" />
       <workItem from="1772520242020" duration="3830000" />
-      <workItem from="1772591275255" duration="14314000" />
-    </task>
-    <task id="LOCAL-00027" summary="Fix robloxUserId to string">
-      <option name="closed" value="true" />
-      <created>1771057863585</created>
-      <option name="number" value="00027" />
-      <option name="presentableId" value="LOCAL-00027" />
-      <option name="project" value="LOCAL" />
-      <updated>1771057863585</updated>
+      <workItem from="1772591275255" duration="14415000" />
     </task>
     <task id="LOCAL-00028" summary="fix typing">
       <option name="closed" value="true" />
@@ -534,7 +526,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772610787418</updated>
     </task>
-    <option name="localTasksCounter" value="76" />
+    <task id="LOCAL-00076" summary="force-dynamic">
+      <option name="closed" value="true" />
+      <created>1772611041440</created>
+      <option name="number" value="00076" />
+      <option name="presentableId" value="LOCAL-00076" />
+      <option name="project" value="LOCAL" />
+      <updated>1772611041440</updated>
+    </task>
+    <option name="localTasksCounter" value="77" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -554,7 +554,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Seperate concerns between season week picker and create matches" />
     <MESSAGE value="Remove create matches form" />
     <MESSAGE value="Show week schedule" />
     <MESSAGE value="Fix teamdetail store usage" />
@@ -579,7 +578,8 @@
     <MESSAGE value="Fix dialogues" />
     <MESSAGE value="Fix brick number formatting" />
     <MESSAGE value="Fix suspense usage" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix suspense usage" />
+    <MESSAGE value="force-dynamic" />
+    <option name="LAST_COMMIT_MESSAGE" value="force-dynamic" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
