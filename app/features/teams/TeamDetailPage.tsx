@@ -22,7 +22,7 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { clientLogger } from "@/app/utils/clientLogger";
 import {useTeamsStore} from "@/app/stores/teamStore";
-import {usePlayersStore} from "@/app/stores/playerStore";
+import {usePlayerStore} from "@/app/stores/playerStore";
 
 export default function TeamDetailPage() {
     const params = useParams();
@@ -37,7 +37,7 @@ export default function TeamDetailPage() {
     const [error, setError] = useState<string | null>(null);
 
     const teamsStore = useTeamsStore();
-    const playersStore = usePlayersStore();
+    const playersStore = usePlayerStore();
     
     const teamData = teamsStore.getTeamBySlugAndSeason(teamSlug, seasonSlug);
     const playersCacheKey = teamData?.id && teamData?.season_id ? `${teamData.id}-${teamData.season_id}` : null;

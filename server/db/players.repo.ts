@@ -137,3 +137,24 @@ export async function updatePlayer(
         .select()
         .single()
 }
+
+export async function findPlayersByIds(
+    supabase: DBClient,
+    playerIds: string[]
+) {
+    return supabase
+        .from("players")
+        .select("id")
+        .in("id", playerIds);
+}
+
+export async function findActivePlayerTeamSeasons(
+    supabase: DBClient,
+    playerIds: string[]
+) {
+    return supabase
+        .from("player_team_seasons")
+        .select("player_id, team_id")
+        .in("player_id", playerIds)
+        .is("left_at", null);
+}

@@ -2,10 +2,17 @@ import {DBClient, Match, Team} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {CreateMatchesInput, UpdateMatchScheduleInput} from "@/server/dto/match.dto";
-import {insertMatches, findAllMatches, findMatchesBySeasonAndWeek, updateMatchSchedule} from "@/server/db/matches.repo";
+import {CompleteMatchInput, CreateMatchesInput, UpdateMatchScheduleInput} from "@/server/dto/match.dto";
+import {
+    insertMatches,
+    findAllMatches,
+    findMatchesBySeasonAndWeek,
+    updateMatchSchedule,
+    updateMatchCompletion, insertMatchSets, findMatchById
+} from "@/server/db/matches.repo";
 import {randomUUID} from "node:crypto";
 import {convertToUTC, isValidTimezone} from "@/server/utils/timezone";
+import {findActivePlayerTeamSeasons} from "@/server/db/players.repo";
 
 export async function createMatches(
     supabase: DBClient,
@@ -250,6 +257,200 @@ export async function updateMatchScheduleService(
         return Ok(data as Match);
     } catch (error) {
         logger.error({ error }, "Unexpected error updating match schedule");
+        return Err(serializeError(error));
+    }
+}
+
+export async function completeMatchService(
+    supabase: DBClient,
+    p: CompleteMatchInput
+): Promise<Result<Match>> {
+    try {
+        const { data: match, error: matchError } = await findMatchById(supabase, p.matchId);
+
+        if (matchError || !match) {
+            logger.error({ matchId: p.matchId, error: matchError }, "Match not found");
+            return Err({
+                name: "NotFoundError",
+                message: "Match not found"
+            });
+        }
+
+        if (match.status !== "scheduled") {
+            return Err({
+                name: "ValidationError",
+                message: "Can only complete scheduled matches"
+            });
+        }
+
+        const expectedMinSets = match.best_of === 5 ? 3 : 2;
+        const expectedMaxSets = match.best_of;
+
+        if (p.sets.length < expectedMinSets || p.sets.length > expectedMaxSets) {
+            return Err({
+                name: "ValidationError",
+                message: `BO${match.best_of} must have ${expectedMinSets}-${expectedMaxSets} sets`
+            });
+        }
+
+        for (const set of p.sets) {
+            const minWinningScore = set.setNumber === 5 && match.best_of === 5 ? 15 : 25;
+            const maxScore = Math.max(set.homeScore, set.awayScore);
+            const minScore = Math.min(set.homeScore, set.awayScore);
+
+            if (maxScore < minWinningScore) {
+                return Err({
+                    name: "ValidationError",
+                    message: `Set ${set.setNumber}: Winning score must be at least ${minWinningScore}`
+                });
+            }
+
+            if (maxScore - minScore < 2) {
+                return Err({
+                    name: "ValidationError",
+                    message: `Set ${set.setNumber}: Winner must win by at least 2 points`
+                });
+            }
+
+            if (maxScore < minWinningScore + 2 && minScore >= minWinningScore) {
+                return Err({
+                    name: "ValidationError",
+                    message: `Set ${set.setNumber}: Invalid deuce score`
+                });
+            }
+        }
+
+        let homeSetsWon = 0;
+        let awaySetsWon = 0;
+        let totalHomePoints = 0;
+        let totalAwayPoints = 0;
+
+        p.sets.forEach(set => {
+            if (set.homeScore > set.awayScore) {
+                homeSetsWon++;
+            } else {
+                awaySetsWon++;
+            }
+            totalHomePoints += set.homeScore;
+            totalAwayPoints += set.awayScore;
+        });
+
+        const winningTeamId = homeSetsWon > awaySetsWon ? match.home_team_id : match.away_team_id;
+        const losingTeamId = homeSetsWon > awaySetsWon ? match.away_team_id : match.home_team_id;
+
+        const { data: playerTeamSeasons, error: ptsError } = await findActivePlayerTeamSeasons(
+            supabase,
+            [p.matchMvpPlayerId, p.loserMvpPlayerId]
+        );
+
+        if (ptsError) {
+            logger.error({ playerIds: [p.matchMvpPlayerId, p.loserMvpPlayerId], error: ptsError }, "Failed to fetch player team assignments");
+            return Err(serializeError(ptsError));
+        }
+
+        if (!playerTeamSeasons || playerTeamSeasons.length !== 2) {
+            return Err({
+                name: "ValidationError",
+                message: "One or both MVP players are not currently rostered on any team"
+            });
+        }
+
+        const matchMvpTeam = playerTeamSeasons.find(pts => pts.player_id === p.matchMvpPlayerId);
+        const loserMvpTeam = playerTeamSeasons.find(pts => pts.player_id === p.loserMvpPlayerId);
+
+        if (!matchMvpTeam || !loserMvpTeam) {
+            return Err({
+                name: "ValidationError",
+                message: "Could not find team assignments for MVP players"
+            });
+        }
+
+        if (matchMvpTeam.team_id !== winningTeamId) {
+            return Err({
+                name: "ValidationError",
+                message: "Match MVP must be from the winning team"
+            });
+        }
+
+        if (loserMvpTeam.team_id !== losingTeamId) {
+            return Err({
+                name: "ValidationError",
+                message: "Loser MVP must be from the losing team"
+            });
+        }
+
+        let homeTeamLvr: number | null = null;
+        let awayTeamLvr: number | null = null;
+
+        if (match.match_type === "season") {
+            const setDiff = homeSetsWon - awaySetsWon;
+            const pointDiff = totalHomePoints - totalAwayPoints;
+
+            const normalizedSetDiff = setDiff / 2;
+            const normalizedPointDiff = pointDiff / 50;
+
+            const lvrValue = 10 * (0.7 * normalizedSetDiff + 0.3 * normalizedPointDiff);
+
+            homeTeamLvr = lvrValue;
+            awayTeamLvr = -lvrValue;
+        }
+
+        const { error: setsError } = await insertMatchSets(supabase, p.matchId, p.sets);
+
+        if (setsError) {
+            logger.error({ matchId: p.matchId, error: setsError }, "Failed to insert match sets");
+            return Err(serializeError(setsError));
+        }
+
+        let scheduledAt: string | null | undefined = undefined;
+
+        if (p.scheduledDate !== undefined && p.scheduledTime !== undefined && p.timezone !== undefined) {
+            if (p.scheduledDate && p.scheduledTime && p.timezone) {
+                if (!isValidTimezone(p.timezone)) {
+                    return Err({
+                        name: "ValidationError",
+                        message: "Invalid timezone"
+                    });
+                }
+
+                scheduledAt = convertToUTC(p.scheduledDate, p.scheduledTime, p.timezone);
+
+                if (!scheduledAt) {
+                    return Err({
+                        name: "ValidationError",
+                        message: "Invalid date/time/timezone combination"
+                    });
+                }
+            } else {
+                scheduledAt = null;
+            }
+        }
+
+        const { data: completedMatch, error: updateError } = await updateMatchCompletion(
+            supabase,
+            p.matchId,
+            {
+                status: "completed",
+                homeSetsWon,
+                awaySetsWon,
+                homeTeamLvr,
+                awayTeamLvr,
+                matchMvpPlayerId: p.matchMvpPlayerId,
+                loserMvpPlayerId: p.loserMvpPlayerId,
+                ...(scheduledAt !== undefined && { scheduledAt }),
+            }
+        );
+
+        if (updateError || !completedMatch) {
+            logger.error({ matchId: p.matchId, error: updateError }, "Failed to update match completion");
+            return Err(serializeError(updateError));
+        }
+
+        logger.info({ matchId: p.matchId, homeSetsWon, awaySetsWon }, "Match completed successfully");
+
+        return Ok(completedMatch as Match);
+    } catch (error) {
+        logger.error({ error }, "Unexpected error completing match");
         return Err(serializeError(error));
     }
 }
