@@ -57,7 +57,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
     useEffect(() => {
         const timer = setTimeout(() => {
             searchDatabase(username);
-        }, 400);
+        }, 300);
 
         return () => clearTimeout(timer);
     }, [username, searchDatabase]);
