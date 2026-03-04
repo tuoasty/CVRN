@@ -339,7 +339,7 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                     {officials.media.length > 0 && (
                                         <div className="flex items-start gap-3">
                                         <span className="text-xs text-muted-foreground uppercase tracking-wide w-20 pt-1">
-                                            Media
+                                            Medias
                                         </span>
                                             <div className="flex gap-3 flex-wrap flex-1">
                                                 {officials.media.map((official) => (
@@ -355,9 +355,16 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                                                 />
                                                             </div>
                                                         )}
+                                                        <div className="flex flex-col">
                                                         <span className="text-xs font-medium">
-                                                        {official.display_name || official.username || "Unknown"}
-                                                    </span>
+                                                            {official.display_name || official.username || "Unknown"}
+                                                        </span>
+                                                            {official.display_name && official.username && (
+                                                                <span className="text-[10px] text-muted-foreground">
+                                                                @{official.username}
+                                                            </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
