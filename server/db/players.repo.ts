@@ -144,7 +144,7 @@ export async function findPlayersByIds(
 ) {
     return supabase
         .from("players")
-        .select("id")
+        .select("*")
         .in("id", playerIds);
 }
 

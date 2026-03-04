@@ -11,6 +11,8 @@ import {useOfficialStore} from "@/app/stores/officialStore";
 import ManageMatchDialog from "@/app/features/matches/ManageMatchDialog";
 import CompleteMatchDialog from "@/app/features/matches/CompleteMatchDialog";
 import { Badge } from "@/app/components/ui/badge";
+import {usePlayerStore} from "@/app/stores/playerStore";
+import {MatchSet, Player} from "@/shared/types/db";
 
 interface SchedulePanelProps {
     seasonId: string;
@@ -25,16 +27,19 @@ const getStatusConfig = (status: string) => {
         case 'scheduled':
             return { label: 'Scheduled', variant: 'default' as const };
         case 'completed':
-            return { label: 'Completed', variant: 'outline' as const };
+            return { label: 'Completed', variant: 'default' as const, className: 'bg-green-600/10 text-green-600 border-green-600/20' };
         default:
             return { label: 'Unknown', variant: 'secondary' as const };
     }
 };
 
 export default function AdminSchedulePanel({seasonId, week, regionCode}: SchedulePanelProps) {
-    const {fetchMatchesForWeek, matchesForWeekCache, loading} = useMatchesStore();
+    const {fetchMatchesForWeek, matchesForWeekCache, fetchMatchSets, matchSetsCache, loading} = useMatchesStore();
     const {fetchMatchOfficials, matchOfficialsCache} = useOfficialStore();
     const {fetchTeamsByIds} = useTeamsStore();
+    const {fetchPlayersByIds} = usePlayerStore();
+    const [matchSets, setMatchSets] = useState<Map<string, MatchSet[]>>(new Map());
+    const [players, setPlayers] = useState<Map<string, Player>>(new Map());
 
     const [teams, setTeams] = useState<Map<string, TeamWithRegion>>(new Map());
     const [matchOfficials, setMatchOfficials] = useState<Map<string, {
@@ -81,9 +86,18 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
 
             if (cached) {
                 const teamIds = new Set<string>();
+                const playerIds = new Set<string>();
+
                 cached.data.forEach(match => {
                     teamIds.add(match.home_team_id);
                     teamIds.add(match.away_team_id);
+
+                    if (match.match_mvp_player_id) {
+                        playerIds.add(match.match_mvp_player_id);
+                    }
+                    if (match.loser_mvp_player_id) {
+                        playerIds.add(match.loser_mvp_player_id);
+                    }
                 });
 
                 const fetchedTeams = await fetchTeamsByIds(Array.from(teamIds));
@@ -95,6 +109,23 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
 
                 const teamsMap = new Map(fetchedTeams.map(t => [t.id, t]));
                 setTeams(teamsMap);
+
+                if (playerIds.size > 0) {
+                    const fetchedPlayers = await fetchPlayersByIds(Array.from(playerIds));
+
+                    if (abortController.signal.aborted) {
+                        clientLogger.info("SchedulePanel", "Request aborted after players fetch", {seasonId, week});
+                        return;
+                    }
+
+                    const playersMap = new Map(fetchedPlayers.map(p => [p.id, p]));
+                    setPlayers(playersMap);
+
+                    clientLogger.info("SchedulePanel", "Players loaded", {
+                        playerCount: fetchedPlayers.length
+                    });
+                }
+
                 setTeamsLoaded(true);
 
                 clientLogger.info("SchedulePanel", "Teams loaded", {
@@ -130,6 +161,20 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                     })
                 );
 
+                const setsResults = await Promise.all(
+                    cached.data
+                        .filter(match => match.status === 'completed')
+                        .map(async (match) => {
+                            await fetchMatchSets(match.id);
+                            const setsCached = matchSetsCache.get(match.id);
+                            return {
+                                matchId: match.id,
+                                sets: setsCached?.data || []
+                            };
+                        })
+                );
+
+
                 if (abortController.signal.aborted) {
                     clientLogger.info("SchedulePanel", "Request aborted before setting officials", {seasonId, week});
                     return;
@@ -139,8 +184,13 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                     officialsResults.map(result => [result.matchId, {referees: result.referees, media: result.media}])
                 );
 
+                const setsMap = new Map(
+                    setsResults.map(result => [result.matchId, result.sets])
+                );
+
                 setMatchOfficials(officialsMap);
                 setOfficialsLoading(false);
+                setMatchSets(setsMap);
 
                 clientLogger.info("SchedulePanel", "Officials loaded", {
                     matchesWithOfficials: officialsResults.filter(r => r.referees.length > 0 || r.media.length > 0).length
@@ -197,6 +247,9 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                 const awayTeam = teams.get(match.away_team_id);
                 const officials = matchOfficials.get(match.id);
                 const statusConfig = getStatusConfig(match.status);
+                const matchMvp = match.match_mvp_player_id ? players.get(match.match_mvp_player_id) : null;
+                const loserMvp = match.loser_mvp_player_id ? players.get(match.loser_mvp_player_id) : null;
+                const sets = matchSets.get(match.id) || [];
 
                 return (
                     <div key={match.id} className="panel p-5">
@@ -206,7 +259,10 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                 <span className="text-sm font-semibold text-muted-foreground">
                                     Match {index + 1}
                                 </span>
-                                    <Badge variant={statusConfig.variant} className="rounded-sm">
+                                    <Badge
+                                        variant={statusConfig.variant}
+                                        className={`rounded-sm ${statusConfig.className || ''}`}
+                                    >
                                         {statusConfig.label}
                                     </Badge>
                                     <Badge variant="outline" className="rounded-sm">
@@ -238,6 +294,7 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                             matchId={match.id}
                                             scheduledAt={match.scheduled_at}
                                             regionCode={regionCode}
+                                            match={match}
                                             onSuccess={loadSchedule}
                                         />
 
@@ -284,6 +341,7 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                       VS
                                     </span>
                                 </div>
+
                                 <div className="flex justify-start items-center gap-3 pl-4">
                                     {awayTeam && (
                                         <>
@@ -305,6 +363,151 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                     )}
                                 </div>
 
+                                {match.status === 'completed' && match.home_sets_won !== null && match.away_sets_won !== null && (
+                                    <div className="col-span-3 space-y-4 pt-4 border-t border-border">
+                                        <div className="panel bg-muted/30 p-4">
+                                            <div className="grid grid-cols-3 gap-4 items-center">
+                                                <div className="flex items-center gap-3 justify-end">
+                                                    {homeTeam?.logo_url && (
+                                                        <div className="relative w-10 h-10">
+                                                            <Image
+                                                                src={homeTeam.logo_url}
+                                                                alt={homeTeam.name}
+                                                                fill
+                                                                sizes="40px"
+                                                                className="object-contain"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-sm font-semibold">{homeTeam?.name}</span>
+                                                        {(match.home_sets_won ?? 0) > (match.away_sets_won ?? 0) && (
+                                                            <span className="text-xs text-green-600 font-medium">WINNER</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <span className="text-3xl font-bold tabular-nums">{match.home_sets_won}</span>
+                                                    <span className="text-lg text-muted-foreground">-</span>
+                                                    <span className="text-3xl font-bold tabular-nums">{match.away_sets_won}</span>
+                                                </div>
+
+                                                <div className="flex items-center gap-3 justify-start">
+                                                    <div className="flex flex-col items-start">
+                                                        <span className="text-sm font-semibold">{awayTeam?.name}</span>
+                                                        {(match.away_sets_won ?? 0) > (match.home_sets_won ?? 0) && (
+                                                            <span className="text-xs text-green-600 font-medium">WINNER</span>
+                                                        )}
+                                                    </div>
+                                                    {awayTeam?.logo_url && (
+                                                        <div className="relative w-10 h-10">
+                                                            <Image
+                                                                src={awayTeam.logo_url}
+                                                                alt={awayTeam.name}
+                                                                fill
+                                                                sizes="40px"
+                                                                className="object-contain"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {sets.length > 0 && (
+                                                <div className="flex items-center justify-center gap-3 mt-4 pt-4 border-t border-border/50">
+                                                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Sets:</span>
+                                                    <div className="flex gap-2">
+                                                        {sets.map((set) => (
+                                                            <div
+                                                                key={set.set_number}
+                                                                className="flex items-center gap-1 px-2 py-1 rounded-sm bg-muted/50"
+                                                            >
+                                                                <span className={`text-xs font-semibold tabular-nums ${
+                                                                    set.home_score > set.away_score ? 'text-foreground' : 'text-muted-foreground'
+                                                                }`}>
+                                                                    {set.home_score}
+                                                                </span>
+                                                                <span className="text-xs text-muted-foreground">-</span>
+                                                                <span className={`text-xs font-semibold tabular-nums ${
+                                                                    set.away_score > set.home_score ? 'text-foreground' : 'text-muted-foreground'
+                                                                }`}>
+                                                                    {set.away_score}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {(matchMvp || loserMvp) && (
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {matchMvp && (
+                                                    <div className="panel p-3">
+                                                        <div className="flex items-center gap-3">
+                                                            {matchMvp.avatar_url && (
+                                                                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
+                                                                    <Image
+                                                                        src={matchMvp.avatar_url}
+                                                                        alt={matchMvp.username || "Player"}
+                                                                        fill
+                                                                        sizes="40px"
+                                                                        className="object-cover"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <div className="flex flex-col min-w-0">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] uppercase tracking-wider text-primary font-semibold">MATCH MVP</span>
+                                                                </div>
+                                                                <span className="text-sm font-semibold truncate">
+                                    {matchMvp.display_name || matchMvp.username || "Unknown"}
+                                </span>
+                                                                {matchMvp.display_name && matchMvp.username && (
+                                                                    <span className="text-xs text-muted-foreground truncate">
+                                        @{matchMvp.username}
+                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {loserMvp && (
+                                                    <div className="panel p-3">
+                                                        <div className="flex items-center gap-3">
+                                                            {loserMvp.avatar_url && (
+                                                                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-muted-foreground/20 shrink-0">
+                                                                    <Image
+                                                                        src={loserMvp.avatar_url}
+                                                                        alt={loserMvp.username || "Player"}
+                                                                        fill
+                                                                        sizes="40px"
+                                                                        className="object-cover"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <div className="flex flex-col min-w-0">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">LOSER MVP</span>
+                                                                </div>
+                                                                <span className="text-sm font-semibold truncate">
+                                    {loserMvp.display_name || loserMvp.username || "Unknown"}
+                                </span>
+                                                                {loserMvp.display_name && loserMvp.username && (
+                                                                    <span className="text-xs text-muted-foreground truncate">
+                                        @{loserMvp.username}
+                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {officialsLoading ? (

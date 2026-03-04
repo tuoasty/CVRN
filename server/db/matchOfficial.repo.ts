@@ -92,11 +92,12 @@ export async function removeAllOfficialsByType(
         .eq("official_type", officialType)
 }
 
-export async function removeAllOfficialsFromMatch(
+export async function removeAllMatchOfficials(
     supabase: DBClient,
     matchId: string
 ) {
-    return supabase.from("match_officials")
+    return supabase
+        .from("match_officials")
         .delete()
-        .eq("match_id", matchId)
+        .eq("match_id", matchId);
 }

@@ -77,3 +77,4 @@ export async function deleteOfficial(
         .delete()
         .eq("id", id)
 }
+

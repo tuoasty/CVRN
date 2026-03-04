@@ -45,3 +45,7 @@ export interface SavePlayerToTeamInput {
     avatarUrl?: string | null
     teamId: string
 }
+
+export interface PlayersByIdsInput {
+    playerIds: string[]
+}

@@ -1,28 +1,31 @@
 import { create } from 'zustand';
-import { Match, Team } from '@/shared/types/db';
+import {Match, MatchSet, Team} from '@/shared/types/db';
 import {
     completeMatchAction,
     getAllMatchesAction,
     getAvailableTeamsForWeekAction,
-    getMatchesForWeekAction
+    getMatchesForWeekAction, getMatchSetsAction, voidMatchAction
 } from '@/app/actions/match.actions';
 import { CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction } from './storeUtils';
 import { clientLogger } from "@/app/utils/clientLogger";
 import { updateMatchScheduleAction } from '@/app/actions/match.actions';
-import {CompleteMatchInput, UpdateMatchScheduleInput} from '@/server/dto/match.dto';
+import {CompleteMatchInput, UpdateMatchScheduleInput, VoidMatchInput} from '@/server/dto/match.dto';
 
 type MatchesState = {
     matchesCache: CacheEntry<Match[]> | undefined;
     availableTeamsCache: Map<string, CacheEntry<Team[]>>;
     matchesForWeekCache: Map<string, CacheEntry<Match[]>>;
+    matchSetsCache: Map<string, CacheEntry<MatchSet[]>>;
     loading: boolean;
     error: string | null;
 
     fetchAllMatches: () => Promise<void>;
     fetchAvailableTeams: (seasonId: string, week: number) => Promise<void>;
     fetchMatchesForWeek: (seasonId: string, week: number) => Promise<void>;
+    fetchMatchSets: (matchId: string) => Promise<void>;
     updateMatchSchedule: (input: UpdateMatchScheduleInput) => Promise<boolean>;
     completeMatch: (input: CompleteMatchInput) => Promise<boolean>;
+    voidMatch: (input: VoidMatchInput) => Promise<boolean>;
     clearCache: () => void;
 };
 
@@ -31,14 +34,17 @@ const AVAILABLE_TEAMS_TTL = 60 * 1000;
 
 const availableTeamsCache = new Map<string, CacheEntry<Team[]>>();
 const matchesForWeekCache = new Map<string, CacheEntry<Match[]>>();
+const matchSetsCache = new Map<string, CacheEntry<MatchSet[]>>();
 
 const cleanupInterval = setupAutoEviction(availableTeamsCache, 60000);
 const matchesCleanupInterval = setupAutoEviction(matchesForWeekCache, 60000);
+const setsCleanupInterval = setupAutoEviction(matchSetsCache, 60000);
 
 export const useMatchesStore = create<MatchesState>((set, get) => ({
     matchesCache: undefined,
     availableTeamsCache,
     matchesForWeekCache,
+    matchSetsCache,
     loading: false,
     error: null,
 
@@ -245,11 +251,91 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
             return false;
         }
     },
+
+    voidMatch: async (input: VoidMatchInput) => {
+        clientLogger.info('MatchesStore', 'Voiding match', { matchId: input.matchId });
+        set({ loading: true, error: null });
+
+        try {
+            const result = await voidMatchAction(input);
+
+            if (!result.ok) {
+                clientLogger.error('MatchesStore', 'Failed to void match', {
+                    matchId: input.matchId,
+                    error: result.error
+                });
+                set({ error: result.error.message, loading: false });
+                return false;
+            }
+
+            const voidedMatch = result.value;
+            clientLogger.info('MatchesStore', 'Match voided successfully', {
+                matchId: input.matchId,
+                status: voidedMatch.status
+            });
+
+            const { matchesCache, matchesForWeekCache } = get();
+
+            if (matchesCache) {
+                const updatedMatches = matchesCache.data.map(m =>
+                    m.id === voidedMatch.id ? voidedMatch : m
+                );
+                set({
+                    matchesCache: createCacheEntry(updatedMatches, MATCHES_TTL),
+                });
+            }
+
+            matchesForWeekCache.forEach((cache, key) => {
+                const updatedWeekMatches = cache.data.map(m =>
+                    m.id === voidedMatch.id ? voidedMatch : m
+                );
+                matchesForWeekCache.set(key, createCacheEntry(updatedWeekMatches, MATCHES_TTL));
+            });
+
+            set({ matchesForWeekCache, loading: false });
+            return true;
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception voiding match', {
+                matchId: input.matchId,
+                error
+            });
+            set({ error: 'Failed to void match', loading: false });
+            return false;
+        }
+    },
+
+    fetchMatchSets: async (matchId: string) => {
+        const { matchSetsCache } = get();
+        const cached = matchSetsCache.get(matchId);
+
+        if (isCacheValid(cached)) {
+            clientLogger.info('MatchesStore', 'Using cached match sets', { matchId, count: cached?.data.length });
+            return;
+        }
+
+        clientLogger.info('MatchesStore', 'Fetching match sets', { matchId });
+
+        try {
+            const result = await getMatchSetsAction({ matchId });
+
+            if (!result.ok) {
+                clientLogger.error('MatchesStore', 'Failed to fetch match sets', { matchId, error: result.error });
+                return;
+            }
+
+            matchSetsCache.set(matchId, createCacheEntry(result.value, MATCHES_TTL));
+            clientLogger.info('MatchesStore', 'Match sets fetched successfully', { matchId, count: result.value.length });
+            set({ matchSetsCache });
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception fetching match sets', { matchId, error });
+        }
+    },
 }));
 
 if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', () => {
         cleanupInterval();
         matchesCleanupInterval();
+        setsCleanupInterval();
     });
 }

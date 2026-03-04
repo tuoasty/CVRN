@@ -60,11 +60,18 @@ export async function findMatchesByRegionAndSeason(
         .order("week", { ascending: true });
 }
 
+// In repo layer
 export async function updateMatchSchedule(
     supabase: DBClient,
     matchId: string,
     scheduledAt: string | null
 ) {
+    const { data: currentMatch } = await supabase
+        .from("matches")
+        .select("status")
+        .eq("id", matchId)
+        .single();
+
     const updateData: {
         scheduled_at: string | null;
         status?: "pending" | "scheduled" | "completed"
@@ -72,7 +79,7 @@ export async function updateMatchSchedule(
         scheduled_at: scheduledAt
     };
 
-    if (scheduledAt) {
+    if (scheduledAt && currentMatch?.status !== "completed") {
         updateData.status = "scheduled";
     }
 
@@ -136,4 +143,46 @@ export async function updateMatchCompletion(
         .eq("id", matchId)
         .select()
         .single();
+}
+
+export async function deleteMatchSets(
+    supabase: DBClient,
+    matchId: string
+) {
+    return supabase
+        .from("match_sets")
+        .delete()
+        .eq("match_id", matchId);
+}
+
+export async function voidMatch(
+    supabase: DBClient,
+    matchId: string
+) {
+    return supabase
+        .from("matches")
+        .update({
+            status: "pending",
+            scheduled_at: null,
+            home_sets_won: 0,
+            away_sets_won: 0,
+            home_team_lvr: 0,
+            away_team_lvr: 0,
+            match_mvp_player_id: null,
+            loser_mvp_player_id: null
+        })
+        .eq("id", matchId)
+        .select()
+        .single();
+}
+
+export async function findMatchSets(
+    supabase: DBClient,
+    matchId: string
+) {
+    return supabase
+        .from("match_sets")
+        .select("*")
+        .eq("match_id", matchId)
+        .order("set_number", { ascending: true });
 }

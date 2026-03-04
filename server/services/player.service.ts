@@ -5,7 +5,7 @@ import {DBClient, Player, PlayerTeamSeason} from "@/shared/types/db";
 import {
     SavePlayerToTeamInput,
     RemovePlayerFromTeamInput,
-    TeamPlayersInput, SavePlayerInput
+    TeamPlayersInput, SavePlayerInput, PlayersByIdsInput
 } from "@/server/dto/player.dto";
 import {serializeError} from "@/server/utils/serializeableError";
 import {findTeamById} from "@/server/db/teams.repo";
@@ -17,7 +17,7 @@ import {
     addPlayerToTeam,
     removePlayerFromTeam,
     updatePlayer,
-    findPlayerById
+    findPlayerById, findPlayersByIds
 } from "@/server/db/players.repo";
 import {logger} from "@/server/utils/logger";
 
@@ -239,6 +239,48 @@ export async function getTeamPlayers(
         return Ok(syncedPlayers);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching team players");
+        return Err(serializeError(error));
+    }
+}
+
+export async function getPlayersByIds(
+    supabase: DBClient,
+    p: PlayersByIdsInput
+): Promise<Result<Player[]>> {
+    try {
+        if (p.playerIds.length === 0) {
+            return Ok([]);
+        }
+
+        const {data, error} = await findPlayersByIds(supabase, p.playerIds);
+
+        if (error) {
+            logger.error({playerIds: p.playerIds, error}, "Failed to fetch players by IDs");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Err({
+                message: "Failed to fetch players",
+                name: "FetchError"
+            });
+        }
+
+        const syncedPlayers: Player[] = [];
+
+        for (const player of data) {
+            const result = await lazySyncPlayer(supabase, player as Player);
+
+            if (result.ok) {
+                syncedPlayers.push(result.value);
+            } else {
+                syncedPlayers.push(player as Player);
+            }
+        }
+
+        return Ok(syncedPlayers);
+    } catch (error) {
+        logger.error({error}, "Unexpected error fetching players by IDs");
         return Err(serializeError(error));
     }
 }
