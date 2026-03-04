@@ -93,7 +93,7 @@ export default function SeasonWeekPicker({
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {Array.from({ length: 10 }, (_, i) => i + 1).map(w => (
+                            {Array.from({ length: 5 }, (_, i) => i + 1).map(w => (
                                 <SelectItem key={w} value={w.toString()}>
                                     Week {w}
                                 </SelectItem>

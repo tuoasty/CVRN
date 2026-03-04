@@ -4,12 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Team detail page UI">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Matches design">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/matches/manage/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/matches/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/CompleteMatchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/CompleteMatchDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/ManageMatchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/ManageMatchDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/seasons/SeasonWeekPicker.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/seasons/SeasonWeekPicker.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -145,15 +144,7 @@
       <workItem from="1772442104280" duration="4452000" />
       <workItem from="1772502136110" duration="7155000" />
       <workItem from="1772520242020" duration="3830000" />
-      <workItem from="1772591275255" duration="12492000" />
-    </task>
-    <task id="LOCAL-00022" summary="Fix update player repo function">
-      <option name="closed" value="true" />
-      <created>1771055610024</created>
-      <option name="number" value="00022" />
-      <option name="presentableId" value="LOCAL-00022" />
-      <option name="project" value="LOCAL" />
-      <updated>1771055610024</updated>
+      <workItem from="1772591275255" duration="13056000" />
     </task>
     <task id="LOCAL-00023" summary="fix user repo function change bigint to string">
       <option name="closed" value="true" />
@@ -539,7 +530,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772608649184</updated>
     </task>
-    <option name="localTasksCounter" value="71" />
+    <task id="LOCAL-00071" summary="Matches design">
+      <option name="closed" value="true" />
+      <created>1772609238556</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
+      <option name="project" value="LOCAL" />
+      <updated>1772609238556</updated>
+    </task>
+    <option name="localTasksCounter" value="72" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -559,7 +558,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="season changes to include slug and theme" />
     <MESSAGE value="Teams service and repo fixed" />
     <MESSAGE value="Feat; Update frontend to adjust to seasons instead of regions" />
     <MESSAGE value="Feat: player join table" />
@@ -584,7 +582,8 @@
     <MESSAGE value="Team management page" />
     <MESSAGE value="Filter by region and season" />
     <MESSAGE value="Team detail page UI" />
-    <option name="LAST_COMMIT_MESSAGE" value="Team detail page UI" />
+    <MESSAGE value="Matches design" />
+    <option name="LAST_COMMIT_MESSAGE" value="Matches design" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
