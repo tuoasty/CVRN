@@ -33,12 +33,6 @@ export default function TeamDetailPage() {
     const seasonSlug = safeDecodeURIComponent(String(params.season || "")).toLowerCase();
     const teamSlug = safeDecodeURIComponent(String(params.teamName || "")).toLowerCase();
 
-    const regionCode = (() => {
-        const raw = String(params.region || "");
-        console.log('[TeamDetailPage] Raw region param:', raw);
-        return safeDecodeURIComponent(raw).toLowerCase();
-    })();
-
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [error, setError] = useState<string | null>(null);

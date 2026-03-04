@@ -24,8 +24,9 @@ function generateSlug(name: string): string {
     return name
         .toLowerCase()
         .trim()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
 }
 
 export async function createTeam(supabase:DBClient, p:CreateTeamInput):Promise<Result<TeamWithRegion>>{
