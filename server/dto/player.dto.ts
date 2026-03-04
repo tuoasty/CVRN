@@ -49,3 +49,23 @@ export interface SavePlayerToTeamInput {
 export interface PlayersByIdsInput {
     playerIds: string[]
 }
+
+export interface SearchPlayersInput {
+    query: string
+}
+
+export interface PlayerWithTeamInfo {
+    id: string
+    roblox_user_id: string
+    username: string | null
+    display_name: string | null
+    avatar_url: string | null
+    current_team_id: string | null
+    current_season_id: string | null
+    current_team_name: string | null
+}
+
+export interface AddExistingPlayerToTeamInput {
+    playerId: string
+    teamId: string
+}

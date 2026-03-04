@@ -28,7 +28,7 @@ export type PlayerTeamSeason =
 export type MatchSet =
     Database["public"]["Tables"]["match_sets"]["Row"];
 
-
-
+type SearchPlayersResult =
+    Database["public"]["Functions"]["search_players_with_similarity"]["Returns"];
 
 export type DBClient = SupabaseClient<Database>;

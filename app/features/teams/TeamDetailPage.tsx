@@ -253,7 +253,7 @@ export default function TeamDetailPage({
 
             {showAddForm && (
                 <div className="panel p-6">
-                    <AddPlayerToTeam teamId={teamData.id} onSuccess={handlePlayerAdded} />
+                    <AddPlayerToTeam teamId={teamData.id} seasonId={teamData.season_id} onSuccess={handlePlayerAdded} />
                 </div>
             )}
 
