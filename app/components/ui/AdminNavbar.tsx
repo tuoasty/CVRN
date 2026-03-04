@@ -22,7 +22,7 @@ export default function AdminNavbar() {
                     <div className="flex items-center gap-8">
                         <Link href="/admin/dashboard">
                             <h1 className="text-lg font-semibold tracking-tight">
-                                CVRN Admin
+                                CVRN
                             </h1>
                         </Link>
 
