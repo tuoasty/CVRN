@@ -17,7 +17,7 @@ export interface TeamWithRegion {
     season_id: string;
     deleted_at: string | null;
     created_at: string;
-    brick_number: string;
+    brick_number: number;
     brick_color: string;
     seasons: {
         id: string;
@@ -42,7 +42,7 @@ export interface InsertTeamDto {
     slug: string;
     logoUrl: string;
     seasonId: string;
-    brickNumber: string;
+    brickNumber: number;
     brickColor: string;
 }
 
@@ -51,6 +51,6 @@ export interface CreateTeamInput {
     logoFile: File;
     seasonId: string;
     userId: string;
-    brickNumber: string;
+    brickNumber: number;
     brickColor: string;
 }
