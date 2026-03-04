@@ -258,7 +258,7 @@ export default function TeamDetailPage() {
                 {players.length === 0 ? (
                     <div className="panel p-8">
                         <p className="text-muted-foreground text-center">
-                            No players in this team yet. Click "Add Player" to get started.
+                            No players in this team yet. Click &quot;Add Player&quot; to get started.
                         </p>
                     </div>
                 ) : (
