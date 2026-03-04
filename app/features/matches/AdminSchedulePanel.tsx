@@ -13,6 +13,7 @@ import CompleteMatchDialog from "@/app/features/matches/CompleteMatchDialog";
 import { Badge } from "@/app/components/ui/badge";
 import {usePlayerStore} from "@/app/stores/playerStore";
 import {MatchSet, Player} from "@/shared/types/db";
+import UpdateMatchDialog from "@/app/features/matches/UpdateMatchDialog";
 
 interface SchedulePanelProps {
     seasonId: string;
@@ -252,13 +253,13 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                 const sets = matchSets.get(match.id) || [];
 
                 return (
-                    <div key={match.id} className="panel p-5">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between pb-4 border-b border-border">
+                    <div key={match.id} className="panel p-4">
+                        <div className="space-y-5">
+                            <div className="flex items-center justify-between pb-3 border-b border-border">
                                 <div className="flex items-center gap-3">
-                                <span className="text-sm font-semibold text-muted-foreground">
-                                    Match {index + 1}
-                                </span>
+                                    <span className="text-sm font-semibold text-muted-foreground">
+                                        Match {index + 1}
+                                    </span>
                                     <Badge
                                         variant={statusConfig.variant}
                                         className={`rounded-sm ${statusConfig.className || ''}`}
@@ -270,12 +271,12 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                     </Badge>
                                     {match.status === 'scheduled' && officials && (officials.referees.length === 0 || officials.media.length === 0) && (
                                         <span className="text-amber-600" title="Missing required officials">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                                        </svg>
-                                    </span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                            </svg>
+                                        </span>
                                     )}
                                 </div>
 
@@ -310,24 +311,56 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                                 onSuccess={loadSchedule}
                                             />
                                         )}
+
+                                        {match.status === 'completed' && homeTeam && awayTeam && !officialsLoading && (
+                                            <UpdateMatchDialog
+                                                matchId={match.id}
+                                                seasonId={seasonId}
+                                                homeTeamId={match.home_team_id}
+                                                awayTeamId={match.away_team_id}
+                                                homeTeamName={homeTeam.name}
+                                                awayTeamName={awayTeam.name}
+                                                bestOf={match.best_of}
+                                                currentSets={sets}
+                                                currentMatchMvpId={match.match_mvp_player_id || ""}
+                                                currentLoserMvpId={match.loser_mvp_player_id || ""}
+                                                onSuccess={loadSchedule}
+                                            />
+                                        )}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 items-center">
-                                <div className="flex justify-end items-center gap-3 pr-4">
+                            {/* Team Matchup */}
+                            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                                {/* Home Team */}
+                                <div className="flex justify-end items-center gap-3">
                                     {homeTeam && (
                                         <>
-                                            <span className="font-semibold text-right">
-                                              {homeTeam.name}
-                                            </span>
+                                            <div className="flex flex-col items-end gap-0.5 min-w-0">
+                                                <span className="font-semibold text-sm text-right truncate w-full">
+                                                    {homeTeam.name}
+                                                </span>
+                                                {match.status === 'completed' && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={`h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 ${
+                                                            (match.home_sets_won ?? 0) > (match.away_sets_won ?? 0)
+                                                                ? "bg-green-600/10 text-green-600"
+                                                                : "opacity-0 pointer-events-none"
+                                                        }`}
+                                                    >
+                                                        Winner
+                                                    </Badge>
+                                                )}
+                                            </div>
                                             {homeTeam.logo_url && (
-                                                <div className="relative w-12 h-12">
+                                                <div className="relative w-12 h-12 shrink-0">
                                                     <Image
                                                         src={homeTeam.logo_url}
                                                         alt={homeTeam.name}
                                                         fill
-                                                        sizes="48px"
+                                                        sizes="56px"
                                                         className="object-contain"
                                                     />
                                                 </div>
@@ -336,100 +369,78 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                     )}
                                 </div>
 
-                                <div className="text-center">
-                                    <span className="text-2xl font-bold text-muted-foreground">
-                                      VS
+                                <div className="flex items-center justify-center px-3">
+                                    <span className="text-lg font-bold text-muted-foreground/50">
+                                        VS
                                     </span>
                                 </div>
 
-                                <div className="flex justify-start items-center gap-3 pl-4">
+                                <div className="flex justify-start items-center gap-3">
                                     {awayTeam && (
                                         <>
                                             {awayTeam.logo_url && (
-                                                <div className="relative w-12 h-12">
+                                                <div className="relative w-12 h-12 shrink-0">
                                                     <Image
                                                         src={awayTeam.logo_url}
                                                         alt={awayTeam.name}
                                                         fill
-                                                        sizes="48px"
+                                                        sizes="56px"
                                                         className="object-contain"
                                                     />
                                                 </div>
                                             )}
-                                            <span className="font-semibold text-left">
-                                              {awayTeam.name}
-                                            </span>
+                                            <div className="flex flex-col items-start gap-0.5 min-w-0">
+                                                <span className="font-semibold text-base text-left truncate w-full">
+                                                    {awayTeam.name}
+                                                </span>
+                                                {match.status === 'completed' && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={`h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 ${
+                                                            (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0)
+                                                                ? "bg-green-600/10 text-green-600"
+                                                                : "opacity-0 pointer-events-none"
+                                                        }`}
+                                                    >
+                                                        Winner
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </>
                                     )}
                                 </div>
 
                                 {match.status === 'completed' && match.home_sets_won !== null && match.away_sets_won !== null && (
-                                    <div className="col-span-3 space-y-4 pt-4 border-t border-border">
+                                    <div className="col-span-3 space-y-3 pt-4 mt-0 border-t border-border">
                                         <div className="panel bg-muted/30 p-4">
-                                            <div className="grid grid-cols-3 gap-4 items-center">
-                                                <div className="flex items-center gap-3 justify-end">
-                                                    {homeTeam?.logo_url && (
-                                                        <div className="relative w-10 h-10">
-                                                            <Image
-                                                                src={homeTeam.logo_url}
-                                                                alt={homeTeam.name}
-                                                                fill
-                                                                sizes="40px"
-                                                                className="object-contain"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                    <div className="flex flex-col items-end">
-                                                        <span className="text-sm font-semibold">{homeTeam?.name}</span>
-                                                        {(match.home_sets_won ?? 0) > (match.away_sets_won ?? 0) && (
-                                                            <span className="text-xs text-green-600 font-medium">WINNER</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center justify-center gap-3">
+                                            <div className="flex items-center justify-center gap-6">
+                                                <div className="flex flex-col items-center min-w-[80px]">
                                                     <span className="text-3xl font-bold tabular-nums">{match.home_sets_won}</span>
-                                                    <span className="text-lg text-muted-foreground">-</span>
-                                                    <span className="text-3xl font-bold tabular-nums">{match.away_sets_won}</span>
                                                 </div>
 
-                                                <div className="flex items-center gap-3 justify-start">
-                                                    <div className="flex flex-col items-start">
-                                                        <span className="text-sm font-semibold">{awayTeam?.name}</span>
-                                                        {(match.away_sets_won ?? 0) > (match.home_sets_won ?? 0) && (
-                                                            <span className="text-xs text-green-600 font-medium">WINNER</span>
-                                                        )}
-                                                    </div>
-                                                    {awayTeam?.logo_url && (
-                                                        <div className="relative w-10 h-10">
-                                                            <Image
-                                                                src={awayTeam.logo_url}
-                                                                alt={awayTeam.name}
-                                                                fill
-                                                                sizes="40px"
-                                                                className="object-contain"
-                                                            />
-                                                        </div>
-                                                    )}
+                                                <span className="text-xl text-muted-foreground/50 font-medium">-</span>
+
+                                                <div className="flex flex-col items-center min-w-[100px]">
+                                                    <span className="text-4xl font-bold tabular-nums">{match.away_sets_won}</span>
                                                 </div>
                                             </div>
 
                                             {sets.length > 0 && (
-                                                <div className="flex items-center justify-center gap-3 mt-4 pt-4 border-t border-border/50">
-                                                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Sets:</span>
-                                                    <div className="flex gap-2">
+                                                <div className="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-border/50">
+                                                    <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Sets</span>
+                                                    <div className="flex gap-1.5">
                                                         {sets.map((set) => (
                                                             <div
                                                                 key={set.set_number}
-                                                                className="flex items-center gap-1 px-2 py-1 rounded-sm bg-muted/50"
+                                                                className="fflex items-center gap-1 px-2.5 py-1 rounded-sm bg-background/50 border border-border/50"
                                                             >
-                                                                <span className={`text-xs font-semibold tabular-nums ${
+                                                                <span className={`text-sm font-semibold tabular-nums ${
                                                                     set.home_score > set.away_score ? 'text-foreground' : 'text-muted-foreground'
                                                                 }`}>
                                                                     {set.home_score}
                                                                 </span>
                                                                 <span className="text-xs text-muted-foreground">-</span>
-                                                                <span className={`text-xs font-semibold tabular-nums ${
+                                                                <span className={`text-sm font-semibold tabular-nums ${
                                                                     set.away_score > set.home_score ? 'text-foreground' : 'text-muted-foreground'
                                                                 }`}>
                                                                     {set.away_score}
@@ -442,10 +453,10 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                         </div>
 
                                         {(matchMvp || loserMvp) && (
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-2 gap-2.5">
                                                 {matchMvp && (
                                                     <div className="panel p-3">
-                                                        <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-2.5">
                                                             {matchMvp.avatar_url && (
                                                                 <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
                                                                     <Image
@@ -458,16 +469,16 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                                                 </div>
                                                             )}
                                                             <div className="flex flex-col min-w-0">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-[10px] uppercase tracking-wider text-primary font-semibold">MATCH MVP</span>
-                                                                </div>
+                                                                <span className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-0.5">
+                                                                    Match MVP
+                                                                </span>
                                                                 <span className="text-sm font-semibold truncate">
-                                    {matchMvp.display_name || matchMvp.username || "Unknown"}
-                                </span>
+                                                                    {matchMvp.display_name || matchMvp.username || "Unknown"}
+                                                                </span>
                                                                 {matchMvp.display_name && matchMvp.username && (
                                                                     <span className="text-xs text-muted-foreground truncate">
-                                        @{matchMvp.username}
-                                    </span>
+                                                                        @{matchMvp.username}
+                                                                    </span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -476,7 +487,7 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
 
                                                 {loserMvp && (
                                                     <div className="panel p-3">
-                                                        <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-2.5">
                                                             {loserMvp.avatar_url && (
                                                                 <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-muted-foreground/20 shrink-0">
                                                                     <Image
@@ -489,16 +500,16 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                                                 </div>
                                                             )}
                                                             <div className="flex flex-col min-w-0">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">LOSER MVP</span>
-                                                                </div>
+                                                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">
+                                                                    Loser MVP
+                                                                </span>
                                                                 <span className="text-sm font-semibold truncate">
-                                    {loserMvp.display_name || loserMvp.username || "Unknown"}
-                                </span>
+                                                                    {loserMvp.display_name || loserMvp.username || "Unknown"}
+                                                                </span>
                                                                 {loserMvp.display_name && loserMvp.username && (
                                                                     <span className="text-xs text-muted-foreground truncate">
-                                        @{loserMvp.username}
-                                    </span>
+                                                                        @{loserMvp.username}
+                                                                    </span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -511,17 +522,17 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                             </div>
 
                             {officialsLoading ? (
-                                <div className="flex items-center justify-center gap-2 py-2">
+                                <div className="flex items-center justify-center gap-2 py-2 border-t border-border">
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                                     <span className="text-xs text-muted-foreground">Loading officials...</span>
                                 </div>
                             ) : officials && (officials.referees.length > 0 || officials.media.length > 0) ? (
-                                <div className="flex flex-col gap-2 pt-2 border-t border-border">
+                                <div className="flex flex-col gap-2.5 pt-3 border-t border-border">
                                     {officials.referees.length > 0 && (
                                         <div className="flex items-start gap-3">
-                                        <span className="text-xs text-muted-foreground uppercase tracking-wide w-20 pt-1">
-                                            Referees
-                                        </span>
+                                            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold w-20 pt-1.5">
+                                                Referees
+                                            </span>
                                             <div className="flex gap-3 flex-wrap flex-1">
                                                 {officials.referees.map((official) => (
                                                     <div key={official.id} className="flex items-center gap-2">
@@ -537,13 +548,13 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                                             </div>
                                                         )}
                                                         <div className="flex flex-col">
-                                                        <span className="text-xs font-medium">
-                                                            {official.display_name || official.username || "Unknown"}
-                                                        </span>
-                                                            {official.display_name && official.username && (
-                                                                <span className="text-[10px] text-muted-foreground">
-                                                                @{official.username}
+                                                            <span className="text-sm font-medium">
+                                                                {official.display_name || official.username || "Unknown"}
                                                             </span>
+                                                            {official.display_name && official.username && (
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    @{official.username}
+                                                                </span>
                                                             )}
                                                         </div>
                                                     </div>
@@ -552,32 +563,32 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                         </div>
                                     )}
                                     {officials.media.length > 0 && (
-                                        <div className="flex items-start gap-3">
-                                        <span className="text-xs text-muted-foreground uppercase tracking-wide w-20 pt-1">
-                                            Medias
-                                        </span>
-                                            <div className="flex gap-3 flex-wrap flex-1">
+                                        <div className="flex items-start gap-4">
+                                            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold w-20 pt-1.5">
+                                                Media
+                                            </span>
+                                            <div className="flex gap-4 flex-wrap flex-1">
                                                 {officials.media.map((official) => (
-                                                    <div key={official.id} className="flex items-center gap-2">
+                                                    <div key={official.id} className="flex items-center gap-2.5">
                                                         {official.avatar_url && (
-                                                            <div className="relative w-6 h-6 rounded-full overflow-hidden border border-border">
+                                                            <div className="relative w-7 h-7 rounded-full overflow-hidden border border-border">
                                                                 <Image
                                                                     src={official.avatar_url}
                                                                     alt={official.username || "Official"}
                                                                     fill
-                                                                    sizes="24px"
+                                                                    sizes="28px"
                                                                     className="object-cover"
                                                                 />
                                                             </div>
                                                         )}
                                                         <div className="flex flex-col">
-                                                        <span className="text-xs font-medium">
-                                                            {official.display_name || official.username || "Unknown"}
-                                                        </span>
-                                                            {official.display_name && official.username && (
-                                                                <span className="text-[10px] text-muted-foreground">
-                                                                @{official.username}
+                                                            <span className="text-sm font-medium">
+                                                                {official.display_name || official.username || "Unknown"}
                                                             </span>
+                                                            {official.display_name && official.username && (
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    @{official.username}
+                                                                </span>
                                                             )}
                                                         </div>
                                                     </div>

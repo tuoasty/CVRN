@@ -13,7 +13,7 @@ import {
     createMatches,
     getAllMatches,
     getAvailableTeamsForWeek,
-    getMatchesForWeek, getMatchSets, updateMatchScheduleService, voidMatchService
+    getMatchesForWeek, getMatchSets, updateMatchResultsService, updateMatchScheduleService, voidMatchService
 } from "@/server/services/match.service";
 
 export async function createMatchesAction(input:CreateMatchesInput) {
@@ -54,4 +54,9 @@ export async function voidMatchAction(input: VoidMatchInput) {
 export async function getMatchSetsAction(input: MatchSetsInput) {
     const supabase = await createServerSupabase();
     return await getMatchSets(supabase, input);
+}
+
+export async function updateMatchResultsAction(input: CompleteMatchInput) {
+    const supabase = await createServerSupabase();
+    return await updateMatchResultsService(supabase, input);
 }

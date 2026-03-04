@@ -338,72 +338,70 @@ export default function CompleteMatchDialog({
                             )}
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <h3 className="font-semibold mb-3">MVP Selection</h3>
+                        <div className="space-y-3">
+                            <h3 className="font-semibold mb-2">MVP Selection</h3>
 
-                                <div className="space-y-3">
-                                    <div className="space-y-2">
-                                        <Label>Match MVP - {winningTeamName}</Label>
-                                        <Select value={matchMvpId} onValueChange={setMatchMvpId}>
-                                            <SelectTrigger className="rounded-sm">
-                                                <SelectValue placeholder="Select winning team MVP" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {winningTeamPlayers.map(player => (
-                                                    <SelectItem key={player.id} value={player.id}>
-                                                        <div className="flex items-center gap-2">
-                                                            {player.avatar_url && (
-                                                                <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                                                                    <Image
-                                                                        src={player.avatar_url}
-                                                                        alt={player.username || "Player"}
-                                                                        fill
-                                                                        sizes="20px"
-                                                                        className="object-cover"
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <span>
-                                                                {player.display_name || player.username || "Unknown"}
-                                                            </span>
-                                                        </div>
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label>Match MVP - {winningTeamName}</Label>
+                                    <Select value={matchMvpId} onValueChange={setMatchMvpId}>
+                                        <SelectTrigger className="rounded-sm h-9">
+                                            <SelectValue placeholder="Select winning MVP" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {winningTeamPlayers.map(player => (
+                                                <SelectItem key={player.id} value={player.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        {player.avatar_url && (
+                                                            <div className="relative w-5 h-5 rounded-full overflow-hidden">
+                                                                <Image
+                                                                    src={player.avatar_url}
+                                                                    alt={player.username || "Player"}
+                                                                    fill
+                                                                    sizes="20px"
+                                                                    className="object-cover"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <span>
+                                    {player.display_name || player.username || "Unknown"}
+                                </span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                                    <div className="space-y-2">
-                                        <Label>Loser MVP - {losingTeamName}</Label>
-                                        <Select value={loserMvpId} onValueChange={setLoserMvpId}>
-                                            <SelectTrigger className="rounded-sm">
-                                                <SelectValue placeholder="Select losing team MVP" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {losingTeamPlayers.map(player => (
-                                                    <SelectItem key={player.id} value={player.id}>
-                                                        <div className="flex items-center gap-2">
-                                                            {player.avatar_url && (
-                                                                <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                                                                    <Image
-                                                                        src={player.avatar_url}
-                                                                        alt={player.username || "Player"}
-                                                                        fill
-                                                                        sizes="20px"
-                                                                        className="object-cover"
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <span>
-                                                                {player.display_name || player.username || "Unknown"}
-                                                            </span>
-                                                        </div>
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                                <div className="space-y-2">
+                                    <Label>Loser MVP - {losingTeamName}</Label>
+                                    <Select value={loserMvpId} onValueChange={setLoserMvpId}>
+                                        <SelectTrigger className="rounded-sm h-9">
+                                            <SelectValue placeholder="Select losing MVP" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {losingTeamPlayers.map(player => (
+                                                <SelectItem key={player.id} value={player.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        {player.avatar_url && (
+                                                            <div className="relative w-5 h-5 rounded-full overflow-hidden">
+                                                                <Image
+                                                                    src={player.avatar_url}
+                                                                    alt={player.username || "Player"}
+                                                                    fill
+                                                                    sizes="20px"
+                                                                    className="object-cover"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <span>
+                                    {player.display_name || player.username || "Unknown"}
+                                </span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                         </div>
