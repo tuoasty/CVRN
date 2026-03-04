@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
@@ -25,13 +25,22 @@ import { useTeamsStore } from "@/app/stores/teamStore";
 import { usePlayerStore } from "@/app/stores/playerStore";
 import {safeDecodeURIComponent} from "@/app/utils/decodeURI";
 
-export default function TeamDetailPage() {
-    const params = useParams();
+type TeamDetailPageProps = {
+    regionCode: string;
+    seasonSlug: string;
+    teamSlug: string;
+};
+
+export default function TeamDetailPage({
+   regionCode: regionCodeProp,
+   seasonSlug: seasonSlugProp,
+   teamSlug: teamSlugProp
+}: TeamDetailPageProps) {
     const router = useRouter();
 
-    const regionCode = safeDecodeURIComponent(String(params.region || "")).toLowerCase();
-    const seasonSlug = safeDecodeURIComponent(String(params.season || "")).toLowerCase();
-    const teamSlug = safeDecodeURIComponent(String(params.teamName || "")).toLowerCase();
+    const regionCode = safeDecodeURIComponent(regionCodeProp).toLowerCase();
+    const seasonSlug = safeDecodeURIComponent(seasonSlugProp).toLowerCase();
+    const teamSlug = safeDecodeURIComponent(teamSlugProp).toLowerCase();
 
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
