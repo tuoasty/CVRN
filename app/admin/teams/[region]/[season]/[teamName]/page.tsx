@@ -9,9 +9,19 @@ type PageProps = {
     }>;
 };
 
-export default async function TeamPage(props: PageProps) {
-    const params = await props.params;
+async function TeamDetailWrapper({ params }: { params: Promise<{ region: string; season: string; teamName: string }> }) {
+    const resolvedParams = await params;
 
+    return (
+        <TeamDetailPage
+            regionCode={resolvedParams.region}
+            seasonSlug={resolvedParams.season}
+            teamSlug={resolvedParams.teamName}
+        />
+    );
+}
+
+export default function TeamPage(props: PageProps) {
     return (
         <Suspense fallback={
             <div className="admin-section">
@@ -20,11 +30,7 @@ export default async function TeamPage(props: PageProps) {
                 </div>
             </div>
         }>
-            <TeamDetailPage
-                regionCode={params.region}
-                seasonSlug={params.season}
-                teamSlug={params.teamName}
-            />
+            <TeamDetailWrapper params={props.params} />
         </Suspense>
     );
 }

@@ -1,19 +1,12 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Button } from "@/app/components/ui/button";
+import { headers } from "next/headers";
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import { LogoutButton } from "@/app/components/ui/LogoutButton";
+import AdminNavItems from "@/app/components/ui/AdminNavItems";
 
-const NAV_ITEMS = [
-    { href: "/admin/dashboard", label: "Dashboard" },
-    { href: "/admin/teams", label: "Teams" },
-    { href: "/admin/matches", label: "Matches" },
-];
-
-export default function AdminNavbar() {
-    const pathname = usePathname();
+export default async function AdminNavbar() {
+    const headersList = await headers();
+    const pathname = headersList.get("x-invoke-path") || headersList.get("x-pathname") || "/admin/dashboard";
 
     return (
         <header className="border-b border-border bg-card">
@@ -26,22 +19,7 @@ export default function AdminNavbar() {
                             </h1>
                         </Link>
 
-                        <nav className="flex gap-1">
-                            {NAV_ITEMS.map((item) => {
-                                const isActive = pathname === item.href;
-                                return (
-                                    <Link key={item.href} href={item.href}>
-                                        <Button
-                                            variant={isActive ? "secondary" : "ghost"}
-                                            size="sm"
-                                            className="rounded-sm text-sm"
-                                        >
-                                            {item.label}
-                                        </Button>
-                                    </Link>
-                                );
-                            })}
-                        </nav>
+                        <AdminNavItems currentPath={pathname} />
                     </div>
 
                     <div className="flex items-center gap-2">
