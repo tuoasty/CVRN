@@ -23,14 +23,21 @@ import { Button } from "@/app/components/ui/button";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { useTeamsStore } from "@/app/stores/teamStore";
 import { usePlayerStore } from "@/app/stores/playerStore";
+import {safeDecodeURIComponent} from "@/app/utils/decodeURI";
 
 export default function TeamDetailPage() {
     const params = useParams();
     const router = useRouter();
 
-    const regionCode = decodeURIComponent(String(params.region || "")).toLowerCase();
-    const seasonSlug = decodeURIComponent(String(params.season || "")).toLowerCase();
-    const teamSlug = decodeURIComponent(String(params.teamName || "")).toLowerCase();
+    const regionCode = safeDecodeURIComponent(String(params.region || "")).toLowerCase();
+    const seasonSlug = safeDecodeURIComponent(String(params.season || "")).toLowerCase();
+    const teamSlug = safeDecodeURIComponent(String(params.teamName || "")).toLowerCase();
+
+    const regionCode = (() => {
+        const raw = String(params.region || "");
+        console.log('[TeamDetailPage] Raw region param:', raw);
+        return safeDecodeURIComponent(raw).toLowerCase();
+    })();
 
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
