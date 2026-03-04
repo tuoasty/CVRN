@@ -17,13 +17,14 @@ interface MatchOfficialSectionProps {
 }
 
 export default function MatchOfficialSection({
-                                                  matchId,
-                                                  officialType,
-                                                  title,
-                                              }: MatchOfficialSectionProps) {
+                                                 matchId,
+                                                 officialType,
+                                                 title,
+                                             }: MatchOfficialSectionProps) {
     const { fetchMatchOfficials, matchOfficialsCache, removeOfficialFromMatch } = useOfficialStore();
 
     const [officials, setOfficials] = useState<MatchOfficialWithDetails[]>([]);
+    const [removing, setRemoving] = useState<string | null>(null);
 
     useEffect(() => {
         loadOfficials();
@@ -45,6 +46,7 @@ export default function MatchOfficialSection({
     };
 
     const handleRemove = async (officialId: string) => {
+        setRemoving(officialId);
         clientLogger.info("MatchOfficialsSection", "Removing official", {
             matchId,
             officialId,
@@ -62,12 +64,19 @@ export default function MatchOfficialSection({
         } else {
             alert("Failed to remove official");
         }
+
+        setRemoving(null);
     };
 
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">{title}</h3>
+                <div>
+                    <h4 className="font-medium">{title}</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                        {officials.length} assigned
+                    </p>
+                </div>
                 <OfficialSearchDialog
                     matchId={matchId}
                     officialType={officialType}
@@ -76,22 +85,26 @@ export default function MatchOfficialSection({
             </div>
 
             {officials.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No {title.toLowerCase()} assigned</div>
+                <div className="panel p-4">
+                    <p className="text-sm text-muted-foreground text-center">
+                        No {title.toLowerCase()} assigned
+                    </p>
+                </div>
             ) : (
                 <div className="space-y-2">
                     {officials.map((mo) => (
                         <div
                             key={mo.id}
-                            className="flex items-center justify-between p-2 border rounded-lg"
+                            className="panel p-3 flex items-center justify-between"
                         >
                             <div className="flex items-center gap-3">
                                 {mo.official.avatar_url && (
-                                    <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border">
                                         <Image
                                             src={mo.official.avatar_url}
                                             alt={mo.official.username || "Official"}
                                             fill
-                                            sizes="32px"
+                                            sizes="40px"
                                             className="object-cover"
                                         />
                                     </div>
@@ -100,7 +113,7 @@ export default function MatchOfficialSection({
                                     <div className="text-sm font-medium">
                                         {mo.official.display_name || mo.official.username}
                                     </div>
-                                    {mo.official.display_name && (
+                                    {mo.official.display_name && mo.official.username && (
                                         <div className="text-xs text-muted-foreground">
                                             @{mo.official.username}
                                         </div>
@@ -111,6 +124,8 @@ export default function MatchOfficialSection({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleRemove(mo.official.id)}
+                                disabled={removing === mo.official.id}
+                                className="rounded-sm"
                             >
                                 <X className="h-4 w-4" />
                             </Button>
