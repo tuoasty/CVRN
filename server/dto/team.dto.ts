@@ -17,6 +17,8 @@ export interface TeamWithRegion {
     season_id: string;
     deleted_at: string | null;
     created_at: string;
+    brick_number: string;
+    brick_color: string;
     seasons: {
         id: string;
         name: string;

@@ -18,7 +18,11 @@ import { useRegionsStore } from "@/app/stores/regionStore";
 import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { clientLogger } from "@/app/utils/clientLogger";
 
-export default function CreateTeamForm() {
+interface CreateTeamFormProps {
+    onSuccess?: () => void;
+}
+
+export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     const { addTeamToCache } = useTeamsStore();
     const { allRegionsCache, fetchAllRegions } = useRegionsStore();
     const { allSeasonsCache, loading: seasonsLoading, fetchAllSeasons } = useSeasonsStore();
@@ -134,6 +138,12 @@ export default function CreateTeamForm() {
             setBrickNumber("");
             setBrickColor("");
 
+            if (onSuccess) {
+                setTimeout(() => {
+                    onSuccess();
+                }, 1500);
+            }
+
         } catch (error) {
             clientLogger.error('CreateTeamForm', 'Exception during team creation', { error });
             setError("Something went wrong");
@@ -152,26 +162,62 @@ export default function CreateTeamForm() {
     }, {} as Record<string, typeof seasons>);
 
     return (
-        <div className="max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Create New Team</h2>
+        <div className="space-y-6">
+            <div>
+                <h2>Create New Team</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                    Add a new team to the league system
+                </p>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <Label htmlFor="name">Team Name</Label>
-                    <Input
-                        id="name"
-                        type="text"
-                        placeholder="Team name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        disabled={loading}
-                    />
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Team Name</Label>
+                        <Input
+                            id="name"
+                            type="text"
+                            placeholder="Team name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            disabled={loading}
+                            className="rounded-sm"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="season">Season</Label>
+                        <Select value={seasonId} onValueChange={setSeasonId} disabled={loading || seasonsLoading}>
+                            <SelectTrigger className="rounded-sm">
+                                <SelectValue placeholder="Select season" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {regions.map((region) => {
+                                    const regionSeasons = seasonsByRegion[region.id] || [];
+                                    if (regionSeasons.length === 0) return null;
+
+                                    return (
+                                        <React.Fragment key={region.id}>
+                                            <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
+                                                {region.code.toUpperCase()} - {region.name}
+                                            </div>
+                                            {regionSeasons.map((season) => (
+                                                <SelectItem key={season.id} value={season.id}>
+                                                    {season.name}
+                                                </SelectItem>
+                                            ))}
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
-                <div>
+                <div className="space-y-2">
                     <Label htmlFor="logo">Team Logo</Label>
                     <div
-                        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                        className={`border-2 border-dashed rounded-sm p-6 text-center transition-colors ${
                             isDragging ? "border-primary bg-primary/10" : "border-muted-foreground/25"
                         }`}
                         onDragOver={handleDragOver}
@@ -181,89 +227,124 @@ export default function CreateTeamForm() {
                         tabIndex={0}
                     >
                         {preview ? (
-                            <Image
-                                src={preview}
-                                alt="Logo Preview"
-                                width={150}
-                                height={150}
-                                className="mx-auto"
-                            />
+                            <div className="space-y-3">
+                                <div className="relative w-32 h-32 mx-auto">
+                                    <Image
+                                        src={preview}
+                                        alt="Logo Preview"
+                                        fill
+                                        sizes="128px"
+                                        className="object-contain"
+                                    />
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setFile(null);
+                                        setPreview(null);
+                                    }}
+                                    className="rounded-sm"
+                                >
+                                    Remove
+                                </Button>
+                            </div>
                         ) : (
-                            <p className="text-sm text-muted-foreground">
-                                Drag & drop, paste, or click to upload
-                            </p>
+                            <div className="space-y-3">
+                                <p className="text-sm text-muted-foreground">
+                                    Drag & drop, paste, or click to upload
+                                </p>
+                                <Input
+                                    id="logo"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    disabled={loading}
+                                    className="rounded-sm"
+                                />
+                            </div>
                         )}
-                        <Input
-                            id="logo"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            disabled={loading}
-                            className="mt-2"
-                        />
                     </div>
                 </div>
 
-                <div>
-                    <Label htmlFor="season">Season</Label>
-                    <Select value={seasonId} onValueChange={setSeasonId} disabled={loading || seasonsLoading}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select season" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {regions.map((region) => {
-                                const regionSeasons = seasonsByRegion[region.id] || [];
-                                if (regionSeasons.length === 0) return null;
+                <div className="grid grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                        <Label htmlFor="brickNumber">Brick Number</Label>
+                        <Input
+                            id="brickNumber"
+                            type="text"
+                            placeholder="e.g., 1, 21, 1032"
+                            value={brickNumber}
+                            onChange={(e) => setBrickNumber(e.target.value)}
+                            disabled={loading}
+                            className="rounded-sm"
+                        />
+                    </div>
 
-                                return (
-                                    <React.Fragment key={region.id}>
-                                        <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
-                                            {region.code.toUpperCase()} - {region.name}
-                                        </div>
-                                        {regionSeasons.map((season) => (
-                                            <SelectItem key={season.id} value={season.id}>
-                                                {season.name}
-                                            </SelectItem>
-                                        ))}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                        <Label htmlFor="brickColor">Brick Color (Hex)</Label>
+                        <div className="flex gap-2">
+                            <Input
+                                id="brickColor"
+                                type="text"
+                                placeholder="#FF0000"
+                                value={brickColor}
+                                onChange={(e) => setBrickColor(e.target.value)}
+                                disabled={loading}
+                                maxLength={7}
+                                className="rounded-sm flex-1"
+                            />
+                            {brickColor && /^#[0-9A-Fa-f]{6}$/.test(brickColor) && (
+                                <div
+                                    className="w-10 h-10 rounded-sm border border-border shrink-0"
+                                    style={{ backgroundColor: brickColor }}
+                                />
+                            )}
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <Label htmlFor="brickNumber">Brick Number</Label>
-                    <Input
-                        id="brickNumber"
-                        type="text"
-                        placeholder="e.g., 1, 21, 1032"
-                        value={brickNumber}
-                        onChange={(e) => setBrickNumber(e.target.value)}
+                {error && (
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-sm p-3">
+                        <p className="text-sm text-destructive">{error}</p>
+                    </div>
+                )}
+
+                {success && (
+                    <div className="bg-primary/10 border border-primary/20 rounded-sm p-3">
+                        <p className="text-sm text-primary">{success}</p>
+                    </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                    <Button
+                        type="submit"
+                        disabled={loading || seasonsLoading}
+                        className="rounded-sm"
+                    >
+                        {loading ? "Creating..." : "Create Team"}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            setName("");
+                            setFile(null);
+                            setSeasonId("");
+                            setPreview(null);
+                            setBrickNumber("");
+                            setBrickColor("");
+                            setError(null);
+                            setSuccess(null);
+                        }}
                         disabled={loading}
-                    />
+                        className="rounded-sm"
+                    >
+                        Reset
+                    </Button>
                 </div>
-
-                <div>
-                    <Label htmlFor="brickColor">Brick Color (Hex)</Label>
-                    <Input
-                        id="brickColor"
-                        type="text"
-                        placeholder="#FF0000"
-                        value={brickColor}
-                        onChange={(e) => setBrickColor(e.target.value)}
-                        disabled={loading}
-                        maxLength={7}
-                    />
-                </div>
-
-                <Button type="submit" disabled={loading || seasonsLoading}>
-                    {loading ? "Creating..." : "Create Team"}
-                </Button>
             </form>
-
-            {error && <div className="text-red-600 mt-2">{error}</div>}
-            {success && <div className="text-green-600 mt-2">{success}</div>}
         </div>
     );
 }
