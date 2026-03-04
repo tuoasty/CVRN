@@ -8,28 +8,55 @@ import { Input } from "@/app/components/ui/input";
 import { TeamWithRegion } from "@/server/dto/team.dto";
 import { useTeamsStore } from "@/app/stores/teamStore";
 import { clientLogger } from "@/app/utils/clientLogger";
+import { useRegionsStore } from "@/app/stores/regionStore";
+import { useSeasonsStore } from "@/app/stores/seasonStore";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/app/components/ui/select";
 
 export default function TeamsDataTable() {
     const { allTeamsCache, loading, error, fetchAllTeams } = useTeamsStore();
+    const { allRegionsCache, fetchAllRegions } = useRegionsStore();
+    const { allSeasonsCache, fetchAllSeasons } = useSeasonsStore();
     const router = useRouter();
+
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedRegion, setSelectedRegion] = useState<string>("all");
+    const [selectedSeason, setSelectedSeason] = useState<string>("all");
 
     useEffect(() => {
         clientLogger.info('TeamsDataTable', 'Component mounted, fetching teams');
         fetchAllTeams();
+        fetchAllRegions();
+        fetchAllSeasons();
     }, []);
 
     const teams = allTeamsCache?.data || [];
+    const regions = allRegionsCache?.data || [];
+    const seasons = allSeasonsCache?.data || [];
 
     const filteredTeams = teams.filter((team) => {
         const searchLower = searchQuery.toLowerCase();
-        return (
+        const matchesSearch =
             team.name?.toLowerCase().includes(searchLower) ||
             team.seasons?.regions?.code?.toLowerCase().includes(searchLower) ||
             team.seasons?.regions?.name?.toLowerCase().includes(searchLower) ||
-            team.seasons?.name?.toLowerCase().includes(searchLower)
-        );
+            team.seasons?.name?.toLowerCase().includes(searchLower);
+
+        const matchesRegion = selectedRegion === "all" || team.seasons?.regions?.id === selectedRegion;
+        const matchesSeason = selectedSeason === "all" || team.seasons?.id === selectedSeason;
+
+        return matchesSearch && matchesRegion && matchesSeason;
     });
+
+    // Get available seasons for selected region
+    const availableSeasons = selectedRegion === "all"
+        ? seasons
+        : seasons.filter(s => s.region_id === selectedRegion);
 
     const handleTeamClick = (team: TeamWithRegion) => {
         if (!team.seasons?.regions?.code || !team.seasons?.slug) {
@@ -62,17 +89,49 @@ export default function TeamsDataTable() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
                 <div className="flex-1 max-w-sm">
                     <Input
                         type="text"
-                        placeholder="Search teams, regions, seasons..."
+                        placeholder="Search teams..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="rounded-sm"
                     />
                 </div>
-                <div className="text-sm text-muted-foreground">
+
+                <Select value={selectedRegion} onValueChange={(value) => {
+                    setSelectedRegion(value);
+                    setSelectedSeason("all");
+                }}>
+                    <SelectTrigger className="w-[300px] rounded-sm">
+                        <SelectValue placeholder="All Regions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Regions</SelectItem>
+                        {regions.map((region) => (
+                            <SelectItem key={region.id} value={region.id}>
+                                {region.code.toUpperCase()} - {region.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+                    <SelectTrigger className="w-[200px] rounded-sm">
+                        <SelectValue placeholder="All Seasons" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Seasons</SelectItem>
+                        {availableSeasons.map((season) => (
+                            <SelectItem key={season.id} value={season.id}>
+                                {season.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <div className="text-sm text-muted-foreground ml-auto">
                     {filteredTeams.length} {filteredTeams.length === 1 ? 'team' : 'teams'}
                 </div>
             </div>
