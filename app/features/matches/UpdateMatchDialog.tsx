@@ -21,11 +21,11 @@ import {
 import { useMatchesStore } from "@/app/stores/matchStore";
 import { usePlayerStore } from "@/app/stores/playerStore";
 import { clientLogger } from "@/app/utils/clientLogger";
-import { Player } from "@/shared/types/db";
+import { Player, MatchSet } from "@/shared/types/db";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 
-interface CompleteMatchDialogProps {
+interface UpdateMatchDialogProps {
     matchId: string;
     seasonId: string;
     homeTeamId: string;
@@ -33,20 +33,26 @@ interface CompleteMatchDialogProps {
     homeTeamName: string;
     awayTeamName: string;
     bestOf: number;
+    currentSets: MatchSet[];
+    currentMatchMvpId: string;
+    currentLoserMvpId: string;
     onSuccess: () => void;
 }
 
-export default function CompleteMatchDialog({
-                                                matchId,
-                                                seasonId,
-                                                homeTeamId,
-                                                awayTeamId,
-                                                homeTeamName,
-                                                awayTeamName,
-                                                bestOf,
-                                                onSuccess
-                                            }: CompleteMatchDialogProps) {
-    const { completeMatch } = useMatchesStore();
+export default function UpdateMatchDialog({
+                                              matchId,
+                                              seasonId,
+                                              homeTeamId,
+                                              awayTeamId,
+                                              homeTeamName,
+                                              awayTeamName,
+                                              bestOf,
+                                              currentSets,
+                                              currentMatchMvpId,
+                                              currentLoserMvpId,
+                                              onSuccess
+                                          }: UpdateMatchDialogProps) {
+    const { updateMatchResults } = useMatchesStore();
     const { fetchTeamPlayers, playersByTeamCache } = usePlayerStore();
 
     const [open, setOpen] = useState(false);
@@ -65,16 +71,27 @@ export default function CompleteMatchDialog({
     useEffect(() => {
         if (open) {
             loadPlayers();
-            initializeSetScores();
+            initializeFromCurrentData();
         }
     }, [open]);
 
-    const initializeSetScores = () => {
-        const initialScores = Array.from({ length: minSets }, () => ({
-            homeScore: "",
-            awayScore: ""
-        }));
-        setSetScores(initialScores);
+    const initializeFromCurrentData = () => {
+        const scores = currentSets
+            .sort((a, b) => a.set_number - b.set_number)
+            .map(set => ({
+                homeScore: set.home_score.toString(),
+                awayScore: set.away_score.toString()
+            }));
+
+        setSetScores(scores);
+        setMatchMvpId(currentMatchMvpId);
+        setLoserMvpId(currentLoserMvpId);
+
+        clientLogger.info("UpdateMatchDialog", "Initialized with current data", {
+            setsCount: scores.length,
+            matchMvpId: currentMatchMvpId,
+            loserMvpId: currentLoserMvpId
+        });
     };
 
     const loadPlayers = async () => {
@@ -96,12 +113,12 @@ export default function CompleteMatchDialog({
                 setAwayPlayers(awayCached.data);
             }
 
-            clientLogger.info("CompleteMatchDialog", "Players loaded", {
+            clientLogger.info("UpdateMatchDialog", "Players loaded", {
                 homeCount: homeCached?.data.length || 0,
                 awayCount: awayCached?.data.length || 0
             });
         } catch (error) {
-            clientLogger.error("CompleteMatchDialog", "Failed to load players", { error });
+            clientLogger.error("UpdateMatchDialog", "Failed to load players", { error });
         } finally {
             setLoadingPlayers(false);
         }
@@ -136,12 +153,11 @@ export default function CompleteMatchDialog({
             });
 
             const setsToWin = Math.ceil(bestOf / 2);
-
             const noWinnerYet = currentHomeSets < setsToWin && currentAwaySets < setsToWin;
 
             if (allSetsHaveScores && noWinnerYet && newScores.length < maxSets) {
                 setSetScores([...newScores, { homeScore: "", awayScore: "" }]);
-                clientLogger.info("CompleteMatchDialog", "Auto-added set", {
+                clientLogger.info("UpdateMatchDialog", "Auto-added set", {
                     currentSets: newScores.length,
                     homeSets: currentHomeSets,
                     awaySets: currentAwaySets
@@ -180,9 +196,9 @@ export default function CompleteMatchDialog({
         }
 
         setSubmitting(true);
-        clientLogger.info("CompleteMatchDialog", "Completing match", { matchId, sets });
+        clientLogger.info("UpdateMatchDialog", "Updating match results", { matchId, sets });
 
-        const success = await completeMatch({
+        const success = await updateMatchResults({
             matchId,
             sets,
             matchMvpPlayerId: matchMvpId,
@@ -190,21 +206,14 @@ export default function CompleteMatchDialog({
         });
 
         if (success) {
-            clientLogger.info("CompleteMatchDialog", "Match completed successfully", { matchId });
+            clientLogger.info("UpdateMatchDialog", "Match results updated successfully", { matchId });
             setOpen(false);
-            resetForm();
             onSuccess();
         } else {
-            alert("Failed to complete match");
+            alert("Failed to update match results");
         }
 
         setSubmitting(false);
-    };
-
-    const resetForm = () => {
-        initializeSetScores();
-        setMatchMvpId("");
-        setLoserMvpId("");
     };
 
     const homeSetsWon = setScores.filter(s =>
@@ -222,15 +231,15 @@ export default function CompleteMatchDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="default" size="sm" className="rounded-sm">
-                    Complete Match
+                <Button variant="outline" size="sm" className="rounded-sm">
+                    Update Results
                 </Button>
             </DialogTrigger>
-            <DialogContent className="!max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
-                <DialogHeader>
-                    <DialogTitle>Complete Match</DialogTitle>
+            <DialogContent className="!max-w-2xl max-h-[85vh] flex flex-col rounded-sm">
+                <DialogHeader className="shrink-0">
+                    <DialogTitle>Update Match Results</DialogTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Enter final scores and select MVPs
+                        Modify scores and MVPs
                     </p>
                 </DialogHeader>
 
@@ -239,8 +248,8 @@ export default function CompleteMatchDialog({
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                 ) : (
-                    <div className="space-y-6">
-                        <div className="space-y-4">
+                    <div className="space-y-5 overflow-y-auto flex-1 pr-2">
+                        <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h3 className="font-semibold">Set Scores</h3>
@@ -278,10 +287,10 @@ export default function CompleteMatchDialog({
                                         <Label className="text-xs text-muted-foreground uppercase tracking-wide">
                                             Set {idx + 1}
                                         </Label>
-                                        <div className="panel p-4">
-                                            <div className="flex items-center justify-center gap-6">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-sm font-medium w-32 text-right">
+                                        <div className="panel p-3">
+                                            <div className="flex items-center justify-center gap-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium w-28 text-right">
                                                         {homeTeamName}
                                                     </span>
                                                     <Input
@@ -289,23 +298,23 @@ export default function CompleteMatchDialog({
                                                         min="0"
                                                         value={set.homeScore}
                                                         onChange={e => handleSetScoreChange(idx, "home", e.target.value)}
-                                                        className="w-20 rounded-sm text-center text-lg font-semibold"
+                                                        className="w-16 rounded-sm text-center text-base font-semibold h-9"
                                                         placeholder="0"
                                                     />
                                                 </div>
 
-                                                <span className="text-2xl font-bold text-muted-foreground">-</span>
+                                                <span className="text-lg font-bold text-muted-foreground">-</span>
 
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-2">
                                                     <Input
                                                         type="number"
                                                         min="0"
                                                         value={set.awayScore}
                                                         onChange={e => handleSetScoreChange(idx, "away", e.target.value)}
-                                                        className="w-20 rounded-sm text-center text-lg font-semibold"
+                                                        className="w-16 rounded-sm text-center text-base font-semibold h-9"
                                                         placeholder="0"
                                                     />
-                                                    <span className="text-sm font-medium w-32">
+                                                    <span className="text-sm font-medium w-28">
                                                         {awayTeamName}
                                                     </span>
                                                 </div>
@@ -316,9 +325,9 @@ export default function CompleteMatchDialog({
                             </div>
 
                             {setScores.length > 0 && (
-                                <div className="panel p-4 bg-muted/50">
-                                    <div className="flex items-center justify-center gap-8">
-                                        <div className="flex items-center gap-3 w-48">
+                                <div className="panel p-3 bg-muted/50">
+                                    <div className="flex items-center justify-center gap-6">
+                                        <div className="flex items-center gap-2 w-40">
                                             <span className="font-semibold flex-1 text-right">{homeTeamName}</span>
                                             <Badge variant="secondary" className="rounded-sm shrink-0">
                                                 {homeSetsWon}
@@ -408,10 +417,10 @@ export default function CompleteMatchDialog({
 
                         <Button
                             onClick={validateAndSubmit}
-                            className="w-full rounded-sm"
+                            className="w-full rounded-sm h-9"
                             disabled={submitting}
                         >
-                            {submitting ? "Completing..." : "Complete Match"}
+                            {submitting ? "Updating..." : "Update Match Results"}
                         </Button>
                     </div>
                 )}

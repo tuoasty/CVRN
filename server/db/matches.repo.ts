@@ -186,3 +186,30 @@ export async function findMatchSets(
         .eq("match_id", matchId)
         .order("set_number", { ascending: true });
 }
+
+export async function updateMatchResults(
+    supabase: DBClient,
+    matchId: string,
+    data: {
+        homeSetsWon: number;
+        awaySetsWon: number;
+        homeTeamLvr: number | null;
+        awayTeamLvr: number | null;
+        matchMvpPlayerId: string;
+        loserMvpPlayerId: string;
+    }
+) {
+    return supabase
+        .from("matches")
+        .update({
+            home_sets_won: data.homeSetsWon,
+            away_sets_won: data.awaySetsWon,
+            home_team_lvr: data.homeTeamLvr,
+            away_team_lvr: data.awayTeamLvr,
+            match_mvp_player_id: data.matchMvpPlayerId,
+            loser_mvp_player_id: data.loserMvpPlayerId,
+        })
+        .eq("id", matchId)
+        .select()
+        .single();
+}
