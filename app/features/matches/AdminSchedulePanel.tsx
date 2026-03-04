@@ -257,42 +257,54 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-center gap-6">
-                                {homeTeam && (
-                                    <div className="flex items-center gap-3">
-                                        {homeTeam.logo_url && (
-                                            <div className="relative w-12 h-12">
-                                                <Image
-                                                    src={homeTeam.logo_url}
-                                                    alt={homeTeam.name}
-                                                    fill
-                                                    sizes="48px"
-                                                    className="object-contain"
-                                                />
-                                            </div>
-                                        )}
-                                        <span className="font-semibold">{homeTeam.name}</span>
-                                    </div>
-                                )}
+                            <div className="grid grid-cols-3 items-center">
+                                <div className="flex justify-end items-center gap-3 pr-4">
+                                    {homeTeam && (
+                                        <>
+                                            <span className="font-semibold text-right">
+                                              {homeTeam.name}
+                                            </span>
+                                            {homeTeam.logo_url && (
+                                                <div className="relative w-12 h-12">
+                                                    <Image
+                                                        src={homeTeam.logo_url}
+                                                        alt={homeTeam.name}
+                                                        fill
+                                                        sizes="48px"
+                                                        className="object-contain"
+                                                    />
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
 
-                                <span className="text-2xl font-bold text-muted-foreground">vs</span>
+                                <div className="text-center">
+                                    <span className="text-2xl font-bold text-muted-foreground">
+                                      VS
+                                    </span>
+                                </div>
+                                <div className="flex justify-start items-center gap-3 pl-4">
+                                    {awayTeam && (
+                                        <>
+                                            {awayTeam.logo_url && (
+                                                <div className="relative w-12 h-12">
+                                                    <Image
+                                                        src={awayTeam.logo_url}
+                                                        alt={awayTeam.name}
+                                                        fill
+                                                        sizes="48px"
+                                                        className="object-contain"
+                                                    />
+                                                </div>
+                                            )}
+                                            <span className="font-semibold text-left">
+                                              {awayTeam.name}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
 
-                                {awayTeam && (
-                                    <div className="flex items-center gap-3">
-                                        {awayTeam.logo_url && (
-                                            <div className="relative w-12 h-12">
-                                                <Image
-                                                    src={awayTeam.logo_url}
-                                                    alt={awayTeam.name}
-                                                    fill
-                                                    sizes="48px"
-                                                    className="object-contain"
-                                                />
-                                            </div>
-                                        )}
-                                        <span className="font-semibold">{awayTeam.name}</span>
-                                    </div>
-                                )}
                             </div>
 
                             {officialsLoading ? (
