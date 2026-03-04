@@ -19,7 +19,7 @@ const playersByTeamCache = new Map<string, CacheEntry<Player[]>>();
 
 const cleanupInterval = setupAutoEviction(playersByTeamCache, 60000);
 
-export const usePlayersStore = create<PlayersState>((set, get) => ({
+export const usePlayerStore = create<PlayersState>((set, get) => ({
     playersByTeamCache,
     loading: false,
     error: null,

@@ -1,10 +1,15 @@
 import { create } from 'zustand';
 import { Match, Team } from '@/shared/types/db';
-import { getAllMatchesAction, getAvailableTeamsForWeekAction, getMatchesForWeekAction } from '@/app/actions/match.actions';
+import {
+    completeMatchAction,
+    getAllMatchesAction,
+    getAvailableTeamsForWeekAction,
+    getMatchesForWeekAction
+} from '@/app/actions/match.actions';
 import { CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction } from './storeUtils';
 import { clientLogger } from "@/app/utils/clientLogger";
 import { updateMatchScheduleAction } from '@/app/actions/match.actions';
-import { UpdateMatchScheduleInput } from '@/server/dto/match.dto';
+import {CompleteMatchInput, UpdateMatchScheduleInput} from '@/server/dto/match.dto';
 
 type MatchesState = {
     matchesCache: CacheEntry<Match[]> | undefined;
@@ -17,6 +22,7 @@ type MatchesState = {
     fetchAvailableTeams: (seasonId: string, week: number) => Promise<void>;
     fetchMatchesForWeek: (seasonId: string, week: number) => Promise<void>;
     updateMatchSchedule: (input: UpdateMatchScheduleInput) => Promise<boolean>;
+    completeMatch: (input: CompleteMatchInput) => Promise<boolean>;
     clearCache: () => void;
 };
 
@@ -184,6 +190,58 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
                 error
             });
             set({ error: 'Failed to update match schedule', loading: false });
+            return false;
+        }
+    },
+
+    completeMatch: async (input: CompleteMatchInput) => {
+        clientLogger.info('MatchesStore', 'Completing match', { matchId: input.matchId });
+        set({ loading: true, error: null });
+
+        try {
+            const result = await completeMatchAction(input);
+
+            if (!result.ok) {
+                clientLogger.error('MatchesStore', 'Failed to complete match', {
+                    matchId: input.matchId,
+                    error: result.error
+                });
+                set({ error: result.error.message, loading: false });
+                return false;
+            }
+
+            const completedMatch = result.value;
+            clientLogger.info('MatchesStore', 'Match completed successfully', {
+                matchId: input.matchId,
+                status: completedMatch.status
+            });
+
+            const { matchesCache, matchesForWeekCache } = get();
+
+            if (matchesCache) {
+                const updatedMatches = matchesCache.data.map(m =>
+                    m.id === completedMatch.id ? completedMatch : m
+                );
+                set({
+                    matchesCache: createCacheEntry(updatedMatches, MATCHES_TTL),
+                });
+            }
+
+            matchesForWeekCache.forEach((cache, key) => {
+                const updatedWeekMatches = cache.data.map(m =>
+                    m.id === completedMatch.id ? completedMatch : m
+                );
+                matchesForWeekCache.set(key, createCacheEntry(updatedWeekMatches, MATCHES_TTL));
+            });
+
+            set({ matchesForWeekCache, loading: false });
+            return true;
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception completing match', {
+                matchId: input.matchId,
+                error
+            });
+            set({ error: 'Failed to complete match', loading: false });
             return false;
         }
     },

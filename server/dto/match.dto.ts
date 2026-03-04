@@ -36,3 +36,17 @@ export interface InsertMatchDto {
     status: "pending" | "scheduled" | "completed";
     matchType: "season" | "playoffs";
 }
+
+export interface CompleteMatchInput {
+    matchId: string;
+    sets: Array<{
+        setNumber: number;
+        homeScore: number;
+        awayScore: number;
+    }>;
+    matchMvpPlayerId: string;
+    loserMvpPlayerId: string;
+    scheduledDate?: string | null;
+    scheduledTime?: string | null;
+    timezone?: string | null;
+}

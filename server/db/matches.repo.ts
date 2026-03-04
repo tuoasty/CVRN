@@ -83,3 +83,57 @@ export async function updateMatchSchedule(
         .select()
         .single();
 }
+
+export async function insertMatchSets(
+    supabase: DBClient,
+    matchId: string,
+    sets: Array<{ setNumber: number; homeScore: number; awayScore: number }>
+) {
+    const rows = sets.map(s => ({
+        match_id: matchId,
+        set_number: s.setNumber,
+        home_score: s.homeScore,
+        away_score: s.awayScore,
+    }));
+
+    return supabase
+        .from("match_sets")
+        .insert(rows)
+        .select();
+}
+
+export async function updateMatchCompletion(
+    supabase: DBClient,
+    matchId: string,
+    data: {
+        status: "completed";
+        homeSetsWon: number;
+        awaySetsWon: number;
+        homeTeamLvr: number | null;
+        awayTeamLvr: number | null;
+        matchMvpPlayerId: string;
+        loserMvpPlayerId: string;
+        scheduledAt?: string | null;
+    }
+) {
+    const updateData: any = {
+        status: data.status,
+        home_sets_won: data.homeSetsWon,
+        away_sets_won: data.awaySetsWon,
+        home_team_lvr: data.homeTeamLvr,
+        away_team_lvr: data.awayTeamLvr,
+        match_mvp_player_id: data.matchMvpPlayerId,
+        loser_mvp_player_id: data.loserMvpPlayerId,
+    };
+
+    if (data.scheduledAt !== undefined) {
+        updateData.scheduled_at = data.scheduledAt;
+    }
+
+    return supabase
+        .from("matches")
+        .update(updateData)
+        .eq("id", matchId)
+        .select()
+        .single();
+}
