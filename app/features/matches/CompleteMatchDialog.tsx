@@ -115,6 +115,39 @@ export default function CompleteMatchDialog({
             newScores[index].awayScore = value;
         }
         setSetScores(newScores);
+
+        setTimeout(() => {
+            const currentHomeSets = newScores.filter(s => {
+                const home = parseInt(s.homeScore);
+                const away = parseInt(s.awayScore);
+                return !isNaN(home) && !isNaN(away) && home > away;
+            }).length;
+
+            const currentAwaySets = newScores.filter(s => {
+                const home = parseInt(s.homeScore);
+                const away = parseInt(s.awayScore);
+                return !isNaN(home) && !isNaN(away) && away > home;
+            }).length;
+
+            const allSetsHaveScores = newScores.every(s => {
+                const home = parseInt(s.homeScore);
+                const away = parseInt(s.awayScore);
+                return !isNaN(home) && !isNaN(away);
+            });
+
+            const setsToWin = Math.ceil(bestOf / 2);
+
+            const noWinnerYet = currentHomeSets < setsToWin && currentAwaySets < setsToWin;
+
+            if (allSetsHaveScores && noWinnerYet && newScores.length < maxSets) {
+                setSetScores([...newScores, { homeScore: "", awayScore: "" }]);
+                clientLogger.info("CompleteMatchDialog", "Auto-added set", {
+                    currentSets: newScores.length,
+                    homeSets: currentHomeSets,
+                    awaySets: currentAwaySets
+                });
+            }
+        }, 100);
     };
 
     const addSet = () => {
@@ -241,40 +274,41 @@ export default function CompleteMatchDialog({
 
                             <div className="space-y-2">
                                 {setScores.map((set, idx) => (
-                                    <div key={idx} className="panel p-3">
-                                        <div className="flex items-center gap-3">
-                                            <Badge variant="outline" className="rounded-sm shrink-0 w-16">
-                                                Set {idx + 1}
-                                            </Badge>
+                                    <div key={idx} className="space-y-2">
+                                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                            Set {idx + 1}
+                                        </Label>
+                                        <div className="panel p-4">
+                                            <div className="flex items-center justify-center gap-6">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-sm font-medium w-32 text-right">
+                                                        {homeTeamName}
+                                                    </span>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        value={set.homeScore}
+                                                        onChange={e => handleSetScoreChange(idx, "home", e.target.value)}
+                                                        className="w-20 rounded-sm text-center text-lg font-semibold"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
 
-                                            <div className="flex items-center gap-2 flex-1">
-                                                <span className="text-sm font-medium w-32 truncate">
-                                                    {homeTeamName}
-                                                </span>
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    value={set.homeScore}
-                                                    onChange={e => handleSetScoreChange(idx, "home", e.target.value)}
-                                                    className="w-16 rounded-sm text-center"
-                                                    placeholder="0"
-                                                />
-                                            </div>
+                                                <span className="text-2xl font-bold text-muted-foreground">-</span>
 
-                                            <span className="text-muted-foreground font-semibold">-</span>
-
-                                            <div className="flex items-center gap-2 flex-1 justify-end">
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    value={set.awayScore}
-                                                    onChange={e => handleSetScoreChange(idx, "away", e.target.value)}
-                                                    className="w-16 rounded-sm text-center"
-                                                    placeholder="0"
-                                                />
-                                                <span className="text-sm font-medium w-32 truncate text-right">
-                                                    {awayTeamName}
-                                                </span>
+                                                <div className="flex items-center gap-3">
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        value={set.awayScore}
+                                                        onChange={e => handleSetScoreChange(idx, "away", e.target.value)}
+                                                        className="w-20 rounded-sm text-center text-lg font-semibold"
+                                                        placeholder="0"
+                                                    />
+                                                    <span className="text-sm font-medium w-32">
+                                                        {awayTeamName}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -283,18 +317,21 @@ export default function CompleteMatchDialog({
 
                             {setScores.length > 0 && (
                                 <div className="panel p-4 bg-muted/50">
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-semibold">{homeTeamName}</span>
-                                            <Badge variant="secondary" className="rounded-sm">
-                                                {homeSetsWon} {homeSetsWon === 1 ? 'set' : 'sets'}
+                                    <div className="flex items-center justify-center gap-8">
+                                        <div className="flex items-center gap-3 w-48">
+                                            <span className="font-semibold flex-1 text-right">{homeTeamName}</span>
+                                            <Badge variant="secondary" className="rounded-sm shrink-0">
+                                                {homeSetsWon}
                                             </Badge>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="secondary" className="rounded-sm">
-                                                {awaySetsWon} {awaySetsWon === 1 ? 'set' : 'sets'}
+
+                                        <span className="text-muted-foreground text-sm font-medium shrink-0">-</span>
+
+                                        <div className="flex items-center gap-3 w-48">
+                                            <Badge variant="secondary" className="rounded-sm shrink-0">
+                                                {awaySetsWon}
                                             </Badge>
-                                            <span className="font-semibold">{awayTeamName}</span>
+                                            <span className="font-semibold flex-1">{awayTeamName}</span>
                                         </div>
                                     </div>
                                 </div>

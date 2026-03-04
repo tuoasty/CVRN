@@ -4,12 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Matches design">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Dialogues UI fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/matches/CompleteMatchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/CompleteMatchDialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/ManageMatchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/ManageMatchDialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/seasons/SeasonWeekPicker.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/seasons/SeasonWeekPicker.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/globals.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -144,15 +142,7 @@
       <workItem from="1772442104280" duration="4452000" />
       <workItem from="1772502136110" duration="7155000" />
       <workItem from="1772520242020" duration="3830000" />
-      <workItem from="1772591275255" duration="13056000" />
-    </task>
-    <task id="LOCAL-00023" summary="fix user repo function change bigint to string">
-      <option name="closed" value="true" />
-      <created>1771055750639</created>
-      <option name="number" value="00023" />
-      <option name="presentableId" value="LOCAL-00023" />
-      <option name="project" value="LOCAL" />
-      <updated>1771055750639</updated>
+      <workItem from="1772591275255" duration="13344000" />
     </task>
     <task id="LOCAL-00024" summary="Database override">
       <option name="closed" value="true" />
@@ -538,7 +528,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772609238556</updated>
     </task>
-    <option name="localTasksCounter" value="72" />
+    <task id="LOCAL-00072" summary="Dialogues UI fix">
+      <option name="closed" value="true" />
+      <created>1772609794557</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
+      <option name="project" value="LOCAL" />
+      <updated>1772609794557</updated>
+    </task>
+    <option name="localTasksCounter" value="73" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -558,7 +556,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Teams service and repo fixed" />
     <MESSAGE value="Feat; Update frontend to adjust to seasons instead of regions" />
     <MESSAGE value="Feat: player join table" />
     <MESSAGE value="Create matches" />
@@ -583,7 +580,8 @@
     <MESSAGE value="Filter by region and season" />
     <MESSAGE value="Team detail page UI" />
     <MESSAGE value="Matches design" />
-    <option name="LAST_COMMIT_MESSAGE" value="Matches design" />
+    <MESSAGE value="Dialogues UI fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="Dialogues UI fix" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
