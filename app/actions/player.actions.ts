@@ -5,14 +5,14 @@ import {
     getUsersByName,
     getTeamPlayers,
     removePlayerFromTeamService,
-    getPlayersByIds
+    getPlayersByIds, searchPlayersInDatabase, addExistingPlayerToTeam
 } from "@/server/services/player.service";
 import {createServerSupabase} from "@/server/supabase/server";
 import {
     SavePlayerToTeamInput,
     RemovePlayerFromTeamInput,
     TeamPlayersInput,
-    PlayersByIdsInput
+    PlayersByIdsInput, SearchPlayersInput, AddExistingPlayerToTeamInput
 } from "@/server/dto/player.dto";
 
 export async function searchPlayersAction(username:string){
@@ -38,4 +38,14 @@ export async function getTeamPlayersAction(input:TeamPlayersInput){
 export async function getPlayersByIdsAction(input: PlayersByIdsInput) {
     const supabase = await createServerSupabase();
     return await getPlayersByIds(supabase, input);
+}
+
+export async function searchPlayersInDatabaseAction(input: SearchPlayersInput) {
+    const supabase = await createServerSupabase();
+    return searchPlayersInDatabase(supabase, input);
+}
+
+export async function addExistingPlayerToTeamAction(input: AddExistingPlayerToTeamInput) {
+    const supabase = await createServerSupabase();
+    return addExistingPlayerToTeam(supabase, input);
 }
