@@ -13,10 +13,10 @@ import {
     getAllOfficials,
     getOfficialsByName,
     saveOfficial,
-    removeOfficial
+    removeOfficial, searchOfficialsInDatabase
 } from "@/server/services/official.service";
 import { AssignOfficialInput, AssignMultipleOfficialsInput, OfficialType } from "@/server/dto/matchOfficial.dto";
-import { SaveOfficialInput } from "@/server/dto/official.dto";
+import {SaveOfficialInput, SearchOfficialsInput} from "@/server/dto/official.dto";
 import { RobloxUserIdInput } from "@/server/dto/player.dto";
 
 export async function searchOfficialsByNameAction(username: string) {
@@ -71,4 +71,9 @@ export async function removeOfficialFromMatchAction(
 export async function removeAllOfficialsOfTypeAction(matchId: string, officialType: OfficialType) {
     const supabase = await createServerSupabase();
     return await removeAllOfficialsOfType(supabase, matchId, officialType);
+}
+
+export async function searchOfficialsInDatabaseAction(input: SearchOfficialsInput) {
+    const supabase = await createServerSupabase();
+    return searchOfficialsInDatabase(supabase, input);
 }

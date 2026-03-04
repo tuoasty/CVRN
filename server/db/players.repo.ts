@@ -158,3 +158,65 @@ export async function findActivePlayerTeamSeasons(
         .in("player_id", playerIds)
         .is("left_at", null);
 }
+
+export async function findPlayersBySimilarity(
+    supabase: DBClient,
+    query: string
+) {
+    const { data, error } = await supabase.rpc('search_players_with_similarity', {
+        search_term: query.toLowerCase()
+    });
+
+    if (error) {
+        return { data: null, error };
+    }
+
+    if (!data || data.length === 0) {
+        return { data: [], error: null };
+    }
+
+    const topPlayers = data.slice(0, 5);
+    const playerIds = topPlayers.map(p => p.id);
+
+    const { data: activeTeamSeasons, error: teamError } = await supabase
+        .from("player_team_seasons")
+        .select(`
+            player_id, 
+            team_id, 
+            season_id,
+            team:teams(name)
+        `)
+        .in("player_id", playerIds)
+        .is("left_at", null);
+
+    if (teamError) {
+        return { data: null, error: teamError };
+    }
+
+    const teamMap = new Map(
+        (activeTeamSeasons || []).map((pts: any) => [
+            pts.player_id,
+            {
+                team_id: pts.team_id,
+                season_id: pts.season_id,
+                team_name: pts.team?.name || null
+            }
+        ])
+    );
+
+    const results = topPlayers.map(player => {
+        const teamInfo = teamMap.get(player.id);
+        return {
+            id: player.id,
+            roblox_user_id: player.roblox_user_id,
+            username: player.username,
+            display_name: player.display_name,
+            avatar_url: player.avatar_url,
+            current_team_id: teamInfo?.team_id || null,
+            current_season_id: teamInfo?.season_id || null,
+            current_team_name: teamInfo?.team_name || null
+        };
+    });
+
+    return { data: results, error: null };
+}
