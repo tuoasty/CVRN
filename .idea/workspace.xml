@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="force-dynamic">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Remove use client and force-dynamic">
+      <change afterPath="$PROJECT_DIR$/app/components/ui/AdminNavbar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/admin/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/layout.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -140,15 +142,7 @@
       <workItem from="1772442104280" duration="4452000" />
       <workItem from="1772502136110" duration="7155000" />
       <workItem from="1772520242020" duration="3830000" />
-      <workItem from="1772591275255" duration="14415000" />
-    </task>
-    <task id="LOCAL-00028" summary="fix typing">
-      <option name="closed" value="true" />
-      <created>1771059181440</created>
-      <option name="number" value="00028" />
-      <option name="presentableId" value="LOCAL-00028" />
-      <option name="project" value="LOCAL" />
-      <updated>1771059181440</updated>
+      <workItem from="1772591275255" duration="14563000" />
     </task>
     <task id="LOCAL-00029" summary="fix update player repo">
       <option name="closed" value="true" />
@@ -534,7 +528,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772611041440</updated>
     </task>
-    <option name="localTasksCounter" value="77" />
+    <task id="LOCAL-00077" summary="Remove use client and force-dynamic">
+      <option name="closed" value="true" />
+      <created>1772611195590</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
+      <option name="project" value="LOCAL" />
+      <updated>1772611195590</updated>
+    </task>
+    <option name="localTasksCounter" value="78" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -554,7 +556,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Remove create matches form" />
     <MESSAGE value="Show week schedule" />
     <MESSAGE value="Fix teamdetail store usage" />
     <MESSAGE value="Time scheduling for matches" />
@@ -579,7 +580,8 @@
     <MESSAGE value="Fix brick number formatting" />
     <MESSAGE value="Fix suspense usage" />
     <MESSAGE value="force-dynamic" />
-    <option name="LAST_COMMIT_MESSAGE" value="force-dynamic" />
+    <MESSAGE value="Remove use client and force-dynamic" />
+    <option name="LAST_COMMIT_MESSAGE" value="Remove use client and force-dynamic" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
