@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Split navbar">
-      <change beforePath="$PROJECT_DIR$/app/admin/teams/[region]/[season]/[teamName]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/teams/[region]/[season]/[teamName]/page.tsx" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Replace force-dynamic with suspense">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -140,31 +141,7 @@
       <workItem from="1772442104280" duration="4452000" />
       <workItem from="1772502136110" duration="7155000" />
       <workItem from="1772520242020" duration="3830000" />
-      <workItem from="1772591275255" duration="14733000" />
-    </task>
-    <task id="LOCAL-00030" summary="Feat: Validation check player in team">
-      <option name="closed" value="true" />
-      <created>1771823550802</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
-      <option name="project" value="LOCAL" />
-      <updated>1771823550802</updated>
-    </task>
-    <task id="LOCAL-00031" summary="Feat : remove player">
-      <option name="closed" value="true" />
-      <created>1771837214229</created>
-      <option name="number" value="00031" />
-      <option name="presentableId" value="LOCAL-00031" />
-      <option name="project" value="LOCAL" />
-      <updated>1771837214229</updated>
-    </task>
-    <task id="LOCAL-00032" summary="Feat: updated team database and schema.&#10;&#10;TODO: Fix load team error, teams are loaded with notre%20dame for spaces. Perhaps add a seperate string for team urls, with underscore etc">
-      <option name="closed" value="true" />
-      <created>1771927050732</created>
-      <option name="number" value="00032" />
-      <option name="presentableId" value="LOCAL-00032" />
-      <option name="project" value="LOCAL" />
-      <updated>1771927050732</updated>
+      <workItem from="1772591275255" duration="15274000" />
     </task>
     <task id="LOCAL-00033" summary="Fix: use slug instead of name">
       <option name="closed" value="true" />
@@ -534,7 +511,31 @@
       <option name="project" value="LOCAL" />
       <updated>1772611290754</updated>
     </task>
-    <option name="localTasksCounter" value="79" />
+    <task id="LOCAL-00079" summary="Wrap team detail page in suspense">
+      <option name="closed" value="true" />
+      <created>1772611475385</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1772611475385</updated>
+    </task>
+    <task id="LOCAL-00080" summary="force-dynamic layout">
+      <option name="closed" value="true" />
+      <created>1772611583908</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1772611583908</updated>
+    </task>
+    <task id="LOCAL-00081" summary="Replace force-dynamic with suspense">
+      <option name="closed" value="true" />
+      <created>1772611633051</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
+      <option name="project" value="LOCAL" />
+      <updated>1772611633051</updated>
+    </task>
+    <option name="localTasksCounter" value="82" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -554,9 +555,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Fix teamdetail store usage" />
-    <MESSAGE value="Time scheduling for matches" />
-    <MESSAGE value="Fix default scheduling to gmt +8" />
     <MESSAGE value="Match officials setup" />
     <MESSAGE value="Match official display and management" />
     <MESSAGE value="Added loading, TODO fix official caching" />
@@ -579,7 +577,10 @@
     <MESSAGE value="force-dynamic" />
     <MESSAGE value="Remove use client and force-dynamic" />
     <MESSAGE value="Split navbar" />
-    <option name="LAST_COMMIT_MESSAGE" value="Split navbar" />
+    <MESSAGE value="Wrap team detail page in suspense" />
+    <MESSAGE value="force-dynamic layout" />
+    <MESSAGE value="Replace force-dynamic with suspense" />
+    <option name="LAST_COMMIT_MESSAGE" value="Replace force-dynamic with suspense" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
