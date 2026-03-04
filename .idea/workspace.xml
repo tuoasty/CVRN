@@ -4,14 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Disable logger in production">
-      <change afterPath="$PROJECT_DIR$/app/features/matches/UpdateMatchDialog.tsx" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix ui in frontend and update dialog logic">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/matchStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/matchStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,7 +24,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="dev" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -63,7 +58,7 @@
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
     &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
@@ -155,6 +150,7 @@
       <workItem from="1772591275255" duration="16170000" />
       <workItem from="1772617366083" duration="2371000" />
       <workItem from="1772621541934" duration="3314000" />
+      <workItem from="1772625396883" duration="292000" />
     </task>
     <task id="LOCAL-00042" summary="input validation and rate limiting">
       <option name="closed" value="true" />
@@ -568,7 +564,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Match management ui - show mvp avatar" />
     <MESSAGE value="Dashboard admin UI improvements" />
     <MESSAGE value="Team management page" />
     <MESSAGE value="Filter by region and season" />
@@ -593,7 +588,8 @@
     <MESSAGE value="Convert detail page to props" />
     <MESSAGE value="FIX FINALLY??" />
     <MESSAGE value="Disable logger in production" />
-    <option name="LAST_COMMIT_MESSAGE" value="Disable logger in production" />
+    <MESSAGE value="Fix ui in frontend and update dialog logic" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix ui in frontend and update dialog logic" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
