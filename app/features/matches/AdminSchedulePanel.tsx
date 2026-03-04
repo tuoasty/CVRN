@@ -332,189 +332,183 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                             </div>
 
                             {/* Team Matchup */}
-                            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-                                {/* Home Team */}
-                                <div className="flex justify-end items-center gap-3">
-                                    {homeTeam && (
-                                        <>
-                                            <div className="flex flex-col items-end gap-0.5 min-w-0">
-                                                <span className="font-semibold text-sm text-right truncate w-full">
-                                                    {homeTeam.name}
-                                                </span>
-                                                {match.status === 'completed' && (
-                                                    <Badge
-                                                        variant="outline"
-                                                        className={`h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 ${
-                                                            (match.home_sets_won ?? 0) > (match.away_sets_won ?? 0)
-                                                                ? "bg-green-600/10 text-green-600"
-                                                                : "opacity-0 pointer-events-none"
-                                                        }`}
-                                                    >
-                                                        Winner
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            {homeTeam.logo_url && (
-                                                <div className="relative w-12 h-12 shrink-0">
-                                                    <Image
-                                                        src={homeTeam.logo_url}
-                                                        alt={homeTeam.name}
-                                                        fill
-                                                        sizes="56px"
-                                                        className="object-contain"
-                                                    />
+                            <div className="space-y-3">
+                                {/* Team Names and Score */}
+                                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                                    {/* Home Team */}
+                                    <div className="flex justify-end items-center gap-3">
+                                        {homeTeam && (
+                                            <>
+                                                <div className="flex flex-col items-end gap-0.5 min-w-0">
+                        <span className="font-semibold text-sm text-right truncate w-full">
+                            {homeTeam.name}
+                        </span>
+                                                    {match.status === 'completed' && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 ${
+                                                                (match.home_sets_won ?? 0) > (match.away_sets_won ?? 0)
+                                                                    ? "bg-green-600/10 text-green-600"
+                                                                    : "opacity-0 pointer-events-none"
+                                                            }`}
+                                                        >
+                                                            Winner
+                                                        </Badge>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-
-                                <div className="flex items-center justify-center px-3">
-                                    <span className="text-lg font-bold text-muted-foreground/50">
-                                        VS
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-start items-center gap-3">
-                                    {awayTeam && (
-                                        <>
-                                            {awayTeam.logo_url && (
-                                                <div className="relative w-12 h-12 shrink-0">
-                                                    <Image
-                                                        src={awayTeam.logo_url}
-                                                        alt={awayTeam.name}
-                                                        fill
-                                                        sizes="56px"
-                                                        className="object-contain"
-                                                    />
-                                                </div>
-                                            )}
-                                            <div className="flex flex-col items-start gap-0.5 min-w-0">
-                                                <span className="font-semibold text-base text-left truncate w-full">
-                                                    {awayTeam.name}
-                                                </span>
-                                                {match.status === 'completed' && (
-                                                    <Badge
-                                                        variant="outline"
-                                                        className={`h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 ${
-                                                            (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0)
-                                                                ? "bg-green-600/10 text-green-600"
-                                                                : "opacity-0 pointer-events-none"
-                                                        }`}
-                                                    >
-                                                        Winner
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-
-                                {match.status === 'completed' && match.home_sets_won !== null && match.away_sets_won !== null && (
-                                    <div className="col-span-3 space-y-3 pt-4 mt-0 border-t border-border">
-                                        <div className="panel bg-muted/30 p-4">
-                                            <div className="flex items-center justify-center gap-6">
-                                                <div className="flex flex-col items-center min-w-[80px]">
-                                                    <span className="text-3xl font-bold tabular-nums">{match.home_sets_won}</span>
-                                                </div>
-
-                                                <span className="text-xl text-muted-foreground/50 font-medium">-</span>
-
-                                                <div className="flex flex-col items-center min-w-[100px]">
-                                                    <span className="text-4xl font-bold tabular-nums">{match.away_sets_won}</span>
-                                                </div>
-                                            </div>
-
-                                            {sets.length > 0 && (
-                                                <div className="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-border/50">
-                                                    <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Sets</span>
-                                                    <div className="flex gap-1.5">
-                                                        {sets.map((set) => (
-                                                            <div
-                                                                key={set.set_number}
-                                                                className="fflex items-center gap-1 px-2.5 py-1 rounded-sm bg-background/50 border border-border/50"
-                                                            >
-                                                                <span className={`text-sm font-semibold tabular-nums ${
-                                                                    set.home_score > set.away_score ? 'text-foreground' : 'text-muted-foreground'
-                                                                }`}>
-                                                                    {set.home_score}
-                                                                </span>
-                                                                <span className="text-xs text-muted-foreground">-</span>
-                                                                <span className={`text-sm font-semibold tabular-nums ${
-                                                                    set.away_score > set.home_score ? 'text-foreground' : 'text-muted-foreground'
-                                                                }`}>
-                                                                    {set.away_score}
-                                                                </span>
-                                                            </div>
-                                                        ))}
+                                                {homeTeam.logo_url && (
+                                                    <div className="relative w-12 h-12 shrink-0">
+                                                        <Image
+                                                            src={homeTeam.logo_url}
+                                                            alt={homeTeam.name}
+                                                            fill
+                                                            sizes="48px"
+                                                            className="object-contain"
+                                                        />
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Center Section - VS or Final Score */}
+                                    {match.status === 'completed' && match.home_sets_won !== null && match.away_sets_won !== null ? (
+                                        <div className="flex items-center gap-3 px-3">
+                                            <span className="text-2xl font-bold tabular-nums">{match.home_sets_won}</span>
+                                            <span className="text-lg text-muted-foreground/50 font-medium">-</span>
+                                            <span className="text-2xl font-bold tabular-nums">{match.away_sets_won}</span>
                                         </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center px-3">
+                <span className="text-lg font-bold text-muted-foreground/50">
+                    VS
+                </span>
+                                        </div>
+                                    )}
 
-                                        {(matchMvp || loserMvp) && (
-                                            <div className="grid grid-cols-2 gap-2.5">
-                                                {matchMvp && (
-                                                    <div className="panel p-3">
-                                                        <div className="flex items-center gap-2.5">
-                                                            {matchMvp.avatar_url && (
-                                                                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
-                                                                    <Image
-                                                                        src={matchMvp.avatar_url}
-                                                                        alt={matchMvp.username || "Player"}
-                                                                        fill
-                                                                        sizes="40px"
-                                                                        className="object-cover"
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <div className="flex flex-col min-w-0">
-                                                                <span className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-0.5">
-                                                                    Match MVP
-                                                                </span>
-                                                                <span className="text-sm font-semibold truncate">
-                                                                    {matchMvp.display_name || matchMvp.username || "Unknown"}
-                                                                </span>
-                                                                {matchMvp.display_name && matchMvp.username && (
-                                                                    <span className="text-xs text-muted-foreground truncate">
-                                                                        @{matchMvp.username}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
+                                    {/* Away Team */}
+                                    <div className="flex justify-start items-center gap-3">
+                                        {awayTeam && (
+                                            <>
+                                                {awayTeam.logo_url && (
+                                                    <div className="relative w-12 h-12 shrink-0">
+                                                        <Image
+                                                            src={awayTeam.logo_url}
+                                                            alt={awayTeam.name}
+                                                            fill
+                                                            sizes="48px"
+                                                            className="object-contain"
+                                                        />
                                                     </div>
                                                 )}
+                                                <div className="flex flex-col items-start gap-0.5 min-w-0">
+                        <span className="font-semibold text-sm text-left truncate w-full">
+                            {awayTeam.name}
+                        </span>
+                                                    {match.status === 'completed' && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 ${
+                                                                (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0)
+                                                                    ? "bg-green-600/10 text-green-600"
+                                                                    : "opacity-0 pointer-events-none"
+                                                            }`}
+                                                        >
+                                                            Winner
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
 
-                                                {loserMvp && (
-                                                    <div className="panel p-3">
-                                                        <div className="flex items-center gap-2.5">
-                                                            {loserMvp.avatar_url && (
-                                                                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-muted-foreground/20 shrink-0">
-                                                                    <Image
-                                                                        src={loserMvp.avatar_url}
-                                                                        alt={loserMvp.username || "Player"}
-                                                                        fill
-                                                                        sizes="40px"
-                                                                        className="object-cover"
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <div className="flex flex-col min-w-0">
-                                                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">
-                                                                    Loser MVP
-                                                                </span>
-                                                                <span className="text-sm font-semibold truncate">
-                                                                    {loserMvp.display_name || loserMvp.username || "Unknown"}
-                                                                </span>
-                                                                {loserMvp.display_name && loserMvp.username && (
-                                                                    <span className="text-xs text-muted-foreground truncate">
-                                                                        @{loserMvp.username}
-                                                                    </span>
-                                                                )}
-                                                            </div>
+                                {/* Set Breakdown - Below teams */}
+                                {match.status === 'completed' && sets.length > 0 && (
+                                    <div className="flex items-center justify-center gap-1.5 py-2">
+                                        {sets.map((set) => (
+                                            <div
+                                                key={set.set_number}
+                                                className="flex items-center gap-1 px-2.5 py-1 rounded-sm bg-muted/50 border border-border/50"
+                                            >
+                    <span className={`text-xs font-semibold tabular-nums ${
+                        set.home_score > set.away_score ? 'text-foreground' : 'text-muted-foreground'
+                    }`}>
+                        {set.home_score}
+                    </span>
+                                                <span className="text-[10px] text-muted-foreground">-</span>
+                                                <span className={`text-xs font-semibold tabular-nums ${
+                                                    set.away_score > set.home_score ? 'text-foreground' : 'text-muted-foreground'
+                                                }`}>
+                        {set.away_score}
+                    </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* MVP Section - Only for Completed Matches */}
+                                {match.status === 'completed' && (matchMvp || loserMvp) && (
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                        {matchMvp && (
+                                            <div className="panel p-3">
+                                                <div className="flex items-center gap-2.5">
+                                                    {matchMvp.avatar_url && (
+                                                        <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
+                                                            <Image
+                                                                src={matchMvp.avatar_url}
+                                                                alt={matchMvp.username || "Player"}
+                                                                fill
+                                                                sizes="40px"
+                                                                className="object-cover"
+                                                            />
                                                         </div>
+                                                    )}
+                                                    <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-0.5">
+                                Match MVP
+                            </span>
+                                                        <span className="text-sm font-semibold truncate">
+                                {matchMvp.display_name || matchMvp.username || "Unknown"}
+                            </span>
+                                                        {matchMvp.display_name && matchMvp.username && (
+                                                            <span className="text-xs text-muted-foreground truncate">
+                                    @{matchMvp.username}
+                                </span>
+                                                        )}
                                                     </div>
-                                                )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {loserMvp && (
+                                            <div className="panel p-3">
+                                                <div className="flex items-center gap-2.5">
+                                                    {loserMvp.avatar_url && (
+                                                        <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-muted-foreground/20 shrink-0">
+                                                            <Image
+                                                                src={loserMvp.avatar_url}
+                                                                alt={loserMvp.username || "Player"}
+                                                                fill
+                                                                sizes="40px"
+                                                                className="object-cover"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">
+                                Loser MVP
+                            </span>
+                                                        <span className="text-sm font-semibold truncate">
+                                {loserMvp.display_name || loserMvp.username || "Unknown"}
+                            </span>
+                                                        {loserMvp.display_name && loserMvp.username && (
+                                                            <span className="text-xs text-muted-foreground truncate">
+                                    @{loserMvp.username}
+                                </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
