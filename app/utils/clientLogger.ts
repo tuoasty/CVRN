@@ -1,8 +1,10 @@
-// /app/utils/clientLogger.ts
-
 type LogLevel = 'info' | 'error' | 'warn' | 'debug';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 function formatLog(level: LogLevel, context: string, message: string, data?: unknown) {
+    if (isProduction) return;
+
     const prefix = `[${context}]`;
     const logData = data ? [prefix, message, data] : [prefix, message];
 
