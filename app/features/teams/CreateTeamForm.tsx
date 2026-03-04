@@ -101,6 +101,12 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             return;
         }
 
+        const brickNum = parseInt(brickNumber.trim(), 10);
+        if (isNaN(brickNum) || brickNum < 0) {
+            setError("Brick number must be a valid positive number");
+            return;
+        }
+
         if (!/^#[0-9A-Fa-f]{6}$/.test(brickColor)) {
             setError("Brick color must be in #RRGGBB format (e.g., #FF0000)");
             return;
@@ -115,7 +121,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             formData.append("name", name);
             formData.append("logo", file);
             formData.append("seasonId", seasonId);
-            formData.append("brickNumber", brickNumber.trim());
+            formData.append("brickNumber", brickNum.toString());
             formData.append("brickColor", brickColor.toUpperCase());
 
             const result = await createTeamAction(formData);

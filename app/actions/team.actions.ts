@@ -36,7 +36,7 @@ export async function createTeamAction(formData: FormData){
         logoFile: file,
         seasonId,
         userId: user.id,
-        brickNumber: brickNumber.trim(),
+        brickNumber: parseInt(brickNumber, 10),
         brickColor: brickColor.toUpperCase()
     });
 }
