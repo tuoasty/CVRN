@@ -64,9 +64,9 @@ export default function TeamsDataTable() {
             return;
         }
 
-        const regionCode = team.seasons.regions.code.toLowerCase();
-        const seasonSlug = team.seasons.slug.toLowerCase();
-        const teamSlug = team.slug.toLowerCase();
+        const regionCode = encodeURIComponent(team.seasons.regions.code.toLowerCase());
+        const seasonSlug = encodeURIComponent(team.seasons.slug.toLowerCase());
+        const teamSlug = encodeURIComponent(team.slug.toLowerCase());
 
         router.push(`/admin/teams/${regionCode}/${seasonSlug}/${teamSlug}`);
     };
