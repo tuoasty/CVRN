@@ -78,3 +78,29 @@ export async function deleteOfficial(
         .eq("id", id)
 }
 
+export async function findOfficialsBySimilarity(
+    supabase: DBClient,
+    query: string
+) {
+    const { data, error } = await supabase.rpc('search_officials_with_similarity', {
+        search_term: query.toLowerCase()
+    });
+
+    if (error) {
+        return { data: null, error };
+    }
+
+    if (!data || data.length === 0) {
+        return { data: [], error: null };
+    }
+
+    const results = data.slice(0, 5).map(official => ({
+        id: official.id,
+        roblox_user_id: official.roblox_user_id,
+        username: official.username,
+        display_name: official.display_name,
+        avatar_url: official.avatar_url
+    }));
+
+    return { data: results, error: null };
+}

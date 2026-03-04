@@ -24,6 +24,7 @@ import { clientLogger } from "@/app/utils/clientLogger";
 import { Player } from "@/shared/types/db";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
+import {toast} from "@/app/utils/toast";
 
 interface CompleteMatchDialogProps {
     matchId: string;
@@ -170,12 +171,12 @@ export default function CompleteMatchDialog({
         }));
 
         if (sets.some(s => isNaN(s.homeScore) || isNaN(s.awayScore))) {
-            alert("Please fill in all set scores");
+            toast.error("Please fill in all set scores");
             return;
         }
 
         if (!matchMvpId || !loserMvpId) {
-            alert("Please select both MVPs");
+            toast.error("Please select both MVPs");
             return;
         }
 
@@ -195,7 +196,7 @@ export default function CompleteMatchDialog({
             resetForm();
             onSuccess();
         } else {
-            alert("Failed to complete match");
+            toast.error("Failed to complete match");
         }
 
         setSubmitting(false);

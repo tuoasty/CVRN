@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useOfficialStore } from "@/app/stores/officialStore";
 import { RobloxUserWithAvatar } from "@/shared/types/roblox";
 import { clientLogger } from "@/app/utils/clientLogger";
@@ -17,6 +17,9 @@ import {
 } from "@/app/components/ui/dialog";
 import { OfficialType } from "@/server/dto/matchOfficial.dto";
 import { Badge } from "@/app/components/ui/badge";
+import { toast } from "@/app/utils/toast";
+import { searchOfficialsInDatabaseAction } from "@/app/actions/matchOfficial.actions";
+import { OfficialWithInfo } from "@/server/dto/official.dto";
 
 interface OfficialSearchDialogProps {
     matchId: string;
@@ -35,32 +38,72 @@ export default function OfficialSearchDialog({
 
     const [open, setOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [searchResults, setSearchResults] = useState<RobloxUserWithAvatar[]>([]);
+    const [dbSuggestions, setDbSuggestions] = useState<OfficialWithInfo[]>([]);
+    const [robloxResults, setRobloxResults] = useState<RobloxUserWithAvatar[]>([]);
     const [searching, setSearching] = useState(false);
     const [assigning, setAssigning] = useState<string | null>(null);
 
+    const searchDatabase = useCallback(async (query: string) => {
+        if (!query.trim()) {
+            setDbSuggestions([]);
+            setRobloxResults([]);
+            return;
+        }
+
+        setRobloxResults([]);
+
+        try {
+            const result = await searchOfficialsInDatabaseAction({ query });
+
+            if (result.ok) {
+                setDbSuggestions(result.value);
+            } else {
+                clientLogger.error('OfficialSearchDialog', 'DB search failed', { query, error: result.error });
+                setDbSuggestions([]);
+            }
+        } catch (error) {
+            clientLogger.error('OfficialSearchDialog', 'Exception during DB search', { query, error });
+            setDbSuggestions([]);
+        }
+    }, []);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            searchDatabase(searchQuery);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery, searchDatabase]);
+
     const handleSearch = async () => {
         if (!searchQuery.trim()) {
+            toast.error("Please enter a username");
             return;
         }
 
         setSearching(true);
-        clientLogger.info("OfficialSearchDialog", "Searching for officials", { query: searchQuery });
+        setRobloxResults([]);
+        clientLogger.info("OfficialSearchDialog", "Searching Roblox for officials", { query: searchQuery });
 
         try {
             const results = await searchOfficials(searchQuery.trim());
-            setSearchResults(results);
-            clientLogger.info("OfficialSearchDialog", "Search completed", { count: results.length });
+            setRobloxResults(results);
+            clientLogger.info("OfficialSearchDialog", "Roblox search completed", { count: results.length });
+
+            if (results.length === 0 && dbSuggestions.length === 0) {
+                toast.error("No users found");
+            }
         } catch (error) {
-            clientLogger.error("OfficialSearchDialog", "Search failed", { error });
+            clientLogger.error("OfficialSearchDialog", "Roblox search failed", { error });
+            toast.error("Search failed");
         } finally {
             setSearching(false);
         }
     };
 
-    const handleAssign = async (user: RobloxUserWithAvatar) => {
+    const handleAssignRoblox = async (user: RobloxUserWithAvatar) => {
         setAssigning(user.id.toString());
-        clientLogger.info("OfficialSearchDialog", "Assigning official", {
+        clientLogger.info("OfficialSearchDialog", "Assigning Roblox official", {
             matchId,
             robloxUserId: user.id,
             officialType,
@@ -69,7 +112,7 @@ export default function OfficialSearchDialog({
         const official = await saveOfficial(user.id, user.name, user.avatarUrl, user.displayName);
 
         if (!official) {
-            alert("Failed to save official");
+            toast.error("Failed to save official");
             setAssigning(null);
             return;
         }
@@ -81,12 +124,42 @@ export default function OfficialSearchDialog({
                 matchId,
                 officialId: official.id,
             });
+            toast.success(`${user.displayName || user.name} assigned successfully`);
             setOpen(false);
             setSearchQuery("");
-            setSearchResults([]);
+            setRobloxResults([]);
+            setDbSuggestions([]);
             onAssigned();
         } else {
-            alert("Failed to assign official to match");
+            toast.error("Failed to assign official to match");
+        }
+
+        setAssigning(null);
+    };
+
+    const handleAssignDb = async (official: OfficialWithInfo) => {
+        setAssigning(official.id);
+        clientLogger.info("OfficialSearchDialog", "Assigning DB official", {
+            matchId,
+            officialId: official.id,
+            officialType,
+        });
+
+        const success = await assignOfficialToMatch(matchId, official.id, officialType);
+
+        if (success) {
+            clientLogger.info("OfficialSearchDialog", "DB official assigned successfully", {
+                matchId,
+                officialId: official.id,
+            });
+            toast.success(`${official.display_name || official.username} assigned successfully`);
+            setOpen(false);
+            setSearchQuery("");
+            setRobloxResults([]);
+            setDbSuggestions([]);
+            onAssigned();
+        } else {
+            toast.error("Failed to assign official to match");
         }
 
         setAssigning(null);
@@ -97,6 +170,8 @@ export default function OfficialSearchDialog({
             handleSearch();
         }
     };
+
+    const hasResults = robloxResults.length > 0 || dbSuggestions.length > 0;
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -129,6 +204,7 @@ export default function OfficialSearchDialog({
                                 onKeyPress={handleKeyPress}
                                 disabled={searching || loading}
                                 className="flex-1 rounded-sm"
+                                autoComplete="off"
                             />
                             <Button
                                 onClick={handleSearch}
@@ -140,19 +216,16 @@ export default function OfficialSearchDialog({
                         </div>
                     </div>
 
-                    {searchResults.length > 0 && (
+                    {hasResults && (
                         <div className="space-y-2 max-h-96 overflow-y-auto">
-                            <div className="text-sm font-medium mb-2">
-                                {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'}
-                            </div>
-                            {searchResults.map((user) => (
+                            {robloxResults.map((user) => (
                                 <div
-                                    key={user.id}
-                                    className="panel p-3 flex items-center justify-between hover:border-primary/50 transition-colors"
+                                    key={`roblox-${user.id}`}
+                                    className="panel p-3 flex items-center justify-between border-l-4 border-l-blue-500/50 bg-blue-500/5"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         {user.avatarUrl && (
-                                            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border shrink-0">
+                                            <div className="relative w-10 h-10 rounded-sm overflow-hidden border border-border shrink-0">
                                                 <Image
                                                     src={user.avatarUrl}
                                                     alt={user.name}
@@ -174,14 +247,11 @@ export default function OfficialSearchDialog({
                                             <div className="text-xs text-muted-foreground truncate">
                                                 @{user.name}
                                             </div>
-                                            <div className="text-xs text-muted-foreground font-mono">
-                                                ID: {user.id}
-                                            </div>
                                         </div>
                                     </div>
                                     <Button
                                         size="sm"
-                                        onClick={() => handleAssign(user)}
+                                        onClick={() => handleAssignRoblox(user)}
                                         disabled={loading || assigning === user.id.toString()}
                                         className="rounded-sm shrink-0"
                                     >
@@ -189,10 +259,47 @@ export default function OfficialSearchDialog({
                                     </Button>
                                 </div>
                             ))}
+
+                            {dbSuggestions.map((official) => (
+                                <div
+                                    key={`db-${official.id}`}
+                                    className="panel p-3 flex items-center justify-between border-l-4 border-l-amber-500/50 bg-amber-500/5"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        {official.avatar_url && (
+                                            <div className="relative w-10 h-10 rounded-sm overflow-hidden border border-border shrink-0">
+                                                <Image
+                                                    src={official.avatar_url}
+                                                    alt={official.username}
+                                                    fill
+                                                    sizes="40px"
+                                                    className="object-cover"
+                                                />
+                                            </div>
+                                        )}
+                                        <div className="min-w-0">
+                                            <div className="font-medium truncate">
+                                                {official.display_name || official.username}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground truncate">
+                                                @{official.username}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleAssignDb(official)}
+                                        disabled={loading || assigning === official.id}
+                                        className="rounded-sm shrink-0"
+                                    >
+                                        {assigning === official.id ? "Assigning..." : "Assign"}
+                                    </Button>
+                                </div>
+                            ))}
                         </div>
                     )}
 
-                    {searchResults.length === 0 && searchQuery && !searching && (
+                    {!hasResults && searchQuery && !searching && (
                         <div className="panel p-8">
                             <p className="text-muted-foreground text-center text-sm">
                                 No users found matching &quot;{searchQuery}&quot;
