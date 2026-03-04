@@ -1,6 +1,5 @@
+import { Suspense } from "react";
 import AdminNavbar from "@/app/components/ui/AdminNavbar";
-
-export const dynamic = "force-dynamic";
 
 export default function AdminLayout({
                                         children,
@@ -9,7 +8,9 @@ export default function AdminLayout({
 }) {
     return (
         <div className="min-h-screen bg-background">
-            <AdminNavbar />
+            <Suspense fallback={<div className="h-14 border-b border-border bg-card" />}>
+                <AdminNavbar />
+            </Suspense>
             <main className="admin-container">
                 {children}
             </main>
