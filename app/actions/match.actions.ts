@@ -1,13 +1,19 @@
 "use server"
 
-import {CompleteMatchInput, CreateMatchesInput, UpdateMatchScheduleInput} from "@/server/dto/match.dto";
+import {
+    CompleteMatchInput,
+    CreateMatchesInput,
+    MatchSetsInput,
+    UpdateMatchScheduleInput,
+    VoidMatchInput
+} from "@/server/dto/match.dto";
 import {createServerSupabase} from "@/server/supabase/server";
 import {
     completeMatchService,
     createMatches,
     getAllMatches,
     getAvailableTeamsForWeek,
-    getMatchesForWeek, updateMatchScheduleService
+    getMatchesForWeek, getMatchSets, updateMatchScheduleService, voidMatchService
 } from "@/server/services/match.service";
 
 export async function createMatchesAction(input:CreateMatchesInput) {
@@ -38,4 +44,14 @@ export async function updateMatchScheduleAction(input: UpdateMatchScheduleInput)
 export async function completeMatchAction(input: CompleteMatchInput) {
     const supabase = await createServerSupabase();
     return await completeMatchService(supabase, input);
+}
+
+export async function voidMatchAction(input: VoidMatchInput) {
+    const supabase = await createServerSupabase();
+    return await voidMatchService(supabase, input);
+}
+
+export async function getMatchSetsAction(input: MatchSetsInput) {
+    const supabase = await createServerSupabase();
+    return await getMatchSets(supabase, input);
 }

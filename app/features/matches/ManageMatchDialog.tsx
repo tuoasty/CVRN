@@ -18,15 +18,27 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/app/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/app/components/ui/alert-dialog";
 import { getRegionTimezone, timezoneOptions } from "@/app/utils/timezoneOptions";
 import MatchOfficialSection from "@/app/features/officials/MatchOfficialSection";
 import { useMatchesStore } from "@/app/stores/matchStore";
 import { clientLogger } from "@/app/utils/clientLogger";
+import { Match } from "@/shared/types/db";
 
 interface ManageMatchDialogProps {
     matchId: string;
     scheduledAt: string | null;
     regionCode?: string;
+    match: Match;
     onSuccess: () => void;
 }
 
@@ -34,12 +46,14 @@ export default function ManageMatchDialog({
                                               matchId,
                                               scheduledAt,
                                               regionCode,
+                                              match,
                                               onSuccess
                                           }: ManageMatchDialogProps) {
-    const { updateMatchSchedule } = useMatchesStore();
+    const { updateMatchSchedule, voidMatch } = useMatchesStore();
 
     const [open, setOpen] = useState(false);
     const [updating, setUpdating] = useState(false);
+    const [voidDialogOpen, setVoidDialogOpen] = useState(false);
     const [editSchedule, setEditSchedule] = useState<{
         date: string;
         time: string;
@@ -137,120 +151,192 @@ export default function ManageMatchDialog({
         setUpdating(false);
     };
 
+    const handleVoidMatch = async () => {
+        setUpdating(true);
+        clientLogger.info("ManageMatchDialog", "Voiding match", { matchId });
+
+        const success = await voidMatch({ matchId });
+
+        if (success) {
+            clientLogger.info("ManageMatchDialog", "Match voided successfully", { matchId });
+            setVoidDialogOpen(false);
+            setOpen(false);
+            onSuccess();
+        } else {
+            alert("Failed to void match");
+        }
+
+        setUpdating(false);
+    };
+
+    const isCompleted = match.status === "completed";
+
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="sm" onClick={openDialog} className="rounded-sm">
-                    Manage
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
-                <DialogHeader>
-                    <DialogTitle>Manage Match</DialogTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Update schedule and assign officials
-                    </p>
-                </DialogHeader>
+        <>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={openDialog} className="rounded-sm">
+                        Manage
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
+                    <DialogHeader>
+                        <DialogTitle>Manage Match</DialogTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {isCompleted ? "Update schedule for completed match or void match" : "Update schedule and assign officials"}
+                        </p>
+                    </DialogHeader>
 
-                <div className="space-y-6">
-                    <div className="space-y-4">
-                        <h3 className="font-semibold">Schedule</h3>
+                    <div className="space-y-6">
+                        <div className="space-y-4">
+                            <h3 className="font-semibold">Schedule</h3>
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="timezone">Timezone</Label>
-                                <Select
-                                    value={editSchedule?.timezone || "Asia/Singapore"}
-                                    onValueChange={v => setEditSchedule(prev => ({
-                                        date: prev?.date || "",
-                                        time: prev?.time || "",
-                                        timezone: v
-                                    }))}
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="timezone">Timezone</Label>
+                                    <Select
+                                        value={editSchedule?.timezone || "Asia/Singapore"}
+                                        onValueChange={v => setEditSchedule(prev => ({
+                                            date: prev?.date || "",
+                                            time: prev?.time || "",
+                                            timezone: v
+                                        }))}
+                                    >
+                                        <SelectTrigger id="timezone" className="rounded-sm">
+                                            <SelectValue placeholder="Select timezone" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {timezoneOptions.map(tz => (
+                                                <SelectItem key={tz.value} value={tz.value}>
+                                                    {tz.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="date">Date</Label>
+                                    <Input
+                                        id="date"
+                                        type="date"
+                                        value={editSchedule?.date || ""}
+                                        onChange={e => setEditSchedule(prev => ({
+                                            date: e.target.value,
+                                            time: prev?.time || "",
+                                            timezone: prev?.timezone || "Asia/Singapore"
+                                        }))}
+                                        className="rounded-sm"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="time">Time</Label>
+                                    <Input
+                                        id="time"
+                                        type="time"
+                                        value={editSchedule?.time || ""}
+                                        onChange={e => setEditSchedule(prev => ({
+                                            date: prev?.date || "",
+                                            time: e.target.value,
+                                            timezone: prev?.timezone || "Asia/Singapore"
+                                        }))}
+                                        className="rounded-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={handleUpdateSchedule}
+                                    disabled={!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone || updating}
+                                    className="rounded-sm"
                                 >
-                                    <SelectTrigger id="timezone" className="rounded-sm">
-                                        <SelectValue placeholder="Select timezone" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {timezoneOptions.map(tz => (
-                                            <SelectItem key={tz.value} value={tz.value}>
-                                                {tz.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                    {updating ? "Updating..." : "Update Schedule"}
+                                </Button>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="date">Date</Label>
-                                <Input
-                                    id="date"
-                                    type="date"
-                                    value={editSchedule?.date || ""}
-                                    onChange={e => setEditSchedule(prev => ({
-                                        date: e.target.value,
-                                        time: prev?.time || "",
-                                        timezone: prev?.timezone || "Asia/Singapore"
-                                    }))}
-                                    className="rounded-sm"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="time">Time</Label>
-                                <Input
-                                    id="time"
-                                    type="time"
-                                    value={editSchedule?.time || ""}
-                                    onChange={e => setEditSchedule(prev => ({
-                                        date: prev?.date || "",
-                                        time: e.target.value,
-                                        timezone: prev?.timezone || "Asia/Singapore"
-                                    }))}
-                                    className="rounded-sm"
-                                />
+                                {scheduledAt && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleClearSchedule}
+                                        disabled={updating}
+                                        className="rounded-sm"
+                                    >
+                                        Clear Schedule
+                                    </Button>
+                                )}
                             </div>
                         </div>
 
-                        <div className="flex gap-2">
-                            <Button
-                                onClick={handleUpdateSchedule}
-                                disabled={!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone || updating}
-                                className="rounded-sm"
-                            >
-                                {updating ? "Updating..." : "Update Schedule"}
-                            </Button>
+                        {!isCompleted && (
+                            <div className="space-y-4 pt-4 border-t border-border">
+                                <h3 className="font-semibold">Officials</h3>
 
-                            {scheduledAt && (
+                                <div className="space-y-4">
+                                    <MatchOfficialSection
+                                        matchId={matchId}
+                                        officialType="referee"
+                                        title="Referees"
+                                    />
+                                    <MatchOfficialSection
+                                        matchId={matchId}
+                                        officialType="media"
+                                        title="Media"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {isCompleted && (
+                            <div className="space-y-4 pt-4 border-t border-border border-destructive/20">
+                                <h3 className="font-semibold text-destructive">Danger Zone</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Voiding a match will reset all scores, remove all officials, clear the schedule, and set the match back to pending status. This action cannot be undone.
+                                </p>
                                 <Button
-                                    variant="outline"
-                                    onClick={handleClearSchedule}
+                                    variant="destructive"
+                                    onClick={() => setVoidDialogOpen(true)}
                                     disabled={updating}
                                     className="rounded-sm"
                                 >
-                                    Clear Schedule
+                                    Void Match
                                 </Button>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
+                </DialogContent>
+            </Dialog>
 
-                    <div className="space-y-4 pt-4 border-t border-border">
-                        <h3 className="font-semibold">Officials</h3>
-
-                        <div className="space-y-4">
-                            <MatchOfficialSection
-                                matchId={matchId}
-                                officialType="referee"
-                                title="Referees"
-                            />
-                            <MatchOfficialSection
-                                matchId={matchId}
-                                officialType="media"
-                                title="Media"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+            <AlertDialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
+                <AlertDialogContent className="rounded-sm">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Void this match?</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div>
+                                <p>This will permanently delete all match data including:</p>
+                                <ul className="list-disc list-inside mt-2 space-y-1">
+                                    <li>All set scores and match results</li>
+                                    <li>Match MVP and Loser MVP assignments</li>
+                                    <li>LVR calculations</li>
+                                    <li>All assigned officials (referees and media)</li>
+                                    <li>Match schedule</li>
+                                </ul>
+                                <p className="mt-3 font-semibold">The match will be reset to pending status. This action cannot be undone.</p>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleVoidMatch}
+                            disabled={updating}
+                            className="rounded-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {updating ? "Voiding..." : "Void Match"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }

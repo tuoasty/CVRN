@@ -4,8 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat: Designs and icon">
-      <change beforePath="$PROJECT_DIR$/public/favicon.ico" beforeDir="false" afterPath="$PROJECT_DIR$/public/favicon.ico" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Disable logger in production">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/player.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/player.actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/ManageMatchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/ManageMatchDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/stores/matchStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/matchStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/stores/playerStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/playerStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/matchOfficial.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matchOfficial.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/official.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/official.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/dto/match.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/match.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/dto/player.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/player.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/services/player.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/player.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/types/db.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/db.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,12 +30,17 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript File" />
         <option value="TypeScript JSX File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -47,39 +67,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "dev",
-    "ignore.virus.scanning.warn.message": "true",
-    "js.debugger.nextJs.config.created.client": "true",
-    "js.debugger.nextJs.config.created.server": "true",
-    "last_opened_file_path": "D:/KEVIN/0SLC/Random/cvrn/public",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.standard": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.standard": "",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "ts.external.directory.path": "D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;js.debugger.nextJs.config.created.client&quot;: &quot;true&quot;,
+    &quot;js.debugger.nextJs.config.created.server&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/KEVIN/0SLC/Random/cvrn/public&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.standard&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.standard&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\KEVIN\\0SLC\\Random\\cvrn\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\KEVIN\0SLC\Random\cvrn\public" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin\teams\[region]\[teamName]" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\KEVIN\0SLC\Random\cvrn" />
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\app" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin\matches" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin\teams\[region]\[season]" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\(public)\teams\[region]\[season]" />
-      <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin" />
-      <recent name="D:\KEVIN\0SLC\Random\cvrn\server" />
     </key>
   </component>
   <component name="RunManager" selected="npm.Next.js: server-side">
@@ -142,62 +162,7 @@
       <workItem from="1772502136110" duration="7155000" />
       <workItem from="1772520242020" duration="3830000" />
       <workItem from="1772591275255" duration="16170000" />
-    </task>
-    <task id="LOCAL-00035" summary="fix: optimized teamslist, fetch teams with region">
-      <option name="closed" value="true" />
-      <created>1771990783999</created>
-      <option name="number" value="00035" />
-      <option name="presentableId" value="LOCAL-00035" />
-      <option name="project" value="LOCAL" />
-      <updated>1771990783999</updated>
-    </task>
-    <task id="LOCAL-00036" summary="fix: optimized team detail page loading">
-      <option name="closed" value="true" />
-      <created>1771991496401</created>
-      <option name="number" value="00036" />
-      <option name="presentableId" value="LOCAL-00036" />
-      <option name="project" value="LOCAL" />
-      <updated>1771991496401</updated>
-    </task>
-    <task id="LOCAL-00037" summary="Zustand stores. Hopefully all are good">
-      <option name="closed" value="true" />
-      <created>1772002952806</created>
-      <option name="number" value="00037" />
-      <option name="presentableId" value="LOCAL-00037" />
-      <option name="project" value="LOCAL" />
-      <updated>1772002952806</updated>
-    </task>
-    <task id="LOCAL-00038" summary="Reset zustand">
-      <option name="closed" value="true" />
-      <created>1772089091009</created>
-      <option name="number" value="00038" />
-      <option name="presentableId" value="LOCAL-00038" />
-      <option name="project" value="LOCAL" />
-      <updated>1772089091009</updated>
-    </task>
-    <task id="LOCAL-00039" summary="Zustand teamStore">
-      <option name="closed" value="true" />
-      <created>1772090900830</created>
-      <option name="number" value="00039" />
-      <option name="presentableId" value="LOCAL-00039" />
-      <option name="project" value="LOCAL" />
-      <updated>1772090900830</updated>
-    </task>
-    <task id="LOCAL-00040" summary="Pino logger">
-      <option name="closed" value="true" />
-      <created>1772091770623</created>
-      <option name="number" value="00040" />
-      <option name="presentableId" value="LOCAL-00040" />
-      <option name="project" value="LOCAL" />
-      <updated>1772091770623</updated>
-    </task>
-    <task id="LOCAL-00041" summary="Regions Store and PLayers Store">
-      <option name="closed" value="true" />
-      <created>1772163257533</created>
-      <option name="number" value="00041" />
-      <option name="presentableId" value="LOCAL-00041" />
-      <option name="project" value="LOCAL" />
-      <updated>1772163257533</updated>
+      <workItem from="1772617366083" duration="2371000" />
     </task>
     <task id="LOCAL-00042" summary="input validation and rate limiting">
       <option name="closed" value="true" />
@@ -535,7 +500,63 @@
       <option name="project" value="LOCAL" />
       <updated>1772612613388</updated>
     </task>
-    <option name="localTasksCounter" value="84" />
+    <task id="LOCAL-00084" summary="Favicon ico">
+      <option name="closed" value="true" />
+      <created>1772613709410</created>
+      <option name="number" value="00084" />
+      <option name="presentableId" value="LOCAL-00084" />
+      <option name="project" value="LOCAL" />
+      <updated>1772613709410</updated>
+    </task>
+    <task id="LOCAL-00085" summary="Debug team detail page">
+      <option name="closed" value="true" />
+      <created>1772614022095</created>
+      <option name="number" value="00085" />
+      <option name="presentableId" value="LOCAL-00085" />
+      <option name="project" value="LOCAL" />
+      <updated>1772614022095</updated>
+    </task>
+    <task id="LOCAL-00086" summary="Fix slug navigation">
+      <option name="closed" value="true" />
+      <created>1772614135265</created>
+      <option name="number" value="00086" />
+      <option name="presentableId" value="LOCAL-00086" />
+      <option name="project" value="LOCAL" />
+      <updated>1772614135265</updated>
+    </task>
+    <task id="LOCAL-00087" summary="Remove suspense">
+      <option name="closed" value="true" />
+      <created>1772614297467</created>
+      <option name="number" value="00087" />
+      <option name="presentableId" value="LOCAL-00087" />
+      <option name="project" value="LOCAL" />
+      <updated>1772614297467</updated>
+    </task>
+    <task id="LOCAL-00088" summary="Convert detail page to props">
+      <option name="closed" value="true" />
+      <created>1772614443061</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
+      <option name="project" value="LOCAL" />
+      <updated>1772614443061</updated>
+    </task>
+    <task id="LOCAL-00089" summary="FIX FINALLY??">
+      <option name="closed" value="true" />
+      <created>1772615144157</created>
+      <option name="number" value="00089" />
+      <option name="presentableId" value="LOCAL-00089" />
+      <option name="project" value="LOCAL" />
+      <updated>1772615144157</updated>
+    </task>
+    <task id="LOCAL-00090" summary="Disable logger in production">
+      <option name="closed" value="true" />
+      <created>1772615438837</created>
+      <option name="number" value="00090" />
+      <option name="presentableId" value="LOCAL-00090" />
+      <option name="project" value="LOCAL" />
+      <updated>1772615438837</updated>
+    </task>
+    <option name="localTasksCounter" value="91" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -555,13 +576,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Added loading, TODO fix official caching" />
-    <MESSAGE value="Fix race condition official loading" />
-    <MESSAGE value="feat: status change to scheduled" />
-    <MESSAGE value="fix: officials display name not saved" />
-    <MESSAGE value="feat: warning message for missing officials" />
-    <MESSAGE value="best of badge" />
-    <MESSAGE value="Manage matches and set results" />
     <MESSAGE value="Match management ui - show mvp avatar" />
     <MESSAGE value="Dashboard admin UI improvements" />
     <MESSAGE value="Team management page" />
@@ -580,7 +594,14 @@
     <MESSAGE value="Replace force-dynamic with suspense" />
     <MESSAGE value="Fix: display media usernames" />
     <MESSAGE value="Feat: Designs and icon" />
-    <option name="LAST_COMMIT_MESSAGE" value="Feat: Designs and icon" />
+    <MESSAGE value="Favicon ico" />
+    <MESSAGE value="Debug team detail page" />
+    <MESSAGE value="Fix slug navigation" />
+    <MESSAGE value="Remove suspense" />
+    <MESSAGE value="Convert detail page to props" />
+    <MESSAGE value="FIX FINALLY??" />
+    <MESSAGE value="Disable logger in production" />
+    <option name="LAST_COMMIT_MESSAGE" value="Disable logger in production" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

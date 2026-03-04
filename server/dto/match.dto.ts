@@ -50,3 +50,11 @@ export interface CompleteMatchInput {
     scheduledTime?: string | null;
     timezone?: string | null;
 }
+
+export interface VoidMatchInput {
+    matchId: string;
+}
+
+export interface MatchSetsInput {
+    matchId: string;
+}
