@@ -4,20 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="best of badge">
-      <change afterPath="$PROJECT_DIR$/app/features/matches/CompleteMatchDialog.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/features/matches/ManageMatchDialog.tsx" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Manage matches and set results">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamDetailPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/matchStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/matchStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/playerStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/playerStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/players.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/players.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/dto/match.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/dto/match.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/types/db.override.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shared/types/db.override.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -152,15 +140,7 @@
       <workItem from="1772442104280" duration="4452000" />
       <workItem from="1772502136110" duration="7155000" />
       <workItem from="1772520242020" duration="3830000" />
-      <workItem from="1772591275255" duration="7225000" />
-    </task>
-    <task id="LOCAL-00016" summary="Display teams">
-      <option name="closed" value="true" />
-      <created>1770455142869</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1770455142869</updated>
+      <workItem from="1772591275255" duration="7545000" />
     </task>
     <task id="LOCAL-00017" summary="refactor arch">
       <option name="closed" value="true" />
@@ -546,7 +526,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772597255658</updated>
     </task>
-    <option name="localTasksCounter" value="65" />
+    <task id="LOCAL-00065" summary="Manage matches and set results">
+      <option name="closed" value="true" />
+      <created>1772603652168</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1772603652168</updated>
+    </task>
+    <option name="localTasksCounter" value="66" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -566,7 +554,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Pino logger" />
     <MESSAGE value="Regions Store and PLayers Store" />
     <MESSAGE value="input validation and rate limiting" />
     <MESSAGE value="badge shadcn" />
@@ -591,7 +578,8 @@
     <MESSAGE value="fix: officials display name not saved" />
     <MESSAGE value="feat: warning message for missing officials" />
     <MESSAGE value="best of badge" />
-    <option name="LAST_COMMIT_MESSAGE" value="best of badge" />
+    <MESSAGE value="Manage matches and set results" />
+    <option name="LAST_COMMIT_MESSAGE" value="Manage matches and set results" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

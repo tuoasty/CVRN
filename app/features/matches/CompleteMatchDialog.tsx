@@ -266,12 +266,40 @@ export default function CompleteMatchDialog({
                                 </label>
                                 <Select value={matchMvpId} onValueChange={setMatchMvpId}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select winning team MVP"/>
+                                        <SelectValue placeholder="Select winning team MVP">
+                                            {matchMvpId && (
+                                                <div className="flex items-center gap-2">
+                                                    {winningTeamPlayers.find(p => p.id === matchMvpId)?.avatar_url && (
+                                                        <img
+                                                            src={winningTeamPlayers.find(p => p.id === matchMvpId)?.avatar_url || ""}
+                                                            alt="Avatar"
+                                                            className="w-5 h-5 rounded-full"
+                                                        />
+                                                    )}
+                                                    <span>
+                                                        {winningTeamPlayers.find(p => p.id === matchMvpId)?.display_name ||
+                                                            winningTeamPlayers.find(p => p.id === matchMvpId)?.username ||
+                                                            "Unknown"}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
                                         {winningTeamPlayers.map(player => (
                                             <SelectItem key={player.id} value={player.id}>
-                                                {player.display_name || player.username || "Unknown"}
+                                                <div className="flex items-center gap-2">
+                                                    {player.avatar_url && (
+                                                        <img
+                                                            src={player.avatar_url}
+                                                            alt={player.username || "Player"}
+                                                            className="w-5 h-5 rounded-full"
+                                                        />
+                                                    )}
+                                                    <span>
+                                                        {player.display_name || player.username || "Unknown"}
+                                                    </span>
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -284,12 +312,40 @@ export default function CompleteMatchDialog({
                                 </label>
                                 <Select value={loserMvpId} onValueChange={setLoserMvpId}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select losing team MVP"/>
+                                        <SelectValue placeholder="Select losing team MVP">
+                                            {loserMvpId && (
+                                                <div className="flex items-center gap-2">
+                                                    {losingTeamPlayers.find(p => p.id === loserMvpId)?.avatar_url && (
+                                                        <img
+                                                            src={losingTeamPlayers.find(p => p.id === loserMvpId)?.avatar_url || ""}
+                                                            alt="Avatar"
+                                                            className="w-5 h-5 rounded-full"
+                                                        />
+                                                    )}
+                                                    <span>
+                                                        {losingTeamPlayers.find(p => p.id === loserMvpId)?.display_name ||
+                                                            losingTeamPlayers.find(p => p.id === loserMvpId)?.username ||
+                                                            "Unknown"}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
                                         {losingTeamPlayers.map(player => (
                                             <SelectItem key={player.id} value={player.id}>
-                                                {player.display_name || player.username || "Unknown"}
+                                                <div className="flex items-center gap-2">
+                                                    {player.avatar_url && (
+                                                        <img
+                                                            src={player.avatar_url}
+                                                            alt={player.username || "Player"}
+                                                            className="w-5 h-5 rounded-full"
+                                                        />
+                                                    )}
+                                                    <span>
+                                                        {player.display_name || player.username || "Unknown"}
+                                                    </span>
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
