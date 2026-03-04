@@ -2,13 +2,13 @@ import {getRobloxAvatarsById, getRobloxUserByName} from "@/server/roblox/users";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {RobloxUserWithAvatar} from "@/shared/types/roblox";
 import {DBClient, Official} from "@/shared/types/db";
-import {SaveOfficialInput} from "@/server/dto/official.dto";
+import {OfficialWithInfo, SaveOfficialInput, SearchOfficialsInput} from "@/server/dto/official.dto";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {
     deleteOfficial,
     findAllOfficials,
-    findOfficialByRobloxId,
+    findOfficialByRobloxId, findOfficialsBySimilarity,
     updateOfficial,
     upsertOfficial
 } from "@/server/db/official.repo";
@@ -156,6 +156,32 @@ export async function removeOfficial(
         return Ok(true);
     } catch (error) {
         logger.error({error}, "Unexpected error removing official");
+        return Err(serializeError(error));
+    }
+}
+
+export async function searchOfficialsInDatabase(
+    supabase: DBClient,
+    p: SearchOfficialsInput
+): Promise<Result<OfficialWithInfo[]>> {
+    try {
+        const { data, error } = await findOfficialsBySimilarity(supabase, p.query);
+
+        if (error) {
+            logger.error({ query: p.query, error }, "Failed to search officials in database");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Err({
+                message: "Failed to search officials",
+                name: "SearchError"
+            });
+        }
+
+        return Ok(data);
+    } catch (error) {
+        logger.error({ error }, "Unexpected error searching officials in database");
         return Err(serializeError(error));
     }
 }
