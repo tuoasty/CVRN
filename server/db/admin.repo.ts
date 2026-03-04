@@ -5,13 +5,11 @@ export async function findPendingUsersByEmail(email: string){
 }
 export async function insertUserRole(data:{
     userId:string,
-    email:string,
     role:string,
     promotedBy:string
 }){
     return supabaseAdmin.from("user_roles").insert({
         user_id:data.userId,
-        email:data.email,
         role:data.role,
         promoted_by:data.promotedBy
     })
