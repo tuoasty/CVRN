@@ -8,7 +8,11 @@ export default function AdminLayout({
 }) {
     return (
         <div className="min-h-screen bg-background">
-            <Suspense fallback={<div className="h-14 border-b border-border bg-card" />}>
+            <Suspense fallback={
+                <header className="border-b border-border bg-card">
+                    <div className="max-w-7xl mx-auto px-6 py-3 h-14" />
+                </header>
+            }>
                 <AdminNavbar />
             </Suspense>
             <main className="admin-container">
