@@ -4,10 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Team management page">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Team detail page UI">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/dashboard/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/teams/TeamsDataTable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/teams/TeamsDataTable.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/admin/matches/manage/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/admin/matches/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/MatchManagementPage.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/seasons/SeasonWeekPicker.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/seasons/SeasonWeekPicker.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,11 +79,11 @@
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin\teams\[region]\[teamName]" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin\matches" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin\teams\[region]\[season]" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\(public)\teams\[region]\[season]" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\app\admin" />
       <recent name="D:\KEVIN\0SLC\Random\cvrn\server" />
-      <recent name="D:\KEVIN\0SLC\Random\cvrn\app\components\ui" />
     </key>
   </component>
   <component name="RunManager" selected="npm.Next.js: server-side">
@@ -142,23 +145,7 @@
       <workItem from="1772442104280" duration="4452000" />
       <workItem from="1772502136110" duration="7155000" />
       <workItem from="1772520242020" duration="3830000" />
-      <workItem from="1772591275255" duration="11677000" />
-    </task>
-    <task id="LOCAL-00020" summary="lazy sync">
-      <option name="closed" value="true" />
-      <created>1771054943093</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1771054943093</updated>
-    </task>
-    <task id="LOCAL-00021" summary="Fix admin actions">
-      <option name="closed" value="true" />
-      <created>1771055458455</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1771055458455</updated>
+      <workItem from="1772591275255" duration="12492000" />
     </task>
     <task id="LOCAL-00022" summary="Fix update player repo function">
       <option name="closed" value="true" />
@@ -536,7 +523,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772607670376</updated>
     </task>
-    <option name="localTasksCounter" value="69" />
+    <task id="LOCAL-00069" summary="Filter by region and season">
+      <option name="closed" value="true" />
+      <created>1772608466263</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1772608466263</updated>
+    </task>
+    <task id="LOCAL-00070" summary="Team detail page UI">
+      <option name="closed" value="true" />
+      <created>1772608649184</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1772608649184</updated>
+    </task>
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -556,8 +559,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Team brick color and hex" />
-    <MESSAGE value="Added multiple service and repo functions" />
     <MESSAGE value="season changes to include slug and theme" />
     <MESSAGE value="Teams service and repo fixed" />
     <MESSAGE value="Feat; Update frontend to adjust to seasons instead of regions" />
@@ -581,7 +582,9 @@
     <MESSAGE value="Match management ui - show mvp avatar" />
     <MESSAGE value="Dashboard admin UI improvements" />
     <MESSAGE value="Team management page" />
-    <option name="LAST_COMMIT_MESSAGE" value="Team management page" />
+    <MESSAGE value="Filter by region and season" />
+    <MESSAGE value="Team detail page UI" />
+    <option name="LAST_COMMIT_MESSAGE" value="Team detail page UI" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">

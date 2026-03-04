@@ -10,6 +10,7 @@ import {formatDateInTimezone, getRegionTimezone} from "@/app/utils/timezoneOptio
 import {useOfficialStore} from "@/app/stores/officialStore";
 import ManageMatchDialog from "@/app/features/matches/ManageMatchDialog";
 import CompleteMatchDialog from "@/app/features/matches/CompleteMatchDialog";
+import { Badge } from "@/app/components/ui/badge";
 
 interface SchedulePanelProps {
     seasonId: string;
@@ -20,13 +21,13 @@ interface SchedulePanelProps {
 const getStatusConfig = (status: string) => {
     switch (status) {
         case 'pending':
-            return {label: 'Pending', color: 'bg-amber-100 text-amber-800 border-amber-200'};
+            return { label: 'Pending', variant: 'secondary' as const };
         case 'scheduled':
-            return {label: 'Scheduled', color: 'bg-blue-100 text-blue-800 border-blue-200'};
+            return { label: 'Scheduled', variant: 'default' as const };
         case 'completed':
-            return {label: 'Completed', color: 'bg-green-100 text-green-800 border-green-200'};
+            return { label: 'Completed', variant: 'outline' as const };
         default:
-            return {label: 'Unknown', color: 'bg-gray-100 text-gray-800 border-gray-200'};
+            return { label: 'Unknown', variant: 'secondary' as const };
     }
 };
 
@@ -169,16 +170,20 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
 
     if (loading || !teamsLoaded) {
         return (
-            <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="panel p-8">
+                <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
             </div>
         );
     }
 
     if (matches.length === 0) {
         return (
-            <div className="text-sm text-gray-500">
-                No matches scheduled for this week
+            <div className="panel p-8">
+                <p className="text-muted-foreground text-center">
+                    No matches scheduled for this week
+                </p>
             </div>
         );
     }
@@ -187,202 +192,179 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
 
     return (
         <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Current Schedule</h2>
-
             {matches.map((match, index) => {
                 const homeTeam = teams.get(match.home_team_id);
                 const awayTeam = teams.get(match.away_team_id);
                 const officials = matchOfficials.get(match.id);
+                const statusConfig = getStatusConfig(match.status);
 
                 return (
-                    <div key={match.id} className="border p-6 rounded-lg">
+                    <div key={match.id} className="panel p-5">
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-muted-foreground">
-                                            Match {index + 1}
-                                        </span>
-                                        <span
-                                            className={`text-xs font-medium px-2 py-1 rounded-md border ${getStatusConfig(match.status).color}`}>
-                                            {getStatusConfig(match.status).label}
-                                        </span>
-                                        <span
-                                            className="text-xs font-medium px-2 py-1 rounded-md border bg-gray-100 text-gray-800 border-gray-200">
-                                            BO{match.best_of}
-                                        </span>
-                                        {match.status === 'scheduled' && officials && (officials.referees.length === 0 || officials.media.length === 0) && (
-                                            <span className="text-amber-600" title="Missing required officials">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4"
-                                                     viewBox="0 0 24 24" fill="none"
-                                                     stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                                                     strokeLinejoin="round">
-                                                    <path
-                                                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                                                </svg>
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-                                        {homeTeam && (
-                                            <div className="flex items-center gap-2">
-                                                {homeTeam.logo_url && (
-                                                    <div className="relative w-8 h-8">
-                                                        <Image
-                                                            src={homeTeam.logo_url}
-                                                            alt={homeTeam.name}
-                                                            fill
-                                                            sizes="32px"
-                                                            className="object-contain"
-                                                        />
-                                                    </div>
-                                                )}
-                                                <span className="font-medium">{homeTeam.name}</span>
-                                            </div>
-                                        )}
-
-                                        <span className="text-muted-foreground">vs</span>
-
-                                        {awayTeam && (
-                                            <div className="flex items-center gap-2">
-                                                {awayTeam.logo_url && (
-                                                    <div className="relative w-8 h-8">
-                                                        <Image
-                                                            src={awayTeam.logo_url}
-                                                            alt={awayTeam.name}
-                                                            fill
-                                                            sizes="32px"
-                                                            className="object-contain"
-                                                        />
-                                                    </div>
-                                                )}
-                                                <span className="font-medium">{awayTeam.name}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {officialsLoading ? (
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
-                                        <span className="text-xs text-muted-foreground">Loading officials...</span>
-                                    </div>
-                                ) : officials && (officials.referees.length > 0 || officials.media.length > 0) ? (
-                                    <div className="flex flex-col gap-2">
-                                        {officials.referees.length > 0 && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-muted-foreground w-16">Referees:</span>
-                                                <div className="flex gap-2 flex-wrap">
-                                                    {officials.referees.map((official) => (
-                                                        <div
-                                                            key={official.id}
-                                                            className="flex items-center gap-1.5"
-                                                        >
-                                                            {official.avatar_url && (
-                                                                <div
-                                                                    className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
-                                                                    <Image
-                                                                        src={official.avatar_url}
-                                                                        alt={official.username || "Official"}
-                                                                        fill
-                                                                        sizes="20px"
-                                                                        className="object-cover"
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <div className="flex flex-col">
-                                                                <span className="text-xs font-medium">
-                                                                    {official.display_name || official.username || "Unknown"}
-                                                                </span>
-                                                                {official.display_name && official.username && (
-                                                                    <span className="text-[10px] text-muted-foreground">
-                                                                        @{official.username}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                        {officials.media.length > 0 && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-muted-foreground w-16">Media:</span>
-                                                <div className="flex gap-2 flex-wrap">
-                                                    {officials.media.map((official) => (
-                                                        <div
-                                                            key={official.id}
-                                                            className="flex items-center gap-1.5"
-                                                        >
-                                                            {official.avatar_url && (
-                                                                <div
-                                                                    className="relative w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
-                                                                    <Image
-                                                                        src={official.avatar_url}
-                                                                        alt={official.username || "Official"}
-                                                                        fill
-                                                                        sizes="20px"
-                                                                        className="object-cover"
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <span className="text-xs">
-                                                                {official.display_name || official.username || "Unknown"}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : null}
-
+                            <div className="flex items-center justify-between pb-4 border-b border-border">
                                 <div className="flex items-center gap-3">
-                                    {officialsLoading ? (
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="text-sm text-muted-foreground">
-                                                {regionTimezone
-                                                    ? formatDateInTimezone(match.scheduled_at, regionTimezone)
-                                                    : match.scheduled_at
-                                                        ? new Date(match.scheduled_at).toLocaleString()
-                                                        : "Time TBD"
-                                                }
-                                            </div>
-
-                                            <div className="flex gap-2">
-                                                <ManageMatchDialog
-                                                    matchId={match.id}
-                                                    scheduledAt={match.scheduled_at}
-                                                    regionCode={regionCode}
-                                                    onSuccess={loadSchedule}
-                                                />
-
-                                                {match.status === 'scheduled' && homeTeam && awayTeam && (
-                                                    <CompleteMatchDialog
-                                                        matchId={match.id}
-                                                        seasonId={seasonId}
-                                                        homeTeamId={match.home_team_id}
-                                                        awayTeamId={match.away_team_id}
-                                                        homeTeamName={homeTeam.name}
-                                                        awayTeamName={awayTeam.name}
-                                                        bestOf={match.best_of}
-                                                        onSuccess={loadSchedule}
-                                                    />
-                                                )}
-                                            </div>
-                                        </>
+                                <span className="text-sm font-semibold text-muted-foreground">
+                                    Match {index + 1}
+                                </span>
+                                    <Badge variant={statusConfig.variant} className="rounded-sm">
+                                        {statusConfig.label}
+                                    </Badge>
+                                    <Badge variant="outline" className="rounded-sm">
+                                        BO{match.best_of}
+                                    </Badge>
+                                    {match.status === 'scheduled' && officials && (officials.referees.length === 0 || officials.media.length === 0) && (
+                                        <span className="text-amber-600" title="Missing required officials">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                        </svg>
+                                    </span>
                                     )}
                                 </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="text-sm text-muted-foreground">
+                                        {regionTimezone
+                                            ? formatDateInTimezone(match.scheduled_at, regionTimezone)
+                                            : match.scheduled_at
+                                                ? new Date(match.scheduled_at).toLocaleString()
+                                                : "Time TBD"
+                                        }
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <ManageMatchDialog
+                                            matchId={match.id}
+                                            scheduledAt={match.scheduled_at}
+                                            regionCode={regionCode}
+                                            onSuccess={loadSchedule}
+                                        />
+
+                                        {match.status === 'scheduled' && homeTeam && awayTeam && (
+                                            <CompleteMatchDialog
+                                                matchId={match.id}
+                                                seasonId={seasonId}
+                                                homeTeamId={match.home_team_id}
+                                                awayTeamId={match.away_team_id}
+                                                homeTeamName={homeTeam.name}
+                                                awayTeamName={awayTeam.name}
+                                                bestOf={match.best_of}
+                                                onSuccess={loadSchedule}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
                             </div>
+
+                            <div className="flex items-center justify-center gap-6">
+                                {homeTeam && (
+                                    <div className="flex items-center gap-3">
+                                        {homeTeam.logo_url && (
+                                            <div className="relative w-12 h-12">
+                                                <Image
+                                                    src={homeTeam.logo_url}
+                                                    alt={homeTeam.name}
+                                                    fill
+                                                    sizes="48px"
+                                                    className="object-contain"
+                                                />
+                                            </div>
+                                        )}
+                                        <span className="font-semibold">{homeTeam.name}</span>
+                                    </div>
+                                )}
+
+                                <span className="text-2xl font-bold text-muted-foreground">vs</span>
+
+                                {awayTeam && (
+                                    <div className="flex items-center gap-3">
+                                        {awayTeam.logo_url && (
+                                            <div className="relative w-12 h-12">
+                                                <Image
+                                                    src={awayTeam.logo_url}
+                                                    alt={awayTeam.name}
+                                                    fill
+                                                    sizes="48px"
+                                                    className="object-contain"
+                                                />
+                                            </div>
+                                        )}
+                                        <span className="font-semibold">{awayTeam.name}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {officialsLoading ? (
+                                <div className="flex items-center justify-center gap-2 py-2">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                                    <span className="text-xs text-muted-foreground">Loading officials...</span>
+                                </div>
+                            ) : officials && (officials.referees.length > 0 || officials.media.length > 0) ? (
+                                <div className="flex flex-col gap-2 pt-2 border-t border-border">
+                                    {officials.referees.length > 0 && (
+                                        <div className="flex items-start gap-3">
+                                        <span className="text-xs text-muted-foreground uppercase tracking-wide w-20 pt-1">
+                                            Referees
+                                        </span>
+                                            <div className="flex gap-3 flex-wrap flex-1">
+                                                {officials.referees.map((official) => (
+                                                    <div key={official.id} className="flex items-center gap-2">
+                                                        {official.avatar_url && (
+                                                            <div className="relative w-6 h-6 rounded-full overflow-hidden border border-border">
+                                                                <Image
+                                                                    src={official.avatar_url}
+                                                                    alt={official.username || "Official"}
+                                                                    fill
+                                                                    sizes="24px"
+                                                                    className="object-cover"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <div className="flex flex-col">
+                                                        <span className="text-xs font-medium">
+                                                            {official.display_name || official.username || "Unknown"}
+                                                        </span>
+                                                            {official.display_name && official.username && (
+                                                                <span className="text-[10px] text-muted-foreground">
+                                                                @{official.username}
+                                                            </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {officials.media.length > 0 && (
+                                        <div className="flex items-start gap-3">
+                                        <span className="text-xs text-muted-foreground uppercase tracking-wide w-20 pt-1">
+                                            Media
+                                        </span>
+                                            <div className="flex gap-3 flex-wrap flex-1">
+                                                {officials.media.map((official) => (
+                                                    <div key={official.id} className="flex items-center gap-2">
+                                                        {official.avatar_url && (
+                                                            <div className="relative w-6 h-6 rounded-full overflow-hidden border border-border">
+                                                                <Image
+                                                                    src={official.avatar_url}
+                                                                    alt={official.username || "Official"}
+                                                                    fill
+                                                                    sizes="24px"
+                                                                    className="object-cover"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs font-medium">
+                                                        {official.display_name || official.username || "Unknown"}
+                                                    </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : null}
                         </div>
                     </div>
                 );
