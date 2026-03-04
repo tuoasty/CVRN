@@ -4,12 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="fix: officials display name not saved">
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="feat: warning message for missing officials">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/officialStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/officialStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/official.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/official.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/database.types.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -143,15 +141,8 @@
       <workItem from="1772360175459" duration="12180000" />
       <workItem from="1772442104280" duration="4452000" />
       <workItem from="1772502136110" duration="7155000" />
-      <workItem from="1772520242020" duration="3199000" />
-    </task>
-    <task id="LOCAL-00014" summary="Test use client">
-      <option name="closed" value="true" />
-      <created>1770454509678</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1770454509678</updated>
+      <workItem from="1772520242020" duration="3830000" />
+      <workItem from="1772591275255" duration="4002000" />
     </task>
     <task id="LOCAL-00015" summary="Fix match list to use client and use effect">
       <option name="closed" value="true" />
@@ -537,7 +528,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772524013780</updated>
     </task>
-    <option name="localTasksCounter" value="63" />
+    <task id="LOCAL-00063" summary="feat: warning message for missing officials">
+      <option name="closed" value="true" />
+      <created>1772525103325</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1772525103325</updated>
+    </task>
+    <option name="localTasksCounter" value="64" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -557,7 +556,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Reset zustand" />
     <MESSAGE value="Zustand teamStore" />
     <MESSAGE value="Pino logger" />
     <MESSAGE value="Regions Store and PLayers Store" />
@@ -582,7 +580,8 @@
     <MESSAGE value="Fix race condition official loading" />
     <MESSAGE value="feat: status change to scheduled" />
     <MESSAGE value="fix: officials display name not saved" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: officials display name not saved" />
+    <MESSAGE value="feat: warning message for missing officials" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: warning message for missing officials" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
