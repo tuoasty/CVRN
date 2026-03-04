@@ -1,7 +1,7 @@
 import {Err, Ok, Result} from "@/shared/types/result";
 import {supabaseAdmin} from "@/server/supabase/admin";
 import {deletePendingUser, findPendingUsersByEmail, insertUserRole} from "@/server/db/admin.repo";
-import {SerializableError, serializeError} from "@/server/utils/serializeableError";
+import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 
 
@@ -9,7 +9,7 @@ export async function inviteUser(
     email:string,
     role:"admin" | "super_admin" | "stat_tracker",
     invitedBy: string
-): Promise<Result<null, SerializableError>> {
+): Promise<Result<null>> {
     try {
         const { error: inviteError} = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
             redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
@@ -46,7 +46,7 @@ export async function finalizeInvitedUser(userId:string, email:string){
         }
 
         const {error: roleError} = await insertUserRole({
-            userId, email, role:pending.role, promotedBy:pending.invited_by
+            userId, role:pending.role, promotedBy:pending.invited_by
         });
 
         if(roleError){

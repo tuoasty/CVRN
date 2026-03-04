@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Fix: display media usernames">
-      <change afterPath="$PROJECT_DIR$/public/favicon.ico" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/components/ui/AdminNavbar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/components/ui/AdminNavbar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
+    <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Feat: Designs and icon">
+      <change beforePath="$PROJECT_DIR$/public/favicon.ico" beforeDir="false" afterPath="$PROJECT_DIR$/public/favicon.ico" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -144,15 +141,7 @@
       <workItem from="1772442104280" duration="4452000" />
       <workItem from="1772502136110" duration="7155000" />
       <workItem from="1772520242020" duration="3830000" />
-      <workItem from="1772591275255" duration="15785000" />
-    </task>
-    <task id="LOCAL-00034" summary="fix: image load optimization">
-      <option name="closed" value="true" />
-      <created>1771989299197</created>
-      <option name="number" value="00034" />
-      <option name="presentableId" value="LOCAL-00034" />
-      <option name="project" value="LOCAL" />
-      <updated>1771989299197</updated>
+      <workItem from="1772591275255" duration="16170000" />
     </task>
     <task id="LOCAL-00035" summary="fix: optimized teamslist, fetch teams with region">
       <option name="closed" value="true" />
@@ -538,7 +527,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772612016522</updated>
     </task>
-    <option name="localTasksCounter" value="83" />
+    <task id="LOCAL-00083" summary="Feat: Designs and icon">
+      <option name="closed" value="true" />
+      <created>1772612613388</created>
+      <option name="number" value="00083" />
+      <option name="presentableId" value="LOCAL-00083" />
+      <option name="project" value="LOCAL" />
+      <updated>1772612613388</updated>
+    </task>
+    <option name="localTasksCounter" value="84" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -558,7 +555,6 @@
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="Match official display and management" />
     <MESSAGE value="Added loading, TODO fix official caching" />
     <MESSAGE value="Fix race condition official loading" />
     <MESSAGE value="feat: status change to scheduled" />
@@ -583,7 +579,8 @@
     <MESSAGE value="force-dynamic layout" />
     <MESSAGE value="Replace force-dynamic with suspense" />
     <MESSAGE value="Fix: display media usernames" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix: display media usernames" />
+    <MESSAGE value="Feat: Designs and icon" />
+    <option name="LAST_COMMIT_MESSAGE" value="Feat: Designs and icon" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="github-copilot-workspace">
