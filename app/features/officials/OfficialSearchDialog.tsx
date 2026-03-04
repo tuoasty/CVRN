@@ -69,7 +69,7 @@ export default function OfficialSearchDialog({
         const official = await saveOfficial(user.id, user.name, user.avatarUrl, user.displayName);
 
         if (!official) {
-            alert("Failed to save official");
+            toast.error("Failed to save official");
             setAssigning(null);
             return;
         }
@@ -86,7 +86,7 @@ export default function OfficialSearchDialog({
             setSearchResults([]);
             onAssigned();
         } else {
-            alert("Failed to assign official to match");
+            toast.error("Failed to assign official to match");
         }
 
         setAssigning(null);

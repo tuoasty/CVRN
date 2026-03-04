@@ -24,6 +24,7 @@ import { clientLogger } from "@/app/utils/clientLogger";
 import { Player, MatchSet } from "@/shared/types/db";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
+import {toast} from "@/app/utils/toast";
 
 interface UpdateMatchDialogProps {
     matchId: string;
@@ -186,12 +187,12 @@ export default function UpdateMatchDialog({
         }));
 
         if (sets.some(s => isNaN(s.homeScore) || isNaN(s.awayScore))) {
-            alert("Please fill in all set scores");
+            toast.error("Please fill in all set scores");
             return;
         }
 
         if (!matchMvpId || !loserMvpId) {
-            alert("Please select both MVPs");
+            toast.error("Please select both MVPs");
             return;
         }
 
@@ -210,7 +211,7 @@ export default function UpdateMatchDialog({
             setOpen(false);
             onSuccess();
         } else {
-            alert("Failed to update match results");
+            toast.error("Failed to update match results");
         }
 
         setSubmitting(false);
