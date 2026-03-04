@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -7,7 +7,7 @@ import { savePlayerToTeamAction, searchPlayersAction } from "@/app/actions/playe
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
+import { Label } from "@/app/components/ui/label";
 import { Badge } from "@/app/components/ui/badge";
 
 interface Props {
@@ -95,72 +95,95 @@ export default function AddPlayerToTeam({ teamId, onSuccess }: Props) {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Search Roblox Player</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <form onSubmit={handleSearch} className="flex gap-2">
-                    <Input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Enter Roblox username"
-                        disabled={loading || adding}
-                        className="flex-1"
-                    />
-                    <Button type="submit" disabled={loading || adding}>
-                        {loading ? "Searching..." : "Search"}
-                    </Button>
-                </form>
+        <div className="space-y-5">
+            <div>
+                <h3>Search Roblox Player</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                    Search for a Roblox user to add to the team
+                </p>
+            </div>
 
-                {error && <div className="text-sm text-destructive">{error}</div>}
-                {success && <div className="text-sm text-green-600">{success}</div>}
-
-                {users.length > 0 && (
-                    <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Found {users.length} user(s):</h4>
-                        <div className="space-y-2">
-                            {users.map((user) => (
-                                <Card key={user.id.toString()}>
-                                    <CardContent className="flex items-center gap-4 p-4">
-                                        <Image
-                                            src={user.avatarUrl}
-                                            alt={user.name}
-                                            width={60}
-                                            height={60}
-                                            className="w-[60px] h-auto rounded object-contain"
-                                        />
-                                        <div className="flex-1 space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-semibold">{user.displayName}</span>
-                                                {user.hasVerifiedBadge && (
-                                                    <Badge variant="secondary" className="text-blue-600">
-                                                        ✓
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                @{user.name}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                ID: {user.id.toString()}
-                                            </div>
-                                        </div>
-                                        <Button
-                                            onClick={() => handleAddPlayer(user)}
-                                            disabled={adding}
-                                            variant="outline"
-                                        >
-                                            {adding ? "Adding..." : "Add to Team"}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+            <form onSubmit={handleSearch} className="space-y-3">
+                <div className="space-y-2">
+                    <Label htmlFor="username">Roblox Username</Label>
+                    <div className="flex gap-2">
+                        <Input
+                            id="username"
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Enter username"
+                            disabled={loading || adding}
+                            className="flex-1 rounded-sm"
+                        />
+                        <Button type="submit" disabled={loading || adding} className="rounded-sm">
+                            {loading ? "Searching..." : "Search"}
+                        </Button>
                     </div>
-                )}
-            </CardContent>
-        </Card>
+                </div>
+            </form>
+
+            {error && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-sm p-3">
+                    <p className="text-sm text-destructive">{error}</p>
+                </div>
+            )}
+
+            {success && (
+                <div className="bg-primary/10 border border-primary/20 rounded-sm p-3">
+                    <p className="text-sm text-primary">{success}</p>
+                </div>
+            )}
+
+            {users.length > 0 && (
+                <div className="space-y-3">
+                    <div className="text-sm font-medium">
+                        Found {users.length} user{users.length !== 1 ? 's' : ''}
+                    </div>
+                    <div className="space-y-2">
+                        {users.map((user) => (
+                            <div
+                                key={user.id.toString()}
+                                className="panel p-4 flex items-center gap-4"
+                            >
+                                <div className="relative w-16 h-16 rounded-sm overflow-hidden border border-border shrink-0">
+                                    <Image
+                                        src={user.avatarUrl}
+                                        alt={user.name}
+                                        fill
+                                        sizes="64px"
+                                        className="object-cover"
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold truncate">{user.displayName}</span>
+                                        {user.hasVerifiedBadge && (
+                                            <Badge variant="secondary" className="text-primary rounded-sm">
+                                                ✓
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground truncate">
+                                        @{user.name}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground font-mono">
+                                        ID: {user.id.toString()}
+                                    </div>
+                                </div>
+                                <Button
+                                    onClick={() => handleAddPlayer(user)}
+                                    disabled={adding}
+                                    variant="default"
+                                    className="rounded-sm shrink-0"
+                                >
+                                    {adding ? "Adding..." : "Add to Team"}
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

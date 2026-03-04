@@ -21,8 +21,8 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { Button } from "@/app/components/ui/button";
 import { clientLogger } from "@/app/utils/clientLogger";
-import {useTeamsStore} from "@/app/stores/teamStore";
-import {usePlayerStore} from "@/app/stores/playerStore";
+import { useTeamsStore } from "@/app/stores/teamStore";
+import { usePlayerStore } from "@/app/stores/playerStore";
 
 export default function TeamDetailPage() {
     const params = useParams();
@@ -38,7 +38,7 @@ export default function TeamDetailPage() {
 
     const teamsStore = useTeamsStore();
     const playersStore = usePlayerStore();
-    
+
     const teamData = teamsStore.getTeamBySlugAndSeason(teamSlug, seasonSlug);
     const playersCacheKey = teamData?.id && teamData?.season_id ? `${teamData.id}-${teamData.season_id}` : null;
     const players = playersCacheKey ? playersStore.playersByTeamCache.get(playersCacheKey)?.data ?? [] : [];
@@ -97,22 +97,40 @@ export default function TeamDetailPage() {
         }
 
         teamsStore.removeTeamFromCache(teamData.id);
-        router.push("/admin/dashboard");
+        router.push("/admin/teams");
     };
 
     const loading = teamsStore.loading || playersStore.loading;
     const displayError = error || teamsStore.error || playersStore.error;
 
     if (loading && !teamData) {
-        return <div className="p-4 text-muted-foreground">Loading team...</div>;
+        return (
+            <div className="admin-section">
+                <div className="panel p-6">
+                    <p className="text-muted-foreground">Loading team...</p>
+                </div>
+            </div>
+        );
     }
 
     if (displayError) {
-        return <div className="p-4 text-destructive">{displayError}</div>;
+        return (
+            <div className="admin-section">
+                <div className="panel p-6">
+                    <p className="text-destructive">{displayError}</p>
+                </div>
+            </div>
+        );
     }
 
     if (!teamData) {
-        return <div className="p-4 text-muted-foreground">Team not found</div>;
+        return (
+            <div className="admin-section">
+                <div className="panel p-6">
+                    <p className="text-muted-foreground">Team not found</p>
+                </div>
+            </div>
+        );
     }
 
     const regionName = teamData.seasons?.regions?.name || "Unknown Region";
@@ -120,72 +138,142 @@ export default function TeamDetailPage() {
     const seasonName = teamData.seasons?.name || "Unknown Season";
 
     return (
-        <div className="p-4 space-y-4">
-            <span className="text-sm text-muted-foreground">
-                {regionCodeDisplay} - {regionName} / {seasonName}
-            </span>
-
-            <div className="flex items-center gap-4">
-                {teamData.logo_url && (
-                    <Image
-                        src={teamData.logo_url}
-                        alt={teamData.name || ""}
-                        width={150}
-                        height={150}
-                        loading="eager"
-                        className="w-[150px] h-auto object-contain"
-                    />
-                )}
+        <div className="admin-section">
+            <div className="admin-header">
                 <div>
-                    <h2 className="text-2xl font-bold">{teamData.name}</h2>
-                    <p className="text-sm text-muted-foreground">
-                        {players.length} {players.length === 1 ? "player" : "players"}
+                    <div className="flex items-center gap-2 mb-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push("/admin/teams")}
+                            className="rounded-sm -ml-2"
+                        >
+                            ← Back to Teams
+                        </Button>
+                    </div>
+                    <h1>{teamData.name}</h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        <span className="font-mono font-semibold">{regionCodeDisplay}</span> - {regionName} / {seasonName}
                     </p>
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant={showAddForm ? "secondary" : "default"}
+                        onClick={() => setShowAddForm(!showAddForm)}
+                        className="rounded-sm"
+                    >
+                        {showAddForm ? "Cancel" : "Add Player"}
+                    </Button>
+
+                    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" className="rounded-sm">
+                                Delete Team
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="rounded-sm">
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Delete {teamData.name}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. All players will be removed from this team.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteTeam} className="rounded-sm">
+                                    Delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </div>
 
-            <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowAddForm(!showAddForm)}>
-                    {showAddForm ? "Cancel" : "Add Player"}
-                </Button>
-
-                <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive">Delete Team</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Delete {teamData.name}?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteTeam}>Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+            <div className="panel p-6">
+                <div className="flex items-start gap-6">
+                    {teamData.logo_url && (
+                        <div className="relative w-32 h-32 shrink-0">
+                            <Image
+                                src={teamData.logo_url}
+                                alt={teamData.name || ""}
+                                fill
+                                sizes="128px"
+                                className="object-contain"
+                            />
+                        </div>
+                    )}
+                    <div className="space-y-3">
+                        <div>
+                            <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
+                                Team Name
+                            </div>
+                            <div className="text-xl font-semibold">{teamData.name}</div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-6">
+                            <div>
+                                <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
+                                    Brick Number
+                                </div>
+                                <div className="font-mono font-semibold">{teamData.brick_number}</div>
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
+                                    Brick Color
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {teamData.brick_color && (
+                                        <div
+                                            className="w-6 h-6 rounded-sm border border-border"
+                                            style={{ backgroundColor: teamData.brick_color }}
+                                        />
+                                    )}
+                                    <span className="font-mono text-sm">{teamData.brick_color}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
+                                    Total Players
+                                </div>
+                                <div className="font-semibold">{players.length}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {showAddForm && (
-                <AddPlayerToTeam teamId={teamData.id} onSuccess={handlePlayerAdded} />
-            )}
-
-            {players.length === 0 ? (
-                <p className="text-muted-foreground">No players in this team yet</p>
-            ) : (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
-                    {players.map((player) => (
-                        <PlayerCard
-                            key={player.id}
-                            player={player}
-                            seasonId={teamData.season_id}
-                            onRemoved={handlePlayerRemoved}
-                        />
-                    ))}
+                <div className="panel p-6">
+                    <AddPlayerToTeam teamId={teamData.id} onSuccess={handlePlayerAdded} />
                 </div>
             )}
+
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2>Team Roster</h2>
+                    <span className="text-sm text-muted-foreground">
+                        {players.length} {players.length === 1 ? 'player' : 'players'}
+                    </span>
+                </div>
+
+                {players.length === 0 ? (
+                    <div className="panel p-8">
+                        <p className="text-muted-foreground text-center">
+                            No players in this team yet. Click "Add Player" to get started.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+                        {players.map((player) => (
+                            <PlayerCard
+                                key={player.id}
+                                player={player}
+                                seasonId={teamData.season_id}
+                                onRemoved={handlePlayerRemoved}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
