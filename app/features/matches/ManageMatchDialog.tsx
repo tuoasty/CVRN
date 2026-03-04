@@ -33,6 +33,7 @@ import MatchOfficialSection from "@/app/features/officials/MatchOfficialSection"
 import { useMatchesStore } from "@/app/stores/matchStore";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Match } from "@/shared/types/db";
+import {toast} from "@/app/utils/toast";
 
 interface ManageMatchDialogProps {
     matchId: string;
@@ -104,7 +105,7 @@ export default function ManageMatchDialog({
 
     const handleUpdateSchedule = async () => {
         if (!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone) {
-            alert("Please fill in all schedule fields");
+            toast.error("Please fill in all schedule fields");
             return;
         }
 
@@ -123,7 +124,7 @@ export default function ManageMatchDialog({
             setOpen(false);
             onSuccess();
         } else {
-            alert("Failed to update schedule");
+            toast.error("Failed to update schedule");
         }
 
         setUpdating(false);
@@ -145,7 +146,7 @@ export default function ManageMatchDialog({
             setOpen(false);
             onSuccess();
         } else {
-            alert("Failed to clear schedule");
+            toast.error("Failed to clear schedule");
         }
 
         setUpdating(false);
@@ -163,7 +164,7 @@ export default function ManageMatchDialog({
             setOpen(false);
             onSuccess();
         } else {
-            alert("Failed to void match");
+            toast.error("Failed to void match");
         }
 
         setUpdating(false);

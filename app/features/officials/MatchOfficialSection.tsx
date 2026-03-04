@@ -9,6 +9,7 @@ import Image from "next/image";
 import { Button } from "@/app/components/ui/button";
 import OfficialSearchDialog from "./OfficialSearchDialog";
 import { X } from "lucide-react";
+import {toast} from "@/app/utils/toast";
 
 interface MatchOfficialSectionProps {
     matchId: string;
@@ -62,7 +63,7 @@ export default function MatchOfficialSection({
             });
             await loadOfficials();
         } else {
-            alert("Failed to remove official");
+            toast.error("Failed to remove official");
         }
 
         setRemoving(null);

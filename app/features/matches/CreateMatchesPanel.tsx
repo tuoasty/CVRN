@@ -18,6 +18,7 @@ import Image from "next/image";
 import { Input } from "@/app/components/ui/input";
 import { timezoneOptions } from "@/app/utils/timezoneOptions";
 import { X } from "lucide-react";
+import {toast} from "@/app/utils/toast";
 
 interface MatchPair {
     id: string;
@@ -161,7 +162,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
 
             if (!result.ok) {
                 clientLogger.error("CreateMatchesPanel", "Failed to create matches", result.error);
-                alert(`Error: ${result.error.message}`);
+                toast.error(`Error: ${result.error.message}`);
                 return;
             }
 
@@ -186,7 +187,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                 setAvailableTeams(cached.data);
             }
 
-            alert(`${result.value.length} matches created successfully`);
+            toast.success(`${result.value.length} matches created successfully`);
 
             if (onSuccess) {
                 setTimeout(() => {
@@ -196,7 +197,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
 
         } catch (error) {
             clientLogger.error("CreateMatchesPanel", "Exception creating matches", { error });
-            alert("Failed to create matches");
+            toast.error("Failed to create matches");
         } finally {
             setSubmitting(false);
         }

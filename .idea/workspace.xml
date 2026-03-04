@@ -5,13 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="77bb5c46-5309-4d73-a583-7148f3158b5a" name="Changes" comment="Disable logger in production">
-      <change afterPath="$PROJECT_DIR$/app/features/matches/UpdateMatchDialog.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/utils/toast.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/actions/match.actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/match.actions.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/AdminSchedulePanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/stores/matchStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/stores/matchStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/db/matches.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/db/matches.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/services/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/services/match.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/CompleteMatchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/CompleteMatchDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/CreateMatchesPanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/ManageMatchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/ManageMatchDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/matches/UpdateMatchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/matches/UpdateMatchDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/officials/MatchOfficialSection.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/officials/MatchOfficialSection.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/features/officials/OfficialSearchDialog.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
