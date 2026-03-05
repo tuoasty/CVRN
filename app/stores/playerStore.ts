@@ -25,7 +25,7 @@ type PlayersState = {
 const TEAM_PLAYERS_TTL = 2 * 60 * 1000;
 const PLAYER_TTL = 5 * 60 * 1000;
 
-const playersByTeamCache = new Map<string, CacheEntry<Player[]>>();
+const playersByTeamCache = new Map<string, CacheEntry<PlayerWithRole[]>>();
 const playersByIdsCache = new Map<string, CacheEntry<Player>>();
 
 const teamCleanupInterval = setupAutoEviction(playersByTeamCache, 60000);
@@ -137,17 +137,15 @@ export const usePlayerStore = create<PlayersState>((set, get) => ({
 
         const allPlayers = cached.data;
 
-        const playersWithRole = allPlayers as Array<Player & { role?: string }>;
-
-        const captain = playersWithRole.find(p => p.role === 'captain') || null;
-        const viceCaptain = playersWithRole.find(p => p.role === 'vice_captain') || null;
-        const courtCaptain = playersWithRole.find(p => p.role === 'court_captain') || null;
-        const players = playersWithRole.filter(p => !p.role || p.role === 'player');
+        const captain = allPlayers.find(p => p.role === 'captain') || null;
+        const viceCaptain = allPlayers.find(p => p.role === 'vice_captain') || null;
+        const courtCaptain = allPlayers.find(p => p.role === 'court_captain') || null;
+        const players = allPlayers.filter(p => p.role === 'player');
 
         return {
-            captain: captain || null,
-            viceCaptain: viceCaptain || null,
-            courtCaptain: courtCaptain || null,
+            captain,
+            viceCaptain,
+            courtCaptain,
             players
         };
     },

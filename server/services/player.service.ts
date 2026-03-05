@@ -10,7 +10,11 @@ import {
     PlayersByIdsInput,
     AddExistingPlayerToTeamInput,
     SearchPlayersInput,
-    PlayerWithTeamInfo
+    PlayerWithTeamInfo,
+    SetPlayerRoleInput,
+    TransferCaptainInput,
+    PlayerRole,
+    PlayerWithRole
 } from "@/server/dto/player.dto";
 import {serializeError} from "@/server/utils/serializeableError";
 import {findTeamById} from "@/server/db/teams.repo";
@@ -254,16 +258,18 @@ export async function getTeamPlayers(
 
             const result = await lazySyncPlayer(supabase, record.player);
 
+            const role: PlayerRole = (record.role as PlayerRole) || 'player';
+
             let playerWithRole: PlayerWithRole;
             if (result.ok) {
                 playerWithRole = {
                     ...result.value,
-                    role: record.role || 'player'
+                    role
                 };
             } else {
                 playerWithRole = {
                     ...record.player,
-                    role: record.role || 'player'
+                    role
                 };
             }
 

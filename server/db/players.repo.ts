@@ -1,5 +1,11 @@
 import {DBClient} from "@/shared/types/db";
-import {SavePlayerInput, UpdatePlayerInput, AddPlayerToTeamInput, RemovePlayerFromTeamInput} from "@/server/dto/player.dto";
+import {
+    SavePlayerInput,
+    UpdatePlayerInput,
+    AddPlayerToTeamInput,
+    RemovePlayerFromTeamInput,
+    SetPlayerRoleInput, PlayerRole
+} from "@/server/dto/player.dto";
 
 export async function upsertPlayer(
     supabase: DBClient,
@@ -194,7 +200,7 @@ export async function findPlayersBySimilarity(
     }
 
     const teamMap = new Map(
-        (activeTeamSeasons || []).map((pts: any) => [
+        (activeTeamSeasons || []).map(pts => [
             pts.player_id,
             {
                 team_id: pts.team_id,
