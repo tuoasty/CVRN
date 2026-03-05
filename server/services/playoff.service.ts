@@ -1,9 +1,10 @@
-import { DBClient } from "@/shared/types/db";
+import {DBClient, PlayoffBracket} from "@/shared/types/db";
 import { Err, Ok, Result } from "@/shared/types/result";
 import { serializeError } from "@/server/utils/serializeableError";
 import { logger } from "@/server/utils/logger";
 import { GeneratePlayoffBracketInput, InsertPlayoffBracketDto, InsertPlayoffMatchDto } from "@/server/dto/playoff.dto";
 import {
+    findPlayoffBracketsBySeasonId,
     findPlayoffConfigBySeasonId,
     findSeasonById,
     findStandingsBySeasonId,
@@ -12,6 +13,7 @@ import {
     updateSeasonPlayoffStatus
 } from "@/server/db/playoff.repo";
 import { randomUUID } from "node:crypto";
+import {findAllMatches} from "@/server/db/matches.repo";
 
 export async function generatePlayoffBracket(
     supabase: DBClient,
@@ -436,5 +438,28 @@ function generateFinalsMatches(
     if (semi2BracketIndex !== -1) {
         allBrackets[semi2BracketIndex].nextBracketId = finalsMatchId;
         allBrackets[semi2BracketIndex].winnerPosition = "away";
+    }
+}
+
+export async function getPlayoffBracketBySeasonId(supabase:DBClient, seasonId:string): Promise<Result<PlayoffBracket[]>>{
+    try {
+        const {data, error} = await findPlayoffBracketsBySeasonId(supabase, seasonId);
+
+        if (error) {
+            logger.error({error}, "Failed to fetch playoff bracket matches");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Err({
+                name: "FetchError",
+                message: "Failed to fetch playoff brackets"
+            });
+        }
+
+        return Ok(data);
+    } catch (error) {
+        logger.error({error}, "Unexpected error fetching playoff brackets");
+        return Err(serializeError(error));
     }
 }
