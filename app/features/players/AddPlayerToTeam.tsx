@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { RobloxUserWithAvatar } from "@/shared/types/roblox";
 import {
     savePlayerToTeamAction,
     searchPlayersAction,
     searchPlayersInDatabaseAction,
-    addExistingPlayerToTeamAction
+    addExistingPlayerToTeamAction, getPlayerByExactUsernameAction,
 } from "@/app/actions/player.actions";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Button } from "@/app/components/ui/button";
@@ -29,11 +29,17 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
     const [robloxResults, setRobloxResults] = useState<RobloxUserWithAvatar[]>([]);
     const [loading, setLoading] = useState(false);
     const [adding, setAdding] = useState(false);
+    const [searchSubmitted, setSearchSubmitted] = useState(false);
+    const lastSearchedQuery = useRef("");
 
     const searchDatabase = useCallback(async (query: string) => {
         if (!query.trim()) {
             setDbSuggestions([]);
             setRobloxResults([]);
+            return;
+        }
+
+        if (searchSubmitted && query === lastSearchedQuery.current) {
             return;
         }
 
@@ -52,7 +58,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
             clientLogger.error('AddPlayerToTeam', 'Exception during DB search', { query, error });
             setDbSuggestions([]);
         }
-    }, []);
+    }, [searchSubmitted]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -71,14 +77,27 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
         }
 
         setLoading(true);
-        setRobloxResults([]);
+        setSearchSubmitted(true);
+        lastSearchedQuery.current = username;
 
         try {
+            const exactMatchResult = await getPlayerByExactUsernameAction({query:username});
+
+            if (!exactMatchResult.ok) {
+                clientLogger.error('AddPlayerToTeam', 'Exact match search failed', { username, error: exactMatchResult.error });
+            } else if (exactMatchResult.value) {
+                setDbSuggestions([exactMatchResult.value]);
+                setRobloxResults([]);
+                setLoading(false);
+                return;
+            }
+
             const result = await searchPlayersAction(username);
 
             if (!result.ok) {
                 clientLogger.error('AddPlayerToTeam', 'Roblox search failed', { username, error: result.error });
                 toast.error(result.error.message);
+                setLoading(false);
                 return;
             }
 
@@ -88,11 +107,16 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
                 toast.error("No users found");
             }
         } catch (error) {
-            clientLogger.error('AddPlayerToTeam', 'Exception during Roblox search', { username, error });
+            clientLogger.error('AddPlayerToTeam', 'Exception during search', { username, error });
             toast.error("Search failed");
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setUsername(e.target.value);
+        setSearchSubmitted(false);
     };
 
     const handleAddRobloxPlayer = async (user: RobloxUserWithAvatar) => {
@@ -118,6 +142,8 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
             setUsername("");
             setRobloxResults([]);
             setDbSuggestions([]);
+            setSearchSubmitted(false);
+            lastSearchedQuery.current = "";
 
             setTimeout(() => {
                 onSuccess();
@@ -155,6 +181,8 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
             setUsername("");
             setRobloxResults([]);
             setDbSuggestions([]);
+            setSearchSubmitted(false);
+            lastSearchedQuery.current = "";
 
             setTimeout(() => {
                 onSuccess();
@@ -186,7 +214,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
                             id="username"
                             type="text"
                             value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            onChange={handleUsernameChange}
                             placeholder="Enter username"
                             disabled={loading || adding}
                             className="flex-1 rounded-sm"

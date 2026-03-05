@@ -220,3 +220,20 @@ export async function findPlayersBySimilarity(
 
     return { data: results, error: null };
 }
+
+export async function findPlayerByExactUsername(
+    supabase: DBClient,
+    username: string
+) {
+    return supabase
+        .from("players")
+        .select(`
+            id,
+            roblox_user_id,
+            username,
+            display_name,
+            avatar_url
+        `)
+        .ilike("username", username)
+        .maybeSingle()
+}
