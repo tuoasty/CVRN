@@ -53,9 +53,8 @@ export default function TeamsDataTable() {
         return matchesSearch && matchesRegion && matchesSeason;
     });
 
-    // Get available seasons for selected region
     const availableSeasons = selectedRegion === "all"
-        ? seasons
+        ? []
         : seasons.filter(s => s.region_id === selectedRegion);
 
     const handleTeamClick = (team: TeamWithRegion) => {
@@ -117,9 +116,13 @@ export default function TeamsDataTable() {
                     </SelectContent>
                 </Select>
 
-                <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+                <Select
+                    value={selectedSeason}
+                    onValueChange={setSelectedSeason}
+                    disabled={selectedRegion === "all"}
+                >
                     <SelectTrigger className="w-[200px] rounded-sm">
-                        <SelectValue placeholder="All Seasons" />
+                        <SelectValue placeholder={selectedRegion === "all" ? "Select region first" : "All Seasons"} />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Seasons</SelectItem>

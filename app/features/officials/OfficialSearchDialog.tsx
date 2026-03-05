@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useOfficialStore } from "@/app/stores/officialStore";
 import { RobloxUserWithAvatar } from "@/shared/types/roblox";
 import { clientLogger } from "@/app/utils/clientLogger";
@@ -18,7 +18,7 @@ import {
 import { OfficialType } from "@/server/dto/matchOfficial.dto";
 import { Badge } from "@/app/components/ui/badge";
 import { toast } from "@/app/utils/toast";
-import { searchOfficialsInDatabaseAction } from "@/app/actions/matchOfficial.actions";
+import {getOfficialByExactUsernameAction, searchOfficialsInDatabaseAction} from "@/app/actions/matchOfficial.actions";
 import { OfficialWithInfo } from "@/server/dto/official.dto";
 
 interface OfficialSearchDialogProps {
@@ -42,11 +42,17 @@ export default function OfficialSearchDialog({
     const [robloxResults, setRobloxResults] = useState<RobloxUserWithAvatar[]>([]);
     const [searching, setSearching] = useState(false);
     const [assigning, setAssigning] = useState<string | null>(null);
+    const [searchSubmitted, setSearchSubmitted] = useState(false);
+    const lastSearchedQuery = useRef("");
 
     const searchDatabase = useCallback(async (query: string) => {
         if (!query.trim()) {
             setDbSuggestions([]);
             setRobloxResults([]);
+            return;
+        }
+
+        if (searchSubmitted && query === lastSearchedQuery.current) {
             return;
         }
 
@@ -65,7 +71,7 @@ export default function OfficialSearchDialog({
             clientLogger.error('OfficialSearchDialog', 'Exception during DB search', { query, error });
             setDbSuggestions([]);
         }
-    }, []);
+    }, [searchSubmitted]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -82,10 +88,22 @@ export default function OfficialSearchDialog({
         }
 
         setSearching(true);
-        setRobloxResults([]);
-        clientLogger.info("OfficialSearchDialog", "Searching Roblox for officials", { query: searchQuery });
+        setSearchSubmitted(true);
+        lastSearchedQuery.current = searchQuery;
+        clientLogger.info("OfficialSearchDialog", "Searching for officials", { query: searchQuery });
 
         try {
+            const exactMatchResult = await getOfficialByExactUsernameAction({query:searchQuery});
+
+            if (!exactMatchResult.ok) {
+                clientLogger.error('OfficialSearchDialog', 'Exact match search failed', { username: searchQuery, error: exactMatchResult.error });
+            } else if (exactMatchResult.value) {
+                setDbSuggestions([exactMatchResult.value]);
+                setRobloxResults([]);
+                setSearching(false);
+                return;
+            }
+
             const results = await searchOfficials(searchQuery.trim());
             setRobloxResults(results);
             clientLogger.info("OfficialSearchDialog", "Roblox search completed", { count: results.length });
@@ -94,11 +112,16 @@ export default function OfficialSearchDialog({
                 toast.error("No users found");
             }
         } catch (error) {
-            clientLogger.error("OfficialSearchDialog", "Roblox search failed", { error });
+            clientLogger.error("OfficialSearchDialog", "Search failed", { error });
             toast.error("Search failed");
         } finally {
             setSearching(false);
         }
+    };
+
+    const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        setSearchSubmitted(false);
     };
 
     const handleAssignRoblox = async (user: RobloxUserWithAvatar) => {
@@ -129,6 +152,8 @@ export default function OfficialSearchDialog({
             setSearchQuery("");
             setRobloxResults([]);
             setDbSuggestions([]);
+            setSearchSubmitted(false);
+            lastSearchedQuery.current = "";
             onAssigned();
         } else {
             toast.error("Failed to assign official to match");
@@ -157,6 +182,8 @@ export default function OfficialSearchDialog({
             setSearchQuery("");
             setRobloxResults([]);
             setDbSuggestions([]);
+            setSearchSubmitted(false);
+            lastSearchedQuery.current = "";
             onAssigned();
         } else {
             toast.error("Failed to assign official to match");
@@ -200,7 +227,7 @@ export default function OfficialSearchDialog({
                                 id="search"
                                 placeholder="Enter username"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={handleSearchQueryChange}
                                 onKeyPress={handleKeyPress}
                                 disabled={searching || loading}
                                 className="flex-1 rounded-sm"

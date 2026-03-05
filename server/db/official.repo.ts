@@ -104,3 +104,20 @@ export async function findOfficialsBySimilarity(
 
     return { data: results, error: null };
 }
+
+export async function findOfficialByExactUsername(
+    supabase: DBClient,
+    username: string
+) {
+    return supabase
+        .from("officials")
+        .select(`
+            id,
+            roblox_user_id,
+            username,
+            display_name,
+            avatar_url
+        `)
+        .ilike("username", username)
+        .maybeSingle()
+}
