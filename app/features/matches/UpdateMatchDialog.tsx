@@ -21,7 +21,7 @@ import {
 import { useMatchesStore } from "@/app/stores/matchStore";
 import { usePlayerStore } from "@/app/stores/playerStore";
 import { clientLogger } from "@/app/utils/clientLogger";
-import { Player, MatchSet } from "@/shared/types/db";
+import { MatchSet } from "@/shared/types/db";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 import {toast} from "@/app/utils/toast";
