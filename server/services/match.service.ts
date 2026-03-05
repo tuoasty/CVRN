@@ -171,15 +171,19 @@ export async function getAvailableTeamsForWeek(
             .eq("week", p.week);
 
         if (matchesError) {
-            logger.error({seasonId:p.seasonId, week:p.week, error: teamsError}, "Failed to fetch matches for week");
+            logger.error({seasonId:p.seasonId, week:p.week, error: matchesError}, "Failed to fetch matches for week");
             return Err(serializeError(matchesError));
         }
 
         const usedTeamIds = new Set<string>();
         if (matches) {
             matches.forEach(m => {
-                usedTeamIds.add(m.home_team_id);
-                usedTeamIds.add(m.away_team_id);
+                if (m.home_team_id) {
+                    usedTeamIds.add(m.home_team_id);
+                }
+                if (m.away_team_id) {
+                    usedTeamIds.add(m.away_team_id);
+                }
             });
         }
 

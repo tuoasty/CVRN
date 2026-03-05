@@ -13,7 +13,8 @@ import {
     updateSeasonPlayoffStatus
 } from "@/server/db/playoff.repo";
 import { randomUUID } from "node:crypto";
-import {findAllMatches} from "@/server/db/matches.repo";
+
+type RoundType = "play_in" | "round_of_16" | "quarterfinal" | "semifinal" | "final" | "third_place";
 
 export async function generatePlayoffBracket(
     supabase: DBClient,
@@ -69,38 +70,30 @@ export async function generatePlayoffBracket(
         const allMatches: InsertPlayoffMatchDto[] = [];
         const allBrackets: InsertPlayoffBracketDto[] = [];
 
-        const playinMatchIds = generatePlayinMatches(
-            p.seasonId,
-            playinTeams,
-            allMatches,
-            allBrackets
-        );
+        const bracketStructure = determineBracketStructure(config.qualified_teams, config.playin_teams);
 
-        const r16MatchIds = generateRound16Matches(
+        let currentWeek = 1;
+        let previousRoundMatchIds: string[] = [];
+
+        if (bracketStructure.hasPlayins) {
+            previousRoundMatchIds = generatePlayinRound(
+                p.seasonId,
+                playinTeams,
+                currentWeek,
+                allMatches,
+                allBrackets
+            );
+            currentWeek++;
+        }
+
+        const teamsAfterPlayins = config.qualified_teams + previousRoundMatchIds.length;
+
+        previousRoundMatchIds = generateMainBracketRounds(
             p.seasonId,
             qualifiedTeams,
-            playinMatchIds,
-            allMatches,
-            allBrackets
-        );
-
-        const quarterMatchIds = generateQuarterfinalsMatches(
-            p.seasonId,
-            r16MatchIds,
-            allMatches,
-            allBrackets
-        );
-
-        const semiMatchIds = generateSemifinalsMatches(
-            p.seasonId,
-            quarterMatchIds,
-            allMatches,
-            allBrackets
-        );
-
-        generateFinalsMatches(
-            p.seasonId,
-            semiMatchIds,
+            previousRoundMatchIds,
+            teamsAfterPlayins,
+            currentWeek,
             allMatches,
             allBrackets
         );
@@ -144,30 +137,40 @@ export async function generatePlayoffBracket(
     }
 }
 
-function generatePlayinMatches(
+function determineBracketStructure(qualifiedTeams: number, playinTeams: number) {
+    const teamsAfterPlayins = qualifiedTeams + playinTeams;
+
+    const nextPowerOf2 = Math.pow(2, Math.ceil(Math.log2(teamsAfterPlayins)));
+
+    return {
+        hasPlayins: playinTeams > 0,
+        playinMatches: playinTeams / 2,
+        teamsAfterPlayins,
+        targetBracketSize: nextPowerOf2,
+        roundsNeeded: Math.log2(nextPowerOf2)
+    };
+}
+
+function generatePlayinRound(
     seasonId: string,
     playinTeams: Array<{ team_id: string | null; rank: number | null }>,
+    week: number,
     allMatches: InsertPlayoffMatchDto[],
     allBrackets: InsertPlayoffBracketDto[]
 ): string[] {
     const matchIds: string[] = [];
-    const pairings = [
-        { home: 16, away: 17 },
-        { home: 15, away: 18 },
-        { home: 14, away: 19 },
-        { home: 13, away: 20 }
-    ];
+    const numMatches = playinTeams.length / 2;
 
-    for (const pairing of pairings) {
+    for (let i = 0; i < numMatches; i++) {
         const matchId = randomUUID();
         matchIds.push(matchId);
 
-        const homeTeam = playinTeams.find(t => t.rank === pairing.home);
-        const awayTeam = playinTeams.find(t => t.rank === pairing.away);
+        const homeTeam = playinTeams[i * 2];
+        const awayTeam = playinTeams[i * 2 + 1];
 
         allMatches.push({
             seasonId,
-            week: 1,
+            week,
             matchType: "playoffs",
             status: "pending",
             bestOf: 3,
@@ -179,8 +182,8 @@ function generatePlayinMatches(
             seasonId,
             round: "play_in",
             matchId,
-            seedHome: pairing.home,
-            seedAway: pairing.away,
+            seedHome: homeTeam?.rank ?? null,
+            seedAway: awayTeam?.rank ?? null,
             nextBracketId: null,
             winnerPosition: null
         });
@@ -189,224 +192,211 @@ function generatePlayinMatches(
     return matchIds;
 }
 
-function generateRound16Matches(
+function generateMainBracketRounds(
     seasonId: string,
     qualifiedTeams: Array<{ team_id: string | null; rank: number | null }>,
     playinMatchIds: string[],
+    totalTeamsInBracket: number,
+    startingWeek: number,
     allMatches: InsertPlayoffMatchDto[],
     allBrackets: InsertPlayoffBracketDto[]
 ): string[] {
-    const matchIds: string[] = [];
+    const rounds = calculateRounds(totalTeamsInBracket);
 
-    const pairings = [
-        { homeSeed: 1, awayPlayinIndex: 0 },
-        { homeSeed: 8, awaySeed: 9 },
-        { homeSeed: 5, awaySeed: 12 },
-        { homeSeed: 4, awayPlayinIndex: 1 },
-        { homeSeed: 3, awayPlayinIndex: 2 },
-        { homeSeed: 6, awaySeed: 11 },
-        { homeSeed: 7, awaySeed: 10 },
-        { homeSeed: 2, awayPlayinIndex: 3 }
-    ];
+    let currentWeek = startingWeek;
+    let previousRoundMatchIds: string[] = [];
 
-    for (const pairing of pairings) {
-        const matchId = randomUUID();
-        matchIds.push(matchId);
+    for (let roundIndex = 0; roundIndex < rounds.length; roundIndex++) {
+        const round = rounds[roundIndex];
+        const isFirstRound = roundIndex === 0;
+        const isSemifinal = round.type === "semifinal";
+        const isFinal = round.type === "final";
 
-        const homeTeam = qualifiedTeams.find(t => t.rank === pairing.homeSeed);
-        let awayTeamId: string | null = null;
-        let awaySeed: number | null = null;
+        const newMatchIds: string[] = [];
 
-        if ('awaySeed' in pairing && pairing.awaySeed !== undefined) {
-            const awayTeam = qualifiedTeams.find(t => t.rank === pairing.awaySeed);
-            awayTeamId = awayTeam?.team_id ?? null;
-            awaySeed = pairing.awaySeed;
-        }
+        for (let matchIndex = 0; matchIndex < round.matchCount; matchIndex++) {
+            const matchId = randomUUID();
+            newMatchIds.push(matchId);
 
-        allMatches.push({
-            seasonId,
-            week: 2,
-            matchType: "playoffs",
-            status: "pending",
-            bestOf: 3,
-            homeTeamId: homeTeam?.team_id ?? null,
-            awayTeamId: awayTeamId
-        });
+            let homeTeamId: string | null = null;
+            let awayTeamId: string | null = null;
+            let homeSeed: number | null = null;
+            let awaySeed: number | null = null;
 
-        const bracketEntry: InsertPlayoffBracketDto = {
-            seasonId,
-            round: "round_of_16",
-            matchId,
-            seedHome: pairing.homeSeed,
-            seedAway: awaySeed,
-            nextBracketId: null,
-            winnerPosition: null
-        };
+            if (isFirstRound) {
+                const seeding = getFirstRoundSeeding(totalTeamsInBracket, matchIndex, qualifiedTeams.length, playinMatchIds.length);
 
-        allBrackets.push(bracketEntry);
+                if (seeding.homeType === 'qualified') {
+                    const qualifiedTeam = qualifiedTeams[seeding.homeIndex!];
+                    homeTeamId = qualifiedTeam?.team_id ?? null;
+                    homeSeed = qualifiedTeam?.rank ?? null;
+                }
 
-        if ('awayPlayinIndex' in pairing && pairing.awayPlayinIndex !== undefined) {
-            const playinMatchId = playinMatchIds[pairing.awayPlayinIndex];
-            const playinBracketIndex = allBrackets.findIndex(b => b.matchId === playinMatchId);
+                if (seeding.awayType === 'qualified') {
+                    const qualifiedTeam = qualifiedTeams[seeding.awayIndex!];
+                    awayTeamId = qualifiedTeam?.team_id ?? null;
+                    awaySeed = qualifiedTeam?.rank ?? null;
+                }
+            }
 
-            if (playinBracketIndex !== -1) {
-                allBrackets[playinBracketIndex].nextBracketId = matchId;
-                allBrackets[playinBracketIndex].winnerPosition = "away";
+            allMatches.push({
+                seasonId,
+                week: currentWeek,
+                matchType: "playoffs",
+                status: "pending",
+                bestOf: isSemifinal || isFinal ? 5 : 3,
+                homeTeamId,
+                awayTeamId
+            });
+
+            allBrackets.push({
+                seasonId,
+                round: round.type,
+                matchId,
+                seedHome: homeSeed,
+                seedAway: awaySeed,
+                nextBracketId: null,
+                winnerPosition: null
+            });
+
+            if (isFirstRound && playinMatchIds.length > 0) {
+                const seeding = getFirstRoundSeeding(totalTeamsInBracket, matchIndex, qualifiedTeams.length, playinMatchIds.length);
+
+                if (seeding.awayType === 'playin') {
+                    const playinMatchId = playinMatchIds[seeding.awayIndex!];
+                    const playinBracketIndex = allBrackets.findIndex(b => b.matchId === playinMatchId);
+
+                    if (playinBracketIndex !== -1) {
+                        allBrackets[playinBracketIndex].nextBracketId = matchId;
+                        allBrackets[playinBracketIndex].winnerPosition = "away";
+                    }
+                }
+            }
+
+            if (!isFirstRound && previousRoundMatchIds.length > 0) {
+                const prevMatch1Index = matchIndex * 2;
+                const prevMatch2Index = matchIndex * 2 + 1;
+
+                if (prevMatch1Index < previousRoundMatchIds.length) {
+                    const prevMatch1Id = previousRoundMatchIds[prevMatch1Index];
+                    const prevBracket1Index = allBrackets.findIndex(b => b.matchId === prevMatch1Id);
+
+                    if (prevBracket1Index !== -1) {
+                        allBrackets[prevBracket1Index].nextBracketId = matchId;
+                        allBrackets[prevBracket1Index].winnerPosition = "home";
+                    }
+                }
+
+                if (prevMatch2Index < previousRoundMatchIds.length) {
+                    const prevMatch2Id = previousRoundMatchIds[prevMatch2Index];
+                    const prevBracket2Index = allBrackets.findIndex(b => b.matchId === prevMatch2Id);
+
+                    if (prevBracket2Index !== -1) {
+                        allBrackets[prevBracket2Index].nextBracketId = matchId;
+                        allBrackets[prevBracket2Index].winnerPosition = "away";
+                    }
+                }
             }
         }
+
+        previousRoundMatchIds = newMatchIds;
+        currentWeek++;
     }
 
-    return matchIds;
+    const semiMatchIds = previousRoundMatchIds;
+    generateThirdPlaceMatch(seasonId, semiMatchIds, currentWeek, allMatches, allBrackets);
+
+    return previousRoundMatchIds;
 }
 
-function generateQuarterfinalsMatches(
-    seasonId: string,
-    r16MatchIds: string[],
-    allMatches: InsertPlayoffMatchDto[],
-    allBrackets: InsertPlayoffBracketDto[]
-): string[] {
-    const matchIds: string[] = [];
+function calculateRounds(teamCount: number): Array<{ type: RoundType; matchCount: number }> {
+    const rounds: Array<{ type: RoundType; matchCount: number }> = [];
+    let remainingTeams = teamCount;
 
-    const quarterPairings = [
-        [0, 1],
-        [2, 3],
-        [4, 5],
-        [6, 7]
-    ];
+    const roundNames: RoundType[] = ["round_of_16", "quarterfinal", "semifinal", "final"];
+    let roundNameIndex = 0;
 
-    for (const [r16Index1, r16Index2] of quarterPairings) {
-        const matchId = randomUUID();
-        matchIds.push(matchId);
-
-        allMatches.push({
-            seasonId,
-            week: 3,
-            matchType: "playoffs",
-            status: "pending",
-            bestOf: 3,
-            homeTeamId: null,
-            awayTeamId: null
-        });
-
-        allBrackets.push({
-            seasonId,
-            round: "quarterfinal",
-            matchId,
-            seedHome: null,
-            seedAway: null,
-            nextBracketId: null,
-            winnerPosition: null
-        });
-
-        const r16Match1Id = r16MatchIds[r16Index1];
-        const r16Match2Id = r16MatchIds[r16Index2];
-
-        const r16Bracket1Index = allBrackets.findIndex(b => b.matchId === r16Match1Id);
-        const r16Bracket2Index = allBrackets.findIndex(b => b.matchId === r16Match2Id);
-
-        if (r16Bracket1Index !== -1) {
-            allBrackets[r16Bracket1Index].nextBracketId = matchId;
-            allBrackets[r16Bracket1Index].winnerPosition = "home";
-        }
-
-        if (r16Bracket2Index !== -1) {
-            allBrackets[r16Bracket2Index].nextBracketId = matchId;
-            allBrackets[r16Bracket2Index].winnerPosition = "away";
-        }
+    if (teamCount === 16) {
+        roundNameIndex = 0;
+    } else if (teamCount === 8) {
+        roundNameIndex = 1;
+    } else if (teamCount === 4) {
+        roundNameIndex = 2;
+    } else if (teamCount === 2) {
+        roundNameIndex = 3;
     }
 
-    return matchIds;
-}
+    while (remainingTeams > 1) {
+        const matchCount = remainingTeams / 2;
+        const roundType = roundNameIndex < roundNames.length ? roundNames[roundNameIndex] : "quarterfinal";
 
-function generateSemifinalsMatches(
-    seasonId: string,
-    quarterMatchIds: string[],
-    allMatches: InsertPlayoffMatchDto[],
-    allBrackets: InsertPlayoffBracketDto[]
-): string[] {
-    const matchIds: string[] = [];
-
-    const semiPairings = [
-        [0, 1],
-        [2, 3]
-    ];
-
-    for (const [quarterIndex1, quarterIndex2] of semiPairings) {
-        const matchId = randomUUID();
-        matchIds.push(matchId);
-
-        allMatches.push({
-            seasonId,
-            week: 4,
-            matchType: "playoffs",
-            status: "pending",
-            bestOf: 5,
-            homeTeamId: null,
-            awayTeamId: null
+        rounds.push({
+            type: roundType,
+            matchCount
         });
 
-        allBrackets.push({
-            seasonId,
-            round: "semifinal",
-            matchId,
-            seedHome: null,
-            seedAway: null,
-            nextBracketId: null,
-            winnerPosition: null
-        });
-
-        const quarterMatch1Id = quarterMatchIds[quarterIndex1];
-        const quarterMatch2Id = quarterMatchIds[quarterIndex2];
-
-        const quarterBracket1Index = allBrackets.findIndex(b => b.matchId === quarterMatch1Id);
-        const quarterBracket2Index = allBrackets.findIndex(b => b.matchId === quarterMatch2Id);
-
-        if (quarterBracket1Index !== -1) {
-            allBrackets[quarterBracket1Index].nextBracketId = matchId;
-            allBrackets[quarterBracket1Index].winnerPosition = "home";
-        }
-
-        if (quarterBracket2Index !== -1) {
-            allBrackets[quarterBracket2Index].nextBracketId = matchId;
-            allBrackets[quarterBracket2Index].winnerPosition = "away";
-        }
+        remainingTeams = matchCount;
+        roundNameIndex++;
     }
 
-    return matchIds;
+    return rounds;
 }
 
-function generateFinalsMatches(
+function getFirstRoundSeeding(
+    totalTeams: number,
+    matchIndex: number,
+    qualifiedCount: number,
+    playinWinnerCount: number
+): {
+    homeType: 'qualified' | 'playin' | null;
+    homeIndex: number | null;
+    awayType: 'qualified' | 'playin' | null;
+    awayIndex: number | null;
+} {
+    const matchesInFirstRound = totalTeams / 2;
+
+    const playinAssignments: number[] = [];
+    const step = matchesInFirstRound / playinWinnerCount;
+
+    for (let i = 0; i < playinWinnerCount; i++) {
+        playinAssignments.push(Math.floor(i * step));
+    }
+
+    const isPlayinMatch = playinAssignments.includes(matchIndex);
+
+    if (isPlayinMatch) {
+        const playinIndex = playinAssignments.indexOf(matchIndex);
+        return {
+            homeType: 'qualified',
+            homeIndex: matchIndex,
+            awayType: 'playin',
+            awayIndex: playinIndex
+        };
+    } else {
+        const awayOffset = matchesInFirstRound - matchIndex - 1;
+        return {
+            homeType: 'qualified',
+            homeIndex: matchIndex,
+            awayType: 'qualified',
+            awayIndex: qualifiedCount - 1 - awayOffset
+        };
+    }
+}
+
+function generateThirdPlaceMatch(
     seasonId: string,
     semiMatchIds: string[],
+    week: number,
     allMatches: InsertPlayoffMatchDto[],
     allBrackets: InsertPlayoffBracketDto[]
 ): void {
-    const finalsMatchId = randomUUID();
+    if (semiMatchIds.length !== 2) return;
+
     const thirdPlaceMatchId = randomUUID();
 
     allMatches.push({
         seasonId,
-        week: 5,
-        matchType: "playoffs",
-        status: "pending",
-        bestOf: 5,
-        homeTeamId: null,
-        awayTeamId: null
-    });
-
-    allBrackets.push({
-        seasonId,
-        round: "final",
-        matchId: finalsMatchId,
-        seedHome: null,
-        seedAway: null,
-        nextBracketId: null,
-        winnerPosition: null
-    });
-
-    allMatches.push({
-        seasonId,
-        week: 5,
+        week,
         matchType: "playoffs",
         status: "pending",
         bestOf: 5,
@@ -423,30 +413,14 @@ function generateFinalsMatches(
         nextBracketId: null,
         winnerPosition: null
     });
-
-    const semi1Id = semiMatchIds[0];
-    const semi2Id = semiMatchIds[1];
-
-    const semi1BracketIndex = allBrackets.findIndex(b => b.matchId === semi1Id);
-    const semi2BracketIndex = allBrackets.findIndex(b => b.matchId === semi2Id);
-
-    if (semi1BracketIndex !== -1) {
-        allBrackets[semi1BracketIndex].nextBracketId = finalsMatchId;
-        allBrackets[semi1BracketIndex].winnerPosition = "home";
-    }
-
-    if (semi2BracketIndex !== -1) {
-        allBrackets[semi2BracketIndex].nextBracketId = finalsMatchId;
-        allBrackets[semi2BracketIndex].winnerPosition = "away";
-    }
 }
 
-export async function getPlayoffBracketBySeasonId(supabase:DBClient, seasonId:string): Promise<Result<PlayoffBracket[]>>{
+export async function getPlayoffBracketBySeasonId(supabase: DBClient, seasonId: string): Promise<Result<PlayoffBracket[]>> {
     try {
-        const {data, error} = await findPlayoffBracketsBySeasonId(supabase, seasonId);
+        const { data, error } = await findPlayoffBracketsBySeasonId(supabase, seasonId);
 
         if (error) {
-            logger.error({error}, "Failed to fetch playoff bracket matches");
+            logger.error({ error }, "Failed to fetch playoff bracket matches");
             return Err(serializeError(error));
         }
 
@@ -459,7 +433,7 @@ export async function getPlayoffBracketBySeasonId(supabase:DBClient, seasonId:st
 
         return Ok(data);
     } catch (error) {
-        logger.error({error}, "Unexpected error fetching playoff brackets");
+        logger.error({ error }, "Unexpected error fetching playoff brackets");
         return Err(serializeError(error));
     }
 }
