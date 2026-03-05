@@ -133,10 +133,20 @@ export async function findPlayoffConfigBySeasonId(
     supabase: DBClient,
     seasonId: string
 ) {
+    const { data: season, error } = await supabase
+        .from("seasons")
+        .select("playoff_config_id")
+        .eq("id", seasonId)
+        .single();
+
+    if (error || !season?.playoff_config_id) {
+        return { data: null, error };
+    }
+
     return supabase
         .from("playoff_configs")
         .select("*")
-        .eq("season_id", seasonId)
+        .eq("id", season.playoff_config_id)
         .single();
 }
 
@@ -145,6 +155,7 @@ export async function insertPlayoffMatches(
     matches: InsertPlayoffMatchDto[]
 ) {
     const rows = matches.map(m => ({
+        ...(m.id && { id: m.id }),
         season_id: m.seasonId,
         week: m.week,
         match_type: m.matchType,

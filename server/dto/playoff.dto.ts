@@ -14,6 +14,7 @@ export interface InsertPlayoffBracketDto {
 }
 
 export interface InsertPlayoffMatchDto {
+    id?: string;
     seasonId: string;
     week: number;
     matchType: "playoffs";

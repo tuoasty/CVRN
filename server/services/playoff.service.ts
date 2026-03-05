@@ -98,6 +98,9 @@ export async function generatePlayoffBracket(
             allBrackets
         );
 
+        const semiMatchIds = previousRoundMatchIds;
+        generateThirdPlaceMatch(p.seasonId, semiMatchIds, currentWeek, allMatches, allBrackets);
+
         const { data: matches, error: matchesError } = await insertPlayoffMatches(supabase, allMatches);
 
         if (matchesError || !matches) {
@@ -105,11 +108,66 @@ export async function generatePlayoffBracket(
             return Err(serializeError(matchesError));
         }
 
-        const { data: brackets, error: bracketsError } = await insertPlayoffBrackets(supabase, allBrackets);
+        const matchIdMap = new Map<string, string>();
+        allMatches.forEach((match, index) => {
+            if (match.id) {
+                matchIdMap.set(match.id, matches[index].id);
+            }
+        });
+
+        // After mapping matchIdMap, insert ALL brackets with next_bracket_id as NULL
+        const bracketsWithoutNext = allBrackets.map(b => ({
+            seasonId: b.seasonId,
+            round: b.round,
+            matchId: b.matchId,
+            seedHome: b.seedHome,
+            seedAway: b.seedAway,
+            nextBracketId: null,
+            winnerPosition: b.winnerPosition
+        }));
+
+        const { data: brackets, error: bracketsError } = await insertPlayoffBrackets(supabase, bracketsWithoutNext);
 
         if (bracketsError || !brackets) {
             logger.error({ seasonId: p.seasonId, error: bracketsError }, "Failed to insert playoff brackets");
             return Err(serializeError(bracketsError));
+        }
+
+// Build map: matchId → bracket.id (the bracket's database ID)
+        const matchToBracketIdMap = new Map<string, string>();
+        brackets.forEach(b => {
+            matchToBracketIdMap.set(b.match_id, b.id);
+        });
+
+// Now update next_bracket_id to reference the BRACKET ID of the next match
+        const updatePromises = allBrackets
+            .filter(b => b.nextBracketId !== null)
+            .map(async (b) => {
+                const currentBracketId = matchToBracketIdMap.get(b.matchId);
+                const nextBracketId = matchToBracketIdMap.get(b.nextBracketId!);
+
+                if (!currentBracketId || !nextBracketId) {
+                    logger.warn({
+                        currentMatchId: b.matchId,
+                        nextMatchId: b.nextBracketId
+                    }, "Could not find bracket IDs for update");
+                    return { error: null };
+                }
+
+                return supabase
+                    .from("playoff_brackets")
+                    .update({ next_bracket_id: nextBracketId })
+                    .eq("id", currentBracketId);
+            });
+
+        if (updatePromises.length > 0) {
+            const updateResults = await Promise.all(updatePromises);
+            const updateError = updateResults.find(r => r.error);
+
+            if (updateError?.error) {
+                logger.error({ seasonId: p.seasonId, error: updateError.error }, "Failed to update bracket references");
+                return Err(serializeError(updateError.error));
+            }
         }
 
         const { error: updateError } = await updateSeasonPlayoffStatus(supabase, p.seasonId, {
@@ -139,7 +197,6 @@ export async function generatePlayoffBracket(
 
 function determineBracketStructure(qualifiedTeams: number, playinTeams: number) {
     const teamsAfterPlayins = qualifiedTeams + playinTeams;
-
     const nextPowerOf2 = Math.pow(2, Math.ceil(Math.log2(teamsAfterPlayins)));
 
     return {
@@ -169,6 +226,7 @@ function generatePlayinRound(
         const awayTeam = playinTeams[i * 2 + 1];
 
         allMatches.push({
+            id: matchId,
             seasonId,
             week,
             matchType: "playoffs",
@@ -204,7 +262,7 @@ function generateMainBracketRounds(
     const rounds = calculateRounds(totalTeamsInBracket);
 
     let currentWeek = startingWeek;
-    let previousRoundMatchIds: string[] = [];
+    let previousRoundMatchIds: string[] = playinMatchIds;
 
     for (let roundIndex = 0; roundIndex < rounds.length; roundIndex++) {
         const round = rounds[roundIndex];
@@ -240,6 +298,7 @@ function generateMainBracketRounds(
             }
 
             allMatches.push({
+                id: matchId,
                 seasonId,
                 week: currentWeek,
                 matchType: "playoffs",
@@ -302,9 +361,6 @@ function generateMainBracketRounds(
         previousRoundMatchIds = newMatchIds;
         currentWeek++;
     }
-
-    const semiMatchIds = previousRoundMatchIds;
-    generateThirdPlaceMatch(seasonId, semiMatchIds, currentWeek, allMatches, allBrackets);
 
     return previousRoundMatchIds;
 }
@@ -395,6 +451,7 @@ function generateThirdPlaceMatch(
     const thirdPlaceMatchId = randomUUID();
 
     allMatches.push({
+        id: thirdPlaceMatchId,
         seasonId,
         week,
         matchType: "playoffs",
