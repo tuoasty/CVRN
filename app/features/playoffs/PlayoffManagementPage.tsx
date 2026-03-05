@@ -9,11 +9,13 @@ import { Button } from "@/app/components/ui/button";
 import { toast } from "@/app/utils/toast";
 import { PlayoffBracket } from "@/shared/types/db";
 import { PlayoffBracketDisplay } from "./PlayoffBracketDisplay";
+import { Loader2 } from "lucide-react";
 
 export default function PlayoffManagementPage() {
     const [selectedRegionId, setSelectedRegionId] = useState<string>("");
     const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
     const [brackets, setBrackets] = useState<PlayoffBracket[]>([]);
+    const [loadingBrackets, setLoadingBrackets] = useState(false);
 
     const { generateBracket, fetchBrackets, loading } = usePlayoffStore();
     const { allRegionsCache, fetchAllRegions } = useRegionsStore();
@@ -42,11 +44,13 @@ export default function PlayoffManagementPage() {
             return;
         }
 
+        setLoadingBrackets(true);
         fetchBrackets(selectedSeasonId)
             .then(setBrackets)
             .catch((error) => {
                 toast.error("Failed to load brackets", error.message);
-            });
+            })
+            .finally(() => setLoadingBrackets(false));
     }, [selectedSeasonId, fetchBrackets]);
 
     const handleGenerateBracket = async () => {
@@ -59,8 +63,10 @@ export default function PlayoffManagementPage() {
 
         if (success) {
             toast.success("Playoff bracket generated successfully");
+            setLoadingBrackets(true);
             const updatedBrackets = await fetchBrackets(selectedSeasonId);
             setBrackets(updatedBrackets);
+            setLoadingBrackets(false);
         }
     };
 
@@ -79,7 +85,7 @@ export default function PlayoffManagementPage() {
                     </div>
                 </div>
 
-                <div className="panel p-6 max-w-2xl">
+                <div className="panel p-6 max-w-2xl mb-6">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Region</label>
@@ -123,15 +129,29 @@ export default function PlayoffManagementPage() {
                             <Button
                                 onClick={handleGenerateBracket}
                                 disabled={loading}
-                                className="w-full"
+                                className="w-full rounded-sm"
                             >
-                                {loading ? "Generating..." : "Generate Playoff Bracket"}
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Generating...
+                                    </>
+                                ) : (
+                                    "Generate Playoff Bracket"
+                                )}
                             </Button>
                         </div>
                     )}
                 </div>
 
-                {selectedSeasonId && brackets.length > 0 ? (
+                {loadingBrackets ? (
+                    <div className="panel p-12">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Loading bracket...</p>
+                        </div>
+                    </div>
+                ) : selectedSeasonId && brackets.length > 0 ? (
                     <PlayoffBracketDisplay brackets={brackets} seasonId={selectedSeasonId} />
                 ) : selectedSeasonId && !loading ? (
                     <div className="panel p-12">

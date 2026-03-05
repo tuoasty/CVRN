@@ -64,42 +64,173 @@ export async function generatePlayoffBracket(
             });
         }
 
-        const qualifiedTeams = standings.slice(0, config.qualified_teams);
-        const playinTeams = standings.slice(config.qualified_teams, totalTeams);
-
         const allMatches: InsertPlayoffMatchDto[] = [];
         const allBrackets: InsertPlayoffBracketDto[] = [];
 
-        const bracketStructure = determineBracketStructure(config.qualified_teams, config.playin_teams);
-
         let currentWeek = 1;
-        let previousRoundMatchIds: string[] = [];
 
-        if (bracketStructure.hasPlayins) {
-            previousRoundMatchIds = generatePlayinRound(
-                p.seasonId,
-                playinTeams,
-                currentWeek,
-                allMatches,
-                allBrackets
-            );
+        // Generate play-in matches if needed
+        const playinMatchIdMap = new Map<number, string>(); // seed -> matchId
+        if (config.playin_teams > 0) {
+            const playinTeams = standings.slice(config.qualified_teams, totalTeams);
+
+            for (let i = 0; i < playinTeams.length; i += 2) {
+                const matchId = randomUUID();
+                const homeTeam = playinTeams[i];
+                const awayTeam = playinTeams[i + 1];
+
+                playinMatchIdMap.set(homeTeam.rank!, matchId);
+                playinMatchIdMap.set(awayTeam.rank!, matchId);
+
+                allMatches.push({
+                    id: matchId,
+                    seasonId: p.seasonId,
+                    week: currentWeek,
+                    matchType: "playoffs",
+                    status: "pending",
+                    bestOf: 3,
+                    homeTeamId: homeTeam?.team_id ?? null,
+                    awayTeamId: awayTeam?.team_id ?? null
+                });
+
+                allBrackets.push({
+                    seasonId: p.seasonId,
+                    round: "play_in",
+                    matchId,
+                    seedHome: homeTeam?.rank ?? null,
+                    seedAway: awayTeam?.rank ?? null,
+                    nextBracketId: null,
+                    winnerPosition: null
+                });
+            }
             currentWeek++;
         }
 
-        const teamsAfterPlayins = config.qualified_teams + previousRoundMatchIds.length;
+        // Generate main bracket
+        const teamsAfterPlayins = config.qualified_teams + (config.playin_teams / 2);
+        const rounds = calculateRounds(teamsAfterPlayins);
 
-        previousRoundMatchIds = generateMainBracketRounds(
-            p.seasonId,
-            qualifiedTeams,
-            previousRoundMatchIds,
-            teamsAfterPlayins,
-            currentWeek,
-            allMatches,
-            allBrackets
-        );
+        let previousRoundMatchIds: string[] = [];
 
-        const semiMatchIds = previousRoundMatchIds;
-        generateThirdPlaceMatch(p.seasonId, semiMatchIds, currentWeek, allMatches, allBrackets);
+        for (let roundIndex = 0; roundIndex < rounds.length; roundIndex++) {
+            const round = rounds[roundIndex];
+            const isFirstRound = roundIndex === 0;
+            const isSemifinal = round.type === "semifinal";
+            const isFinal = round.type === "final";
+
+            const newMatchIds: string[] = [];
+
+            for (let matchIndex = 0; matchIndex < round.matchCount; matchIndex++) {
+                const matchId = randomUUID();
+                newMatchIds.push(matchId);
+
+                let homeTeamId: string | null = null;
+                let awayTeamId: string | null = null;
+                let homeSeed: number | null = null;
+                let awaySeed: number | null = null;
+
+                if (isFirstRound) {
+                    // First round of main bracket
+                    const seeding = getFirstRoundSeeding(
+                        config.qualified_teams,
+                        config.playin_teams,
+                        matchIndex
+                    );
+
+                    // Set home team (always qualified)
+                    if (seeding.homeSeed) {
+                        const homeTeam = standings.find(s => s.rank === seeding.homeSeed);
+                        homeTeamId = homeTeam?.team_id ?? null;
+                        homeSeed = seeding.homeSeed;
+                    }
+
+                    // Set away team (qualified or TBD from play-in)
+                    if (seeding.awayType === 'qualified' && seeding.awaySeed) {
+                        const awayTeam = standings.find(s => s.rank === seeding.awaySeed);
+                        awayTeamId = awayTeam?.team_id ?? null;
+                        awaySeed = seeding.awaySeed;
+                    }
+                    // If awayType is 'playin', leave awayTeamId as null (TBD)
+                }
+
+                allMatches.push({
+                    id: matchId,
+                    seasonId: p.seasonId,
+                    week: currentWeek,
+                    matchType: "playoffs",
+                    status: "pending",
+                    bestOf: isSemifinal || isFinal ? 5 : 3,
+                    homeTeamId,
+                    awayTeamId
+                });
+
+                allBrackets.push({
+                    seasonId: p.seasonId,
+                    round: round.type,
+                    matchId,
+                    seedHome: homeSeed,
+                    seedAway: awaySeed,
+                    nextBracketId: null,
+                    winnerPosition: null
+                });
+
+                // Link play-in matches to first round
+                if (isFirstRound) {
+                    const seeding = getFirstRoundSeeding(
+                        config.qualified_teams,
+                        config.playin_teams,
+                        matchIndex
+                    );
+
+                    if (seeding.awayType === 'playin' && seeding.playinSeeds) {
+                        // Find the play-in match that these seeds participate in
+                        const playinMatchId = playinMatchIdMap.get(seeding.playinSeeds[0]);
+
+                        if (playinMatchId) {
+                            const playinBracketIndex = allBrackets.findIndex(b => b.matchId === playinMatchId);
+                            if (playinBracketIndex !== -1) {
+                                allBrackets[playinBracketIndex].nextBracketId = matchId;
+                                allBrackets[playinBracketIndex].winnerPosition = "away";
+                            }
+                        }
+                    }
+                }
+
+                // Link previous round to current round
+                if (!isFirstRound && previousRoundMatchIds.length > 0) {
+                    const prevMatch1Index = matchIndex * 2;
+                    const prevMatch2Index = matchIndex * 2 + 1;
+
+                    if (prevMatch1Index < previousRoundMatchIds.length) {
+                        const prevMatch1Id = previousRoundMatchIds[prevMatch1Index];
+                        const prevBracket1Index = allBrackets.findIndex(b => b.matchId === prevMatch1Id);
+
+                        if (prevBracket1Index !== -1) {
+                            allBrackets[prevBracket1Index].nextBracketId = matchId;
+                            allBrackets[prevBracket1Index].winnerPosition = "home";
+                        }
+                    }
+
+                    if (prevMatch2Index < previousRoundMatchIds.length) {
+                        const prevMatch2Id = previousRoundMatchIds[prevMatch2Index];
+                        const prevBracket2Index = allBrackets.findIndex(b => b.matchId === prevMatch2Id);
+
+                        if (prevBracket2Index !== -1) {
+                            allBrackets[prevBracket2Index].nextBracketId = matchId;
+                            allBrackets[prevBracket2Index].winnerPosition = "away";
+                        }
+                    }
+                }
+            }
+
+            previousRoundMatchIds = newMatchIds;
+            currentWeek++;
+        }
+
+        // Generate third place match
+        if (previousRoundMatchIds.length === 2) {
+            generateThirdPlaceMatch(p.seasonId, previousRoundMatchIds, currentWeek, allMatches, allBrackets);
+        }
 
         const { data: matches, error: matchesError } = await insertPlayoffMatches(supabase, allMatches);
 
@@ -115,7 +246,6 @@ export async function generatePlayoffBracket(
             }
         });
 
-        // After mapping matchIdMap, insert ALL brackets with next_bracket_id as NULL
         const bracketsWithoutNext = allBrackets.map(b => ({
             seasonId: b.seasonId,
             round: b.round,
@@ -133,13 +263,11 @@ export async function generatePlayoffBracket(
             return Err(serializeError(bracketsError));
         }
 
-// Build map: matchId → bracket.id (the bracket's database ID)
         const matchToBracketIdMap = new Map<string, string>();
         brackets.forEach(b => {
             matchToBracketIdMap.set(b.match_id, b.id);
         });
 
-// Now update next_bracket_id to reference the BRACKET ID of the next match
         const updatePromises = allBrackets
             .filter(b => b.nextBracketId !== null)
             .map(async (b) => {
@@ -195,176 +323,6 @@ export async function generatePlayoffBracket(
     }
 }
 
-function determineBracketStructure(qualifiedTeams: number, playinTeams: number) {
-    const teamsAfterPlayins = qualifiedTeams + playinTeams;
-    const nextPowerOf2 = Math.pow(2, Math.ceil(Math.log2(teamsAfterPlayins)));
-
-    return {
-        hasPlayins: playinTeams > 0,
-        playinMatches: playinTeams / 2,
-        teamsAfterPlayins,
-        targetBracketSize: nextPowerOf2,
-        roundsNeeded: Math.log2(nextPowerOf2)
-    };
-}
-
-function generatePlayinRound(
-    seasonId: string,
-    playinTeams: Array<{ team_id: string | null; rank: number | null }>,
-    week: number,
-    allMatches: InsertPlayoffMatchDto[],
-    allBrackets: InsertPlayoffBracketDto[]
-): string[] {
-    const matchIds: string[] = [];
-    const numMatches = playinTeams.length / 2;
-
-    for (let i = 0; i < numMatches; i++) {
-        const matchId = randomUUID();
-        matchIds.push(matchId);
-
-        const homeTeam = playinTeams[i * 2];
-        const awayTeam = playinTeams[i * 2 + 1];
-
-        allMatches.push({
-            id: matchId,
-            seasonId,
-            week,
-            matchType: "playoffs",
-            status: "pending",
-            bestOf: 3,
-            homeTeamId: homeTeam?.team_id ?? null,
-            awayTeamId: awayTeam?.team_id ?? null
-        });
-
-        allBrackets.push({
-            seasonId,
-            round: "play_in",
-            matchId,
-            seedHome: homeTeam?.rank ?? null,
-            seedAway: awayTeam?.rank ?? null,
-            nextBracketId: null,
-            winnerPosition: null
-        });
-    }
-
-    return matchIds;
-}
-
-function generateMainBracketRounds(
-    seasonId: string,
-    qualifiedTeams: Array<{ team_id: string | null; rank: number | null }>,
-    playinMatchIds: string[],
-    totalTeamsInBracket: number,
-    startingWeek: number,
-    allMatches: InsertPlayoffMatchDto[],
-    allBrackets: InsertPlayoffBracketDto[]
-): string[] {
-    const rounds = calculateRounds(totalTeamsInBracket);
-
-    let currentWeek = startingWeek;
-    let previousRoundMatchIds: string[] = playinMatchIds;
-
-    for (let roundIndex = 0; roundIndex < rounds.length; roundIndex++) {
-        const round = rounds[roundIndex];
-        const isFirstRound = roundIndex === 0;
-        const isSemifinal = round.type === "semifinal";
-        const isFinal = round.type === "final";
-
-        const newMatchIds: string[] = [];
-
-        for (let matchIndex = 0; matchIndex < round.matchCount; matchIndex++) {
-            const matchId = randomUUID();
-            newMatchIds.push(matchId);
-
-            let homeTeamId: string | null = null;
-            let awayTeamId: string | null = null;
-            let homeSeed: number | null = null;
-            let awaySeed: number | null = null;
-
-            if (isFirstRound) {
-                const seeding = getFirstRoundSeeding(totalTeamsInBracket, matchIndex, qualifiedTeams.length, playinMatchIds.length);
-
-                if (seeding.homeType === 'qualified') {
-                    const qualifiedTeam = qualifiedTeams[seeding.homeIndex!];
-                    homeTeamId = qualifiedTeam?.team_id ?? null;
-                    homeSeed = qualifiedTeam?.rank ?? null;
-                }
-
-                if (seeding.awayType === 'qualified') {
-                    const qualifiedTeam = qualifiedTeams[seeding.awayIndex!];
-                    awayTeamId = qualifiedTeam?.team_id ?? null;
-                    awaySeed = qualifiedTeam?.rank ?? null;
-                }
-            }
-
-            allMatches.push({
-                id: matchId,
-                seasonId,
-                week: currentWeek,
-                matchType: "playoffs",
-                status: "pending",
-                bestOf: isSemifinal || isFinal ? 5 : 3,
-                homeTeamId,
-                awayTeamId
-            });
-
-            allBrackets.push({
-                seasonId,
-                round: round.type,
-                matchId,
-                seedHome: homeSeed,
-                seedAway: awaySeed,
-                nextBracketId: null,
-                winnerPosition: null
-            });
-
-            if (isFirstRound && playinMatchIds.length > 0) {
-                const seeding = getFirstRoundSeeding(totalTeamsInBracket, matchIndex, qualifiedTeams.length, playinMatchIds.length);
-
-                if (seeding.awayType === 'playin') {
-                    const playinMatchId = playinMatchIds[seeding.awayIndex!];
-                    const playinBracketIndex = allBrackets.findIndex(b => b.matchId === playinMatchId);
-
-                    if (playinBracketIndex !== -1) {
-                        allBrackets[playinBracketIndex].nextBracketId = matchId;
-                        allBrackets[playinBracketIndex].winnerPosition = "away";
-                    }
-                }
-            }
-
-            if (!isFirstRound && previousRoundMatchIds.length > 0) {
-                const prevMatch1Index = matchIndex * 2;
-                const prevMatch2Index = matchIndex * 2 + 1;
-
-                if (prevMatch1Index < previousRoundMatchIds.length) {
-                    const prevMatch1Id = previousRoundMatchIds[prevMatch1Index];
-                    const prevBracket1Index = allBrackets.findIndex(b => b.matchId === prevMatch1Id);
-
-                    if (prevBracket1Index !== -1) {
-                        allBrackets[prevBracket1Index].nextBracketId = matchId;
-                        allBrackets[prevBracket1Index].winnerPosition = "home";
-                    }
-                }
-
-                if (prevMatch2Index < previousRoundMatchIds.length) {
-                    const prevMatch2Id = previousRoundMatchIds[prevMatch2Index];
-                    const prevBracket2Index = allBrackets.findIndex(b => b.matchId === prevMatch2Id);
-
-                    if (prevBracket2Index !== -1) {
-                        allBrackets[prevBracket2Index].nextBracketId = matchId;
-                        allBrackets[prevBracket2Index].winnerPosition = "away";
-                    }
-                }
-            }
-        }
-
-        previousRoundMatchIds = newMatchIds;
-        currentWeek++;
-    }
-
-    return previousRoundMatchIds;
-}
-
 function calculateRounds(teamCount: number): Array<{ type: RoundType; matchCount: number }> {
     const rounds: Array<{ type: RoundType; matchCount: number }> = [];
     let remainingTeams = teamCount;
@@ -399,42 +357,64 @@ function calculateRounds(teamCount: number): Array<{ type: RoundType; matchCount
 }
 
 function getFirstRoundSeeding(
-    totalTeams: number,
-    matchIndex: number,
     qualifiedCount: number,
-    playinWinnerCount: number
+    playinCount: number,
+    matchIndex: number
 ): {
-    homeType: 'qualified' | 'playin' | null;
-    homeIndex: number | null;
-    awayType: 'qualified' | 'playin' | null;
-    awayIndex: number | null;
+    homeSeed: number;
+    awayType: 'qualified' | 'playin';
+    awaySeed?: number;
+    playinSeeds?: [number, number];
 } {
-    const matchesInFirstRound = totalTeams / 2;
+    const totalTeams = qualifiedCount + playinCount;
+    const playinWinners = playinCount / 2;
+    const firstRoundMatchCount = (qualifiedCount + playinWinners) / 2;
 
-    const playinAssignments: number[] = [];
-    const step = matchesInFirstRound / playinWinnerCount;
+    // Standard tournament seeding: 1 vs lowest, 2 vs second-lowest, etc.
+    // With play-ins: top seeds face play-in winners
 
-    for (let i = 0; i < playinWinnerCount; i++) {
-        playinAssignments.push(Math.floor(i * step));
-    }
+    if (playinCount > 0) {
+        // Determine which matches have play-in opponents
+        // Top seeds (1, 2, ...) face play-in winners
+        const topSeedsWithPlayins = Math.floor(playinWinners);
 
-    const isPlayinMatch = playinAssignments.includes(matchIndex);
+        if (matchIndex < topSeedsWithPlayins) {
+            // This is a top seed vs play-in winner match
+            const homeSeed = matchIndex + 1; // 1, 2, 3, ...
 
-    if (isPlayinMatch) {
-        const playinIndex = playinAssignments.indexOf(matchIndex);
-        return {
-            homeType: 'qualified',
-            homeIndex: matchIndex,
-            awayType: 'playin',
-            awayIndex: playinIndex
-        };
+            // Determine which play-in seeds feed into this match
+            // For 4 play-in teams (seeds 7,8,9,10):
+            // Match 0: Seed 1 vs winner of (8v9)
+            // Match 1: Seed 2 vs winner of (7v10)
+            const playinPairIndex = topSeedsWithPlayins - matchIndex - 1;
+            const firstPlayinSeed = qualifiedCount + 1 + (playinPairIndex * 2);
+
+            return {
+                homeSeed,
+                awayType: 'playin',
+                playinSeeds: [firstPlayinSeed + 1, firstPlayinSeed] // Higher seed first (e.g., 8, 9)
+            };
+        } else {
+            // This is a qualified vs qualified match
+            const adjustedIndex = matchIndex - topSeedsWithPlayins;
+            const homeSeed = topSeedsWithPlayins + adjustedIndex + 1;
+            const awaySeed = qualifiedCount - adjustedIndex;
+
+            return {
+                homeSeed,
+                awayType: 'qualified',
+                awaySeed
+            };
+        }
     } else {
-        const awayOffset = matchesInFirstRound - matchIndex - 1;
+        // No play-ins, standard seeding
+        const homeSeed = matchIndex + 1;
+        const awaySeed = qualifiedCount - matchIndex;
+
         return {
-            homeType: 'qualified',
-            homeIndex: matchIndex,
+            homeSeed,
             awayType: 'qualified',
-            awayIndex: qualifiedCount - 1 - awayOffset
+            awaySeed
         };
     }
 }
