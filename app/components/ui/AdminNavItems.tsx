@@ -8,7 +8,8 @@ const NAV_ITEMS = [
     { href: "/admin/dashboard", label: "Dashboard" },
     { href: "/admin/teams", label: "Teams" },
     { href: "/admin/matches", label: "Matches" },
-    { href: "/admin/standings", label: "Standings"}
+    { href: "/admin/standings", label: "Standings"},
+    { href: "/admin/playoffs", label: "Playoffs"}
 ];
 
 export default function AdminNavItems() {
