@@ -343,17 +343,29 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                         <span className="font-semibold text-sm text-right truncate w-full">
                             {homeTeam.name}
                         </span>
-                                                    {match.status === 'completed' && (
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={`h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 ${
-                                                                (match.home_sets_won ?? 0) > (match.away_sets_won ?? 0)
-                                                                    ? "bg-green-600/10 text-green-600"
-                                                                    : "opacity-0 pointer-events-none"
-                                                            }`}
-                                                        >
-                                                            Winner
-                                                        </Badge>
+                                                    {match.status === "completed" && (
+                                                        <>
+                                                            {/* Winner Badge */}
+                                                            {(match.home_sets_won ?? 0) > (match.away_sets_won ?? 0) && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-green-600/10 text-green-600"
+                                                                >
+                                                                    Winner
+                                                                </Badge>
+                                                            )}
+
+                                                            {/* Forfeit Badge (Home Lost by Forfeit) */}
+                                                            {match.is_forfeit &&
+                                                                (match.home_sets_won ?? 0) < (match.away_sets_won ?? 0) && (
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-red-600/10 text-red-600"
+                                                                    >
+                                                                        Forfeited
+                                                                    </Badge>
+                                                                )}
+                                                        </>
                                                     )}
                                                 </div>
                                                 {homeTeam.logo_url && (
@@ -405,17 +417,29 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                         <span className="font-semibold text-sm text-left truncate w-full">
                             {awayTeam.name}
                         </span>
-                                                    {match.status === 'completed' && (
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={`h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 ${
-                                                                (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0)
-                                                                    ? "bg-green-600/10 text-green-600"
-                                                                    : "opacity-0 pointer-events-none"
-                                                            }`}
-                                                        >
-                                                            Winner
-                                                        </Badge>
+                                                    {match.status === "completed" && (
+                                                        <>
+                                                            {/* Winner Badge */}
+                                                            {(match.away_sets_won ?? 0) > (match.home_sets_won ?? 0) && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-green-600/10 text-green-600"
+                                                                >
+                                                                    Winner
+                                                                </Badge>
+                                                            )}
+
+                                                            {/* Forfeit Badge (Home Lost by Forfeit) */}
+                                                            {match.is_forfeit &&
+                                                                (match.away_sets_won ?? 0) < (match.home_sets_won ?? 0) && (
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-red-600/10 text-red-600"
+                                                                    >
+                                                                        Forfeited
+                                                                    </Badge>
+                                                                )}
+                                                        </>
                                                     )}
                                                 </div>
                                             </>

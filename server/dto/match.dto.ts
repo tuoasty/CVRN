@@ -44,11 +44,13 @@ export interface CompleteMatchInput {
         homeScore: number;
         awayScore: number;
     }>;
-    matchMvpPlayerId: string;
-    loserMvpPlayerId: string;
+    matchMvpPlayerId?: string | null;
+    loserMvpPlayerId?: string | null;
     scheduledDate?: string | null;
     scheduledTime?: string | null;
     timezone?: string | null;
+    isForfeit?: boolean;
+    forfeitingTeam?: "home" | "away";
 }
 
 export interface VoidMatchInput {

@@ -21,7 +21,6 @@ import {
 import { useMatchesStore } from "@/app/stores/matchStore";
 import { usePlayerStore } from "@/app/stores/playerStore";
 import { clientLogger } from "@/app/utils/clientLogger";
-import { Player } from "@/shared/types/db";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 import {toast} from "@/app/utils/toast";
@@ -59,6 +58,9 @@ export default function CompleteMatchDialog({
 
     const maxSets = bestOf;
     const minSets = bestOf === 5 ? 3 : 2;
+
+    const [isForfeit, setIsForfeit] = useState(false);
+    const [forfeitingTeam, setForfeitingTeam] = useState<"home" | "away">("home");
 
     const [setScores, setSetScores] = useState<Array<{ homeScore: string; awayScore: string }>>([]);
     const [matchMvpId, setMatchMvpId] = useState<string>("");
@@ -165,6 +167,30 @@ export default function CompleteMatchDialog({
     };
 
     const validateAndSubmit = async () => {
+        if (isForfeit) {
+            setSubmitting(true);
+            clientLogger.info("CompleteMatchDialog", "Completing match as forfeit", { matchId, forfeitingTeam });
+
+            const success = await completeMatch({
+                matchId,
+                sets: [],
+                isForfeit: true,
+                forfeitingTeam,
+            });
+
+            if (success) {
+                clientLogger.info("CompleteMatchDialog", "Match completed as forfeit", { matchId });
+                setOpen(false);
+                resetForm();
+                onSuccess();
+            } else {
+                toast.error("Failed to complete match");
+            }
+
+            setSubmitting(false);
+            return;
+        }
+
         const sets = setScores.map((s, idx) => ({
             setNumber: idx + 1,
             homeScore: parseInt(s.homeScore),
@@ -188,7 +214,8 @@ export default function CompleteMatchDialog({
             matchId,
             sets,
             matchMvpPlayerId: matchMvpId,
-            loserMvpPlayerId: loserMvpId
+            loserMvpPlayerId: loserMvpId,
+            isForfeit: false,
         });
 
         if (success) {
@@ -202,11 +229,12 @@ export default function CompleteMatchDialog({
 
         setSubmitting(false);
     };
-
     const resetForm = () => {
         initializeSetScores();
         setMatchMvpId("");
         setLoserMvpId("");
+        setIsForfeit(false);
+        setForfeitingTeam("home");
     };
 
     const homeSetsWon = setScores.filter(s =>
@@ -242,171 +270,203 @@ export default function CompleteMatchDialog({
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h3 className="font-semibold">Set Scores</h3>
-                                    <p className="text-xs text-muted-foreground mt-0.5">
-                                        Best of {bestOf} - Minimum {minSets} sets
-                                    </p>
-                                </div>
-                                <div className="flex gap-2">
-                                    {setScores.length < maxSets && (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={addSet}
-                                            className="rounded-sm"
-                                        >
-                                            + Add Set
-                                        </Button>
-                                    )}
-                                    {setScores.length > minSets && (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={removeSet}
-                                            className="rounded-sm"
-                                        >
-                                            Remove
-                                        </Button>
-                                    )}
-                                </div>
+                        <div className="flex items-center space-x-2 panel p-4">
+                            <input
+                                type="checkbox"
+                                id="forfeit-checkbox"
+                                checked={isForfeit}
+                                onChange={(e) => setIsForfeit(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300"
+                            />
+                            <Label htmlFor="forfeit-checkbox" className="cursor-pointer">
+                                Mark as Forfeit
+                            </Label>
+                        </div>
+                        {isForfeit ? (
+                            <div className="space-y-3">
+                                <Label>Which team forfeited?</Label>
+                                <Select value={forfeitingTeam} onValueChange={(val: "home" | "away") => setForfeitingTeam(val)}>
+                                    <SelectTrigger className="rounded-sm">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="home">{homeTeamName}</SelectItem>
+                                        <SelectItem value="away">{awayTeamName}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-sm text-muted-foreground">
+                                    Winner receives +5 LVR, forfeiting team receives -10 LVR
+                                </p>
                             </div>
+                        ) : (
+                            <>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="font-semibold">Set Scores</h3>
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                Best of {bestOf} - Minimum {minSets} sets
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            {setScores.length < maxSets && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={addSet}
+                                                    className="rounded-sm"
+                                                >
+                                                    + Add Set
+                                                </Button>
+                                            )}
+                                            {setScores.length > minSets && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={removeSet}
+                                                    className="rounded-sm"
+                                                >
+                                                    Remove
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
 
-                            <div className="space-y-2">
-                                {setScores.map((set, idx) => (
-                                    <div key={idx} className="space-y-2">
-                                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
-                                            Set {idx + 1}
-                                        </Label>
-                                        <div className="panel p-4">
-                                            <div className="flex items-center justify-center gap-6">
-                                                <div className="flex items-center gap-3">
+                                    <div className="space-y-2">
+                                        {setScores.map((set, idx) => (
+                                            <div key={idx} className="space-y-2">
+                                                <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                                    Set {idx + 1}
+                                                </Label>
+                                                <div className="panel p-4">
+                                                    <div className="flex items-center justify-center gap-6">
+                                                        <div className="flex items-center gap-3">
                                                     <span className="text-sm font-medium w-32 text-right">
                                                         {homeTeamName}
                                                     </span>
-                                                    <Input
-                                                        type="number"
-                                                        min="0"
-                                                        value={set.homeScore}
-                                                        onChange={e => handleSetScoreChange(idx, "home", e.target.value)}
-                                                        className="w-20 rounded-sm text-center text-lg font-semibold"
-                                                        placeholder="0"
-                                                    />
-                                                </div>
+                                                            <Input
+                                                                type="number"
+                                                                min="0"
+                                                                value={set.homeScore}
+                                                                onChange={e => handleSetScoreChange(idx, "home", e.target.value)}
+                                                                className="w-20 rounded-sm text-center text-lg font-semibold"
+                                                                placeholder="0"
+                                                            />
+                                                        </div>
 
-                                                <span className="text-2xl font-bold text-muted-foreground">-</span>
+                                                        <span className="text-2xl font-bold text-muted-foreground">-</span>
 
-                                                <div className="flex items-center gap-3">
-                                                    <Input
-                                                        type="number"
-                                                        min="0"
-                                                        value={set.awayScore}
-                                                        onChange={e => handleSetScoreChange(idx, "away", e.target.value)}
-                                                        className="w-20 rounded-sm text-center text-lg font-semibold"
-                                                        placeholder="0"
-                                                    />
-                                                    <span className="text-sm font-medium w-32">
+                                                        <div className="flex items-center gap-3">
+                                                            <Input
+                                                                type="number"
+                                                                min="0"
+                                                                value={set.awayScore}
+                                                                onChange={e => handleSetScoreChange(idx, "away", e.target.value)}
+                                                                className="w-20 rounded-sm text-center text-lg font-semibold"
+                                                                placeholder="0"
+                                                            />
+                                                            <span className="text-sm font-medium w-32">
                                                         {awayTeamName}
                                                     </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {setScores.length > 0 && (
+                                        <div className="panel p-4 bg-muted/50">
+                                            <div className="flex items-center justify-center gap-8">
+                                                <div className="flex items-center gap-3 w-48">
+                                                    <span className="font-semibold flex-1 text-right">{homeTeamName}</span>
+                                                    <Badge variant="secondary" className="rounded-sm shrink-0">
+                                                        {homeSetsWon}
+                                                    </Badge>
+                                                </div>
+
+                                                <span className="text-muted-foreground text-sm font-medium shrink-0">-</span>
+
+                                                <div className="flex items-center gap-3 w-48">
+                                                    <Badge variant="secondary" className="rounded-sm shrink-0">
+                                                        {awaySetsWon}
+                                                    </Badge>
+                                                    <span className="font-semibold flex-1">{awayTeamName}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {setScores.length > 0 && (
-                                <div className="panel p-4 bg-muted/50">
-                                    <div className="flex items-center justify-center gap-8">
-                                        <div className="flex items-center gap-3 w-48">
-                                            <span className="font-semibold flex-1 text-right">{homeTeamName}</span>
-                                            <Badge variant="secondary" className="rounded-sm shrink-0">
-                                                {homeSetsWon}
-                                            </Badge>
-                                        </div>
-
-                                        <span className="text-muted-foreground text-sm font-medium shrink-0">-</span>
-
-                                        <div className="flex items-center gap-3 w-48">
-                                            <Badge variant="secondary" className="rounded-sm shrink-0">
-                                                {awaySetsWon}
-                                            </Badge>
-                                            <span className="font-semibold flex-1">{awayTeamName}</span>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
 
-                        <div className="space-y-3">
-                            <h3 className="font-semibold mb-2">MVP Selection</h3>
+                                <div className="space-y-3">
+                                    <h3 className="font-semibold mb-2">MVP Selection</h3>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                    <Label>Match MVP - {winningTeamName}</Label>
-                                    <Select value={matchMvpId} onValueChange={setMatchMvpId}>
-                                        <SelectTrigger className="rounded-sm h-9">
-                                            <SelectValue placeholder="Select winning MVP" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {winningTeamPlayers.map(player => (
-                                                <SelectItem key={player.id} value={player.id}>
-                                                    <div className="flex items-center gap-2">
-                                                        {player.avatar_url && (
-                                                            <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                                                                <Image
-                                                                    src={player.avatar_url}
-                                                                    alt={player.username || "Player"}
-                                                                    fill
-                                                                    sizes="20px"
-                                                                    className="object-cover"
-                                                                />
-                                                            </div>
-                                                        )}
-                                                        <span>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-2">
+                                            <Label>Match MVP - {winningTeamName}</Label>
+                                            <Select value={matchMvpId} onValueChange={setMatchMvpId}>
+                                                <SelectTrigger className="rounded-sm h-9">
+                                                    <SelectValue placeholder="Select winning MVP" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {winningTeamPlayers.map(player => (
+                                                        <SelectItem key={player.id} value={player.id}>
+                                                            <div className="flex items-center gap-2">
+                                                                {player.avatar_url && (
+                                                                    <div className="relative w-5 h-5 rounded-full overflow-hidden">
+                                                                        <Image
+                                                                            src={player.avatar_url}
+                                                                            alt={player.username || "Player"}
+                                                                            fill
+                                                                            sizes="20px"
+                                                                            className="object-cover"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                <span>
                                     {player.display_name || player.username || "Unknown"}
                                 </span>
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Loser MVP - {losingTeamName}</Label>
-                                    <Select value={loserMvpId} onValueChange={setLoserMvpId}>
-                                        <SelectTrigger className="rounded-sm h-9">
-                                            <SelectValue placeholder="Select losing MVP" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {losingTeamPlayers.map(player => (
-                                                <SelectItem key={player.id} value={player.id}>
-                                                    <div className="flex items-center gap-2">
-                                                        {player.avatar_url && (
-                                                            <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                                                                <Image
-                                                                    src={player.avatar_url}
-                                                                    alt={player.username || "Player"}
-                                                                    fill
-                                                                    sizes="20px"
-                                                                    className="object-cover"
-                                                                />
                                                             </div>
-                                                        )}
-                                                        <span>
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>Loser MVP - {losingTeamName}</Label>
+                                            <Select value={loserMvpId} onValueChange={setLoserMvpId}>
+                                                <SelectTrigger className="rounded-sm h-9">
+                                                    <SelectValue placeholder="Select losing MVP" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {losingTeamPlayers.map(player => (
+                                                        <SelectItem key={player.id} value={player.id}>
+                                                            <div className="flex items-center gap-2">
+                                                                {player.avatar_url && (
+                                                                    <div className="relative w-5 h-5 rounded-full overflow-hidden">
+                                                                        <Image
+                                                                            src={player.avatar_url}
+                                                                            alt={player.username || "Player"}
+                                                                            fill
+                                                                            sizes="20px"
+                                                                            className="object-cover"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                <span>
                                     {player.display_name || player.username || "Unknown"}
                                 </span>
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                                            </div>
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            </>
+                        )}
 
                         <Button
                             onClick={validateAndSubmit}

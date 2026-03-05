@@ -118,8 +118,9 @@ export async function updateMatchCompletion(
         awaySetsWon: number;
         homeTeamLvr: number | null;
         awayTeamLvr: number | null;
-        matchMvpPlayerId: string;
-        loserMvpPlayerId: string;
+        matchMvpPlayerId: string | null;
+        loserMvpPlayerId: string | null;
+        isForfeit: boolean;
         scheduledAt?: string | null;
     }
 ) {
@@ -131,6 +132,7 @@ export async function updateMatchCompletion(
         away_team_lvr: data.awayTeamLvr,
         match_mvp_player_id: data.matchMvpPlayerId,
         loser_mvp_player_id: data.loserMvpPlayerId,
+        is_forfeit: data.isForfeit,
     };
 
     if (data.scheduledAt !== undefined) {
@@ -140,6 +142,56 @@ export async function updateMatchCompletion(
     return supabase
         .from("matches")
         .update(updateData)
+        .eq("id", matchId)
+        .select()
+        .single();
+}
+
+export async function voidMatch(
+    supabase: DBClient,
+    matchId: string
+) {
+    return supabase
+        .from("matches")
+        .update({
+            status: "pending",
+            scheduled_at: null,
+            home_sets_won: 0,
+            away_sets_won: 0,
+            home_team_lvr: null,
+            away_team_lvr: null,
+            match_mvp_player_id: null,
+            loser_mvp_player_id: null,
+            is_forfeit: false
+        })
+        .eq("id", matchId)
+        .select()
+        .single();
+}
+export async function updateMatchResults(
+    supabase: DBClient,
+    matchId: string,
+    data: {
+        homeSetsWon: number;
+        awaySetsWon: number;
+        homeTeamLvr: number | null;
+        awayTeamLvr: number | null;
+        matchMvpPlayerId: string | null;
+        loserMvpPlayerId: string | null;
+        isForfeit: boolean;
+    }
+) {
+    return supabase
+        .from("matches")
+        .update({
+            home_sets_won: data.homeSetsWon,
+            away_sets_won: data.awaySetsWon,
+            home_team_lvr: data.homeTeamLvr,
+            away_team_lvr: data.awayTeamLvr,
+            match_mvp_player_id: data.matchMvpPlayerId,
+            loser_mvp_player_id: data.loserMvpPlayerId,
+            is_forfeit: data.isForfeit,
+        })
         .eq("id", matchId)
         .select()
         .single();
@@ -155,27 +207,6 @@ export async function deleteMatchSets(
         .eq("match_id", matchId);
 }
 
-export async function voidMatch(
-    supabase: DBClient,
-    matchId: string
-) {
-    return supabase
-        .from("matches")
-        .update({
-            status: "pending",
-            scheduled_at: null,
-            home_sets_won: 0,
-            away_sets_won: 0,
-            home_team_lvr: 0,
-            away_team_lvr: 0,
-            match_mvp_player_id: null,
-            loser_mvp_player_id: null
-        })
-        .eq("id", matchId)
-        .select()
-        .single();
-}
-
 export async function findMatchSets(
     supabase: DBClient,
     matchId: string
@@ -185,31 +216,4 @@ export async function findMatchSets(
         .select("*")
         .eq("match_id", matchId)
         .order("set_number", { ascending: true });
-}
-
-export async function updateMatchResults(
-    supabase: DBClient,
-    matchId: string,
-    data: {
-        homeSetsWon: number;
-        awaySetsWon: number;
-        homeTeamLvr: number | null;
-        awayTeamLvr: number | null;
-        matchMvpPlayerId: string;
-        loserMvpPlayerId: string;
-    }
-) {
-    return supabase
-        .from("matches")
-        .update({
-            home_sets_won: data.homeSetsWon,
-            away_sets_won: data.awaySetsWon,
-            home_team_lvr: data.homeTeamLvr,
-            away_team_lvr: data.awayTeamLvr,
-            match_mvp_player_id: data.matchMvpPlayerId,
-            loser_mvp_player_id: data.loserMvpPlayerId,
-        })
-        .eq("id", matchId)
-        .select()
-        .single();
 }

@@ -319,7 +319,7 @@ export default function TeamDetailPage({
                 ) : (
                     <>
                         <div>
-                            <h3 className="text-sm uppercase tracking-wide text-muted-foreground mb-3">Team Leadership</h3>
+                            <h3 className="text-sm uppercase tracking-wide text-muted-foreground mb-3">Leadership</h3>
                             <div className="grid grid-cols-3 gap-4">
                                 <CaptainSlotCard
                                     role="captain"
