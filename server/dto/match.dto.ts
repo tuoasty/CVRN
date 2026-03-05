@@ -29,8 +29,8 @@ export interface MatchIdInput {
 export interface InsertMatchDto {
     id?: string;
     seasonId: string;
-    homeTeamId: string;
-    awayTeamId: string;
+    homeTeamId: string | null;
+    awayTeamId: string | null;
     week: number;
     scheduledAt: string | null;
     status: "pending" | "scheduled" | "completed";

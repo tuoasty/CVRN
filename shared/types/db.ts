@@ -28,6 +28,13 @@ export type PlayerTeamSeason =
 export type MatchSet =
     Database["public"]["Tables"]["match_sets"]["Row"];
 
-export type Standing = Database["public"]["Views"]["standings"]["Row"];
+export type Standing =
+    Database["public"]["Views"]["standings"]["Row"];
+
+export type PlayoffConfig =
+    Database["public"]["Tables"]["playoff_configs"]["Row"];
+
+export type PlayoffBracket =
+    Database["public"]["Tables"]["playoff_brackets"]["Row"];
 
 export type DBClient = SupabaseClient<Database>;
