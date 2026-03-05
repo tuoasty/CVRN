@@ -63,12 +63,12 @@ export function StandingsTable({ standings, isLoading }: StandingsTableProps) {
         const status = getQualificationStatus(rank);
 
         if (status === "qualified") {
-            return "bg-primary/5 border-l-4 border-l-primary/40 hover:bg-primary/10";
+            return "bg-primary/5 !border-l-4 border-l-primary/40 hover:bg-primary/10";
         }
         if (status === "playin") {
-            return "bg-secondary/5 border-l-4 border-l-secondary/40 hover:bg-secondary/10";
+            return "bg-secondary/5 !border-l-4 border-l-secondary/40 hover:bg-secondary/10";
         }
-        return "bg-destructive/5 border-l-4 border-l-destructive/30 hover:bg-destructive/10";
+        return "bg-destructive/5 !border-l-4 border-l-destructive/60 hover:bg-destructive/10";
     };
 
     const getRankBadge = (rank: number) => {
