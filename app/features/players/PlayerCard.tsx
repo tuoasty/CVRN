@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { Player } from "@/shared/types/db";
-import { removePlayerFromTeamAction } from "@/app/actions/player.actions";
+import { removePlayerFromTeamAction, setPlayerRoleAction } from "@/app/actions/player.actions";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -17,21 +16,42 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu";
+import { toast } from "@/app/utils/toast";
+import { PlayerRole, PlayerWithRole } from "@/server/dto/player.dto";
 
 interface Props {
-    player: Player;
+    player: PlayerWithRole;
+    teamId: string;
     seasonId: string;
+    onRoleChanged: () => void;
     onRemoved: () => void;
+    availableRoles: {
+        captain: boolean;
+        viceCaptain: boolean;
+        courtCaptain: boolean;
+    };
 }
 
-export default function PlayerCard({ player, seasonId, onRemoved }: Props) {
+export default function PlayerCard({
+                                       player,
+                                       teamId,
+                                       seasonId,
+                                       onRoleChanged,
+                                       onRemoved,
+                                       availableRoles
+                                   }: Props) {
     const [removing, setRemoving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [showConfirm, setShowConfirm] = useState(false);
+    const [updating, setUpdating] = useState(false);
+    const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
     const handleRemove = async () => {
         setRemoving(true);
-        setError(null);
 
         const result = await removePlayerFromTeamAction({
             playerId: player.id,
@@ -39,17 +59,41 @@ export default function PlayerCard({ player, seasonId, onRemoved }: Props) {
         });
 
         if (!result.ok) {
-            setError(result.error.message);
+            toast.error(result.error.message);
             setRemoving(false);
             return;
         }
 
-        setShowConfirm(false);
+        toast.success("Player removed successfully");
+        setShowRemoveConfirm(false);
         onRemoved();
     };
 
+    const handlePromote = async (newRole: PlayerRole) => {
+        setUpdating(true);
+
+        const result = await setPlayerRoleAction({
+            playerId: player.id,
+            teamId: teamId,
+            seasonId: seasonId,
+            role: newRole,
+        });
+
+        if (!result.ok) {
+            toast.error(result.error.message);
+            setUpdating(false);
+            return;
+        }
+
+        toast.success("Role updated successfully");
+        setUpdating(false);
+        onRoleChanged();
+    };
+
+    const hasAvailablePromotions = availableRoles.captain || availableRoles.viceCaptain || availableRoles.courtCaptain;
+
     return (
-        <Card className="rounded-sm hover:border-primary/50 transition-colors">
+        <Card className="rounded-sm hover:border-primary/50 transition-colors h-[280px]">
             <CardContent className="p-4">
                 <div className="flex flex-col items-center text-center space-y-3">
                     {player.avatar_url && (
@@ -73,42 +117,72 @@ export default function PlayerCard({ player, seasonId, onRemoved }: Props) {
                         </p>
                     </div>
 
-                    {error && (
-                        <div className="w-full bg-destructive/10 border border-destructive/20 rounded-sm p-2">
-                            <p className="text-xs text-destructive">{error}</p>
-                        </div>
-                    )}
+                    <div className="w-full space-y-2">
+                        {hasAvailablePromotions && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full rounded-sm"
+                                        disabled={updating}
+                                    >
+                                        Promote To
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="rounded-sm">
+                                    {availableRoles.captain && (
+                                        <DropdownMenuItem onClick={() => handlePromote('captain')}>
+                                            Captain
+                                        </DropdownMenuItem>
+                                    )}
+                                    {availableRoles.viceCaptain && (
+                                        <DropdownMenuItem onClick={() => handlePromote('vice_captain')}>
+                                            Vice Captain
+                                        </DropdownMenuItem>
+                                    )}
+                                    {availableRoles.courtCaptain && (
+                                        <DropdownMenuItem onClick={() => handlePromote('court_captain')}>
+                                            Court Captain
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
 
-                    <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-                        <AlertDialogTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full rounded-sm text-destructive hover:text-destructive"
-                                disabled={removing}
-                            >
-                                Remove
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="rounded-sm">
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Remove Player?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Remove {player.display_name || player.username} from this team?
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={handleRemove}
-                                    disabled={removing}
-                                    className="rounded-sm"
+                        <AlertDialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full rounded-sm text-destructive hover:text-destructive"
+                                    disabled={removing || updating}
                                 >
-                                    {removing ? "Removing..." : "Remove"}
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                                    Remove
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="rounded-sm">
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Remove Player?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Remove {player.display_name || player.username} from this team?
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleRemove}
+                                        disabled={removing}
+                                        className="rounded-sm"
+                                    >
+                                        {removing ? "Removing..." : "Remove"}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+
+                        {!hasAvailablePromotions && <div className="h-8" />}
+                    </div>
                 </div>
             </CardContent>
         </Card>

@@ -5,16 +5,20 @@ import {
     getUsersByName,
     getTeamPlayers,
     removePlayerFromTeamService,
-    getPlayersByIds, searchPlayersInDatabase, addExistingPlayerToTeam, getPlayerByExactUsername
+    getPlayersByIds,
+    searchPlayersInDatabase,
+    addExistingPlayerToTeam,
+    getPlayerByExactUsername,
+    setPlayerRoleService,
+    transferCaptainService
 } from "@/server/services/player.service";
 import {createServerSupabase} from "@/server/supabase/server";
 import {
     SavePlayerToTeamInput,
     RemovePlayerFromTeamInput,
     TeamPlayersInput,
-    PlayersByIdsInput, SearchPlayersInput, AddExistingPlayerToTeamInput
+    PlayersByIdsInput, SearchPlayersInput, AddExistingPlayerToTeamInput, SetPlayerRoleInput, TransferCaptainInput
 } from "@/server/dto/player.dto";
-import {findPlayerByExactUsername} from "@/server/db/players.repo";
 
 export async function searchPlayersAction(username:string){
     const supabase = await createServerSupabase();
@@ -54,4 +58,14 @@ export async function addExistingPlayerToTeamAction(input: AddExistingPlayerToTe
 export async function getPlayerByExactUsernameAction(input: SearchPlayersInput) {
     const supabase = await createServerSupabase();
     return getPlayerByExactUsername(supabase, input);
+}
+
+export async function setPlayerRoleAction(input: SetPlayerRoleInput) {
+    const supabase = await createServerSupabase();
+    return setPlayerRoleService(supabase, input);
+}
+
+export async function transferCaptainAction(input: TransferCaptainInput) {
+    const supabase = await createServerSupabase();
+    return transferCaptainService(supabase, input);
 }
