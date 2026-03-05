@@ -269,7 +269,6 @@ export default function ManageMatchDialog({
                             </div>
                         </div>
 
-                        {!isCompleted && (
                             <div className="space-y-4 pt-4 border-t border-border">
                                 <h3 className="font-semibold">Officials</h3>
 
@@ -286,7 +285,6 @@ export default function ManageMatchDialog({
                                     />
                                 </div>
                             </div>
-                        )}
 
                         {isCompleted && (
                             <div className="space-y-4 pt-4 border-t border-border border-destructive/20">
