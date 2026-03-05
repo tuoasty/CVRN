@@ -3,15 +3,22 @@ import { Player } from '@/shared/types/db';
 import { getTeamPlayersAction, getPlayersByIdsAction } from '@/app/actions/player.actions';
 import { CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction } from './storeUtils';
 import { clientLogger } from "@/app/utils/clientLogger";
+import {PlayerWithRole} from "@/server/dto/player.dto";
 
 type PlayersState = {
-    playersByTeamCache: Map<string, CacheEntry<Player[]>>;
+    playersByTeamCache: Map<string, CacheEntry<PlayerWithRole[]>>;
     playersByIdsCache: Map<string, CacheEntry<Player>>;
     loading: boolean;
     error: string | null;
 
     fetchTeamPlayers: (teamId: string, seasonId: string) => Promise<void>;
     fetchPlayersByIds: (playerIds: string[]) => Promise<Player[]>;
+    getSortedTeamPlayers: (teamId: string, seasonId: string) => {
+        captain: PlayerWithRole | null;
+        viceCaptain: PlayerWithRole | null;
+        courtCaptain: PlayerWithRole | null;
+        players: PlayerWithRole[];
+    };
     clearCache: () => void;
 };
 
@@ -112,6 +119,37 @@ export const usePlayerStore = create<PlayersState>((set, get) => ({
             });
             return cachedPlayers;
         }
+    },
+
+    getSortedTeamPlayers: (teamId: string, seasonId: string) => {
+        const cacheKey = `${teamId}-${seasonId}`;
+        const { playersByTeamCache } = get();
+        const cached = playersByTeamCache.get(cacheKey);
+
+        if (!cached) {
+            return {
+                captain: null,
+                viceCaptain: null,
+                courtCaptain: null,
+                players: []
+            };
+        }
+
+        const allPlayers = cached.data;
+
+        const playersWithRole = allPlayers as Array<Player & { role?: string }>;
+
+        const captain = playersWithRole.find(p => p.role === 'captain') || null;
+        const viceCaptain = playersWithRole.find(p => p.role === 'vice_captain') || null;
+        const courtCaptain = playersWithRole.find(p => p.role === 'court_captain') || null;
+        const players = playersWithRole.filter(p => !p.role || p.role === 'player');
+
+        return {
+            captain: captain || null,
+            viceCaptain: viceCaptain || null,
+            courtCaptain: courtCaptain || null,
+            players
+        };
     },
 
     clearCache: () => {

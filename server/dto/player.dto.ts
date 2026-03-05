@@ -69,3 +69,30 @@ export interface AddExistingPlayerToTeamInput {
     playerId: string
     teamId: string
 }
+
+export type PlayerRole = 'captain' | 'vice_captain' | 'court_captain' | 'player';
+
+export interface PlayerWithRole {
+    id: string;
+    roblox_user_id: string;
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+    last_synced_at: string | null;
+    created_at: string;
+    role: PlayerRole;
+}
+
+export interface SetPlayerRoleInput {
+    playerId: string;
+    teamId: string;
+    seasonId: string;
+    role: PlayerRole;
+}
+
+export interface TransferCaptainInput {
+    currentCaptainPlayerId: string;
+    newCaptainPlayerId: string;
+    teamId: string;
+    seasonId: string;
+}

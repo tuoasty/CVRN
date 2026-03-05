@@ -199,13 +199,6 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
 
     return (
         <div className="space-y-5">
-            <div>
-                <h3>Search Roblox Player</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                    Search for a Roblox user to add to the team
-                </p>
-            </div>
-
             <form onSubmit={handleSearch} className="space-y-3">
                 <div className="space-y-2">
                     <Label htmlFor="username">Roblox Username</Label>

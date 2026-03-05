@@ -237,3 +237,47 @@ export async function findPlayerByExactUsername(
         .ilike("username", username)
         .maybeSingle()
 }
+
+export async function setPlayerRole(
+    supabase: DBClient,
+    p: SetPlayerRoleInput
+) {
+    return supabase
+        .from("player_team_seasons")
+        .update({ role: p.role })
+        .eq("player_id", p.playerId)
+        .eq("team_id", p.teamId)
+        .eq("season_id", p.seasonId)
+        .is("left_at", null)
+        .select()
+        .single();
+}
+
+export async function countActivePlayersInTeam(
+    supabase: DBClient,
+    teamId: string,
+    seasonId: string
+) {
+    return supabase
+        .from("player_team_seasons")
+        .select("id", { count: "exact", head: true })
+        .eq("team_id", teamId)
+        .eq("season_id", seasonId)
+        .is("left_at", null);
+}
+
+export async function findPlayerByRole(
+    supabase: DBClient,
+    teamId: string,
+    seasonId: string,
+    role: PlayerRole
+) {
+    return supabase
+        .from("player_team_seasons")
+        .select("*")
+        .eq("team_id", teamId)
+        .eq("season_id", seasonId)
+        .eq("role", role)
+        .is("left_at", null)
+        .maybeSingle();
+}

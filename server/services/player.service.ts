@@ -22,7 +22,12 @@ import {
     addPlayerToTeam,
     removePlayerFromTeam,
     updatePlayer,
-    findPlayerById, findPlayersByIds, findPlayersBySimilarity, findPlayerByExactUsername
+    findPlayerById,
+    findPlayersByIds,
+    findPlayersBySimilarity,
+    findPlayerByExactUsername,
+    findPlayerByRole,
+    setPlayerRole, countActivePlayersInTeam
 } from "@/server/db/players.repo";
 import {logger} from "@/server/utils/logger";
 
@@ -80,6 +85,21 @@ export async function savePlayerToTeam(
         }
 
         const seasonId = team.season_id;
+
+        const { count, error: countError } = await countActivePlayersInTeam(supabase, p.teamId, seasonId);
+
+        if (countError) {
+            logger.error({ teamId: p.teamId, seasonId, error: countError }, "Failed to count team players");
+            return Err(serializeError(countError));
+        }
+
+        if (count !== null && count >= 16) {
+            logger.warn({ teamId: p.teamId, seasonId, currentCount: count }, "Team is at maximum capacity");
+            return Err({
+                name: "TeamAtCapacity",
+                message: "Team already has 16 players (maximum capacity)"
+            });
+        }
 
         const {data: existingPlayer} = await findPlayerByRobloxId(supabase, p.robloxUserId);
 
@@ -210,7 +230,7 @@ export async function removePlayerFromTeamService(
 export async function getTeamPlayers(
     supabase: DBClient,
     p: TeamPlayersInput
-): Promise<Result<Player[]>> {
+): Promise<Result<PlayerWithRole[]>> {
     try {
         const {data, error} = await findAllTeamPlayers(supabase, p.teamId, p.seasonId);
         if (error) {
@@ -225,7 +245,7 @@ export async function getTeamPlayers(
             });
         }
 
-        const syncedPlayers: Player[] = [];
+        const syncedPlayers: PlayerWithRole[] = [];
 
         for (const record of data) {
             if (!record.player) {
@@ -234,11 +254,20 @@ export async function getTeamPlayers(
 
             const result = await lazySyncPlayer(supabase, record.player);
 
+            let playerWithRole: PlayerWithRole;
             if (result.ok) {
-                syncedPlayers.push(result.value);
+                playerWithRole = {
+                    ...result.value,
+                    role: record.role || 'player'
+                };
             } else {
-                syncedPlayers.push(record.player);
+                playerWithRole = {
+                    ...record.player,
+                    role: record.role || 'player'
+                };
             }
+
+            syncedPlayers.push(playerWithRole);
         }
 
         return Ok(syncedPlayers);
@@ -331,6 +360,21 @@ export async function addExistingPlayerToTeam(
         }
 
         const seasonId = team.season_id;
+
+        const { count, error: countError } = await countActivePlayersInTeam(supabase, p.teamId, seasonId);
+
+        if (countError) {
+            logger.error({ teamId: p.teamId, seasonId, error: countError }, "Failed to count team players");
+            return Err(serializeError(countError));
+        }
+
+        if (count !== null && count >= 16) {
+            logger.warn({ teamId: p.teamId, seasonId, currentCount: count }, "Team is at maximum capacity");
+            return Err({
+                name: "TeamAtCapacity",
+                message: "Team already has 16 players (maximum capacity)"
+            });
+        }
 
         const { data: player } = await findPlayerById(supabase, p.playerId);
         if (!player) {
@@ -513,6 +557,118 @@ export async function getPlayerByExactUsername(
         return Ok(result);
     } catch (error) {
         logger.error({ error }, "Unexpected error finding player by exact username");
+        return Err(serializeError(error));
+    }
+}
+
+export async function setPlayerRoleService(
+    supabase: DBClient,
+    p: SetPlayerRoleInput
+): Promise<Result<PlayerTeamSeason>> {
+    try {
+        const { data: currentRecord } = await findPlayerCurrentTeam(supabase, p.playerId, p.seasonId);
+
+        if (!currentRecord || currentRecord.team_id !== p.teamId) {
+            logger.error({ playerId: p.playerId, teamId: p.teamId, seasonId: p.seasonId }, "Player not in team");
+            return Err({
+                name: "PlayerNotInTeam",
+                message: "Player is not in this team"
+            });
+        }
+
+        if (p.role !== 'player') {
+            const { data: existingRole } = await findPlayerByRole(supabase, p.teamId, p.seasonId, p.role);
+
+            if (existingRole && existingRole.player_id !== p.playerId) {
+                logger.warn({ teamId: p.teamId, seasonId: p.seasonId, role: p.role }, "Role already assigned");
+                return Err({
+                    name: "RoleAlreadyTaken",
+                    message: `This role is already assigned to another player`
+                });
+            }
+        }
+
+        const { data, error } = await setPlayerRole(supabase, p);
+
+        if (error) {
+            logger.error({ ...p, error }, "Failed to set player role");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Err({
+                name: "UpdateError",
+                message: "Failed to update player role"
+            });
+        }
+
+        return Ok(data);
+    } catch (error) {
+        logger.error({ error }, "Unexpected error setting player role");
+        return Err(serializeError(error));
+    }
+}
+
+export async function transferCaptainService(
+    supabase: DBClient,
+    p: TransferCaptainInput
+): Promise<Result<{ oldCaptain: PlayerTeamSeason, newCaptain: PlayerTeamSeason }>> {
+    try {
+        const { data: currentCaptain } = await findPlayerCurrentTeam(supabase, p.currentCaptainPlayerId, p.seasonId);
+
+        if (!currentCaptain || currentCaptain.team_id !== p.teamId || currentCaptain.role !== 'captain') {
+            logger.error({ currentCaptainPlayerId: p.currentCaptainPlayerId }, "Current captain invalid");
+            return Err({
+                name: "InvalidCaptain",
+                message: "Current player is not the team captain"
+            });
+        }
+
+        const { data: newCaptainRecord } = await findPlayerCurrentTeam(supabase, p.newCaptainPlayerId, p.seasonId);
+
+        if (!newCaptainRecord || newCaptainRecord.team_id !== p.teamId) {
+            logger.error({ newCaptainPlayerId: p.newCaptainPlayerId }, "New captain not in team");
+            return Err({
+                name: "PlayerNotInTeam",
+                message: "New captain must be in the team"
+            });
+        }
+
+        const { data: oldCaptain, error: demoteError } = await setPlayerRole(supabase, {
+            playerId: p.currentCaptainPlayerId,
+            teamId: p.teamId,
+            seasonId: p.seasonId,
+            role: 'player'
+        });
+
+        if (demoteError || !oldCaptain) {
+            logger.error({ error: demoteError }, "Failed to demote current captain");
+            return Err(serializeError(demoteError));
+        }
+
+        const { data: newCaptain, error: promoteError } = await setPlayerRole(supabase, {
+            playerId: p.newCaptainPlayerId,
+            teamId: p.teamId,
+            seasonId: p.seasonId,
+            role: 'captain'
+        });
+
+        if (promoteError || !newCaptain) {
+            logger.error({ error: promoteError }, "Failed to promote new captain");
+
+            await setPlayerRole(supabase, {
+                playerId: p.currentCaptainPlayerId,
+                teamId: p.teamId,
+                seasonId: p.seasonId,
+                role: 'captain'
+            });
+
+            return Err(serializeError(promoteError));
+        }
+
+        return Ok({ oldCaptain, newCaptain });
+    } catch (error) {
+        logger.error({ error }, "Unexpected error transferring captain");
         return Err(serializeError(error));
     }
 }
