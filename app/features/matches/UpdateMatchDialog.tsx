@@ -25,6 +25,7 @@ import { Player, MatchSet } from "@/shared/types/db";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 import {toast} from "@/app/utils/toast";
+import {PlayerWithRole} from "@/server/dto/player.dto";
 
 interface UpdateMatchDialogProps {
     matchId: string;
@@ -59,8 +60,8 @@ export default function UpdateMatchDialog({
     const [open, setOpen] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [homePlayers, setHomePlayers] = useState<Player[]>([]);
-    const [awayPlayers, setAwayPlayers] = useState<Player[]>([]);
+    const [homePlayers, setHomePlayers] = useState<PlayerWithRole[]>([]);
+    const [awayPlayers, setAwayPlayers] = useState<PlayerWithRole[]>([]);
 
     const maxSets = bestOf;
     const minSets = bestOf === 5 ? 3 : 2;
