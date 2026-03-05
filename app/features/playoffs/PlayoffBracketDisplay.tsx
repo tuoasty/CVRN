@@ -50,6 +50,42 @@ const VERTICAL_SPACING_BASE = 24;
 const HEADER_OFFSET = 60;
 const BOTTOM_PADDING = 100;
 
+function assignDisplayOrder(brackets: BracketWithMatch[]): Map<string, number> {
+    const orderMap = new Map<string, number>();
+
+    const finalBracket = brackets.find(b => b.round === "final");
+    if (!finalBracket) return orderMap;
+
+    let currentOrder = 0;
+
+    function assignOrder(bracketId: string) {
+        const bracket = brackets.find(b => b.id === bracketId);
+        if (!bracket) return;
+
+        const feedingBrackets = brackets.filter(b => b.next_bracket_id === bracketId);
+
+        if (feedingBrackets.length === 0) {
+            orderMap.set(bracketId, currentOrder++);
+            return;
+        }
+
+        feedingBrackets.sort((a, b) => {
+            const seedA = a.seed_home || 999;
+            const seedB = b.seed_home || 999;
+            return seedA - seedB;
+        });
+
+        feedingBrackets.forEach((fb) => {
+            assignOrder(fb.id);
+        });
+
+        orderMap.set(bracketId, currentOrder++);
+    }
+
+    assignOrder(finalBracket.id);
+    return orderMap;
+}
+
 export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) {
     const { allTeamsCache, fetchAllTeams } = useTeamsStore();
     const { matchesCache, fetchAllMatches } = useMatchesStore();
@@ -91,6 +127,8 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
         const thirdPlace = bracketsWithMatches.find((b) => b.round === "third_place");
         const mainBrackets = bracketsWithMatches.filter((b) => b.round !== "third_place");
 
+        const displayOrderMap = assignDisplayOrder(mainBrackets);
+
         const roundsMap = new Map<RoundType, BracketWithMatch[]>();
 
         mainBrackets.forEach((bracket) => {
@@ -111,9 +149,9 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                 type: roundType,
                 label: ROUND_LABELS[roundType],
                 brackets: roundBrackets.sort((a, b) => {
-                    const aSeed = a.seed_home || 999;
-                    const bSeed = b.seed_home || 999;
-                    return aSeed - bSeed;
+                    const orderA = displayOrderMap.get(a.id) || 999;
+                    const orderB = displayOrderMap.get(b.id) || 999;
+                    return orderA - orderB;
                 }),
             };
         }).filter((r): r is RoundData => r !== null);
@@ -127,48 +165,29 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
     const { matchPositions, connectorLines } = useMemo(() => {
         const positions = new Map<string, { x: number; y: number }>();
 
-        // First pass: Calculate positions for all brackets
         mainBracketRounds.forEach((round, roundIndex) => {
             if (roundIndex === 0) {
-                // First round: position based on where they feed into
-                if (round.type === "play_in") {
-                    // Play-in matches need to be spaced based on next round
-                    const nextRound = mainBracketRounds[roundIndex + 1];
-                    if (nextRound) {
-                        round.brackets.forEach((bracket) => {
-                            // Find which match in the next round this feeds into
-                            const nextBracket = nextRound.brackets.find(
-                                nb => nb.id === bracket.next_bracket_id
-                            );
-
-                            if (nextBracket) {
-                                const nextBracketIndex = nextRound.brackets.indexOf(nextBracket);
-                                // Position play-in at the same Y as its destination
-                                const destY = HEADER_OFFSET + nextBracketIndex * (MATCH_HEIGHT + VERTICAL_SPACING_BASE) * 2;
-                                positions.set(bracket.id, {
-                                    x: 0,
-                                    y: destY,
-                                });
-                            } else {
-                                // Fallback if no next bracket found
-                                const bracketIndex = round.brackets.indexOf(bracket);
-                                positions.set(bracket.id, {
-                                    x: 0,
-                                    y: HEADER_OFFSET + bracketIndex * (MATCH_HEIGHT + VERTICAL_SPACING_BASE) * 3,
-                                });
-                            }
-                        });
-                    } else {
-                        // No next round, just stack normally
-                        round.brackets.forEach((bracket, bracketIndex) => {
+                if (round.type === "play_in" && mainBracketRounds.length > 1) {
+                    const nextRound = mainBracketRounds[1];
+                    round.brackets.forEach((bracket) => {
+                        const nextBracket = nextRound.brackets.find(
+                            nb => nb.id === bracket.next_bracket_id
+                        );
+                        if (nextBracket) {
+                            const nextBracketIndex = nextRound.brackets.indexOf(nextBracket);
                             positions.set(bracket.id, {
                                 x: 0,
-                                y: HEADER_OFFSET + bracketIndex * (MATCH_HEIGHT + VERTICAL_SPACING_BASE),
+                                y: HEADER_OFFSET + nextBracketIndex * (MATCH_HEIGHT + VERTICAL_SPACING_BASE) * 2,
                             });
-                        });
-                    }
+                        } else {
+                            const bracketIndex = round.brackets.indexOf(bracket);
+                            positions.set(bracket.id, {
+                                x: 0,
+                                y: HEADER_OFFSET + bracketIndex * (MATCH_HEIGHT + VERTICAL_SPACING_BASE) * 2,
+                            });
+                        }
+                    });
                 } else {
-                    // Non-play-in first round: stack vertically with double spacing
                     round.brackets.forEach((bracket, bracketIndex) => {
                         positions.set(bracket.id, {
                             x: 0,
@@ -177,17 +196,14 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                     });
                 }
             } else {
-                // Subsequent rounds: center between feeding brackets
                 const previousRound = mainBracketRounds[roundIndex - 1];
 
                 round.brackets.forEach((bracket) => {
-                    // Find brackets from previous round that feed into this one
                     const feedingBrackets = previousRound.brackets.filter(
                         b => b.next_bracket_id === bracket.id
                     );
 
                     if (feedingBrackets.length > 0) {
-                        // Average the Y positions of feeding brackets
                         const avgY = feedingBrackets.reduce((sum, fb) => {
                             const pos = positions.get(fb.id);
                             return sum + (pos?.y || 0);
@@ -198,7 +214,6 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                             y: avgY,
                         });
                     } else {
-                        // Fallback: use exponential spacing
                         const bracketIndex = round.brackets.indexOf(bracket);
                         const spacing = (MATCH_HEIGHT + VERTICAL_SPACING_BASE) * Math.pow(2, roundIndex);
                         positions.set(bracket.id, {
@@ -210,7 +225,6 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
             }
         });
 
-        // Second pass: Draw connector lines using calculated positions
         const lines: Array<{
             x1: number; y1: number; x2: number; y2: number;
             x3: number; y3: number; x4: number; y4: number;
@@ -323,7 +337,6 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                 isFullscreen && "fixed inset-0 z-50 bg-background"
             )}>
                 <div className="relative" style={{ width: totalWidth, height: totalHeight, minWidth: totalWidth }}>
-                    {/* Connector Lines Layer */}
                     <svg
                         className="absolute top-0 left-0 pointer-events-none"
                         style={{ width: totalWidth, height: totalHeight }}
@@ -360,10 +373,8 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                         ))}
                     </svg>
 
-                    {/* Match Cards Layer */}
                     {mainBracketRounds.map((round, roundIndex) => (
                         <div key={round.type}>
-                            {/* Round Header */}
                             <div
                                 className="absolute"
                                 style={{
@@ -379,7 +390,6 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                                 </div>
                             </div>
 
-                            {/* Match Cards */}
                             {round.brackets.map((bracket) => {
                                 const pos = matchPositions.get(bracket.id);
                                 if (!pos) return null;
