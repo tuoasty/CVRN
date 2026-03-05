@@ -294,7 +294,6 @@ export default function ManageMatchDialog({
                             </div>
                         )}
 
-                        {/* Save Changes button at the bottom */}
                         <div className="pt-4 border-t border-border">
                             <Button
                                 onClick={handleUpdateSchedule}
