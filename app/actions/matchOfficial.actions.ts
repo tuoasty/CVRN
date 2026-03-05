@@ -13,7 +13,7 @@ import {
     getAllOfficials,
     getOfficialsByName,
     saveOfficial,
-    removeOfficial, searchOfficialsInDatabase
+    removeOfficial, searchOfficialsInDatabase, getOfficialByExactUsername
 } from "@/server/services/official.service";
 import { AssignOfficialInput, AssignMultipleOfficialsInput, OfficialType } from "@/server/dto/matchOfficial.dto";
 import {SaveOfficialInput, SearchOfficialsInput} from "@/server/dto/official.dto";
@@ -76,4 +76,9 @@ export async function removeAllOfficialsOfTypeAction(matchId: string, officialTy
 export async function searchOfficialsInDatabaseAction(input: SearchOfficialsInput) {
     const supabase = await createServerSupabase();
     return searchOfficialsInDatabase(supabase, input);
+}
+
+export async function getOfficialByExactUsernameAction(input:SearchOfficialsInput) {
+    const supabase = await createServerSupabase();
+    return getOfficialByExactUsername(supabase, input);
 }
