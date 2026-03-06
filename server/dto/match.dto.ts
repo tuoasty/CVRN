@@ -1,3 +1,5 @@
+import {Match, MatchSet} from "@/shared/types/db";
+
 export interface CreateMatchInput {
     homeId: string;
     awayId: string;
@@ -60,3 +62,17 @@ export interface VoidMatchInput {
 export interface MatchSetsInput {
     matchId: string;
 }
+
+export type MatchOfficialEntry = {
+    id: string;
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+    official_type: "referee" | "media";
+};
+
+export type MatchWithDetails = {
+    match: Match;
+    sets: MatchSet[];
+    officials: MatchOfficialEntry[];
+};

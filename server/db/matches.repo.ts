@@ -217,3 +217,32 @@ export async function findMatchSets(
         .eq("match_id", matchId)
         .order("set_number", { ascending: true });
 }
+
+export async function findMatchesWithDetailsBySeasonAndWeek(
+    supabase: DBClient,
+    seasonId: string,
+    week: number
+) {
+    return supabase
+        .from("matches")
+        .select(`
+            *,
+            match_sets (
+                set_number,
+                home_score,
+                away_score
+            ),
+            match_officials (
+                official_type,
+                officials (
+                    id,
+                    username,
+                    display_name,
+                    avatar_url
+                )
+            )
+        `)
+        .eq("season_id", seasonId)
+        .eq("week", week)
+        .order("created_at", { ascending: true });
+}

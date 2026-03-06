@@ -5,7 +5,7 @@ import {logger} from "@/server/utils/logger";
 import {
     CompleteMatchInput,
     CreateMatchesInput,
-    MatchSetsInput,
+    MatchSetsInput, MatchWithDetails,
     UpdateMatchScheduleInput,
     VoidMatchInput
 } from "@/server/dto/match.dto";
@@ -14,7 +14,14 @@ import {
     findAllMatches,
     findMatchesBySeasonAndWeek,
     updateMatchSchedule,
-    updateMatchCompletion, insertMatchSets, findMatchById, deleteMatchSets, voidMatch, findMatchSets, updateMatchResults
+    updateMatchCompletion,
+    insertMatchSets,
+    findMatchById,
+    deleteMatchSets,
+    voidMatch,
+    findMatchSets,
+    updateMatchResults,
+    findMatchesWithDetailsBySeasonAndWeek
 } from "@/server/db/matches.repo";
 import {randomUUID} from "node:crypto";
 import {convertToUTC, isValidTimezone} from "@/server/utils/timezone";
@@ -808,6 +815,41 @@ export async function updateMatchResultsService(
         return Ok(updatedMatch as Match);
     } catch (error) {
         logger.error({ error }, "Unexpected error updating match results");
+        return Err(serializeError(error));
+    }
+}
+
+export async function getWeekSchedule(
+    supabase: DBClient,
+    p: { seasonId: string; week: number }
+): Promise<Result<MatchWithDetails[]>> {
+    try {
+        const { data, error } = await findMatchesWithDetailsBySeasonAndWeek(supabase, p.seasonId, p.week);
+
+        if (error) {
+            logger.error({ seasonId: p.seasonId, week: p.week, error }, "Failed to fetch week schedule");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Ok([]);
+        }
+
+        const result: MatchWithDetails[] = data.map(row => ({
+            match: row as unknown as Match,
+            sets: (row.match_sets ?? []) as MatchSet[],
+            officials: (row.match_officials ?? []).map((mo: any) => ({
+                id: mo.officials.id,
+                username: mo.officials.username,
+                display_name: mo.officials.display_name,
+                avatar_url: mo.officials.avatar_url,
+                official_type: mo.official_type,
+            })),
+        }));
+
+        return Ok(result);
+    } catch (error) {
+        logger.error({ error }, "Unexpected error fetching week schedule");
         return Err(serializeError(error));
     }
 }
