@@ -10,7 +10,7 @@ import {formatDateInTimezone, getRegionTimezone} from "@/app/utils/timezoneOptio
 import {useOfficialStore} from "@/app/stores/officialStore";
 import ManageMatchDialog from "@/app/features/matches/ManageMatchDialog";
 import CompleteMatchDialog from "@/app/features/matches/CompleteMatchDialog";
-import { Badge } from "@/app/components/ui/badge";
+import {Badge} from "@/app/components/ui/badge";
 import {usePlayerStore} from "@/app/stores/playerStore";
 import {MatchSet, Player} from "@/shared/types/db";
 import UpdateMatchDialog from "@/app/features/matches/UpdateMatchDialog";
@@ -24,13 +24,17 @@ interface SchedulePanelProps {
 const getStatusConfig = (status: string) => {
     switch (status) {
         case 'pending':
-            return { label: 'Pending', variant: 'secondary' as const };
+            return {label: 'Pending', variant: 'secondary' as const};
         case 'scheduled':
-            return { label: 'Scheduled', variant: 'default' as const };
+            return {label: 'Scheduled', variant: 'default' as const};
         case 'completed':
-            return { label: 'Completed', variant: 'default' as const, className: 'bg-green-600/10 text-green-600 border-green-600/20' };
+            return {
+                label: 'Completed',
+                variant: 'default' as const,
+                className: 'bg-green-600/10 text-green-600 border-green-600/20'
+            };
         default:
-            return { label: 'Unknown', variant: 'secondary' as const };
+            return {label: 'Unknown', variant: 'secondary' as const};
     }
 };
 
@@ -90,8 +94,8 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                 const playerIds = new Set<string>();
 
                 cached.data.forEach(match => {
-                    teamIds.add(match.home_team_id);
-                    teamIds.add(match.away_team_id);
+                    if (match.home_team_id) teamIds.add(match.home_team_id);
+                    if (match.away_team_id) teamIds.add(match.away_team_id);
 
                     if (match.match_mvp_player_id) {
                         playerIds.add(match.match_mvp_player_id);
@@ -244,8 +248,8 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
     return (
         <div className="space-y-4">
             {matches.map((match, index) => {
-                const homeTeam = teams.get(match.home_team_id);
-                const awayTeam = teams.get(match.away_team_id);
+                const homeTeam = match.home_team_id ? teams.get(match.home_team_id) : undefined;
+                const awayTeam = match.away_team_id ? teams.get(match.away_team_id) : undefined;
                 const officials = matchOfficials.get(match.id);
                 const statusConfig = getStatusConfig(match.status);
                 const matchMvp = match.match_mvp_player_id ? players.get(match.match_mvp_player_id) : null;
@@ -271,8 +275,11 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                     </Badge>
                                     {match.status === 'scheduled' && officials && (officials.referees.length === 0 || officials.media.length === 0) && (
                                         <span className="text-amber-600" title="Missing required officials">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4"
+                                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                                                 strokeLinecap="round" strokeLinejoin="round">
+                                                <path
+                                                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                                                 <line x1="12" y1="9" x2="12" y2="13"></line>
                                                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
                                             </svg>
@@ -299,12 +306,12 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                             onSuccess={loadSchedule}
                                         />
 
-                                        {match.status === 'scheduled' && homeTeam && awayTeam && (
+                                        {match.status === 'scheduled' && homeTeam && awayTeam &&  (
                                             <CompleteMatchDialog
                                                 matchId={match.id}
                                                 seasonId={seasonId}
-                                                homeTeamId={match.home_team_id}
-                                                awayTeamId={match.away_team_id}
+                                                homeTeamId={match.home_team_id!}
+                                                awayTeamId={match.away_team_id!}
                                                 homeTeamName={homeTeam.name}
                                                 awayTeamName={awayTeam.name}
                                                 bestOf={match.best_of}
@@ -316,8 +323,8 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                             <UpdateMatchDialog
                                                 matchId={match.id}
                                                 seasonId={seasonId}
-                                                homeTeamId={match.home_team_id}
-                                                awayTeamId={match.away_team_id}
+                                                homeTeamId={match.home_team_id!}
+                                                awayTeamId={match.away_team_id!}
                                                 homeTeamName={homeTeam.name}
                                                 awayTeamName={awayTeam.name}
                                                 bestOf={match.best_of}
@@ -331,118 +338,90 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                 </div>
                             </div>
 
-                            {/* Team Matchup */}
                             <div className="space-y-3">
-                                {/* Team Names and Score */}
                                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-                                    {/* Home Team */}
                                     <div className="flex justify-end items-center gap-3">
-                                        {homeTeam && (
+                                        {homeTeam ? (
                                             <>
                                                 <div className="flex flex-col items-end gap-0.5 min-w-0">
-                        <span className="font-semibold text-sm text-right truncate w-full">
-                            {homeTeam.name}
-                        </span>
+                                                    <span className="font-semibold text-sm text-right truncate w-full">
+                                                        {homeTeam.name}
+                                                    </span>
                                                     {match.status === "completed" && (
                                                         <>
-                                                            {/* Winner Badge */}
                                                             {(match.home_sets_won ?? 0) > (match.away_sets_won ?? 0) && (
-                                                                <Badge
-                                                                    variant="outline"
-                                                                    className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-green-600/10 text-green-600"
-                                                                >
+                                                                <Badge variant="outline"
+                                                                       className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-green-600/10 text-green-600">
                                                                     Winner
                                                                 </Badge>
                                                             )}
-
-                                                            {/* Forfeit Badge (Home Lost by Forfeit) */}
-                                                            {match.is_forfeit &&
-                                                                (match.home_sets_won ?? 0) < (match.away_sets_won ?? 0) && (
-                                                                    <Badge
-                                                                        variant="outline"
-                                                                        className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-red-600/10 text-red-600"
-                                                                    >
-                                                                        Forfeited
-                                                                    </Badge>
-                                                                )}
+                                                            {match.is_forfeit && (match.home_sets_won ?? 0) < (match.away_sets_won ?? 0) && (
+                                                                <Badge variant="outline"
+                                                                       className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-red-600/10 text-red-600">
+                                                                    Forfeited
+                                                                </Badge>
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>
                                                 {homeTeam.logo_url && (
                                                     <div className="relative w-12 h-12 shrink-0">
-                                                        <Image
-                                                            src={homeTeam.logo_url}
-                                                            alt={homeTeam.name}
-                                                            fill
-                                                            sizes="48px"
-                                                            className="object-contain"
-                                                        />
+                                                        <Image src={homeTeam.logo_url} alt={homeTeam.name} fill
+                                                               sizes="48px" className="object-contain"/>
                                                     </div>
                                                 )}
                                             </>
+                                        ) : (
+                                            <span
+                                                className="font-semibold text-sm text-muted-foreground text-right">TBD</span>
                                         )}
                                     </div>
-
-                                    {/* Center Section - VS or Final Score */}
                                     {match.status === 'completed' && match.home_sets_won !== null && match.away_sets_won !== null ? (
                                         <div className="flex items-center gap-3 px-3">
-                                            <span className="text-2xl font-bold tabular-nums">{match.home_sets_won}</span>
+                                            <span
+                                                className="text-2xl font-bold tabular-nums">{match.home_sets_won}</span>
                                             <span className="text-lg text-muted-foreground/50 font-medium">-</span>
-                                            <span className="text-2xl font-bold tabular-nums">{match.away_sets_won}</span>
+                                            <span
+                                                className="text-2xl font-bold tabular-nums">{match.away_sets_won}</span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center justify-center px-3">
-                <span className="text-lg font-bold text-muted-foreground/50">
-                    VS
-                </span>
+                                        <span className="text-lg font-bold text-muted-foreground/50">
+                                            VS
+                                        </span>
                                         </div>
                                     )}
 
-                                    {/* Away Team */}
                                     <div className="flex justify-start items-center gap-3">
-                                        {awayTeam && (
+                                        {awayTeam ? (
                                             <>
                                                 {awayTeam.logo_url && (
                                                     <div className="relative w-12 h-12 shrink-0">
-                                                        <Image
-                                                            src={awayTeam.logo_url}
-                                                            alt={awayTeam.name}
-                                                            fill
-                                                            sizes="48px"
-                                                            className="object-contain"
-                                                        />
+                                                        <Image src={awayTeam.logo_url} alt={awayTeam.name} fill sizes="48px" className="object-contain" />
                                                     </div>
                                                 )}
                                                 <div className="flex flex-col items-start gap-0.5 min-w-0">
-                        <span className="font-semibold text-sm text-left truncate w-full">
-                            {awayTeam.name}
-                        </span>
+                                                    <span className="font-semibold text-sm text-left truncate w-full">
+                                                        {awayTeam.name}
+                                                    </span>
                                                     {match.status === "completed" && (
                                                         <>
-                                                            {/* Winner Badge */}
                                                             {(match.away_sets_won ?? 0) > (match.home_sets_won ?? 0) && (
-                                                                <Badge
-                                                                    variant="outline"
-                                                                    className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-green-600/10 text-green-600"
-                                                                >
+                                                                <Badge variant="outline" className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-green-600/10 text-green-600">
                                                                     Winner
                                                                 </Badge>
                                                             )}
-
-                                                            {/* Forfeit Badge (Home Lost by Forfeit) */}
-                                                            {match.is_forfeit &&
-                                                                (match.away_sets_won ?? 0) < (match.home_sets_won ?? 0) && (
-                                                                    <Badge
-                                                                        variant="outline"
-                                                                        className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-red-600/10 text-red-600"
-                                                                    >
-                                                                        Forfeited
-                                                                    </Badge>
-                                                                )}
+                                                            {match.is_forfeit && (match.away_sets_won ?? 0) < (match.home_sets_won ?? 0) && (
+                                                                <Badge variant="outline" className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider border-0 bg-red-600/10 text-red-600">
+                                                                    Forfeited
+                                                                </Badge>
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>
                                             </>
+                                        ) : (
+                                            <span className="font-semibold text-sm text-muted-foreground">TBD</span>
                                         )}
                                     </div>
                                 </div>
@@ -471,14 +450,14 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                     </div>
                                 )}
 
-                                {/* MVP Section - Only for Completed Matches */}
                                 {match.status === 'completed' && (matchMvp || loserMvp) && (
                                     <div className="grid grid-cols-2 gap-2.5">
                                         {matchMvp && (
                                             <div className="panel p-3">
                                                 <div className="flex items-center gap-2.5">
                                                     {matchMvp.avatar_url && (
-                                                        <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
+                                                        <div
+                                                            className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
                                                             <Image
                                                                 src={matchMvp.avatar_url}
                                                                 alt={matchMvp.username || "Player"}
@@ -509,7 +488,8 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                             <div className="panel p-3">
                                                 <div className="flex items-center gap-2.5">
                                                     {loserMvp.avatar_url && (
-                                                        <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-muted-foreground/20 shrink-0">
+                                                        <div
+                                                            className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-muted-foreground/20 shrink-0">
                                                             <Image
                                                                 src={loserMvp.avatar_url}
                                                                 alt={loserMvp.username || "Player"}
@@ -520,7 +500,8 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                                         </div>
                                                     )}
                                                     <div className="flex flex-col min-w-0">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">
+                            <span
+                                className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">
                                 Loser MVP
                             </span>
                                                         <span className="text-sm font-semibold truncate">
@@ -548,14 +529,16 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                 <div className="flex flex-col gap-2.5 pt-3 border-t border-border">
                                     {officials.referees.length > 0 && (
                                         <div className="flex items-start gap-3">
-                                            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold w-20 pt-1.5">
+                                            <span
+                                                className="text-xs text-muted-foreground uppercase tracking-wide font-semibold w-20 pt-1.5">
                                                 Referees
                                             </span>
                                             <div className="flex gap-3 flex-wrap flex-1">
                                                 {officials.referees.map((official) => (
                                                     <div key={official.id} className="flex items-center gap-2">
                                                         {official.avatar_url && (
-                                                            <div className="relative w-6 h-6 rounded-full overflow-hidden border border-border">
+                                                            <div
+                                                                className="relative w-6 h-6 rounded-full overflow-hidden border border-border">
                                                                 <Image
                                                                     src={official.avatar_url}
                                                                     alt={official.username || "Official"}
@@ -582,14 +565,16 @@ export default function AdminSchedulePanel({seasonId, week, regionCode}: Schedul
                                     )}
                                     {officials.media.length > 0 && (
                                         <div className="flex items-start gap-4">
-                                            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold w-20 pt-1.5">
+                                            <span
+                                                className="text-xs text-muted-foreground uppercase tracking-wide font-semibold w-20 pt-1.5">
                                                 Media
                                             </span>
                                             <div className="flex gap-4 flex-wrap flex-1">
                                                 {officials.media.map((official) => (
                                                     <div key={official.id} className="flex items-center gap-2.5">
                                                         {official.avatar_url && (
-                                                            <div className="relative w-7 h-7 rounded-full overflow-hidden border border-border">
+                                                            <div
+                                                                className="relative w-7 h-7 rounded-full overflow-hidden border border-border">
                                                                 <Image
                                                                     src={official.avatar_url}
                                                                     alt={official.username || "Official"}
