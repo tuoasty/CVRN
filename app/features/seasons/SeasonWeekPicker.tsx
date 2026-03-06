@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { useRegionsStore } from "@/app/stores/regionStore";
 import { Label } from "@/app/components/ui/label";
@@ -11,6 +11,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/components/ui/select";
+import { useAdminReady } from "@/app/admin/AdminReadyContext";
+import { Skeleton } from "@/app/components/ui/skeleton";
 
 interface SeasonWeekPickerProps {
     selectedSeasonId: string;
@@ -25,13 +27,9 @@ export default function SeasonWeekPicker({
                                              onSeasonChange,
                                              onWeekChange,
                                          }: SeasonWeekPickerProps) {
-    const { fetchAllSeasons, allSeasonsCache } = useSeasonsStore();
-    const { fetchAllRegions, allRegionsCache } = useRegionsStore();
-
-    useEffect(() => {
-        fetchAllSeasons();
-        fetchAllRegions();
-    }, [fetchAllSeasons, fetchAllRegions]);
+    const { allSeasonsCache } = useSeasonsStore();
+    const { allRegionsCache } = useRegionsStore();
+    const ready = useAdminReady();
 
     const seasons = allSeasonsCache?.data || [];
     const regions = allRegionsCache?.data || [];
@@ -44,6 +42,29 @@ export default function SeasonWeekPicker({
         acc[regionId].push(season);
         return acc;
     }, {} as Record<string, typeof seasons>);
+
+    if (!ready) {
+        return (
+            <div className="space-y-5">
+                <div>
+                    <h3>Select Season and Week</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Choose which season and week to manage matches for
+                    </p>
+                </div>
+                <div className="grid grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                        <Label htmlFor="season">Season</Label>
+                        <Skeleton className="h-9 w-full rounded-sm" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="week">Week</Label>
+                        <Skeleton className="h-9 w-full rounded-sm" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-5">
@@ -58,7 +79,7 @@ export default function SeasonWeekPicker({
                 <div className="space-y-2">
                     <Label htmlFor="season">Season</Label>
                     <Select value={selectedSeasonId} onValueChange={onSeasonChange}>
-                        <SelectTrigger id="season" className="rounded-sm">
+                        <SelectTrigger id="season" className="rounded-sm w-full">
                             <SelectValue placeholder="Select season" />
                         </SelectTrigger>
                         <SelectContent>
@@ -89,7 +110,7 @@ export default function SeasonWeekPicker({
                         value={selectedWeek.toString()}
                         onValueChange={v => onWeekChange(parseInt(v))}
                     >
-                        <SelectTrigger id="week" className="rounded-sm">
+                        <SelectTrigger id="week" className="rounded-sm w-full">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
