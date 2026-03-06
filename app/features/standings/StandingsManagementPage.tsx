@@ -8,6 +8,8 @@ import { StandingsTable } from "@/app/features/standings/StandingsTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { toast } from "@/app/utils/toast";
 import { StandingWithInfo } from "@/server/dto/standing.dto";
+import { useAdminReady } from "@/app/admin/AdminReadyContext";
+import { Skeleton } from "@/app/components/ui/skeleton";
 
 export default function StandingsManagementPage() {
     const [selectedRegionId, setSelectedRegionId] = useState<string>("");
@@ -15,18 +17,9 @@ export default function StandingsManagementPage() {
     const [standings, setStandings] = useState<StandingWithInfo[]>([]);
 
     const { fetchStandings, loading: standingsLoading } = useStandingsStore();
-    const { allRegionsCache, fetchAllRegions } = useRegionsStore();
-    const { allSeasonsCache, fetchAllSeasons } = useSeasonsStore();
-
-    useEffect(() => {
-        fetchAllRegions().catch((error) => {
-            toast.error("Failed to load regions", error.message);
-        });
-
-        fetchAllSeasons().catch((error) => {
-            toast.error("Failed to load seasons", error.message);
-        });
-    }, [fetchAllRegions, fetchAllSeasons]);
+    const { allRegionsCache } = useRegionsStore();
+    const { allSeasonsCache } = useSeasonsStore();
+    const ready = useAdminReady();
 
     const regions = allRegionsCache?.data || [];
     const allSeasons = allSeasonsCache?.data || [];
@@ -67,38 +60,45 @@ export default function StandingsManagementPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Region</label>
-                            <Select value={selectedRegionId} onValueChange={setSelectedRegionId}>
-                                <SelectTrigger className="rounded-sm">
-                                    <SelectValue placeholder="Select region" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {regions.map((region) => (
-                                        <SelectItem key={region.id} value={region.id}>
-                                            {region.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            {ready ? (
+                                <Select value={selectedRegionId} onValueChange={setSelectedRegionId}>
+                                    <SelectTrigger className="rounded-sm w-full">
+                                        <SelectValue placeholder="Select region" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {regions.map((region) => (
+                                            <SelectItem key={region.id} value={region.id}>
+                                                {region.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <Skeleton className="h-9 w-full rounded-sm" />
+                            )}
                         </div>
-
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Season</label>
-                            <Select
-                                value={selectedSeasonId}
-                                onValueChange={setSelectedSeasonId}
-                                disabled={!selectedRegionId}
-                            >
-                                <SelectTrigger className="rounded-sm">
-                                    <SelectValue placeholder={selectedRegionId ? "Select season" : "Select region first"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {filteredSeasons.map((season) => (
-                                        <SelectItem key={season.id} value={season.id}>
-                                            {season.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            {ready ? (
+                                <Select
+                                    value={selectedSeasonId}
+                                    onValueChange={setSelectedSeasonId}
+                                    disabled={!selectedRegionId}
+                                >
+                                    <SelectTrigger className="rounded-sm w-full">
+                                        <SelectValue placeholder={selectedRegionId ? "Select season" : "Select region first"} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {filteredSeasons.map((season) => (
+                                            <SelectItem key={season.id} value={season.id}>
+                                                {season.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <Skeleton className="h-9 w-full rounded-sm" />
+                            )}
                         </div>
                     </div>
                 </div>
