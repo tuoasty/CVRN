@@ -3,7 +3,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
 import { StandingWithInfo } from "@/server/dto/standing.dto";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 type StandingsTableProps = {
     standings: StandingWithInfo[];
@@ -175,9 +175,8 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             const displayLvr = 100 + (standing.total_lvr || 0);
 
                             return (
-                                <>
+                                <React.Fragment key={standing.team_id}>
                                     <TableRow
-                                        key={standing.team_id}
                                         className={getRowClassName(rank)}
                                     >
                                         <TableCell className="text-center">
@@ -214,17 +213,17 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                             </span>
                                         </TableCell>
                                     </TableRow>
-                                    {isLastQualified && (
-                                        <TableRow key={`divider-qualified-${rank}`} className="h-0 p-0 border-0 hover:bg-transparent">
-                                            <TableCell colSpan={6} className="h-0 p-0 border-t-2 border-primary/40" />
-                                        </TableRow>
-                                    )}
-                                    {isLastPlayin && (
-                                        <TableRow key={`divider-playin-${rank}`} className="h-0 p-0 border-0 hover:bg-transparent">
-                                            <TableCell colSpan={6} className="h-0 p-0 border-t-2 border-secondary/40" />
-                                        </TableRow>
-                                    )}
-                                </>
+                                    {/*{isLastQualified && (*/}
+                                    {/*    <TableRow className="h-0 p-0 border-0 hover:bg-transparent">*/}
+                                    {/*        <TableCell colSpan={6} className="h-0 p-0 border-t-2 border-primary/40" />*/}
+                                    {/*    </TableRow>*/}
+                                    {/*)}*/}
+                                    {/*{isLastPlayin && (*/}
+                                    {/*    <TableRow className="h-0 p-0 border-0 hover:bg-transparent">*/}
+                                    {/*        <TableCell colSpan={6} className="h-0 p-0 border-t-2 border-secondary/40" />*/}
+                                    {/*    </TableRow>*/}
+                                    {/*)}*/}
+                                </React.Fragment>
                             );
                         })}
                     </TableBody>
