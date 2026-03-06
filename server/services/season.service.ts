@@ -11,7 +11,7 @@ import {
     updateSeasonById,
     deleteSeasonById, findSeasonBySlugAndRegion
 } from "@/server/db/seasons.repo";
-import {CreateSeasonInput, SeasonIdInput, UpdateSeasonInput} from "@/server/dto/season.dto";
+import {CreateSeasonInput, SeasonIdInput, SeasonWithPlayoffConfig, UpdateSeasonInput} from "@/server/dto/season.dto";
 import {randomUUID} from "node:crypto";
 
 export async function createSeason(
@@ -53,7 +53,7 @@ export async function createSeason(
 
 export async function getAllSeasons(
     supabase: DBClient
-): Promise<Result<Season[]>> {
+): Promise<Result<SeasonWithPlayoffConfig[]>> {
     try {
         const {data, error} = await findAllSeasons(supabase);
 
@@ -69,7 +69,7 @@ export async function getAllSeasons(
             });
         }
 
-        return Ok(data);
+        return Ok(data as SeasonWithPlayoffConfig[]);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching all seasons");
         return Err(serializeError(error));
@@ -220,7 +220,7 @@ export async function getSeasonBySlugAndRegion(
     supabase: DBClient,
     slug: string,
     regionId: string
-): Promise<Result<Season>> {
+): Promise<Result<SeasonWithPlayoffConfig>> {
     try {
         const {data, error} = await findSeasonBySlugAndRegion(supabase, slug, regionId);
 
@@ -236,7 +236,7 @@ export async function getSeasonBySlugAndRegion(
             });
         }
 
-        return Ok(data);
+        return Ok(data as SeasonWithPlayoffConfig);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching season by slug and region");
         return Err(serializeError(error));

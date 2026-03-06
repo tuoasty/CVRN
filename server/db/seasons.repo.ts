@@ -21,7 +21,7 @@ export async function insertSeason(supabase: DBClient, p: InsertSeasonDto) {
 export async function findAllSeasons(supabase: DBClient) {
     return supabase
         .from("seasons")
-        .select("*")
+        .select("*, playoff_configs(*)")
         .order("start_date", { ascending: false });
 }
 

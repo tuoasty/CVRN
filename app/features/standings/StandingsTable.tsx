@@ -8,11 +8,13 @@ import { useMemo, useState } from "react";
 type StandingsTableProps = {
     standings: StandingWithInfo[];
     isLoading?: boolean;
+    qualifiedTeams?: number;
+    playinTeams?: number;
 };
 
 type SortMode = "wins" | "lvr";
 
-export function StandingsTable({ standings, isLoading }: StandingsTableProps) {
+export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, playinTeams = 8 }: StandingsTableProps) {
     const [sortMode, setSortMode] = useState<SortMode>("lvr");
 
     const sortedStandings = useMemo(() => {
@@ -54,21 +56,16 @@ export function StandingsTable({ standings, isLoading }: StandingsTableProps) {
     }, [standings, sortMode]);
 
     const getQualificationStatus = (rank: number) => {
-        if (rank <= 2) return "qualified";
-        if (rank <= 3) return "playin";
+        if (rank <= qualifiedTeams) return "qualified";
+        if (rank <= qualifiedTeams + playinTeams) return "playin";
         return "eliminated";
     };
 
     const getRowClassName = (rank: number) => {
         const status = getQualificationStatus(rank);
-
-        if (status === "qualified") {
-            return "bg-primary/5 !border-l-4 border-l-primary/40 hover:bg-primary/10";
-        }
-        if (status === "playin") {
-            return "bg-secondary/5 !border-l-4 border-l-secondary/40 hover:bg-secondary/10";
-        }
-        return "bg-destructive/5 !border-l-4 border-l-destructive/60 hover:bg-destructive/10";
+        if (status === "qualified") return "!border-l-4 border-l-primary/60 hover:bg-muted/10";
+        if (status === "playin") return "!border-l-4 border-l-secondary/60 hover:bg-muted/10";
+        return "!border-l-4 border-l-destructive/60 hover:bg-muted/10";
     };
 
     const getRankBadge = (rank: number) => {
@@ -169,6 +166,8 @@ export function StandingsTable({ standings, isLoading }: StandingsTableProps) {
                     <TableBody>
                         {sortedStandings.map((standing, index) => {
                             const rank = index + 1;
+                            const isLastQualified = rank === qualifiedTeams;
+                            const isLastPlayin = rank === qualifiedTeams + playinTeams;
                             const wins = standing.wins || 0;
                             const losses = standing.losses || 0;
                             const totalGames = wins + losses;
@@ -176,44 +175,56 @@ export function StandingsTable({ standings, isLoading }: StandingsTableProps) {
                             const displayLvr = 100 + (standing.total_lvr || 0);
 
                             return (
-                                <TableRow
-                                    key={standing.team_id}
-                                    className={getRowClassName(rank)}
-                                >
-                                    <TableCell className="text-center">
-                                        {getRankBadge(rank)}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3 h-12">
-                                            {standing.team_logo_url && (
-                                                <div className="w-10 h-10 flex-shrink-0">
-                                                    <Image
-                                                        src={standing.team_logo_url}
-                                                        alt={standing.team_name || "Team"}
-                                                        width={40}
-                                                        height={40}
-                                                        className="rounded object-contain w-full h-full"
-                                                    />
-                                                </div>
-                                            )}
-                                            <span className="font-semibold">{standing.team_name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-center font-medium">
-                                        {wins}-{losses}
-                                    </TableCell>
-                                    <TableCell className="text-center text-muted-foreground">
-                                        {winPct.toFixed(1)}%
-                                    </TableCell>
-                                    <TableCell className="text-center text-muted-foreground">
-                                        {standing.sets_won || 0}-{standing.sets_lost || 0}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                <span className={`font-bold ${displayLvr >= 100 ? 'text-primary' : 'text-destructive'}`}>
-                    {displayLvr.toFixed(1)}
-                </span>
-                                    </TableCell>
-                                </TableRow>
+                                <>
+                                    <TableRow
+                                        key={standing.team_id}
+                                        className={getRowClassName(rank)}
+                                    >
+                                        <TableCell className="text-center">
+                                            {getRankBadge(rank)}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3 h-12">
+                                                {standing.team_logo_url && (
+                                                    <div className="w-10 h-10 flex-shrink-0">
+                                                        <Image
+                                                            src={standing.team_logo_url}
+                                                            alt={standing.team_name || "Team"}
+                                                            width={40}
+                                                            height={40}
+                                                            className="rounded object-contain w-full h-full"
+                                                        />
+                                                    </div>
+                                                )}
+                                                <span className="font-semibold">{standing.team_name}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-center font-medium">
+                                            {wins}-{losses}
+                                        </TableCell>
+                                        <TableCell className="text-center text-muted-foreground">
+                                            {winPct.toFixed(1)}%
+                                        </TableCell>
+                                        <TableCell className="text-center text-muted-foreground">
+                                            {standing.sets_won || 0}-{standing.sets_lost || 0}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <span className={`font-bold ${displayLvr >= 100 ? 'text-primary' : 'text-destructive'}`}>
+                                                {displayLvr.toFixed(1)}
+                                            </span>
+                                        </TableCell>
+                                    </TableRow>
+                                    {isLastQualified && (
+                                        <TableRow key={`divider-qualified-${rank}`} className="h-0 p-0 border-0 hover:bg-transparent">
+                                            <TableCell colSpan={6} className="h-0 p-0 border-t-2 border-primary/40" />
+                                        </TableRow>
+                                    )}
+                                    {isLastPlayin && (
+                                        <TableRow key={`divider-playin-${rank}`} className="h-0 p-0 border-0 hover:bg-transparent">
+                                            <TableCell colSpan={6} className="h-0 p-0 border-t-2 border-secondary/40" />
+                                        </TableRow>
+                                    )}
+                                </>
                             );
                         })}
                     </TableBody>
@@ -221,8 +232,7 @@ export function StandingsTable({ standings, isLoading }: StandingsTableProps) {
             </div>
 
             <div className="text-xs text-muted-foreground">
-                {/* TODO: Update qualification thresholds based on playoff configuration */}
-                Currently showing: Top 2 qualify for playoffs, 3 qualify for play-ins
+                Currently showing: Top {qualifiedTeams} qualify for playoffs, next {playinTeams} qualify for play-ins
             </div>
         </div>
     );

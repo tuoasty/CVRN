@@ -3,10 +3,11 @@ import { Season } from '@/shared/types/db';
 import { getAllSeasonsAction, getSeasonBySlugAndRegionAction } from '@/app/actions/season.actions';
 import { CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction } from './storeUtils';
 import { clientLogger } from "@/app/utils/clientLogger";
+import {SeasonWithPlayoffConfig} from "@/server/dto/season.dto";
 
 type SeasonsState = {
-    allSeasonsCache: CacheEntry<Season[]> | undefined;
-    seasonBySlugCache: Map<string, CacheEntry<Season>>;
+    allSeasonsCache: CacheEntry<SeasonWithPlayoffConfig[]> | undefined;
+    seasonBySlugCache: Map<string, CacheEntry<SeasonWithPlayoffConfig>>;
     loading: boolean;
     error: string | null;
 
@@ -18,7 +19,7 @@ type SeasonsState = {
 const SEASONS_LIST_TTL = 30 * 60 * 1000;
 const SEASON_DETAILS_TTL = 30 * 60 * 1000;
 
-const seasonBySlugCache = new Map<string, CacheEntry<Season>>();
+const seasonBySlugCache = new Map<string, CacheEntry<SeasonWithPlayoffConfig>>();
 
 const cleanupInterval = setupAutoEviction(seasonBySlugCache, 60000);
 
