@@ -1,3 +1,5 @@
+import {PlayoffConfig, Season} from "@/shared/types/db";
+
 export interface CreateSeasonInput {
     name: string;
     regionId: string;
@@ -30,4 +32,8 @@ export interface InsertSeasonDto {
     theme?: string | null;
     endDate?: string | null;
     isActive: boolean;
+}
+
+export interface SeasonWithPlayoffConfig extends Season {
+    playoff_configs: PlayoffConfig | null;
 }

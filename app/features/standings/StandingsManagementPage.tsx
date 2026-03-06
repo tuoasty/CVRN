@@ -28,6 +28,8 @@ export default function StandingsManagementPage() {
         ? allSeasons.filter((s) => s.region_id === selectedRegionId)
         : [];
 
+    const selectedSeason = filteredSeasons.find((s) => s.id === selectedSeasonId) ?? null;
+
     useEffect(() => {
         if (!selectedRegionId || !selectedSeasonId) {
             setStandings([]);
@@ -107,6 +109,8 @@ export default function StandingsManagementPage() {
                     <StandingsTable
                         standings={standings}
                         isLoading={standingsLoading}
+                        qualifiedTeams={selectedSeason?.playoff_configs?.qualified_teams}
+                        playinTeams={selectedSeason?.playoff_configs?.playin_teams}
                     />
                 ) : (
                     <div className="panel p-12">
