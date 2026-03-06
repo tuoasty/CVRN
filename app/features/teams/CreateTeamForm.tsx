@@ -17,6 +17,7 @@ import { useTeamsStore } from "@/app/stores/teamStore";
 import { useRegionsStore } from "@/app/stores/regionStore";
 import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { clientLogger } from "@/app/utils/clientLogger";
+import {compressImage} from "@/app/utils/imageCompression";
 
 interface CreateTeamFormProps {
     onSuccess?: () => void;
@@ -39,6 +40,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
 
     const [preview, setPreview] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [compressing, setCompressing] = useState(false);
 
     useEffect(() => {
         clientLogger.info('CreateTeamForm', 'Component mounted, fetching data');
@@ -48,15 +50,6 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
 
     const regions = allRegionsCache?.data || [];
     const seasons = allSeasonsCache?.data || [];
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selected = e.target.files?.[0];
-
-        if (!selected) return;
-
-        setFile(selected);
-        setPreview(URL.createObjectURL(selected));
-    };
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -68,25 +61,55 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         setIsDragging(false);
     };
 
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-
-        const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile && droppedFile.type.startsWith("image/")) {
-            setFile(droppedFile);
-            setPreview(URL.createObjectURL(droppedFile));
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selected = e.target.files?.[0];
+        if (!selected) return;
+        setCompressing(true);
+        try {
+            const compressed = await compressImage(selected);
+            setFile(compressed);
+            setPreview(URL.createObjectURL(compressed));
+        } catch (err) {
+            clientLogger.error("CreateTeamForm", "Image compression failed", { err });
+            setError("Failed to process image");
+        } finally {
+            setCompressing(false);
         }
     };
 
-    const handlePaste = (e: React.ClipboardEvent) => {
-        const items = e.clipboardData.items;
-        for (let i = 0; i < items.length; i++) {
-            if (items[i].type.startsWith("image/")) {
-                const pastedFile = items[i].getAsFile();
-                if (pastedFile) {
-                    setFile(pastedFile);
-                    setPreview(URL.createObjectURL(pastedFile));
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const droppedFile = e.dataTransfer.files[0];
+        if (!droppedFile?.type.startsWith("image/")) return;
+        setCompressing(true);
+        try {
+            const compressed = await compressImage(droppedFile);
+            setFile(compressed);
+            setPreview(URL.createObjectURL(compressed));
+        } catch (err) {
+            clientLogger.error("CreateTeamForm", "Image compression failed on drop", { err });
+            setError("Failed to process image");
+        } finally {
+            setCompressing(false);
+        }
+    };
+
+    const handlePaste = async (e: React.ClipboardEvent) => {
+        for (let i = 0; i < e.clipboardData.items.length; i++) {
+            if (e.clipboardData.items[i].type.startsWith("image/")) {
+                const pastedFile = e.clipboardData.items[i].getAsFile();
+                if (!pastedFile) break;
+                setCompressing(true);
+                try {
+                    const compressed = await compressImage(pastedFile);
+                    setFile(compressed);
+                    setPreview(URL.createObjectURL(compressed));
+                } catch (err) {
+                    clientLogger.error("CreateTeamForm", "Image compression failed on paste", { err });
+                    setError("Failed to process image");
+                } finally {
+                    setCompressing(false);
                 }
                 break;
             }
@@ -186,7 +209,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                             placeholder="Team name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            disabled={loading}
+                            disabled={loading || compressing}
                             className="rounded-sm"
                         />
                     </div>
@@ -259,7 +282,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                         ) : (
                             <div className="space-y-3">
                                 <p className="text-sm text-muted-foreground">
-                                    Drag & drop, paste, or click to upload
+                                    {compressing ? "Processing image..." : "Drag & drop, paste, or click to upload"}
                                 </p>
                                 <Input
                                     id="logo"
@@ -326,7 +349,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                 <div className="flex gap-3 pt-2">
                     <Button
                         type="submit"
-                        disabled={loading || seasonsLoading}
+                        disabled={loading || seasonsLoading || compressing}
                         className="rounded-sm"
                     >
                         {loading ? "Creating..." : "Create Team"}
