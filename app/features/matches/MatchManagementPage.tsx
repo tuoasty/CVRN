@@ -8,6 +8,7 @@ import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { useRegionsStore } from "@/app/stores/regionStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { PlayoffRound } from "@/server/dto/playoff.dto";
+import { Calendar } from "lucide-react";
 
 export default function MatchManagementPage() {
     const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
@@ -33,69 +34,79 @@ export default function MatchManagementPage() {
     }, [selectedSeasonId, allSeasonsCache, allRegionsCache]);
 
     return (
-        <div className="admin-section">
-            <div className="admin-header">
-                <div>
-                    <h1>Match Management</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Schedule and manage matches by season and week
-                    </p>
+        <div className="admin-container">
+            <div className="admin-section">
+                <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
+                    <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
+                        <Calendar className="h-7 w-7 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                        <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                            Match Management
+                        </h1>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Schedule and manage matches by season and week
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            <div className="panel p-6 max-w-2xl">
-                <SeasonWeekPicker
-                    selectedSeasonId={selectedSeasonId}
-                    selectedWeek={selectedWeek}
-                    selectedMatchType={matchType}
-                    selectedRound={selectedRound}
-                    onSeasonChange={setSelectedSeasonId}
-                    onWeekChange={setSelectedWeek}
-                    onMatchTypeChange={setMatchType}
-                    onRoundChange={setSelectedRound}
-                />
-            </div>
+                <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+                    <SeasonWeekPicker
+                        selectedSeasonId={selectedSeasonId}
+                        selectedWeek={selectedWeek}
+                        selectedMatchType={matchType}
+                        selectedRound={selectedRound}
+                        onSeasonChange={setSelectedSeasonId}
+                        onWeekChange={setSelectedWeek}
+                        onMatchTypeChange={setMatchType}
+                        onRoundChange={setSelectedRound}
+                    />
+                </div>
 
-            {selectedSeasonId ? (
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="rounded-sm">
-                        <TabsTrigger value="schedule" className="rounded-sm">
-                            Current Schedule
-                        </TabsTrigger>
-                        {matchType === "season" && (
-                            <TabsTrigger value="create" className="rounded-sm">
-                                Create Matches
+                {selectedSeasonId ? (
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList className="rounded-sm bg-muted/50 p-1">
+                            <TabsTrigger value="schedule" className="rounded-sm">
+                                Current Schedule
                             </TabsTrigger>
-                        )}
-                    </TabsList>
+                            {matchType === "season" && (
+                                <TabsTrigger value="create" className="rounded-sm">
+                                    Create Matches
+                                </TabsTrigger>
+                            )}
+                        </TabsList>
 
-                    <TabsContent value="schedule" className="mt-6">
-                        <AdminSchedulePanel
-                            seasonId={selectedSeasonId}
-                            week={matchType === "season" ? selectedWeek : undefined}
-                            round={matchType === "playoff" ? selectedRound : undefined}
-                            matchType={matchType}
-                            regionCode={regionCode}
-                        />
-                    </TabsContent>
-
-                    {matchType === "season" && (
-                        <TabsContent value="create" className="mt-6">
-                            <CreateMatchesPanel
+                        <TabsContent value="schedule" className="mt-6">
+                            <AdminSchedulePanel
                                 seasonId={selectedSeasonId}
-                                week={selectedWeek}
-                                onSuccess={() => setActiveTab("schedule")}
+                                week={matchType === "season" ? selectedWeek : undefined}
+                                round={matchType === "playoff" ? selectedRound : undefined}
+                                matchType={matchType}
+                                regionCode={regionCode}
                             />
                         </TabsContent>
-                    )}
-                </Tabs>
-            ) : (
-                <div className="panel p-8">
-                    <p className="text-muted-foreground text-center">
-                        Select a season to manage matches
-                    </p>
-                </div>
-            )}
+
+                        {matchType === "season" && (
+                            <TabsContent value="create" className="mt-6">
+                                <CreateMatchesPanel
+                                    seasonId={selectedSeasonId}
+                                    week={selectedWeek}
+                                    onSuccess={() => setActiveTab("schedule")}
+                                />
+                            </TabsContent>
+                        )}
+                    </Tabs>
+                ) : (
+                    <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
+                        <div className="text-center space-y-3">
+                            <Calendar className="h-12 w-12 text-muted-foreground/40 mx-auto" />
+                            <p className="text-sm text-muted-foreground font-medium">
+                                Select a season to manage matches
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

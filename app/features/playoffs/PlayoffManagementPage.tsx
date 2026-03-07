@@ -20,7 +20,7 @@ import {
 import { toast } from "@/app/utils/toast";
 import { PlayoffBracket } from "@/shared/types/db";
 import { PlayoffBracketDisplay } from "./PlayoffBracketDisplay";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Trophy } from "lucide-react";
 import { useAdminReady } from "@/app/admin/AdminReadyContext";
 import { Skeleton } from "@/app/components/ui/skeleton";
 
@@ -101,15 +101,22 @@ export default function PlayoffManagementPage() {
         <div className="admin-container">
             <div className="admin-section">
                 <div className="admin-header">
-                    <div>
-                        <h1>Playoff Brackets</h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Generate and manage playoff brackets
-                        </p>
+                    <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
+                        <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
+                            <Trophy className="h-7 w-7 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                            <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                                Playoff Brackets
+                            </h1>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Generate and manage playoff brackets
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                <div className="panel p-6 max-w-2xl mb-6">
+                <div className="panel p-6 max-w-2xl mb-6 border-l-4 border-l-primary/30">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Region</label>
@@ -160,7 +167,7 @@ export default function PlayoffManagementPage() {
                             <Button
                                 onClick={handleGenerateBracket}
                                 disabled={loading || brackets.length > 0}
-                                className="w-full rounded-sm"
+                                className="w-full rounded-sm bg-primary hover:bg-primary/90"
                             >
                                 {loading ? (
                                     <>
@@ -168,7 +175,10 @@ export default function PlayoffManagementPage() {
                                         Generating...
                                     </>
                                 ) : (
-                                    "Generate Playoff Bracket"
+                                    <>
+                                        <Trophy className="mr-2 h-4 w-4" />
+                                        Generate Playoff Bracket
+                                    </>
                                 )}
                             </Button>
                         </div>
@@ -187,7 +197,7 @@ export default function PlayoffManagementPage() {
                                         Reset Playoff Brackets
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
+                                <AlertDialogContent className="rounded-sm">
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Reset Playoff Brackets?</AlertDialogTitle>
                                         <AlertDialogDescription>
@@ -196,10 +206,10 @@ export default function PlayoffManagementPage() {
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
                                         <AlertDialogAction
                                             onClick={handleResetBrackets}
-                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-sm"
                                         >
                                             {loading ? (
                                                 <>
@@ -218,16 +228,16 @@ export default function PlayoffManagementPage() {
                 </div>
 
                 {loadingBrackets ? (
-                    <div className="panel p-12">
+                    <div className="panel p-12 border-l-4 border-l-primary/30">
                         <div className="flex flex-col items-center justify-center gap-3">
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             <p className="text-sm text-muted-foreground">Loading bracket...</p>
                         </div>
                     </div>
                 ) : selectedSeasonId && brackets.length > 0 ? (
                     <PlayoffBracketDisplay brackets={brackets} seasonId={selectedSeasonId} />
                 ) : selectedSeasonId && !loading ? (
-                    <div className="panel p-12">
+                    <div className="panel p-12 border-l-4 border-l-muted">
                         <p className="text-sm text-muted-foreground text-center">
                             {hasPlayoffStarted ? "No brackets found" : "Click 'Generate Playoff Bracket' to create the bracket structure"}
                         </p>

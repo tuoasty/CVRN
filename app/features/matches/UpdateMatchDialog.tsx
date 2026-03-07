@@ -26,6 +26,7 @@ import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 import {toast} from "@/app/utils/toast";
 import {PlayerWithRole} from "@/server/dto/player.dto";
+import {Pencil} from "lucide-react";
 
 interface UpdateMatchDialogProps {
     matchId: string;
@@ -233,8 +234,8 @@ export default function UpdateMatchDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="rounded-sm">
-                    Update Results
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-sm">
+                    <Pencil className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="!max-w-2xl max-h-[85vh] flex flex-col rounded-sm">

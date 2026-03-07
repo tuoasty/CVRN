@@ -34,6 +34,7 @@ import { useMatchesStore } from "@/app/stores/matchStore";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Match } from "@/shared/types/db";
 import {toast} from "@/app/utils/toast";
+import {Settings} from "lucide-react";
 
 interface ManageMatchDialogProps {
     matchId: string;
@@ -176,8 +177,8 @@ export default function ManageMatchDialog({
         <>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" onClick={openDialog} className="rounded-sm">
-                        Manage
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-sm">
+                        <Settings className="h-4 w-4" />
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
