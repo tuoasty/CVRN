@@ -14,10 +14,13 @@ import CompleteMatchDialog from "@/app/features/matches/CompleteMatchDialog";
 import UpdateMatchDialog from "@/app/features/matches/UpdateMatchDialog";
 import { Badge } from "@/app/components/ui/badge";
 import { MatchWithDetails } from "@/server/dto/match.dto";
+import { PlayoffRound } from "@/server/dto/playoff.dto";
 
 interface SchedulePanelProps {
     seasonId: string;
-    week: number;
+    week?: number;
+    round?: PlayoffRound;
+    matchType: "season" | "playoff";
     regionCode?: string;
 }
 
@@ -34,8 +37,8 @@ const getStatusConfig = (status: string) => {
     }
 };
 
-export default function AdminSchedulePanel({ seasonId, week, regionCode }: SchedulePanelProps) {
-    const { fetchWeekSchedule, weekScheduleCache, loading } = useMatchesStore();
+export default function AdminSchedulePanel({ seasonId, week, round, matchType, regionCode }: SchedulePanelProps) {
+    const { fetchWeekSchedule, fetchPlayoffSchedule, weekScheduleCache, playoffScheduleCache, loading } = useMatchesStore();
     const { fetchTeamsByIds } = useTeamsStore();
     const { fetchPlayersByIds } = usePlayerStore();
 
@@ -43,41 +46,35 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
     const [players, setPlayers] = useState<Map<string, Player>>(new Map());
     const [loaded, setLoaded] = useState(false);
 
-    const cacheKey = `${seasonId}-${week}`;
-    const schedule: MatchWithDetails[] = weekScheduleCache.get(cacheKey)?.data ?? [];
+    const schedule: MatchWithDetails[] = matchType === "season" && week !== undefined
+        ? weekScheduleCache.get(`${seasonId}-${week}`)?.data ?? []
+        : matchType === "playoff" && round
+            ? playoffScheduleCache.get(`${seasonId}-${round}`)?.data ?? []
+            : [];
 
     useEffect(() => {
-        if (seasonId) {
+        if (seasonId && ((matchType === "season" && week !== undefined) || (matchType === "playoff" && round))) {
             loadSchedule();
         }
-    }, [seasonId, week]);
+    }, [seasonId, week, round, matchType]);
 
     const loadSchedule = async () => {
         setLoaded(false);
 
         try {
-            await fetchWeekSchedule(seasonId, week);
-
-            const cached = weekScheduleCache.get(`${seasonId}-${week}`);
-            if (!cached) return;
-
-            const teamIds = new Set<string>();
-            const playerIds = new Set<string>();
-
-            cached.data.forEach(({ match }) => {
-                if (match.home_team_id) teamIds.add(match.home_team_id);
-                if (match.away_team_id) teamIds.add(match.away_team_id);
-                if (match.match_mvp_player_id) playerIds.add(match.match_mvp_player_id);
-                if (match.loser_mvp_player_id) playerIds.add(match.loser_mvp_player_id);
-            });
-
-            const [fetchedTeams, fetchedPlayers] = await Promise.all([
-                fetchTeamsByIds(Array.from(teamIds)),
-                playerIds.size > 0 ? fetchPlayersByIds(Array.from(playerIds)) : Promise.resolve([]),
-            ]);
-
-            setTeams(new Map(fetchedTeams.map(t => [t.id, t])));
-            setPlayers(new Map(fetchedPlayers.map(p => [p.id, p])));
+            if (matchType === "season" && week !== undefined) {
+                await fetchWeekSchedule(seasonId, week);
+                const cached = weekScheduleCache.get(`${seasonId}-${week}`);
+                if (cached) {
+                    processScheduleData(cached.data);
+                }
+            } else if (matchType === "playoff" && round) {
+                await fetchPlayoffSchedule(seasonId, round);
+                const cached = playoffScheduleCache.get(`${seasonId}-${round}`);
+                if (cached) {
+                    processScheduleData(cached.data);
+                }
+            }
         } catch (error) {
             clientLogger.error("SchedulePanel", "Error loading schedule", { error });
         } finally {
@@ -85,10 +82,30 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
         }
     };
 
+    const processScheduleData = async (data: MatchWithDetails[]) => {
+        const teamIds = new Set<string>();
+        const playerIds = new Set<string>();
+
+        data.forEach(({ match }) => {
+            if (match.home_team_id) teamIds.add(match.home_team_id);
+            if (match.away_team_id) teamIds.add(match.away_team_id);
+            if (match.match_mvp_player_id) playerIds.add(match.match_mvp_player_id);
+            if (match.loser_mvp_player_id) playerIds.add(match.loser_mvp_player_id);
+        });
+
+        const [fetchedTeams, fetchedPlayers] = await Promise.all([
+            fetchTeamsByIds(Array.from(teamIds)),
+            playerIds.size > 0 ? fetchPlayersByIds(Array.from(playerIds)) : Promise.resolve([]),
+        ]);
+
+        setTeams(new Map(fetchedTeams.map(t => [t.id, t])));
+        setPlayers(new Map(fetchedPlayers.map(p => [p.id, p])));
+    };
+
     if (!seasonId) {
         return (
             <div className="text-sm text-gray-500">
-                Select a season and week to view schedule
+                Select a season and {matchType === "season" ? "week" : "round"} to view schedule
             </div>
         );
     }
@@ -106,7 +123,9 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
     if (schedule.length === 0) {
         return (
             <div className="panel p-8">
-                <p className="text-muted-foreground text-center">No matches scheduled for this week</p>
+                <p className="text-muted-foreground text-center">
+                    No matches {matchType === "playoff" ? "in this playoff round" : "scheduled for this week"}
+                </p>
             </div>
         );
     }
@@ -138,6 +157,11 @@ export default function AdminSchedulePanel({ seasonId, week, regionCode }: Sched
                                     <Badge variant="outline" className="rounded-sm">
                                         BO{match.best_of}
                                     </Badge>
+                                    {match.match_type === "playoffs" && (
+                                        <Badge variant="outline" className="rounded-sm bg-purple-600/10 text-purple-600 border-purple-600/20">
+                                            Playoff
+                                        </Badge>
+                                    )}
                                     {match.status === 'scheduled' && (referees.length === 0 || media.length === 0) && (
                                         <span className="text-amber-600" title="Missing required officials">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

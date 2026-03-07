@@ -1,3 +1,10 @@
+export type PlayoffRound = "play_in" | "round_of_16" | "quarterfinal" | "semifinal" | "final" | "third_place";
+
+export interface GetPlayoffScheduleInput {
+    seasonId: string;
+    round: PlayoffRound;
+}
+
 export interface GeneratePlayoffBracketInput {
     seasonId: string;
 }
@@ -11,6 +18,8 @@ export interface InsertPlayoffBracketDto {
     seedAway: number | null;
     nextBracketId: string | null;
     winnerPosition: "home" | "away" | null;
+    loserNextBracketId?: string | null;
+    loserPosition?: "home" | "away" | null;
 }
 
 export interface InsertPlayoffMatchDto {

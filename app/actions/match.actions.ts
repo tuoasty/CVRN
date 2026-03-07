@@ -11,15 +11,16 @@ import {createServerSupabase} from "@/server/supabase/server";
 import {
     completeMatchService,
     createMatches,
-    getAllMatches,
+    getAllMatches, getAvailablePlayoffRounds,
     getAvailableTeamsForWeek,
     getMatchesForWeek,
-    getMatchSets,
+    getMatchSets, getPlayoffSchedule,
     getWeekSchedule,
     updateMatchResultsService,
     updateMatchScheduleService,
     voidMatchService
 } from "@/server/services/match.service";
+import {GetPlayoffScheduleInput} from "@/server/dto/playoff.dto";
 
 export async function createMatchesAction(input:CreateMatchesInput) {
     const supabase = await createServerSupabase()
@@ -69,4 +70,14 @@ export async function updateMatchResultsAction(input: CompleteMatchInput) {
 export async function getWeekScheduleAction(input: { seasonId: string; week: number }) {
     const supabase = await createServerSupabase();
     return await getWeekSchedule(supabase, input);
+}
+
+export async function getPlayoffScheduleAction(input: GetPlayoffScheduleInput) {
+    const supabase = await createServerSupabase();
+    return await getPlayoffSchedule(supabase, input);
+}
+
+export async function getAvailablePlayoffRoundsAction(seasonId: string) {
+    const supabase = await createServerSupabase();
+    return await getAvailablePlayoffRounds(supabase, seasonId);
 }

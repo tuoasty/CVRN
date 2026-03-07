@@ -36,6 +36,8 @@ export async function insertPlayoffBrackets(
         seed_away: b.seedAway,
         next_bracket_id: b.nextBracketId,
         winner_position: b.winnerPosition,
+        loser_next_bracket_id: b.loserNextBracketId ?? null,
+        loser_position: b.loserPosition ?? null,
     }));
 
     return supabase
@@ -43,7 +45,6 @@ export async function insertPlayoffBrackets(
         .insert(rows)
         .select();
 }
-
 export async function updateSeasonPlayoffStatus(
     supabase: DBClient,
     seasonId: string,
@@ -173,4 +174,50 @@ export async function insertPlayoffMatches(
         .from("matches")
         .insert(rows)
         .select();
+}
+
+export async function findUniquePlayoffRoundsBySeason(
+    supabase: DBClient,
+    seasonId: string
+) {
+    return supabase
+        .from("playoff_brackets")
+        .select("round")
+        .eq("season_id", seasonId)
+        .order("round", { ascending: true });
+}
+
+export async function findMatchesWithDetailsBySeasonAndRound(
+    supabase: DBClient,
+    seasonId: string,
+    round: string
+) {
+    return supabase
+        .from("playoff_brackets")
+        .select(`
+            round,
+            seed_home,
+            seed_away,
+            match_id,
+            matches!inner (
+                *,
+                match_sets (
+                    set_number,
+                    home_score,
+                    away_score
+                ),
+                match_officials (
+                    official_type,
+                    officials (
+                        id,
+                        username,
+                        display_name,
+                        avatar_url
+                    )
+                )
+            )
+        `)
+        .eq("season_id", seasonId)
+        .eq("round", round)
+        .order("seed_home", { ascending: true, nullsFirst: false });
 }

@@ -853,3 +853,65 @@ export async function getWeekSchedule(
         return Err(serializeError(error));
     }
 }
+
+import { GetPlayoffScheduleInput } from "@/server/dto/playoff.dto";
+import { findMatchesWithDetailsBySeasonAndRound, findUniquePlayoffRoundsBySeason } from "@/server/db/playoff.repo";
+
+export async function getPlayoffSchedule(
+    supabase: DBClient,
+    p: GetPlayoffScheduleInput
+): Promise<Result<MatchWithDetails[]>> {
+    try {
+        const { data, error } = await findMatchesWithDetailsBySeasonAndRound(supabase, p.seasonId, p.round);
+
+        if (error) {
+            logger.error({ seasonId: p.seasonId, round: p.round, error }, "Failed to fetch playoff schedule");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Ok([]);
+        }
+
+        const result: MatchWithDetails[] = data.map(row => ({
+            match: row.matches as unknown as Match,
+            sets: (row.matches.match_sets ?? []) as MatchSet[],
+            officials: (row.matches.match_officials ?? []).map((mo: any) => ({
+                id: mo.officials.id,
+                username: mo.officials.username,
+                display_name: mo.officials.display_name,
+                avatar_url: mo.officials.avatar_url,
+                official_type: mo.official_type,
+            })),
+        }));
+
+        return Ok(result);
+    } catch (error) {
+        logger.error({ error }, "Unexpected error fetching playoff schedule");
+        return Err(serializeError(error));
+    }
+}
+
+export async function getAvailablePlayoffRounds(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<string[]>> {
+    try {
+        const { data, error } = await findUniquePlayoffRoundsBySeason(supabase, seasonId);
+
+        if (error) {
+            logger.error({ seasonId, error }, "Failed to fetch playoff rounds");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Ok([]);
+        }
+
+        const uniqueRounds = Array.from(new Set(data.map(r => r.round)));
+        return Ok(uniqueRounds);
+    } catch (error) {
+        logger.error({ error }, "Unexpected error fetching playoff rounds");
+        return Err(serializeError(error));
+    }
+}

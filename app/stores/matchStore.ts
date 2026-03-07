@@ -3,9 +3,11 @@ import { Match, MatchSet, Team } from '@/shared/types/db';
 import {
     completeMatchAction,
     getAllMatchesAction,
+    getAvailablePlayoffRoundsAction,
     getAvailableTeamsForWeekAction,
     getMatchesForWeekAction,
     getMatchSetsAction,
+    getPlayoffScheduleAction,
     getWeekScheduleAction,
     updateMatchResultsAction,
     updateMatchScheduleAction,
@@ -14,6 +16,7 @@ import {
 import { CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction } from './storeUtils';
 import { clientLogger } from '@/app/utils/clientLogger';
 import { CompleteMatchInput, MatchWithDetails, UpdateMatchScheduleInput, VoidMatchInput } from '@/server/dto/match.dto';
+import { PlayoffRound } from "@/server/dto/playoff.dto";
 
 type MatchesState = {
     matchesCache: CacheEntry<Match[]> | undefined;
@@ -21,6 +24,8 @@ type MatchesState = {
     matchesForWeekCache: Map<string, CacheEntry<Match[]>>;
     matchSetsCache: Map<string, CacheEntry<MatchSet[]>>;
     weekScheduleCache: Map<string, CacheEntry<MatchWithDetails[]>>;
+    playoffScheduleCache: Map<string, CacheEntry<MatchWithDetails[]>>;
+    availableRoundsCache: Map<string, CacheEntry<string[]>>;
     loading: boolean;
     error: string | null;
 
@@ -29,6 +34,8 @@ type MatchesState = {
     fetchMatchesForWeek: (seasonId: string, week: number) => Promise<void>;
     fetchMatchSets: (matchId: string) => Promise<void>;
     fetchWeekSchedule: (seasonId: string, week: number) => Promise<void>;
+    fetchPlayoffSchedule: (seasonId: string, round: PlayoffRound) => Promise<void>;
+    fetchAvailablePlayoffRounds: (seasonId: string) => Promise<string[]>;
     updateMatchSchedule: (input: UpdateMatchScheduleInput) => Promise<boolean>;
     completeMatch: (input: CompleteMatchInput) => Promise<boolean>;
     voidMatch: (input: VoidMatchInput) => Promise<boolean>;
@@ -43,11 +50,15 @@ const availableTeamsCache = new Map<string, CacheEntry<Team[]>>();
 const matchesForWeekCache = new Map<string, CacheEntry<Match[]>>();
 const matchSetsCache = new Map<string, CacheEntry<MatchSet[]>>();
 const weekScheduleCache = new Map<string, CacheEntry<MatchWithDetails[]>>();
+const playoffScheduleCache = new Map<string, CacheEntry<MatchWithDetails[]>>();
+const availableRoundsCache = new Map<string, CacheEntry<string[]>>();
 
 const cleanupAvailable = setupAutoEviction(availableTeamsCache, 60000);
 const cleanupWeek = setupAutoEviction(matchesForWeekCache, 60000);
 const cleanupSets = setupAutoEviction(matchSetsCache, 60000);
 const cleanupSchedule = setupAutoEviction(weekScheduleCache, 60000);
+const cleanupPlayoffSchedule = setupAutoEviction(playoffScheduleCache, 60000);
+const cleanupRounds = setupAutoEviction(availableRoundsCache, 60000);
 
 export const useMatchesStore = create<MatchesState>((set, get) => ({
     matchesCache: undefined,
@@ -55,6 +66,8 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
     matchesForWeekCache,
     matchSetsCache,
     weekScheduleCache,
+    playoffScheduleCache,
+    availableRoundsCache,
     loading: false,
     error: null,
 
@@ -173,6 +186,55 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
         }
     },
 
+    fetchPlayoffSchedule: async (seasonId: string, round: PlayoffRound) => {
+        const cacheKey = `${seasonId}-${round}`;
+        const cached = playoffScheduleCache.get(cacheKey);
+
+        if (isCacheValid(cached)) return;
+
+        set({ loading: true, error: null });
+
+        try {
+            const result = await getPlayoffScheduleAction({ seasonId, round });
+
+            if (!result.ok) {
+                clientLogger.error('MatchesStore', 'Failed to fetch playoff schedule', { seasonId, round, error: result.error });
+                set({ error: result.error.message, loading: false });
+                return;
+            }
+
+            playoffScheduleCache.set(cacheKey, createCacheEntry(result.value, MATCHES_TTL));
+            set({ playoffScheduleCache, loading: false });
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception fetching playoff schedule', { seasonId, round, error });
+            set({ error: 'Failed to fetch playoff schedule', loading: false });
+        }
+    },
+
+    fetchAvailablePlayoffRounds: async (seasonId: string) => {
+        const cached = availableRoundsCache.get(seasonId);
+
+        if (cached && isCacheValid(cached)) {
+            return cached.data;
+        }
+
+        try {
+            const result = await getAvailablePlayoffRoundsAction(seasonId);
+
+            if (!result.ok) {
+                clientLogger.error('MatchesStore', 'Failed to fetch available rounds', { seasonId, error: result.error });
+                return [];
+            }
+
+            availableRoundsCache.set(seasonId, createCacheEntry(result.value, MATCHES_TTL));
+            set({ availableRoundsCache });
+            return result.value;
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception fetching available rounds', { seasonId, error });
+            return [];
+        }
+    },
+
     updateMatchSchedule: async (input: UpdateMatchScheduleInput) => {
         set({ loading: true, error: null });
 
@@ -204,7 +266,8 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
             });
 
             weekScheduleCache.clear();
-            set({ matchesForWeekCache, weekScheduleCache, loading: false });
+            playoffScheduleCache.clear();
+            set({ matchesForWeekCache, weekScheduleCache, playoffScheduleCache, loading: false });
             return true;
         } catch (error) {
             clientLogger.error('MatchesStore', 'Exception updating match schedule', { matchId: input.matchId, error });
@@ -244,7 +307,8 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
             });
 
             weekScheduleCache.clear();
-            set({ matchesForWeekCache, weekScheduleCache, loading: false });
+            playoffScheduleCache.clear();
+            set({ matchesForWeekCache, weekScheduleCache, playoffScheduleCache, loading: false });
             return true;
         } catch (error) {
             clientLogger.error('MatchesStore', 'Exception completing match', { matchId: input.matchId, error });
@@ -284,7 +348,8 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
             });
 
             weekScheduleCache.clear();
-            set({ matchesForWeekCache, weekScheduleCache, loading: false });
+            playoffScheduleCache.clear();
+            set({ matchesForWeekCache, weekScheduleCache, playoffScheduleCache, loading: false });
             return true;
         } catch (error) {
             clientLogger.error('MatchesStore', 'Exception voiding match', { matchId: input.matchId, error });
@@ -325,7 +390,8 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
 
             matchSetsCache.delete(input.matchId);
             weekScheduleCache.clear();
-            set({ matchesForWeekCache, matchSetsCache, weekScheduleCache, loading: false });
+            playoffScheduleCache.clear();
+            set({ matchesForWeekCache, matchSetsCache, weekScheduleCache, playoffScheduleCache, loading: false });
             return true;
         } catch (error) {
             clientLogger.error('MatchesStore', 'Exception updating match results', { matchId: input.matchId, error });
@@ -339,7 +405,16 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
         matchesForWeekCache.clear();
         matchSetsCache.clear();
         weekScheduleCache.clear();
-        set({ matchesCache: undefined, weekScheduleCache, matchSetsCache, error: null });
+        playoffScheduleCache.clear();
+        availableRoundsCache.clear();
+        set({
+            matchesCache: undefined,
+            weekScheduleCache,
+            matchSetsCache,
+            playoffScheduleCache,
+            availableRoundsCache,
+            error: null
+        });
     },
 }));
 
@@ -349,5 +424,7 @@ if (typeof window !== 'undefined') {
         cleanupWeek();
         cleanupSets();
         cleanupSchedule();
+        cleanupPlayoffSchedule();
+        cleanupRounds();
     });
 }
