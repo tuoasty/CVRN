@@ -15,6 +15,7 @@ import UpdateMatchDialog from "@/app/features/matches/UpdateMatchDialog";
 import { Badge } from "@/app/components/ui/badge";
 import { MatchWithDetails } from "@/server/dto/match.dto";
 import { PlayoffRound } from "@/server/dto/playoff.dto";
+import DeleteMatchDialog from "@/app/features/matches/DeleteMatchDialog";
 
 interface SchedulePanelProps {
     seasonId: string;
@@ -214,6 +215,12 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                                 currentSets={sets}
                                                 currentMatchMvpId={match.match_mvp_player_id || ""}
                                                 currentLoserMvpId={match.loser_mvp_player_id || ""}
+                                                onSuccess={loadSchedule}
+                                            />
+                                        )}
+                                        {match.match_type === "season"  && (
+                                            <DeleteMatchDialog
+                                                matchId={match.id}
                                                 onSuccess={loadSchedule}
                                             />
                                         )}

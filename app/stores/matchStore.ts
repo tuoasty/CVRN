@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Match, MatchSet, Team } from '@/shared/types/db';
 import {
-    completeMatchAction,
+    completeMatchAction, deleteMatchAction,
     getAllMatchesAction,
     getAvailablePlayoffRoundsAction,
     getAvailableTeamsForWeekAction,
@@ -40,6 +40,7 @@ type MatchesState = {
     completeMatch: (input: CompleteMatchInput) => Promise<boolean>;
     voidMatch: (input: VoidMatchInput) => Promise<boolean>;
     updateMatchResults: (input: CompleteMatchInput) => Promise<boolean>;
+    deleteMatch: (matchId: string) => Promise<boolean>;
     clearCache: () => void;
 };
 
@@ -396,6 +397,46 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
         } catch (error) {
             clientLogger.error('MatchesStore', 'Exception updating match results', { matchId: input.matchId, error });
             set({ error: 'Failed to update match results', loading: false });
+            return false;
+        }
+    },
+
+    deleteMatch: async (matchId: string) => {
+        set({ loading: true, error: null });
+
+        try {
+            const result = await deleteMatchAction(matchId);
+
+            if (!result.ok) {
+                set({ error: result.error.message, loading: false });
+                return false;
+            }
+
+            const { matchesCache } = get();
+
+            if (matchesCache) {
+                set({
+                    matchesCache: createCacheEntry(
+                        matchesCache.data.filter(m => m.id !== matchId),
+                        MATCHES_TTL
+                    ),
+                });
+            }
+
+            matchesForWeekCache.forEach((cache, key) => {
+                matchesForWeekCache.set(key, createCacheEntry(
+                    cache.data.filter(m => m.id !== matchId),
+                    MATCHES_TTL
+                ));
+            });
+
+            weekScheduleCache.clear();
+            availableTeamsCache.clear();
+            set({ matchesForWeekCache, weekScheduleCache, availableTeamsCache, loading: false });
+            return true;
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception deleting match', { matchId, error });
+            set({ error: 'Failed to delete match', loading: false });
             return false;
         }
     },
