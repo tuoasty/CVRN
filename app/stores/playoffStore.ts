@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { PlayoffBracket } from '@/shared/types/db';
 import {
     generatePlayoffBracketAction,
-    getPlayoffBracketBySeasonIdAction
+    getPlayoffBracketBySeasonIdAction, resetPlayoffBracketsAction
 } from '@/app/actions/playoff.actions';
 import { CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction } from './storeUtils';
 import { clientLogger } from "@/app/utils/clientLogger";
@@ -15,6 +15,7 @@ type PlayoffState = {
 
     fetchBrackets: (seasonId: string) => Promise<PlayoffBracket[]>;
     generateBracket: (input: GeneratePlayoffBracketInput) => Promise<boolean>;
+    resetBrackets: (seasonId: string) => Promise<boolean>;
     clearCache: () => void;
 };
 
@@ -93,6 +94,39 @@ export const usePlayoffStore = create<PlayoffState>((set, get) => ({
                 error
             });
             set({ error: 'Failed to generate playoff bracket', loading: false });
+            return false;
+        }
+    },
+
+    resetBrackets: async (seasonId: string) => {
+        clientLogger.info('PlayoffStore', 'Resetting playoff brackets', { seasonId });
+        set({ loading: true, error: null });
+
+        try {
+            const result = await resetPlayoffBracketsAction(seasonId);
+
+            if (!result.ok) {
+                clientLogger.error('PlayoffStore', 'Failed to reset playoff brackets', {
+                    seasonId,
+                    error: result.error
+                });
+                set({ error: result.error.message, loading: false });
+                return false;
+            }
+
+            clientLogger.info('PlayoffStore', 'Playoff brackets reset successfully', { seasonId });
+
+            const { bracketsCache } = get();
+            bracketsCache.delete(seasonId);
+
+            set({ bracketsCache, loading: false });
+            return true;
+        } catch (error) {
+            clientLogger.error('PlayoffStore', 'Exception resetting playoff brackets', {
+                seasonId,
+                error
+            });
+            set({ error: 'Failed to reset playoff brackets', loading: false });
             return false;
         }
     },
