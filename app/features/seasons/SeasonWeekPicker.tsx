@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { useRegionsStore } from "@/app/stores/regionStore";
+import { useMatchesStore } from "@/app/stores/matchStore";
 import { Label } from "@/app/components/ui/label";
 import {
     Select,
@@ -11,118 +12,174 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/components/ui/select";
-import { useAdminReady } from "@/app/admin/AdminReadyContext";
-import { Skeleton } from "@/app/components/ui/skeleton";
+import { PlayoffRound } from "@/server/dto/playoff.dto";
 
 interface SeasonWeekPickerProps {
     selectedSeasonId: string;
-    selectedWeek: number;
+    selectedWeek?: number;
+    selectedMatchType?: "season" | "playoff";
+    selectedRound?: PlayoffRound;
     onSeasonChange: (seasonId: string) => void;
-    onWeekChange: (week: number) => void;
+    onWeekChange?: (week: number) => void;
+    onMatchTypeChange?: (type: "season" | "playoff") => void;
+    onRoundChange?: (round: PlayoffRound) => void;
 }
+
+const ROUND_LABELS: Record<string, string> = {
+    play_in: "Play-in",
+    round_of_16: "Round of 16",
+    quarterfinal: "Quarterfinals",
+    semifinal: "Semifinals",
+    third_place: "3rd Place",
+    final: "Finals",
+};
+
+const ROUND_ORDER: Record<string, number> = {
+    play_in: 1,
+    round_of_16: 2,
+    quarterfinal: 3,
+    semifinal: 4,
+    third_place: 5,
+    final: 6,
+};
 
 export default function SeasonWeekPicker({
                                              selectedSeasonId,
                                              selectedWeek,
+                                             selectedMatchType,
+                                             selectedRound,
                                              onSeasonChange,
                                              onWeekChange,
+                                             onMatchTypeChange,
+                                             onRoundChange,
                                          }: SeasonWeekPickerProps) {
-    const { allSeasonsCache } = useSeasonsStore();
-    const { allRegionsCache } = useRegionsStore();
-    const ready = useAdminReady();
+    const { fetchAllSeasons, allSeasonsCache } = useSeasonsStore();
+    const { fetchAllRegions, allRegionsCache } = useRegionsStore();
+    const { fetchAvailablePlayoffRounds } = useMatchesStore();
+
+    const [availableRounds, setAvailableRounds] = useState<string[]>([]);
+    const [maxWeeks, setMaxWeeks] = useState(10);
+
+    useEffect(() => {
+        fetchAllSeasons();
+        fetchAllRegions();
+    }, []);
+
+    useEffect(() => {
+        if (selectedSeasonId && allSeasonsCache?.data) {
+            const season = allSeasonsCache.data.find(s => s.id === selectedSeasonId);
+            if (season) {
+                setMaxWeeks(season.weeks || 10);
+
+                if (onMatchTypeChange && !selectedMatchType) {
+                    onMatchTypeChange(season.playoff_started ? "playoff" : "season");
+                }
+
+                if (season.playoff_started) {
+                    fetchAvailablePlayoffRounds(selectedSeasonId).then(rounds => {
+                        const sortedRounds = rounds.sort((a, b) => {
+                            return (ROUND_ORDER[a] || 999) - (ROUND_ORDER[b] || 999);
+                        });
+                        setAvailableRounds(sortedRounds);
+
+                        if (sortedRounds.length > 0 && onRoundChange && !selectedRound) {
+                            onRoundChange(sortedRounds[0] as PlayoffRound);
+                        }
+                    });
+                }
+            }
+        }
+    }, [selectedSeasonId, allSeasonsCache]);
 
     const seasons = allSeasonsCache?.data || [];
     const regions = allRegionsCache?.data || [];
 
-    const seasonsByRegion = seasons.reduce((acc, season) => {
-        const regionId = season.region_id;
-        if (!acc[regionId]) {
-            acc[regionId] = [];
-        }
-        acc[regionId].push(season);
-        return acc;
-    }, {} as Record<string, typeof seasons>);
+    const groupedSeasons = regions.map(region => ({
+        region,
+        seasons: seasons.filter(s => s.region_id === region.id),
+    })).filter(g => g.seasons.length > 0);
 
-    if (!ready) {
-        return (
-            <div className="space-y-5">
-                <div>
-                    <h3>Select Season and Week</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Choose which season and week to manage matches for
-                    </p>
-                </div>
-                <div className="grid grid-cols-2 gap-5">
-                    <div className="space-y-2">
-                        <Label htmlFor="season">Season</Label>
-                        <Skeleton className="h-9 w-full rounded-sm" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="week">Week</Label>
-                        <Skeleton className="h-9 w-full rounded-sm" />
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
+    const showMatchTypePicker = selectedSeason?.playoff_started;
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-4">
             <div>
-                <h3>Select Season and Week</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                    Choose which season and week to manage matches for
-                </p>
+                <Label>Season</Label>
+                <Select value={selectedSeasonId} onValueChange={onSeasonChange}>
+                    <SelectTrigger className="rounded-sm">
+                        <SelectValue placeholder="Select season" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-sm">
+                        {groupedSeasons.map(({ region, seasons }) => (
+                            <React.Fragment key={region.id}>
+                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                    {region.name}
+                                </div>
+                                {seasons.map(season => (
+                                    <SelectItem key={season.id} value={season.id} className="rounded-sm">
+                                        {season.name}
+                                        {season.is_active && (
+                                            <span className="ml-2 text-xs text-primary">(Active)</span>
+                                        )}
+                                    </SelectItem>
+                                ))}
+                            </React.Fragment>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                    <Label htmlFor="season">Season</Label>
-                    <Select value={selectedSeasonId} onValueChange={onSeasonChange}>
-                        <SelectTrigger id="season" className="rounded-sm w-full">
-                            <SelectValue placeholder="Select season" />
+            {showMatchTypePicker && selectedMatchType && onMatchTypeChange && (
+                <div>
+                    <Label>Match Type</Label>
+                    <Select value={selectedMatchType} onValueChange={onMatchTypeChange}>
+                        <SelectTrigger className="rounded-sm">
+                            <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                            {regions.map((region) => {
-                                const regionSeasons = seasonsByRegion[region.id] || [];
-                                if (regionSeasons.length === 0) return null;
-
-                                return (
-                                    <React.Fragment key={region.id}>
-                                        <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
-                                            {region.code.toUpperCase()} - {region.name}
-                                        </div>
-                                        {regionSeasons.map((season) => (
-                                            <SelectItem key={season.id} value={season.id}>
-                                                {season.name}
-                                            </SelectItem>
-                                        ))}
-                                    </React.Fragment>
-                                );
-                            })}
+                        <SelectContent className="rounded-sm">
+                            <SelectItem value="season" className="rounded-sm">Season Matches</SelectItem>
+                            <SelectItem value="playoff" className="rounded-sm">Playoff Matches</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
+            )}
 
-                <div className="space-y-2">
-                    <Label htmlFor="week">Week</Label>
-                    <Select
-                        value={selectedWeek.toString()}
-                        onValueChange={v => onWeekChange(parseInt(v))}
-                    >
-                        <SelectTrigger id="week" className="rounded-sm w-full">
+            {selectedMatchType === "season" && selectedWeek !== undefined && onWeekChange && (
+                <div>
+                    <Label>Week</Label>
+                    <Select value={selectedWeek.toString()} onValueChange={(v) => onWeekChange(parseInt(v))}>
+                        <SelectTrigger className="rounded-sm">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                            {Array.from({ length: 5 }, (_, i) => i + 1).map(w => (
-                                <SelectItem key={w} value={w.toString()}>
-                                    Week {w}
+                        <SelectContent className="rounded-sm">
+                            {Array.from({ length: maxWeeks }, (_, i) => i + 1).map(week => (
+                                <SelectItem key={week} value={week.toString()} className="rounded-sm">
+                                    Week {week}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                 </div>
-            </div>
+            )}
+
+            {selectedMatchType === "playoff" && selectedRound !== undefined && onRoundChange && (
+                <div>
+                    <Label>Round</Label>
+                    <Select value={selectedRound} onValueChange={onRoundChange}>
+                        <SelectTrigger className="rounded-sm">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-sm">
+                            {availableRounds.map(round => (
+                                <SelectItem key={round} value={round} className="rounded-sm">
+                                    {ROUND_LABELS[round] || round}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
         </div>
     );
 }

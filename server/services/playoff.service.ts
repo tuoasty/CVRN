@@ -99,17 +99,19 @@ export async function generatePlayoffBracket(
                     seedHome: higherSeedTeam?.rank ?? null,
                     seedAway: lowerSeedTeam?.rank ?? null,
                     nextBracketId: null,
-                    winnerPosition: null
+                    winnerPosition: null,
+                    loserNextBracketId: null,
+                    loserPosition: null
                 });
             }
             currentWeek++;
         }
 
-        // Generate main bracket
         const teamsAfterPlayins = config.qualified_teams + (config.playin_teams / 2);
         const rounds = calculateRounds(teamsAfterPlayins);
 
         let previousRoundMatchIds: string[] = [];
+        let semifinalMatchIds: string[] = [];
 
         type SeedTracker = {
             matchId: string;
@@ -214,7 +216,9 @@ export async function generatePlayoffBracket(
                     seedHome: tempMatch.homeSeed,
                     seedAway: tempMatch.awaySeed,
                     nextBracketId: null,
-                    winnerPosition: null
+                    winnerPosition: null,
+                    loserNextBracketId: null,
+                    loserPosition: null
                 });
 
                 currentRoundSeeds.push({
@@ -275,14 +279,54 @@ export async function generatePlayoffBracket(
                 }
             }
 
+            if (isSemifinal) {
+                semifinalMatchIds = [...sortedMatchIds];
+            }
+
             previousRoundMatchIds = sortedMatchIds;
             previousRoundSeeds = currentRoundSeeds;
             currentWeek++;
         }
 
-        // Generate third place match
-        if (previousRoundMatchIds.length === 2) {
-            generateThirdPlaceMatch(p.seasonId, previousRoundMatchIds, currentWeek, allMatches, allBrackets);
+        if (semifinalMatchIds.length === 2) {
+            const thirdPlaceMatchId = randomUUID();
+            const finalsWeek = currentWeek - 1;
+
+            allMatches.push({
+                id: thirdPlaceMatchId,
+                seasonId: p.seasonId,
+                week: finalsWeek,
+                matchType: "playoffs",
+                status: "pending",
+                bestOf: 5,
+                homeTeamId: null,
+                awayTeamId: null
+            });
+
+            allBrackets.push({
+                seasonId: p.seasonId,
+                round: "third_place",
+                matchId: thirdPlaceMatchId,
+                seedHome: null,
+                seedAway: null,
+                nextBracketId: null,
+                winnerPosition: null,
+                loserNextBracketId: null,
+                loserPosition: null
+            });
+
+            const semi1BracketIndex = allBrackets.findIndex(b => b.matchId === semifinalMatchIds[0]);
+            const semi2BracketIndex = allBrackets.findIndex(b => b.matchId === semifinalMatchIds[1]);
+
+            if (semi1BracketIndex !== -1) {
+                allBrackets[semi1BracketIndex].loserNextBracketId = thirdPlaceMatchId;
+                allBrackets[semi1BracketIndex].loserPosition = "home";
+            }
+
+            if (semi2BracketIndex !== -1) {
+                allBrackets[semi2BracketIndex].loserNextBracketId = thirdPlaceMatchId;
+                allBrackets[semi2BracketIndex].loserPosition = "away";
+            }
         }
 
         const { data: matches, error: matchesError } = await insertPlayoffMatches(supabase, allMatches);
@@ -306,7 +350,9 @@ export async function generatePlayoffBracket(
             seedHome: b.seedHome,
             seedAway: b.seedAway,
             nextBracketId: null,
-            winnerPosition: b.winnerPosition
+            winnerPosition: b.winnerPosition,
+            loserNextBracketId: null,
+            loserPosition: b.loserPosition
         }));
 
         const { data: brackets, error: bracketsError } = await insertPlayoffBrackets(supabase, bracketsWithoutNext);
@@ -322,22 +368,41 @@ export async function generatePlayoffBracket(
         });
 
         const updatePromises = allBrackets
-            .filter(b => b.nextBracketId !== null)
+            .filter(b => b.nextBracketId !== null || b.loserNextBracketId !== null)
             .map(async (b) => {
                 const currentBracketId = matchToBracketIdMap.get(b.matchId);
-                const nextBracketId = matchToBracketIdMap.get(b.nextBracketId!);
 
-                if (!currentBracketId || !nextBracketId) {
-                    logger.warn({
-                        currentMatchId: b.matchId,
-                        nextMatchId: b.nextBracketId
-                    }, "Could not find bracket IDs for update");
+                if (!currentBracketId) {
+                    logger.warn({ matchId: b.matchId }, "Could not find bracket ID for update");
+                    return { error: null };
+                }
+
+                const updateData: {
+                    next_bracket_id?: string;
+                    loser_next_bracket_id?: string;
+                } = {};
+
+                if (b.nextBracketId) {
+                    const nextBracketId = matchToBracketIdMap.get(b.nextBracketId);
+                    if (nextBracketId) {
+                        updateData.next_bracket_id = nextBracketId;
+                    }
+                }
+
+                if (b.loserNextBracketId) {
+                    const loserNextBracketId = matchToBracketIdMap.get(b.loserNextBracketId);
+                    if (loserNextBracketId) {
+                        updateData.loser_next_bracket_id = loserNextBracketId;
+                    }
+                }
+
+                if (Object.keys(updateData).length === 0) {
                     return { error: null };
                 }
 
                 return supabase
                     .from("playoff_brackets")
-                    .update({ next_bracket_id: nextBracketId })
+                    .update(updateData)
                     .eq("id", currentBracketId);
             });
 
@@ -457,39 +522,6 @@ function getFirstRoundSeeding(
             awaySeed
         };
     }
-}
-
-function generateThirdPlaceMatch(
-    seasonId: string,
-    semiMatchIds: string[],
-    week: number,
-    allMatches: InsertPlayoffMatchDto[],
-    allBrackets: InsertPlayoffBracketDto[]
-): void {
-    if (semiMatchIds.length !== 2) return;
-
-    const thirdPlaceMatchId = randomUUID();
-
-    allMatches.push({
-        id: thirdPlaceMatchId,
-        seasonId,
-        week,
-        matchType: "playoffs",
-        status: "pending",
-        bestOf: 5,
-        homeTeamId: null,
-        awayTeamId: null
-    });
-
-    allBrackets.push({
-        seasonId,
-        round: "third_place",
-        matchId: thirdPlaceMatchId,
-        seedHome: null,
-        seedAway: null,
-        nextBracketId: null,
-        winnerPosition: null
-    });
 }
 
 export async function getPlayoffBracketBySeasonId(supabase: DBClient, seasonId: string): Promise<Result<PlayoffBracket[]>> {

@@ -244,5 +244,6 @@ export async function findMatchesWithDetailsBySeasonAndWeek(
         `)
         .eq("season_id", seasonId)
         .eq("week", week)
+        .eq("match_type", "season")
         .order("created_at", { ascending: true });
 }
