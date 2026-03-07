@@ -10,7 +10,7 @@ import {
 import {createServerSupabase} from "@/server/supabase/server";
 import {
     completeMatchService,
-    createMatches,
+    createMatches, deleteMatchService,
     getAllMatches, getAvailablePlayoffRounds,
     getAvailableTeamsForWeek,
     getMatchesForWeek,
@@ -80,4 +80,9 @@ export async function getPlayoffScheduleAction(input: GetPlayoffScheduleInput) {
 export async function getAvailablePlayoffRoundsAction(seasonId: string) {
     const supabase = await createServerSupabase();
     return await getAvailablePlayoffRounds(supabase, seasonId);
+}
+
+export async function deleteMatchAction(matchId: string) {
+    const supabase = await createServerSupabase();
+    return await deleteMatchService(supabase, matchId);
 }

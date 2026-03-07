@@ -247,3 +247,15 @@ export async function findMatchesWithDetailsBySeasonAndWeek(
         .eq("match_type", "season")
         .order("created_at", { ascending: true });
 }
+
+export async function deleteMatch(
+    supabase: DBClient,
+    matchId: string
+) {
+    return supabase
+        .from("matches")
+        .delete()
+        .eq("id", matchId)
+        .select()
+        .single();
+}
