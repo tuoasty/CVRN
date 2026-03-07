@@ -175,6 +175,7 @@ export async function getAvailableTeamsForWeek(
             .from("matches")
             .select("home_team_id, away_team_id")
             .eq("season_id", p.seasonId)
+            .eq("match_type", "season")
             .eq("week", p.week);
 
         if (matchesError) {
