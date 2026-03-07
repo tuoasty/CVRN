@@ -6,10 +6,21 @@ import { useRegionsStore } from "@/app/stores/regionStore";
 import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { Button } from "@/app/components/ui/button";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/app/components/ui/alert-dialog";
 import { toast } from "@/app/utils/toast";
 import { PlayoffBracket } from "@/shared/types/db";
 import { PlayoffBracketDisplay } from "./PlayoffBracketDisplay";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useAdminReady } from "@/app/admin/AdminReadyContext";
 import { Skeleton } from "@/app/components/ui/skeleton";
 
@@ -18,9 +29,10 @@ export default function PlayoffManagementPage() {
     const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
     const [brackets, setBrackets] = useState<PlayoffBracket[]>([]);
     const [loadingBrackets, setLoadingBrackets] = useState(false);
+    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const ready = useAdminReady();
 
-    const { generateBracket, fetchBrackets, loading } = usePlayoffStore();
+    const { generateBracket, fetchBrackets, resetBrackets, loading } = usePlayoffStore();
     const { allRegionsCache } = useRegionsStore();
     const { allSeasonsCache } = useSeasonsStore();
 
@@ -60,6 +72,25 @@ export default function PlayoffManagementPage() {
             const updatedBrackets = await fetchBrackets(selectedSeasonId);
             setBrackets(updatedBrackets);
             setLoadingBrackets(false);
+
+            await useSeasonsStore.getState().fetchAllSeasons();
+        }
+    };
+
+    const handleResetBrackets = async () => {
+        if (!selectedSeasonId) {
+            toast.error("No season selected");
+            return;
+        }
+
+        const success = await resetBrackets(selectedSeasonId);
+
+        if (success) {
+            toast.success("Playoff brackets reset successfully");
+            setBrackets([]);
+            setIsResetDialogOpen(false);
+
+            await useSeasonsStore.getState().fetchAllSeasons();
         }
     };
 
@@ -128,7 +159,7 @@ export default function PlayoffManagementPage() {
                         <div className="mt-4">
                             <Button
                                 onClick={handleGenerateBracket}
-                                disabled={loading}
+                                disabled={loading || brackets.length > 0}
                                 className="w-full rounded-sm"
                             >
                                 {loading ? (
@@ -140,6 +171,48 @@ export default function PlayoffManagementPage() {
                                     "Generate Playoff Bracket"
                                 )}
                             </Button>
+                        </div>
+                    )}
+
+                    {ready && selectedSeasonId && hasPlayoffStarted && (
+                        <div className="mt-4">
+                            <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                                <AlertDialogTrigger asChild>
+                                    <Button
+                                        variant="destructive"
+                                        disabled={loading || brackets.length == 0}
+                                        className="w-full rounded-sm"
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Reset Playoff Brackets
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Reset Playoff Brackets?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete all playoff matches, brackets, and related data for this season.
+                                            This action cannot be undone. You will need to regenerate the bracket after reset.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleResetBrackets}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                            {loading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Resetting...
+                                                </>
+                                            ) : (
+                                                "Reset Brackets"
+                                            )}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
                     )}
                 </div>

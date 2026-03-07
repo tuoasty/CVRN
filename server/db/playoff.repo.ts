@@ -221,3 +221,14 @@ export async function findMatchesWithDetailsBySeasonAndRound(
         .eq("round", round)
         .order("seed_home", { ascending: true, nullsFirst: false });
 }
+
+export async function deletePlayoffMatchesBySeasonId(
+    supabase: DBClient,
+    seasonId: string
+) {
+    return supabase
+        .from("matches")
+        .delete()
+        .eq("season_id", seasonId)
+        .eq("match_type", "playoffs");
+}
