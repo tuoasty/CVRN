@@ -52,12 +52,11 @@ export default function DeleteMatchDialog({ matchId, onSuccess }: DeleteMatchDia
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm">
+                    <Trash2 className="h-4 w-4" />
                 </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="rounded-sm">
                 <AlertDialogHeader>
                     <AlertDialogTitle>Delete Match</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -66,11 +65,11 @@ export default function DeleteMatchDialog({ matchId, onSuccess }: DeleteMatchDia
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel disabled={loading} className="rounded-sm">Cancel</AlertDialogCancel>
                     <AlertDialogAction
                         onClick={handleDelete}
                         disabled={loading}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-sm"
                     >
                         {loading ? "Deleting..." : "Delete Match"}
                     </AlertDialogAction>

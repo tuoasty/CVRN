@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState, useRef } from "react";
 import { PlayoffBracket, Match } from "@/shared/types/db";
 import { MatchBracketCard } from "./MatchBracketCard";
 import { useTeamsStore } from "@/app/stores/teamStore";
 import { useMatchesStore } from "@/app/stores/matchStore";
-import { Loader2, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2, Maximize2, Minimize2, Move } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ type RoundData = {
 };
 
 const ROUND_LABELS: Record<RoundType, string> = {
-    play_in: "Play-In",
+    play_in: "Play-In Round",
     round_of_16: "Round of 16",
     quarterfinal: "Quarterfinals",
     semifinal: "Semifinals",
@@ -43,12 +43,12 @@ const ROUND_ORDER: RoundType[] = [
     "final",
 ];
 
-const MATCH_HEIGHT = 140;
-const MATCH_WIDTH = 280;
-const ROUND_GAP = 120;
-const VERTICAL_SPACING_BASE = 24;
-const HEADER_OFFSET = 60;
-const BOTTOM_PADDING = 100;
+const MATCH_HEIGHT = 150;
+const MATCH_WIDTH = 300;
+const ROUND_GAP = 140;
+const VERTICAL_SPACING_BASE = 32;
+const HEADER_OFFSET = 80;
+const BOTTOM_PADDING = 120;
 
 function assignDisplayOrder(brackets: BracketWithMatch[]): Map<string, number> {
     const orderMap = new Map<string, number>();
@@ -92,6 +92,11 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
     const [loadingTeams, setLoadingTeams] = useState(true);
     const [loadingMatches, setLoadingMatches] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [scrollStart, setScrollStart] = useState({ left: 0, top: 0 });
 
     useEffect(() => {
         fetchAllTeams()
@@ -162,7 +167,7 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
         };
     }, [brackets, matchesMap]);
 
-    const { matchPositions, connectorLines } = useMemo(() => {
+    const { matchPositions, connectorLines, thirdPlacePosition } = useMemo(() => {
         const positions = new Map<string, { x: number; y: number }>();
 
         mainBracketRounds.forEach((round, roundIndex) => {
@@ -270,8 +275,31 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
             });
         });
 
-        return { matchPositions: positions, connectorLines: lines };
-    }, [mainBracketRounds]);
+        let thirdPlacePos = null;
+        if (thirdPlaceMatch) {
+            const semifinalRound = mainBracketRounds.find(r => r.type === "semifinal");
+            const finalRound = mainBracketRounds.find(r => r.type === "final");
+
+            if (semifinalRound && finalRound && finalRound.brackets.length > 0) {
+                const finalBracket = finalRound.brackets[0];
+                const finalPos = positions.get(finalBracket.id);
+
+                if (finalPos && semifinalRound.brackets.length >= 2) {
+                    const lowerSemifinalBracket = semifinalRound.brackets[1];
+                    const lowerSemifinalPos = positions.get(lowerSemifinalBracket.id);
+
+                    if (lowerSemifinalPos) {
+                        thirdPlacePos = {
+                            x: finalPos.x,
+                            y: lowerSemifinalPos.y + MATCH_HEIGHT + 80,
+                        };
+                    }
+                }
+            }
+        }
+
+        return { matchPositions: positions, connectorLines: lines, thirdPlacePosition: thirdPlacePos };
+    }, [mainBracketRounds, thirdPlaceMatch]);
 
     const { totalHeight, totalWidth } = useMemo(() => {
         if (mainBracketRounds.length === 0) return { totalHeight: 0, totalWidth: 0 };
@@ -282,17 +310,68 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
             if (bottomY > maxY) maxY = bottomY;
         });
 
+        if (thirdPlacePosition) {
+            const thirdPlaceBottom = thirdPlacePosition.y + MATCH_HEIGHT;
+            if (thirdPlaceBottom > maxY) maxY = thirdPlaceBottom;
+        }
+
         const height = maxY + BOTTOM_PADDING;
         const width = mainBracketRounds.length * (MATCH_WIDTH + ROUND_GAP);
 
         return { totalHeight: height, totalWidth: width };
-    }, [mainBracketRounds, matchPositions]);
+    }, [mainBracketRounds, matchPositions, thirdPlacePosition]);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (e.button === 1) {
+            e.preventDefault();
+            setIsDragging(true);
+            setDragStart({ x: e.clientX, y: e.clientY });
+            if (containerRef.current) {
+                setScrollStart({
+                    left: containerRef.current.scrollLeft,
+                    top: containerRef.current.scrollTop,
+                });
+            }
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isDragging && containerRef.current) {
+            const dx = e.clientX - dragStart.x;
+            const dy = e.clientY - dragStart.y;
+            containerRef.current.scrollLeft = scrollStart.left - dx;
+            containerRef.current.scrollTop = scrollStart.top - dy;
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    useEffect(() => {
+        const handleGlobalMouseUp = () => setIsDragging(false);
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+        return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    }, []);
+
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                setIsFullscreen(false);
+            }
+        };
+
+        if (isFullscreen) {
+            window.addEventListener('keydown', handleEscape);
+            return () => window.removeEventListener('keydown', handleEscape);
+        }
+    }, [isFullscreen]);
 
     if (loadingTeams || loadingMatches) {
         return (
-            <div className="panel p-12">
+            <div className="panel p-12 border-l-4 border-l-primary/30">
                 <div className="flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <p className="text-sm text-muted-foreground">Loading bracket data...</p>
                 </div>
             </div>
@@ -301,7 +380,7 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
 
     if (mainBracketRounds.length === 0 && !thirdPlaceMatch) {
         return (
-            <div className="panel p-12">
+            <div className="panel p-12 border-l-4 border-l-muted">
                 <p className="text-sm text-muted-foreground text-center">
                     No playoff bracket data available
                 </p>
@@ -311,7 +390,11 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center panel p-4 bg-gradient-to-r from-primary/5 to-transparent border-l-4 border-l-primary">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Move className="h-4 w-4" />
+                    <span>Hold middle mouse button to pan</span>
+                </div>
                 <Button
                     variant="outline"
                     size="sm"
@@ -326,16 +409,37 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                     ) : (
                         <>
                             <Maximize2 className="h-4 w-4 mr-2" />
-                            Fullscreen View
+                            Fullscreen
                         </>
                     )}
                 </Button>
             </div>
 
-            <div className={cn(
-                "panel p-6 overflow-auto",
-                isFullscreen && "fixed inset-0 z-50 bg-background"
-            )}>
+            <div
+                ref={containerRef}
+                className={cn(
+                    "panel overflow-auto border-l-4 border-l-primary/30",
+                    isFullscreen ? "fixed inset-4 z-50 bg-background shadow-2xl rounded-sm" : "p-8",
+                    isDragging && "cursor-grabbing select-none"
+                )}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                style={{ cursor: isDragging ? 'grabbing' : 'default' }}
+            >
+                {isFullscreen && (
+                    <div className="sticky top-0 right-0 z-50 flex justify-end p-4 bg-background/95 backdrop-blur-sm border-b border-border">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsFullscreen(false)}
+                            className="rounded-sm"
+                        >
+                            <Minimize2 className="h-4 w-4 mr-2" />
+                            Exit Fullscreen (ESC)
+                        </Button>
+                    </div>
+                )}
                 <div className="relative" style={{ width: totalWidth, height: totalHeight, minWidth: totalWidth }}>
                     <svg
                         className="absolute top-0 left-0 pointer-events-none"
@@ -343,6 +447,12 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                         width={totalWidth}
                         height={totalHeight}
                     >
+                        <defs>
+                            <linearGradient id="completedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
+                                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                            </linearGradient>
+                        </defs>
                         {connectorLines.map((line, index) => (
                             <g key={index}>
                                 <line
@@ -351,7 +461,9 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                                     x2={line.x2}
                                     y2={line.y2}
                                     stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                                    strokeWidth={2}
+                                    strokeWidth={line.isCompleted ? 3 : 2}
+                                    strokeDasharray={line.isCompleted ? "0" : "5,5"}
+                                    strokeOpacity={line.isCompleted ? 0.8 : 1}
                                 />
                                 <line
                                     x1={line.x2}
@@ -359,7 +471,9 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                                     x2={line.x3}
                                     y2={line.y3}
                                     stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                                    strokeWidth={2}
+                                    strokeWidth={line.isCompleted ? 3 : 2}
+                                    strokeDasharray={line.isCompleted ? "0" : "5,5"}
+                                    strokeOpacity={line.isCompleted ? 0.8 : 1}
                                 />
                                 <line
                                     x1={line.x3}
@@ -367,7 +481,9 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                                     x2={line.x4}
                                     y2={line.y4}
                                     stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                                    strokeWidth={2}
+                                    strokeWidth={line.isCompleted ? 3 : 2}
+                                    strokeDasharray={line.isCompleted ? "0" : "5,5"}
+                                    strokeOpacity={line.isCompleted ? 0.8 : 1}
                                 />
                             </g>
                         ))}
@@ -383,10 +499,13 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                                     width: MATCH_WIDTH,
                                 }}
                             >
-                                <div className="mb-4">
-                                    <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                                <div className="mb-6 pb-3 border-b-2 border-primary/20">
+                                    <h3 className="text-base font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                                         {round.label}
                                     </h3>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {round.brackets.filter(b => b.match.status === "completed").length} / {round.brackets.length} complete
+                                    </p>
                                 </div>
                             </div>
 
@@ -422,35 +541,39 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                             })}
                         </div>
                     ))}
+
+                    {thirdPlaceMatch && thirdPlacePosition && (
+                        <div
+                            className="absolute z-10"
+                            style={{
+                                left: thirdPlacePosition.x,
+                                top: thirdPlacePosition.y,
+                                width: MATCH_WIDTH,
+                            }}
+                        >
+                            <div className="mb-3 pb-2 border-b-2 border-amber-500/30">
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-amber-600">
+                                    {ROUND_LABELS.third_place}
+                                </h3>
+                            </div>
+                            <MatchBracketCard
+                                bracket={thirdPlaceMatch}
+                                match={thirdPlaceMatch.match}
+                                homeTeam={
+                                    thirdPlaceMatch.match.home_team_id
+                                        ? teamsMap.get(thirdPlaceMatch.match.home_team_id)
+                                        : undefined
+                                }
+                                awayTeam={
+                                    thirdPlaceMatch.match.away_team_id
+                                        ? teamsMap.get(thirdPlaceMatch.match.away_team_id)
+                                        : undefined
+                                }
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
-
-            {thirdPlaceMatch && (
-                <div className="panel p-6">
-                    <div className="mb-4">
-                        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                            {ROUND_LABELS.third_place}
-                        </h3>
-                    </div>
-
-                    <div className="max-w-sm">
-                        <MatchBracketCard
-                            bracket={thirdPlaceMatch}
-                            match={thirdPlaceMatch.match}
-                            homeTeam={
-                                thirdPlaceMatch.match.home_team_id
-                                    ? teamsMap.get(thirdPlaceMatch.match.home_team_id)
-                                    : undefined
-                            }
-                            awayTeam={
-                                thirdPlaceMatch.match.away_team_id
-                                    ? teamsMap.get(thirdPlaceMatch.match.away_team_id)
-                                    : undefined
-                            }
-                        />
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

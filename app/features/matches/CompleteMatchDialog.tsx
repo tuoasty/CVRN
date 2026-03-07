@@ -25,6 +25,7 @@ import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 import {toast} from "@/app/utils/toast";
 import {PlayerWithRole} from "@/server/dto/player.dto";
+import {Trophy} from "lucide-react";
 
 interface CompleteMatchDialogProps {
     matchId: string;
@@ -252,8 +253,8 @@ export default function CompleteMatchDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="default" size="sm" className="rounded-sm">
-                    Complete Match
+                <Button variant="default" size="sm" className="h-8 w-8 p-0 rounded-sm">
+                    <Trophy className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="!max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">

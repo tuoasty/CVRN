@@ -10,8 +10,9 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/app/components/ui/tooltip";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, Trophy, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 type MatchBracketCardProps = {
     bracket: PlayoffBracket;
@@ -40,127 +41,217 @@ export function MatchBracketCard({
         });
     };
 
-    const getStatusBadge = () => {
+    const getStatusConfig = () => {
         if (match.status === "completed") {
-            return <Badge variant="default" className="text-xs rounded-sm bg-primary text-primary-foreground">COMPLETED</Badge>;
+            return {
+                label: "Completed",
+                className: "bg-green-600/15 text-green-600 border-green-600/30",
+                icon: <Trophy className="h-3 w-3" />
+            };
         }
         if (match.status === "scheduled") {
-            return <Badge variant="secondary" className="text-xs rounded-sm bg-secondary text-secondary-foreground">SCHEDULED</Badge>;
+            return {
+                label: "Scheduled",
+                className: "bg-blue-600/15 text-blue-600 border-blue-600/30",
+                icon: <Calendar className="h-3 w-3" />
+            };
         }
-        return <Badge variant="outline" className="text-xs rounded-sm border-2 text-foreground">PENDING</Badge>;
+        return {
+            label: "Pending",
+            className: "bg-amber-600/15 text-amber-600 border-amber-600/30",
+            icon: <AlertCircle className="h-3 w-3" />
+        };
     };
+
+    const statusConfig = getStatusConfig();
 
     return (
         <TooltipProvider delayDuration={200}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="border border-border bg-card rounded-sm overflow-hidden hover:border-primary/50 transition-colors cursor-pointer">
+                    <div className={cn(
+                        "border-2 bg-card rounded-sm overflow-hidden transition-all duration-200 cursor-pointer shadow-sm",
+                        isCompleted ? "border-primary/40 shadow-primary/10" : "border-border hover:border-primary/30",
+                        "hover:shadow-lg hover:-translate-y-0.5"
+                    )}>
                         <div className={cn(
-                            "border-b border-border p-3 transition-colors",
-                            homeWon && "bg-primary/10 border-l-4 border-l-primary"
+                            "px-3 py-2.5 border-b transition-all",
+                            homeWon && "bg-gradient-to-r from-primary/20 to-primary/5 border-l-4 border-l-primary",
+                            !homeWon && !awayWon && "border-border"
                         )}>
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2.5 flex-1">
                                     {bracket.seed_home && (
-                                        <span className="text-xs font-semibold text-muted-foreground w-6 flex-shrink-0">
-                                            #{bracket.seed_home}
-                                        </span>
+                                        <div className="flex items-center justify-center w-6 h-6 rounded-sm bg-muted/50 border border-border shrink-0">
+                                            <span className="text-xs font-bold text-muted-foreground">
+                                                {bracket.seed_home}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {homeTeam?.logo_url && (
+                                        <div className="relative w-6 h-6 shrink-0">
+                                            <Image
+                                                src={homeTeam.logo_url}
+                                                alt={homeTeam.name}
+                                                fill
+                                                sizes="24px"
+                                                className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                            />
+                                        </div>
                                     )}
                                     <span className={cn(
-                                        "text-sm font-medium truncate",
+                                        "text-sm font-semibold",
+                                        homeWon && "text-primary",
                                         !homeTeam && "text-muted-foreground italic"
                                     )}>
                                         {homeTeam?.name || "TBD"}
                                     </span>
                                 </div>
                                 {isCompleted && (
-                                    <span className={cn(
-                                        "text-sm font-bold",
-                                        homeWon ? "text-primary" : "text-muted-foreground"
+                                    <div className={cn(
+                                        "flex items-center justify-center min-w-[28px] h-7 px-2 rounded-sm font-bold text-sm tabular-nums",
+                                        homeWon ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
                                     )}>
                                         {match.home_sets_won || 0}
-                                    </span>
+                                    </div>
                                 )}
                             </div>
                         </div>
 
                         <div className={cn(
-                            "border-b border-border p-3 transition-colors",
-                            awayWon && "bg-primary/10 border-l-4 border-l-primary"
+                            "px-3 py-2.5 border-b transition-all",
+                            awayWon && "bg-gradient-to-r from-primary/20 to-primary/5 border-l-4 border-l-primary",
+                            !homeWon && !awayWon && "border-border"
                         )}>
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
                                     {bracket.seed_away && (
-                                        <span className="text-xs font-semibold text-muted-foreground w-6 flex-shrink-0">
-                                            #{bracket.seed_away}
-                                        </span>
+                                        <div className="flex items-center justify-center w-6 h-6 rounded-sm bg-muted/50 border border-border shrink-0">
+                                            <span className="text-xs font-bold text-muted-foreground">
+                                                {bracket.seed_away}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {awayTeam?.logo_url && (
+                                        <div className="relative w-6 h-6 shrink-0">
+                                            <Image
+                                                src={awayTeam.logo_url}
+                                                alt={awayTeam.name}
+                                                fill
+                                                sizes="24px"
+                                                className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                            />
+                                        </div>
                                     )}
                                     <span className={cn(
-                                        "text-sm font-medium truncate",
+                                        "text-sm font-semibold",
+                                        awayWon && "text-primary",
                                         !awayTeam && "text-muted-foreground italic"
                                     )}>
                                         {awayTeam?.name || "TBD"}
                                     </span>
                                 </div>
                                 {isCompleted && (
-                                    <span className={cn(
-                                        "text-sm font-bold",
-                                        awayWon ? "text-primary" : "text-muted-foreground"
+                                    <div className={cn(
+                                        "flex items-center justify-center min-w-[28px] h-7 px-2 rounded-sm font-bold text-sm tabular-nums",
+                                        awayWon ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
                                     )}>
                                         {match.away_sets_won || 0}
-                                    </span>
+                                    </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="bg-muted/30 px-3 py-2 flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">
+                        <div className="bg-muted/40 px-3 py-2 flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-muted-foreground">
                                 BO{match.best_of}
                             </span>
-                            {getStatusBadge()}
+                            <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-semibold uppercase tracking-wider flex items-center gap-1", statusConfig.className)}>
+                                {statusConfig.icon}
+                                {statusConfig.label}
+                            </Badge>
                         </div>
                     </div>
                 </TooltipTrigger>
                 <TooltipContent
                     side="right"
-                    className="w-80 p-4 bg-popover border-2 border-border shadow-lg"
-                    sideOffset={8}
+                    className="w-80 p-4 border-2 border-primary/20 shadow-xl rounded-sm bg-card"
+                    sideOffset={10}
                 >
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between pb-2 border-b border-border">
-                            <span className="text-sm font-semibold text-foreground">Match Details</span>
-                            {getStatusBadge()}
+                        <div className="flex items-center justify-between pb-3 border-b-2 border-primary/20">
+                            <span className="text-sm font-bold text-foreground">Match Details</span>
+                            <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-semibold uppercase tracking-wider flex items-center gap-1", statusConfig.className)}>
+                                {statusConfig.icon}
+                                {statusConfig.label}
+                            </Badge>
                         </div>
 
-                        <div className="space-y-2 pt-2 border-t">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Calendar className="h-3 w-3" />
-                                <span>{formatDate(match.scheduled_at)}</span>
+                        <div className="grid grid-cols-2 gap-2 py-2">
+                            <div className="p-2.5 bg-muted/50 rounded-sm border border-border">
+                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Date/Time</div>
+                                <div className="text-xs font-medium text-foreground">{formatDate(match.scheduled_at)}</div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Users className="h-3 w-3" />
-                                <span>Best of {match.best_of}</span>
+                            <div className="p-2.5 bg-muted/50 rounded-sm border border-border">
+                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Format</div>
+                                <div className="text-xs font-medium text-foreground">Best of {match.best_of}</div>
                             </div>
                         </div>
 
                         {isCompleted && (
-                            <div className="pt-2 border-t">
-                                <div className="text-xs font-semibold mb-2">Set Scores</div>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between text-xs">
-                                        <span>{homeTeam?.name || "TBD"}</span>
-                                        <span className="font-mono">{match.home_sets_won || 0}</span>
+                            <div className="pt-2 border-t border-border">
+                                <div className="text-xs font-semibold mb-2 text-primary">Final Score</div>
+                                <div className="space-y-1.5">
+                                    <div className={cn(
+                                        "flex justify-between items-center p-2 rounded-sm border",
+                                        homeWon ? "bg-primary/15 border-primary/30" : "bg-muted/30 border-border"
+                                    )}>
+                                        <div className="flex items-center gap-2">
+                                            {homeTeam?.logo_url && (
+                                                <div className="relative w-4 h-4">
+                                                    <Image
+                                                        src={homeTeam.logo_url}
+                                                        alt={homeTeam.name}
+                                                        fill
+                                                        sizes="16px"
+                                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                    />
+                                                </div>
+                                            )}
+                                            <span className="text-xs font-medium text-foreground">{homeTeam?.name || "TBD"}</span>
+                                        </div>
+                                        <span className={cn("text-sm font-bold tabular-nums", homeWon ? "text-primary" : "text-foreground")}>
+                            {match.home_sets_won || 0}
+                        </span>
                                     </div>
-                                    <div className="flex justify-between text-xs">
-                                        <span>{awayTeam?.name || "TBD"}</span>
-                                        <span className="font-mono">{match.away_sets_won || 0}</span>
+                                    <div className={cn(
+                                        "flex justify-between items-center p-2 rounded-sm border",
+                                        awayWon ? "bg-primary/15 border-primary/30" : "bg-muted/30 border-border"
+                                    )}>
+                                        <div className="flex items-center gap-2">
+                                            {awayTeam?.logo_url && (
+                                                <div className="relative w-4 h-4">
+                                                    <Image
+                                                        src={awayTeam.logo_url}
+                                                        alt={awayTeam.name}
+                                                        fill
+                                                        sizes="16px"
+                                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                    />
+                                                </div>
+                                            )}
+                                            <span className="text-xs font-medium text-foreground">{awayTeam?.name || "TBD"}</span>
+                                        </div>
+                                        <span className={cn("text-sm font-bold tabular-nums", awayWon ? "text-primary" : "text-foreground")}>
+                            {match.away_sets_won || 0}
+                        </span>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {match.is_forfeit && (
-                            <div className="pt-2 border-t">
+                            <div className="pt-2 border-t border-destructive/20">
                                 <Badge variant="destructive" className="text-xs">FORFEIT</Badge>
                             </div>
                         )}
