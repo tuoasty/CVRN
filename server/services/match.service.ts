@@ -516,6 +516,17 @@ export async function completeMatchService(
             return Err(serializeError(updateError));
         }
 
+        if (match.match_type === "playoffs" && match.home_team_id && match.away_team_id) {
+            const winnerTeamId = homeSetsWon > awaySetsWon ? match.home_team_id : match.away_team_id;
+            const loserTeamId = homeSetsWon > awaySetsWon ? match.away_team_id : match.home_team_id;
+
+            const advanceResult = await advancePlayoffWinner(supabase, p.matchId, winnerTeamId, loserTeamId);
+
+            if (!advanceResult.ok) {
+                logger.error({ matchId: p.matchId, error: advanceResult.error }, "Failed to advance playoff teams - match completed but bracket not updated");
+            }
+        }
+
         logger.info({ matchId: p.matchId, homeSetsWon, awaySetsWon, isForfeit: p.isForfeit }, "Match completed successfully");
 
         return Ok(completedMatch as Match);
@@ -617,6 +628,34 @@ export async function updateMatchResultsService(
                 message: "Can only update results for completed matches"
             });
         }
+        if (match.match_type === "playoffs") {
+            const { data: bracket, error: bracketError } = await findPlayoffBracketByMatchId(supabase, p.matchId);
+
+            if (bracketError) {
+                logger.error({ matchId: p.matchId, error: bracketError }, "Failed to find playoff bracket");
+                return Err(serializeError(bracketError));
+            }
+
+            if (bracket?.next_bracket_id) {
+                const { data: nextBracket } = await supabase
+                    .from("playoff_brackets")
+                    .select("match_id")
+                    .eq("id", bracket.next_bracket_id)
+                    .single();
+
+                if (nextBracket) {
+                    const { data: nextMatch } = await findMatchById(supabase, nextBracket.match_id);
+
+                    if (nextMatch && nextMatch.status === "completed") {
+                        return Err({
+                            name: "ValidationError",
+                            message: "Cannot update results - next bracket match is already completed"
+                        });
+                    }
+                }
+            }
+        }
+
 
         let homeSetsWon = 0;
         let awaySetsWon = 0;
@@ -811,6 +850,18 @@ export async function updateMatchResultsService(
             return Err(serializeError(updateError));
         }
 
+        if (match.match_type === "playoffs" && match.home_team_id && match.away_team_id) {
+            const winnerTeamId = homeSetsWon > awaySetsWon ? match.home_team_id : match.away_team_id;
+            const loserTeamId = homeSetsWon > awaySetsWon ? match.away_team_id : match.home_team_id;
+
+            const advanceResult = await advancePlayoffWinner(supabase, p.matchId, winnerTeamId, loserTeamId);
+
+            if (!advanceResult.ok) {
+                logger.error({ matchId: p.matchId, error: advanceResult.error }, "Failed to re-cascade playoff teams after update");
+            }
+        }
+
+
         logger.info({ matchId: p.matchId, homeSetsWon, awaySetsWon, isForfeit: p.isForfeit }, "Match results updated successfully");
 
         return Ok(updatedMatch as Match);
@@ -856,7 +907,11 @@ export async function getWeekSchedule(
 }
 
 import { GetPlayoffScheduleInput } from "@/server/dto/playoff.dto";
-import { findMatchesWithDetailsBySeasonAndRound, findUniquePlayoffRoundsBySeason } from "@/server/db/playoff.repo";
+import {
+    findMatchesWithDetailsBySeasonAndRound, findPlayoffBracketByMatchId,
+    findUniquePlayoffRoundsBySeason,
+    updateMatchTeam
+} from "@/server/db/playoff.repo";
 
 export async function getPlayoffSchedule(
     supabase: DBClient,
@@ -913,6 +968,116 @@ export async function getAvailablePlayoffRounds(
         return Ok(uniqueRounds);
     } catch (error) {
         logger.error({ error }, "Unexpected error fetching playoff rounds");
+        return Err(serializeError(error));
+    }
+}
+
+async function advancePlayoffWinner(
+    supabase: DBClient,
+    matchId: string,
+    winnerTeamId: string,
+    loserTeamId: string
+): Promise<Result<void>> {
+    try {
+        const { data: bracket, error: bracketError } = await findPlayoffBracketByMatchId(supabase, matchId);
+
+        if (bracketError) {
+            logger.error({ matchId, error: bracketError }, "Failed to find playoff bracket");
+            return Err(serializeError(bracketError));
+        }
+
+        if (!bracket) {
+            logger.warn({ matchId }, "No bracket entry found for playoff match");
+            return Ok(undefined);
+        }
+
+        const winnerSeed = bracket.seed_home !== null && bracket.seed_away !== null
+            ? Math.min(bracket.seed_home, bracket.seed_away)
+            : null;
+
+        const loserSeed = bracket.seed_home !== null && bracket.seed_away !== null
+            ? Math.max(bracket.seed_home, bracket.seed_away)
+            : null;
+
+        if (bracket.next_bracket_id && bracket.winner_position) {
+            const { data: nextBracket, error: nextBracketError } = await supabase
+                .from("playoff_brackets")
+                .select("match_id")
+                .eq("id", bracket.next_bracket_id)
+                .single();
+
+            if (nextBracketError || !nextBracket) {
+                logger.error({ nextBracketId: bracket.next_bracket_id, error: nextBracketError }, "Failed to find next bracket");
+                return Err(serializeError(nextBracketError));
+            }
+
+            const { error: updateError } = await updateMatchTeam(
+                supabase,
+                nextBracket.match_id,
+                bracket.winner_position as "home" | "away",
+                winnerTeamId
+            );
+
+            if (updateError) {
+                logger.error({ matchId: nextBracket.match_id, position: bracket.winner_position, error: updateError }, "Failed to advance winner");
+                return Err(serializeError(updateError));
+            }
+
+            const seedField = bracket.winner_position === "home" ? "seed_home" : "seed_away";
+            const { error: seedError } = await supabase
+                .from("playoff_brackets")
+                .update({ [seedField]: winnerSeed })
+                .eq("id", bracket.next_bracket_id);
+
+            if (seedError) {
+                logger.error({ bracketId: bracket.next_bracket_id, seedField, error: seedError }, "Failed to update winner seed");
+                return Err(serializeError(seedError));
+            }
+
+            logger.info({ matchId, winnerTeamId, winnerSeed, nextMatchId: nextBracket.match_id, position: bracket.winner_position }, "Winner advanced to next bracket");
+        }
+
+        if (bracket.loser_next_bracket_id && bracket.loser_position) {
+            const { data: loserBracket, error: loserBracketError } = await supabase
+                .from("playoff_brackets")
+                .select("match_id")
+                .eq("id", bracket.loser_next_bracket_id)
+                .single();
+
+            if (loserBracketError || !loserBracket) {
+                logger.error({ loserNextBracketId: bracket.loser_next_bracket_id, error: loserBracketError }, "Failed to find loser bracket");
+                return Err(serializeError(loserBracketError));
+            }
+
+            const { error: updateError } = await updateMatchTeam(
+                supabase,
+                loserBracket.match_id,
+                bracket.loser_position as "home" | "away",
+                loserTeamId
+            );
+
+            if (updateError) {
+                logger.error({ matchId: loserBracket.match_id, position: bracket.loser_position, error: updateError }, "Failed to advance loser");
+                return Err(serializeError(updateError));
+            }
+
+            const seedField = bracket.loser_position === "home" ? "seed_home" : "seed_away";
+            const { error: seedError } = await supabase
+                .from("playoff_brackets")
+                .update({ [seedField]: loserSeed })
+                .eq("id", bracket.loser_next_bracket_id);
+
+            if (seedError) {
+                logger.error({ bracketId: bracket.loser_next_bracket_id, seedField, error: seedError }, "Failed to update loser seed");
+                return Err(serializeError(seedError));
+            }
+
+            logger.info({ matchId, loserTeamId, loserSeed, thirdPlaceMatchId: loserBracket.match_id, position: bracket.loser_position }, "Loser advanced to third place match");
+        }
+
+        return Ok(undefined);
+    } catch (error) {
+        logger.error({ matchId, error }, "Unexpected error advancing playoff teams");
         return Err(serializeError(error));
     }
 }

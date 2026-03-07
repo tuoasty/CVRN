@@ -307,36 +307,38 @@ export default function ManageMatchDialog({
                 </DialogContent>
             </Dialog>
 
-            <AlertDialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
-                <AlertDialogContent className="rounded-sm">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Void this match?</AlertDialogTitle>
-                        <AlertDialogDescription asChild>
-                            <div>
-                                <p>This will permanently delete all match data including:</p>
-                                <ul className="list-disc list-inside mt-2 space-y-1">
-                                    <li>All set scores and match results</li>
-                                    <li>Match MVP and Loser MVP assignments</li>
-                                    <li>LVR calculations</li>
-                                    <li>All assigned officials (referees and media)</li>
-                                    <li>Match schedule</li>
-                                </ul>
-                                <p className="mt-3 font-semibold">The match will be reset to pending status. This action cannot be undone.</p>
-                            </div>
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleVoidMatch}
-                            disabled={updating}
-                            className="rounded-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                            {updating ? "Voiding..." : "Void Match"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            {match.status === 'completed' && match.match_type !== 'playoffs' && (
+                <AlertDialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
+                    <AlertDialogContent className="rounded-sm">
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Void this match?</AlertDialogTitle>
+                            <AlertDialogDescription asChild>
+                                <div>
+                                    <p>This will permanently delete all match data including:</p>
+                                    <ul className="list-disc list-inside mt-2 space-y-1">
+                                        <li>All set scores and match results</li>
+                                        <li>Match MVP and Loser MVP assignments</li>
+                                        <li>LVR calculations</li>
+                                        <li>All assigned officials (referees and media)</li>
+                                        <li>Match schedule</li>
+                                    </ul>
+                                    <p className="mt-3 font-semibold">The match will be reset to pending status. This action cannot be undone.</p>
+                                </div>
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={handleVoidMatch}
+                                disabled={updating}
+                                className="rounded-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                                {updating ? "Voiding..." : "Void Match"}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
         </>
     );
 }
