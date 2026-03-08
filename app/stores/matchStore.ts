@@ -7,7 +7,7 @@ import {
     getAvailableTeamsForWeekAction,
     getMatchesForWeekAction,
     getMatchSetsAction,
-    getPlayoffScheduleAction,
+    getPlayoffScheduleAction, getRecentMatchesAction, getUpcomingMatchesAction,
     getWeekScheduleAction,
     updateMatchResultsAction,
     updateMatchScheduleAction,
@@ -26,6 +26,8 @@ type MatchesState = {
     weekScheduleCache: Map<string, CacheEntry<MatchWithDetails[]>>;
     playoffScheduleCache: Map<string, CacheEntry<MatchWithDetails[]>>;
     availableRoundsCache: Map<string, CacheEntry<string[]>>;
+    upcomingMatchesCache: Map<string, CacheEntry<MatchWithDetails[]>>;
+    recentMatchesCache: Map<string, CacheEntry<MatchWithDetails[]>>;
     loading: boolean;
     error: string | null;
 
@@ -41,6 +43,8 @@ type MatchesState = {
     voidMatch: (input: VoidMatchInput) => Promise<boolean>;
     updateMatchResults: (input: CompleteMatchInput) => Promise<boolean>;
     deleteMatch: (matchId: string) => Promise<boolean>;
+    fetchUpcomingMatches: (seasonId: string, limit?: number) => Promise<void>;
+    fetchRecentMatches: (seasonId: string, limit?: number) => Promise<void>;
     clearCache: () => void;
 };
 
@@ -61,6 +65,12 @@ const cleanupSchedule = setupAutoEviction(weekScheduleCache, 60000);
 const cleanupPlayoffSchedule = setupAutoEviction(playoffScheduleCache, 60000);
 const cleanupRounds = setupAutoEviction(availableRoundsCache, 60000);
 
+const upcomingMatchesCache = new Map<string, CacheEntry<MatchWithDetails[]>>();
+const recentMatchesCache = new Map<string, CacheEntry<MatchWithDetails[]>>();
+
+const cleanupUpcoming = setupAutoEviction(upcomingMatchesCache, 60000);
+const cleanupRecent = setupAutoEviction(recentMatchesCache, 60000);
+
 export const useMatchesStore = create<MatchesState>((set, get) => ({
     matchesCache: undefined,
     availableTeamsCache,
@@ -69,6 +79,8 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
     weekScheduleCache,
     playoffScheduleCache,
     availableRoundsCache,
+    upcomingMatchesCache,
+    recentMatchesCache,
     loading: false,
     error: null,
 
@@ -441,6 +453,57 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
         }
     },
 
+    fetchUpcomingMatches: async (seasonId: string, limit: number = 5) => {
+        const cacheKey = `${seasonId}-${limit}`;
+        const cached = upcomingMatchesCache.get(cacheKey);
+
+        if (isCacheValid(cached)) return;
+
+        set({ loading: true, error: null });
+
+        try {
+            const result = await getUpcomingMatchesAction(seasonId, limit);
+
+            if (!result.ok) {
+                clientLogger.error('MatchesStore', 'Failed to fetch upcoming matches', { seasonId, error: result.error });
+                set({ error: result.error.message, loading: false });
+                return;
+            }
+
+            upcomingMatchesCache.set(cacheKey, createCacheEntry(result.value, MATCHES_TTL));
+            set({ upcomingMatchesCache, loading: false });
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception fetching upcoming matches', { seasonId, error });
+            set({ error: 'Failed to fetch upcoming matches', loading: false });
+        }
+    },
+
+    fetchRecentMatches: async (seasonId: string, limit: number = 5) => {
+        const cacheKey = `${seasonId}-${limit}`;
+        const cached = recentMatchesCache.get(cacheKey);
+
+        if (isCacheValid(cached)) return;
+
+        set({ loading: true, error: null });
+
+        try {
+            const result = await getRecentMatchesAction(seasonId, limit);
+
+            if (!result.ok) {
+                clientLogger.error('MatchesStore', 'Failed to fetch recent matches', { seasonId, error: result.error });
+                set({ error: result.error.message, loading: false });
+                return;
+            }
+
+            recentMatchesCache.set(cacheKey, createCacheEntry(result.value, MATCHES_TTL));
+            set({ recentMatchesCache, loading: false });
+        } catch (error) {
+            clientLogger.error('MatchesStore', 'Exception fetching recent matches', { seasonId, error });
+            set({ error: 'Failed to fetch recent matches', loading: false });
+        }
+    },
+
+
     clearCache: () => {
         availableTeamsCache.clear();
         matchesForWeekCache.clear();
@@ -448,12 +511,16 @@ export const useMatchesStore = create<MatchesState>((set, get) => ({
         weekScheduleCache.clear();
         playoffScheduleCache.clear();
         availableRoundsCache.clear();
+        upcomingMatchesCache.clear();
+        recentMatchesCache.clear();
         set({
             matchesCache: undefined,
             weekScheduleCache,
             matchSetsCache,
             playoffScheduleCache,
             availableRoundsCache,
+            upcomingMatchesCache,
+            recentMatchesCache,
             error: null
         });
     },
@@ -467,5 +534,7 @@ if (typeof window !== 'undefined') {
         cleanupSchedule();
         cleanupPlayoffSchedule();
         cleanupRounds();
+        cleanupUpcoming();
+        cleanupRecent();
     });
 }

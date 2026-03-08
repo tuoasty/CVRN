@@ -49,7 +49,7 @@ export default function SetPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="flex items-center justify-center min-h-[calc(100vh-5.5rem)] -mx-4">
             <Card className="w-full max-w-md rounded-sm">
                 <CardHeader>
                     <CardTitle className="text-xl text-center">Set Your Password</CardTitle>

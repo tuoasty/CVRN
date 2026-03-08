@@ -14,7 +14,7 @@ import {
     getAllMatches, getAvailablePlayoffRounds,
     getAvailableTeamsForWeek,
     getMatchesForWeek,
-    getMatchSets, getPlayoffSchedule,
+    getMatchSets, getPlayoffSchedule, getRecentMatches, getUpcomingMatches,
     getWeekSchedule,
     updateMatchResultsService,
     updateMatchScheduleService,
@@ -85,4 +85,14 @@ export async function getAvailablePlayoffRoundsAction(seasonId: string) {
 export async function deleteMatchAction(matchId: string) {
     const supabase = await createServerSupabase();
     return await deleteMatchService(supabase, matchId);
+}
+
+export async function getUpcomingMatchesAction(seasonId: string, limit: number = 5) {
+    const supabase = await createServerSupabase();
+    return await getUpcomingMatches(supabase, seasonId, limit);
+}
+
+export async function getRecentMatchesAction(seasonId: string, limit: number = 5) {
+    const supabase = await createServerSupabase();
+    return await getRecentMatches(supabase, seasonId, limit);
 }
