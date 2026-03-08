@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import { LogoutButton } from "@/app/components/ui/LogoutButton";
 import AdminNavItems from "@/app/components/ui/AdminNavItems";
+import { Users } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
 
 export default function AdminNavbar() {
     return (
@@ -18,7 +20,17 @@ export default function AdminNavbar() {
                         <AdminNavItems />
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
+                        <Link href="/home">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 rounded-sm"
+                            >
+                                <Users className="h-4 w-4" />
+                            </Button>
+                        </Link>
+                        <div className="h-6 w-px bg-border" />
                         <ModeToggle />
                         <LogoutButton />
                     </div>
