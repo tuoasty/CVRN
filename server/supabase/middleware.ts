@@ -57,9 +57,24 @@ export async function updateSession(request: NextRequest) {
 
   if (isLogin) {
     if (user) {
-      return NextResponse.redirect(
-          new URL("/admin/dashboard", request.url)
-      );
+      const url = new URL("/admin/dashboard", request.url);
+      const returnUrl = request.nextUrl.searchParams.get("returnUrl");
+
+      if (returnUrl) {
+        const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .single();
+
+        if (!roleData?.role) {
+          return NextResponse.redirect(url);
+        }
+
+        return NextResponse.redirect(new URL(returnUrl, request.url));
+      }
+
+      return NextResponse.redirect(url);
     }
 
     return supabaseResponse;

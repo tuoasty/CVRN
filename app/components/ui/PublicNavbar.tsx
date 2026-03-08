@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import PublicNavItems from "@/app/components/ui/PublicNavItems";
 import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
+import UserButton from "@/app/components/ui/UserButton";
 
 export default function PublicNavbar() {
     return (
@@ -20,6 +21,8 @@ export default function PublicNavbar() {
 
                     <div className="flex items-center gap-3">
                         <RegionSeasonSelector />
+                        <div className="h-6 w-px bg-border" />
+                        <UserButton />
                         <div className="h-6 w-px bg-border" />
                         <ModeToggle />
                     </div>

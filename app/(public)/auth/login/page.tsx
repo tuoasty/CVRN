@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { loginAction } from "@/app/actions/auth.actions";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -8,6 +9,10 @@ import { Label } from "@/app/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 
 export default function LoginPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const returnUrl = searchParams.get("returnUrl");
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -24,7 +29,11 @@ export default function LoginPage() {
             setError(result.error.message);
             setLoading(false);
         } else {
-            window.location.href = "/admin/dashboard";
+            if (returnUrl) {
+                router.push(returnUrl);
+            } else {
+                router.push("/admin/dashboard");
+            }
         }
     }
 
