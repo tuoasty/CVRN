@@ -259,3 +259,64 @@ export async function deleteMatch(
         .select()
         .single();
 }
+
+export async function findUpcomingMatches(
+    supabase: DBClient,
+    seasonId: string,
+    limit: number
+) {
+    return supabase
+        .from("matches")
+        .select(`
+            *,
+            match_sets (
+                set_number,
+                home_score,
+                away_score
+            ),
+            match_officials (
+                official_type,
+                officials (
+                    id,
+                    username,
+                    display_name,
+                    avatar_url
+                )
+            )
+        `)
+        .eq("season_id", seasonId)
+        .eq("status", "scheduled")
+        .not("scheduled_at", "is", null)
+        .order("scheduled_at", { ascending: true })
+        .limit(limit);
+}
+
+export async function findRecentMatches(
+    supabase: DBClient,
+    seasonId: string,
+    limit: number
+) {
+    return supabase
+        .from("matches")
+        .select(`
+            *,
+            match_sets (
+                set_number,
+                home_score,
+                away_score
+            ),
+            match_officials (
+                official_type,
+                officials (
+                    id,
+                    username,
+                    display_name,
+                    avatar_url
+                )
+            )
+        `)
+        .eq("season_id", seasonId)
+        .eq("status", "completed")
+        .order("scheduled_at", { ascending: false, nullsFirst: false })
+        .limit(limit);
+}

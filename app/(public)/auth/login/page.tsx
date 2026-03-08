@@ -38,7 +38,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="flex items-center justify-center min-h-[calc(100vh-6rem)] -mx-4">
             <Card className="w-full max-w-md rounded-sm">
                 <CardHeader>
                     <CardTitle className="text-xl text-center">CVRN Login</CardTitle>

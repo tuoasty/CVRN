@@ -21,7 +21,7 @@ import {
     voidMatch,
     findMatchSets,
     updateMatchResults,
-    findMatchesWithDetailsBySeasonAndWeek, deleteMatch
+    findMatchesWithDetailsBySeasonAndWeek, deleteMatch, findRecentMatches, findUpcomingMatches
 } from "@/server/db/matches.repo";
 import {randomUUID} from "node:crypto";
 import {convertToUTC, isValidTimezone} from "@/server/utils/timezone";
@@ -1122,6 +1122,78 @@ export async function deleteMatchService(
         return Ok(undefined);
     } catch (error) {
         logger.error({ error }, "Unexpected error deleting match");
+        return Err(serializeError(error));
+    }
+}
+
+export async function getUpcomingMatches(
+    supabase: DBClient,
+    seasonId: string,
+    limit: number = 5
+): Promise<Result<MatchWithDetails[]>> {
+    try {
+        const { data, error } = await findUpcomingMatches(supabase, seasonId, limit);
+
+        if (error) {
+            logger.error({ seasonId, limit, error }, "Failed to fetch upcoming matches");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Ok([]);
+        }
+
+        const result: MatchWithDetails[] = data.map(row => ({
+            match: row as unknown as Match,
+            sets: (row.match_sets ?? []) as MatchSet[],
+            officials: (row.match_officials ?? []).map((mo: any) => ({
+                id: mo.officials.id,
+                username: mo.officials.username,
+                display_name: mo.officials.display_name,
+                avatar_url: mo.officials.avatar_url,
+                official_type: mo.official_type,
+            })),
+        }));
+
+        return Ok(result);
+    } catch (error) {
+        logger.error({ error }, "Unexpected error fetching upcoming matches");
+        return Err(serializeError(error));
+    }
+}
+
+export async function getRecentMatches(
+    supabase: DBClient,
+    seasonId: string,
+    limit: number = 5
+): Promise<Result<MatchWithDetails[]>> {
+    try {
+        const { data, error } = await findRecentMatches(supabase, seasonId, limit);
+
+        if (error) {
+            logger.error({ seasonId, limit, error }, "Failed to fetch recent matches");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Ok([]);
+        }
+
+        const result: MatchWithDetails[] = data.map(row => ({
+            match: row as unknown as Match,
+            sets: (row.match_sets ?? []) as MatchSet[],
+            officials: (row.match_officials ?? []).map((mo: any) => ({
+                id: mo.officials.id,
+                username: mo.officials.username,
+                display_name: mo.officials.display_name,
+                avatar_url: mo.officials.avatar_url,
+                official_type: mo.official_type,
+            })),
+        }));
+
+        return Ok(result);
+    } catch (error) {
+        logger.error({ error }, "Unexpected error fetching recent matches");
         return Err(serializeError(error));
     }
 }
