@@ -96,8 +96,6 @@ export default function TeamDetailPage({
     }, [teamData?.id, teamData?.season_id]);
 
     const handlePlayerAdded = (addedPlayer: Player) => {
-        setShowAddForm(false);
-
         if (teamData?.id && teamData?.season_id) {
             const playerWithRole = {
                 ...addedPlayer,
