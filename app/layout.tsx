@@ -18,7 +18,7 @@ export const metadata: Metadata = {
         siteName: "Confederate Volleyball Roblox Network",
         images: [
             {
-                url: "/hero-banner-embed.png",
+                url: `${siteUrl}/hero-banner-embed.png`,
                 width: 1200,
                 height: 630,
                 alt: "CVRN - The official CVR Network",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
         title: "CVR Network",
         description:
             "The official CVR Network. View league standings, match schedules, teams, and playoff brackets for the CVRN Volleyball League.",
-        images: ["/hero-banner.png"],
+        images: [`${siteUrl}/hero-banner.png`],
     },
 };
 
