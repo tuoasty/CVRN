@@ -4,19 +4,17 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import {Toaster} from "@/app/components/ui/sonner";
 
-const defaultUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
+const siteUrl = "https://cvrn.vercel.app";
 
 export const metadata: Metadata = {
-    metadataBase: new URL(defaultUrl),
+    metadataBase: new URL(siteUrl),
     title: "CVR Network – Matches, Teams, and League Info",
     description:
         "The official CVR Network. View league standings, match schedules, teams, and playoff brackets for the CVRN Volleyball League.",
     openGraph: {
         title: "CVR Network",
         description: "The official CVR Network. View league information, matches, teams, and more.",
-        url: defaultUrl,
+        url: siteUrl,
         siteName: "Confederate Volleyball Roblox Network",
         images: [
             {
