@@ -8,14 +8,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Suspense
                 fallback={
                     <header className="border-b border-border bg-card">
-                        <div className="max-w-7xl mx-auto px-6 py-3 h-14" />
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 h-14" />
                     </header>
                 }
             >
                 <PublicNavbar />
             </Suspense>
             <PublicStoreInitializer>
-                <main className="user-container">{children}</main>
+                <main className="user-container px-4 sm:px-6 lg:px-8">{children}</main>
             </PublicStoreInitializer>
         </div>
     );
