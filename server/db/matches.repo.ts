@@ -285,7 +285,7 @@ export async function findUpcomingMatches(
             )
         `)
         .eq("season_id", seasonId)
-        .eq("status", "scheduled")
+        .in("status", ["scheduled", "pending"])
         .not("scheduled_at", "is", null)
         .order("scheduled_at", { ascending: true })
         .limit(limit);
