@@ -35,7 +35,7 @@ export interface TeamWithRegion {
 
 export interface TeamWithRegionAndPlayers {
     team: TeamWithRegion;
-    players: Player[];
+    players: PlayerWithRole[];
 }
 
 export interface InsertTeamDto {

@@ -27,7 +27,7 @@ import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
 import UpdateTeamDialog from "@/app/features/teams/UpdateTeamDialog";
-import { Player } from "@/shared/types/db";
+import {Player} from "@/shared/types/db";
 
 type TeamDetailPageProps = {
     regionCode: string;

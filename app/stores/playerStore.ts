@@ -190,16 +190,6 @@ export const usePlayerStore = create<PlayersState>((set, get) => ({
         }
     },
 
-    setTeamPlayersCache: (teamId: string, seasonId: string, players: PlayerWithRole[]) => {
-        const cacheKey = `${teamId}-${seasonId}`;
-        clientLogger.info('PlayerStore', 'Setting players cache from initial load', { teamId, seasonId, count: players.length });
-
-        const { playersByTeamCache } = get();
-        playersByTeamCache.set(cacheKey, createCacheEntry(players, TEAM_PLAYERS_TTL));
-
-        set({ playersByTeamCache });
-    },
-
     updatePlayerRoleInCache: (teamId: string, seasonId: string, playerId: string, role: PlayerRole) => {
         const cacheKey = `${teamId}-${seasonId}`;
         const cached = playersByTeamCache.get(cacheKey);
@@ -219,6 +209,16 @@ export const usePlayerStore = create<PlayersState>((set, get) => ({
         } else {
             clientLogger.warn('PlayersStore', 'Cannot update role - cache not initialized', { teamId, seasonId });
         }
+    },
+
+    setTeamPlayersCache: (teamId: string, seasonId: string, players: PlayerWithRole[]) => {
+        const cacheKey = `${teamId}-${seasonId}`;
+        clientLogger.info('PlayerStore', 'Setting players cache from initial load', { teamId, seasonId, count: players.length });
+
+        const { playersByTeamCache } = get();
+        playersByTeamCache.set(cacheKey, createCacheEntry(players, TEAM_PLAYERS_TTL));
+
+        set({ playersByTeamCache });
     },
 
     clearCache: () => {
