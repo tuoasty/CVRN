@@ -27,6 +27,7 @@ import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
 import UpdateTeamDialog from "@/app/features/teams/UpdateTeamDialog";
+import {Player} from "@/shared/types/db";
 
 type TeamDetailPageProps = {
     regionCode: string;
@@ -94,18 +95,22 @@ export default function TeamDetailPage({
         }
     }, [teamData?.id, teamData?.season_id]);
 
-    const handlePlayerAdded = () => {
+    const handlePlayerAdded = (addedPlayer: Player) => {
         setShowAddForm(false);
+
         if (teamData?.id && teamData?.season_id) {
-            playersStore.clearCache();
-            playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
+            const playerWithRole = {
+                ...addedPlayer,
+                role: 'player' as const
+            };
+
+            playersStore.addPlayerToCache(teamData.id, teamData.season_id, playerWithRole);
         }
     };
 
-    const handlePlayerRemoved = () => {
+    const handlePlayerRemoved = (playerId: string) => {
         if (teamData?.id && teamData?.season_id) {
-            playersStore.clearCache();
-            playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
+            playersStore.removePlayerFromCache(teamData.id, teamData.season_id, playerId);
         }
     };
 
@@ -171,7 +176,6 @@ export default function TeamDetailPage({
 
     const handleRoleChanged = () => {
         if (teamData?.id && teamData?.season_id) {
-            playersStore.clearCache();
             playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
         }
     };
