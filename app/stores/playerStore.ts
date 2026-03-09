@@ -22,6 +22,7 @@ type PlayersState = {
     addPlayerToCache: (teamId: string, seasonId: string, player: PlayerWithRole) => void;
     removePlayerFromCache: (teamId: string, seasonId: string, playerId: string) => void;
     updatePlayerRoleInCache: (teamId: string, seasonId: string, playerId: string, role: PlayerRole) => void;
+    setTeamPlayersCache: (teamId: string, seasonId: string, players: PlayerWithRole[]) => void;
     clearCache: () => void;
 };
 
@@ -187,6 +188,16 @@ export const usePlayerStore = create<PlayersState>((set, get) => ({
         } else {
             clientLogger.warn('PlayersStore', 'Cannot remove player - cache not initialized', { teamId, seasonId });
         }
+    },
+
+    setTeamPlayersCache: (teamId: string, seasonId: string, players: PlayerWithRole[]) => {
+        const cacheKey = `${teamId}-${seasonId}`;
+        clientLogger.info('PlayerStore', 'Setting players cache from initial load', { teamId, seasonId, count: players.length });
+
+        const { playersByTeamCache } = get();
+        playersByTeamCache.set(cacheKey, createCacheEntry(players, TEAM_PLAYERS_TTL));
+
+        set({ playersByTeamCache });
     },
 
     updatePlayerRoleInCache: (teamId: string, seasonId: string, playerId: string, role: PlayerRole) => {
