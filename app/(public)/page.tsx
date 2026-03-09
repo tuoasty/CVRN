@@ -1,22 +1,20 @@
-import {Suspense} from "react";
-import RobloxPlayerSearch from "@/app/features/players/RobloxPlayerSearch";
-import {ModeToggle} from "@/app/components/ui/ModeToggle";
+import { Suspense } from "react";
 import RedirectCleaner from "@/app/components/providers/RedirectCleaner";
+import HeroSection from "@/app/components/public/HeroSection";
+import CVRNInfo from "@/app/components/public/CVRNInfo";
+import PublicFooter from "@/app/components/public/PublicFooter";
 
 export default function PublicHome() {
     return (
-        <main className="min-h-screen bg-background text-foreground p-6 space-y-6">
+        <>
             <Suspense fallback={null}>
-                <RedirectCleaner/>
+                <RedirectCleaner />
             </Suspense>
-            <ModeToggle/>
-            <h1 className="text-2xl font-semibold">
-                Public Page
-            </h1>
-
-            <div className="rounded-lg border border-border bg-card p-4">
-                <RobloxPlayerSearch />
-            </div>
-        </main>
+            <main className="min-h-screen bg-background text-foreground flex flex-col">
+                <HeroSection />
+                <CVRNInfo />
+                <PublicFooter />
+            </main>
+        </>
     );
 }

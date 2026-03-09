@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { useTeamsStore } from "@/app/stores/teamStore";
-import { ArrowRight, Users, Calendar, LayoutDashboard, Trophy } from "lucide-react";
+import { ArrowRight, Users, Calendar, LayoutDashboard } from "lucide-react";
 import { useRegionsStore } from "@/app/stores/regionStore";
 
 export default function AdminDashboard() {
