@@ -2,7 +2,7 @@ import {DBClient} from "@/shared/types/db";
 import {InsertTeamDto} from "@/server/dto/team.dto";
 
 export async function findAllTeams(supabase: DBClient){
-    return supabase.from("teams").select("*")
+    return supabase.from("teams").select("*").eq("is_bye", false)
 }
 
 export async function findAllTeamsWithRegions(supabase: DBClient) {
@@ -22,6 +22,7 @@ export async function findAllTeamsWithRegions(supabase: DBClient) {
             )
         `)
         .is("deleted_at", null)
+        .eq("is_bye", false)
 }
 export async function findTeamById(supabase: DBClient, id:string){
     return supabase.from("teams").select("*").eq("id", id).single()
@@ -37,6 +38,7 @@ export async function findTeamByNameAndSeason(supabase: DBClient, p: {
         .ilike("name", p.name)
         .eq("season_id", p.seasonId)
         .is("deleted_at", null)
+        .eq("is_bye", false)
         .single()
 }
 
@@ -90,6 +92,7 @@ export async function findTeamBySlugAndSeason(supabase: DBClient, p: {
         .eq("slug", p.slug)
         .eq("season_id", p.seasonId)
         .is("deleted_at", null)
+        .eq("is_bye", false)
         .single()
 }
 
@@ -115,6 +118,7 @@ export async function findTeamBySlugAndSeasonWithRegion(supabase: DBClient, p: {
         .eq("slug", p.slug)
         .eq("season_id", p.seasonId)
         .is("deleted_at", null)
+        .eq("is_bye", false)
         .single()
 }
 
@@ -136,6 +140,7 @@ export async function findTeamByIdWithRegion(supabase: DBClient, teamId: string)
         `)
         .eq('id', teamId)
         .is("deleted_at", null)
+        .eq("is_bye", false)
         .single();
 }
 
@@ -164,5 +169,6 @@ export async function findTeamsByIds(supabase: DBClient, teamIds: string[]) {
             )
         `)
         .in("id", teamIds)
-        .is("deleted_at", null);
+        .is("deleted_at", null)
+        .eq("is_bye", false);
 }

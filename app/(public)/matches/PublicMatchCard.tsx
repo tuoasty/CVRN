@@ -75,6 +75,11 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                             <span className={`font-semibold text-sm text-right truncate w-full ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>
                                 {homeTeam?.name || "TBD"}
                             </span>
+                            {homeTeam?.is_bye && (
+                                <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wider border-0 bg-orange-600/10 text-orange-600">
+                                    BYE
+                                </Badge>
+                            )}
                             {match.status === "completed" && (
                                 <>
                                     {homeWon && (
@@ -119,6 +124,11 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                             <span className={`font-semibold text-sm text-left truncate w-full ${awayWon ? "text-foreground" : "text-muted-foreground"}`}>
                                 {awayTeam?.name || "TBD"}
                             </span>
+                            {awayTeam?.is_bye && (
+                                <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wider border-0 bg-orange-600/10 text-orange-600">
+                                    BYE
+                                </Badge>
+                            )}
                             {match.status === "completed" && (
                                 <>
                                     {awayWon && (

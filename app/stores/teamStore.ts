@@ -135,7 +135,7 @@ export const useTeamsStore = create<TeamsState>((set, get) => ({
         for (const id of teamIds) {
             const cached = teamsCache.get(id);
             if (cached && isCacheValid(cached)) {
-                cachedTeams.push(cached.data);
+                if (!cached.data.is_bye) cachedTeams.push(cached.data);
             } else {
                 uncachedIds.push(id);
             }
