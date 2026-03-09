@@ -1,19 +1,29 @@
 "use server";
 
+import { createServerSupabase } from "@/server/supabase/server";
+import { Result, Err } from "@/shared/types/result";
+import {
+    CreateTeamInput,
+    GetTeamByNameSeason,
+    TeamIdInput,
+    TeamWithRegion,
+    TeamWithRegionAndPlayers,
+    UpdateTeamInput
+} from "@/server/dto/team.dto";
 import {
     createTeam,
     deleteTeam,
     getAllTeams,
     getAllTeamsWithRegions,
     getTeamByNameAndSeason,
-    getTeamBySlugAndSeasonWithRegion, getTeamsByIds,
-    getTeamWithRegionAndPlayers, updateTeam
+    getTeamBySlugAndSeasonWithRegion,
+    getTeamsByIds,
+    getTeamWithRegionAndPlayers,
+    updateTeam
 } from "@/server/services/team.service";
-import {createServerSupabase} from "@/server/supabase/server";
-import {GetTeamByNameSeason, TeamIdInput} from "@/server/dto/team.dto";
-import {Err} from "@/shared/types/result";
+import { Team } from "@/shared/types/db";
 
-export async function createTeamAction(formData: FormData){
+export async function createTeamAction(formData: FormData) {
     const supabase = await createServerSupabase();
 
     const name = formData.get('name') as string;
@@ -41,22 +51,22 @@ export async function createTeamAction(formData: FormData){
     });
 }
 
-export async function getAllTeamsAction(){
+export async function getAllTeamsAction() {
     const supabase = await createServerSupabase();
     return getAllTeams(supabase);
 }
 
-export async function getAllTeamsWithRegionsAction() {
+export async function getAllTeamsWithRegionsAction(): Promise<Result<TeamWithRegion[]>> {
     const supabase = await createServerSupabase();
     return getAllTeamsWithRegions(supabase);
 }
 
-export async function getTeamByNameAndSeasonAction(input: GetTeamByNameSeason) {
+export async function getTeamByNameAndSeasonAction(input: GetTeamByNameSeason): Promise<Result<Team>> {
     const supabase = await createServerSupabase();
     return getTeamByNameAndSeason(supabase, input);
 }
 
-export async function deleteTeamAction(input: TeamIdInput){
+export async function deleteTeamAction(input: TeamIdInput): Promise<Result<void>> {
     const supabase = await createServerSupabase();
     return deleteTeam(supabase, input);
 }
@@ -64,7 +74,7 @@ export async function deleteTeamAction(input: TeamIdInput){
 export async function getTeamBySlugAndSeasonAction(p: {
     slug: string;
     seasonId: string;
-}) {
+}): Promise<Result<TeamWithRegion>> {
     const supabase = await createServerSupabase();
     return getTeamBySlugAndSeasonWithRegion(supabase, p);
 }
@@ -77,7 +87,7 @@ export async function getTeamWithPlayersAction(params: {
     return getTeamWithRegionAndPlayers(supabase, params);
 }
 
-export async function getTeamsByIdsAction(teamIds: string[]) {
+export async function getTeamsByIdsAction(teamIds: string[]): Promise<Result<TeamWithRegion[]>> {
     const supabase = await createServerSupabase();
     return await getTeamsByIds(supabase, teamIds);
 }

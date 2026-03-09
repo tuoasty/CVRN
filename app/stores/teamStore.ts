@@ -4,11 +4,14 @@ import {
     getAllTeamsWithRegionsAction,
     getTeamBySlugAndSeasonAction,
     getTeamsByIdsAction,
+    getTeamWithPlayersAction,
 } from '@/app/actions/team.actions';
 import {CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction} from './storeUtils';
 import {clientLogger} from "@/app/utils/clientLogger";
 import { useRegionsStore } from './regionStore';
 import { useSeasonsStore } from './seasonStore';
+import { usePlayerStore } from './playerStore';
+import { PlayerWithRole } from '@/server/dto/player.dto';
 
 type TeamsState = {
     allTeamsCache: CacheEntry<TeamWithRegion[]> | undefined;
@@ -18,12 +21,12 @@ type TeamsState = {
 
     fetchAllTeams: () => Promise<void>;
     fetchTeamDetails: (teamSlug: string, seasonSlug: string, regionCode: string) => Promise<void>;
+    fetchTeamWithPlayers: (teamSlug: string, seasonSlug: string, regionCode: string) => Promise<{ team: TeamWithRegion; players: PlayerWithRole[] } | null>;
     fetchTeamsByIds: (teamIds: string[]) => Promise<TeamWithRegion[]>;
     addTeamToCache: (team: TeamWithRegion) => void;
     removeTeamFromCache: (teamId: string) => void;
     updateTeamInCache: (team: TeamWithRegion) => void;
     clearCache: () => void;
-    fetchTeamWithPlayers: (teamSlug: string, seasonSlug: string, regionCode: string) => Promise<TeamWithRegionAndPlayers | null>;
     getTeamBySlugAndSeason: (teamSlug: string, seasonSlug: string) => TeamWithRegion | undefined;
 };
 
@@ -133,9 +136,16 @@ export const useTeamsStore = create<TeamsState>((set, get) => ({
         const cacheKey = createTeamCacheKey(teamSlug, seasonSlug);
         const cached = teamsCache.get(cacheKey);
 
-        if (isCacheValid(cached)) {
+        if (cached && isCacheValid(cached)) {
             clientLogger.info('TeamsStore', 'Using cached team details', { teamSlug, seasonSlug });
-            return cached.data;
+
+            const playersStore = usePlayerStore.getState();
+            const playersCacheKey = `${cached.data.id}-${cached.data.season_id}`;
+            const playersCache = playersStore.playersByTeamCache.get(playersCacheKey);
+
+            if (playersCache && isCacheValid(playersCache)) {
+                return { team: cached.data, players: playersCache.data };
+            }
         }
 
         clientLogger.info('TeamsStore', 'Fetching team with players', { teamSlug, seasonSlug, regionCode });

@@ -265,11 +265,14 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
             return Err(serializeError(playersError))
         }
 
-        const players = playersData?.map(record => record.player).filter(Boolean) || []
+        const playersWithRoles = playersData?.map(record => ({
+            ...record.player,
+            role: record.role || 'player' as PlayerRole
+        })) || []
 
         return Ok({
             team: teamData as TeamWithRegion,
-            players
+            players: playersWithRoles
         })
     } catch (error) {
         return Err(serializeError(error))
