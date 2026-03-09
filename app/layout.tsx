@@ -20,7 +20,7 @@ export const metadata: Metadata = {
         siteName: "Confederate Volleyball Roblox Network",
         images: [
             {
-                url: "/hero-banner.png",
+                url: "/hero-banner-embed.png",
                 width: 1200,
                 height: 630,
                 alt: "CVRN - The official CVR Network",
