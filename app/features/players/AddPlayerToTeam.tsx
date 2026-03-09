@@ -16,11 +16,12 @@ import { Label } from "@/app/components/ui/label";
 import { Badge } from "@/app/components/ui/badge";
 import { PlayerWithTeamInfo } from "@/server/dto/player.dto";
 import {toast} from "@/app/utils/toast";
+import {Player} from "@/shared/types/db";
 
 interface Props {
     teamId: string;
     seasonId: string;
-    onSuccess: () => void;
+    onSuccess: (player: Player) => void;
 }
 
 export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) {
@@ -145,9 +146,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
             setSearchSubmitted(false);
             lastSearchedQuery.current = "";
 
-            setTimeout(() => {
-                onSuccess();
-            }, 1000);
+            onSuccess(result.value.player);
         } catch (error) {
             clientLogger.error('AddPlayerToTeam', 'Exception adding Roblox player', { userId: user.id, teamId, error });
             toast.error("Failed to add player");
@@ -184,9 +183,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
             setSearchSubmitted(false);
             lastSearchedQuery.current = "";
 
-            setTimeout(() => {
-                onSuccess();
-            }, 1000);
+            onSuccess(result.value.player);
         } catch (error) {
             clientLogger.error('AddPlayerToTeam', 'Exception adding DB player', { playerId: player.id, teamId, error });
             toast.error("Failed to add player");

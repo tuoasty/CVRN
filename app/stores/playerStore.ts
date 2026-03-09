@@ -3,7 +3,7 @@ import { Player } from '@/shared/types/db';
 import { getTeamPlayersAction, getPlayersByIdsAction } from '@/app/actions/player.actions';
 import { CacheEntry, createCacheEntry, isCacheValid, setupAutoEviction } from './storeUtils';
 import { clientLogger } from "@/app/utils/clientLogger";
-import {PlayerWithRole} from "@/server/dto/player.dto";
+import {PlayerRole, PlayerWithRole} from "@/server/dto/player.dto";
 
 type PlayersState = {
     playersByTeamCache: Map<string, CacheEntry<PlayerWithRole[]>>;
@@ -19,6 +19,9 @@ type PlayersState = {
         courtCaptain: PlayerWithRole | null;
         players: PlayerWithRole[];
     };
+    addPlayerToCache: (teamId: string, seasonId: string, player: PlayerWithRole) => void;
+    removePlayerFromCache: (teamId: string, seasonId: string, playerId: string) => void;
+    updatePlayerRoleInCache: (teamId: string, seasonId: string, playerId: string, role: PlayerRole) => void;
     clearCache: () => void;
 };
 
@@ -148,6 +151,63 @@ export const usePlayerStore = create<PlayersState>((set, get) => ({
             courtCaptain,
             players
         };
+    },
+
+    addPlayerToCache: (teamId: string, seasonId: string, player: PlayerWithRole) => {
+        const cacheKey = `${teamId}-${seasonId}`;
+        const cached = playersByTeamCache.get(cacheKey);
+
+        if (cached) {
+            const updatedPlayers = [...cached.data, player];
+            playersByTeamCache.set(cacheKey, createCacheEntry(updatedPlayers, TEAM_PLAYERS_TTL));
+            clientLogger.info('PlayersStore', 'Player added to cache optimistically', {
+                teamId,
+                seasonId,
+                playerId: player.id
+            });
+            set({ playersByTeamCache });
+        } else {
+            clientLogger.warn('PlayersStore', 'Cannot add player - cache not initialized', { teamId, seasonId });
+        }
+    },
+
+    removePlayerFromCache: (teamId: string, seasonId: string, playerId: string) => {
+        const cacheKey = `${teamId}-${seasonId}`;
+        const cached = playersByTeamCache.get(cacheKey);
+
+        if (cached) {
+            const updatedPlayers = cached.data.filter(p => p.id !== playerId);
+            playersByTeamCache.set(cacheKey, createCacheEntry(updatedPlayers, TEAM_PLAYERS_TTL));
+            clientLogger.info('PlayersStore', 'Player removed from cache optimistically', {
+                teamId,
+                seasonId,
+                playerId
+            });
+            set({ playersByTeamCache });
+        } else {
+            clientLogger.warn('PlayersStore', 'Cannot remove player - cache not initialized', { teamId, seasonId });
+        }
+    },
+
+    updatePlayerRoleInCache: (teamId: string, seasonId: string, playerId: string, role: PlayerRole) => {
+        const cacheKey = `${teamId}-${seasonId}`;
+        const cached = playersByTeamCache.get(cacheKey);
+
+        if (cached) {
+            const updatedPlayers = cached.data.map(p =>
+                p.id === playerId ? { ...p, role } : p
+            );
+            playersByTeamCache.set(cacheKey, createCacheEntry(updatedPlayers, TEAM_PLAYERS_TTL));
+            clientLogger.info('PlayersStore', 'Player role updated in cache', {
+                teamId,
+                seasonId,
+                playerId,
+                role
+            });
+            set({ playersByTeamCache });
+        } else {
+            clientLogger.warn('PlayersStore', 'Cannot update role - cache not initialized', { teamId, seasonId });
+        }
     },
 
     clearCache: () => {

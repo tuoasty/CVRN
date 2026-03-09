@@ -30,7 +30,7 @@ interface Props {
     teamId: string;
     seasonId: string;
     onRoleChanged: () => void;
-    onRemoved: () => void;
+    onRemoved: (playerId: string) => void;
     availableRoles: {
         captain: boolean;
         viceCaptain: boolean;
@@ -66,7 +66,7 @@ export default function PlayerCard({
 
         toast.success("Player removed successfully");
         setShowRemoveConfirm(false);
-        onRemoved();
+        onRemoved(player.id);
     };
 
     const handlePromote = async (newRole: PlayerRole) => {
