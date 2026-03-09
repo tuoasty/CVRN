@@ -19,6 +19,7 @@ export interface TeamWithRegion {
     created_at: string;
     brick_number: number;
     brick_color: string;
+    starting_lvr: number;
     seasons: {
         id: string;
         name: string;
@@ -44,6 +45,7 @@ export interface InsertTeamDto {
     seasonId: string;
     brickNumber: number;
     brickColor: string;
+    startingLvr: number;
 }
 
 export interface CreateTeamInput {
@@ -53,6 +55,7 @@ export interface CreateTeamInput {
     userId: string;
     brickNumber: number;
     brickColor: string;
+    startingLvr: number;
 }
 
 export interface UpdateTeamInput {
@@ -62,4 +65,5 @@ export interface UpdateTeamInput {
     brickNumber: number;
     brickColor: string;
     userId: string;
+    startingLvr: number;
 }

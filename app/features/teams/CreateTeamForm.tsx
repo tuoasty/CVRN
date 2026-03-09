@@ -33,6 +33,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     const [seasonId, setSeasonId] = useState("");
     const [brickNumber, setBrickNumber] = useState("");
     const [brickColor, setBrickColor] = useState("");
+    const [startingLvr, setStartingLvr] = useState("100");
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -135,6 +136,12 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             return;
         }
 
+        const lvrVal = parseFloat(startingLvr);
+        if (isNaN(lvrVal)) {
+            setError("Starting LVR must be a valid number");
+            return;
+        }
+
         setLoading(true);
         setError(null);
         setSuccess(null);
@@ -146,6 +153,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             formData.append("seasonId", seasonId);
             formData.append("brickNumber", brickNum.toString());
             formData.append("brickColor", brickColor.toUpperCase());
+            formData.append("startingLvr", lvrVal.toString());
 
             const result = await createTeamAction(formData);
 
@@ -166,6 +174,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             setPreview(null);
             setBrickNumber("");
             setBrickColor("");
+            setStartingLvr("100");
 
             if (onSuccess) {
                 setTimeout(() => {
@@ -331,6 +340,20 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                                 />
                             )}
                         </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="startingLvr">Starting LVR</Label>
+                        <Input
+                            id="startingLvr"
+                            type="number"
+                            step="0.1"
+                            placeholder="100"
+                            value={startingLvr}
+                            onChange={(e) => setStartingLvr(e.target.value)}
+                            disabled={loading}
+                            className="rounded-sm"
+                        />
                     </div>
                 </div>
 

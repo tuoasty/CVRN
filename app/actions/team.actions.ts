@@ -23,6 +23,7 @@ export async function createTeamAction(formData: FormData){
     const seasonId = formData.get('seasonId') as string;
     const brickNumber = formData.get('brickNumber') as string;
     const brickColor = formData.get('brickColor') as string;
+    const startingLvr = formData.get('startingLvr') as string;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         return Err({
@@ -37,7 +38,8 @@ export async function createTeamAction(formData: FormData){
         seasonId,
         userId: user.id,
         brickNumber: parseInt(brickNumber, 10),
-        brickColor: brickColor.toUpperCase()
+        brickColor: brickColor.toUpperCase(),
+        startingLvr: parseFloat(startingLvr),
     });
 }
 
@@ -107,6 +109,7 @@ export async function updateTeamAction(formData: FormData) {
     const file = formData.get('logo') as File | null;
     const brickNumber = formData.get('brickNumber') as string;
     const brickColor = formData.get('brickColor') as string;
+    const startingLvr = formData.get('startingLvr') as string;
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -120,5 +123,6 @@ export async function updateTeamAction(formData: FormData) {
         userId: user.id,
         brickNumber: parseInt(brickNumber, 10),
         brickColor: brickColor.toUpperCase(),
+        startingLvr: parseFloat(startingLvr),
     });
 }

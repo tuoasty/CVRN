@@ -64,7 +64,8 @@ export async function createTeam(supabase:DBClient, p:CreateTeamInput):Promise<R
             logoUrl: uploadRes.value.url,
             seasonId: p.seasonId,
             brickNumber: p.brickNumber,
-            brickColor: p.brickColor
+            brickColor: p.brickColor,
+            startingLvr: p.startingLvr,
         })
         if(error || !data){
             logger.error({ teamId, error }, "Failed to insert team, cleaning up uploaded file");
@@ -352,6 +353,7 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
             ...(logoUrl !== undefined && { logoUrl }),
             brickNumber: p.brickNumber,
             brickColor: p.brickColor,
+            startingLvr: p.startingLvr,
         });
 
         if (error || !data) {

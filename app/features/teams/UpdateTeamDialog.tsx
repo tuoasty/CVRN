@@ -37,6 +37,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
     const [isDragging, setIsDragging] = useState(false);
     const [compressing, setCompressing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [startingLvr, setStartingLvr] = useState(team.starting_lvr.toString());
 
     const resetForm = () => {
         setName(team.name);
@@ -44,6 +45,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
         setBrickColor(team.brick_color);
         setFile(null);
         setPreview(team.logo_url);
+        setStartingLvr(team.starting_lvr.toString());
     };
 
     const handleOpenChange = (val: boolean) => {
@@ -105,6 +107,12 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
             return;
         }
 
+        const lvrVal = parseFloat(startingLvr);
+        if (isNaN(lvrVal)) {
+            toast.error("Starting LVR must be a valid number");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -114,6 +122,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
             formData.append("brickNumber", brickNum.toString());
             formData.append("brickColor", brickColor.toUpperCase());
             if (file) formData.append("logo", file);
+            formData.append("startingLvr", lvrVal.toString());
 
             const result = await updateTeamAction(formData);
 
@@ -235,6 +244,18 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
                                     />
                                 )}
                             </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="update-starting-lvr">Starting LVR</Label>
+                            <Input
+                                id="update-starting-lvr"
+                                type="number"
+                                step="0.1"
+                                value={startingLvr}
+                                onChange={(e) => setStartingLvr(e.target.value)}
+                                disabled={loading}
+                                className="rounded-sm"
+                            />
                         </div>
                     </div>
 

@@ -52,7 +52,7 @@ export default function StandingsPreview({
                     const rank = index + 1;
                     const wins = standing.wins || 0;
                     const losses = standing.losses || 0;
-                    const displayLvr = 100 + (standing.total_lvr || 0);
+                    const displayLvr = standing.total_lvr || 0;
                     const isQualified = rank <= qualifiedTeams;
 
                     return (

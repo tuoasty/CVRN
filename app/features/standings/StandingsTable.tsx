@@ -241,8 +241,8 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             const losses = standing.losses || 0;
                             const totalGames = wins + losses;
                             const winPct = totalGames > 0 ? (wins / totalGames) * 100 : 0;
-                            const displayLvr = 100 + (standing.total_lvr || 0);
-                            const lvrDiff = standing.total_lvr || 0;
+                            const displayLvr = standing.total_lvr || 0;
+                            const lvrDiff = (standing.total_lvr || 0) - (standing.starting_lvr ?? 100);
 
                             return (
                                 <TableRow
