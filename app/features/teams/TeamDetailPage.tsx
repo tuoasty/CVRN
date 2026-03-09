@@ -26,6 +26,7 @@ import { usePlayerStore } from "@/app/stores/playerStore";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
+import UpdateTeamDialog from "@/app/features/teams/UpdateTeamDialog";
 
 type TeamDetailPageProps = {
     regionCode: string;
@@ -203,6 +204,8 @@ export default function TeamDetailPage({
                     >
                         {showAddForm ? "Adding Player" : "Add Player"}
                     </Button>
+
+                    <UpdateTeamDialog team={teamData} onSuccess={loadTeam} />
 
                     <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
                         <AlertDialogTrigger asChild>

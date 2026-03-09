@@ -54,3 +54,12 @@ export interface CreateTeamInput {
     brickNumber: number;
     brickColor: string;
 }
+
+export interface UpdateTeamInput {
+    teamId: string;
+    name: string;
+    logoFile?: File | null;
+    brickNumber: number;
+    brickColor: string;
+    userId: string;
+}
