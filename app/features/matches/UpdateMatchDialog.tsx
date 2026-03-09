@@ -193,10 +193,10 @@ export default function UpdateMatchDialog({
             return;
         }
 
-        if (!matchMvpId || !loserMvpId) {
-            toast.error("Please select both MVPs");
-            return;
-        }
+        // if (!matchMvpId || !loserMvpId) {
+        //     toast.error("Please select both MVPs");
+        //     return;
+        // }
 
         setSubmitting(true);
         clientLogger.info("UpdateMatchDialog", "Updating match results", { matchId, sets });

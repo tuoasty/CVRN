@@ -399,56 +399,8 @@ export async function completeMatchService(
             const winningTeamId = homeSetsWon > awaySetsWon ? match.home_team_id : match.away_team_id;
             const losingTeamId = homeSetsWon > awaySetsWon ? match.away_team_id : match.home_team_id;
 
-            if (!p.matchMvpPlayerId || !p.loserMvpPlayerId) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Both MVPs must be selected for non-forfeit matches"
-                });
-            }
-
-            const { data: playerTeamSeasons, error: ptsError } = await findActivePlayerTeamSeasons(
-                supabase,
-                [p.matchMvpPlayerId, p.loserMvpPlayerId]
-            );
-
-            if (ptsError) {
-                logger.error({ playerIds: [p.matchMvpPlayerId, p.loserMvpPlayerId], error: ptsError }, "Failed to fetch player team assignments");
-                return Err(serializeError(ptsError));
-            }
-
-            if (!playerTeamSeasons || playerTeamSeasons.length !== 2) {
-                return Err({
-                    name: "ValidationError",
-                    message: "One or both MVP players are not currently rostered on any team"
-                });
-            }
-
-            const matchMvpTeam = playerTeamSeasons.find(pts => pts.player_id === p.matchMvpPlayerId);
-            const loserMvpTeam = playerTeamSeasons.find(pts => pts.player_id === p.loserMvpPlayerId);
-
-            if (!matchMvpTeam || !loserMvpTeam) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Could not find team assignments for MVP players"
-                });
-            }
-
-            if (matchMvpTeam.team_id !== winningTeamId) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Match MVP must be from the winning team"
-                });
-            }
-
-            if (loserMvpTeam.team_id !== losingTeamId) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Loser MVP must be from the losing team"
-                });
-            }
-
-            matchMvpPlayerId = p.matchMvpPlayerId;
-            loserMvpPlayerId = p.loserMvpPlayerId;
+            matchMvpPlayerId = p.matchMvpPlayerId || null;
+            loserMvpPlayerId = p.loserMvpPlayerId || null;
 
             if (match.match_type === "season") {
                 const setDiff = homeSetsWon - awaySetsWon;
@@ -754,56 +706,8 @@ export async function updateMatchResultsService(
             const winningTeamId = homeSetsWon > awaySetsWon ? match.home_team_id : match.away_team_id;
             const losingTeamId = homeSetsWon > awaySetsWon ? match.away_team_id : match.home_team_id;
 
-            if (!p.matchMvpPlayerId || !p.loserMvpPlayerId) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Both MVPs must be selected for non-forfeit matches"
-                });
-            }
-
-            const { data: playerTeamSeasons, error: ptsError } = await findActivePlayerTeamSeasons(
-                supabase,
-                [p.matchMvpPlayerId, p.loserMvpPlayerId]
-            );
-
-            if (ptsError) {
-                logger.error({ playerIds: [p.matchMvpPlayerId, p.loserMvpPlayerId], error: ptsError }, "Failed to fetch player team assignments");
-                return Err(serializeError(ptsError));
-            }
-
-            if (!playerTeamSeasons || playerTeamSeasons.length !== 2) {
-                return Err({
-                    name: "ValidationError",
-                    message: "One or both MVP players are not currently rostered on any team"
-                });
-            }
-
-            const matchMvpTeam = playerTeamSeasons.find(pts => pts.player_id === p.matchMvpPlayerId);
-            const loserMvpTeam = playerTeamSeasons.find(pts => pts.player_id === p.loserMvpPlayerId);
-
-            if (!matchMvpTeam || !loserMvpTeam) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Could not find team assignments for MVP players"
-                });
-            }
-
-            if (matchMvpTeam.team_id !== winningTeamId) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Match MVP must be from the winning team"
-                });
-            }
-
-            if (loserMvpTeam.team_id !== losingTeamId) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Loser MVP must be from the losing team"
-                });
-            }
-
-            matchMvpPlayerId = p.matchMvpPlayerId;
-            loserMvpPlayerId = p.loserMvpPlayerId;
+            matchMvpPlayerId = p.matchMvpPlayerId || null;
+            loserMvpPlayerId = p.loserMvpPlayerId || null;
 
             if (match.match_type === "season") {
                 const setDiff = homeSetsWon - awaySetsWon;

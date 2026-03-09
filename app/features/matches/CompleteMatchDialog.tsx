@@ -203,10 +203,10 @@ export default function CompleteMatchDialog({
             return;
         }
 
-        if (!matchMvpId || !loserMvpId) {
-            toast.error("Please select both MVPs");
-            return;
-        }
+        // if (!matchMvpId || !loserMvpId) {
+        //     toast.error("Please select both MVPs");
+        //     return;
+        // }
 
         setSubmitting(true);
         clientLogger.info("CompleteMatchDialog", "Completing match", { matchId, sets });
