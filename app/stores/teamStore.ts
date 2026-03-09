@@ -23,6 +23,7 @@ type TeamsState = {
     removeTeamFromCache: (teamId: string) => void;
     updateTeamInCache: (team: TeamWithRegion) => void;
     clearCache: () => void;
+    fetchTeamWithPlayers: (teamSlug: string, seasonSlug: string, regionCode: string) => Promise<TeamWithRegionAndPlayers | null>;
     getTeamBySlugAndSeason: (teamSlug: string, seasonSlug: string) => TeamWithRegion | undefined;
 };
 
@@ -124,6 +125,65 @@ export const useTeamsStore = create<TeamsState>((set, get) => ({
         } catch (error) {
             clientLogger.error('TeamsStore', 'Exception fetching team details', { teamSlug, seasonSlug, error });
             set({ error: 'Failed to fetch team details', loading: false });
+        }
+    },
+
+    fetchTeamWithPlayers: async (teamSlug: string, seasonSlug: string, regionCode: string) => {
+        const { teamsCache } = get();
+        const cacheKey = createTeamCacheKey(teamSlug, seasonSlug);
+        const cached = teamsCache.get(cacheKey);
+
+        if (isCacheValid(cached)) {
+            clientLogger.info('TeamsStore', 'Using cached team details', { teamSlug, seasonSlug });
+            return cached.data;
+        }
+
+        clientLogger.info('TeamsStore', 'Fetching team with players', { teamSlug, seasonSlug, regionCode });
+        set({ loading: true, error: null });
+
+        try {
+            const regionsStore = useRegionsStore.getState();
+            await regionsStore.fetchRegionByCode(regionCode);
+
+            const region = regionsStore.regionByCodeCache.get(regionCode.toLowerCase())?.data;
+
+            if (!region) {
+                clientLogger.error('TeamsStore', 'Region not found', { regionCode });
+                set({ error: 'Region not found', loading: false });
+                return null;
+            }
+
+            const seasonsStore = useSeasonsStore.getState();
+            await seasonsStore.fetchSeasonBySlugAndRegion(seasonSlug, region.id);
+
+            const season = seasonsStore.seasonBySlugCache.get(`${seasonSlug}-${region.id}`)?.data;
+
+            if (!season) {
+                clientLogger.error('TeamsStore', 'Season not found', { seasonSlug, regionId: region.id });
+                set({ error: 'Season not found', loading: false });
+                return null;
+            }
+
+            const result = await getTeamWithPlayersAction({
+                slug: teamSlug,
+                seasonId: season.id
+            });
+
+            if (!result.ok) {
+                clientLogger.error('TeamsStore', 'Failed to fetch team with players', { teamSlug, seasonSlug, error: result.error });
+                set({ error: result.error.message, loading: false });
+                return null;
+            }
+
+            teamsCache.set(result.value.team.id, createCacheEntry(result.value.team, TEAM_DETAILS_TTL));
+            clientLogger.info('TeamsStore', 'Team with players fetched successfully', { teamSlug, seasonSlug, playerCount: result.value.players.length });
+            set({ teamsCache, loading: false });
+
+            return result.value;
+        } catch (error) {
+            clientLogger.error('TeamsStore', 'Exception fetching team with players', { teamSlug, seasonSlug, error });
+            set({ error: 'Failed to fetch team details', loading: false });
+            return null;
         }
     },
 

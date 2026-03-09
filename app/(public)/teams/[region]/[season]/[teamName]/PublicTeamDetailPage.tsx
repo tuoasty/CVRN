@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTeamsStore } from "@/app/stores/teamStore";
@@ -11,6 +11,7 @@ import { Badge } from "@/app/components/ui/badge";
 import { ChevronLeft, Users } from "lucide-react";
 import { PlayerWithRole } from "@/server/dto/player.dto";
 import { Card, CardContent } from "@/app/components/ui/card";
+import { clientLogger } from "@/app/utils/clientLogger";
 
 const ROLE_BADGE_CONFIG = {
     captain: { label: "C", className: "bg-purple-600/15 text-purple-600 border-purple-600/30" },
@@ -79,6 +80,9 @@ export default function PublicTeamDetailPage({
     const seasonSlug = safeDecodeURIComponent(seasonSlugProp).toLowerCase();
     const teamSlug = safeDecodeURIComponent(teamSlugProp).toLowerCase();
 
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
     const teamsStore = useTeamsStore();
     const playersStore = usePlayerStore();
 
@@ -91,24 +95,69 @@ export default function PublicTeamDetailPage({
         : null;
     const players = cachedData?.data ?? [];
 
-    const isLoadingPlayers = playersStore.loading || (teamData?.id && teamData?.season_id && !cachedData);
+    const loadTeamWithPlayers = async () => {
+        setError(null);
+
+        try {
+            const result = await teamsStore.fetchTeamWithPlayers(teamSlug, seasonSlug, regionCode);
+
+            if (teamsStore.error) {
+                setError(teamsStore.error);
+                setIsInitialLoad(false);
+                return;
+            }
+
+            if (result) {
+                playersStore.setTeamPlayersCache(result.team.id, result.team.season_id, result.players);
+
+                backgroundLazySync(result.team.id, result.team.season_id);
+            }
+
+            setIsInitialLoad(false);
+        } catch (err) {
+            clientLogger.error('PublicTeamDetailPage', 'Exception loading team data', { error: err });
+            setError("Failed to load team data");
+            setIsInitialLoad(false);
+        }
+    };
+
+    const backgroundLazySync = async (teamId: string, seasonId: string) => {
+        clientLogger.info('PublicTeamDetailPage', 'Starting background lazy sync for players');
+
+        try {
+            await playersStore.fetchTeamPlayers(teamId, seasonId);
+            clientLogger.info('PublicTeamDetailPage', 'Background lazy sync completed');
+        } catch (err) {
+            clientLogger.error('PublicTeamDetailPage', 'Background lazy sync failed', { error: err });
+        }
+    };
 
     useEffect(() => {
         if (!regionCode || !seasonSlug || !teamSlug) return;
-        teamsStore.fetchTeamDetails(teamSlug, seasonSlug, regionCode);
+        loadTeamWithPlayers();
     }, [regionCode, seasonSlug, teamSlug]);
 
-    useEffect(() => {
-        if (teamData?.id && teamData?.season_id) {
-            playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
-        }
-    }, [teamData?.id, teamData?.season_id]);
+    const loading = isInitialLoad && teamsStore.loading;
+    const displayError = error || teamsStore.error;
 
-    if (teamsStore.loading && !teamData) {
+    if (loading && !teamData) {
         return (
             <div className="admin-section">
                 <div className="panel p-6">
-                    <p className="text-muted-foreground">Loading team...</p>
+                    <div className="flex flex-col items-center justify-center gap-3 py-12">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                        <p className="text-muted-foreground">Loading team...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (displayError) {
+        return (
+            <div className="admin-section">
+                <div className="panel p-6">
+                    <p className="text-destructive">{displayError}</p>
                 </div>
             </div>
         );
@@ -212,14 +261,7 @@ export default function PublicTeamDetailPage({
             </div>
 
             <div className="space-y-4">
-                {isLoadingPlayers ? (
-                    <div className="panel p-8">
-                        <div className="flex items-center justify-center gap-3">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                            <p className="text-muted-foreground">Loading roster...</p>
-                        </div>
-                    </div>
-                ) : players.length === 0 ? (
+                {players.length === 0 ? (
                     <div className="panel p-8">
                         <p className="text-muted-foreground text-center">No players on this roster</p>
                     </div>
@@ -230,8 +272,8 @@ export default function PublicTeamDetailPage({
                                 Roster
                             </h3>
                             <span className="text-sm text-muted-foreground">
-                    {players.length} / 16
-                </span>
+                                {players.length} / 16
+                            </span>
                         </div>
                         <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
                             {allPlayersSorted.map((player, index) => (

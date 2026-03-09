@@ -11,8 +11,6 @@ import {
 } from "@/server/services/team.service";
 import {createServerSupabase} from "@/server/supabase/server";
 import {GetTeamByNameSeason, TeamIdInput} from "@/server/dto/team.dto";
-import {getRegionByCode} from "@/server/services/region.service";
-import {getSeasonBySlugAndRegion} from "@/server/services/season.service";
 import {Err} from "@/shared/types/result";
 
 export async function createTeamAction(formData: FormData){
@@ -71,29 +69,12 @@ export async function getTeamBySlugAndSeasonAction(p: {
     return getTeamBySlugAndSeasonWithRegion(supabase, p);
 }
 
-export async function getTeamWithRegionAndPlayersAction(p: {
+export async function getTeamWithPlayersAction(params: {
     slug: string;
-    seasonSlug: string;
-    regionCode: string;
-}) {
+    seasonId: string;
+}): Promise<Result<TeamWithRegionAndPlayers>> {
     const supabase = await createServerSupabase();
-
-    const regionResult = await getRegionByCode(supabase, p.regionCode);
-
-    if (!regionResult.ok) {
-        return regionResult;
-    }
-
-    const seasonResult = await getSeasonBySlugAndRegion(supabase, p.seasonSlug, regionResult.value.id);
-
-    if (!seasonResult.ok) {
-        return seasonResult;
-    }
-
-    return getTeamWithRegionAndPlayers(supabase, {
-        slug: p.slug,
-        seasonId: seasonResult.value.id
-    });
+    return getTeamWithRegionAndPlayers(supabase, params);
 }
 
 export async function getTeamsByIdsAction(teamIds: string[]) {

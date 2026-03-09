@@ -27,7 +27,7 @@ import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
 import UpdateTeamDialog from "@/app/features/teams/UpdateTeamDialog";
-import {Player} from "@/shared/types/db";
+import { Player } from "@/shared/types/db";
 
 type TeamDetailPageProps = {
     regionCode: string;
@@ -50,6 +50,7 @@ export default function TeamDetailPage({
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const teamsStore = useTeamsStore();
     const playersStore = usePlayerStore();
@@ -58,18 +59,40 @@ export default function TeamDetailPage({
     const playersCacheKey = teamData?.id && teamData?.season_id ? `${teamData.id}-${teamData.season_id}` : null;
     const players = playersCacheKey ? playersStore.playersByTeamCache.get(playersCacheKey)?.data ?? [] : [];
 
-    const loadTeam = async () => {
+    const loadTeamWithPlayers = async () => {
         setError(null);
 
         try {
-            await teamsStore.fetchTeamDetails(teamSlug, seasonSlug, regionCode);
+            const result = await teamsStore.fetchTeamWithPlayers(teamSlug, seasonSlug, regionCode);
 
             if (teamsStore.error) {
                 setError(teamsStore.error);
+                setIsInitialLoad(false);
+                return;
             }
+
+            if (result) {
+                playersStore.setTeamPlayersCache(result.team.id, result.team.season_id, result.players);
+
+                backgroundLazySync(result.team.id, result.team.season_id);
+            }
+
+            setIsInitialLoad(false);
         } catch (err) {
             clientLogger.error('TeamDetailPage', 'Exception loading team data', { error: err });
             setError("Failed to load team data");
+            setIsInitialLoad(false);
+        }
+    };
+
+    const backgroundLazySync = async (teamId: string, seasonId: string) => {
+        clientLogger.info('TeamDetailPage', 'Starting background lazy sync for players');
+
+        try {
+            await playersStore.fetchTeamPlayers(teamId, seasonId);
+            clientLogger.info('TeamDetailPage', 'Background lazy sync completed');
+        } catch (err) {
+            clientLogger.error('TeamDetailPage', 'Background lazy sync failed', { error: err });
         }
     };
 
@@ -86,14 +109,8 @@ export default function TeamDetailPage({
     useEffect(() => {
         if (!regionCode || !seasonSlug || !teamSlug) return;
 
-        loadTeam();
+        loadTeamWithPlayers();
     }, [regionCode, seasonSlug, teamSlug]);
-
-    useEffect(() => {
-        if (teamData?.id && teamData?.season_id) {
-            playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
-        }
-    }, [teamData?.id, teamData?.season_id]);
 
     const handlePlayerAdded = (addedPlayer: Player) => {
         if (teamData?.id && teamData?.season_id) {
@@ -127,14 +144,17 @@ export default function TeamDetailPage({
         router.push("/admin/teams");
     };
 
-    const loading = teamsStore.loading || playersStore.loading;
-    const displayError = error || teamsStore.error || playersStore.error;
+    const loading = isInitialLoad && teamsStore.loading;
+    const displayError = error || teamsStore.error;
 
     if (loading && !teamData) {
         return (
             <div className="admin-section">
                 <div className="panel p-6">
-                    <p className="text-muted-foreground">Loading team...</p>
+                    <div className="flex flex-col items-center justify-center gap-3 py-12">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                        <p className="text-muted-foreground">Loading team...</p>
+                    </div>
                 </div>
             </div>
         );
@@ -207,7 +227,7 @@ export default function TeamDetailPage({
                         {showAddForm ? "Adding Player" : "Add Player"}
                     </Button>
 
-                    <UpdateTeamDialog team={teamData} onSuccess={loadTeam} />
+                    <UpdateTeamDialog team={teamData} onSuccess={loadTeamWithPlayers} />
 
                     <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
                         <AlertDialogTrigger asChild>
