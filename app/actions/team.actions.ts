@@ -7,7 +7,7 @@ import {
     getAllTeamsWithRegions,
     getTeamByNameAndSeason,
     getTeamBySlugAndSeasonWithRegion, getTeamsByIds,
-    getTeamWithRegionAndPlayers
+    getTeamWithRegionAndPlayers, updateTeam
 } from "@/server/services/team.service";
 import {createServerSupabase} from "@/server/supabase/server";
 import {GetTeamByNameSeason, TeamIdInput} from "@/server/dto/team.dto";
@@ -97,4 +97,28 @@ export async function getTeamWithRegionAndPlayersAction(p: {
 export async function getTeamsByIdsAction(teamIds: string[]) {
     const supabase = await createServerSupabase();
     return await getTeamsByIds(supabase, teamIds);
+}
+
+export async function updateTeamAction(formData: FormData) {
+    const supabase = await createServerSupabase();
+
+    const teamId = formData.get('teamId') as string;
+    const name = formData.get('name') as string;
+    const file = formData.get('logo') as File | null;
+    const brickNumber = formData.get('brickNumber') as string;
+    const brickColor = formData.get('brickColor') as string;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return Err({ message: "User not authenticated", name: "AuthError" });
+    }
+
+    return updateTeam(supabase, {
+        teamId,
+        name,
+        logoFile: file && file.size > 0 ? file : null,
+        userId: user.id,
+        brickNumber: parseInt(brickNumber, 10),
+        brickColor: brickColor.toUpperCase(),
+    });
 }

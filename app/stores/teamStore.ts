@@ -21,6 +21,7 @@ type TeamsState = {
     fetchTeamsByIds: (teamIds: string[]) => Promise<TeamWithRegion[]>;
     addTeamToCache: (team: TeamWithRegion) => void;
     removeTeamFromCache: (teamId: string) => void;
+    updateTeamInCache: (team: TeamWithRegion) => void;
     clearCache: () => void;
     getTeamBySlugAndSeason: (teamSlug: string, seasonSlug: string) => TeamWithRegion | undefined;
 };
@@ -223,6 +224,25 @@ export const useTeamsStore = create<TeamsState>((set, get) => ({
         }
 
         return undefined;
+    },
+
+    updateTeamInCache: (team: TeamWithRegion) => {
+        const { allTeamsCache, teamsCache } = get();
+
+        teamsCache.set(team.id, createCacheEntry(team, TEAM_DETAILS_TTL));
+
+        const slugSeasonKey = createTeamCacheKey(team.slug, team.seasons.slug);
+        teamsCache.set(slugSeasonKey, createCacheEntry(team, TEAM_DETAILS_TTL));
+
+        if (allTeamsCache) {
+            const updatedTeams = allTeamsCache.data.map(t => t.id === team.id ? team : t);
+            set({
+                allTeamsCache: createCacheEntry(updatedTeams, TEAMS_LIST_TTL),
+                teamsCache,
+            });
+        } else {
+            set({ teamsCache });
+        }
     },
 
     clearCache: () => {

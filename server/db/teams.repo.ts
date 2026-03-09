@@ -52,15 +52,27 @@ export async function insertTeam(supabase: DBClient, p: InsertTeamDto) {
     }).select().single()
 }
 
-export async function updateTeamById(supabase: DBClient, id:string, p: {
-    name?:string, logoUrl?:string
-}){
-    return supabase.from("teams").update({
-        ...(p.name && {name:p.name}),
-            ...(p.logoUrl && {logo_url:p.logoUrl})
-    }).eq("id", id).select().single()
+export async function updateTeamById(supabase: DBClient, id: string, p: {
+    name?: string;
+    slug?: string;
+    logoUrl?: string;
+    brickNumber?: number;
+    brickColor?: string;
+}) {
+    return supabase
+        .from("teams")
+        .update({
+            ...(p.name !== undefined && { name: p.name }),
+            ...(p.slug !== undefined && { slug: p.slug }),
+            ...(p.logoUrl !== undefined && { logo_url: p.logoUrl }),
+            ...(p.brickNumber !== undefined && { brick_number: p.brickNumber }),
+            ...(p.brickColor !== undefined && { brick_color: p.brickColor }),
+        })
+        .eq("id", id)
+        .is("deleted_at", null)
+        .select()
+        .single();
 }
-
 export async function deleteTeamById(supabase: DBClient, id:string){
     return supabase.from("teams").delete().eq("id", id)
 }
