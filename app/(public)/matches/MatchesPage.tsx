@@ -147,7 +147,6 @@ export default function MatchesPage() {
                             )}
                         </div>
                     </div>
-                    <RegionSeasonSelector />
                 </div>
 
                 {selectedSeasonId ? (

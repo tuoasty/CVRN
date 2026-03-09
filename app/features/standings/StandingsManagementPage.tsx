@@ -84,11 +84,11 @@ export default function StandingsManagementPage() {
                             </div>
                             <div className="text-right">
                                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg LVR</div>
-                                <div className="text-lg font-bold tabular-nums">{(100 + stats.avgLvr).toFixed(1)}</div>
+                                <div className="text-lg font-bold tabular-nums">{stats.avgLvr.toFixed(1)}</div>
                             </div>
                             <div className="text-right">
                                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Top LVR</div>
-                                <div className="text-lg font-bold text-primary tabular-nums">{(100 + stats.topLvr).toFixed(1)}</div>
+                                <div className="text-lg font-bold text-primary tabular-nums">{stats.topLvr.toFixed(1)}</div>
                             </div>
                         </div>
                     )}

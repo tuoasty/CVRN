@@ -48,7 +48,8 @@ export async function insertTeam(supabase: DBClient, p: InsertTeamDto) {
         logo_url: p.logoUrl,
         season_id: p.seasonId,
         brick_number: p.brickNumber,
-        brick_color: p.brickColor
+        brick_color: p.brickColor,
+        starting_lvr: p.startingLvr,
     }).select().single()
 }
 
@@ -58,6 +59,7 @@ export async function updateTeamById(supabase: DBClient, id: string, p: {
     logoUrl?: string;
     brickNumber?: number;
     brickColor?: string;
+    startingLvr?: number;
 }) {
     return supabase
         .from("teams")
@@ -67,6 +69,7 @@ export async function updateTeamById(supabase: DBClient, id: string, p: {
             ...(p.logoUrl !== undefined && { logo_url: p.logoUrl }),
             ...(p.brickNumber !== undefined && { brick_number: p.brickNumber }),
             ...(p.brickColor !== undefined && { brick_color: p.brickColor }),
+            ...(p.startingLvr !== undefined && { starting_lvr: p.startingLvr }),
         })
         .eq("id", id)
         .is("deleted_at", null)
