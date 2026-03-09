@@ -1,4 +1,4 @@
-import {Player} from "@/shared/types/db";
+import {PlayerWithRole} from "@/server/dto/player.dto";
 
 export interface GetTeamByNameSeason {
     name: string;

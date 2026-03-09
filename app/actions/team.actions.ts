@@ -3,12 +3,10 @@
 import { createServerSupabase } from "@/server/supabase/server";
 import { Result, Err } from "@/shared/types/result";
 import {
-    CreateTeamInput,
     GetTeamByNameSeason,
     TeamIdInput,
     TeamWithRegion,
     TeamWithRegionAndPlayers,
-    UpdateTeamInput
 } from "@/server/dto/team.dto";
 import {
     createTeam,
