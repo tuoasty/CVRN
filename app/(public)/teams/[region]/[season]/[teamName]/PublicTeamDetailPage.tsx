@@ -86,9 +86,12 @@ export default function PublicTeamDetailPage({
     const playersCacheKey = teamData?.id && teamData?.season_id
         ? `${teamData.id}-${teamData.season_id}`
         : null;
-    const players = playersCacheKey
-        ? playersStore.playersByTeamCache.get(playersCacheKey)?.data ?? []
-        : [];
+    const cachedData = playersCacheKey
+        ? playersStore.playersByTeamCache.get(playersCacheKey)
+        : null;
+    const players = cachedData?.data ?? [];
+
+    const isLoadingPlayers = playersStore.loading || (teamData?.id && teamData?.season_id && !cachedData);
 
     useEffect(() => {
         if (!regionCode || !seasonSlug || !teamSlug) return;
@@ -209,7 +212,14 @@ export default function PublicTeamDetailPage({
             </div>
 
             <div className="space-y-4">
-                {players.length === 0 ? (
+                {isLoadingPlayers ? (
+                    <div className="panel p-8">
+                        <div className="flex items-center justify-center gap-3">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                            <p className="text-muted-foreground">Loading roster...</p>
+                        </div>
+                    </div>
+                ) : players.length === 0 ? (
                     <div className="panel p-8">
                         <p className="text-muted-foreground text-center">No players on this roster</p>
                     </div>
@@ -220,8 +230,8 @@ export default function PublicTeamDetailPage({
                                 Roster
                             </h3>
                             <span className="text-sm text-muted-foreground">
-                                {players.length} / 16
-                            </span>
+                    {players.length} / 16
+                </span>
                         </div>
                         <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
                             {allPlayersSorted.map((player, index) => (
