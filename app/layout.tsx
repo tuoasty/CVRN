@@ -11,10 +11,10 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata: Metadata = {
     metadataBase: new URL(defaultUrl),
     title: "CVRN",
-    description: "The official CVR Network. View teams, matches, standings, and playoff brackets.",
+    description: "The official CVR Network. View league information, matches, teams, and more.",
     openGraph: {
         title: "CVRN",
-        description: "The official CVR Network. View teams, matches, standings, and playoff brackets.",
+        description: "The official CVR Network. View league information, matches, teams, and more.",
         url: defaultUrl,
         siteName: "CVRN Volleyball League",
         images: [
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     twitter: {
         card: "summary_large_image",
         title: "CVRN",
-        description: "The official CVR Network. View teams, matches, standings, and playoff brackets.",
+        description: "The official CVR Network. View league information, matches, teams, and more.",
         images: ["/hero-banner.png"],
     },
 };
