@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/ta
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { CalendarDays, Trophy } from "lucide-react";
-import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
 import { MatchWithDetails } from "@/server/dto/match.dto";

@@ -22,9 +22,9 @@ export default function PublicNavbar() {
                     <div className="flex items-center gap-3">
                         <RegionSeasonSelector />
                         <div className="h-6 w-px bg-border" />
-                        <UserButton />
-                        <div className="h-6 w-px bg-border" />
                         <ModeToggle />
+                        <div className="h-6 w-px bg-border" />
+                        <UserButton />
                     </div>
                 </div>
 

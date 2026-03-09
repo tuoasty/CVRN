@@ -24,8 +24,7 @@ export function LogoutButton() {
             size="sm"
             className="rounded-sm"
         >
-            <LogOut className="w-4 h-4 mr-2" />
-            {loading ? "Logging out..." : "Logout"}
+            <LogOut className="w-4 h-4" />
         </Button>
     );
 }
