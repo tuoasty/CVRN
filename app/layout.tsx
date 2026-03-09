@@ -9,9 +9,31 @@ const defaultUrl = process.env.VERCEL_URL
     : "http://localhost:3000";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "CVRN",
-  description: "Confederate Volleyball Roblox Network",
+    metadataBase: new URL(defaultUrl),
+    title: "CVRN",
+    description: "The official CVR Network. View teams, matches, standings, and playoff brackets.",
+    openGraph: {
+        title: "CVRN",
+        description: "The official CVR Network. View teams, matches, standings, and playoff brackets.",
+        url: defaultUrl,
+        siteName: "CVRN Volleyball League",
+        images: [
+            {
+                url: "/hero-banner.png",
+                width: 1200,
+                height: 630,
+                alt: "CVRN - The official CVR Network",
+            },
+        ],
+        locale: "en_US",
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "CVRN",
+        description: "The official CVR Network. View teams, matches, standings, and playoff brackets.",
+        images: ["/hero-banner.png"],
+    },
 };
 
 const geistSans = Geist({
@@ -22,22 +44,22 @@ const geistSans = Geist({
 });
 
 export default function RootLayout({
-                                     children,
+                                       children,
                                    }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-      <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistSans.className} antialiased`}>
-      <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-      >
-        {children}
-          <Toaster/>
-      </ThemeProvider>
-      </body>
-      </html>
-  );
+    return (
+        <html lang="en" suppressHydrationWarning>
+        <body className={`${geistSans.variable} ${geistSans.className} antialiased`}>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+        >
+            {children}
+            <Toaster/>
+        </ThemeProvider>
+        </body>
+        </html>
+    );
 }
