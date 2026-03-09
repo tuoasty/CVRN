@@ -43,14 +43,21 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
     return (
         <div className="panel p-4">
             <div className="space-y-3">
+                {/* Header with status */}
                 <div className="flex items-center justify-between pb-2 border-b border-border">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Match {index + 1}
-                        </span>
-                        <Badge variant="outline" className={`rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider ${statusConfig.className}`}>
-                            {statusConfig.label}
-                        </Badge>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Match {index + 1}
+            </span>
+                        {match.is_forfeit ? (
+                            <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider bg-red-600/10 text-red-600 border-red-600/20">
+                                Forfeit
+                            </Badge>
+                        ) : (
+                            <Badge variant="outline" className={`rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider ${statusConfig.className}`}>
+                                {statusConfig.label}
+                            </Badge>
+                        )}
                         <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2">
                             BO{match.best_of}
                         </Badge>
@@ -61,91 +68,113 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                         )}
                     </div>
                     <span className="text-xs text-muted-foreground">
-                        {regionTimezone
-                            ? formatDateInTimezone(match.scheduled_at, regionTimezone)
-                            : match.scheduled_at
-                                ? new Date(match.scheduled_at).toLocaleString()
-                                : "Time TBD"}
-                    </span>
+            {regionTimezone
+                ? formatDateInTimezone(match.scheduled_at, regionTimezone)
+                : match.scheduled_at
+                    ? new Date(match.scheduled_at).toLocaleString()
+                    : "Time TBD"}
+        </span>
                 </div>
 
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
-                    <div className="flex justify-end items-center gap-2.5">
-                        <div className="flex flex-col items-end gap-0.5 min-w-0">
-                            <span className={`font-semibold text-sm text-right truncate w-full ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>
-                                {homeTeam?.name || "TBD"}
-                            </span>
-                            {homeTeam?.is_bye && (
-                                <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wider border-0 bg-orange-600/10 text-orange-600">
-                                    BYE
+                {/* Team matchup - vertical stacking within each column */}
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 py-2">
+                    {/* Home Team */}
+                    <div className="flex flex-col items-end gap-1">
+                        {/* Empty space for symmetry */}
+                        <div className="min-h-[20px]"></div>
+
+                        {/* Team name and logo */}
+                        <div className="flex items-center gap-2 justify-end w-full">
+            <span className={`font-semibold text-xs sm:text-sm text-right truncate ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>
+                {homeTeam?.name || "TBD"}
+            </span>
+                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0">
+                                {homeTeam?.is_bye ? (
+                                    <div className="w-full h-full rounded-sm bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
+                                        <span className="text-[10px] sm:text-xs text-orange-600 font-bold">BYE</span>
+                                    </div>
+                                ) : homeTeam?.logo_url ? (
+                                    <Image
+                                        src={homeTeam.logo_url}
+                                        alt={homeTeam.name}
+                                        fill
+                                        sizes="40px"
+                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
+                                        <span className="text-xs text-muted-foreground font-bold">?</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* LVR below */}
+                        <div className="min-h-[20px] flex justify-end">
+                            {match.status === "completed" && match.home_team_lvr !== null && match.home_team_lvr !== undefined && (
+                                <Badge variant="outline" className={`h-4 px-1.5 text-[9px] font-semibold tabular-nums ${match.home_team_lvr >= 0 ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-red-600/10 text-red-600 border-red-600/20'}`}>
+                                    {match.home_team_lvr >= 0 ? '+' : ''}{match.home_team_lvr.toFixed(1)} LVR
                                 </Badge>
                             )}
-                            {match.status === "completed" && (
-                                <>
-                                    {homeWon && (
-                                        <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wider border-0 bg-green-600/10 text-green-600">
-                                            Winner
-                                        </Badge>
-                                    )}
-                                    {match.is_forfeit && !homeWon && (
-                                        <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wider border-0 bg-red-600/10 text-red-600">
-                                            Forfeit
-                                        </Badge>
-                                    )}
-                                </>
-                            )}
                         </div>
-                        {homeTeam?.logo_url && (
-                            <div className="relative w-10 h-10 shrink-0">
-                                <Image src={homeTeam.logo_url} alt={homeTeam.name} fill sizes="40px" className="object-contain mix-blend-multiply dark:mix-blend-screen" />
-                            </div>
-                        )}
                     </div>
 
+                    {/* Score/VS - Centered */}
                     {match.status === "completed" && match.home_sets_won !== null && match.away_sets_won !== null ? (
-                        <div className="flex items-center gap-2 px-2">
-                            <span className={`text-xl font-bold tabular-nums ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>{match.home_sets_won}</span>
-                            <span className="text-sm text-muted-foreground/50 font-medium">-</span>
-                            <span className={`text-xl font-bold tabular-nums ${awayWon ? "text-foreground" : "text-muted-foreground"}`}>{match.away_sets_won}</span>
+                        <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2">
+                            <span className={`text-lg sm:text-xl font-bold tabular-nums ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>{match.home_sets_won}</span>
+                            <span className="text-xs sm:text-sm text-muted-foreground/50 font-medium">-</span>
+                            <span className={`text-lg sm:text-xl font-bold tabular-nums ${awayWon ? "text-foreground" : "text-muted-foreground"}`}>{match.away_sets_won}</span>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center px-2">
-                            <span className="text-base font-bold text-muted-foreground/50">VS</span>
+                        <div className="flex items-center justify-center px-1 sm:px-2">
+                            <span className="text-sm sm:text-base font-bold text-muted-foreground/50">VS</span>
                         </div>
                     )}
 
-                    <div className="flex justify-start items-center gap-2.5">
-                        {awayTeam?.logo_url && (
-                            <div className="relative w-10 h-10 shrink-0">
-                                <Image src={awayTeam.logo_url} alt={awayTeam.name} fill sizes="40px" className="object-contain mix-blend-multiply dark:mix-blend-screen" />
+                    {/* Away Team */}
+                    <div className="flex flex-col items-start gap-1">
+                        {/* Empty space for symmetry */}
+                        <div className="min-h-[20px]"></div>
+
+                        {/* Team name and logo */}
+                        <div className="flex items-center gap-2 justify-start w-full">
+                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0">
+                                {awayTeam?.is_bye ? (
+                                    <div className="w-full h-full rounded-sm bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
+                                        <span className="text-[10px] sm:text-xs text-orange-600 font-bold">BYE</span>
+                                    </div>
+                                ) : awayTeam?.logo_url ? (
+                                    <Image
+                                        src={awayTeam.logo_url}
+                                        alt={awayTeam.name}
+                                        fill
+                                        sizes="40px"
+                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
+                                        <span className="text-xs text-muted-foreground font-bold">?</span>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                        <div className="flex flex-col items-start gap-0.5 min-w-0">
-                            <span className={`font-semibold text-sm text-left truncate w-full ${awayWon ? "text-foreground" : "text-muted-foreground"}`}>
-                                {awayTeam?.name || "TBD"}
-                            </span>
-                            {awayTeam?.is_bye && (
-                                <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wider border-0 bg-orange-600/10 text-orange-600">
-                                    BYE
+                            <span className={`font-semibold text-xs sm:text-sm text-left truncate ${awayWon ? "text-foreground" : "text-muted-foreground"}`}>
+                {awayTeam?.name || "TBD"}
+            </span>
+                        </div>
+
+                        {/* LVR below */}
+                        <div className="min-h-[20px] flex justify-start">
+                            {match.status === "completed" && match.away_team_lvr !== null && match.away_team_lvr !== undefined && (
+                                <Badge variant="outline" className={`h-4 px-1.5 text-[9px] font-semibold tabular-nums ${match.away_team_lvr >= 0 ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-red-600/10 text-red-600 border-red-600/20'}`}>
+                                    {match.away_team_lvr >= 0 ? '+' : ''}{match.away_team_lvr.toFixed(1)} LVR
                                 </Badge>
-                            )}
-                            {match.status === "completed" && (
-                                <>
-                                    {awayWon && (
-                                        <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wider border-0 bg-green-600/10 text-green-600">
-                                            Winner
-                                        </Badge>
-                                    )}
-                                    {match.is_forfeit && !awayWon && (
-                                        <Badge variant="outline" className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wider border-0 bg-red-600/10 text-red-600">
-                                            Forfeit
-                                        </Badge>
-                                    )}
-                                </>
                             )}
                         </div>
                     </div>
                 </div>
+
+                {/* Rest remains the same - set scores, MVPs, officials */}
 
                 {match.status === "completed" && sets.length > 0 && (
                     <div className="flex items-center justify-center gap-1 py-1.5">

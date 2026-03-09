@@ -21,6 +21,10 @@ export default function AdminNavbar() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        <LogoutButton />
+                        <div className="h-6 w-px bg-border" />
+                        <ModeToggle />
+                        <div className="h-6 w-px bg-border" />
                         <Link href="/home">
                             <Button
                                 variant="ghost"
@@ -30,9 +34,6 @@ export default function AdminNavbar() {
                                 <Users className="h-4 w-4" />
                             </Button>
                         </Link>
-                        <div className="h-6 w-px bg-border" />
-                        <ModeToggle />
-                        <LogoutButton />
                     </div>
                 </div>
             </div>

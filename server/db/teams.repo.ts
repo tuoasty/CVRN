@@ -170,5 +170,4 @@ export async function findTeamsByIds(supabase: DBClient, teamIds: string[]) {
         `)
         .in("id", teamIds)
         .is("deleted_at", null)
-        .eq("is_bye", false);
 }
