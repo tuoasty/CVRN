@@ -11,7 +11,7 @@ export interface StandingWithInfo {
     team_name: string | null;
     team_slug: string | null;
     team_logo_url: string | null;
-    starting_lvr: number;
+    starting_lvr: number | null;
     wins: number | null;
     losses: number | null;
     sets_won: number | null;
