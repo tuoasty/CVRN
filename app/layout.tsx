@@ -10,13 +10,14 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
     metadataBase: new URL(defaultUrl),
-    title: "CVRN",
-    description: "The official CVR Network. View league information, matches, teams, and more.",
+    title: "CVR Network – Matches, Teams, and League Info",
+    description:
+        "The official CVR Network. View league standings, match schedules, teams, and playoff brackets for the CVRN Volleyball League.",
     openGraph: {
-        title: "CVRN",
+        title: "CVR Network",
         description: "The official CVR Network. View league information, matches, teams, and more.",
         url: defaultUrl,
-        siteName: "CVRN Volleyball League",
+        siteName: "Confederate Volleyball Roblox Network",
         images: [
             {
                 url: "/hero-banner.png",
@@ -30,8 +31,9 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "CVRN",
-        description: "The official CVR Network. View league information, matches, teams, and more.",
+        title: "CVR Network",
+        description:
+            "The official CVR Network. View league standings, match schedules, teams, and playoff brackets for the CVRN Volleyball League.",
         images: ["/hero-banner.png"],
     },
 };
