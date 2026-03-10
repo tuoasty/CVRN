@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
-import { Geist } from "next/font/google";
-import { ThemeProvider } from "next-themes";
+import type {Metadata} from "next";
+import {Geist} from "next/font/google";
+import {ThemeProvider} from "next-themes";
 import "./globals.css";
 import {Toaster} from "@/app/components/ui/sonner";
+import {Analytics} from "@vercel/analytics/next";
 
 const siteUrl = "https://cvrn.vercel.app";
 
@@ -66,6 +67,7 @@ export default function RootLayout({
             {children}
             <Toaster/>
         </ThemeProvider>
+        <Analytics/>
         </body>
         </html>
     );
