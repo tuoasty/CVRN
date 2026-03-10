@@ -8,7 +8,6 @@ import { useRegionsStore } from "@/app/stores/regionStore";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
 import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
-import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy, Loader2 } from "lucide-react";
 import { PlayoffBracket } from "@/shared/types/db";
 import { toast } from "@/app/utils/toast";
@@ -115,7 +114,11 @@ export default function PlayoffsPage() {
                         </div>
                     </div>
                 ) : (
-                    <PlayoffBracketDisplay brackets={brackets} seasonId={selectedSeasonId} />
+                    <PlayoffBracketDisplay
+                        brackets={brackets}
+                        seasonId={selectedSeasonId}
+                        regionId={selectedSeason.region_id}
+                    />
                 )}
             </div>
         </>
