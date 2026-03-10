@@ -8,10 +8,12 @@ import { useMatchesStore } from "@/app/stores/matchStore";
 import { Loader2, Maximize2, Minimize2, Move } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { cn } from "@/lib/utils";
+import {useRegionsStore} from "@/app/stores/regionStore";
 
 type PlayoffBracketDisplayProps = {
     brackets: PlayoffBracket[];
     seasonId: string;
+    regionId: string;
 };
 
 type RoundType = "play_in" | "round_of_16" | "quarterfinal" | "semifinal" | "final" | "third_place";
@@ -86,9 +88,10 @@ function assignDisplayOrder(brackets: BracketWithMatch[]): Map<string, number> {
     return orderMap;
 }
 
-export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) {
+export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisplayProps) {
     const { allTeamsCache, fetchAllTeams } = useTeamsStore();
     const { matchesCache, fetchAllMatches } = useMatchesStore();
+    const { allRegionsCache } = useRegionsStore();
     const [loadingTeams, setLoadingTeams] = useState(true);
     const [loadingMatches, setLoadingMatches] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -321,6 +324,12 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
         return { totalHeight: height, totalWidth: width };
     }, [mainBracketRounds, matchPositions, thirdPlacePosition]);
 
+    const regionCode = useMemo(() => {
+        const regions = allRegionsCache?.data || [];
+        const region = regions.find(r => r.id === regionId);
+        return region?.code;
+    }, [allRegionsCache, regionId]);
+
     const handleMouseDown = (e: React.MouseEvent) => {
         if (e.button === 1) {
             e.preventDefault();
@@ -535,6 +544,7 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                                             match={bracket.match}
                                             homeTeam={homeTeam}
                                             awayTeam={awayTeam}
+                                            regionCode={regionCode}
                                         />
                                     </div>
                                 );
@@ -569,6 +579,7 @@ export function PlayoffBracketDisplay({ brackets }: PlayoffBracketDisplayProps) 
                                         ? teamsMap.get(thirdPlaceMatch.match.away_team_id)
                                         : undefined
                                 }
+                                regionCode={regionCode}
                             />
                         </div>
                     )}

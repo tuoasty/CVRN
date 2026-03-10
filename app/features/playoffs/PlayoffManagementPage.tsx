@@ -235,7 +235,7 @@ export default function PlayoffManagementPage() {
                         </div>
                     </div>
                 ) : selectedSeasonId && brackets.length > 0 ? (
-                    <PlayoffBracketDisplay brackets={brackets} seasonId={selectedSeasonId} />
+                    <PlayoffBracketDisplay brackets={brackets} seasonId={selectedSeasonId} regionId={selectedRegionId} />
                 ) : selectedSeasonId && !loading ? (
                     <div className="panel p-12 border-l-4 border-l-muted">
                         <p className="text-sm text-muted-foreground text-center">

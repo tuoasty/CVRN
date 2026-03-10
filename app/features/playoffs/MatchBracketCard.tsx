@@ -13,12 +13,14 @@ import {
 import { Calendar, Trophy, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import {formatDateInTimezone, getRegionTimezone} from "@/app/utils/timezoneOptions";
 
 type MatchBracketCardProps = {
     bracket: PlayoffBracket;
     match: Match;
     homeTeam?: TeamWithRegion;
     awayTeam?: TeamWithRegion;
+    regionCode?: string;
 };
 
 export function MatchBracketCard({
@@ -26,6 +28,7 @@ export function MatchBracketCard({
                                      match,
                                      homeTeam,
                                      awayTeam,
+                                     regionCode,
                                  }: MatchBracketCardProps) {
     const isCompleted = match.status === "completed";
     const homeWon = isCompleted && (match.home_sets_won || 0) > (match.away_sets_won || 0);
@@ -33,6 +36,12 @@ export function MatchBracketCard({
 
     const formatDate = (date: string | null) => {
         if (!date) return "TBD";
+
+        if (regionCode) {
+            const timezone = getRegionTimezone(regionCode);
+            return formatDateInTimezone(date, timezone);
+        }
+
         return new Date(date).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
