@@ -4,6 +4,7 @@ import {ThemeProvider} from "next-themes";
 import "./globals.css";
 import {Toaster} from "@/app/components/ui/sonner";
 import {Analytics} from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const siteUrl = "https://cvrn.vercel.app";
 
@@ -66,8 +67,9 @@ export default function RootLayout({
         >
             {children}
             <Toaster/>
+            <Analytics/>
+            <SpeedInsights/>
         </ThemeProvider>
-        <Analytics/>
         </body>
         </html>
     );
