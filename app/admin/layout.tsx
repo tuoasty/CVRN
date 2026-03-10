@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import AdminNavbar from "@/app/components/ui/AdminNavbar";
+import AdminNavbar from "@/app/components/admin/navigation/AdminNavbar";
 import {AdminStoreInitializer} from "@/app/admin/AdminStoreInitializier";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

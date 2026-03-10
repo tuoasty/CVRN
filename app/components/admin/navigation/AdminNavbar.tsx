@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import { LogoutButton } from "@/app/components/ui/LogoutButton";
-import AdminNavItems from "@/app/components/ui/AdminNavItems";
+import AdminNavItems from "@/app/components/admin/navigation/AdminNavItems";
 import { Users } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 
