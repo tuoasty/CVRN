@@ -5,7 +5,6 @@ import { usePublicContextStore } from "@/app/stores/publicContextStore";
 import { useTeamsStore } from "@/app/stores/teamStore";
 import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { useRegionsStore } from "@/app/stores/regionStore";
-import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import PublicTeamCard from "@/app/(public)/teams/PublicTeamCard";
 import { Skeleton } from "@/app/components/ui/skeleton";

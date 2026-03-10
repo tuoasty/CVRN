@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState, useTransition} from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/components/ui/button";
@@ -17,6 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/components/ui/select";
+import LoadingComponent from "@/app/components/ui/LoadingComponent";
 
 export default function TeamsDataTable() {
     const { allTeamsCache, loading, error, fetchAllTeams } = useTeamsStore();
@@ -27,6 +28,7 @@ export default function TeamsDataTable() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedRegion, setSelectedRegion] = useState<string>("all");
     const [selectedSeason, setSelectedSeason] = useState<string>("all");
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
         clientLogger.info('TeamsDataTable', 'Component mounted, fetching teams');
@@ -67,7 +69,9 @@ export default function TeamsDataTable() {
         const seasonSlug = encodeURIComponent(team.seasons.slug.toLowerCase());
         const teamSlug = encodeURIComponent(team.slug.toLowerCase());
 
-        router.push(`/admin/teams/${regionCode}/${seasonSlug}/${teamSlug}`);
+        startTransition(() => {
+            router.push(`/admin/teams/${regionCode}/${seasonSlug}/${teamSlug}`);
+        })
     };
 
     if (loading) {
@@ -88,6 +92,7 @@ export default function TeamsDataTable() {
 
     return (
         <div className="space-y-4">
+            <LoadingComponent isPending={isPending}/>
             <div className="flex items-center gap-3">
                 <div className="flex-1 max-w-sm">
                     <Input
