@@ -6,12 +6,12 @@ import { useStandingsStore } from "@/app/stores/standingStore";
 import { useSeasonsStore } from "@/app/stores/seasonStore";
 import { useRegionsStore } from "@/app/stores/regionStore";
 import { StandingsTable } from "@/app/features/standings/StandingsTable";
-import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
 import { StandingWithInfo } from "@/server/dto/standing.dto";
 import { toast } from "@/app/utils/toast";
+import {clientLogger} from "@/app/utils/clientLogger";
 
 export default function StandingsPage() {
     const { selectedSeasonId, selectedRegionId } = usePublicContextStore();
@@ -28,6 +28,7 @@ export default function StandingsPage() {
         if (standings.length === 0) return null;
         const totalTeams = standings.length;
         const avgLvr = standings.reduce((sum, s) => sum + (s.total_lvr || 0), 0) / totalTeams;
+        clientLogger.info("standings", "standings lvr value", standings)
         const topLvr = Math.max(...standings.map(s => s.total_lvr || 0));
         return { totalTeams, avgLvr, topLvr };
     }, [standings]);
@@ -75,11 +76,11 @@ export default function StandingsPage() {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg LVR</div>
-                                    <div className="text-lg font-bold tabular-nums">{(100 + stats.avgLvr).toFixed(1)}</div>
+                                    <div className="text-lg font-bold tabular-nums">{(stats.avgLvr).toFixed(1)}</div>
                                 </div>
                                 <div className="text-right">
                                     <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Top LVR</div>
-                                    <div className="text-lg font-bold text-primary tabular-nums">{(100 + stats.topLvr).toFixed(1)}</div>
+                                    <div className="text-lg font-bold text-primary tabular-nums">{(stats.topLvr).toFixed(1)}</div>
                                 </div>
                             </div>
                         )}
