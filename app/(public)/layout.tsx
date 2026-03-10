@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import PublicNavbar from "@/app/components/ui/PublicNavbar";
+import PublicNavbar from "@/app/components/public/navigation/PublicNavbar";
 import {PublicStoreInitializer} from "@/app/(public)/PublicStoreInitializer";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {

@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import RedirectCleaner from "@/app/components/providers/RedirectCleaner";
-import HeroSection from "@/app/components/public/HeroSection";
-import CVRNInfo from "@/app/components/public/CVRNInfo";
-import PublicFooter from "@/app/components/public/PublicFooter";
+import HeroSection from "@/app/components/public/landing/HeroSection";
+import CVRNInfo from "@/app/components/public/landing/CVRNInfo";
+import PublicFooter from "@/app/components/public/landing/PublicFooter";
 
 export default function PublicHome() {
     return (

@@ -85,29 +85,27 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
     const getRankBadge = (rank: number) => {
         if (rank === 1) {
             return (
-                <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-lg">
-                    <span className="text-base font-bold text-yellow-950 tabular-nums">{rank}</span>
-                </div>
+                    <span className="text-lg font-bold text-yellow-600 tabular-nums">{rank}</span>
             );
         }
         if (rank === 2) {
             return (
-                <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-gradient-to-br from-slate-300 to-slate-500 shadow-md">
-                    <span className="text-base font-bold text-slate-800 tabular-nums">{rank}</span>
-                </div>
+
+                    <span className="text-lg font-bold text-slate-500 tabular-nums">{rank}</span>
+
             );
         }
         if (rank === 3) {
             return (
-                <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-gradient-to-br from-orange-400 to-orange-600 shadow-md">
-                    <span className="text-base font-bold text-orange-950 tabular-nums">{rank}</span>
-                </div>
+
+                    <span className="text-lg font-bold text-orange-600 tabular-nums">{rank}</span>
+
             );
         }
         return (
-            <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-muted border border-border">
-                <span className="text-base font-bold text-foreground tabular-nums">{rank}</span>
-            </div>
+
+                <span className="text-lg font-bold text-foreground tabular-nums">{rank}</span>
+
         );
     };
 

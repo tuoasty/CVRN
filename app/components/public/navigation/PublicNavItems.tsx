@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTransition } from "react";
 import { Button } from "@/app/components/ui/button";
 import {
     Select,
@@ -23,33 +23,46 @@ const NAV_ITEMS = [
 export default function PublicNavItems() {
     const pathname = usePathname();
     const router = useRouter();
+    const [isPending, startTransition] = useTransition();
 
     const currentItem = NAV_ITEMS.find((item) => pathname === item.href);
 
     return (
         <>
-            {/* Desktop Navigation */}
+            {isPending && (
+                <div className="fixed top-[80px] left-0 right-0 bottom-0 bg-background/80 backdrop-blur-sm z-[60] flex items-center justify-center">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+            )}
+
             <nav className="hidden md:flex gap-1">
                 {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href;
                     return (
-                        <Link key={item.href} href={item.href}>
-                            <Button
-                                variant={isActive ? "secondary" : "ghost"}
-                                size="sm"
-                                className="rounded-sm text-sm"
-                            >
-                                {item.label}
-                            </Button>
-                        </Link>
+                        <Button
+                            key={item.href}
+                            variant={isActive ? "secondary" : "ghost"}
+                            size="sm"
+                            className="rounded-sm text-sm"
+                            onClick={() => {
+                                startTransition(() => {
+                                    router.push(item.href);
+                                });
+                            }}
+                        >
+                            {item.label}
+                        </Button>
                     );
                 })}
             </nav>
 
-            {/* Mobile Navigation Dropdown */}
             <Select
                 value={pathname}
-                onValueChange={(value) => router.push(value)}
+                onValueChange={(value) => {
+                    startTransition(() => {
+                        router.push(value);
+                    });
+                }}
             >
                 <SelectTrigger className="md:hidden w-[140px] h-8 rounded-sm text-sm">
                     <SelectValue>

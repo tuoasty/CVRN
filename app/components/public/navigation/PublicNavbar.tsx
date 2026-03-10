@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
-import PublicNavItems from "@/app/components/ui/PublicNavItems";
+import PublicNavItems from "@/app/components/public/navigation/PublicNavItems";
 import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import UserButton from "@/app/components/ui/UserButton";
 
@@ -11,7 +11,7 @@ export default function PublicNavbar() {
                 {/* Desktop: Single Row */}
                 <div className="hidden lg:flex items-center justify-between py-3">
                     <div className="flex items-center gap-8">
-                        <Link href="/">
+                        <Link href="/app/components/public">
                             <h1 className="text-lg font-semibold tracking-tight">
                                 CVRN
                             </h1>
@@ -32,7 +32,7 @@ export default function PublicNavbar() {
                 <div className="lg:hidden">
                     {/* Top Row */}
                     <div className="flex items-center justify-between py-2.5 border-b border-border/50">
-                        <Link href="/">
+                        <Link href="/app/components/public">
                             <h1 className="text-lg font-semibold tracking-tight">
                                 CVRN
                             </h1>
