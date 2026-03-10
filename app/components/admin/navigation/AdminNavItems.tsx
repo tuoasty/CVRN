@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/app/components/ui/button";
