@@ -19,6 +19,7 @@ import {
     TeamWithRegionAndPlayers, UpdateTeamInput
 } from "@/server/dto/team.dto";
 import {findAllTeamPlayers, removePlayerFromTeam} from "@/server/db/players.repo";
+import {PlayerRole} from "@/server/dto/player.dto";
 
 function generateSlug(name: string): string {
     return name
@@ -267,7 +268,7 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
 
         const playersWithRoles = playersData?.map(record => ({
             ...record.player,
-            role: record.role || 'player' as PlayerRole
+            role: (record.role || 'player') as PlayerRole
         })) || []
 
         return Ok({
