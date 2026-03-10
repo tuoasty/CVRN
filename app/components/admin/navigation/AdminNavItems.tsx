@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
+import LoadingComponent from "@/app/components/ui/LoadingComponent";
 
 const NAV_ITEMS = [
     { href: "/admin/dashboard", label: "Dashboard" },
@@ -20,12 +21,7 @@ export default function AdminNavItems() {
 
     return (
         <>
-            {isPending && (
-                <div className="fixed top-[80px] left-0 right-0 bottom-0 bg-background/80 backdrop-blur-sm z-[60] flex items-center justify-center">
-                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                </div>
-            )}
-
+            <LoadingComponent isPending={isPending}/>
             <nav className="flex gap-1">
                 {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href;

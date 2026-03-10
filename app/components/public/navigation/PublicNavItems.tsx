@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from "@/app/components/ui/select";
 import { useRouter } from "next/navigation";
+import LoadingComponent from "@/app/components/ui/LoadingComponent";
 
 const NAV_ITEMS = [
     { href: "/home", label: "Home" },
@@ -29,11 +30,7 @@ export default function PublicNavItems() {
 
     return (
         <>
-            {isPending && (
-                <div className="fixed top-[80px] left-0 right-0 bottom-0 bg-background/80 backdrop-blur-sm z-[60] flex items-center justify-center">
-                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                </div>
-            )}
+            <LoadingComponent isPending={isPending}/>
 
             <nav className="hidden md:flex gap-1">
                 {NAV_ITEMS.map((item) => {
