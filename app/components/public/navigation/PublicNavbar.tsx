@@ -11,7 +11,7 @@ export default function PublicNavbar() {
                 {/* Desktop: Single Row */}
                 <div className="hidden lg:flex items-center justify-between py-3">
                     <div className="flex items-center gap-8">
-                        <Link href="/app/components/public">
+                        <Link href="/">
                             <h1 className="text-lg font-semibold tracking-tight">
                                 CVRN
                             </h1>
