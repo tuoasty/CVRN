@@ -14,7 +14,7 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { Button } from "@/app/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { useMatchesStore } from "@/app/stores/matchStore";
+import { deleteMatch } from "@/app/hooks/useMatches";
 import { toast } from "@/app/utils/toast";
 import { clientLogger } from "@/app/utils/clientLogger";
 
@@ -26,7 +26,7 @@ interface DeleteMatchDialogProps {
 export default function DeleteMatchDialog({ matchId, onSuccess }: DeleteMatchDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const { deleteMatch } = useMatchesStore();
+
 
     const handleDelete = async () => {
         setLoading(true);

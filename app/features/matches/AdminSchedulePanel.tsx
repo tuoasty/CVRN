@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useMatchesStore } from "@/app/stores/matchStore";
-import { useTeamsStore } from "@/app/stores/teamStore";
-import { usePlayerStore } from "@/app/stores/playerStore";
-import { clientLogger } from "@/app/utils/clientLogger";
+import React, { useMemo } from "react";
+import { useWeekSchedule, usePlayoffSchedule } from "@/app/hooks/useMatches";
+import { useTeamsByIds } from "@/app/hooks/useTeams";
+import { usePlayersByIds } from "@/app/hooks/usePlayers";
 import Image from "next/image";
-import { TeamWithRegion } from "@/server/dto/team.dto";
-import { Player } from "@/shared/types/db";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import ManageMatchDialog from "@/app/features/matches/ManageMatchDialog";
 import CompleteMatchDialog from "@/app/features/matches/CompleteMatchDialog";
@@ -52,69 +49,47 @@ const getStatusConfig = (status: string) => {
 };
 
 export default function AdminSchedulePanel({ seasonId, week, round, matchType, regionCode }: SchedulePanelProps) {
-    const { fetchWeekSchedule, fetchPlayoffSchedule, weekScheduleCache, playoffScheduleCache, loading } = useMatchesStore();
-    const { fetchTeamsByIds } = useTeamsStore();
-    const { fetchPlayersByIds } = usePlayerStore();
+    const { schedule: weekSchedule, isLoading: weekLoading, mutate: mutateWeek } = useWeekSchedule(
+        matchType === "season" ? seasonId : null,
+        matchType === "season" ? (week ?? null) : null
+    );
+    const { schedule: playoffScheduleData, isLoading: playoffLoading, mutate: mutatePlayoff } = usePlayoffSchedule(
+        matchType === "playoff" ? seasonId : null,
+        matchType === "playoff" ? (round ?? null) : null
+    );
 
-    const [teams, setTeams] = useState<Map<string, TeamWithRegion>>(new Map());
-    const [players, setPlayers] = useState<Map<string, Player>>(new Map());
-    const [loaded, setLoaded] = useState(false);
+    const schedule: MatchWithDetails[] = matchType === "season" ? weekSchedule : playoffScheduleData;
+    const loading = matchType === "season" ? weekLoading : playoffLoading;
 
-    const schedule: MatchWithDetails[] = matchType === "season" && week !== undefined
-        ? weekScheduleCache.get(`${seasonId}-${week}`)?.data ?? []
-        : matchType === "playoff" && round
-            ? playoffScheduleCache.get(`${seasonId}-${round}`)?.data ?? []
-            : [];
-
-    useEffect(() => {
-        if (seasonId && ((matchType === "season" && week !== undefined) || (matchType === "playoff" && round))) {
-            loadSchedule();
-        }
-    }, [seasonId, week, round, matchType]);
-
-    const loadSchedule = async () => {
-        setLoaded(false);
-
-        try {
-            if (matchType === "season" && week !== undefined) {
-                await fetchWeekSchedule(seasonId, week);
-                const cached = weekScheduleCache.get(`${seasonId}-${week}`);
-                if (cached) {
-                    processScheduleData(cached.data);
-                }
-            } else if (matchType === "playoff" && round) {
-                await fetchPlayoffSchedule(seasonId, round);
-                const cached = playoffScheduleCache.get(`${seasonId}-${round}`);
-                if (cached) {
-                    processScheduleData(cached.data);
-                }
-            }
-        } catch (error) {
-            clientLogger.error("SchedulePanel", "Error loading schedule", { error });
-        } finally {
-            setLoaded(true);
-        }
+    const reloadSchedule = () => {
+        if (matchType === "season") mutateWeek();
+        else mutatePlayoff();
     };
 
-    const processScheduleData = async (data: MatchWithDetails[]) => {
-        const teamIds = new Set<string>();
-        const playerIds = new Set<string>();
-
-        data.forEach(({ match }) => {
-            if (match.home_team_id) teamIds.add(match.home_team_id);
-            if (match.away_team_id) teamIds.add(match.away_team_id);
-            if (match.match_mvp_player_id) playerIds.add(match.match_mvp_player_id);
-            if (match.loser_mvp_player_id) playerIds.add(match.loser_mvp_player_id);
+    // Extract team and player IDs from schedule
+    const teamIds = useMemo(() => {
+        const ids = new Set<string>();
+        schedule.forEach(({ match }) => {
+            if (match.home_team_id) ids.add(match.home_team_id);
+            if (match.away_team_id) ids.add(match.away_team_id);
         });
+        return Array.from(ids);
+    }, [schedule]);
 
-        const [fetchedTeams, fetchedPlayers] = await Promise.all([
-            fetchTeamsByIds(Array.from(teamIds)),
-            playerIds.size > 0 ? fetchPlayersByIds(Array.from(playerIds)) : Promise.resolve([]),
-        ]);
+    const playerIds = useMemo(() => {
+        const ids = new Set<string>();
+        schedule.forEach(({ match }) => {
+            if (match.match_mvp_player_id) ids.add(match.match_mvp_player_id);
+            if (match.loser_mvp_player_id) ids.add(match.loser_mvp_player_id);
+        });
+        return Array.from(ids);
+    }, [schedule]);
 
-        setTeams(new Map(fetchedTeams.map(t => [t.id, t])));
-        setPlayers(new Map(fetchedPlayers.map(p => [p.id, p])));
-    };
+    const { teams: fetchedTeams } = useTeamsByIds(teamIds);
+    const { players: fetchedPlayers } = usePlayersByIds(playerIds);
+
+    const teams = useMemo(() => new Map(fetchedTeams.map(t => [t.id, t])), [fetchedTeams]);
+    const players = useMemo(() => new Map(fetchedPlayers.map(p => [p.id, p])), [fetchedPlayers]);
 
     if (!seasonId) {
         return (
@@ -124,7 +99,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
         );
     }
 
-    if (loading || !loaded) {
+    if (loading) {
         return (
             <div className="panel p-8">
                 <div className="flex items-center justify-center">
@@ -204,7 +179,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                             scheduledAt={match.scheduled_at}
                                             regionCode={regionCode}
                                             match={match}
-                                            onSuccess={loadSchedule}
+                                            onSuccess={reloadSchedule}
                                         />
                                         {match.status === 'scheduled' && homeTeam && awayTeam && (
                                             <CompleteMatchDialog
@@ -215,7 +190,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                                 homeTeamName={homeTeam.name}
                                                 awayTeamName={awayTeam.name}
                                                 bestOf={match.best_of}
-                                                onSuccess={loadSchedule}
+                                                onSuccess={reloadSchedule}
                                             />
                                         )}
                                         {match.status === 'completed' && homeTeam && awayTeam && (
@@ -230,13 +205,13 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                                 currentSets={sets}
                                                 currentMatchMvpId={match.match_mvp_player_id || ""}
                                                 currentLoserMvpId={match.loser_mvp_player_id || ""}
-                                                onSuccess={loadSchedule}
+                                                onSuccess={reloadSchedule}
                                             />
                                         )}
                                         {match.match_type === "season" && (
                                             <DeleteMatchDialog
                                                 matchId={match.id}
-                                                onSuccess={loadSchedule}
+                                                onSuccess={reloadSchedule}
                                             />
                                         )}
                                     </div>

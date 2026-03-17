@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
-import { useMatchesStore } from "@/app/stores/matchStore";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { useRegions } from "@/app/hooks/useRegions";
+import { useAvailablePlayoffRounds } from "@/app/hooks/useMatches";
 import { Label } from "@/app/components/ui/label";
 import {
     Select,
@@ -53,46 +53,34 @@ export default function SeasonWeekPicker({
                                              onMatchTypeChange,
                                              onRoundChange,
                                          }: SeasonWeekPickerProps) {
-    const { fetchAllSeasons, allSeasonsCache } = useSeasonsStore();
-    const { fetchAllRegions, allRegionsCache } = useRegionsStore();
-    const { fetchAvailablePlayoffRounds } = useMatchesStore();
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
+    const { rounds: fetchedRounds } = useAvailablePlayoffRounds(selectedSeasonId || null);
 
-    const [availableRounds, setAvailableRounds] = useState<string[]>([]);
     const [maxWeeks, setMaxWeeks] = useState(10);
 
-    useEffect(() => {
-        fetchAllSeasons();
-        fetchAllRegions();
-    }, []);
+    const availableRounds = [...fetchedRounds].sort((a, b) => {
+        return (ROUND_ORDER[a] || 999) - (ROUND_ORDER[b] || 999);
+    });
 
     useEffect(() => {
-        if (selectedSeasonId && allSeasonsCache?.data) {
-            const season = allSeasonsCache.data.find(s => s.id === selectedSeasonId);
+        if (selectedSeasonId && seasons.length > 0) {
+            const season = seasons.find(s => s.id === selectedSeasonId);
             if (season) {
                 setMaxWeeks(season.weeks || 10);
 
                 if (onMatchTypeChange && !selectedMatchType) {
                     onMatchTypeChange(season.playoff_started ? "playoff" : "season");
                 }
-
-                if (season.playoff_started) {
-                    fetchAvailablePlayoffRounds(selectedSeasonId).then(rounds => {
-                        const sortedRounds = rounds.sort((a, b) => {
-                            return (ROUND_ORDER[a] || 999) - (ROUND_ORDER[b] || 999);
-                        });
-                        setAvailableRounds(sortedRounds);
-
-                        if (sortedRounds.length > 0 && onRoundChange && !selectedRound) {
-                            onRoundChange(sortedRounds[0] as PlayoffRound);
-                        }
-                    });
-                }
             }
         }
-    }, [selectedSeasonId, allSeasonsCache]);
+    }, [selectedSeasonId, seasons]);
 
-    const seasons = allSeasonsCache?.data || [];
-    const regions = allRegionsCache?.data || [];
+    useEffect(() => {
+        if (availableRounds.length > 0 && onRoundChange && !selectedRound) {
+            onRoundChange(availableRounds[0] as PlayoffRound);
+        }
+    }, [availableRounds]);
 
     const groupedSeasons = regions.map(region => ({
         region,

@@ -1,8 +1,8 @@
 "use client";
 
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { useRegions } from "@/app/hooks/useRegions";
 import {
     Select,
     SelectContent,
@@ -14,11 +14,8 @@ import { Calendar } from "lucide-react";
 
 export default function SeasonSelectionMiddleware() {
     const { selectedSeasonId, setSelectedSeasonId, setSelectedRegionId } = usePublicContextStore();
-    const { allSeasonsCache } = useSeasonsStore();
-    const { allRegionsCache } = useRegionsStore();
-
-    const regions = allRegionsCache?.data || [];
-    const seasons = allSeasonsCache?.data || [];
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
 
     const handleSeasonChange = (seasonId: string) => {
         const season = seasons.find((s) => s.id === seasonId);

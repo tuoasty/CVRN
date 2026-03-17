@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePlayoffStore } from "@/app/stores/playoffStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
+import { usePlayoffBrackets, generateBracket, resetBrackets } from "@/app/hooks/usePlayoffs";
+import { useRegions } from "@/app/hooks/useRegions";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { mutate } from "swr";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -27,36 +28,17 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 export default function PlayoffManagementPage() {
     const [selectedRegionId, setSelectedRegionId] = useState<string>("");
     const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
-    const [brackets, setBrackets] = useState<PlayoffBracket[]>([]);
-    const [loadingBrackets, setLoadingBrackets] = useState(false);
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
     const ready = useAdminReady();
 
-    const { generateBracket, fetchBrackets, resetBrackets, loading } = usePlayoffStore();
-    const { allRegionsCache } = useRegionsStore();
-    const { allSeasonsCache } = useSeasonsStore();
-
-    const regions = allRegionsCache?.data || [];
-    const allSeasons = allSeasonsCache?.data || [];
+    const { regions } = useRegions();
+    const { seasons: allSeasons } = useSeasons();
+    const { brackets, isLoading: loadingBrackets } = usePlayoffBrackets(selectedSeasonId || null);
 
     const filteredSeasons = selectedRegionId
         ? allSeasons.filter((s) => s.region_id === selectedRegionId)
         : [];
-
-    useEffect(() => {
-        if (!selectedSeasonId) {
-            setBrackets([]);
-            return;
-        }
-
-        setLoadingBrackets(true);
-        fetchBrackets(selectedSeasonId)
-            .then(setBrackets)
-            .catch((error) => {
-                toast.error("Failed to load brackets", error.message);
-            })
-            .finally(() => setLoadingBrackets(false));
-    }, [selectedSeasonId, fetchBrackets]);
 
     const handleGenerateBracket = async () => {
         if (!selectedSeasonId) {
@@ -64,16 +46,15 @@ export default function PlayoffManagementPage() {
             return;
         }
 
-        const success = await generateBracket({ seasonId: selectedSeasonId });
-
-        if (success) {
+        setIsProcessing(true);
+        try {
+            await generateBracket({ seasonId: selectedSeasonId });
             toast.success("Playoff bracket generated successfully");
-            setLoadingBrackets(true);
-            const updatedBrackets = await fetchBrackets(selectedSeasonId);
-            setBrackets(updatedBrackets);
-            setLoadingBrackets(false);
-
-            await useSeasonsStore.getState().fetchAllSeasons();
+            await mutate("seasons");
+        } catch (error: any) {
+            toast.error("Failed to generate bracket", error?.message);
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -83,14 +64,16 @@ export default function PlayoffManagementPage() {
             return;
         }
 
-        const success = await resetBrackets(selectedSeasonId);
-
-        if (success) {
+        setIsProcessing(true);
+        try {
+            await resetBrackets(selectedSeasonId);
             toast.success("Playoff brackets reset successfully");
-            setBrackets([]);
             setIsResetDialogOpen(false);
-
-            await useSeasonsStore.getState().fetchAllSeasons();
+            await mutate("seasons");
+        } catch (error: any) {
+            toast.error("Failed to reset brackets", error?.message);
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -166,10 +149,10 @@ export default function PlayoffManagementPage() {
                         <div className="mt-4">
                             <Button
                                 onClick={handleGenerateBracket}
-                                disabled={loading || brackets.length > 0}
+                                disabled={isProcessing || brackets.length > 0}
                                 className="w-full rounded-sm bg-primary hover:bg-primary/90"
                             >
-                                {loading ? (
+                                {isProcessing ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Generating...
@@ -190,7 +173,7 @@ export default function PlayoffManagementPage() {
                                 <AlertDialogTrigger asChild>
                                     <Button
                                         variant="destructive"
-                                        disabled={loading || brackets.length == 0}
+                                        disabled={isProcessing || brackets.length == 0}
                                         className="w-full rounded-sm"
                                     >
                                         <Trash2 className="mr-2 h-4 w-4" />
@@ -211,7 +194,7 @@ export default function PlayoffManagementPage() {
                                             onClick={handleResetBrackets}
                                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-sm"
                                         >
-                                            {loading ? (
+                                            {isProcessing ? (
                                                 <>
                                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                                     Resetting...
@@ -236,7 +219,7 @@ export default function PlayoffManagementPage() {
                     </div>
                 ) : selectedSeasonId && brackets.length > 0 ? (
                     <PlayoffBracketDisplay brackets={brackets} seasonId={selectedSeasonId} regionId={selectedRegionId} />
-                ) : selectedSeasonId && !loading ? (
+                ) : selectedSeasonId && !isProcessing ? (
                     <div className="panel p-12 border-l-4 border-l-muted">
                         <p className="text-sm text-muted-foreground text-center">
                             {hasPlayoffStarted ? "No brackets found" : "Click 'Generate Playoff Bracket' to create the bracket structure"}

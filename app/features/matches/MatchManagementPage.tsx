@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import SeasonWeekPicker from "@/app/features/seasons/SeasonWeekPicker";
 import CreateMatchesPanel from "@/app/features/matches/CreateMatchesPanel";
 import AdminSchedulePanel from "@/app/features/matches/AdminSchedulePanel";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { useRegions } from "@/app/hooks/useRegions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { PlayoffRound } from "@/server/dto/playoff.dto";
 import { Calendar } from "lucide-react";
@@ -18,20 +18,20 @@ export default function MatchManagementPage() {
     const [regionCode, setRegionCode] = useState<string>("");
     const [activeTab, setActiveTab] = useState("schedule");
 
-    const { allSeasonsCache } = useSeasonsStore();
-    const { allRegionsCache } = useRegionsStore();
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
 
     useEffect(() => {
-        if (selectedSeasonId && allSeasonsCache?.data && allRegionsCache?.data) {
-            const season = allSeasonsCache.data.find(s => s.id === selectedSeasonId);
+        if (selectedSeasonId && seasons.length > 0 && regions.length > 0) {
+            const season = seasons.find(s => s.id === selectedSeasonId);
             if (season) {
-                const region = allRegionsCache.data.find(r => r.id === season.region_id);
+                const region = regions.find(r => r.id === season.region_id);
                 if (region) {
                     setRegionCode(region.code);
                 }
             }
         }
-    }, [selectedSeasonId, allSeasonsCache, allRegionsCache]);
+    }, [selectedSeasonId, seasons, regions]);
 
     return (
         <div className="admin-container">

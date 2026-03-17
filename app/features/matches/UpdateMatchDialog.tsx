@@ -18,8 +18,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/app/components/ui/dialog";
-import { useMatchesStore } from "@/app/stores/matchStore";
-import { usePlayerStore } from "@/app/stores/playerStore";
+import { updateMatchResults } from "@/app/hooks/useMatches";
+import { getTeamPlayersAction } from "@/app/actions/player.actions";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { MatchSet } from "@/shared/types/db";
 import { Badge } from "@/app/components/ui/badge";
@@ -55,8 +55,7 @@ export default function UpdateMatchDialog({
                                               currentLoserMvpId,
                                               onSuccess
                                           }: UpdateMatchDialogProps) {
-    const { updateMatchResults } = useMatchesStore();
-    const { fetchTeamPlayers, playersByTeamCache } = usePlayerStore();
+
 
     const [open, setOpen] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
@@ -73,8 +72,8 @@ export default function UpdateMatchDialog({
 
     useEffect(() => {
         if (open) {
-            loadPlayers();
             initializeFromCurrentData();
+            loadPlayers();
         }
     }, [open]);
 
@@ -100,26 +99,13 @@ export default function UpdateMatchDialog({
     const loadPlayers = async () => {
         setLoadingPlayers(true);
         try {
-            await fetchTeamPlayers(homeTeamId, seasonId);
-            await fetchTeamPlayers(awayTeamId, seasonId);
+            const [homeResult, awayResult] = await Promise.all([
+                getTeamPlayersAction({ teamId: homeTeamId, seasonId }),
+                getTeamPlayersAction({ teamId: awayTeamId, seasonId }),
+            ]);
 
-            const homeCacheKey = `${homeTeamId}-${seasonId}`;
-            const awayCacheKey = `${awayTeamId}-${seasonId}`;
-
-            const homeCached = playersByTeamCache.get(homeCacheKey);
-            const awayCached = playersByTeamCache.get(awayCacheKey);
-
-            if (homeCached) {
-                setHomePlayers(homeCached.data);
-            }
-            if (awayCached) {
-                setAwayPlayers(awayCached.data);
-            }
-
-            clientLogger.info("UpdateMatchDialog", "Players loaded", {
-                homeCount: homeCached?.data.length || 0,
-                awayCount: awayCached?.data.length || 0
-            });
+            if (homeResult.ok) setHomePlayers(homeResult.value);
+            if (awayResult.ok) setAwayPlayers(awayResult.value);
         } catch (error) {
             clientLogger.error("UpdateMatchDialog", "Failed to load players", { error });
         } finally {

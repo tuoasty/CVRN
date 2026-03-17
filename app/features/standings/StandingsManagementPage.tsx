@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { useStandingsStore } from "@/app/stores/standingStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
+import React, { useState, useMemo } from "react";
+import { useStandings } from "@/app/hooks/useStandings";
+import { useRegions } from "@/app/hooks/useRegions";
+import { useSeasons } from "@/app/hooks/useSeasons";
 import { StandingsTable } from "@/app/features/standings/StandingsTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
-import { toast } from "@/app/utils/toast";
-import { StandingWithInfo } from "@/server/dto/standing.dto";
 import { useAdminReady } from "@/app/admin/AdminReadyContext";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
@@ -15,15 +13,14 @@ import { Trophy } from "lucide-react";
 export default function StandingsManagementPage() {
     const [selectedRegionId, setSelectedRegionId] = useState<string>("");
     const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
-    const [standings, setStandings] = useState<StandingWithInfo[]>([]);
 
-    const { fetchStandings, loading: standingsLoading } = useStandingsStore();
-    const { allRegionsCache } = useRegionsStore();
-    const { allSeasonsCache } = useSeasonsStore();
+    const { regions } = useRegions();
+    const { seasons: allSeasons } = useSeasons();
+    const { standings, isLoading: standingsLoading } = useStandings(
+        selectedSeasonId || undefined,
+        selectedRegionId || undefined,
+    );
     const ready = useAdminReady();
-
-    const regions = allRegionsCache?.data || [];
-    const allSeasons = allSeasonsCache?.data || [];
 
     const filteredSeasons = selectedRegionId
         ? allSeasons.filter((s) => s.region_id === selectedRegionId)
@@ -41,22 +38,6 @@ export default function StandingsManagementPage() {
 
         return { totalTeams, avgLvr, topLvr };
     }, [standings]);
-
-    useEffect(() => {
-        if (!selectedRegionId || !selectedSeasonId) {
-            setStandings([]);
-            return;
-        }
-
-        fetchStandings({
-            seasonId: selectedSeasonId,
-            regionId: selectedRegionId,
-        })
-            .then(setStandings)
-            .catch((error) => {
-                toast.error("Failed to load standings", error.message);
-            });
-    }, [selectedRegionId, selectedSeasonId, fetchStandings]);
 
     return (
         <div className="admin-container">

@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useRegionsStore } from "@/app/stores/regionStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
+import { useRegions } from "@/app/hooks/useRegions";
+import { useSeasons } from "@/app/hooks/useSeasons";
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
 import {
     Select,
@@ -14,13 +14,10 @@ import {
 } from "@/app/components/ui/select";
 
 export default function RegionSeasonSelector() {
-    const { allRegionsCache } = useRegionsStore();
-    const { allSeasonsCache } = useSeasonsStore();
+    const { regions } = useRegions();
+    const { seasons } = useSeasons();
     const { selectedSeasonId, setSelectedSeasonId, setSelectedRegionId } =
         usePublicContextStore();
-
-    const regions = allRegionsCache?.data || [];
-    const seasons = allSeasonsCache?.data || [];
 
     const handleSeasonChange = (seasonId: string) => {
         const season = seasons.find((s) => s.id === seasonId);
