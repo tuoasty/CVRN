@@ -3,12 +3,12 @@
 import React, { useMemo, useEffect, useState, useRef } from "react";
 import { PlayoffBracket, Match } from "@/shared/types/db";
 import { MatchBracketCard } from "./MatchBracketCard";
-import { useTeamsStore } from "@/app/stores/teamStore";
-import { useMatchesStore } from "@/app/stores/matchStore";
+import { useTeams } from "@/app/hooks/useTeams";
+import { useAllMatches } from "@/app/hooks/useMatches";
+import { useRegions } from "@/app/hooks/useRegions";
 import { Loader2, Maximize2, Minimize2, Move } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { cn } from "@/lib/utils";
-import {useRegionsStore} from "@/app/stores/regionStore";
 
 type PlayoffBracketDisplayProps = {
     brackets: PlayoffBracket[];
@@ -89,32 +89,15 @@ function assignDisplayOrder(brackets: BracketWithMatch[]): Map<string, number> {
 }
 
 export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisplayProps) {
-    const { allTeamsCache, fetchAllTeams } = useTeamsStore();
-    const { matchesCache, fetchAllMatches } = useMatchesStore();
-    const { allRegionsCache } = useRegionsStore();
-    const [loadingTeams, setLoadingTeams] = useState(true);
-    const [loadingMatches, setLoadingMatches] = useState(true);
+    const { teams, isLoading: loadingTeams } = useTeams();
+    const { matches, isLoading: loadingMatches } = useAllMatches();
+    const { regions } = useRegions();
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [scrollStart, setScrollStart] = useState({ left: 0, top: 0 });
-
-    useEffect(() => {
-        fetchAllTeams()
-            .then(() => setLoadingTeams(false))
-            .catch(() => setLoadingTeams(false));
-    }, [fetchAllTeams]);
-
-    useEffect(() => {
-        fetchAllMatches()
-            .then(() => setLoadingMatches(false))
-            .catch(() => setLoadingMatches(false));
-    }, [fetchAllMatches]);
-
-    const teams = allTeamsCache?.data || [];
-    const matches = matchesCache?.data || [];
 
     const teamsMap = useMemo(() => {
         return new Map(teams.map((team) => [team.id, team]));
@@ -325,10 +308,9 @@ export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisp
     }, [mainBracketRounds, matchPositions, thirdPlacePosition]);
 
     const regionCode = useMemo(() => {
-        const regions = allRegionsCache?.data || [];
         const region = regions.find(r => r.id === regionId);
         return region?.code;
-    }, [allRegionsCache, regionId]);
+    }, [regions, regionId]);
 
     const handleMouseDown = (e: React.MouseEvent) => {
         if (e.button === 1) {

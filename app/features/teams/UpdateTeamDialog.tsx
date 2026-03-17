@@ -13,7 +13,7 @@ import {
     DialogTrigger,
 } from "@/app/components/ui/dialog";
 import { updateTeamAction } from "@/app/actions/team.actions";
-import { useTeamsStore } from "@/app/stores/teamStore";
+import { mutateAllTeams } from "@/app/hooks/useTeams";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { compressImage } from "@/app/utils/imageCompression";
 import { TeamWithRegion } from "@/server/dto/team.dto";
@@ -26,7 +26,7 @@ interface UpdateTeamDialogProps {
 }
 
 export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogProps) {
-    const { updateTeamInCache } = useTeamsStore();
+
 
     const [open, setOpen] = useState(false);
     const [name, setName] = useState(team.name);
@@ -132,7 +132,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
                 return;
             }
 
-            updateTeamInCache(result.value);
+            await mutateAllTeams();
             toast.success("Team updated successfully");
             setOpen(false);
             onSuccess?.();

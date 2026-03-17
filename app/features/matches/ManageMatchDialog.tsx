@@ -30,7 +30,7 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { getRegionTimezone, timezoneOptions } from "@/app/utils/timezoneOptions";
 import MatchOfficialSection from "@/app/features/officials/MatchOfficialSection";
-import { useMatchesStore } from "@/app/stores/matchStore";
+import { updateMatchSchedule, voidMatch } from "@/app/hooks/useMatches";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Match } from "@/shared/types/db";
 import {toast} from "@/app/utils/toast";
@@ -51,7 +51,7 @@ export default function ManageMatchDialog({
                                               match,
                                               onSuccess
                                           }: ManageMatchDialogProps) {
-    const { updateMatchSchedule, voidMatch } = useMatchesStore();
+
 
     const [open, setOpen] = useState(false);
     const [updating, setUpdating] = useState(false);

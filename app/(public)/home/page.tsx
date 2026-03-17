@@ -4,10 +4,10 @@
 
 import { useEffect, useState } from "react";
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
-import { useMatchesStore } from "@/app/stores/matchStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
-import { useTeamsStore } from "@/app/stores/teamStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
+import { useUpcomingMatches, useRecentMatches } from "@/app/hooks/useMatches";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { useTeams } from "@/app/hooks/useTeams";
+import { useRegions } from "@/app/hooks/useRegions";
 import { Calendar, Clock, Trophy } from "lucide-react";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
@@ -15,56 +15,25 @@ import CompactMatchCard from "@/app/(public)/home/CompactMatchCard";
 import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import StandingsPreview from "@/app/(public)/home/StandingsPreview";
-import {useStandingsStore} from "@/app/stores/standingStore";
-import {StandingWithInfo} from "@/server/dto/standing.dto";
+import { useStandings } from "@/app/hooks/useStandings";
+import { StandingWithInfo } from "@/server/dto/standing.dto";
 
 export default function HomePage() {
     const { selectedSeasonId, selectedRegionId } = usePublicContextStore();
-    const { upcomingMatchesCache, recentMatchesCache, fetchUpcomingMatches, fetchRecentMatches } = useMatchesStore();
-    const { allSeasonsCache } = useSeasonsStore();
-    const { allTeamsCache, fetchAllTeams } = useTeamsStore();
-    const { allRegionsCache } = useRegionsStore();
+    
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
+    const { teams, isLoading: loadingTeams } = useTeams();
+    
+    const { matches: upcomingMatches, isLoading: loadingUpcoming } = useUpcomingMatches(selectedSeasonId || null, 5);
+    const { matches: recentMatches, isLoading: loadingRecent } = useRecentMatches(selectedSeasonId || null, 5);
 
-    const { fetchStandings } = useStandingsStore();
+    const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId || undefined, selectedRegionId || undefined);
 
-    const [standings, setStandings] = useState<StandingWithInfo[]>([]);
-    const [standingsLoading, setStandingsLoading] = useState(false);
+    const loading = loadingTeams || loadingUpcoming || loadingRecent;
 
-    const [loading, setLoading] = useState(true);
-
-    const selectedSeason = allSeasonsCache?.data?.find((s) => s.id === selectedSeasonId);
-    const regionCode = allRegionsCache?.data?.find((r) => r.id === selectedRegionId)?.code;
-
-    useEffect(() => {
-        if (!selectedSeasonId) return;
-
-        const loadData = async () => {
-            setLoading(true);
-            await Promise.all([
-                fetchUpcomingMatches(selectedSeasonId, 5),
-                fetchRecentMatches(selectedSeasonId, 5),
-                fetchAllTeams(),
-            ]);
-
-            setLoading(false);
-        };
-
-        if (selectedSeasonId && selectedRegionId) {
-            setStandingsLoading(true);
-            fetchStandings({ seasonId: selectedSeasonId, regionId: selectedRegionId })
-                .then(setStandings)
-                .finally(() => setStandingsLoading(false));
-        }
-
-        loadData();
-    }, [selectedSeasonId]);
-
-    const upcomingCacheKey = `${selectedSeasonId}-5`;
-    const recentCacheKey = `${selectedSeasonId}-5`;
-
-    const upcomingMatches = upcomingMatchesCache?.get(upcomingCacheKey)?.data || [];
-    const recentMatches = recentMatchesCache?.get(recentCacheKey)?.data || [];
-    const teams = allTeamsCache?.data || [];
+    const selectedSeason = seasons.find((s) => s.id === selectedSeasonId);
+    const regionCode = regions.find((r) => r.id === selectedRegionId)?.code;
 
     const featuredMatch = upcomingMatches[0];
     const featuredHomeTeam = teams.find((t) => t.id === featuredMatch?.match.home_team_id);
@@ -101,7 +70,7 @@ export default function HomePage() {
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {upcomingMatches.map((matchDetails) => {
+                                    {upcomingMatches.map((matchDetails: any) => {
                                         const homeTeam = teams.find((t) => t.id === matchDetails.match.home_team_id);
                                         const awayTeam = teams.find((t) => t.id === matchDetails.match.away_team_id);
 
@@ -142,7 +111,7 @@ export default function HomePage() {
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {recentMatches.map((matchDetails) => {
+                                    {recentMatches.map((matchDetails: any) => {
                                         const homeTeam = teams.find((t) => t.id === matchDetails.match.home_team_id);
                                         const awayTeam = teams.find((t) => t.id === matchDetails.match.away_team_id);
 

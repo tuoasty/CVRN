@@ -1,15 +1,15 @@
 "use client";
 
-import React, {useEffect, useState, useTransition} from "react";
+import React, {useState, useTransition} from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { TeamWithRegion } from "@/server/dto/team.dto";
-import { useTeamsStore } from "@/app/stores/teamStore";
+import { useTeams } from "@/app/hooks/useTeams";
 import { clientLogger } from "@/app/utils/clientLogger";
-import { useRegionsStore } from "@/app/stores/regionStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
+import { useRegions } from "@/app/hooks/useRegions";
+import { useSeasons } from "@/app/hooks/useSeasons";
 import {
     Select,
     SelectContent,
@@ -20,26 +20,15 @@ import {
 import LoadingComponent from "@/app/components/ui/LoadingComponent";
 
 export default function TeamsDataTable() {
-    const { allTeamsCache, loading, error, fetchAllTeams } = useTeamsStore();
-    const { allRegionsCache, fetchAllRegions } = useRegionsStore();
-    const { allSeasonsCache, fetchAllSeasons } = useSeasonsStore();
+    const { teams, isLoading, error } = useTeams();
+    const { regions } = useRegions();
+    const { seasons } = useSeasons();
     const router = useRouter();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedRegion, setSelectedRegion] = useState<string>("all");
     const [selectedSeason, setSelectedSeason] = useState<string>("all");
     const [isPending, startTransition] = useTransition();
-
-    useEffect(() => {
-        clientLogger.info('TeamsDataTable', 'Component mounted, fetching teams');
-        fetchAllTeams();
-        fetchAllRegions();
-        fetchAllSeasons();
-    }, []);
-
-    const teams = allTeamsCache?.data || [];
-    const regions = allRegionsCache?.data || [];
-    const seasons = allSeasonsCache?.data || [];
 
     const filteredTeams = teams.filter((team) => {
         const searchLower = searchQuery.toLowerCase();
@@ -74,7 +63,7 @@ export default function TeamsDataTable() {
         })
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="panel p-6">
                 <p className="text-muted-foreground">Loading teams...</p>

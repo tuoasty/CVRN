@@ -18,8 +18,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/app/components/ui/dialog";
-import { useMatchesStore } from "@/app/stores/matchStore";
-import { usePlayerStore } from "@/app/stores/playerStore";
+import { completeMatch as completeMatchAction, invalidateMatchCaches } from "@/app/hooks/useMatches";
+import { getTeamPlayersAction } from "@/app/actions/player.actions";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
@@ -48,8 +48,7 @@ export default function CompleteMatchDialog({
                                                 bestOf,
                                                 onSuccess
                                             }: CompleteMatchDialogProps) {
-    const { completeMatch } = useMatchesStore();
-    const { fetchTeamPlayers, playersByTeamCache } = usePlayerStore();
+
 
     const [open, setOpen] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
@@ -85,26 +84,13 @@ export default function CompleteMatchDialog({
     const loadPlayers = async () => {
         setLoadingPlayers(true);
         try {
-            await fetchTeamPlayers(homeTeamId, seasonId);
-            await fetchTeamPlayers(awayTeamId, seasonId);
+            const [homeResult, awayResult] = await Promise.all([
+                getTeamPlayersAction({ teamId: homeTeamId, seasonId }),
+                getTeamPlayersAction({ teamId: awayTeamId, seasonId }),
+            ]);
 
-            const homeCacheKey = `${homeTeamId}-${seasonId}`;
-            const awayCacheKey = `${awayTeamId}-${seasonId}`;
-
-            const homeCached = playersByTeamCache.get(homeCacheKey);
-            const awayCached = playersByTeamCache.get(awayCacheKey);
-
-            if (homeCached) {
-                setHomePlayers(homeCached.data);
-            }
-            if (awayCached) {
-                setAwayPlayers(awayCached.data);
-            }
-
-            clientLogger.info("CompleteMatchDialog", "Players loaded", {
-                homeCount: homeCached?.data.length || 0,
-                awayCount: awayCached?.data.length || 0
-            });
+            if (homeResult.ok) setHomePlayers(homeResult.value);
+            if (awayResult.ok) setAwayPlayers(awayResult.value);
         } catch (error) {
             clientLogger.error("CompleteMatchDialog", "Failed to load players", { error });
         } finally {
@@ -169,19 +155,19 @@ export default function CompleteMatchDialog({
             setSubmitting(true);
             clientLogger.info("CompleteMatchDialog", "Completing match as forfeit", { matchId, forfeitingTeam });
 
-            const success = await completeMatch({
-                matchId,
-                sets: [],
-                isForfeit: true,
-                forfeitingTeam,
-            });
+            try {
+                await completeMatchAction({
+                    matchId,
+                    sets: [],
+                    isForfeit: true,
+                    forfeitingTeam,
+                });
 
-            if (success) {
                 clientLogger.info("CompleteMatchDialog", "Match completed as forfeit", { matchId });
                 setOpen(false);
                 resetForm();
                 onSuccess();
-            } else {
+            } catch (err) {
                 toast.error("Failed to complete match");
             }
 
@@ -208,20 +194,20 @@ export default function CompleteMatchDialog({
         setSubmitting(true);
         clientLogger.info("CompleteMatchDialog", "Completing match", { matchId, sets });
 
-        const success = await completeMatch({
-            matchId,
-            sets,
-            matchMvpPlayerId: matchMvpId,
-            loserMvpPlayerId: loserMvpId,
-            isForfeit: false,
-        });
+        try {
+            await completeMatchAction({
+                matchId,
+                sets,
+                matchMvpPlayerId: matchMvpId,
+                loserMvpPlayerId: loserMvpId,
+                isForfeit: false,
+            });
 
-        if (success) {
             clientLogger.info("CompleteMatchDialog", "Match completed successfully", { matchId });
             setOpen(false);
             resetForm();
             onSuccess();
-        } else {
+        } catch (err) {
             toast.error("Failed to complete match");
         }
 

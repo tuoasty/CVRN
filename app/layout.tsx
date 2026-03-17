@@ -5,6 +5,7 @@ import "./globals.css";
 import {Toaster} from "@/app/components/ui/sonner";
 import {Analytics} from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import {SWRProvider} from "@/app/providers/SWRProvider";
 
 const siteUrl = "https://cvrn.vercel.app";
 
@@ -65,7 +66,9 @@ export default function RootLayout({
             defaultTheme="system"
             enableSystem
         >
+            <SWRProvider>
             {children}
+            </SWRProvider>
             <Toaster/>
             <Analytics/>
             <SpeedInsights/>

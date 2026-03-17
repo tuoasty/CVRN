@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
-import { useStandingsStore } from "@/app/stores/standingStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
+import { useStandings } from "@/app/hooks/useStandings";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { useRegions } from "@/app/hooks/useRegions";
 import { StandingsTable } from "@/app/features/standings/StandingsTable";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import { Skeleton } from "@/app/components/ui/skeleton";
@@ -15,14 +15,12 @@ import {clientLogger} from "@/app/utils/clientLogger";
 
 export default function StandingsPage() {
     const { selectedSeasonId, selectedRegionId } = usePublicContextStore();
-    const { fetchStandings, loading: standingsLoading } = useStandingsStore();
-    const { allSeasonsCache } = useSeasonsStore();
-    const { allRegionsCache } = useRegionsStore();
+    const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId || undefined, selectedRegionId || undefined);
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
 
-    const [standings, setStandings] = useState<StandingWithInfo[]>([]);
-
-    const selectedSeason = allSeasonsCache?.data?.find(s => s.id === selectedSeasonId);
-    const selectedRegion = allRegionsCache?.data?.find(r => r.id === selectedRegionId);
+    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
+    const selectedRegion = regions.find(r => r.id === selectedRegionId);
 
     const stats = useMemo(() => {
         if (standings.length === 0) return null;
@@ -32,17 +30,6 @@ export default function StandingsPage() {
         const topLvr = Math.max(...standings.map(s => s.total_lvr || 0));
         return { totalTeams, avgLvr, topLvr };
     }, [standings]);
-
-    useEffect(() => {
-        if (!selectedSeasonId || !selectedRegionId) {
-            setStandings([]);
-            return;
-        }
-
-        fetchStandings({ seasonId: selectedSeasonId, regionId: selectedRegionId })
-            .then(setStandings)
-            .catch((error) => toast.error("Failed to load standings", error.message));
-    }, [selectedSeasonId, selectedRegionId]);
 
     return (
         <>

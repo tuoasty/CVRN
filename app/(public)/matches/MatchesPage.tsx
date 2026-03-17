@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
-import { useMatchesStore } from "@/app/stores/matchStore";
-import { useTeamsStore } from "@/app/stores/teamStore";
-import { usePlayerStore } from "@/app/stores/playerStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
+import { useWeekSchedule, usePlayoffSchedule, useAvailablePlayoffRounds } from "@/app/hooks/useMatches";
+import { useTeamsByIds } from "@/app/hooks/useTeams";
+import { usePlayersByIds } from "@/app/hooks/usePlayers";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { useRegions } from "@/app/hooks/useRegions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { Skeleton } from "@/app/components/ui/skeleton";
@@ -39,88 +39,70 @@ const ROUND_ORDER: Record<string, number> = {
 
 export default function MatchesPage() {
     const { selectedSeasonId } = usePublicContextStore();
-    const { fetchWeekSchedule, fetchPlayoffSchedule, fetchAvailablePlayoffRounds, weekScheduleCache, playoffScheduleCache } = useMatchesStore();
-    const { fetchTeamsByIds } = useTeamsStore();
-    const { fetchPlayersByIds } = usePlayerStore();
-    const { allSeasonsCache } = useSeasonsStore();
-    const { allRegionsCache } = useRegionsStore();
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
 
     const [activeTab, setActiveTab] = useState<"season" | "playoffs">("season");
     const [selectedWeek, setSelectedWeek] = useState(1);
     const [selectedRound, setSelectedRound] = useState<PlayoffRound>("play_in");
-    const [availableRounds, setAvailableRounds] = useState<string[]>([]);
-    const [teams, setTeams] = useState<Map<string, TeamWithRegion>>(new Map());
-    const [players, setPlayers] = useState<Map<string, Player>>(new Map());
-    const [loading, setLoading] = useState(false);
 
-    const selectedSeason = allSeasonsCache?.data?.find(s => s.id === selectedSeasonId);
-    const selectedRegion = allRegionsCache?.data?.find(r => r.id === selectedSeason?.region_id);
+    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
+    const selectedRegion = regions.find(r => r.id === selectedSeason?.region_id);
     const regionCode = selectedRegion?.code;
     const maxWeeks = selectedSeason?.weeks || 10;
     const hasPlayoffs = selectedSeason?.playoff_started;
 
-    const schedule: MatchWithDetails[] = activeTab === "season"
-        ? weekScheduleCache.get(`${selectedSeasonId}-${selectedWeek}`)?.data ?? []
-        : playoffScheduleCache.get(`${selectedSeasonId}-${selectedRound}`)?.data ?? [];
+    const { rounds: availableRounds } = useAvailablePlayoffRounds(hasPlayoffs ? (selectedSeasonId || null) : null);
+
+    const { schedule: weekSchedule, isLoading: loadingWeek } = useWeekSchedule(
+        activeTab === "season" ? (selectedSeasonId || null) : null,
+        activeTab === "season" ? selectedWeek : null
+    );
+
+    const { schedule: playoffSchedule, isLoading: loadingPlayoff } = usePlayoffSchedule(
+        activeTab === "playoffs" ? (selectedSeasonId || null) : null,
+        activeTab === "playoffs" ? selectedRound : null
+    );
+
+    const schedule = activeTab === "season" ? weekSchedule : playoffSchedule;
+    const loading = activeTab === "season" ? loadingWeek : loadingPlayoff;
+
+    // Collect distinct team/player IDs from schedule
+    const teamIdsToFetch = useMemo(() => {
+        const ids = new Set<string>();
+        schedule.forEach(({ match }) => {
+            if (match.home_team_id) ids.add(match.home_team_id);
+            if (match.away_team_id) ids.add(match.away_team_id);
+        });
+        return Array.from(ids);
+    }, [schedule]);
+
+    const playerIdsToFetch = useMemo(() => {
+        const ids = new Set<string>();
+        schedule.forEach(({ match }) => {
+            if (match.match_mvp_player_id) ids.add(match.match_mvp_player_id);
+            if (match.loser_mvp_player_id) ids.add(match.loser_mvp_player_id);
+        });
+        return Array.from(ids);
+    }, [schedule]);
+
+    const { teams: fetchedTeams } = useTeamsByIds(teamIdsToFetch);
+    const { players: fetchedPlayers } = usePlayersByIds(playerIdsToFetch);
+
+    const teams = useMemo(() => new Map(fetchedTeams.map(t => [t.id, t])), [fetchedTeams]);
+    const players = useMemo(() => new Map(fetchedPlayers.map(p => [p.id, p])), [fetchedPlayers]);
 
     useEffect(() => {
         if (!selectedSeasonId) return;
         setSelectedWeek(1);
 
-        if (hasPlayoffs) {
-            fetchAvailablePlayoffRounds(selectedSeasonId).then(rounds => {
-                const sorted = [...rounds].sort((a, b) => (ROUND_ORDER[a] ?? 999) - (ROUND_ORDER[b] ?? 999));
-                setAvailableRounds(sorted);
-                if (sorted.length > 0) setSelectedRound(sorted[0] as PlayoffRound);
-            });
-        }
-    }, [selectedSeasonId]);
-
-    useEffect(() => {
-        if (!selectedSeasonId) return;
-        loadSchedule();
-    }, [selectedSeasonId, selectedWeek, selectedRound, activeTab]);
-
-    const loadSchedule = async () => {
-        if (!selectedSeasonId) return;
-        setLoading(true);
-
-        try {
-            if (activeTab === "season") {
-                await fetchWeekSchedule(selectedSeasonId, selectedWeek);
-                const cached = weekScheduleCache.get(`${selectedSeasonId}-${selectedWeek}`);
-                if (cached) await processTeamsAndPlayers(cached.data);
-            } else {
-                await fetchPlayoffSchedule(selectedSeasonId, selectedRound);
-                const cached = playoffScheduleCache.get(`${selectedSeasonId}-${selectedRound}`);
-                if (cached) await processTeamsAndPlayers(cached.data);
+        if (hasPlayoffs && availableRounds.length > 0) {
+            const sorted = [...availableRounds].sort((a, b) => (ROUND_ORDER[a] ?? 999) - (ROUND_ORDER[b] ?? 999));
+            if (!sorted.includes(selectedRound)) {
+                 setSelectedRound(sorted[0] as PlayoffRound);
             }
-        } catch (error) {
-            clientLogger.error("MatchesPage", "Error loading schedule", { error });
-        } finally {
-            setLoading(false);
         }
-    };
-
-    const processTeamsAndPlayers = async (data: MatchWithDetails[]) => {
-        const teamIds = new Set<string>();
-        const playerIds = new Set<string>();
-
-        data.forEach(({ match }) => {
-            if (match.home_team_id) teamIds.add(match.home_team_id);
-            if (match.away_team_id) teamIds.add(match.away_team_id);
-            if (match.match_mvp_player_id) playerIds.add(match.match_mvp_player_id);
-            if (match.loser_mvp_player_id) playerIds.add(match.loser_mvp_player_id);
-        });
-
-        const [fetchedTeams, fetchedPlayers] = await Promise.all([
-            fetchTeamsByIds(Array.from(teamIds)),
-            playerIds.size > 0 ? fetchPlayersByIds(Array.from(playerIds)) : Promise.resolve([]),
-        ]);
-
-        setTeams(new Map(fetchedTeams.map(t => [t.id, t])));
-        setPlayers(new Map(fetchedPlayers.map(p => [p.id, p])));
-    };
+    }, [selectedSeasonId, hasPlayoffs, availableRounds.length]);
 
     const completedCount = schedule.filter(m => m.match.status === "completed").length;
 

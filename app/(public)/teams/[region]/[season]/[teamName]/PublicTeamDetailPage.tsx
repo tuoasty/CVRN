@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useTeamsStore } from "@/app/stores/teamStore";
-import { usePlayerStore } from "@/app/stores/playerStore";
+import { useTeamWithPlayers } from "@/app/hooks/useTeams";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -80,65 +79,7 @@ export default function PublicTeamDetailPage({
     const seasonSlug = safeDecodeURIComponent(seasonSlugProp).toLowerCase();
     const teamSlug = safeDecodeURIComponent(teamSlugProp).toLowerCase();
 
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const teamsStore = useTeamsStore();
-    const playersStore = usePlayerStore();
-
-    const teamData = teamsStore.getTeamBySlugAndSeason(teamSlug, seasonSlug);
-    const playersCacheKey = teamData?.id && teamData?.season_id
-        ? `${teamData.id}-${teamData.season_id}`
-        : null;
-    const cachedData = playersCacheKey
-        ? playersStore.playersByTeamCache.get(playersCacheKey)
-        : null;
-    const players = cachedData?.data ?? [];
-
-    const loadTeamWithPlayers = async () => {
-        setError(null);
-
-        try {
-            const result = await teamsStore.fetchTeamWithPlayers(teamSlug, seasonSlug, regionCode);
-
-            if (teamsStore.error) {
-                setError(teamsStore.error);
-                setIsInitialLoad(false);
-                return;
-            }
-
-            if (result) {
-                playersStore.setTeamPlayersCache(result.team.id, result.team.season_id, result.players);
-
-                backgroundLazySync(result.team.id, result.team.season_id);
-            }
-
-            setIsInitialLoad(false);
-        } catch (err) {
-            clientLogger.error('PublicTeamDetailPage', 'Exception loading team data', { error: err });
-            setError("Failed to load team data");
-            setIsInitialLoad(false);
-        }
-    };
-
-    const backgroundLazySync = async (teamId: string, seasonId: string) => {
-        clientLogger.info('PublicTeamDetailPage', 'Starting background lazy sync for players');
-
-        try {
-            await playersStore.fetchTeamPlayers(teamId, seasonId);
-            clientLogger.info('PublicTeamDetailPage', 'Background lazy sync completed');
-        } catch (err) {
-            clientLogger.error('PublicTeamDetailPage', 'Background lazy sync failed', { error: err });
-        }
-    };
-
-    useEffect(() => {
-        if (!regionCode || !seasonSlug || !teamSlug) return;
-        loadTeamWithPlayers();
-    }, [regionCode, seasonSlug, teamSlug]);
-
-    const loading = isInitialLoad && teamsStore.loading;
-    const displayError = error || teamsStore.error;
+    const { team: teamData, players, isLoading: loading, error: displayError } = useTeamWithPlayers(teamSlug, seasonSlug, regionCode);
 
     if (loading && !teamData) {
         return (
@@ -176,13 +117,19 @@ export default function PublicTeamDetailPage({
     const regionName = teamData.seasons?.regions?.name || "Unknown Region";
     const regionCodeDisplay = teamData.seasons?.regions?.code?.toUpperCase() || "??";
     const seasonName = teamData.seasons?.name || "Unknown Season";
-    const sortedPlayers = playersStore.getSortedTeamPlayers(teamData.id, teamData.season_id);
+    
+    const captain = players.find((p) => p.role === 'captain') || null;
+    const viceCaptain = players.find((p) => p.role === 'vice_captain') || null;
+    const courtCaptain = players.find((p) => p.role === 'court_captain') || null;
+    const otherPlayers = players.filter(
+        (p) => p.role !== 'captain' && p.role !== 'vice_captain' && p.role !== 'court_captain'
+    );
 
     const allPlayersSorted = [
-        ...(sortedPlayers.captain ? [sortedPlayers.captain] : []),
-        ...(sortedPlayers.viceCaptain ? [sortedPlayers.viceCaptain] : []),
-        ...(sortedPlayers.courtCaptain ? [sortedPlayers.courtCaptain] : []),
-        ...sortedPlayers.players,
+        ...(captain ? [captain] : []),
+        ...(viceCaptain ? [viceCaptain] : []),
+        ...(courtCaptain ? [courtCaptain] : []),
+        ...otherPlayers,
     ];
 
     return (

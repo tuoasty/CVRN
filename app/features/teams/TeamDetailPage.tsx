@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -21,8 +21,8 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { Button } from "@/app/components/ui/button";
 import { clientLogger } from "@/app/utils/clientLogger";
-import { useTeamsStore } from "@/app/stores/teamStore";
-import { usePlayerStore } from "@/app/stores/playerStore";
+import { useTeamWithPlayers, mutateAllTeams } from "@/app/hooks/useTeams";
+import { useTeamPlayers, mutateTeamPlayers } from "@/app/hooks/usePlayers";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
@@ -50,51 +50,25 @@ export default function TeamDetailPage({
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    const teamsStore = useTeamsStore();
-    const playersStore = usePlayerStore();
+    // SWR hooks for team and players
+    const {
+        team: teamData,
+        isLoading: teamLoading,
+        error: teamError,
+        mutate: mutateTeam,
+    } = useTeamWithPlayers(teamSlug, seasonSlug, regionCode);
 
-    const teamData = teamsStore.getTeamBySlugAndSeason(teamSlug, seasonSlug);
-    const playersCacheKey = teamData?.id && teamData?.season_id ? `${teamData.id}-${teamData.season_id}` : null;
-    const players = playersCacheKey ? playersStore.playersByTeamCache.get(playersCacheKey)?.data ?? [] : [];
-
-    const loadTeamWithPlayers = async () => {
-        setError(null);
-
-        try {
-            const result = await teamsStore.fetchTeamWithPlayers(teamSlug, seasonSlug, regionCode);
-
-            if (teamsStore.error) {
-                setError(teamsStore.error);
-                setIsInitialLoad(false);
-                return;
-            }
-
-            if (result) {
-                playersStore.setTeamPlayersCache(result.team.id, result.team.season_id, result.players);
-
-                backgroundLazySync(result.team.id, result.team.season_id);
-            }
-
-            setIsInitialLoad(false);
-        } catch (err) {
-            clientLogger.error('TeamDetailPage', 'Exception loading team data', { error: err });
-            setError("Failed to load team data");
-            setIsInitialLoad(false);
-        }
-    };
-
-    const backgroundLazySync = async (teamId: string, seasonId: string) => {
-        clientLogger.info('TeamDetailPage', 'Starting background lazy sync for players');
-
-        try {
-            await playersStore.fetchTeamPlayers(teamId, seasonId);
-            clientLogger.info('TeamDetailPage', 'Background lazy sync completed');
-        } catch (err) {
-            clientLogger.error('TeamDetailPage', 'Background lazy sync failed', { error: err });
-        }
-    };
+    // Also use the separate players hook so we have mutation access
+    const {
+        players,
+        captain,
+        viceCaptain,
+        courtCaptain,
+        regularPlayers,
+        isLoading: playersLoading,
+        mutate: mutatePlayers,
+    } = useTeamPlayers(teamData?.id ?? null, teamData?.season_id ?? null);
 
     const handleOpenAddForm = () => {
         setShowAddForm(true);
@@ -106,26 +80,16 @@ export default function TeamDetailPage({
         }, 100);
     };
 
-    useEffect(() => {
-        if (!regionCode || !seasonSlug || !teamSlug) return;
-
-        loadTeamWithPlayers();
-    }, [regionCode, seasonSlug, teamSlug]);
-
-    const handlePlayerAdded = (addedPlayer: Player) => {
+    const handlePlayerAdded = (_addedPlayer: Player) => {
+        // Revalidate via SWR
         if (teamData?.id && teamData?.season_id) {
-            const playerWithRole = {
-                ...addedPlayer,
-                role: 'player' as const
-            };
-
-            playersStore.addPlayerToCache(teamData.id, teamData.season_id, playerWithRole);
+            mutateTeamPlayers(teamData.id, teamData.season_id);
         }
     };
 
-    const handlePlayerRemoved = (playerId: string) => {
+    const handlePlayerRemoved = (_playerId: string) => {
         if (teamData?.id && teamData?.season_id) {
-            playersStore.removePlayerFromCache(teamData.id, teamData.season_id, playerId);
+            mutateTeamPlayers(teamData.id, teamData.season_id);
         }
     };
 
@@ -140,14 +104,25 @@ export default function TeamDetailPage({
             return;
         }
 
-        teamsStore.removeTeamFromCache(teamData.id);
+        await mutateAllTeams();
         router.push("/admin/teams");
     };
 
-    const loading = isInitialLoad && teamsStore.loading;
-    const displayError = error || teamsStore.error;
+    const handleRoleChanged = () => {
+        if (teamData?.id && teamData?.season_id) {
+            mutateTeamPlayers(teamData.id, teamData.season_id);
+        }
+    };
 
-    if (loading && !teamData) {
+    const handleTeamUpdated = () => {
+        mutateTeam();
+        mutateAllTeams();
+    };
+
+    const isLoading = teamLoading;
+    const displayError = error || teamError;
+
+    if (isLoading && !teamData) {
         return (
             <div className="admin-section">
                 <div className="panel p-6">
@@ -184,18 +159,10 @@ export default function TeamDetailPage({
     const regionCodeDisplay = teamData.seasons?.regions?.code?.toUpperCase() || "??";
     const seasonName = teamData.seasons?.name || "Unknown Season";
 
-    const sortedPlayers = playersStore.getSortedTeamPlayers(teamData.id, teamData.season_id);
-
     const availableRoles = {
-        captain: !sortedPlayers.captain,
-        viceCaptain: !sortedPlayers.viceCaptain,
-        courtCaptain: !sortedPlayers.courtCaptain,
-    };
-
-    const handleRoleChanged = () => {
-        if (teamData?.id && teamData?.season_id) {
-            playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
-        }
+        captain: !captain,
+        viceCaptain: !viceCaptain,
+        courtCaptain: !courtCaptain,
     };
 
     return (
@@ -227,7 +194,7 @@ export default function TeamDetailPage({
                         {showAddForm ? "Adding Player" : "Add Player"}
                     </Button>
 
-                    <UpdateTeamDialog team={teamData} onSuccess={loadTeamWithPlayers} />
+                    <UpdateTeamDialog team={teamData} onSuccess={handleTeamUpdated} />
 
                     <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
                         <AlertDialogTrigger asChild>
@@ -348,7 +315,7 @@ export default function TeamDetailPage({
                             <div className="grid grid-cols-3 gap-4">
                                 <CaptainSlotCard
                                     role="captain"
-                                    player={sortedPlayers.captain}
+                                    player={captain}
                                     gradientFrom="#9e6bff"
                                     gradientTo="#9fc1ff"
                                     teamId={teamData.id}
@@ -359,7 +326,7 @@ export default function TeamDetailPage({
                                 />
                                 <CaptainSlotCard
                                     role="vice_captain"
-                                    player={sortedPlayers.viceCaptain}
+                                    player={viceCaptain}
                                     gradientFrom="#aea287"
                                     gradientTo="#f1f7ff"
                                     teamId={teamData.id}
@@ -370,7 +337,7 @@ export default function TeamDetailPage({
                                 />
                                 <CaptainSlotCard
                                     role="court_captain"
-                                    player={sortedPlayers.courtCaptain}
+                                    player={courtCaptain}
                                     gradientFrom="#907575"
                                     gradientTo="#ffcec6"
                                     teamId={teamData.id}
@@ -385,7 +352,7 @@ export default function TeamDetailPage({
                         <div>
                             <h3 className="text-sm uppercase tracking-wide text-muted-foreground mb-3">Players</h3>
                             <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-                                {sortedPlayers.players.map((player) => (
+                                {regularPlayers.map((player) => (
                                     <PlayerCard
                                         key={player.id}
                                         player={player}

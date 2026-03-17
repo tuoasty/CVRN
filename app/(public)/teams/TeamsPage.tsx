@@ -2,9 +2,9 @@
 
 import { useEffect } from "react";
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
-import { useTeamsStore } from "@/app/stores/teamStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
+import { useTeams } from "@/app/hooks/useTeams";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { useRegions } from "@/app/hooks/useRegions";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import PublicTeamCard from "@/app/(public)/teams/PublicTeamCard";
 import { Skeleton } from "@/app/components/ui/skeleton";
@@ -12,18 +12,12 @@ import { Users } from "lucide-react";
 
 export default function TeamsPage() {
     const { selectedSeasonId } = usePublicContextStore();
-    const { allTeamsCache, fetchAllTeams, loading } = useTeamsStore();
-    const { allSeasonsCache } = useSeasonsStore();
-    const { allRegionsCache } = useRegionsStore();
+    const { teams: allTeams, isLoading: loading } = useTeams();
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
 
-    const selectedSeason = allSeasonsCache?.data?.find(s => s.id === selectedSeasonId);
-    const selectedRegion = allRegionsCache?.data?.find(r => r.id === selectedSeason?.region_id);
-
-    useEffect(() => {
-        fetchAllTeams();
-    }, []);
-
-    const allTeams = allTeamsCache?.data || [];
+    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
+    const selectedRegion = regions.find(r => r.id === selectedSeason?.region_id);
     const teams = allTeams.filter(t => t.season_id === selectedSeasonId && !t.deleted_at);
 
     return (
