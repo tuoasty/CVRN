@@ -69,8 +69,8 @@ export default function CompleteMatchDialog({
 
     useEffect(() => {
         if (open) {
-            loadPlayers();
             initializeSetScores();
+            loadPlayers();
         }
     }, [open]);
 
@@ -140,13 +140,11 @@ export default function CompleteMatchDialog({
                 return !isNaN(home) && !isNaN(away);
             });
 
-            const setsToWin = Math.ceil(bestOf / 2);
+            const teamsTied = currentHomeSets === currentAwaySets;
 
-            const noWinnerYet = currentHomeSets < setsToWin && currentAwaySets < setsToWin;
-
-            if (allSetsHaveScores && noWinnerYet && newScores.length < maxSets) {
+            if (allSetsHaveScores && teamsTied && newScores.length < maxSets) {
                 setSetScores([...newScores, { homeScore: "", awayScore: "" }]);
-                clientLogger.info("CompleteMatchDialog", "Auto-added set", {
+                clientLogger.info("CompleteMatchDialog", "Auto-added set (teams tied)", {
                     currentSets: newScores.length,
                     homeSets: currentHomeSets,
                     awaySets: currentAwaySets
@@ -154,7 +152,6 @@ export default function CompleteMatchDialog({
             }
         }, 100);
     };
-
     const addSet = () => {
         if (setScores.length < maxSets) {
             setSetScores([...setScores, { homeScore: "", awayScore: "" }]);
