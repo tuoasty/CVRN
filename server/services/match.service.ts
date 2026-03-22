@@ -588,26 +588,17 @@ export async function updateMatchResultsService(
                 return Err(serializeError(bracketError));
             }
 
-            if (bracket?.next_bracket_id) {
-                const { data: nextBracket } = await supabase
-                    .from("playoff_brackets")
-                    .select("match_id")
-                    .eq("id", bracket.next_bracket_id)
-                    .single();
+            if (bracket) {
+                const resetResult = await resetDownstreamBrackets(supabase, bracket.id);
 
-                if (nextBracket) {
-                    const { data: nextMatch } = await findMatchById(supabase, nextBracket.match_id);
-
-                    if (nextMatch && nextMatch.status === "completed") {
-                        return Err({
-                            name: "ValidationError",
-                            message: "Cannot update results - next bracket match is already completed"
-                        });
-                    }
+                if (!resetResult.ok) {
+                    logger.error({ matchId: p.matchId, error: resetResult.error }, "Failed to reset downstream brackets");
+                    return Err(resetResult.error);
                 }
+
+                logger.info({ matchId: p.matchId, bracketId: bracket.id }, "Downstream brackets reset successfully");
             }
         }
-
 
         let homeSetsWon = 0;
         let awaySetsWon = 0;
