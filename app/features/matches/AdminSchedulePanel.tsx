@@ -206,6 +206,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                                 currentMatchMvpId={match.match_mvp_player_id || ""}
                                                 currentLoserMvpId={match.loser_mvp_player_id || ""}
                                                 onSuccess={reloadSchedule}
+                                                currentIsForfeit={match.is_forfeit ?? false}
                                             />
                                         )}
                                         {match.match_type === "season" && (

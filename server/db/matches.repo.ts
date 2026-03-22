@@ -331,7 +331,7 @@ export async function resetDownstreamBrackets(
     try {
         const { data: bracket, error: bracketError } = await supabase
             .from("playoff_brackets")
-            .select("next_bracket_id, loser_next_bracket_id, match_id")
+            .select("next_bracket_id, loser_next_bracket_id, match_id, winner_position, loser_position")
             .eq("id", bracketId)
             .single();
 
@@ -343,49 +343,133 @@ export async function resetDownstreamBrackets(
             return Ok(undefined);
         }
 
-        const downstreamBracketIds = [
-            bracket.next_bracket_id,
-            bracket.loser_next_bracket_id
-        ].filter(Boolean) as string[];
-
-        for (const downstreamBracketId of downstreamBracketIds) {
-            const { data: downstreamBracket } = await supabase
+        // Reset winner path
+        if (bracket.next_bracket_id && bracket.winner_position) {
+            const { data: nextBracket } = await supabase
                 .from("playoff_brackets")
                 .select("match_id, id")
-                .eq("id", downstreamBracketId)
+                .eq("id", bracket.next_bracket_id)
                 .single();
 
-            if (downstreamBracket) {
-                await resetDownstreamBrackets(supabase, downstreamBracket.id);
+            if (nextBracket) {
+                const teamField = bracket.winner_position === "home" ? "home_team_id" : "away_team_id";
+                const seedField = bracket.winner_position === "home" ? "seed_home" : "seed_away";
 
-                await supabase
-                    .from("match_sets")
-                    .delete()
-                    .eq("match_id", downstreamBracket.match_id);
+                const { data: nextMatch } = await findMatchById(supabase, nextBracket.match_id);
 
-                await supabase
-                    .from("matches")
-                    .update({
-                        status: "pending",
-                        home_sets_won: null,
-                        away_sets_won: null,
-                        home_team_lvr: null,
-                        away_team_lvr: null,
-                        match_mvp_player_id: null,
-                        loser_mvp_player_id: null,
-                        is_forfeit: false,
-                        home_team_id: null,
-                        away_team_id: null
-                    })
-                    .eq("id", downstreamBracket.match_id);
+                if (nextMatch?.status === "completed") {
+                    // Recursively reset downstream first
+                    await resetDownstreamBrackets(supabase, nextBracket.id);
 
-                await supabase
-                    .from("playoff_brackets")
-                    .update({
-                        seed_home: null,
-                        seed_away: null
-                    })
-                    .eq("id", downstreamBracket.id);
+                    // Delete match sets
+                    await supabase
+                        .from("match_sets")
+                        .delete()
+                        .eq("match_id", nextBracket.match_id);
+
+                    // Reset the entire match to pending
+                    await supabase
+                        .from("matches")
+                        .update({
+                            status: "pending",
+                            home_sets_won: null,
+                            away_sets_won: null,
+                            home_team_lvr: null,
+                            away_team_lvr: null,
+                            match_mvp_player_id: null,
+                            loser_mvp_player_id: null,
+                            is_forfeit: false,
+                            home_team_id: null,
+                            away_team_id: null
+                        })
+                        .eq("id", nextBracket.match_id);
+
+                    // Reset both seeds since we're clearing both teams
+                    await supabase
+                        .from("playoff_brackets")
+                        .update({
+                            seed_home: null,
+                            seed_away: null
+                        })
+                        .eq("id", bracket.next_bracket_id);
+                } else if (nextMatch?.status === "scheduled" || nextMatch?.status === "pending") {
+                    // Only clear the specific team slot that was filled by this bracket
+                    await supabase
+                        .from("matches")
+                        .update({ [teamField]: null })
+                        .eq("id", nextBracket.match_id);
+
+                    // Only clear the specific seed
+                    await supabase
+                        .from("playoff_brackets")
+                        .update({ [seedField]: null })
+                        .eq("id", bracket.next_bracket_id);
+                }
+            }
+        }
+
+        // Reset loser path (third place)
+        if (bracket.loser_next_bracket_id && bracket.loser_position) {
+            const { data: loserBracket } = await supabase
+                .from("playoff_brackets")
+                .select("match_id, id")
+                .eq("id", bracket.loser_next_bracket_id)
+                .single();
+
+            if (loserBracket) {
+                const teamField = bracket.loser_position === "home" ? "home_team_id" : "away_team_id";
+                const seedField = bracket.loser_position === "home" ? "seed_home" : "seed_away";
+
+                const { data: loserMatch } = await findMatchById(supabase, loserBracket.match_id);
+
+                if (loserMatch?.status === "completed") {
+                    // Recursively reset downstream first
+                    await resetDownstreamBrackets(supabase, loserBracket.id);
+
+                    // Delete match sets
+                    await supabase
+                        .from("match_sets")
+                        .delete()
+                        .eq("match_id", loserBracket.match_id);
+
+                    // Reset the entire match to pending
+                    await supabase
+                        .from("matches")
+                        .update({
+                            status: "pending",
+                            home_sets_won: null,
+                            away_sets_won: null,
+                            home_team_lvr: null,
+                            away_team_lvr: null,
+                            match_mvp_player_id: null,
+                            loser_mvp_player_id: null,
+                            is_forfeit: false,
+                            home_team_id: null,
+                            away_team_id: null
+                        })
+                        .eq("id", loserBracket.match_id);
+
+                    // Reset both seeds since we're clearing both teams
+                    await supabase
+                        .from("playoff_brackets")
+                        .update({
+                            seed_home: null,
+                            seed_away: null
+                        })
+                        .eq("id", bracket.loser_next_bracket_id);
+                } else if (loserMatch?.status === "scheduled" || loserMatch?.status === "pending") {
+                    // Only clear the specific team slot that was filled by this bracket
+                    await supabase
+                        .from("matches")
+                        .update({ [teamField]: null })
+                        .eq("id", loserBracket.match_id);
+
+                    // Only clear the specific seed
+                    await supabase
+                        .from("playoff_brackets")
+                        .update({ [seedField]: null })
+                        .eq("id", bracket.loser_next_bracket_id);
+                }
             }
         }
 
