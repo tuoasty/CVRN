@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, useRef} from "react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -55,6 +55,7 @@ export default function CompleteMatchDialog({
     const [submitting, setSubmitting] = useState(false);
     const [homePlayers, setHomePlayers] = useState<PlayerWithRole[]>([]);
     const [awayPlayers, setAwayPlayers] = useState<PlayerWithRole[]>([]);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const maxSets = bestOf;
     const minSets = bestOf === 5 ? 3 : 2;
@@ -70,8 +71,15 @@ export default function CompleteMatchDialog({
         if (open) {
             initializeSetScores();
             loadPlayers();
+        } else {
+            // Cancel player loading when dialog closes
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+                abortControllerRef.current = null;
+            }
         }
     }, [open]);
+
 
     const initializeSetScores = () => {
         const initialScores = Array.from({ length: minSets }, () => ({
@@ -82,6 +90,14 @@ export default function CompleteMatchDialog({
     };
 
     const loadPlayers = async () => {
+        // Cancel any existing request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create new abort controller
+        abortControllerRef.current = new AbortController();
+
         setLoadingPlayers(true);
         try {
             const [homeResult, awayResult] = await Promise.all([
@@ -89,13 +105,32 @@ export default function CompleteMatchDialog({
                 getTeamPlayersAction({ teamId: awayTeamId, seasonId }),
             ]);
 
+            // Check if request was aborted
+            if (abortControllerRef.current?.signal.aborted) {
+                return;
+            }
+
             if (homeResult.ok) setHomePlayers(homeResult.value);
             if (awayResult.ok) setAwayPlayers(awayResult.value);
         } catch (error) {
+            if (abortControllerRef.current?.signal.aborted) {
+                clientLogger.info("CompleteMatchDialog", "Player loading cancelled");
+                return;
+            }
             clientLogger.error("CompleteMatchDialog", "Failed to load players", { error });
         } finally {
-            setLoadingPlayers(false);
+            if (!abortControllerRef.current?.signal.aborted) {
+                setLoadingPlayers(false);
+            }
         }
+    };
+
+    const cancelPlayerLoading = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setLoadingPlayers(false);
     };
 
     const handleSetScoreChange = (index: number, team: "home" | "away", value: string) => {
@@ -249,8 +284,159 @@ export default function CompleteMatchDialog({
                 </DialogHeader>
 
                 {loadingPlayers ? (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <div className="space-y-6">
+                        {/* Show match form immediately */}
+                        <div className="flex items-center space-x-2 panel p-4">
+                            <input
+                                type="checkbox"
+                                id="forfeit-checkbox"
+                                checked={isForfeit}
+                                onChange={(e) => setIsForfeit(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300"
+                            />
+                            <Label htmlFor="forfeit-checkbox" className="cursor-pointer">
+                                Mark as Forfeit
+                            </Label>
+                        </div>
+
+                        {!isForfeit && (
+                            <>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="font-semibold">Set Scores</h3>
+                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                Best of {bestOf} - Minimum {minSets} sets
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            {setScores.length < maxSets && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={addSet}
+                                                    className="rounded-sm"
+                                                >
+                                                    + Add Set
+                                                </Button>
+                                            )}
+                                            {setScores.length > minSets && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={removeSet}
+                                                    className="rounded-sm"
+                                                >
+                                                    Remove
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {setScores.map((set, idx) => (
+                                            <div key={idx} className="space-y-2">
+                                                <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                                                    Set {idx + 1}
+                                                </Label>
+                                                <div className="panel p-4">
+                                                    <div className="flex items-center justify-center gap-6">
+                                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-medium w-32 text-right">
+                                                {homeTeamName}
+                                            </span>
+                                                            <Input
+                                                                type="number"
+                                                                min="0"
+                                                                value={set.homeScore}
+                                                                onChange={e => handleSetScoreChange(idx, "home", e.target.value)}
+                                                                className="w-20 rounded-sm text-center text-lg font-semibold"
+                                                                placeholder="0"
+                                                            />
+                                                        </div>
+
+                                                        <span className="text-2xl font-bold text-muted-foreground">-</span>
+
+                                                        <div className="flex items-center gap-3">
+                                                            <Input
+                                                                type="number"
+                                                                min="0"
+                                                                value={set.awayScore}
+                                                                onChange={e => handleSetScoreChange(idx, "away", e.target.value)}
+                                                                className="w-20 rounded-sm text-center text-lg font-semibold"
+                                                                placeholder="0"
+                                                            />
+                                                            <span className="text-sm font-medium w-32">
+                                                {awayTeamName}
+                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {setScores.length > 0 && (
+                                        <div className="panel p-4 bg-muted/50">
+                                            <div className="flex items-center justify-center gap-8">
+                                                <div className="flex items-center gap-3 w-48">
+                                                    <span className="font-semibold flex-1 text-right">{homeTeamName}</span>
+                                                    <Badge variant="secondary" className="rounded-sm shrink-0">
+                                                        {homeSetsWon}
+                                                    </Badge>
+                                                </div>
+
+                                                <span className="text-muted-foreground text-sm font-medium shrink-0">-</span>
+
+                                                <div className="flex items-center gap-3 w-48">
+                                                    <Badge variant="secondary" className="rounded-sm shrink-0">
+                                                        {awaySetsWon}
+                                                    </Badge>
+                                                    <span className="font-semibold flex-1">{awayTeamName}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* MVP section with loading indicator */}
+                                <div className="space-y-3">
+                                    <h3 className="font-semibold mb-2">MVP Selection</h3>
+                                    <div className="flex items-center justify-center py-4">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                        <span className="ml-3 text-sm text-muted-foreground">Loading players...</span>
+                                    </div>
+                                </div>
+
+                                {loadingPlayers && (
+                                    <div className="space-y-3">
+                                        <h3 className="font-semibold mb-2">MVP Selection</h3>
+                                        <div className="flex flex-col items-center justify-center py-4 gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                                <span className="text-sm text-muted-foreground">Loading players...</span>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={cancelPlayerLoading}
+                                                className="rounded-sm"
+                                            >
+                                                Skip MVP Selection
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        <Button
+                            onClick={validateAndSubmit}
+                            className="w-full rounded-sm"
+                            disabled={submitting}
+                        >
+                            {submitting ? "Completing..." : "Complete Match"}
+                        </Button>
                     </div>
                 ) : (
                     <div className="space-y-6">

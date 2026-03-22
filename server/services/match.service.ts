@@ -589,14 +589,53 @@ export async function updateMatchResultsService(
             }
 
             if (bracket) {
-                const resetResult = await resetDownstreamBrackets(supabase, bracket.id);
+                // Calculate old and new winners to detect if winner changed
+                const oldHomeSetsWon = match.home_sets_won ?? 0;
+                const oldAwaySetsWon = match.away_sets_won ?? 0;
+                const oldWinnerTeamId = oldHomeSetsWon > oldAwaySetsWon ? match.home_team_id : match.away_team_id;
 
-                if (!resetResult.ok) {
-                    logger.error({ matchId: p.matchId, error: resetResult.error }, "Failed to reset downstream brackets");
-                    return Err(resetResult.error);
+                // Calculate new winner (we'll compute this later, but we need to check now)
+                // We'll use the logic from below to determine the new winner
+                let newHomeSetsWon = 0;
+                let newAwaySetsWon = 0;
+
+                if (p.isForfeit) {
+                    const minSets = match.best_of === 5 ? 3 : 2;
+                    if (p.forfeitingTeam === "home") {
+                        newAwaySetsWon = minSets;
+                    } else {
+                        newHomeSetsWon = minSets;
+                    }
+                } else {
+                    p.sets.forEach(set => {
+                        if (set.homeScore > set.awayScore) {
+                            newHomeSetsWon++;
+                        } else {
+                            newAwaySetsWon++;
+                        }
+                    });
                 }
 
-                logger.info({ matchId: p.matchId, bracketId: bracket.id }, "Downstream brackets reset successfully");
+                const newWinnerTeamId = newHomeSetsWon > newAwaySetsWon ? match.home_team_id : match.away_team_id;
+
+                // Only reset if winner changed
+                if (oldWinnerTeamId !== newWinnerTeamId) {
+                    const resetResult = await resetDownstreamBrackets(supabase, bracket.id);
+
+                    if (!resetResult.ok) {
+                        logger.error({ matchId: p.matchId, error: resetResult.error }, "Failed to reset downstream brackets");
+                        return Err(resetResult.error);
+                    }
+
+                    logger.info({
+                        matchId: p.matchId,
+                        bracketId: bracket.id,
+                        oldWinner: oldWinnerTeamId,
+                        newWinner: newWinnerTeamId
+                    }, "Downstream brackets reset due to winner change");
+                } else {
+                    logger.info({ matchId: p.matchId, bracketId: bracket.id }, "Winner unchanged, skipping downstream reset");
+                }
             }
         }
 
