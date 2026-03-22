@@ -1,5 +1,8 @@
 import {DBClient} from "@/shared/types/db";
 import {InsertMatchDto} from "@/server/dto/match.dto";
+import {Err, Ok, Result} from "@/shared/types/result";
+import {serializeError} from "@/server/utils/serializeableError";
+import {logger} from "@/server/utils/logger";
 
 export async function insertMatches(
     supabase: DBClient,
@@ -319,4 +322,76 @@ export async function findRecentMatches(
         .eq("status", "completed")
         .order("scheduled_at", { ascending: false, nullsFirst: false })
         .limit(limit);
+}
+
+export async function resetDownstreamBrackets(
+    supabase: DBClient,
+    bracketId: string
+): Promise<Result<void>> {
+    try {
+        const { data: bracket, error: bracketError } = await supabase
+            .from("playoff_brackets")
+            .select("next_bracket_id, loser_next_bracket_id, match_id")
+            .eq("id", bracketId)
+            .single();
+
+        if (bracketError) {
+            return Err(serializeError(bracketError));
+        }
+
+        if (!bracket) {
+            return Ok(undefined);
+        }
+
+        const downstreamBracketIds = [
+            bracket.next_bracket_id,
+            bracket.loser_next_bracket_id
+        ].filter(Boolean) as string[];
+
+        for (const downstreamBracketId of downstreamBracketIds) {
+            const { data: downstreamBracket } = await supabase
+                .from("playoff_brackets")
+                .select("match_id, id")
+                .eq("id", downstreamBracketId)
+                .single();
+
+            if (downstreamBracket) {
+                await resetDownstreamBrackets(supabase, downstreamBracket.id);
+
+                await supabase
+                    .from("match_sets")
+                    .delete()
+                    .eq("match_id", downstreamBracket.match_id);
+
+                await supabase
+                    .from("matches")
+                    .update({
+                        status: "pending",
+                        home_sets_won: null,
+                        away_sets_won: null,
+                        home_team_lvr: null,
+                        away_team_lvr: null,
+                        match_mvp_player_id: null,
+                        loser_mvp_player_id: null,
+                        is_forfeit: false,
+                        home_team_id: null,
+                        away_team_id: null
+                    })
+                    .eq("id", downstreamBracket.match_id);
+
+                await supabase
+                    .from("playoff_brackets")
+                    .update({
+                        seed_home: null,
+                        seed_away: null
+                    })
+                    .eq("id", downstreamBracket.id);
+            }
+        }
+
+        return Ok(undefined);
+    } catch (error) {
+        logger.error({ bracketId, error }, "Failed to reset downstream brackets");
+        return Err(serializeError(error));
+    }
 }

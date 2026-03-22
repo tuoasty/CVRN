@@ -18,7 +18,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/app/components/ui/dialog";
-import { completeMatch as completeMatchAction, invalidateMatchCaches } from "@/app/hooks/useMatches";
+import { completeMatch as completeMatchAction } from "@/app/hooks/useMatches";
 import { getTeamPlayersAction } from "@/app/actions/player.actions";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Badge } from "@/app/components/ui/badge";
