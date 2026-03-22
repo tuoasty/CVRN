@@ -64,24 +64,23 @@ function assignDisplayOrder(brackets: BracketWithMatch[]): Map<string, number> {
         const bracket = brackets.find(b => b.id === bracketId);
         if (!bracket) return;
 
+        orderMap.set(bracketId, currentOrder++);
+
         const feedingBrackets = brackets.filter(b => b.next_bracket_id === bracketId);
 
         if (feedingBrackets.length === 0) {
-            orderMap.set(bracketId, currentOrder++);
             return;
         }
 
         feedingBrackets.sort((a, b) => {
-            const seedA = a.seed_home || 999;
-            const seedB = b.seed_home || 999;
+            const seedA = Math.min(a.seed_home ?? 999, a.seed_away ?? 999);
+            const seedB = Math.min(b.seed_home ?? 999, b.seed_away ?? 999);
             return seedA - seedB;
         });
 
         feedingBrackets.forEach((fb) => {
             assignOrder(fb.id);
         });
-
-        orderMap.set(bracketId, currentOrder++);
     }
 
     assignOrder(finalBracket.id);
