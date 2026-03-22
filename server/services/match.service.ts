@@ -886,13 +886,28 @@ async function advancePlayoffWinner(
             return Ok(undefined);
         }
 
-        const winnerSeed = bracket.seed_home !== null && bracket.seed_away !== null
-            ? Math.min(bracket.seed_home, bracket.seed_away)
-            : null;
+        // Get the match to determine which seed corresponds to which team
+        const { data: match } = await findMatchById(supabase, matchId);
 
-        const loserSeed = bracket.seed_home !== null && bracket.seed_away !== null
-            ? Math.max(bracket.seed_home, bracket.seed_away)
-            : null;
+        if (!match) {
+            logger.error({ matchId }, "Match not found for bracket");
+            return Err({
+                name: "NotFoundError",
+                message: "Match not found"
+            });
+        }
+
+        // Determine which seed belongs to the winner
+        let winnerSeed: number | null = null;
+        let loserSeed: number | null = null;
+
+        if (match.home_team_id === winnerTeamId && bracket.seed_home !== null) {
+            winnerSeed = bracket.seed_home;
+            loserSeed = bracket.seed_away;
+        } else if (match.away_team_id === winnerTeamId && bracket.seed_away !== null) {
+            winnerSeed = bracket.seed_away;
+            loserSeed = bracket.seed_home;
+        }
 
         if (bracket.next_bracket_id && bracket.winner_position) {
             const { data: nextBracket, error: nextBracketError } = await supabase
