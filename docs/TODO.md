@@ -9,10 +9,19 @@
 - [x] Create `docs/integrations.md` — external API docs
 
 ### Phase 2: Code Health Audit
-- [ ] Systematic code review across all layers
-- [ ] Identify bugs, dead code, inconsistencies
-- [ ] Type safety audit (`any` types, unsafe casts, missing null checks)
-- [ ] Error handling consistency check (all services return `Result<T,E>`)
+- [x] Systematic code review across all layers
+- [x] Identify bugs, dead code, inconsistencies
+- [x] Type safety audit (`any` types, unsafe casts, missing null checks)
+- [x] Error handling consistency check (all services return `Result<T,E>`)
+- [ ] Tasks in progress, refer to phase2-audit.md
+  7 tasks (5 done, 1 in progress, 1 open)
+  √ Remove dead code and unused exports
+  √ Fix sequential lazy sync (player/official loading bottleneck)
+  √ Fix TeamDetailPage double player fetch
+  √ Extract validateAndCalculateMatchResult from match.service.ts
+  √ Extract toMatchWithDetails mapper in match.service.ts
+  ■ Extract resetBracketPath helper in matches.repo.ts
+  □ Minor cleanups (await convention, auth helper, mid-file imports)
 
 ### Phase 3: Architecture Refactor Plan
 - [ ] Evaluate DDD / feature-sliced architecture

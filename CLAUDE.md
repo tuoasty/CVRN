@@ -74,6 +74,7 @@ Server Action (app/actions/*.actions.ts)
 ## Reference Docs
 
 See `docs/` for detailed reference:
+- `docs/TODO.md` - Details on tasks to complete and work on, keep track here
 - `docs/database.md` — Full schema, relationships, enums, functions
 - `docs/api-inventory.md` — All server actions and service methods
 - `docs/integrations.md` — External API details and data flows

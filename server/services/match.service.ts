@@ -179,6 +179,20 @@ function validateAndCalculateMatchResult(
     });
 }
 
+function toMatchWithDetails(row: any): MatchWithDetails {
+    return {
+        match: row as unknown as Match,
+        sets: (row.match_sets ?? []) as MatchSet[],
+        officials: (row.match_officials ?? []).map((mo: any) => ({
+            id: mo.officials.id,
+            username: mo.officials.username,
+            display_name: mo.officials.display_name,
+            avatar_url: mo.officials.avatar_url,
+            official_type: mo.official_type,
+        })),
+    };
+}
+
 export async function createMatches(
     supabase: DBClient,
     p: CreateMatchesInput
@@ -752,17 +766,7 @@ export async function getWeekSchedule(
             return Ok([]);
         }
 
-        const result: MatchWithDetails[] = data.map(row => ({
-            match: row as unknown as Match,
-            sets: (row.match_sets ?? []) as MatchSet[],
-            officials: (row.match_officials ?? []).map((mo: any) => ({
-                id: mo.officials.id,
-                username: mo.officials.username,
-                display_name: mo.officials.display_name,
-                avatar_url: mo.officials.avatar_url,
-                official_type: mo.official_type,
-            })),
-        }));
+        const result: MatchWithDetails[] = data.map(toMatchWithDetails);
 
         return Ok(result);
     } catch (error) {
@@ -794,17 +798,7 @@ export async function getPlayoffSchedule(
             return Ok([]);
         }
 
-        const result: MatchWithDetails[] = data.map(row => ({
-            match: row.matches as unknown as Match,
-            sets: (row.matches.match_sets ?? []) as MatchSet[],
-            officials: (row.matches.match_officials ?? []).map((mo: any) => ({
-                id: mo.officials.id,
-                username: mo.officials.username,
-                display_name: mo.officials.display_name,
-                avatar_url: mo.officials.avatar_url,
-                official_type: mo.official_type,
-            })),
-        }));
+        const result: MatchWithDetails[] = data.map(row => toMatchWithDetails(row.matches));
 
         return Ok(result);
     } catch (error) {
@@ -1023,17 +1017,7 @@ export async function getUpcomingMatches(
             return Ok([]);
         }
 
-        const result: MatchWithDetails[] = data.map(row => ({
-            match: row as unknown as Match,
-            sets: (row.match_sets ?? []) as MatchSet[],
-            officials: (row.match_officials ?? []).map((mo: any) => ({
-                id: mo.officials.id,
-                username: mo.officials.username,
-                display_name: mo.officials.display_name,
-                avatar_url: mo.officials.avatar_url,
-                official_type: mo.official_type,
-            })),
-        }));
+        const result: MatchWithDetails[] = data.map(toMatchWithDetails);
 
         return Ok(result);
     } catch (error) {
@@ -1059,17 +1043,7 @@ export async function getRecentMatches(
             return Ok([]);
         }
 
-        const result: MatchWithDetails[] = data.map(row => ({
-            match: row as unknown as Match,
-            sets: (row.match_sets ?? []) as MatchSet[],
-            officials: (row.match_officials ?? []).map((mo: any) => ({
-                id: mo.officials.id,
-                username: mo.officials.username,
-                display_name: mo.officials.display_name,
-                avatar_url: mo.officials.avatar_url,
-                official_type: mo.official_type,
-            })),
-        }));
+        const result: MatchWithDetails[] = data.map(toMatchWithDetails);
 
         return Ok(result);
     } catch (error) {
