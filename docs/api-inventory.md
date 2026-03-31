@@ -12,7 +12,6 @@ All client-accessible operations go through Server Actions in `app/actions/`. Ea
 | getMatchesBySeasonAndWeek | match.service.getMatchesBySeasonAndWeek | Fetch matches for display |
 | updateMatchSchedule | match.service.updateMatchSchedule | Set/update scheduled date/time |
 | voidMatch | match.service.voidMatch | Void a completed match |
-| getMatchSets | match.service.getMatchSets | Get set scores for a match |
 
 ### team.actions.ts
 | Action | Service Method | Description |
@@ -79,7 +78,10 @@ Located in `app/hooks/`:
 
 | Hook | Action Called | Key Pattern |
 |------|-------------|-------------|
-| useMatches | getMatchesBySeasonAndWeek | [seasonId, week] |
+| useAllMatches | getAllMatches | [] |
+| useMatchesForWeek | getMatchesBySeasonAndWeek | [seasonId, week] |
+| useWeekSchedule | getWeekSchedule | [seasonId, week] |
+| usePlayoffSchedule | getPlayoffSchedule | [seasonId, round] |
 | useTeams | getTeamsBySeasonId | [seasonId] |
 | usePlayers | getPlayersByTeamAndSeason | [teamId, seasonId] |
 | useStandings | getStandings | [seasonId] |
@@ -90,7 +92,7 @@ Located in `app/hooks/`:
 
 ## Services with Notable Complexity
 
-### match.service.ts (~1,147 lines)
+### match.service.ts (~1,050 lines)
 - Match creation with schedule parsing and timezone handling
 - Match completion with set validation, LVR calculation
 - Playoff bracket advancement on match completion
