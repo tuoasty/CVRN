@@ -249,32 +249,16 @@ export async function getTeamPlayers(
             });
         }
 
-        const syncedPlayers: PlayerWithRole[] = [];
-
-        for (const record of data) {
-            if (!record.player) {
-                continue;
-            }
-
-            const result = await lazySyncPlayer(supabase, record.player);
-
-            const role: PlayerRole = (record.role as PlayerRole) || 'player';
-
-            let playerWithRole: PlayerWithRole;
-            if (result.ok) {
-                playerWithRole = {
-                    ...result.value,
-                    role
-                };
-            } else {
-                playerWithRole = {
-                    ...record.player,
-                    role
-                };
-            }
-
-            syncedPlayers.push(playerWithRole);
-        }
+        const syncedPlayers: PlayerWithRole[] = await Promise.all(
+            data
+                .filter(record => record.player)
+                .map(async (record) => {
+                    const result = await lazySyncPlayer(supabase, record.player!);
+                    const role: PlayerRole = (record.role as PlayerRole) || 'player';
+                    const player = result.ok ? result.value : record.player!;
+                    return { ...player, role };
+                })
+        );
 
         return Ok(syncedPlayers);
     } catch (error) {
@@ -306,17 +290,12 @@ export async function getPlayersByIds(
             });
         }
 
-        const syncedPlayers: Player[] = [];
-
-        for (const player of data) {
-            const result = await lazySyncPlayer(supabase, player as Player);
-
-            if (result.ok) {
-                syncedPlayers.push(result.value);
-            } else {
-                syncedPlayers.push(player as Player);
-            }
-        }
+        const syncedPlayers: Player[] = await Promise.all(
+            data.map(async (player) => {
+                const result = await lazySyncPlayer(supabase, player as Player);
+                return result.ok ? result.value : (player as Player);
+            })
+        );
 
         return Ok(syncedPlayers);
     } catch (error) {
