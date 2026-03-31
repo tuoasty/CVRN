@@ -98,24 +98,15 @@ export async function getMatchOfficials(
             });
         }
 
-        const syncedOfficials: MatchOfficialWithDetails[] = [];
-
-        for (const matchOfficial of data) {
-            if (matchOfficial.official) {
+        const syncedOfficials: MatchOfficialWithDetails[] = await Promise.all(
+            data.map(async (matchOfficial) => {
+                if (!matchOfficial.official) return matchOfficial;
                 const result = await lazySyncOfficial(supabase, matchOfficial.official);
-
-                if (result.ok) {
-                    syncedOfficials.push({
-                        ...matchOfficial,
-                        official: result.value
-                    });
-                } else {
-                    syncedOfficials.push(matchOfficial);
-                }
-            } else {
-                syncedOfficials.push(matchOfficial);
-            }
-        }
+                return result.ok
+                    ? { ...matchOfficial, official: result.value }
+                    : matchOfficial;
+            })
+        );
 
         return Ok(syncedOfficials);
     } catch (error) {
@@ -144,24 +135,15 @@ export async function getMatchOfficialsByType(
             });
         }
 
-        const syncedOfficials: MatchOfficialWithDetails[] = [];
-
-        for (const matchOfficial of data) {
-            if (matchOfficial.official) {
+        const syncedOfficials: MatchOfficialWithDetails[] = await Promise.all(
+            data.map(async (matchOfficial) => {
+                if (!matchOfficial.official) return matchOfficial;
                 const result = await lazySyncOfficial(supabase, matchOfficial.official);
-
-                if (result.ok) {
-                    syncedOfficials.push({
-                        ...matchOfficial,
-                        official: result.value
-                    });
-                } else {
-                    syncedOfficials.push(matchOfficial);
-                }
-            } else {
-                syncedOfficials.push(matchOfficial);
-            }
-        }
+                return result.ok
+                    ? { ...matchOfficial, official: result.value }
+                    : matchOfficial;
+            })
+        );
 
         return Ok(syncedOfficials);
     } catch (error) {

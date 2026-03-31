@@ -22,7 +22,6 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { useTeamWithPlayers, mutateAllTeams } from "@/app/hooks/useTeams";
-import { useTeamPlayers, mutateTeamPlayers } from "@/app/hooks/usePlayers";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
@@ -51,24 +50,19 @@ export default function TeamDetailPage({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // SWR hooks for team and players
+    // SWR hook for team and players (single fetch)
     const {
         team: teamData,
+        players,
         isLoading: teamLoading,
         error: teamError,
         mutate: mutateTeam,
     } = useTeamWithPlayers(teamSlug, seasonSlug, regionCode);
 
-    // Also use the separate players hook so we have mutation access
-    const {
-        players,
-        captain,
-        viceCaptain,
-        courtCaptain,
-        regularPlayers,
-        isLoading: playersLoading,
-        mutate: mutatePlayers,
-    } = useTeamPlayers(teamData?.id ?? null, teamData?.season_id ?? null);
+    const captain = players.find(p => p.role === 'captain') ?? null;
+    const viceCaptain = players.find(p => p.role === 'vice_captain') ?? null;
+    const courtCaptain = players.find(p => p.role === 'court_captain') ?? null;
+    const regularPlayers = players.filter(p => p.role === 'player');
 
     const handleOpenAddForm = () => {
         setShowAddForm(true);
@@ -81,16 +75,11 @@ export default function TeamDetailPage({
     };
 
     const handlePlayerAdded = (_addedPlayer: Player) => {
-        // Revalidate via SWR
-        if (teamData?.id && teamData?.season_id) {
-            mutateTeamPlayers(teamData.id, teamData.season_id);
-        }
+        mutateTeam();
     };
 
     const handlePlayerRemoved = (_playerId: string) => {
-        if (teamData?.id && teamData?.season_id) {
-            mutateTeamPlayers(teamData.id, teamData.season_id);
-        }
+        mutateTeam();
     };
 
     const handleDeleteTeam = async () => {
@@ -109,9 +98,7 @@ export default function TeamDetailPage({
     };
 
     const handleRoleChanged = () => {
-        if (teamData?.id && teamData?.season_id) {
-            mutateTeamPlayers(teamData.id, teamData.season_id);
-        }
+        mutateTeam();
     };
 
     const handleTeamUpdated = () => {

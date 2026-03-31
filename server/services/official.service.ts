@@ -112,17 +112,12 @@ export async function getAllOfficials(
             });
         }
 
-        const syncedOfficials: Official[] = [];
-
-        for (const official of data) {
-            const result = await lazySyncOfficial(supabase, official);
-
-            if (result.ok) {
-                syncedOfficials.push(result.value);
-            } else {
-                syncedOfficials.push(official);
-            }
-        }
+        const syncedOfficials: Official[] = await Promise.all(
+            data.map(async (official) => {
+                const result = await lazySyncOfficial(supabase, official);
+                return result.ok ? result.value : official;
+            })
+        );
 
         return Ok(syncedOfficials);
     } catch (error) {
