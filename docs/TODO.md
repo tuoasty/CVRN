@@ -39,7 +39,10 @@
 - [ ] When updating or completing matches, player load takes too long, probably due to sync. Fix, and also improve dialog designs.
 
 ### Design fixes
-- [ ] Mobile needs a better UI layout, for example migrating to a sidebar with burger toggle for navigation instead of current double navbar with selector/
+- [ ] Mobile needs a better UI layout, for example migrating to a sidebar with burger toggle for navigation instead of current double navbar with selector
+
+### Others
+- [ ] Fix typing and typescript errors, not allowed to use :any
 
 ### Features (TBD)
 - [ ] Google Sheets import integration
