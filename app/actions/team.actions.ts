@@ -14,7 +14,7 @@ import {
     getAllTeams,
     getAllTeamsWithRegions,
     getTeamByNameAndSeason,
-    getTeamBySlugAndSeasonWithRegion,
+
     getTeamsByIds,
     getTeamWithRegionAndPlayers,
     updateTeam
@@ -67,14 +67,6 @@ export async function getTeamByNameAndSeasonAction(input: GetTeamByNameSeason): 
 export async function deleteTeamAction(input: TeamIdInput): Promise<Result<void>> {
     const supabase = await createServerSupabase();
     return deleteTeam(supabase, input);
-}
-
-export async function getTeamBySlugAndSeasonAction(p: {
-    slug: string;
-    seasonId: string;
-}): Promise<Result<TeamWithRegion>> {
-    const supabase = await createServerSupabase();
-    return getTeamBySlugAndSeasonWithRegion(supabase, p);
 }
 
 export async function getTeamWithPlayersAction(params: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
 import { useStandings } from "@/app/hooks/useStandings";
 import { useSeasons } from "@/app/hooks/useSeasons";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
 import { useTeams } from "@/app/hooks/useTeams";
 import { useSeasons } from "@/app/hooks/useSeasons";

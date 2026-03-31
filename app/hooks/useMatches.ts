@@ -1,5 +1,5 @@
 import useSWR, { mutate as globalMutate } from 'swr';
-import { Match, MatchSet, Team } from '@/shared/types/db';
+import { Match, Team } from '@/shared/types/db';
 import {
     completeMatchAction,
     deleteMatchAction,
@@ -7,7 +7,7 @@ import {
     getAvailablePlayoffRoundsAction,
     getAvailableTeamsForWeekAction,
     getMatchesForWeekAction,
-    getMatchSetsAction,
+
     getPlayoffScheduleAction,
     getRecentMatchesAction,
     getUpcomingMatchesAction,
@@ -38,12 +38,6 @@ async function fetchAvailableTeams([, seasonId, week]: [string, string, number])
 
 async function fetchMatchesForWeek([, seasonId, week]: [string, string, number]): Promise<Match[]> {
     const result = await getMatchesForWeekAction({ seasonId, week });
-    if (!result.ok) throw new Error(result.error.message);
-    return result.value;
-}
-
-async function fetchMatchSets([, matchId]: [string, string]): Promise<MatchSet[]> {
-    const result = await getMatchSetsAction({ matchId });
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
 }
@@ -104,15 +98,6 @@ export function useMatchesForWeek(seasonId: string | null, week: number | null) 
         revalidateOnFocus: false,
     });
     return { matches: (data as Match[] | undefined) ?? [], isLoading, error: error?.message ?? null, mutate };
-}
-
-export function useMatchSets(matchId: string | null) {
-    const key = matchId ? ['matchSets', matchId] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchMatchSets as any, {
-        dedupingInterval: MATCHES_TTL,
-        revalidateOnFocus: false,
-    });
-    return { matchSets: (data as MatchSet[] | undefined) ?? [], isLoading, error: error?.message ?? null, mutate };
 }
 
 export function useWeekSchedule(seasonId: string | null, week: number | null) {
