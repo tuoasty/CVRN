@@ -7,12 +7,12 @@ import {
     deletePlayoffMatchesBySeasonId,
     findPlayoffBracketsBySeasonId,
     findPlayoffConfigBySeasonId,
-    findSeasonById,
     findStandingsBySeasonId,
     insertPlayoffBrackets,
     insertPlayoffMatches,
     updateSeasonPlayoffStatus
 } from "@/server/db/playoff.repo";
+import { findSeasonById } from "@/server/db/seasons.repo";
 import { randomUUID } from "node:crypto";
 
 type RoundType = "play_in" | "round_of_16" | "quarterfinal" | "semifinal" | "final" | "third_place";

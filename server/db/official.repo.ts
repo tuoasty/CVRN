@@ -22,16 +22,6 @@ export async function upsertOfficial(
         .single()
 }
 
-export async function findOfficialById(
-    supabase: DBClient,
-    id: string
-) {
-    return supabase.from("officials")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle()
-}
-
 export async function findOfficialByRobloxId(
     supabase: DBClient,
     robloxUserId: string

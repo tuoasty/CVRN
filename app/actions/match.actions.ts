@@ -3,7 +3,6 @@
 import {
     CompleteMatchInput,
     CreateMatchesInput,
-    MatchSetsInput,
     UpdateMatchScheduleInput,
     VoidMatchInput
 } from "@/server/dto/match.dto";
@@ -14,7 +13,7 @@ import {
     getAllMatches, getAvailablePlayoffRounds,
     getAvailableTeamsForWeek,
     getMatchesForWeek,
-    getMatchSets, getPlayoffSchedule, getRecentMatches, getUpcomingMatches,
+    getPlayoffSchedule, getRecentMatches, getUpcomingMatches,
     getWeekSchedule,
     updateMatchResultsService,
     updateMatchScheduleService,
@@ -55,11 +54,6 @@ export async function completeMatchAction(input: CompleteMatchInput) {
 export async function voidMatchAction(input: VoidMatchInput) {
     const supabase = await createServerSupabase();
     return await voidMatchService(supabase, input);
-}
-
-export async function getMatchSetsAction(input: MatchSetsInput) {
-    const supabase = await createServerSupabase();
-    return await getMatchSets(supabase, input);
 }
 
 export async function updateMatchResultsAction(input: CompleteMatchInput) {

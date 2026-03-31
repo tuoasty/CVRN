@@ -11,17 +11,11 @@ export async function inviteUserAction(email:string, role:"super_admin"|"admin"|
         data: {user},
     } = await supabase.auth.getUser();
     if(!user){
-        // const url = new URL("/", request.url);
-        // url.searchParams.set("redirect", pathname);
-        // return NextResponse.redirect(url);
         return Err(createError("Unauthorized", "UNAUTHORIZED", 401));
     }
 
     const { data: roleData} = await supabase.from("user_roles").select("role").eq("user_id", user.id).single();
     if(roleData?.role !== "super_admin"){
-        // const url = new URL("/", request.url);
-        // url.searchParams.set("redirect", pathname);
-        // return NextResponse.redirect(url);
         return Err(createError("Forbidden", "FORBIDDEN", 403));
     }
 

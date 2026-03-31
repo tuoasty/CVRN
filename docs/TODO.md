@@ -35,6 +35,12 @@
 - [ ] Add transaction support to repository layer
 - [ ] Reduce tight coupling between services
 
+### Bug fixes
+- [ ] When updating or completing matches, player load takes too long, probably due to sync. Fix, and also improve dialog designs.
+
+### Design fixes
+- [ ] Mobile needs a better UI layout, for example migrating to a sidebar with burger toggle for navigation instead of current double navbar with selector/
+
 ### Features (TBD)
 - [ ] Google Sheets import integration
 - [ ] Player stats tracking (schema exists, implementation TBD)

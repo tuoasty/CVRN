@@ -72,17 +72,6 @@ export async function updateSeasonPlayoffStatus(
         .single();
 }
 
-export async function findSeasonById(
-    supabase: DBClient,
-    seasonId: string
-) {
-    return supabase
-        .from("seasons")
-        .select("*")
-        .eq("id", seasonId)
-        .single();
-}
-
 export async function findPlayoffBracketsBySeasonId(
     supabase: DBClient,
     seasonId: string

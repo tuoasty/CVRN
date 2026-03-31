@@ -25,7 +25,7 @@ import {
 } from "@/server/db/matches.repo";
 import {randomUUID} from "node:crypto";
 import {convertToUTC, isValidTimezone} from "@/server/utils/timezone";
-import {findActivePlayerTeamSeasons} from "@/server/db/players.repo";
+
 import {removeAllMatchOfficials} from "@/server/db/matchOfficial.repo";
 
 export async function createMatches(
