@@ -23,70 +23,70 @@ import {GetPlayoffScheduleInput} from "@/server/dto/playoff.dto";
 
 export async function createMatchesAction(input:CreateMatchesInput) {
     const supabase = await createServerSupabase()
-    return await createMatches(supabase, input);
+    return createMatches(supabase, input);
 }
 
 export async function getAvailableTeamsForWeekAction(input: {seasonId: string, week:number}) {
     const supabase = await createServerSupabase()
-    return await getAvailableTeamsForWeek(supabase, input);
+    return getAvailableTeamsForWeek(supabase, input);
 }
 
 export async function getAllMatchesAction() {
     const supabase = await createServerSupabase()
-    return await getAllMatches(supabase);
+    return getAllMatches(supabase);
 }
 
 export async function getMatchesForWeekAction(input: {seasonId: string, week: number}) {
     const supabase = await createServerSupabase()
-    return await getMatchesForWeek(supabase, input);
+    return getMatchesForWeek(supabase, input);
 }
 
 export async function updateMatchScheduleAction(input: UpdateMatchScheduleInput) {
     const supabase = await createServerSupabase();
-    return await updateMatchScheduleService(supabase, input);
+    return updateMatchScheduleService(supabase, input);
 }
 
 export async function completeMatchAction(input: CompleteMatchInput) {
     const supabase = await createServerSupabase();
-    return await completeMatchService(supabase, input);
+    return completeMatchService(supabase, input);
 }
 
 export async function voidMatchAction(input: VoidMatchInput) {
     const supabase = await createServerSupabase();
-    return await voidMatchService(supabase, input);
+    return voidMatchService(supabase, input);
 }
 
 export async function updateMatchResultsAction(input: CompleteMatchInput) {
     const supabase = await createServerSupabase();
-    return await updateMatchResultsService(supabase, input);
+    return updateMatchResultsService(supabase, input);
 }
 
 export async function getWeekScheduleAction(input: { seasonId: string; week: number }) {
     const supabase = await createServerSupabase();
-    return await getWeekSchedule(supabase, input);
+    return getWeekSchedule(supabase, input);
 }
 
 export async function getPlayoffScheduleAction(input: GetPlayoffScheduleInput) {
     const supabase = await createServerSupabase();
-    return await getPlayoffSchedule(supabase, input);
+    return getPlayoffSchedule(supabase, input);
 }
 
 export async function getAvailablePlayoffRoundsAction(seasonId: string) {
     const supabase = await createServerSupabase();
-    return await getAvailablePlayoffRounds(supabase, seasonId);
+    return getAvailablePlayoffRounds(supabase, seasonId);
 }
 
 export async function deleteMatchAction(matchId: string) {
     const supabase = await createServerSupabase();
-    return await deleteMatchService(supabase, matchId);
+    return deleteMatchService(supabase, matchId);
 }
 
 export async function getUpcomingMatchesAction(seasonId: string, limit: number = 5) {
     const supabase = await createServerSupabase();
-    return await getUpcomingMatches(supabase, seasonId, limit);
+    return getUpcomingMatches(supabase, seasonId, limit);
 }
 
 export async function getRecentMatchesAction(seasonId: string, limit: number = 5) {
     const supabase = await createServerSupabase();
-    return await getRecentMatches(supabase, seasonId, limit);
+    return getRecentMatches(supabase, seasonId, limit);
 }

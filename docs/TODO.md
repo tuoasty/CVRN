@@ -8,20 +8,9 @@
 - [x] Create `docs/api-inventory.md` — server actions and service inventory
 - [x] Create `docs/integrations.md` — external API docs
 
-### Phase 2: Code Health Audit
-- [x] Systematic code review across all layers
-- [x] Identify bugs, dead code, inconsistencies
-- [x] Type safety audit (`any` types, unsafe casts, missing null checks)
-- [x] Error handling consistency check (all services return `Result<T,E>`)
-- [ ] Tasks in progress, refer to phase2-audit.md
-  7 tasks (5 done, 1 in progress, 1 open)
-  √ Remove dead code and unused exports
-  √ Fix sequential lazy sync (player/official loading bottleneck)
-  √ Fix TeamDetailPage double player fetch
-  √ Extract validateAndCalculateMatchResult from match.service.ts
-  √ Extract toMatchWithDetails mapper in match.service.ts
-  ■ Extract resetBracketPath helper in matches.repo.ts
-  □ Minor cleanups (await convention, auth helper, mid-file imports)
+### Phase 2: Code Health Audit (completed)
+- [x] Dead code removal, duplicated logic extraction, sync parallelization, frontend fetch optimization
+- [x] Full findings in `docs/phase2-audit.md`
 
 ### Phase 3: Architecture Refactor Plan
 - [ ] Evaluate DDD / feature-sliced architecture
@@ -45,7 +34,8 @@
 - [ ] Reduce tight coupling between services
 
 ### Bug fixes
-- [ ] When updating or completing matches, player load takes too long, probably due to sync. Fix, and also improve dialog designs.
+- [x] ~~Player load too slow due to sequential sync~~ — fixed in Phase 2 (parallelized with `Promise.all`)
+- [ ] Improve match completion/update dialog designs
 
 ### Design fixes
 - [ ] Mobile needs a better UI layout, for example migrating to a sidebar with burger toggle for navigation instead of current double navbar with selector

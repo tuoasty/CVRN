@@ -21,6 +21,11 @@ import {
 } from "@/server/services/team.service";
 import { Team } from "@/shared/types/db";
 
+async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
+}
+
 export async function createTeamAction(formData: FormData) {
     const supabase = await createServerSupabase();
 
@@ -30,13 +35,8 @@ export async function createTeamAction(formData: FormData) {
     const brickNumber = formData.get('brickNumber') as string;
     const brickColor = formData.get('brickColor') as string;
     const startingLvr = formData.get('startingLvr') as string;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return Err({
-            message: "User not authenticated",
-            name: "AuthError"
-        });
-    }
+    const user = await requireAuth(supabase);
+    if (!user) return Err({ message: "User not authenticated", name: "AuthError" });
 
     return createTeam(supabase, {
         name,
@@ -79,7 +79,7 @@ export async function getTeamWithPlayersAction(params: {
 
 export async function getTeamsByIdsAction(teamIds: string[]): Promise<Result<TeamWithRegion[]>> {
     const supabase = await createServerSupabase();
-    return await getTeamsByIds(supabase, teamIds);
+    return getTeamsByIds(supabase, teamIds);
 }
 
 export async function updateTeamAction(formData: FormData) {
@@ -92,10 +92,8 @@ export async function updateTeamAction(formData: FormData) {
     const brickColor = formData.get('brickColor') as string;
     const startingLvr = formData.get('startingLvr') as string;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return Err({ message: "User not authenticated", name: "AuthError" });
-    }
+    const user = await requireAuth(supabase);
+    if (!user) return Err({ message: "User not authenticated", name: "AuthError" });
 
     return updateTeam(supabase, {
         teamId,

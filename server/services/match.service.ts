@@ -27,6 +27,12 @@ import {randomUUID} from "node:crypto";
 import {convertToUTC, isValidTimezone} from "@/server/utils/timezone";
 
 import {removeAllMatchOfficials} from "@/server/db/matchOfficial.repo";
+import { GetPlayoffScheduleInput } from "@/server/dto/playoff.dto";
+import {
+    findMatchesWithDetailsBySeasonAndRound, findPlayoffBracketByMatchId,
+    findUniquePlayoffRoundsBySeason,
+    updateMatchTeam
+} from "@/server/db/playoff.repo";
 
 type MatchResultInput = {
     sets: Array<{ setNumber: number; homeScore: number; awayScore: number }>;
@@ -774,13 +780,6 @@ export async function getWeekSchedule(
         return Err(serializeError(error));
     }
 }
-
-import { GetPlayoffScheduleInput } from "@/server/dto/playoff.dto";
-import {
-    findMatchesWithDetailsBySeasonAndRound, findPlayoffBracketByMatchId,
-    findUniquePlayoffRoundsBySeason,
-    updateMatchTeam
-} from "@/server/db/playoff.repo";
 
 export async function getPlayoffSchedule(
     supabase: DBClient,

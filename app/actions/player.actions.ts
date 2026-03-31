@@ -42,7 +42,7 @@ export async function getTeamPlayersAction(input:TeamPlayersInput){
 
 export async function getPlayersByIdsAction(input: PlayersByIdsInput) {
     const supabase = await createServerSupabase();
-    return await getPlayersByIds(supabase, input);
+    return getPlayersByIds(supabase, input);
 }
 
 export async function searchPlayersInDatabaseAction(input: SearchPlayersInput) {

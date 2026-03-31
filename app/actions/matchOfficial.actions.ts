@@ -21,42 +21,42 @@ import { RobloxUserIdInput } from "@/server/dto/player.dto";
 
 export async function searchOfficialsByNameAction(username: string) {
     const supabase = await createServerSupabase();
-    return await getOfficialsByName(supabase, username);
+    return getOfficialsByName(supabase, username);
 }
 
 export async function saveOfficialAction(input: SaveOfficialInput) {
     const supabase = await createServerSupabase();
-    return await saveOfficial(supabase, input);
+    return saveOfficial(supabase, input);
 }
 
 export async function getAllOfficialsAction() {
     const supabase = await createServerSupabase();
-    return await getAllOfficials(supabase);
+    return getAllOfficials(supabase);
 }
 
 export async function removeOfficialAction(input: RobloxUserIdInput) {
     const supabase = await createServerSupabase();
-    return await removeOfficial(supabase, input);
+    return removeOfficial(supabase, input);
 }
 
 export async function assignOfficialToMatchAction(input: AssignOfficialInput) {
     const supabase = await createServerSupabase();
-    return await assignOfficialToMatch(supabase, input);
+    return assignOfficialToMatch(supabase, input);
 }
 
 export async function assignMultipleOfficialsToMatchAction(input: AssignMultipleOfficialsInput) {
     const supabase = await createServerSupabase();
-    return await assignMultipleOfficialsToMatch(supabase, input);
+    return assignMultipleOfficialsToMatch(supabase, input);
 }
 
 export async function getMatchOfficialsAction(matchId: string) {
     const supabase = await createServerSupabase();
-    return await getMatchOfficials(supabase, { matchId });
+    return getMatchOfficials(supabase, { matchId });
 }
 
 export async function getMatchOfficialsByTypeAction(matchId: string, officialType: OfficialType) {
     const supabase = await createServerSupabase();
-    return await getMatchOfficialsByType(supabase, matchId, officialType);
+    return getMatchOfficialsByType(supabase, matchId, officialType);
 }
 
 export async function removeOfficialFromMatchAction(
@@ -65,12 +65,12 @@ export async function removeOfficialFromMatchAction(
     officialType: OfficialType
 ) {
     const supabase = await createServerSupabase();
-    return await removeOfficialFromMatch(supabase, matchId, officialId, officialType);
+    return removeOfficialFromMatch(supabase, matchId, officialId, officialType);
 }
 
 export async function removeAllOfficialsOfTypeAction(matchId: string, officialType: OfficialType) {
     const supabase = await createServerSupabase();
-    return await removeAllOfficialsOfType(supabase, matchId, officialType);
+    return removeAllOfficialsOfType(supabase, matchId, officialType);
 }
 
 export async function searchOfficialsInDatabaseAction(input: SearchOfficialsInput) {

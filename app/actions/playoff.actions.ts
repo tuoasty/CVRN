@@ -10,15 +10,15 @@ import {
 
 export async function generatePlayoffBracketAction(input: GeneratePlayoffBracketInput) {
     const supabase = await createServerSupabase();
-    return await generatePlayoffBracket(supabase, input);
+    return generatePlayoffBracket(supabase, input);
 }
 
 export async function getPlayoffBracketBySeasonIdAction(seasonId: string) {
     const supabase = await createServerSupabase();
-    return await getPlayoffBracketBySeasonId(supabase, seasonId);
+    return getPlayoffBracketBySeasonId(supabase, seasonId);
 }
 
 export async function resetPlayoffBracketsAction(seasonId: string) {
     const supabase = await createServerSupabase();
-    return await resetPlayoffBracketsService(supabase, seasonId);
+    return resetPlayoffBracketsService(supabase, seasonId);
 }
