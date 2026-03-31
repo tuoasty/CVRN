@@ -28,6 +28,157 @@ import {convertToUTC, isValidTimezone} from "@/server/utils/timezone";
 
 import {removeAllMatchOfficials} from "@/server/db/matchOfficial.repo";
 
+type MatchResultInput = {
+    sets: Array<{ setNumber: number; homeScore: number; awayScore: number }>;
+    matchMvpPlayerId?: string | null;
+    loserMvpPlayerId?: string | null;
+    isForfeit?: boolean;
+    forfeitingTeam?: "home" | "away";
+};
+
+type MatchContext = {
+    best_of: number;
+    match_type: string;
+    home_team_id: string | null;
+    away_team_id: string | null;
+};
+
+type MatchResultOutput = {
+    homeSetsWon: number;
+    awaySetsWon: number;
+    homeTeamLvr: number | null;
+    awayTeamLvr: number | null;
+    setsToInsert: Array<{ setNumber: number; homeScore: number; awayScore: number }>;
+    matchMvpPlayerId: string | null;
+    loserMvpPlayerId: string | null;
+};
+
+function validateAndCalculateMatchResult(
+    input: MatchResultInput,
+    match: MatchContext
+): Result<MatchResultOutput> {
+    let homeSetsWon = 0;
+    let awaySetsWon = 0;
+    let totalHomePoints = 0;
+    let totalAwayPoints = 0;
+    let homeTeamLvr: number | null = null;
+    let awayTeamLvr: number | null = null;
+    let setsToInsert = input.sets;
+    let matchMvpPlayerId: string | null = input.matchMvpPlayerId || null;
+    let loserMvpPlayerId: string | null = input.loserMvpPlayerId || null;
+
+    if (input.isForfeit) {
+        if (!input.forfeitingTeam) {
+            return Err({
+                name: "ValidationError",
+                message: "Forfeiting team must be specified"
+            });
+        }
+
+        const minSets = match.best_of === 5 ? 3 : 2;
+
+        if (input.forfeitingTeam === "home") {
+            awaySetsWon = minSets;
+            homeSetsWon = 0;
+        } else {
+            homeSetsWon = minSets;
+            awaySetsWon = 0;
+        }
+
+        setsToInsert = Array.from({ length: minSets }, (_, i) => ({
+            setNumber: i + 1,
+            homeScore: input.forfeitingTeam === "home" ? 0 : 25,
+            awayScore: input.forfeitingTeam === "away" ? 0 : 25,
+        }));
+
+        if (match.match_type === "season") {
+            if (input.forfeitingTeam === "home") {
+                homeTeamLvr = -10;
+                awayTeamLvr = 5;
+            } else {
+                homeTeamLvr = 5;
+                awayTeamLvr = -10;
+            }
+        }
+
+        matchMvpPlayerId = null;
+        loserMvpPlayerId = null;
+    } else {
+        const expectedMinSets = match.best_of === 5 ? 3 : 2;
+        const expectedMaxSets = match.best_of;
+
+        if (input.sets.length < expectedMinSets || input.sets.length > expectedMaxSets) {
+            return Err({
+                name: "ValidationError",
+                message: `BO${match.best_of} must have ${expectedMinSets}-${expectedMaxSets} sets`
+            });
+        }
+
+        for (const set of input.sets) {
+            const minWinningScore = set.setNumber === 5 && match.best_of === 5 ? 15 : 25;
+            const maxScore = Math.max(set.homeScore, set.awayScore);
+            const minScore = Math.min(set.homeScore, set.awayScore);
+
+            if (maxScore < minWinningScore) {
+                return Err({
+                    name: "ValidationError",
+                    message: `Set ${set.setNumber}: Winning score must be at least ${minWinningScore}`
+                });
+            }
+
+            if (maxScore - minScore < 2) {
+                return Err({
+                    name: "ValidationError",
+                    message: `Set ${set.setNumber}: Winner must win by at least 2 points`
+                });
+            }
+
+            if (maxScore < minWinningScore + 2 && minScore >= minWinningScore) {
+                return Err({
+                    name: "ValidationError",
+                    message: `Set ${set.setNumber}: Invalid deuce score`
+                });
+            }
+        }
+
+        input.sets.forEach(set => {
+            if (set.homeScore > set.awayScore) {
+                homeSetsWon++;
+            } else {
+                awaySetsWon++;
+            }
+            totalHomePoints += set.homeScore;
+            totalAwayPoints += set.awayScore;
+        });
+
+        matchMvpPlayerId = input.matchMvpPlayerId || null;
+        loserMvpPlayerId = input.loserMvpPlayerId || null;
+
+        if (match.match_type === "season") {
+            const setDiff = homeSetsWon - awaySetsWon;
+            const pointDiff = totalHomePoints - totalAwayPoints;
+
+            const normalizedSetDiff = setDiff / 2;
+            const normalizedPointDiff = pointDiff / 50;
+
+            const lvrValue = 10 * (0.7 * normalizedSetDiff + 0.3 * normalizedPointDiff);
+
+            homeTeamLvr = lvrValue;
+            awayTeamLvr = -lvrValue;
+        }
+    }
+
+    return Ok({
+        homeSetsWon,
+        awaySetsWon,
+        homeTeamLvr,
+        awayTeamLvr,
+        setsToInsert,
+        matchMvpPlayerId,
+        loserMvpPlayerId,
+    });
+}
+
 export async function createMatches(
     supabase: DBClient,
     p: CreateMatchesInput
@@ -302,119 +453,9 @@ export async function completeMatchService(
             });
         }
 
-        let homeSetsWon = 0;
-        let awaySetsWon = 0;
-        let totalHomePoints = 0;
-        let totalAwayPoints = 0;
-        let homeTeamLvr: number | null = null;
-        let awayTeamLvr: number | null = null;
-        let setsToInsert = p.sets;
-        let matchMvpPlayerId: string | null = p.matchMvpPlayerId || null;
-        let loserMvpPlayerId: string | null = p.loserMvpPlayerId || null;
-
-        if (p.isForfeit) {
-            if (!p.forfeitingTeam) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Forfeiting team must be specified"
-                });
-            }
-
-            const minSets = match.best_of === 5 ? 3 : 2;
-
-            if (p.forfeitingTeam === "home") {
-                awaySetsWon = minSets;
-                homeSetsWon = 0;
-            } else {
-                homeSetsWon = minSets;
-                awaySetsWon = 0;
-            }
-
-            setsToInsert = Array.from({ length: minSets }, (_, i) => ({
-                setNumber: i + 1,
-                homeScore: p.forfeitingTeam === "home" ? 0 : 25,
-                awayScore: p.forfeitingTeam === "away" ? 0 : 25,
-            }));
-
-            if (match.match_type === "season") {
-                if (p.forfeitingTeam === "home") {
-                    homeTeamLvr = -10;
-                    awayTeamLvr = 5;
-                } else {
-                    homeTeamLvr = 5;
-                    awayTeamLvr = -10;
-                }
-            }
-
-            matchMvpPlayerId = null;
-            loserMvpPlayerId = null;
-        } else {
-            const expectedMinSets = match.best_of === 5 ? 3 : 2;
-            const expectedMaxSets = match.best_of;
-
-            if (p.sets.length < expectedMinSets || p.sets.length > expectedMaxSets) {
-                return Err({
-                    name: "ValidationError",
-                    message: `BO${match.best_of} must have ${expectedMinSets}-${expectedMaxSets} sets`
-                });
-            }
-
-            for (const set of p.sets) {
-                const minWinningScore = set.setNumber === 5 && match.best_of === 5 ? 15 : 25;
-                const maxScore = Math.max(set.homeScore, set.awayScore);
-                const minScore = Math.min(set.homeScore, set.awayScore);
-
-                if (maxScore < minWinningScore) {
-                    return Err({
-                        name: "ValidationError",
-                        message: `Set ${set.setNumber}: Winning score must be at least ${minWinningScore}`
-                    });
-                }
-
-                if (maxScore - minScore < 2) {
-                    return Err({
-                        name: "ValidationError",
-                        message: `Set ${set.setNumber}: Winner must win by at least 2 points`
-                    });
-                }
-
-                if (maxScore < minWinningScore + 2 && minScore >= minWinningScore) {
-                    return Err({
-                        name: "ValidationError",
-                        message: `Set ${set.setNumber}: Invalid deuce score`
-                    });
-                }
-            }
-
-            p.sets.forEach(set => {
-                if (set.homeScore > set.awayScore) {
-                    homeSetsWon++;
-                } else {
-                    awaySetsWon++;
-                }
-                totalHomePoints += set.homeScore;
-                totalAwayPoints += set.awayScore;
-            });
-
-            const winningTeamId = homeSetsWon > awaySetsWon ? match.home_team_id : match.away_team_id;
-            const losingTeamId = homeSetsWon > awaySetsWon ? match.away_team_id : match.home_team_id;
-
-            matchMvpPlayerId = p.matchMvpPlayerId || null;
-            loserMvpPlayerId = p.loserMvpPlayerId || null;
-
-            if (match.match_type === "season") {
-                const setDiff = homeSetsWon - awaySetsWon;
-                const pointDiff = totalHomePoints - totalAwayPoints;
-
-                const normalizedSetDiff = setDiff / 2;
-                const normalizedPointDiff = pointDiff / 50;
-
-                const lvrValue = 10 * (0.7 * normalizedSetDiff + 0.3 * normalizedPointDiff);
-
-                homeTeamLvr = lvrValue;
-                awayTeamLvr = -lvrValue;
-            }
-        }
+        const calcResult = validateAndCalculateMatchResult(p, match);
+        if (!calcResult.ok) return calcResult;
+        const { homeSetsWon, awaySetsWon, homeTeamLvr, awayTeamLvr, setsToInsert, matchMvpPlayerId, loserMvpPlayerId } = calcResult.value;
 
         const { error: setsError } = await insertMatchSets(supabase, p.matchId, setsToInsert);
 
@@ -639,119 +680,9 @@ export async function updateMatchResultsService(
             }
         }
 
-        let homeSetsWon = 0;
-        let awaySetsWon = 0;
-        let totalHomePoints = 0;
-        let totalAwayPoints = 0;
-        let homeTeamLvr: number | null = null;
-        let awayTeamLvr: number | null = null;
-        let setsToInsert = p.sets;
-        let matchMvpPlayerId: string | null = p.matchMvpPlayerId || null;
-        let loserMvpPlayerId: string | null = p.loserMvpPlayerId || null;
-
-        if (p.isForfeit) {
-            if (!p.forfeitingTeam) {
-                return Err({
-                    name: "ValidationError",
-                    message: "Forfeiting team must be specified"
-                });
-            }
-
-            const minSets = match.best_of === 5 ? 3 : 2;
-
-            if (p.forfeitingTeam === "home") {
-                awaySetsWon = minSets;
-                homeSetsWon = 0;
-            } else {
-                homeSetsWon = minSets;
-                awaySetsWon = 0;
-            }
-
-            setsToInsert = Array.from({ length: minSets }, (_, i) => ({
-                setNumber: i + 1,
-                homeScore: p.forfeitingTeam === "home" ? 0 : 25,
-                awayScore: p.forfeitingTeam === "away" ? 0 : 25,
-            }));
-
-            if (match.match_type === "season") {
-                if (p.forfeitingTeam === "home") {
-                    homeTeamLvr = -10;
-                    awayTeamLvr = 5;
-                } else {
-                    homeTeamLvr = 5;
-                    awayTeamLvr = -10;
-                }
-            }
-
-            matchMvpPlayerId = null;
-            loserMvpPlayerId = null;
-        } else {
-            const expectedMinSets = match.best_of === 5 ? 3 : 2;
-            const expectedMaxSets = match.best_of;
-
-            if (p.sets.length < expectedMinSets || p.sets.length > expectedMaxSets) {
-                return Err({
-                    name: "ValidationError",
-                    message: `BO${match.best_of} must have ${expectedMinSets}-${expectedMaxSets} sets`
-                });
-            }
-
-            for (const set of p.sets) {
-                const minWinningScore = set.setNumber === 5 && match.best_of === 5 ? 15 : 25;
-                const maxScore = Math.max(set.homeScore, set.awayScore);
-                const minScore = Math.min(set.homeScore, set.awayScore);
-
-                if (maxScore < minWinningScore) {
-                    return Err({
-                        name: "ValidationError",
-                        message: `Set ${set.setNumber}: Winning score must be at least ${minWinningScore}`
-                    });
-                }
-
-                if (maxScore - minScore < 2) {
-                    return Err({
-                        name: "ValidationError",
-                        message: `Set ${set.setNumber}: Winner must win by at least 2 points`
-                    });
-                }
-
-                if (maxScore < minWinningScore + 2 && minScore >= minWinningScore) {
-                    return Err({
-                        name: "ValidationError",
-                        message: `Set ${set.setNumber}: Invalid deuce score`
-                    });
-                }
-            }
-
-            p.sets.forEach(set => {
-                if (set.homeScore > set.awayScore) {
-                    homeSetsWon++;
-                } else {
-                    awaySetsWon++;
-                }
-                totalHomePoints += set.homeScore;
-                totalAwayPoints += set.awayScore;
-            });
-
-            const winningTeamId = homeSetsWon > awaySetsWon ? match.home_team_id : match.away_team_id;
-            const losingTeamId = homeSetsWon > awaySetsWon ? match.away_team_id : match.home_team_id;
-
-            matchMvpPlayerId = p.matchMvpPlayerId || null;
-            loserMvpPlayerId = p.loserMvpPlayerId || null;
-
-            if (match.match_type === "season") {
-                const setDiff = homeSetsWon - awaySetsWon;
-                const pointDiff = totalHomePoints - totalAwayPoints;
-
-                const normalizedSetDiff = setDiff / 2;
-                const normalizedPointDiff = pointDiff / 50;
-
-                const lvrValue = 10 * (0.7 * normalizedSetDiff + 0.3 * normalizedPointDiff);
-
-                homeTeamLvr = lvrValue;
-                awayTeamLvr = -lvrValue;
-            }
-        }
+        const calcResult = validateAndCalculateMatchResult(p, match);
+        if (!calcResult.ok) return calcResult;
+        const { homeSetsWon, awaySetsWon, homeTeamLvr, awayTeamLvr, setsToInsert, matchMvpPlayerId, loserMvpPlayerId } = calcResult.value;
 
         const { error: deleteSetsError } = await deleteMatchSets(supabase, p.matchId);
         if (deleteSetsError) {
