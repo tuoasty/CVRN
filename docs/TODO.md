@@ -2,43 +2,35 @@
 
 ## Current Session
 
-### Phase 1: Foundation (completed)
-- [x] Update CLAUDE.md with discovered details and known issues
-- [x] Create `docs/database.md` — full schema reference
-- [x] Create `docs/api-inventory.md` — server actions and service inventory
-- [x] Create `docs/integrations.md` — external API docs
+### Phase 3: Architecture Refactor — Vertical Slice Architecture + CQS
 
-### Phase 2: Code Health Audit (completed)
-- [x] Dead code removal, duplicated logic extraction, sync parallelization, frontend fetch optimization
-- [x] Full findings in `docs/phase2-audit.md`
+Replace `server/services/` with `server/domains/` organized by domain. Each domain contains `commands/` (writes), `queries/` (reads), `validators/` (Zod schemas + domain rules), `types/`, and `helpers/`. Repo layer stays unchanged.
 
-### Phase 3: Architecture Refactor Plan
-- [ ] Evaluate DDD / feature-sliced architecture
-- [ ] Plan decomposition of `match.service.ts` (1,147 lines)
-- [ ] Design runtime validation strategy (Zod for DTOs)
-- [ ] Address repo layer gaps (no transaction support)
+**Migration Steps (incremental — each phase builds successfully):**
+
+- [ ] **Phase 1: Foundation** — Install Zod, create `server/domains/match/` structure, extract types, create Zod schemas
+- [ ] **Phase 2: Extract Match Validators & Helpers** — Move `validateAndCalculateMatchResult` and `toMatchWithDetails` out of `match.service.ts`
+- [ ] **Phase 3: Migrate Match Queries** — Move 8 query functions to `match/queries/`, update action imports
+- [ ] **Phase 4: Migrate Match Commands** — Move 6 command functions to `match/commands/`, extract `advancePlayoffWinner` to `playoff/commands/`, delete `match.service.ts`
+- [ ] **Phase 5: Migrate Remaining Domains** — playoff, player, team, official, season, auth, admin, standing, region (one at a time)
+- [ ] **Phase 6: Add Zod Validation to All Actions** — Add `schema.parse()` at action boundary
+- [ ] **Phase 7 (Optional): Transaction Support** — Supabase RPC functions for `completeMatch` and `voidMatch`
+
+**Detailed plan:** `.claude/plans/modular-crunching-tide.md`
 
 ## Project-Wide
 
 ### Code Quality
 - [ ] Fix `standing.action.ts` → `standing.actions.ts` naming
-- [ ] Decompose `match.service.ts` into smaller focused services
-- [ ] Add runtime validation (Zod schemas) to DTOs
 - [ ] Replace generic README with CVRN-specific documentation
 - [ ] Add error codes / standardized error responses to services
 - [ ] Document service method signatures
 
-### Architecture
-- [ ] Evaluate and plan modular architecture refactor (DDD-lite)
-- [ ] Add transaction support to repository layer
-- [ ] Reduce tight coupling between services
-
-### Bug fixes
-- [x] ~~Player load too slow due to sequential sync~~ — fixed in Phase 2 (parallelized with `Promise.all`)
+### Bug Fixes
 - [ ] Improve match completion/update dialog designs
 
-### Design fixes
-- [ ] Mobile needs a better UI layout, for example migrating to a sidebar with burger toggle for navigation instead of current double navbar with selector
+### Design Fixes
+- [ ] Mobile: migrate to sidebar with burger toggle instead of double navbar
 
 ### Others
 - [ ] Fix typing and typescript errors, not allowed to use :any
