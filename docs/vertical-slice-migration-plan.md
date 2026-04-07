@@ -94,7 +94,7 @@ Steps: Create domain files → update action imports → verify build → delete
 | `season/commands/deleteSeason.ts` | `deleteSeason` |
 | `season/types/index.ts` | re-export from `season.dto` |
 
-### Phase 6: Official (292 lines, 4 queries + 2 commands + helper)
+### Phase 6: Official (292 lines, 4 queries + 2 commands + helper) V
 **Source:** `server/services/official.service.ts`
 **DTO:** `server/dto/official.dto.ts`
 **Action:** `app/actions/matchOfficial.actions.ts` (shared with matchOfficial)
@@ -113,7 +113,7 @@ Steps: Create domain files → update action imports → verify build → delete
 
 **Extra step:** Update `server/services/matchOfficial.service.ts` import of `lazySyncOfficial` to `@/server/domains/official`
 
-### Phase 7: MatchOfficial (194 lines, 2 queries + 4 commands)
+### Phase 7: MatchOfficial (194 lines, 2 queries + 4 commands) V
 **Source:** `server/services/matchOfficial.service.ts`
 **DTO:** `server/dto/matchOfficial.dto.ts`
 **Action:** `app/actions/matchOfficial.actions.ts`
