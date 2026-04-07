@@ -8,13 +8,15 @@ import {
     getMatchOfficialsByType,
     removeOfficialFromMatch,
     removeAllOfficialsOfType
-} from "@/server/services/matchOfficial.service";
+} from "@/server/domains/matchOfficial";
 import {
     getAllOfficials,
     getOfficialsByName,
     saveOfficial,
-    removeOfficial, searchOfficialsInDatabase, getOfficialByExactUsername
-} from "@/server/services/official.service";
+    removeOfficial,
+    searchOfficialsInDatabase,
+    getOfficialByExactUsername
+} from "@/server/domains/official";
 import { AssignOfficialInput, AssignMultipleOfficialsInput, OfficialType } from "@/server/dto/matchOfficial.dto";
 import {SaveOfficialInput, SearchOfficialsInput} from "@/server/dto/official.dto";
 import { RobloxUserIdInput } from "@/server/dto/player.dto";
