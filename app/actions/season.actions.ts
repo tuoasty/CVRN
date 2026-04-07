@@ -1,7 +1,7 @@
 "use server";
 
 import { createServerSupabase } from "@/server/supabase/server";
-import { getAllSeasons, getSeasonBySlugAndRegion } from "@/server/services/season.service";
+import { getAllSeasons, getSeasonBySlugAndRegion } from "@/server/domains/season";
 
 export async function getAllSeasonsAction() {
     const supabase = await createServerSupabase();

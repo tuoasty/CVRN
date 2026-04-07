@@ -49,7 +49,7 @@ Steps: Create domain files → update action imports → verify build → delete
 | `standing/queries/getStandings.ts` | `getStandings` |
 | `standing/types/index.ts` | re-export from `standing.dto` |
 
-### Phase 3: Admin (66 lines, 2 commands, 0 deps)
+### Phase 3: Admin (66 lines, 2 commands, 0 deps) V
 **Source:** `server/services/admin.service.ts`
 **Action:** `app/actions/admin.actions.ts`
 **Consumed by:** `auth.service.ts` (imports `finalizeInvitedUser`)
@@ -61,7 +61,7 @@ Steps: Create domain files → update action imports → verify build → delete
 
 **Extra step:** Update `server/services/auth.service.ts` import of `finalizeInvitedUser` to point to `@/server/domains/admin`
 
-### Phase 4: Auth (174 lines, 3 queries + 4 commands)
+### Phase 4: Auth (174 lines, 3 queries + 4 commands) V
 **Source:** `server/services/auth.service.ts`
 **Action:** `app/actions/auth.actions.ts`
 **Depends on:** admin (migrated in Phase 3)
@@ -77,7 +77,7 @@ Steps: Create domain files → update action imports → verify build → delete
 | `auth/commands/processAuthCallback.ts` | `processAuthCallback` |
 | `auth/types/index.ts` | `AuthUser`, `AuthResponse` (currently inline in service) |
 
-### Phase 5: Season (244 lines, 5 queries + 3 commands, 0 deps)
+### Phase 5: Season (244 lines, 5 queries + 3 commands, 0 deps) V
 **Source:** `server/services/season.service.ts`
 **DTO:** `server/dto/season.dto.ts`
 **Action:** `app/actions/season.actions.ts`
