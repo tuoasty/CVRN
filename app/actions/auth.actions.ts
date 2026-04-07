@@ -1,6 +1,6 @@
 "use server"
 
-import {processAuthCallback, setUserPassword, signIn, signOut} from "@/server/services/auth.service";
+import {processAuthCallback, setUserPassword, signIn, signOut} from "@/server/domains/auth";
 import {createServerSupabase} from "@/server/supabase/server";
 
 export async function loginAction(email:string, password:string){
