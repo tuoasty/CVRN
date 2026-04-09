@@ -45,3 +45,6 @@ next-env.d.ts
 .idea/tasks.xml
 .idea/shelf/
 .idea/httpRequests/
+
+docs
+CLAUDE.md
