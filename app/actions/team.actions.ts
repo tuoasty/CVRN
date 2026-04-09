@@ -14,11 +14,10 @@ import {
     getAllTeams,
     getAllTeamsWithRegions,
     getTeamByNameAndSeason,
-
     getTeamsByIds,
     getTeamWithRegionAndPlayers,
     updateTeam
-} from "@/server/services/team.service";
+} from "@/server/domains/team";
 import { Team } from "@/shared/types/db";
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
