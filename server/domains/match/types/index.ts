@@ -35,3 +35,23 @@ export type MatchResultOutput = {
     matchMvpPlayerId: string | null;
     loserMvpPlayerId: string | null;
 };
+
+export type RawMatchOfficial = {
+    official_type: "referee" | "media";
+    officials: {
+        id: string;
+        username: string | null;
+        display_name: string | null;
+        avatar_url: string | null;
+    };
+};
+
+export type MatchWithDetailsRow = {
+    match_sets: Array<{
+        set_number: number;
+        home_score: number;
+        away_score: number;
+    }>;
+    match_officials: RawMatchOfficial[];
+    [key: string]: unknown;
+};

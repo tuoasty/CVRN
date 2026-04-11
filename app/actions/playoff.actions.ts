@@ -1,7 +1,7 @@
 "use server"
 
-import { createServerSupabase } from "@/server/supabase/server";
-import type { GeneratePlayoffBracketInput } from "@/server/domains/playoff";
+import {createServerSupabase} from "@/server/supabase/server";
+import type {GeneratePlayoffBracketInput} from "@/server/domains/playoff";
 import {
     generatePlayoffBracket,
     getPlayoffBracketBySeasonId,

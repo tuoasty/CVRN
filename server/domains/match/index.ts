@@ -29,4 +29,6 @@ export type {
     MatchSetsInput,
     MatchOfficialEntry,
     MatchWithDetails,
+    RawMatchOfficial,
+    MatchWithDetailsRow,
 } from "./types";
