@@ -1,8 +1,8 @@
-import {DBClient, PlayoffBracket} from "@/shared/types/db";
-import { Err, Ok, Result } from "@/shared/types/result";
-import { serializeError } from "@/server/utils/serializeableError";
-import { logger } from "@/server/utils/logger";
-import { GeneratePlayoffBracketInput, InsertPlayoffBracketDto, InsertPlayoffMatchDto } from "@/server/dto/playoff.dto";
+import {DBClient} from "@/shared/types/db";
+import {Err, Ok, Result} from "@/shared/types/result";
+import {serializeError} from "@/server/utils/serializeableError";
+import {logger} from "@/server/utils/logger";
+import {GeneratePlayoffBracketInput, InsertPlayoffBracketDto, InsertPlayoffMatchDto} from "../types";
 import {
     deletePlayoffMatchesBySeasonId,
     findPlayoffBracketsBySeasonId,
@@ -12,8 +12,10 @@ import {
     insertPlayoffMatches,
     updateSeasonPlayoffStatus
 } from "@/server/db/playoff.repo";
-import { findSeasonById } from "@/server/db/seasons.repo";
-import { randomUUID } from "node:crypto";
+import {findSeasonById} from "@/server/db/seasons.repo";
+import {randomUUID} from "node:crypto";
+import {calculateRounds} from "../helpers/calculateRounds";
+import {getFirstRoundSeeding} from "../helpers/getFirstRoundSeeding";
 
 type RoundType = "play_in" | "round_of_16" | "quarterfinal" | "semifinal" | "final" | "third_place";
 
@@ -438,181 +440,6 @@ export async function generatePlayoffBracket(
         });
     } catch (error) {
         logger.error({ error }, "Unexpected error generating playoff bracket");
-        return Err(serializeError(error));
-    }
-}
-
-function calculateRounds(teamCount: number): Array<{ type: RoundType; matchCount: number }> {
-    const rounds: Array<{ type: RoundType; matchCount: number }> = [];
-    let remainingTeams = teamCount;
-
-    const roundNames: RoundType[] = ["round_of_16", "quarterfinal", "semifinal", "final"];
-    let roundNameIndex = 0;
-
-    if (teamCount === 16) {
-        roundNameIndex = 0;
-    } else if (teamCount === 8) {
-        roundNameIndex = 1;
-    } else if (teamCount === 4) {
-        roundNameIndex = 2;
-    } else if (teamCount === 2) {
-        roundNameIndex = 3;
-    }
-
-    while (remainingTeams > 1) {
-        const matchCount = remainingTeams / 2;
-        const roundType = roundNameIndex < roundNames.length ? roundNames[roundNameIndex] : "quarterfinal";
-
-        rounds.push({
-            type: roundType,
-            matchCount
-        });
-
-        remainingTeams = matchCount;
-        roundNameIndex++;
-    }
-
-    return rounds;
-}
-
-function getFirstRoundSeeding(
-    qualifiedCount: number,
-    playinCount: number,
-    matchIndex: number
-): {
-    homeSeed: number;
-    awayType: 'qualified' | 'playin';
-    awaySeed?: number;
-    playinLowerSeed?: number;
-} {
-    const playinWinners = playinCount / 2;
-    const totalFirstRoundTeams = qualifiedCount + playinWinners;
-    const firstRoundMatchCount = totalFirstRoundTeams / 2;
-
-    if (playinCount > 0) {
-        const topSeedsWithPlayins = playinWinners;
-
-        if (matchIndex < topSeedsWithPlayins) {
-            const homeSeed = matchIndex + 1;
-            const playinMatchIndex = playinWinners - matchIndex - 1;
-            const playinLowerSeed = qualifiedCount + playinCount - playinMatchIndex;
-
-            return {
-                homeSeed,
-                awayType: 'playin',
-                playinLowerSeed
-            };
-        } else {
-            const adjustedIndex = matchIndex - topSeedsWithPlayins;
-            const homeSeed = topSeedsWithPlayins + adjustedIndex + 1;
-            const awaySeed = qualifiedCount - adjustedIndex;
-
-            return {
-                homeSeed,
-                awayType: 'qualified',
-                awaySeed
-            };
-        }
-    } else {
-        const homeSeed = matchIndex + 1;
-        const awaySeed = qualifiedCount - matchIndex;
-
-        return {
-            homeSeed,
-            awayType: 'qualified',
-            awaySeed
-        };
-    }
-}
-
-export async function getPlayoffBracketBySeasonId(supabase: DBClient, seasonId: string): Promise<Result<PlayoffBracket[]>> {
-    try {
-        const { data, error } = await findPlayoffBracketsBySeasonId(supabase, seasonId);
-
-        if (error) {
-            logger.error({ error }, "Failed to fetch playoff bracket matches");
-            return Err(serializeError(error));
-        }
-
-        if (!data) {
-            return Err({
-                name: "FetchError",
-                message: "Failed to fetch playoff brackets"
-            });
-        }
-
-        return Ok(data);
-    } catch (error) {
-        logger.error({ error }, "Unexpected error fetching playoff brackets");
-        return Err(serializeError(error));
-    }
-}
-
-export async function resetPlayoffBracketsService(
-    supabase: DBClient,
-    seasonId: string
-): Promise<Result<{ message: string }>> {
-    try {
-        const { data: season, error: seasonError } = await findSeasonById(supabase, seasonId);
-
-        if (seasonError || !season) {
-            logger.error({ seasonId, error: seasonError }, "Season not found");
-            return Err({
-                name: "NotFoundError",
-                message: "Season not found"
-            });
-        }
-
-        if (!season.playoff_started) {
-            return Err({
-                name: "ValidationError",
-                message: "Playoffs have not been started for this season"
-            });
-        }
-
-        const { data: playoffMatches, error: matchesError } = await supabase
-            .from("matches")
-            .select("id, status")
-            .eq("season_id", seasonId)
-            .eq("match_type", "playoffs");
-
-        if (matchesError) {
-            logger.error({ seasonId, error: matchesError }, "Failed to fetch playoff matches");
-            return Err(serializeError(matchesError));
-        }
-
-        const hasCompletedMatches = playoffMatches?.some(m => m.status === "completed");
-
-        if (hasCompletedMatches) {
-            return Err({
-                name: "ValidationError",
-                message: "Cannot reset brackets - some playoff matches have been completed"
-            });
-        }
-
-        const { error: deleteError } = await deletePlayoffMatchesBySeasonId(supabase, seasonId);
-
-        if (deleteError) {
-            logger.error({ seasonId, error: deleteError }, "Failed to delete playoff matches");
-            return Err(serializeError(deleteError));
-        }
-
-        const { error: updateError } = await updateSeasonPlayoffStatus(supabase, seasonId, {
-            playoffStarted: false
-        });
-
-        if (updateError) {
-            logger.error({ seasonId, error: updateError }, "Failed to update season playoff status");
-            return Err(serializeError(updateError));
-        }
-
-        logger.info({ seasonId }, "Playoff brackets reset successfully");
-
-        return Ok({
-            message: "Playoff brackets reset successfully"
-        });
-    } catch (error) {
-        logger.error({ error }, "Unexpected error resetting playoff brackets");
         return Err(serializeError(error));
     }
 }

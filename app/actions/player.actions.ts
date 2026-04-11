@@ -11,14 +11,18 @@ import {
     getPlayerByExactUsername,
     setPlayerRoleService,
     transferCaptainService
-} from "@/server/services/player.service";
+} from "@/server/domains/player";
 import {createServerSupabase} from "@/server/supabase/server";
-import {
+import type {
     SavePlayerToTeamInput,
     RemovePlayerFromTeamInput,
     TeamPlayersInput,
-    PlayersByIdsInput, SearchPlayersInput, AddExistingPlayerToTeamInput, SetPlayerRoleInput, TransferCaptainInput
-} from "@/server/dto/player.dto";
+    PlayersByIdsInput,
+    SearchPlayersInput,
+    AddExistingPlayerToTeamInput,
+    SetPlayerRoleInput,
+    TransferCaptainInput
+} from "@/server/domains/player";
 
 export async function searchPlayersAction(username:string){
     const supabase = await createServerSupabase();

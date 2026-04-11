@@ -1,12 +1,12 @@
 "use server"
 
 import { createServerSupabase } from "@/server/supabase/server";
-import { GeneratePlayoffBracketInput } from "@/server/dto/playoff.dto";
+import type { GeneratePlayoffBracketInput } from "@/server/domains/playoff";
 import {
     generatePlayoffBracket,
     getPlayoffBracketBySeasonId,
     resetPlayoffBracketsService
-} from "@/server/services/playoff.service";
+} from "@/server/domains/playoff";
 
 export async function generatePlayoffBracketAction(input: GeneratePlayoffBracketInput) {
     const supabase = await createServerSupabase();
