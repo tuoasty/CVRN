@@ -9,16 +9,20 @@ import {
 import {createServerSupabase} from "@/server/supabase/server";
 import {
     completeMatchService,
-    createMatches, deleteMatchService,
-    getAllMatches, getAvailablePlayoffRounds,
+    createMatches,
+    deleteMatchService,
+    getAllMatches,
+    getAvailablePlayoffRounds,
     getAvailableTeamsForWeek,
     getMatchesForWeek,
-    getPlayoffSchedule, getRecentMatches, getUpcomingMatches,
+    getPlayoffSchedule,
+    getRecentMatches,
+    getUpcomingMatches,
     getWeekSchedule,
     updateMatchResultsService,
     updateMatchScheduleService,
     voidMatchService
-} from "@/server/services/match.service";
+} from "@/server/domains/match";
 import {GetPlayoffScheduleInput} from "@/server/dto/playoff.dto";
 
 export async function createMatchesAction(input:CreateMatchesInput) {

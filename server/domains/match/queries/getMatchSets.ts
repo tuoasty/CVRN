@@ -1,0 +1,29 @@
+import {Err, Ok, Result} from "@/shared/types/result";
+import {DBClient, MatchSet} from "@/shared/types/db";
+import {serializeError} from "@/server/utils/serializeableError";
+import {logger} from "@/server/utils/logger";
+import {findMatchSets} from "@/server/db/matches.repo";
+import {MatchSetsInput} from "../types";
+
+export async function getMatchSets(
+    supabase: DBClient,
+    p: MatchSetsInput
+): Promise<Result<MatchSet[]>> {
+    try {
+        const {data, error} = await findMatchSets(supabase, p.matchId);
+
+        if (error) {
+            logger.error({matchId: p.matchId, error}, "Failed to fetch match sets");
+            return Err(serializeError(error));
+        }
+
+        if (!data) {
+            return Ok([]);
+        }
+
+        return Ok(data as MatchSet[]);
+    } catch (error) {
+        logger.error({error}, "Unexpected error fetching match sets");
+        return Err(serializeError(error));
+    }
+}
