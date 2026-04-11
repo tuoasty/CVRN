@@ -38,7 +38,6 @@ export async function updateMatchResultsService(
             }
 
             if (bracket) {
-                // Calculate old and new winners to detect if winner changed
                 const oldHomeSetsWon = match.home_sets_won ?? 0;
                 const oldAwaySetsWon = match.away_sets_won ?? 0;
                 const oldWinnerTeamId = oldHomeSetsWon > oldAwaySetsWon ? match.home_team_id : match.away_team_id;
@@ -65,7 +64,6 @@ export async function updateMatchResultsService(
 
                 const newWinnerTeamId = newHomeSetsWon > newAwaySetsWon ? match.home_team_id : match.away_team_id;
 
-                // Only reset if winner changed
                 if (oldWinnerTeamId !== newWinnerTeamId) {
                     const resetResult = await resetDownstreamBrackets(supabase, bracket.id);
 

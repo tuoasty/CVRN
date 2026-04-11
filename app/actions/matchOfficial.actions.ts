@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerSupabase } from "@/server/supabase/server";
+import {createServerSupabase} from "@/server/supabase/server";
 import {
     assignOfficialToMatch,
     assignMultipleOfficialsToMatch,
@@ -17,9 +17,9 @@ import {
     searchOfficialsInDatabase,
     getOfficialByExactUsername
 } from "@/server/domains/official";
-import { AssignOfficialInput, AssignMultipleOfficialsInput, OfficialType } from "@/server/dto/matchOfficial.dto";
+import {AssignOfficialInput, AssignMultipleOfficialsInput, OfficialType} from "@/server/dto/matchOfficial.dto";
 import {SaveOfficialInput, SearchOfficialsInput} from "@/server/dto/official.dto";
-import { RobloxUserIdInput } from "@/server/dto/player.dto";
+import {RobloxUserIdInput} from "@/server/dto/player.dto";
 
 export async function searchOfficialsByNameAction(username: string) {
     const supabase = await createServerSupabase();

@@ -1,4 +1,4 @@
-"use server";
+"use server"
 
 import {createServerSupabase} from "@/server/supabase/server";
 import {getAllRegions} from "@/server/domains/region";

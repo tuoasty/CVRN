@@ -1,1 +1,1 @@
-export { getStandings } from "./queries/getStandings";
+export {getStandings} from "./queries/getStandings";

@@ -1,7 +1,7 @@
-"use server";
+"use server"
 
-import { createServerSupabase } from "@/server/supabase/server";
-import { Result, Err } from "@/shared/types/result";
+import {createServerSupabase} from "@/server/supabase/server";
+import {Result, Err} from "@/shared/types/result";
 import {
     GetTeamByNameSeason,
     TeamIdInput,
@@ -18,7 +18,7 @@ import {
     getTeamWithRegionAndPlayers,
     updateTeam
 } from "@/server/domains/team";
-import { Team } from "@/shared/types/db";
+import {Team} from "@/shared/types/db";
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
     const { data: { user } } = await supabase.auth.getUser();
