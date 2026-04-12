@@ -17,7 +17,6 @@ import { MatchWithDetails } from "@/server/dto/match.dto";
 import { TeamWithRegion } from "@/server/dto/team.dto";
 import { Player } from "@/shared/types/db";
 import { PlayoffRound } from "@/server/dto/playoff.dto";
-import { clientLogger } from "@/app/utils/clientLogger";
 
 const ROUND_LABELS: Record<string, string> = {
     play_in: "Play-in",

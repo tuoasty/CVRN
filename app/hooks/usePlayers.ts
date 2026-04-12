@@ -1,4 +1,4 @@
-import useSWR, { mutate as globalMutate } from 'swr';
+import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { getTeamPlayersAction, getPlayersByIdsAction } from '@/app/actions/player.actions';
 import { Player } from '@/shared/types/db';
 import { PlayerWithRole } from '@/server/dto/player.dto';
@@ -30,7 +30,7 @@ export function useTeamPlayers(teamId: string | null, seasonId: string | null) {
 
     const { data, error, isLoading, mutate } = useSWR(
         key,
-        fetchTeamPlayers as any,
+        fetchTeamPlayers as BareFetcher<PlayerWithRole[]>,
         {
             dedupingInterval: TEAM_PLAYERS_TTL,
             revalidateOnFocus: false,
@@ -64,7 +64,7 @@ export function usePlayersByIds(playerIds: string[]) {
 
     const { data, error, isLoading } = useSWR(
         key,
-        fetchPlayersByIds as any,
+        fetchPlayersByIds as BareFetcher<Player[]>,
         {
             dedupingInterval: PLAYER_TTL,
             revalidateOnFocus: false,

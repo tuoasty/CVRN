@@ -19,16 +19,20 @@ export function serializeError(error: unknown): SerializableError {
         typeof error === "object" &&
         error !== null &&
         "message" in error &&
-        typeof (error as any).message === "string"
+        typeof (error as { message: unknown }).message === "string"
     ) {
+        const e = error as {
+            message: string;
+            name?: string;
+            code?: string;
+            statusCode?: number;
+            status?: number;
+        };
         return {
-            message: (error as any).message,
-            name: (error as any).name ?? "Error",
-            code: (error as any).code,
-            statusCode:
-                (error as any).statusCode ??
-                (error as any).status ??
-                undefined,
+            message: e.message,
+            name: e.name ?? "Error",
+            code: e.code,
+            statusCode: e.statusCode ?? e.status ?? undefined,
         };
     }
     if (typeof error === "string") {

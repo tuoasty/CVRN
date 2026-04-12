@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useMatchOfficials, removeOfficialFromMatch } from "@/app/hooks/useOfficials";
-import { MatchOfficialWithDetails } from "@/server/domains/matchOfficial";
 import { OfficialType } from "@/server/dto/matchOfficial.dto";
 import { clientLogger } from "@/app/utils/clientLogger";
 import Image from "next/image";
@@ -22,7 +21,7 @@ export default function MatchOfficialSection({
                                                  officialType,
                                                  title,
                                              }: MatchOfficialSectionProps) {
-    const { officials: allOfficials, isLoading, mutate } = useMatchOfficials(matchId);
+    const { officials: allOfficials, mutate } = useMatchOfficials(matchId);
     
     // Filter officials by type
     const officials = allOfficials.filter(mo => mo.official_type === officialType);
@@ -44,7 +43,7 @@ export default function MatchOfficialSection({
                 officialId,
             });
             mutate();
-        } catch (error) {
+        } catch {
             toast.error("Failed to remove official");
         }
 

@@ -1,4 +1,4 @@
-import useSWR from 'swr';
+import useSWR, { type BareFetcher } from 'swr';
 import { getAllSeasonsAction, getSeasonBySlugAndRegionAction } from '@/app/actions/season.actions';
 import { SeasonWithPlayoffConfig } from '@/server/dto/season.dto';
 
@@ -38,7 +38,7 @@ export function useSeasonBySlugAndRegion(slug: string | null, regionId: string |
 
     const { data, error, isLoading } = useSWR(
         key,
-        fetchSeasonBySlugAndRegion as any,
+        fetchSeasonBySlugAndRegion as BareFetcher<SeasonWithPlayoffConfig>,
         {
             dedupingInterval: SEASON_DETAIL_TTL,
             revalidateOnFocus: false,

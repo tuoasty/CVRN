@@ -12,7 +12,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/components/ui/select";
-import { Team } from "@/shared/types/db";
 import { clientLogger } from "@/app/utils/clientLogger";
 import Image from "next/image";
 import { Input } from "@/app/components/ui/input";

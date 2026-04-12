@@ -37,7 +37,7 @@ export type MatchResultOutput = {
 };
 
 export type RawMatchOfficial = {
-    official_type: "referee" | "media";
+    official_type: string;
     officials: {
         id: string;
         username: string | null;

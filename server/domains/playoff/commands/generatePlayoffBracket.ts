@@ -4,8 +4,6 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {GeneratePlayoffBracketInput, InsertPlayoffBracketDto, InsertPlayoffMatchDto} from "../types";
 import {
-    deletePlayoffMatchesBySeasonId,
-    findPlayoffBracketsBySeasonId,
     findPlayoffConfigBySeasonId,
     findStandingsBySeasonId,
     insertPlayoffBrackets,
@@ -16,8 +14,6 @@ import {findSeasonById} from "@/server/db/seasons.repo";
 import {randomUUID} from "node:crypto";
 import {calculateRounds} from "../helpers/calculateRounds";
 import {getFirstRoundSeeding} from "../helpers/getFirstRoundSeeding";
-
-type RoundType = "play_in" | "round_of_16" | "quarterfinal" | "semifinal" | "final" | "third_place";
 
 export async function generatePlayoffBracket(
     supabase: DBClient,

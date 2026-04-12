@@ -1,4 +1,4 @@
-import useSWR, { mutate as globalMutate } from 'swr';
+import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { Match, Team } from '@/shared/types/db';
 import {
     completeMatchAction,
@@ -84,7 +84,7 @@ export function useAllMatches() {
 
 export function useAvailableTeams(seasonId: string | null, week: number | null) {
     const key = seasonId && week != null ? ['availableTeams', seasonId, week] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchAvailableTeams as any, {
+    const { data, error, isLoading, mutate } = useSWR(key, fetchAvailableTeams as BareFetcher<Team[]>, {
         dedupingInterval: AVAILABLE_TEAMS_TTL,
         revalidateOnFocus: false,
     });
@@ -93,7 +93,7 @@ export function useAvailableTeams(seasonId: string | null, week: number | null) 
 
 export function useMatchesForWeek(seasonId: string | null, week: number | null) {
     const key = seasonId && week != null ? ['matchesForWeek', seasonId, week] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchMatchesForWeek as any, {
+    const { data, error, isLoading, mutate } = useSWR(key, fetchMatchesForWeek as BareFetcher<Match[]>, {
         dedupingInterval: MATCHES_TTL,
         revalidateOnFocus: false,
     });
@@ -102,7 +102,7 @@ export function useMatchesForWeek(seasonId: string | null, week: number | null) 
 
 export function useWeekSchedule(seasonId: string | null, week: number | null) {
     const key = seasonId && week != null ? ['weekSchedule', seasonId, week] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchWeekSchedule as any, {
+    const { data, error, isLoading, mutate } = useSWR(key, fetchWeekSchedule as BareFetcher<MatchWithDetails[]>, {
         dedupingInterval: MATCHES_TTL,
         revalidateOnFocus: false,
     });
@@ -111,7 +111,7 @@ export function useWeekSchedule(seasonId: string | null, week: number | null) {
 
 export function usePlayoffSchedule(seasonId: string | null, round: PlayoffRound | null) {
     const key = seasonId && round ? ['playoffSchedule', seasonId, round] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchPlayoffSchedule as any, {
+    const { data, error, isLoading, mutate } = useSWR(key, fetchPlayoffSchedule as BareFetcher<MatchWithDetails[]>, {
         dedupingInterval: MATCHES_TTL,
         revalidateOnFocus: false,
     });
@@ -120,7 +120,7 @@ export function usePlayoffSchedule(seasonId: string | null, round: PlayoffRound 
 
 export function useAvailablePlayoffRounds(seasonId: string | null) {
     const key = seasonId ? ['playoffRounds', seasonId] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchAvailablePlayoffRounds as any, {
+    const { data, error, isLoading, mutate } = useSWR(key, fetchAvailablePlayoffRounds as BareFetcher<string[]>, {
         dedupingInterval: MATCHES_TTL,
         revalidateOnFocus: false,
     });
@@ -129,7 +129,7 @@ export function useAvailablePlayoffRounds(seasonId: string | null) {
 
 export function useUpcomingMatches(seasonId: string | null, limit: number = 5) {
     const key = seasonId ? ['upcoming', seasonId, limit] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchUpcomingMatches as any, {
+    const { data, error, isLoading, mutate } = useSWR(key, fetchUpcomingMatches as BareFetcher<MatchWithDetails[]>, {
         dedupingInterval: MATCHES_TTL,
         revalidateOnFocus: false,
     });
@@ -138,7 +138,7 @@ export function useUpcomingMatches(seasonId: string | null, limit: number = 5) {
 
 export function useRecentMatches(seasonId: string | null, limit: number = 5) {
     const key = seasonId ? ['recent', seasonId, limit] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchRecentMatches as any, {
+    const { data, error, isLoading, mutate } = useSWR(key, fetchRecentMatches as BareFetcher<MatchWithDetails[]>, {
         dedupingInterval: MATCHES_TTL,
         revalidateOnFocus: false,
     });
@@ -153,7 +153,7 @@ export async function updateMatchSchedule(input: UpdateMatchScheduleInput): Prom
     // Revalidate affected caches
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: any) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule'), undefined, { revalidate: true }),
     ]);
     return true;
 }
@@ -163,7 +163,7 @@ export async function completeMatch(input: CompleteMatchInput): Promise<boolean>
     if (!result.ok) throw new Error(result.error.message);
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: any) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'upcoming' || key[0] === 'recent'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'upcoming' || key[0] === 'recent'), undefined, { revalidate: true }),
     ]);
     return true;
 }
@@ -173,7 +173,7 @@ export async function voidMatch(input: VoidMatchInput): Promise<boolean> {
     if (!result.ok) throw new Error(result.error.message);
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: any) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule'), undefined, { revalidate: true }),
     ]);
     return true;
 }
@@ -183,7 +183,7 @@ export async function updateMatchResults(input: CompleteMatchInput): Promise<boo
     if (!result.ok) throw new Error(result.error.message);
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: any) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'matchSets'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'matchSets'), undefined, { revalidate: true }),
     ]);
     return true;
 }
@@ -193,7 +193,7 @@ export async function deleteMatch(matchId: string): Promise<boolean> {
     if (!result.ok) throw new Error(result.error.message);
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: any) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'availableTeams'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'availableTeams'), undefined, { revalidate: true }),
     ]);
     return true;
 }
@@ -201,5 +201,5 @@ export async function deleteMatch(matchId: string): Promise<boolean> {
 // Utility for invalidating match related caches from outside
 export function invalidateMatchCaches() {
     globalMutate('matches');
-    globalMutate((key: any) => Array.isArray(key) && ['matchesForWeek', 'weekSchedule', 'playoffSchedule', 'availableTeams', 'upcoming', 'recent', 'matchSets', 'playoffRounds'].includes(key[0]), undefined, { revalidate: true });
+    globalMutate((key: unknown) => Array.isArray(key) && ['matchesForWeek', 'weekSchedule', 'playoffSchedule', 'availableTeams', 'upcoming', 'recent', 'matchSets', 'playoffRounds'].includes(key[0]), undefined, { revalidate: true });
 }

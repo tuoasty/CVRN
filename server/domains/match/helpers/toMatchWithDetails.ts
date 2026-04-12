@@ -10,7 +10,7 @@ export function toMatchWithDetails(row: MatchWithDetailsRow): MatchWithDetails {
             username: mo.officials.username,
             display_name: mo.officials.display_name,
             avatar_url: mo.officials.avatar_url,
-            official_type: mo.official_type,
+            official_type: mo.official_type as "referee" | "media",
         })),
     };
 }

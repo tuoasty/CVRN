@@ -202,7 +202,7 @@ export default function CompleteMatchDialog({
                 setOpen(false);
                 resetForm();
                 onSuccess();
-            } catch (err) {
+            } catch {
                 toast.error("Failed to complete match");
             }
 
@@ -242,7 +242,7 @@ export default function CompleteMatchDialog({
             setOpen(false);
             resetForm();
             onSuccess();
-        } catch (err) {
+        } catch {
             toast.error("Failed to complete match");
         }
 

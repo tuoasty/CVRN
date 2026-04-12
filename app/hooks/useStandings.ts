@@ -1,6 +1,6 @@
-import useSWR from 'swr';
+import useSWR, { type BareFetcher } from 'swr';
 import { StandingWithInfo } from '@/server/dto/standing.dto';
-import { getStandingsAction } from '@/app/actions/standing.action';
+import { getStandingsAction } from '@/app/actions/standing.actions';
 
 const STANDINGS_TTL = 2 * 60 * 1000;
 
@@ -19,7 +19,7 @@ export function useStandings(seasonId?: string, regionId?: string) {
 
     const { data, error, isLoading, mutate } = useSWR(
         key,
-        fetchStandings as any,
+        fetchStandings as BareFetcher<StandingWithInfo[]>,
         {
             dedupingInterval: STANDINGS_TTL,
             revalidateOnFocus: false,

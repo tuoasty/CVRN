@@ -9,8 +9,6 @@ import { StandingsTable } from "@/app/features/standings/StandingsTable";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
-import { StandingWithInfo } from "@/server/dto/standing.dto";
-import { toast } from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
 
 export default function StandingsPage() {
