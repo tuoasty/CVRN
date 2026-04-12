@@ -5,7 +5,7 @@ import { TeamWithRegion } from "@/server/dto/team.dto";
 import Image from "next/image";
 import { Badge } from "@/app/components/ui/badge";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 interface FeaturedMatchCardProps {
     matchDetails: MatchWithDetails;

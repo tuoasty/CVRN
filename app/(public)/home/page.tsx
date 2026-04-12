@@ -2,7 +2,6 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
 import { useUpcomingMatches, useRecentMatches } from "@/app/hooks/useMatches";
 import { useSeasons } from "@/app/hooks/useSeasons";
@@ -16,7 +15,7 @@ import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import StandingsPreview from "@/app/(public)/home/StandingsPreview";
 import { useStandings } from "@/app/hooks/useStandings";
-import { StandingWithInfo } from "@/server/dto/standing.dto";
+import { MatchWithDetails } from "@/server/dto/match.dto";
 
 export default function HomePage() {
     const { selectedSeasonId, selectedRegionId } = usePublicContextStore();
@@ -70,7 +69,7 @@ export default function HomePage() {
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {upcomingMatches.map((matchDetails: any) => {
+                                    {upcomingMatches.map((matchDetails: MatchWithDetails) => {
                                         const homeTeam = teams.find((t) => t.id === matchDetails.match.home_team_id);
                                         const awayTeam = teams.find((t) => t.id === matchDetails.match.away_team_id);
 
@@ -111,7 +110,7 @@ export default function HomePage() {
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {recentMatches.map((matchDetails: any) => {
+                                    {recentMatches.map((matchDetails: MatchWithDetails) => {
                                         const homeTeam = teams.find((t) => t.id === matchDetails.match.home_team_id);
                                         const awayTeam = teams.find((t) => t.id === matchDetails.match.away_team_id);
 

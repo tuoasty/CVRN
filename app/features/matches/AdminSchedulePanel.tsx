@@ -66,7 +66,6 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
         else mutatePlayoff();
     };
 
-    // Extract team and player IDs from schedule
     const teamIds = useMemo(() => {
         const ids = new Set<string>();
         schedule.forEach(({ match }) => {

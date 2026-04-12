@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { usePlayoffBrackets, generateBracket, resetBrackets } from "@/app/hooks/usePlayoffs";
 import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasons } from "@/app/hooks/useSeasons";
@@ -19,7 +19,6 @@ import {
     AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
 import { toast } from "@/app/utils/toast";
-import { PlayoffBracket } from "@/shared/types/db";
 import { PlayoffBracketDisplay } from "./PlayoffBracketDisplay";
 import { Loader2, Trash2, Trophy } from "lucide-react";
 import { useAdminReady } from "@/app/admin/AdminReadyContext";
@@ -51,8 +50,9 @@ export default function PlayoffManagementPage() {
             await generateBracket({ seasonId: selectedSeasonId });
             toast.success("Playoff bracket generated successfully");
             await mutate("seasons");
-        } catch (error: any) {
-            toast.error("Failed to generate bracket", error?.message);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : undefined;
+            toast.error("Failed to generate bracket", message);
         } finally {
             setIsProcessing(false);
         }
@@ -70,8 +70,9 @@ export default function PlayoffManagementPage() {
             toast.success("Playoff brackets reset successfully");
             setIsResetDialogOpen(false);
             await mutate("seasons");
-        } catch (error: any) {
-            toast.error("Failed to reset brackets", error?.message);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : undefined;
+            toast.error("Failed to reset brackets", message);
         } finally {
             setIsProcessing(false);
         }

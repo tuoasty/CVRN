@@ -1,4 +1,4 @@
-import useSWR, { mutate as globalMutate } from 'swr';
+import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { Official } from '@/shared/types/db';
 import { RobloxUserWithAvatar } from '@/shared/types/roblox';
 import {
@@ -41,7 +41,7 @@ export function useOfficials() {
 
 export function useMatchOfficials(matchId: string | null) {
     const key = matchId ? ['matchOfficials', matchId] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchMatchOfficials as any, {
+    const { data, error, isLoading, mutate } = useSWR(key, fetchMatchOfficials as BareFetcher<MatchOfficialWithDetails[]>, {
         dedupingInterval: OFFICIALS_TTL,
         revalidateOnFocus: false,
     });

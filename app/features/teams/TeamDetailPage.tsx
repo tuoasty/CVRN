@@ -26,7 +26,6 @@ import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
 import UpdateTeamDialog from "@/app/features/teams/UpdateTeamDialog";
-import {Player} from "@/shared/types/db";
 
 type TeamDetailPageProps = {
     regionCode: string;
@@ -74,11 +73,11 @@ export default function TeamDetailPage({
         }, 100);
     };
 
-    const handlePlayerAdded = (_addedPlayer: Player) => {
+    const handlePlayerAdded = () => {
         mutateTeam();
     };
 
-    const handlePlayerRemoved = (_playerId: string) => {
+    const handlePlayerRemoved = () => {
         mutateTeam();
     };
 

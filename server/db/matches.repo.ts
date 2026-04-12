@@ -127,7 +127,7 @@ export async function updateMatchCompletion(
         scheduledAt?: string | null;
     }
 ) {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
         status: data.status,
         home_sets_won: data.homeSetsWon,
         away_sets_won: data.awaySetsWon,

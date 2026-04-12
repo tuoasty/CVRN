@@ -9,8 +9,6 @@ export function getFirstRoundSeeding(
     playinLowerSeed?: number;
 } {
     const playinWinners = playinCount / 2;
-    const totalFirstRoundTeams = qualifiedCount + playinWinners;
-    const firstRoundMatchCount = totalFirstRoundTeams / 2;
 
     if (playinCount > 0) {
         const topSeedsWithPlayins = playinWinners;

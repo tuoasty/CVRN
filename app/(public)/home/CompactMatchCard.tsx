@@ -5,7 +5,7 @@ import { TeamWithRegion } from "@/server/dto/team.dto";
 import Image from "next/image";
 import { Badge } from "@/app/components/ui/badge";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
-import { Calendar, Trophy } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 interface CompactMatchCardProps {
     matchDetails: MatchWithDetails;
@@ -42,7 +42,7 @@ export default function CompactMatchCard({
                                              awayTeam,
                                              regionCode,
                                          }: CompactMatchCardProps) {
-    const { match, sets } = matchDetails;
+    const { match } = matchDetails;
     const statusConfig = getStatusConfig(match.status);
     const regionTimezone = regionCode ? getRegionTimezone(regionCode) : undefined;
 

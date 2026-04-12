@@ -9,8 +9,6 @@ import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDis
 import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import { Trophy, Loader2 } from "lucide-react";
-import { PlayoffBracket } from "@/shared/types/db";
-import { toast } from "@/app/utils/toast";
 import { Badge } from "@/app/components/ui/badge";
 
 export default function PlayoffsPage() {

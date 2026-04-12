@@ -28,7 +28,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/app/components/ui/alert-dialog";
-import { getRegionTimezone, timezoneOptions } from "@/app/utils/timezoneOptions";
+import { timezoneOptions } from "@/app/utils/timezoneOptions";
 import MatchOfficialSection from "@/app/features/officials/MatchOfficialSection";
 import { updateMatchSchedule, voidMatch } from "@/app/hooks/useMatches";
 import { clientLogger } from "@/app/utils/clientLogger";
@@ -47,7 +47,6 @@ interface ManageMatchDialogProps {
 export default function ManageMatchDialog({
                                               matchId,
                                               scheduledAt,
-                                              regionCode,
                                               match,
                                               onSuccess
                                           }: ManageMatchDialogProps) {
@@ -61,48 +60,6 @@ export default function ManageMatchDialog({
         time: string;
         timezone: string;
     } | null>(null);
-
-    const openDialog = () => {
-        if (scheduledAt) {
-            const tz = regionCode ? getRegionTimezone(regionCode) : "Asia/Singapore";
-            const date = new Date(scheduledAt);
-
-            const localDateString = date.toLocaleString('en-US', {
-                timeZone: tz,
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-
-            const parts = localDateString.match(/(\d{2})\/(\d{2})\/(\d{4}),\s(\d{2}):(\d{2})/);
-
-            if (parts) {
-                const [, month, day, year, hours, minutes] = parts;
-
-                setEditSchedule({
-                    date: `${year}-${month}-${day}`,
-                    time: `${hours}:${minutes}`,
-                    timezone: tz
-                });
-            } else {
-                setEditSchedule({
-                    date: "",
-                    time: "",
-                    timezone: tz
-                });
-            }
-        } else {
-            setEditSchedule({
-                date: "",
-                time: "",
-                timezone: regionCode ? getRegionTimezone(regionCode) : "Asia/Singapore"
-            });
-        }
-        setOpen(true);
-    };
 
     const handleUpdateSchedule = async () => {
         if (!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone) {

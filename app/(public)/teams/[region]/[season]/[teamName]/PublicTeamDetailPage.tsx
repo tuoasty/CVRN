@@ -10,7 +10,6 @@ import { Badge } from "@/app/components/ui/badge";
 import { ChevronLeft, Users } from "lucide-react";
 import { PlayerWithRole } from "@/server/dto/player.dto";
 import { Card, CardContent } from "@/app/components/ui/card";
-import { clientLogger } from "@/app/utils/clientLogger";
 
 const ROLE_BADGE_CONFIG = {
     captain: { label: "C", className: "bg-purple-600/15 text-purple-600 border-purple-600/30" },

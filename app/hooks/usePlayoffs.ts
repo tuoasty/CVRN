@@ -1,4 +1,4 @@
-import useSWR, { mutate as globalMutate } from 'swr';
+import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { PlayoffBracket } from '@/shared/types/db';
 import {
     generatePlayoffBracketAction,
@@ -20,7 +20,7 @@ export function usePlayoffBrackets(seasonId: string | null) {
 
     const { data, error, isLoading, mutate } = useSWR(
         key,
-        fetchBrackets as any,
+        fetchBrackets as BareFetcher<PlayoffBracket[]>,
         {
             dedupingInterval: BRACKETS_TTL,
             revalidateOnFocus: false,
