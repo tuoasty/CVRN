@@ -170,7 +170,7 @@ export default function TeamDetailPage({
                         <span className="font-mono font-semibold">{regionCodeDisplay}</span> - {regionName} / {seasonName}
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <Button
                         variant={showAddForm ? "secondary" : "default"}
                         onClick={handleOpenAddForm}
@@ -206,27 +206,27 @@ export default function TeamDetailPage({
                 </div>
             </div>
 
-            <div className="panel p-6">
-                <div className="flex items-start gap-6">
+            <div className="panel p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
                     {teamData.logo_url && (
-                        <div className="relative w-32 h-32 shrink-0">
+                        <div className="relative w-24 h-24 sm:w-32 sm:h-32 shrink-0 mx-auto sm:mx-0">
                             <Image
                                 src={teamData.logo_url}
                                 alt={teamData.name || ""}
                                 fill
-                                sizes="128px"
+                                sizes="(max-width: 640px) 96px, 128px"
                                 className="object-contain"
                             />
                         </div>
                     )}
-                    <div className="space-y-3">
+                    <div className="space-y-3 w-full min-w-0">
                         <div>
                             <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
                                 Team Name
                             </div>
                             <div className="text-xl font-semibold">{teamData.name}</div>
                         </div>
-                        <div className="grid grid-cols-3 gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
                             <div>
                                 <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
                                     Brick Number
@@ -298,7 +298,7 @@ export default function TeamDetailPage({
                     <>
                         <div>
                             <h3 className="text-sm uppercase tracking-wide text-muted-foreground mb-3">Leadership</h3>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <CaptainSlotCard
                                     role="captain"
                                     player={captain}

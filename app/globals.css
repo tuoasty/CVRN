@@ -141,7 +141,7 @@
   }
 
   .admin-header {
-    @apply flex items-center justify-between pb-6 border-b border-border;
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-border;
   }
 
   /* Form Components */

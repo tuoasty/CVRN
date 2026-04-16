@@ -199,7 +199,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="space-y-2">
                         <Label htmlFor="name">Team Name</Label>
                         <Input
@@ -256,7 +256,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                     >
                         {preview ? (
                             <div className="space-y-3">
-                                <div className="relative w-32 h-32 mx-auto">
+                                <div className="relative w-24 h-24 sm:w-32 sm:h-32 mx-auto">
                                     <Image
                                         src={preview}
                                         alt="Logo Preview"
@@ -296,7 +296,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="space-y-2">
                         <Label htmlFor="brickNumber">Brick Number</Label>
                         <Input
