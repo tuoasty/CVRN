@@ -50,21 +50,23 @@ export default function UserButton() {
     }, []);
 
     const handleClick = () => {
+        if (!isAuthenticated) {
+            const returnUrl = encodeURIComponent(pathname);
+            startTransition(() => {
+                router.push(`/auth/login?returnUrl=${returnUrl}`);
+            });
+            return;
+        }
+
         const isOnAdminRoute = pathname.startsWith("/admin");
 
-        if (isAuthenticated && isAdmin) {
-            if (isOnAdminRoute) {
-                startTransition(() => {
-                    router.push("/home");
-                });
-            } else {
-                startTransition(() => {
-                    router.push("/admin/dashboard");
-                });
-            }
+        if (isAdmin) {
+            startTransition(() => {
+                router.push(isOnAdminRoute ? "/home" : "/admin/dashboard");
+            });
         } else {
             startTransition(() => {
-                router.push(`/home`);
+                router.push("/home");
             });
         }
     };
