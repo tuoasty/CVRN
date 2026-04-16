@@ -57,40 +57,44 @@ export default function PublicNavbar() {
                         </h1>
                     </Link>
 
-                    <Sheet open={open} onOpenChange={setOpen}>
-                        <SheetTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-10 w-10 p-0 rounded-sm"
-                                aria-label="Open navigation menu"
-                            >
-                                <Menu className="h-5 w-5" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="left" className="w-72 sm:max-w-sm">
-                            <SheetHeader>
-                                <SheetTitle>CVRN</SheetTitle>
-                                <SheetDescription className="sr-only">
-                                    Navigation menu
-                                </SheetDescription>
-                            </SheetHeader>
-                            <div className="flex flex-col gap-4 px-4 pb-4">
-                                <PublicNavItems
-                                    layout="vertical"
-                                    onNavigate={() => setOpen(false)}
-                                />
-                                <div className="h-px bg-border" />
-                                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                        <UserButton />
+                        <Sheet open={open} onOpenChange={setOpen}>
+                            <SheetTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-10 w-10 p-0 rounded-sm"
+                                    aria-label="Open navigation menu"
+                                >
+                                    <Menu className="h-5 w-5" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="w-72 sm:max-w-sm">
+                                <SheetHeader>
+                                    <SheetTitle>CVRN</SheetTitle>
+                                    <SheetDescription className="sr-only">
+                                        Navigation menu
+                                    </SheetDescription>
+                                </SheetHeader>
+                                <div className="flex flex-col gap-4 px-4 pb-4">
+                                    <PublicNavItems
+                                        layout="vertical"
+                                        onNavigate={() => setOpen(false)}
+                                    />
+                                    <div className="h-px bg-border" />
                                     <RegionSeasonSelector />
-                                    <div className="flex items-center gap-2">
+                                    <div className="h-px bg-border" />
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-muted-foreground">
+                                            Theme
+                                        </span>
                                         <ModeToggle />
-                                        <UserButton />
                                     </div>
                                 </div>
-                            </div>
-                        </SheetContent>
-                    </Sheet>
+                            </SheetContent>
+                        </Sheet>
+                    </div>
                 </div>
             </div>
         </header>
