@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(awk '/<Image/,/>/{print NR\": \"$0}' /d/KEVIN/0SLC/Random/cvrn/app/\\\\\\(public\\\\\\)/home/FeaturedMatchCard.tsx)"
+    ]
+  }
+}

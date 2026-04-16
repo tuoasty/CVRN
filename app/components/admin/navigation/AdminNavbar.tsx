@@ -1,15 +1,35 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Menu, Users } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/app/components/ui/sheet";
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import { LogoutButton } from "@/app/components/ui/LogoutButton";
 import AdminNavItems from "@/app/components/admin/navigation/AdminNavItems";
-import { Users } from "lucide-react";
-import { Button } from "@/app/components/ui/button";
 
 export default function AdminNavbar() {
+    const pathname = usePathname();
+    const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+        setOpen(false);
+    }, [pathname]);
+
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-card">
-            <div className="max-w-7xl mx-auto px-6 py-3">
-                <div className="flex items-center justify-between">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                {/* Desktop: Single Row */}
+                <div className="hidden lg:flex items-center justify-between py-3">
                     <div className="flex items-center gap-8">
                         <Link href="/admin/dashboard">
                             <h1 className="text-lg font-semibold tracking-tight">
@@ -35,6 +55,56 @@ export default function AdminNavbar() {
                             </Button>
                         </Link>
                     </div>
+                </div>
+
+                {/* Mobile/Tablet: Single Row with Burger */}
+                <div className="lg:hidden flex items-center justify-between py-2.5">
+                    <Link href="/admin/dashboard">
+                        <h1 className="text-lg font-semibold tracking-tight">
+                            CVRN
+                        </h1>
+                    </Link>
+
+                    <Sheet open={open} onOpenChange={setOpen}>
+                        <SheetTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-10 w-10 p-0 rounded-sm"
+                                aria-label="Open navigation menu"
+                            >
+                                <Menu className="h-5 w-5" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="w-72 sm:max-w-sm">
+                            <SheetHeader>
+                                <SheetTitle>CVRN Admin</SheetTitle>
+                                <SheetDescription className="sr-only">
+                                    Admin navigation menu
+                                </SheetDescription>
+                            </SheetHeader>
+                            <div className="flex flex-col gap-4 px-4 pb-4">
+                                <AdminNavItems
+                                    layout="vertical"
+                                    onNavigate={() => setOpen(false)}
+                                />
+                                <div className="h-px bg-border" />
+                                <Link
+                                    href="/home"
+                                    onClick={() => setOpen(false)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-sm text-sm hover:bg-accent"
+                                >
+                                    <Users className="h-4 w-4" />
+                                    <span>Public Site</span>
+                                </Link>
+                                <div className="h-px bg-border" />
+                                <div className="flex items-center gap-2">
+                                    <LogoutButton />
+                                    <ModeToggle />
+                                </div>
+                            </div>
+                        </SheetContent>
+                    </Sheet>
                 </div>
             </div>
         </header>
