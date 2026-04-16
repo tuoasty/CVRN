@@ -65,46 +65,51 @@ export default function AdminNavbar() {
                         </h1>
                     </Link>
 
-                    <Sheet open={open} onOpenChange={setOpen}>
-                        <SheetTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-10 w-10 p-0 rounded-sm"
-                                aria-label="Open navigation menu"
-                            >
-                                <Menu className="h-5 w-5" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="left" className="w-72 sm:max-w-sm">
-                            <SheetHeader>
-                                <SheetTitle>CVRN Admin</SheetTitle>
-                                <SheetDescription className="sr-only">
-                                    Admin navigation menu
-                                </SheetDescription>
-                            </SheetHeader>
-                            <div className="flex flex-col gap-4 px-4 pb-4">
-                                <AdminNavItems
-                                    layout="vertical"
-                                    onNavigate={() => setOpen(false)}
-                                />
-                                <div className="h-px bg-border" />
-                                <Link
-                                    href="/home"
-                                    onClick={() => setOpen(false)}
-                                    className="flex items-center gap-2 px-3 py-2 rounded-sm text-sm hover:bg-accent"
+                    <div className="flex items-center gap-2">
+                        <LogoutButton />
+                        <Sheet open={open} onOpenChange={setOpen}>
+                            <SheetTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-10 w-10 p-0 rounded-sm"
+                                    aria-label="Open navigation menu"
                                 >
-                                    <Users className="h-4 w-4" />
-                                    <span>Public Site</span>
-                                </Link>
-                                <div className="h-px bg-border" />
-                                <div className="flex items-center gap-2">
-                                    <LogoutButton />
-                                    <ModeToggle />
+                                    <Menu className="h-5 w-5" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="w-72 sm:max-w-sm">
+                                <SheetHeader>
+                                    <SheetTitle>CVRN Admin</SheetTitle>
+                                    <SheetDescription className="sr-only">
+                                        Admin navigation menu
+                                    </SheetDescription>
+                                </SheetHeader>
+                                <div className="flex flex-col gap-4 px-4 pb-4">
+                                    <AdminNavItems
+                                        layout="vertical"
+                                        onNavigate={() => setOpen(false)}
+                                    />
+                                    <div className="h-px bg-border" />
+                                    <Link
+                                        href="/home"
+                                        onClick={() => setOpen(false)}
+                                        className="flex items-center gap-2 px-3 py-2 rounded-sm text-sm hover:bg-accent"
+                                    >
+                                        <Users className="h-4 w-4" />
+                                        <span>Public Site</span>
+                                    </Link>
+                                    <div className="h-px bg-border" />
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-muted-foreground">
+                                            Theme
+                                        </span>
+                                        <ModeToggle />
+                                    </div>
                                 </div>
-                            </div>
-                        </SheetContent>
-                    </Sheet>
+                            </SheetContent>
+                        </Sheet>
+                    </div>
                 </div>
             </div>
         </header>
