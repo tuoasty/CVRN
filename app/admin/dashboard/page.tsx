@@ -30,7 +30,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <Card className="rounded-sm border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
                         <CardHeader className="pb-3">
                             <CardTitle className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
                     </Card>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <Link href="/admin/teams">
                         <Card className="rounded-sm border-l-4 border-l-primary/20 hover:border-l-primary hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer h-full bg-gradient-to-r from-primary/5 to-transparent">
                             <CardHeader className="pb-3">
