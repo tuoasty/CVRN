@@ -134,11 +134,11 @@ export default function ManageMatchDialog({
         <>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-sm">
+                    <Button variant="ghost" size="sm" className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm">
                         <Settings className="h-4 w-4" />
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
                     <DialogHeader>
                         <DialogTitle>Manage Match</DialogTitle>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -150,7 +150,7 @@ export default function ManageMatchDialog({
                         <div className="space-y-4">
                             <h3 className="font-semibold">Schedule</h3>
 
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="timezone">Timezone</Label>
                                     <Select
