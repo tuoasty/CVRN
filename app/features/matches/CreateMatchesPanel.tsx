@@ -179,7 +179,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="default-timezone">Timezone</Label>
                             <Select
@@ -251,7 +251,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
             </div>
 
             <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                         <h3>Match Pairs</h3>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -261,7 +261,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                     <Button
                         onClick={handleSubmit}
                         disabled={submitting || matchPairs.length === 0 || matchPairs.some(m => !m.homeTeamId || !m.awayTeamId)}
-                        className="rounded-sm"
+                        className="w-full sm:w-auto rounded-sm"
                     >
                         {submitting ? "Creating..." : `Create ${matchPairs.filter(m => m.homeTeamId && m.awayTeamId).length} Matches`}
                     </Button>
@@ -326,7 +326,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                 </Button>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Home Team</Label>
                                     <Select
@@ -460,7 +460,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                     Override default schedule for this specific match
                                 </p>
 
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div className="space-y-1">
                                         <Label className="text-xs">Timezone</Label>
                                         <Select

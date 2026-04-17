@@ -52,7 +52,7 @@ export default function DeleteMatchDialog({ matchId, onSuccess }: DeleteMatchDia
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm">
+                <Button variant="ghost" size="sm" className="h-10 w-10 sm:h-8 sm:w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm">
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </AlertDialogTrigger>

@@ -45,7 +45,7 @@ export default function RegionSeasonSelector() {
 
     return (
         <Select value={selectedSeasonId || ""} onValueChange={handleSeasonChange}>
-            <SelectTrigger className="w-[180px] h-9 rounded-sm text-sm">
+            <SelectTrigger className="w-full sm:w-[180px] h-9 rounded-sm text-sm">
                 <SelectValue placeholder="Select Season">
                     {displayValue}
                 </SelectValue>

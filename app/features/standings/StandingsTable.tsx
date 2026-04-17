@@ -125,8 +125,8 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                 <TableHead className="w-20 text-center">RANK</TableHead>
                                 <TableHead>TEAM</TableHead>
                                 <TableHead className="text-center">RECORD</TableHead>
-                                <TableHead className="text-center">WIN %</TableHead>
-                                <TableHead className="text-center">SETS</TableHead>
+                                <TableHead className="hidden sm:table-cell text-center">WIN %</TableHead>
+                                <TableHead className="hidden sm:table-cell text-center">SETS</TableHead>
                                 <TableHead className="text-center">LVR</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -145,10 +145,10 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                     <TableCell className="text-center">
                                         <Skeleton className="h-5 w-12 rounded-sm mx-auto" />
                                     </TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className="hidden sm:table-cell text-center">
                                         <Skeleton className="h-5 w-14 rounded-sm mx-auto" />
                                     </TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className="hidden sm:table-cell text-center">
                                         <Skeleton className="h-5 w-12 rounded-sm mx-auto" />
                                     </TableCell>
                                     <TableCell className="text-center">
@@ -179,8 +179,8 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
     return (
         <div className="space-y-4">
             <div className="panel p-4 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-6 text-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-4 sm:gap-6 text-sm flex-wrap">
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded-sm bg-primary/60 border-2 border-primary"></div>
                             <span className="text-muted-foreground font-medium">Playoffs ({qualifiedTeams})</span>
@@ -227,8 +227,8 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             <TableHead className="w-20 text-center text-[10px] uppercase tracking-wider font-semibold">Rank</TableHead>
                             <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Team</TableHead>
                             <TableHead className="text-center text-[10px] uppercase tracking-wider font-semibold">Record</TableHead>
-                            <TableHead className="text-center text-[10px] uppercase tracking-wider font-semibold">Win %</TableHead>
-                            <TableHead className="text-center text-[10px] uppercase tracking-wider font-semibold">Sets</TableHead>
+                            <TableHead className="hidden sm:table-cell text-center text-[10px] uppercase tracking-wider font-semibold">Win %</TableHead>
+                            <TableHead className="hidden sm:table-cell text-center text-[10px] uppercase tracking-wider font-semibold">Sets</TableHead>
                             <TableHead className="text-center text-[10px] uppercase tracking-wider font-semibold">LVR</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -269,10 +269,10 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                     <TableCell className="text-center font-bold text-sm tabular-nums py-4">
                                         {wins}-{losses}
                                     </TableCell>
-                                    <TableCell className="text-center text-sm text-muted-foreground tabular-nums py-4">
+                                    <TableCell className="hidden sm:table-cell text-center text-sm text-muted-foreground tabular-nums py-4">
                                         {winPct.toFixed(1)}%
                                     </TableCell>
-                                    <TableCell className="text-center text-sm text-muted-foreground tabular-nums py-4">
+                                    <TableCell className="hidden sm:table-cell text-center text-sm text-muted-foreground tabular-nums py-4">
                                         {standing.sets_won || 0}-{standing.sets_lost || 0}
                                     </TableCell>
                                     <TableCell className="text-center py-4">
