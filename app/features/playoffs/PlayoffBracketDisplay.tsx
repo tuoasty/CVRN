@@ -415,7 +415,7 @@ export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisp
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
-                style={{ cursor: isDragging ? 'grabbing' : 'default' }}
+                style={{ cursor: isDragging ? 'grabbing' : 'default', touchAction: 'pan-x pan-y pinch-zoom' }}
             >
                 {isFullscreen && (
                     <div className="sticky top-0 right-0 z-50 flex justify-end p-4 bg-background/95 backdrop-blur-sm border-b border-border">
