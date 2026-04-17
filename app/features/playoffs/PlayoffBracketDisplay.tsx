@@ -388,7 +388,7 @@ export function PlayoffBracketDisplay({brackets, regionId}: PlayoffBracketDispla
                 maxScale={2}
                 initialScale={0.6}
                 centerOnInit
-                wheel={{step: 0.002, smoothStep: 0.001}}
+                wheel={{step: 0.002}}
                 panning={{velocityDisabled: false}}
                 doubleClick={{disabled: true}}
             >
