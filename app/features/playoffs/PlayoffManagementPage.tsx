@@ -100,8 +100,8 @@ export default function PlayoffManagementPage() {
                     </div>
                 </div>
 
-                <div className="panel p-6 max-w-2xl mb-6 border-l-4 border-l-primary/30">
-                    <div className="grid grid-cols-2 gap-4">
+                <div className="panel p-4 sm:p-6 max-w-2xl mb-6 border-l-4 border-l-primary/30">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Region</label>
                             {ready ? (
