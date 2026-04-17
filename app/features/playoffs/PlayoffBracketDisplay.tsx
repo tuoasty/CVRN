@@ -377,7 +377,7 @@ export function PlayoffBracketDisplay({brackets, regionId}: PlayoffBracketDispla
         <div
             ref={containerRef}
             className="relative panel overflow-hidden border-l-4 border-l-primary/30 rounded-sm"
-            style={{height: "calc(100vh - 12rem)"}}
+            style={{height: "calc(100vh - 12rem)", touchAction: "pan-x pan-y pinch-zoom"}}
         >
             <div className="absolute top-3 left-3 z-20 flex items-center gap-2 text-xs text-muted-foreground bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-border shadow-sm">
                 <span>Scroll to zoom · Drag to pan</span>

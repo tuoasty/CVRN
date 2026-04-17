@@ -97,7 +97,7 @@ export default function PublicFooter(){
                 </div>
             </div>
 
-            <div className="border-t border-border px-6 py-3 max-w-5xl mx-auto flex items-center justify-between">
+            <div className="border-t border-border px-6 py-3 max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                     © 2025 CVRN · Confederate Volleyball Roblox Network
                 </p>

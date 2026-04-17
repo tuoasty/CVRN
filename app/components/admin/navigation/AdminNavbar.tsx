@@ -49,7 +49,7 @@ export default function AdminNavbar() {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 rounded-sm"
+                                className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm"
                             >
                                 <Users className="h-4 w-4" />
                             </Button>
