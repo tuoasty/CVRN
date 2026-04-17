@@ -3,13 +3,6 @@
 import { usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/app/components/ui/button";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/app/components/ui/select";
 import { useRouter } from "next/navigation";
 import LoadingComponent from "@/app/components/ui/LoadingComponent";
 
@@ -21,18 +14,34 @@ const NAV_ITEMS = [
     { href: "/teams", label: "Teams" },
 ];
 
-export default function PublicNavItems() {
+interface PublicNavItemsProps {
+    layout?: "horizontal" | "vertical";
+    onNavigate?: () => void;
+}
+
+export default function PublicNavItems({
+    layout = "horizontal",
+    onNavigate,
+}: PublicNavItemsProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
-    const currentItem = NAV_ITEMS.find((item) => pathname === item.href);
+    const navClasses =
+        layout === "vertical"
+            ? "flex flex-col gap-1 w-full"
+            : "hidden lg:flex gap-1";
+
+    const buttonClasses =
+        layout === "vertical"
+            ? "w-full justify-start rounded-sm text-sm"
+            : "rounded-sm text-sm";
 
     return (
         <>
-            <LoadingComponent isPending={isPending}/>
+            <LoadingComponent isPending={isPending} />
 
-            <nav className="hidden md:flex gap-1">
+            <nav className={navClasses}>
                 {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -40,11 +49,12 @@ export default function PublicNavItems() {
                             key={item.href}
                             variant={isActive ? "secondary" : "ghost"}
                             size="sm"
-                            className="rounded-sm text-sm"
+                            className={buttonClasses}
                             onClick={() => {
                                 startTransition(() => {
                                     router.push(item.href);
                                 });
+                                onNavigate?.();
                             }}
                         >
                             {item.label}
@@ -52,32 +62,6 @@ export default function PublicNavItems() {
                     );
                 })}
             </nav>
-
-            <Select
-                value={pathname}
-                onValueChange={(value) => {
-                    startTransition(() => {
-                        router.push(value);
-                    });
-                }}
-            >
-                <SelectTrigger className="md:hidden w-[140px] h-8 rounded-sm text-sm">
-                    <SelectValue>
-                        {currentItem?.label || "Navigate"}
-                    </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-sm">
-                    {NAV_ITEMS.map((item) => (
-                        <SelectItem
-                            key={item.href}
-                            value={item.href}
-                            className="rounded-sm text-sm"
-                        >
-                            {item.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
         </>
     );
 }

@@ -99,11 +99,13 @@ export default function PlayoffsPage() {
                         </div>
                     </div>
                 ) : (
-                    <PlayoffBracketDisplay
-                        brackets={brackets}
-                        seasonId={selectedSeasonId}
-                        regionId={selectedSeason.region_id}
-                    />
+                    <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+                        <PlayoffBracketDisplay
+                            brackets={brackets}
+                            seasonId={selectedSeasonId}
+                            regionId={selectedSeason.region_id}
+                        />
+                    </div>
                 )}
             </div>
         </>

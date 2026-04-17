@@ -42,23 +42,25 @@ export default function StandingsManagementPage() {
     return (
         <div className="admin-container">
             <div className="admin-section">
-                <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
-                    <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
-                        <Trophy className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                        <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                            Standings
-                        </h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            {selectedRegion && selectedSeason
-                                ? `${selectedRegion.name} • ${selectedSeason.name}`
-                                : "Select a region and season to view standings"
-                            }
-                        </p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 pb-6 border-b-2 border-primary/20">
+                    <div className="flex items-center gap-4 flex-1">
+                        <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20 shrink-0">
+                            <Trophy className="h-7 w-7 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                                Standings
+                            </h1>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                {selectedRegion && selectedSeason
+                                    ? `${selectedRegion.name} • ${selectedSeason.name}`
+                                    : "Select a region and season to view standings"
+                                }
+                            </p>
+                        </div>
                     </div>
                     {standings.length > 0 && (
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6">
                             <div className="text-right">
                                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Teams</div>
                                 <div className="text-lg font-bold text-primary tabular-nums">{stats.totalTeams}</div>
@@ -75,8 +77,8 @@ export default function StandingsManagementPage() {
                     )}
                 </div>
 
-                <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-                    <div className="grid grid-cols-2 gap-6">
+                <div className="panel p-4 sm:p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
                             <label className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Region</label>
                             {ready ? (

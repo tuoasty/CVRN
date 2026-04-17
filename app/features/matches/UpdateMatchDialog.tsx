@@ -302,11 +302,11 @@ export default function UpdateMatchDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-sm">
+                <Button variant="ghost" size="sm" className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm">
                     <Pencil className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="!max-w-2xl max-h-[85vh] flex flex-col rounded-sm">
+            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl max-h-[85vh] flex flex-col rounded-sm">
                 <DialogHeader className="shrink-0">
                     <DialogTitle>Update Match Results</DialogTitle>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -370,9 +370,9 @@ export default function UpdateMatchDialog({
                                                     Set {idx + 1}
                                                 </Label>
                                                 <div className="panel p-3">
-                                                    <div className="flex items-center justify-center gap-4">
+                                                    <div className="flex items-center justify-center gap-2 sm:gap-4">
                                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium w-28 text-right">
+                                            <span className="text-sm font-medium sm:w-28 text-right truncate">
                                                 {homeTeamName}
                                             </span>
                                                             <Input
@@ -380,7 +380,7 @@ export default function UpdateMatchDialog({
                                                                 min="0"
                                                                 value={set.homeScore}
                                                                 onChange={e => handleSetScoreChange(idx, "home", e.target.value)}
-                                                                className="w-16 rounded-sm text-center text-base font-semibold h-9"
+                                                                className="w-14 sm:w-16 h-11 sm:h-9 rounded-sm text-center text-base font-semibold"
                                                                 placeholder="0"
                                                             />
                                                         </div>
@@ -393,10 +393,10 @@ export default function UpdateMatchDialog({
                                                                 min="0"
                                                                 value={set.awayScore}
                                                                 onChange={e => handleSetScoreChange(idx, "away", e.target.value)}
-                                                                className="w-16 rounded-sm text-center text-base font-semibold h-9"
+                                                                className="w-14 sm:w-16 h-11 sm:h-9 rounded-sm text-center text-base font-semibold"
                                                                 placeholder="0"
                                                             />
-                                                            <span className="text-sm font-medium w-28">
+                                                            <span className="text-sm font-medium sm:w-28 truncate">
                                                 {awayTeamName}
                                             </span>
                                                         </div>
@@ -408,8 +408,8 @@ export default function UpdateMatchDialog({
 
                                     {setScores.length > 0 && (
                                         <div className="panel p-3 bg-muted/50">
-                                            <div className="flex items-center justify-center gap-6">
-                                                <div className="flex items-center gap-2 w-40">
+                                            <div className="flex items-center justify-center gap-2 sm:gap-6">
+                                                <div className="flex items-center gap-2 flex-1 sm:w-40 sm:flex-none min-w-0">
                                                     <span className="font-semibold flex-1 text-right">{homeTeamName}</span>
                                                     <Badge variant="secondary" className="rounded-sm shrink-0">
                                                         {homeSetsWon}
@@ -418,7 +418,7 @@ export default function UpdateMatchDialog({
 
                                                 <span className="text-muted-foreground text-sm font-medium shrink-0">-</span>
 
-                                                <div className="flex items-center gap-3 w-48">
+                                                <div className="flex items-center gap-2 sm:gap-3 flex-1 sm:w-48 sm:flex-none min-w-0">
                                                     <Badge variant="secondary" className="rounded-sm shrink-0">
                                                         {awaySetsWon}
                                                     </Badge>
@@ -539,9 +539,9 @@ export default function UpdateMatchDialog({
                                                     Set {idx + 1}
                                                 </Label>
                                                 <div className="panel p-3">
-                                                    <div className="flex items-center justify-center gap-4">
+                                                    <div className="flex items-center justify-center gap-2 sm:gap-4">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-sm font-medium w-28 text-right">
+                                                            <span className="text-sm font-medium sm:w-28 text-right truncate">
                                                                 {homeTeamName}
                                                             </span>
                                                             <Input
@@ -549,7 +549,7 @@ export default function UpdateMatchDialog({
                                                                 min="0"
                                                                 value={set.homeScore}
                                                                 onChange={e => handleSetScoreChange(idx, "home", e.target.value)}
-                                                                className="w-16 rounded-sm text-center text-base font-semibold h-9"
+                                                                className="w-14 sm:w-16 h-11 sm:h-9 rounded-sm text-center text-base font-semibold"
                                                                 placeholder="0"
                                                             />
                                                         </div>
@@ -562,10 +562,10 @@ export default function UpdateMatchDialog({
                                                                 min="0"
                                                                 value={set.awayScore}
                                                                 onChange={e => handleSetScoreChange(idx, "away", e.target.value)}
-                                                                className="w-16 rounded-sm text-center text-base font-semibold h-9"
+                                                                className="w-14 sm:w-16 h-11 sm:h-9 rounded-sm text-center text-base font-semibold"
                                                                 placeholder="0"
                                                             />
-                                                            <span className="text-sm font-medium w-28">
+                                                            <span className="text-sm font-medium sm:w-28 truncate">
                                                                 {awayTeamName}
                                                             </span>
                                                         </div>
@@ -577,8 +577,8 @@ export default function UpdateMatchDialog({
 
                                     {setScores.length > 0 && (
                                         <div className="panel p-3 bg-muted/50">
-                                            <div className="flex items-center justify-center gap-6">
-                                                <div className="flex items-center gap-2 w-40">
+                                            <div className="flex items-center justify-center gap-2 sm:gap-6">
+                                                <div className="flex items-center gap-2 flex-1 sm:w-40 sm:flex-none min-w-0">
                                                     <span className="font-semibold flex-1 text-right">{homeTeamName}</span>
                                                     <Badge variant="secondary" className="rounded-sm shrink-0">
                                                         {homeSetsWon}
@@ -587,7 +587,7 @@ export default function UpdateMatchDialog({
 
                                                 <span className="text-muted-foreground text-sm font-medium shrink-0">-</span>
 
-                                                <div className="flex items-center gap-3 w-48">
+                                                <div className="flex items-center gap-2 sm:gap-3 flex-1 sm:w-48 sm:flex-none min-w-0">
                                                     <Badge variant="secondary" className="rounded-sm shrink-0">
                                                         {awaySetsWon}
                                                     </Badge>
@@ -601,7 +601,7 @@ export default function UpdateMatchDialog({
                                 <div className="space-y-3">
                                     <h3 className="font-semibold mb-2">MVP Selection</h3>
 
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div className="space-y-2">
                                             <Label>Match MVP - {winningTeamName}</Label>
                                             <Select value={matchMvpId} onValueChange={setMatchMvpId}>
