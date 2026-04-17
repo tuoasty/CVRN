@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useMemo, useEffect, useState, useRef } from "react";
-import { PlayoffBracket, Match } from "@/shared/types/db";
-import { MatchBracketCard } from "./MatchBracketCard";
-import { useTeams } from "@/app/hooks/useTeams";
-import { useAllMatches } from "@/app/hooks/useMatches";
-import { useRegions } from "@/app/hooks/useRegions";
-import { Loader2, Maximize2, Minimize2, Move } from "lucide-react";
-import { Button } from "@/app/components/ui/button";
-import { cn } from "@/lib/utils";
+import React, {useMemo, useEffect, useRef, useCallback} from "react";
+import {PlayoffBracket, Match} from "@/shared/types/db";
+import {MatchBracketCard} from "./MatchBracketCard";
+import {useTeams} from "@/app/hooks/useTeams";
+import {useAllMatches} from "@/app/hooks/useMatches";
+import {useRegions} from "@/app/hooks/useRegions";
+import {Loader2, ZoomIn, ZoomOut, Maximize} from "lucide-react";
+import {Button} from "@/app/components/ui/button";
+import {TransformWrapper, TransformComponent, useControls} from "react-zoom-pan-pinch";
 
 type PlayoffBracketDisplayProps = {
     brackets: PlayoffBracket[];
@@ -45,12 +45,12 @@ const ROUND_ORDER: RoundType[] = [
     "final",
 ];
 
-const MATCH_HEIGHT = 150;
+const MATCH_HEIGHT = 140;
 const MATCH_WIDTH = 300;
-const ROUND_GAP = 140;
-const VERTICAL_SPACING_BASE = 32;
+const ROUND_GAP = 120;
+const VERTICAL_SPACING_BASE = 16;
 const HEADER_OFFSET = 80;
-const BOTTOM_PADDING = 120;
+const BOTTOM_PADDING = 80;
 
 function assignDisplayOrder(brackets: BracketWithMatch[]): Map<string, number> {
     const orderMap = new Map<string, number>();
@@ -87,16 +87,45 @@ function assignDisplayOrder(brackets: BracketWithMatch[]): Map<string, number> {
     return orderMap;
 }
 
-export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisplayProps) {
-    const { teams, isLoading: loadingTeams } = useTeams();
-    const { matches, isLoading: loadingMatches } = useAllMatches();
-    const { regions } = useRegions();
-    const [isFullscreen, setIsFullscreen] = useState(false);
+function ZoomControls() {
+    const {zoomIn, zoomOut, resetTransform} = useControls();
+
+    return (
+        <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-1.5">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => zoomIn(0.4)}
+                className="rounded-sm h-9 w-9 p-0 bg-background/95 backdrop-blur-sm shadow-md"
+            >
+                <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => zoomOut(0.4)}
+                className="rounded-sm h-9 w-9 p-0 bg-background/95 backdrop-blur-sm shadow-md"
+            >
+                <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => resetTransform()}
+                className="rounded-sm h-9 w-9 p-0 bg-background/95 backdrop-blur-sm shadow-md"
+            >
+                <Maximize className="h-4 w-4" />
+            </Button>
+        </div>
+    );
+}
+
+export function PlayoffBracketDisplay({brackets, regionId}: PlayoffBracketDisplayProps) {
+    const {teams, isLoading: loadingTeams} = useTeams();
+    const {matches, isLoading: loadingMatches} = useAllMatches();
+    const {regions} = useRegions();
 
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-    const [scrollStart, setScrollStart] = useState({ left: 0, top: 0 });
 
     const teamsMap = useMemo(() => {
         return new Map(teams.map((team) => [team.id, team]));
@@ -106,7 +135,7 @@ export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisp
         return new Map(matches.map((match) => [match.id, match]));
     }, [matches]);
 
-    const { mainBracketRounds, thirdPlaceMatch } = useMemo(() => {
+    const {mainBracketRounds, thirdPlaceMatch} = useMemo(() => {
         const bracketsWithMatches = brackets
             .filter((b) => matchesMap.has(b.match_id))
             .map((b) => ({
@@ -152,7 +181,7 @@ export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisp
         };
     }, [brackets, matchesMap]);
 
-    const { matchPositions, connectorLines, thirdPlacePosition } = useMemo(() => {
+    const {matchPositions, connectorLines, thirdPlacePosition} = useMemo(() => {
         const positions = new Map<string, { x: number; y: number }>();
 
         mainBracketRounds.forEach((round, roundIndex) => {
@@ -283,11 +312,11 @@ export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisp
             }
         }
 
-        return { matchPositions: positions, connectorLines: lines, thirdPlacePosition: thirdPlacePos };
+        return {matchPositions: positions, connectorLines: lines, thirdPlacePosition: thirdPlacePos};
     }, [mainBracketRounds, thirdPlaceMatch]);
 
-    const { totalHeight, totalWidth } = useMemo(() => {
-        if (mainBracketRounds.length === 0) return { totalHeight: 0, totalWidth: 0 };
+    const {totalHeight, totalWidth} = useMemo(() => {
+        if (mainBracketRounds.length === 0) return {totalHeight: 0, totalWidth: 0};
 
         let maxY = 0;
         matchPositions.forEach((pos) => {
@@ -303,7 +332,7 @@ export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisp
         const height = maxY + BOTTOM_PADDING;
         const width = mainBracketRounds.length * (MATCH_WIDTH + ROUND_GAP);
 
-        return { totalHeight: height, totalWidth: width };
+        return {totalHeight: height, totalWidth: width};
     }, [mainBracketRounds, matchPositions, thirdPlacePosition]);
 
     const regionCode = useMemo(() => {
@@ -311,51 +340,17 @@ export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisp
         return region?.code;
     }, [regions, regionId]);
 
-    const handleMouseDown = (e: React.MouseEvent) => {
-        if (e.button === 1) {
+    // Prevent browser zoom (Ctrl+scroll) inside the bracket container
+    const handlePageWheel = useCallback((e: WheelEvent) => {
+        if (e.ctrlKey && containerRef.current?.contains(e.target as Node)) {
             e.preventDefault();
-            setIsDragging(true);
-            setDragStart({ x: e.clientX, y: e.clientY });
-            if (containerRef.current) {
-                setScrollStart({
-                    left: containerRef.current.scrollLeft,
-                    top: containerRef.current.scrollTop,
-                });
-            }
         }
-    };
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (isDragging && containerRef.current) {
-            const dx = e.clientX - dragStart.x;
-            const dy = e.clientY - dragStart.y;
-            containerRef.current.scrollLeft = scrollStart.left - dx;
-            containerRef.current.scrollTop = scrollStart.top - dy;
-        }
-    };
-
-    const handleMouseUp = () => {
-        setIsDragging(false);
-    };
-
-    useEffect(() => {
-        const handleGlobalMouseUp = () => setIsDragging(false);
-        window.addEventListener('mouseup', handleGlobalMouseUp);
-        return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
     }, []);
 
     useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isFullscreen) {
-                setIsFullscreen(false);
-            }
-        };
-
-        if (isFullscreen) {
-            window.addEventListener('keydown', handleEscape);
-            return () => window.removeEventListener('keydown', handleEscape);
-        }
-    }, [isFullscreen]);
+        document.addEventListener('wheel', handlePageWheel, {passive: false});
+        return () => document.removeEventListener('wheel', handlePageWheel);
+    }, [handlePageWheel]);
 
     if (loadingTeams || loadingMatches) {
         return (
@@ -379,193 +374,166 @@ export function PlayoffBracketDisplay({ brackets, regionId }: PlayoffBracketDisp
     }
 
     return (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center panel p-4 bg-gradient-to-r from-primary/5 to-transparent border-l-4 border-l-primary">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Move className="h-4 w-4" />
-                    <span>Hold middle mouse button to pan</span>
-                </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsFullscreen(!isFullscreen)}
-                    className="rounded-sm"
-                >
-                    {isFullscreen ? (
-                        <>
-                            <Minimize2 className="h-4 w-4 mr-2" />
-                            Exit Fullscreen
-                        </>
-                    ) : (
-                        <>
-                            <Maximize2 className="h-4 w-4 mr-2" />
-                            Fullscreen
-                        </>
-                    )}
-                </Button>
+        <div
+            ref={containerRef}
+            className="relative panel overflow-hidden border-l-4 border-l-primary/30 rounded-sm"
+            style={{height: "calc(100vh - 12rem)"}}
+        >
+            <div className="absolute top-3 left-3 z-20 flex items-center gap-2 text-xs text-muted-foreground bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-border shadow-sm">
+                <span>Scroll to zoom · Drag to pan</span>
             </div>
 
-            <div
-                ref={containerRef}
-                className={cn(
-                    "panel overflow-auto border-l-4 border-l-primary/30",
-                    isFullscreen ? "fixed inset-4 z-50 bg-background shadow-2xl rounded-sm" : "p-8",
-                    isDragging && "cursor-grabbing select-none"
-                )}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                style={{ cursor: isDragging ? 'grabbing' : 'default', touchAction: 'pan-x pan-y pinch-zoom' }}
+            <TransformWrapper
+                minScale={0.4}
+                maxScale={2}
+                initialScale={0.6}
+                centerOnInit
+                wheel={{step: 0.002, smoothStep: 0.001}}
+                panning={{velocityDisabled: false}}
+                doubleClick={{disabled: true}}
             >
-                {isFullscreen && (
-                    <div className="sticky top-0 right-0 z-50 flex justify-end p-4 bg-background/95 backdrop-blur-sm border-b border-border">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsFullscreen(false)}
-                            className="rounded-sm"
+                <ZoomControls />
+                <TransformComponent
+                    wrapperStyle={{width: "100%", height: "100%"}}
+                    contentStyle={{width: totalWidth, height: totalHeight}}
+                >
+                    <div className="relative" style={{width: totalWidth, height: totalHeight, padding: "16px"}}>
+                        <svg
+                            className="absolute top-0 left-0 pointer-events-none"
+                            style={{width: totalWidth, height: totalHeight}}
+                            width={totalWidth}
+                            height={totalHeight}
                         >
-                            <Minimize2 className="h-4 w-4 mr-2" />
-                            Exit Fullscreen (ESC)
-                        </Button>
-                    </div>
-                )}
-                <div className="relative" style={{ width: totalWidth, height: totalHeight, minWidth: totalWidth }}>
-                    <svg
-                        className="absolute top-0 left-0 pointer-events-none"
-                        style={{ width: totalWidth, height: totalHeight }}
-                        width={totalWidth}
-                        height={totalHeight}
-                    >
-                        <defs>
-                            <linearGradient id="completedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-                                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="1" />
-                            </linearGradient>
-                        </defs>
-                        {connectorLines.map((line, index) => (
-                            <g key={index}>
-                                <line
-                                    x1={line.x1}
-                                    y1={line.y1}
-                                    x2={line.x2}
-                                    y2={line.y2}
-                                    stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                                    strokeWidth={line.isCompleted ? 3 : 2}
-                                    strokeDasharray={line.isCompleted ? "0" : "5,5"}
-                                    strokeOpacity={line.isCompleted ? 0.8 : 1}
-                                />
-                                <line
-                                    x1={line.x2}
-                                    y1={line.y2}
-                                    x2={line.x3}
-                                    y2={line.y3}
-                                    stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                                    strokeWidth={line.isCompleted ? 3 : 2}
-                                    strokeDasharray={line.isCompleted ? "0" : "5,5"}
-                                    strokeOpacity={line.isCompleted ? 0.8 : 1}
-                                />
-                                <line
-                                    x1={line.x3}
-                                    y1={line.y3}
-                                    x2={line.x4}
-                                    y2={line.y4}
-                                    stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                                    strokeWidth={line.isCompleted ? 3 : 2}
-                                    strokeDasharray={line.isCompleted ? "0" : "5,5"}
-                                    strokeOpacity={line.isCompleted ? 0.8 : 1}
-                                />
-                            </g>
-                        ))}
-                    </svg>
+                            <defs>
+                                <linearGradient id="completedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
+                                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+                                </linearGradient>
+                            </defs>
+                            {connectorLines.map((line, index) => (
+                                <g key={index}>
+                                    <line
+                                        x1={line.x1}
+                                        y1={line.y1}
+                                        x2={line.x2}
+                                        y2={line.y2}
+                                        stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
+                                        strokeWidth={line.isCompleted ? 3 : 2}
+                                        strokeDasharray={line.isCompleted ? "0" : "5,5"}
+                                        strokeOpacity={line.isCompleted ? 0.8 : 1}
+                                    />
+                                    <line
+                                        x1={line.x2}
+                                        y1={line.y2}
+                                        x2={line.x3}
+                                        y2={line.y3}
+                                        stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
+                                        strokeWidth={line.isCompleted ? 3 : 2}
+                                        strokeDasharray={line.isCompleted ? "0" : "5,5"}
+                                        strokeOpacity={line.isCompleted ? 0.8 : 1}
+                                    />
+                                    <line
+                                        x1={line.x3}
+                                        y1={line.y3}
+                                        x2={line.x4}
+                                        y2={line.y4}
+                                        stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
+                                        strokeWidth={line.isCompleted ? 3 : 2}
+                                        strokeDasharray={line.isCompleted ? "0" : "5,5"}
+                                        strokeOpacity={line.isCompleted ? 0.8 : 1}
+                                    />
+                                </g>
+                            ))}
+                        </svg>
 
-                    {mainBracketRounds.map((round, roundIndex) => (
-                        <div key={round.type}>
+                        {mainBracketRounds.map((round, roundIndex) => (
+                            <div key={round.type}>
+                                <div
+                                    className="absolute"
+                                    style={{
+                                        left: roundIndex * (MATCH_WIDTH + ROUND_GAP),
+                                        top: 0,
+                                        width: MATCH_WIDTH,
+                                    }}
+                                >
+                                    <div className="mb-6 pb-3 border-b-2 border-primary/20">
+                                        <h3 className="text-base font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                                            {round.label}
+                                        </h3>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            {round.brackets.filter(b => b.match.status === "completed").length} / {round.brackets.length} complete
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {round.brackets.map((bracket) => {
+                                    const pos = matchPositions.get(bracket.id);
+                                    if (!pos) return null;
+
+                                    const homeTeam = bracket.match.home_team_id
+                                        ? teamsMap.get(bracket.match.home_team_id)
+                                        : undefined;
+                                    const awayTeam = bracket.match.away_team_id
+                                        ? teamsMap.get(bracket.match.away_team_id)
+                                        : undefined;
+
+                                    return (
+                                        <div
+                                            key={bracket.id}
+                                            className="absolute z-10"
+                                            style={{
+                                                left: pos.x,
+                                                top: pos.y,
+                                                width: MATCH_WIDTH,
+                                            }}
+                                        >
+                                            <MatchBracketCard
+                                                bracket={bracket}
+                                                match={bracket.match}
+                                                homeTeam={homeTeam}
+                                                awayTeam={awayTeam}
+                                                regionCode={regionCode}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ))}
+
+                        {thirdPlaceMatch && thirdPlacePosition && (
                             <div
-                                className="absolute"
+                                className="absolute z-10"
                                 style={{
-                                    left: roundIndex * (MATCH_WIDTH + ROUND_GAP),
-                                    top: 0,
+                                    left: thirdPlacePosition.x,
+                                    top: thirdPlacePosition.y,
                                     width: MATCH_WIDTH,
                                 }}
                             >
-                                <div className="mb-6 pb-3 border-b-2 border-primary/20">
-                                    <h3 className="text-base font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                                        {round.label}
+                                <div className="mb-3 pb-2 border-b-2 border-amber-500/30">
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-amber-600">
+                                        {ROUND_LABELS.third_place}
                                     </h3>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        {round.brackets.filter(b => b.match.status === "completed").length} / {round.brackets.length} complete
-                                    </p>
                                 </div>
+                                <MatchBracketCard
+                                    bracket={thirdPlaceMatch}
+                                    match={thirdPlaceMatch.match}
+                                    homeTeam={
+                                        thirdPlaceMatch.match.home_team_id
+                                            ? teamsMap.get(thirdPlaceMatch.match.home_team_id)
+                                            : undefined
+                                    }
+                                    awayTeam={
+                                        thirdPlaceMatch.match.away_team_id
+                                            ? teamsMap.get(thirdPlaceMatch.match.away_team_id)
+                                            : undefined
+                                    }
+                                    regionCode={regionCode}
+                                />
                             </div>
-
-                            {round.brackets.map((bracket) => {
-                                const pos = matchPositions.get(bracket.id);
-                                if (!pos) return null;
-
-                                const homeTeam = bracket.match.home_team_id
-                                    ? teamsMap.get(bracket.match.home_team_id)
-                                    : undefined;
-                                const awayTeam = bracket.match.away_team_id
-                                    ? teamsMap.get(bracket.match.away_team_id)
-                                    : undefined;
-
-                                return (
-                                    <div
-                                        key={bracket.id}
-                                        className="absolute z-10"
-                                        style={{
-                                            left: pos.x,
-                                            top: pos.y,
-                                            width: MATCH_WIDTH,
-                                        }}
-                                    >
-                                        <MatchBracketCard
-                                            bracket={bracket}
-                                            match={bracket.match}
-                                            homeTeam={homeTeam}
-                                            awayTeam={awayTeam}
-                                            regionCode={regionCode}
-                                        />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ))}
-
-                    {thirdPlaceMatch && thirdPlacePosition && (
-                        <div
-                            className="absolute z-10"
-                            style={{
-                                left: thirdPlacePosition.x,
-                                top: thirdPlacePosition.y,
-                                width: MATCH_WIDTH,
-                            }}
-                        >
-                            <div className="mb-3 pb-2 border-b-2 border-amber-500/30">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-amber-600">
-                                    {ROUND_LABELS.third_place}
-                                </h3>
-                            </div>
-                            <MatchBracketCard
-                                bracket={thirdPlaceMatch}
-                                match={thirdPlaceMatch.match}
-                                homeTeam={
-                                    thirdPlaceMatch.match.home_team_id
-                                        ? teamsMap.get(thirdPlaceMatch.match.home_team_id)
-                                        : undefined
-                                }
-                                awayTeam={
-                                    thirdPlaceMatch.match.away_team_id
-                                        ? teamsMap.get(thirdPlaceMatch.match.away_team_id)
-                                        : undefined
-                                }
-                                regionCode={regionCode}
-                            />
-                        </div>
-                    )}
-                </div>
-            </div>
+                        )}
+                    </div>
+                </TransformComponent>
+            </TransformWrapper>
         </div>
     );
 }
