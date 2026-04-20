@@ -13,7 +13,7 @@ export async function getAvailablePlayoffRounds(
 
         if (error) {
             logger.error({ seasonId, error }, "Failed to fetch playoff rounds");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {

@@ -17,7 +17,8 @@ export async function updateMatchScheduleService(
             if (!isValidTimezone(p.timezone)) {
                 return Err({
                     name: "ValidationError",
-                    message: "Invalid timezone"
+                    message: "Invalid timezone",
+                    code: "VALIDATION_ERROR"
                 });
             }
 
@@ -26,7 +27,8 @@ export async function updateMatchScheduleService(
             if (!scheduledAt) {
                 return Err({
                     name: "ValidationError",
-                    message: "Invalid date/time/timezone combination"
+                    message: "Invalid date/time/timezone combination",
+                    code: "VALIDATION_ERROR"
                 });
             }
         }
@@ -39,13 +41,14 @@ export async function updateMatchScheduleService(
 
         if (error) {
             logger.error({ matchId: p.matchId, error }, "Failed to update match schedule");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "UpdateError",
-                message: "Failed to update match schedule"
+                message: "Failed to update match schedule",
+                code: "DB_ERROR"
             });
         }
 

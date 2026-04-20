@@ -1,18 +1,54 @@
+import {Match, MatchSet} from "@/shared/types/db";
+
+export interface InsertMatchDto {
+    id?: string;
+    seasonId: string;
+    homeTeamId: string | null;
+    awayTeamId: string | null;
+    week: number;
+    scheduledAt: string | null;
+    status: "pending" | "scheduled" | "completed";
+    matchType: "season" | "playoffs";
+}
+
+export type MatchOfficialEntry = {
+    id: string;
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+    official_type: "referee" | "media";
+};
+
+export type MatchWithDetails = {
+    match: Match;
+    sets: MatchSet[];
+    officials: MatchOfficialEntry[];
+};
+
 export type {
     CreateMatchInput,
     CreateMatchesInput,
     UpdateMatchScheduleInput,
     MatchIdInput,
-    InsertMatchDto,
     CompleteMatchInput,
     VoidMatchInput,
     MatchSetsInput,
-    MatchOfficialEntry,
-    MatchWithDetails,
-} from "@/server/dto/match.dto";
+    SeasonWeekInput,
+} from "./schemas";
+
+export {
+    CreateMatchSchema,
+    CreateMatchesSchema,
+    CompleteMatchSchema,
+    VoidMatchSchema,
+    UpdateMatchScheduleSchema,
+    MatchIdSchema,
+    MatchSetsSchema,
+    SeasonWeekSchema,
+} from "./schemas";
 
 export type MatchResultInput = {
-    sets: Array<{ setNumber: number; homeScore: number; awayScore: number }>;
+    sets: Array<{setNumber: number; homeScore: number; awayScore: number}>;
     matchMvpPlayerId?: string | null;
     loserMvpPlayerId?: string | null;
     isForfeit?: boolean;
@@ -31,7 +67,7 @@ export type MatchResultOutput = {
     awaySetsWon: number;
     homeTeamLvr: number | null;
     awayTeamLvr: number | null;
-    setsToInsert: Array<{ setNumber: number; homeScore: number; awayScore: number }>;
+    setsToInsert: Array<{setNumber: number; homeScore: number; awayScore: number}>;
     matchMvpPlayerId: string | null;
     loserMvpPlayerId: string | null;
 };

@@ -19,14 +19,16 @@ export async function updateMatchResultsService(
             logger.error({ matchId: p.matchId, error: matchError }, "Match not found");
             return Err({
                 name: "NotFoundError",
-                message: "Match not found"
+                message: "Match not found",
+                code: "NOT_FOUND"
             });
         }
 
         if (match.status !== "completed") {
             return Err({
                 name: "ValidationError",
-                message: "Can only update results for completed matches"
+                message: "Can only update results for completed matches",
+                code: "VALIDATION_ERROR"
             });
         }
         if (match.match_type === "playoffs") {
@@ -34,7 +36,7 @@ export async function updateMatchResultsService(
 
             if (bracketError) {
                 logger.error({ matchId: p.matchId, error: bracketError }, "Failed to find playoff bracket");
-                return Err(serializeError(bracketError));
+                return Err(serializeError(bracketError, "DB_ERROR"));
             }
 
             if (bracket) {
@@ -91,13 +93,13 @@ export async function updateMatchResultsService(
         const { error: deleteSetsError } = await deleteMatchSets(supabase, p.matchId);
         if (deleteSetsError) {
             logger.error({ matchId: p.matchId, error: deleteSetsError }, "Failed to delete existing match sets");
-            return Err(serializeError(deleteSetsError));
+            return Err(serializeError(deleteSetsError, "DB_ERROR"));
         }
 
         const { error: setsError } = await insertMatchSets(supabase, p.matchId, setsToInsert);
         if (setsError) {
             logger.error({ matchId: p.matchId, error: setsError }, "Failed to insert match sets");
-            return Err(serializeError(setsError));
+            return Err(serializeError(setsError, "DB_ERROR"));
         }
 
         const { data: updatedMatch, error: updateError } = await updateMatchResults(
@@ -116,7 +118,7 @@ export async function updateMatchResultsService(
 
         if (updateError || !updatedMatch) {
             logger.error({ matchId: p.matchId, error: updateError }, "Failed to update match results");
-            return Err(serializeError(updateError));
+            return Err(serializeError(updateError, "DB_ERROR"));
         }
 
         if (match.match_type === "playoffs" && match.home_team_id && match.away_team_id) {

@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { Badge } from "@/app/components/ui/badge";
-import { MatchWithDetails } from "@/server/dto/match.dto";
-import { TeamWithRegion } from "@/server/dto/team.dto";
+import { MatchWithDetails } from "@/server/domains/match";
+import { TeamWithRegion } from "@/server/domains/team";
 import { Player } from "@/shared/types/db";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 

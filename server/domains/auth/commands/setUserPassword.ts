@@ -18,6 +18,7 @@ export async function setUserPassword(
             return Err({
                 message:"Not authenticated",
                 name:"Unauthorized",
+                code:"UNAUTHORIZED"
             });
         }
 
@@ -26,7 +27,7 @@ export async function setUserPassword(
         });
         if(passwordError){
             logger.error({userId: user.id, error: passwordError}, "Failed to update user password");
-            return Err(serializeError(passwordError))
+            return Err(serializeError(passwordError, "UNAUTHORIZED"))
         }
 
         const finalizeResult = await finalizeInvitedUser(

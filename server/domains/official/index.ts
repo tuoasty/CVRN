@@ -5,4 +5,5 @@ export {getOfficialByExactUsername} from "./queries/getOfficialByExactUsername";
 export {saveOfficial} from "./commands/saveOfficial";
 export {removeOfficial} from "./commands/removeOfficial";
 export {lazySyncOfficial} from "./helpers/lazySyncOfficial";
-export type {SaveOfficialInput, OfficialWithInfo, SearchOfficialsInput} from "./types";
+export type {SaveOfficialInput, UpdateOfficialInput, OfficialWithInfo, SearchOfficialsInput} from "./types";
+export {SaveOfficialSchema, SearchOfficialsSchema} from "./types";

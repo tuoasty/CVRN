@@ -14,7 +14,7 @@ export async function getPlayerByExactUsername(
 
         if (error) {
             logger.error({ query: p.query, error }, "Failed to find player by exact username");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!player) {

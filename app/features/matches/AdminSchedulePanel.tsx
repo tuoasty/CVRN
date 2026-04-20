@@ -10,8 +10,8 @@ import ManageMatchDialog from "@/app/features/matches/ManageMatchDialog";
 import CompleteMatchDialog from "@/app/features/matches/CompleteMatchDialog";
 import UpdateMatchDialog from "@/app/features/matches/UpdateMatchDialog";
 import { Badge } from "@/app/components/ui/badge";
-import { MatchWithDetails } from "@/server/dto/match.dto";
-import { PlayoffRound } from "@/server/dto/playoff.dto";
+import { MatchWithDetails } from "@/server/domains/match";
+import { PlayoffRound } from "@/server/domains/playoff";
 import DeleteMatchDialog from "@/app/features/matches/DeleteMatchDialog";
 import { AlertTriangle } from "lucide-react";
 

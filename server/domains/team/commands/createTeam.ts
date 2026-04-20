@@ -33,7 +33,8 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
             logger.error({teamId, error: uploadRes.error}, "Failed to upload team logo");
             return Err({
                 message: "Failed to upload team logo",
-                name: "UploadError"
+                name: "UploadError",
+                code: "INTEGRATION_ERROR"
             });
         }
 
@@ -56,12 +57,13 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
             });
         }
         if (error) {
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
         if (!data) {
             return Err({
                 message: "Failed to insert new team",
-                name: "InsertError"
+                name: "InsertError",
+                code: "DB_ERROR"
             });
         }
 
@@ -71,7 +73,8 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
             logger.error({teamId, error: fetchError}, "Failed to fetch created team with region");
             return Err({
                 message: "Failed to fetch created team with region",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 

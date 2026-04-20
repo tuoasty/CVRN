@@ -27,8 +27,19 @@ export type {
     CompleteMatchInput,
     VoidMatchInput,
     MatchSetsInput,
+    SeasonWeekInput,
     MatchOfficialEntry,
     MatchWithDetails,
     RawMatchOfficial,
     MatchWithDetailsRow,
+} from "./types";
+export {
+    CreateMatchSchema,
+    CreateMatchesSchema,
+    CompleteMatchSchema,
+    VoidMatchSchema,
+    UpdateMatchScheduleSchema,
+    MatchIdSchema,
+    MatchSetsSchema,
+    SeasonWeekSchema,
 } from "./types";
