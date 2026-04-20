@@ -3,8 +3,7 @@ import {DBClient} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findTeamBySlugAndSeasonWithRegion} from "@/server/db/teams.repo";
-import {findAllTeamPlayers} from "@/server/db/players.repo";
-import {PlayerRole} from "@/server/domains/player";
+import {getTeamPlayers} from "@/server/domains/player";
 import {TeamWithRegion, TeamWithRegionAndPlayers} from "../types";
 
 export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
@@ -27,17 +26,14 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
             });
         }
 
-        const {data: playersData, error: playersError} = await findAllTeamPlayers(supabase, teamData.id, p.seasonId);
+        const playersResult = await getTeamPlayers(supabase, { teamId: teamData.id, seasonId: p.seasonId });
 
-        if (playersError) {
-            logger.error({teamId: teamData.id, seasonId: p.seasonId, error: playersError}, "Failed to fetch team players");
-            return Err(serializeError(playersError, "DB_ERROR"));
+        if (!playersResult.ok) {
+            logger.error({teamId: teamData.id, seasonId: p.seasonId, error: playersResult.error}, "Failed to fetch team players");
+            return Err(playersResult.error);
         }
 
-        const playersWithRoles = playersData?.map(record => ({
-            ...record.player,
-            role: (record.role || 'player') as PlayerRole
-        })) || [];
+        const playersWithRoles = playersResult.value;
 
         return Ok({
             team: teamData as TeamWithRegion,
