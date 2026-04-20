@@ -11,3 +11,4 @@ export type {
     InsertPlayoffBracketDto,
     InsertPlayoffMatchDto,
 } from "./types";
+export {PlayoffRoundSchema, GeneratePlayoffBracketSchema, GetPlayoffScheduleSchema} from "./types";

@@ -12,6 +12,7 @@ export type {
     CompleteMatchInput,
     VoidMatchInput,
     MatchSetsInput,
+    SeasonWeekInput,
 } from "./schemas";
 
 export {
@@ -22,6 +23,7 @@ export {
     UpdateMatchScheduleSchema,
     MatchIdSchema,
     MatchSetsSchema,
+    SeasonWeekSchema,
 } from "./schemas";
 
 export type MatchResultInput = {

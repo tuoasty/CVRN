@@ -58,3 +58,9 @@ export const MatchSetsSchema = z.object({
     matchId: z.uuid(),
 })
 export type MatchSetsInput = z.infer<typeof MatchSetsSchema>
+
+export const SeasonWeekSchema = z.object({
+    seasonId: z.uuid(),
+    week: z.number().int().positive(),
+})
+export type SeasonWeekInput = z.infer<typeof SeasonWeekSchema>
