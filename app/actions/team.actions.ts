@@ -30,8 +30,6 @@ async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupab
 }
 
 export async function createTeamAction(formData: FormData) {
-    const supabase = await createServerSupabase();
-
     const parsed = CreateTeamFormSchema.safeParse({
         name: formData.get('name'),
         seasonId: formData.get('seasonId'),
@@ -41,6 +39,7 @@ export async function createTeamAction(formData: FormData) {
     });
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 
+    const supabase = await createServerSupabase();
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
 
@@ -52,7 +51,7 @@ export async function createTeamAction(formData: FormData) {
         seasonId: parsed.data.seasonId,
         userId: user.id,
         brickNumber: parsed.data.brickNumber,
-        brickColor: parsed.data.brickColor.toUpperCase(),
+        brickColor: parsed.data.brickColor,
         startingLvr: parsed.data.startingLvr,
     });
 }
@@ -96,8 +95,6 @@ export async function getTeamsByIdsAction(teamIds: unknown): Promise<Result<Team
 }
 
 export async function updateTeamAction(formData: FormData) {
-    const supabase = await createServerSupabase();
-
     const parsed = UpdateTeamFormSchema.safeParse({
         teamId: formData.get('teamId'),
         name: formData.get('name'),
@@ -107,6 +104,7 @@ export async function updateTeamAction(formData: FormData) {
     });
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 
+    const supabase = await createServerSupabase();
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
 
@@ -118,7 +116,7 @@ export async function updateTeamAction(formData: FormData) {
         logoFile: file && file.size > 0 ? file : null,
         userId: user.id,
         brickNumber: parsed.data.brickNumber,
-        brickColor: parsed.data.brickColor.toUpperCase(),
+        brickColor: parsed.data.brickColor,
         startingLvr: parsed.data.startingLvr,
     });
 }

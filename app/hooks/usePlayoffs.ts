@@ -5,7 +5,7 @@ import {
     getPlayoffBracketBySeasonIdAction,
     resetPlayoffBracketsAction,
 } from '@/app/actions/playoff.actions';
-import { GeneratePlayoffBracketInput } from '@/server/dto/playoff.dto';
+import { GeneratePlayoffBracketInput } from '@/server/domains/playoff';
 
 const BRACKETS_TTL = 5 * 60 * 1000;
 

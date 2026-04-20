@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useMatchOfficials, removeOfficialFromMatch } from "@/app/hooks/useOfficials";
-import { OfficialType } from "@/server/dto/matchOfficial.dto";
+import { OfficialType } from "@/server/domains/matchOfficial";
 import { clientLogger } from "@/app/utils/clientLogger";
 import Image from "next/image";
 import { Button } from "@/app/components/ui/button";

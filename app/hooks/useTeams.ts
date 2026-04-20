@@ -4,8 +4,8 @@ import {
     getTeamsByIdsAction,
     getTeamWithPlayersAction,
 } from '@/app/actions/team.actions';
-import { TeamWithRegion } from '@/server/dto/team.dto';
-import { PlayerWithRole } from '@/server/dto/player.dto';
+import { TeamWithRegion } from '@/server/domains/team';
+import { PlayerWithRole } from '@/server/domains/player';
 import { useRegionByCode } from './useRegions';
 import { useSeasonBySlugAndRegion } from './useSeasons';
 

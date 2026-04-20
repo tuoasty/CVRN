@@ -4,7 +4,7 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findTeamBySlugAndSeasonWithRegion} from "@/server/db/teams.repo";
 import {findAllTeamPlayers} from "@/server/db/players.repo";
-import {PlayerRole} from "@/server/dto/player.dto";
+import {PlayerRole} from "@/server/domains/player";
 import {TeamWithRegion, TeamWithRegionAndPlayers} from "../types";
 
 export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {

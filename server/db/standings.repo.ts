@@ -1,5 +1,5 @@
 import { DBClient } from "@/shared/types/db";
-import { GetStandingsInput } from "@/server/dto/standing.dto";
+import { GetStandingsInput } from "@/server/domains/standing";
 
 export async function findStandingsBySeasonAndRegion(
     supabase: DBClient,

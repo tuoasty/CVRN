@@ -4,7 +4,9 @@ export interface MatchOfficialWithDetails extends MatchOfficial {
     official: Official;
 }
 
-export type {MatchIdInput} from "@/server/dto/matchOfficial.dto";
+export interface MatchIdInput {
+    matchId: string;
+}
 
 export type {
     OfficialType,

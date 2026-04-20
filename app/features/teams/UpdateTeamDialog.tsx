@@ -16,7 +16,7 @@ import { updateTeamAction } from "@/app/actions/team.actions";
 import { mutateAllTeams } from "@/app/hooks/useTeams";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { compressImage } from "@/app/utils/imageCompression";
-import { TeamWithRegion } from "@/server/dto/team.dto";
+import { TeamWithRegion } from "@/server/domains/team";
 import { toast } from "@/app/utils/toast";
 import { Pencil } from "lucide-react";
 

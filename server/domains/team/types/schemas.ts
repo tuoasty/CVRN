@@ -21,7 +21,7 @@ export const CreateTeamFormSchema = z.object({
     name: z.string().min(1),
     seasonId: z.uuid(),
     brickNumber: z.coerce.number().int().positive(),
-    brickColor: z.string().min(1),
+    brickColor: z.string().min(1).transform(s => s.toUpperCase()),
     startingLvr: z.coerce.number(),
 })
 export type CreateTeamFormInput = z.infer<typeof CreateTeamFormSchema>
@@ -30,7 +30,7 @@ export const UpdateTeamFormSchema = z.object({
     teamId: z.uuid(),
     name: z.string().min(1),
     brickNumber: z.coerce.number().int().positive(),
-    brickColor: z.string().min(1),
+    brickColor: z.string().min(1).transform(s => s.toUpperCase()),
     startingLvr: z.coerce.number(),
 })
 export type UpdateTeamFormInput = z.infer<typeof UpdateTeamFormSchema>

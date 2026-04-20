@@ -15,7 +15,7 @@ import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import StandingsPreview from "@/app/(public)/home/StandingsPreview";
 import { useStandings } from "@/app/hooks/useStandings";
-import { MatchWithDetails } from "@/server/dto/match.dto";
+import { MatchWithDetails } from "@/server/domains/match";
 
 export default function HomePage() {
     const { selectedSeasonId, selectedRegionId } = usePublicContextStore();

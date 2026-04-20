@@ -1,5 +1,5 @@
 import {DBClient} from "@/shared/types/db";
-import {InsertTeamDto} from "@/server/dto/team.dto";
+import {InsertTeamDto} from "@/server/domains/team";
 
 export async function findAllTeams(supabase: DBClient){
     return supabase.from("teams").select("*").eq("is_bye", false)

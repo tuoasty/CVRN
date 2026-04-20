@@ -74,7 +74,7 @@ export async function lazySyncOfficial(
 
     } catch (err) {
         logger.error({error: err}, "Unexpected error during lazy sync");
-        return Err(serializeError(err));
+        return Ok(official);
     }
 }
 

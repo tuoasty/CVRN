@@ -1,5 +1,5 @@
 import useSWR, { type BareFetcher } from 'swr';
-import { StandingWithInfo } from '@/server/dto/standing.dto';
+import { StandingWithInfo } from '@/server/domains/standing';
 import { getStandingsAction } from '@/app/actions/standing.actions';
 
 const STANDINGS_TTL = 2 * 60 * 1000;
