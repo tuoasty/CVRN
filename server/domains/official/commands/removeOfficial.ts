@@ -3,7 +3,7 @@ import {DBClient} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findOfficialByRobloxId, deleteOfficial} from "@/server/db/official.repo";
-import {RobloxUserIdInput} from "@/server/dto/player.dto";
+import {RobloxUserIdInput} from "@/server/domains/player";
 
 export async function removeOfficial(
     supabase: DBClient,

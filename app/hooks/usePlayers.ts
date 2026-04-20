@@ -1,7 +1,7 @@
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { getTeamPlayersAction, getPlayersByIdsAction } from '@/app/actions/player.actions';
 import { Player } from '@/shared/types/db';
-import { PlayerWithRole } from '@/server/dto/player.dto';
+import { PlayerWithRole } from '@/server/domains/player';
 
 const TEAM_PLAYERS_TTL = 2 * 60 * 1000;
 const PLAYER_TTL = 5 * 60 * 1000;

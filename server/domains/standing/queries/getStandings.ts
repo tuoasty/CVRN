@@ -1,6 +1,6 @@
 import { DBClient } from "@/shared/types/db";
 import { Err, Ok, Result } from "@/shared/types/result";
-import { GetStandingsInput, StandingWithInfo } from "@/server/dto/standing.dto";
+import { GetStandingsInput, StandingWithInfo } from "@/server/domains/standing";
 import { serializeError } from "@/server/utils/serializeableError";
 import { logger } from "@/server/utils/logger";
 import {findStandingsBySeasonAndRegion} from "@/server/db/standings.repo";

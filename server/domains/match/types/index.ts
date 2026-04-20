@@ -1,8 +1,29 @@
-export type {
-    InsertMatchDto,
-    MatchOfficialEntry,
-    MatchWithDetails,
-} from "@/server/dto/match.dto";
+import {Match, MatchSet} from "@/shared/types/db";
+
+export interface InsertMatchDto {
+    id?: string;
+    seasonId: string;
+    homeTeamId: string | null;
+    awayTeamId: string | null;
+    week: number;
+    scheduledAt: string | null;
+    status: "pending" | "scheduled" | "completed";
+    matchType: "season" | "playoffs";
+}
+
+export type MatchOfficialEntry = {
+    id: string;
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+    official_type: "referee" | "media";
+};
+
+export type MatchWithDetails = {
+    match: Match;
+    sets: MatchSet[];
+    officials: MatchOfficialEntry[];
+};
 
 export type {
     CreateMatchInput,

@@ -1,6 +1,6 @@
 import useSWR, { type BareFetcher } from 'swr';
 import { getAllSeasonsAction, getSeasonBySlugAndRegionAction } from '@/app/actions/season.actions';
-import { SeasonWithPlayoffConfig } from '@/server/dto/season.dto';
+import { SeasonWithPlayoffConfig } from '@/server/domains/season';
 
 const SEASONS_TTL = 30 * 60 * 1000;
 const SEASON_DETAIL_TTL = 30 * 60 * 1000;

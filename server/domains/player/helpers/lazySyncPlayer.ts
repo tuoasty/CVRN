@@ -70,7 +70,7 @@ export async function lazySyncPlayer(
 
     } catch (err) {
         logger.error({error: err}, "Unexpected error during lazy sync");
-        return Err(serializeError(err));
+        return Ok(player);
     }
 }
 

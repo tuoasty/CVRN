@@ -1,7 +1,7 @@
 "use client";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
-import { StandingWithInfo } from "@/server/dto/standing.dto";
+import { StandingWithInfo } from "@/server/domains/standing";
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import { Skeleton } from "@/app/components/ui/skeleton";
