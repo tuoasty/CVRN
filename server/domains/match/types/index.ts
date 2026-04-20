@@ -1,18 +1,31 @@
 export type {
-    CreateMatchInput,
-    CreateMatchesInput,
-    UpdateMatchScheduleInput,
-    MatchIdInput,
     InsertMatchDto,
-    CompleteMatchInput,
-    VoidMatchInput,
-    MatchSetsInput,
     MatchOfficialEntry,
     MatchWithDetails,
 } from "@/server/dto/match.dto";
 
+export type {
+    CreateMatchInput,
+    CreateMatchesInput,
+    UpdateMatchScheduleInput,
+    MatchIdInput,
+    CompleteMatchInput,
+    VoidMatchInput,
+    MatchSetsInput,
+} from "./schemas";
+
+export {
+    CreateMatchSchema,
+    CreateMatchesSchema,
+    CompleteMatchSchema,
+    VoidMatchSchema,
+    UpdateMatchScheduleSchema,
+    MatchIdSchema,
+    MatchSetsSchema,
+} from "./schemas";
+
 export type MatchResultInput = {
-    sets: Array<{ setNumber: number; homeScore: number; awayScore: number }>;
+    sets: Array<{setNumber: number; homeScore: number; awayScore: number}>;
     matchMvpPlayerId?: string | null;
     loserMvpPlayerId?: string | null;
     isForfeit?: boolean;
@@ -31,7 +44,7 @@ export type MatchResultOutput = {
     awaySetsWon: number;
     homeTeamLvr: number | null;
     awayTeamLvr: number | null;
-    setsToInsert: Array<{ setNumber: number; homeScore: number; awayScore: number }>;
+    setsToInsert: Array<{setNumber: number; homeScore: number; awayScore: number}>;
     matchMvpPlayerId: string | null;
     loserMvpPlayerId: string | null;
 };
