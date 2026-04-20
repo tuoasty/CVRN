@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { TeamWithRegion } from "@/server/dto/team.dto";
+import { TeamWithRegion } from "@/server/domains/team";
 
 interface PublicTeamCardProps {
     team: TeamWithRegion;

@@ -14,7 +14,7 @@ export async function getMatchSets(
 
         if (error) {
             logger.error({matchId: p.matchId, error}, "Failed to fetch match sets");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {

@@ -15,11 +15,11 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/app/components/ui/dialog";
-import { OfficialType } from "@/server/dto/matchOfficial.dto";
+import { OfficialType } from "@/server/domains/matchOfficial";
 import { Badge } from "@/app/components/ui/badge";
 import { toast } from "@/app/utils/toast";
 import {getOfficialByExactUsernameAction, searchOfficialsInDatabaseAction} from "@/app/actions/matchOfficial.actions";
-import { OfficialWithInfo } from "@/server/dto/official.dto";
+import { OfficialWithInfo } from "@/server/domains/official";
 
 interface OfficialSearchDialogProps {
     matchId: string;

@@ -13,13 +13,14 @@ export async function getSeasonsByRegion(
 
         if (error) {
             logger.error({regionId, error}, "Failed to fetch seasons by region");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to fetch seasons",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 

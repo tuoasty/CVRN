@@ -13,10 +13,10 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import { CalendarDays, Trophy } from "lucide-react";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
-import { MatchWithDetails } from "@/server/dto/match.dto";
-import { TeamWithRegion } from "@/server/dto/team.dto";
+import { MatchWithDetails } from "@/server/domains/match";
+import { TeamWithRegion } from "@/server/domains/team";
 import { Player } from "@/shared/types/db";
-import { PlayoffRound } from "@/server/dto/playoff.dto";
+import { PlayoffRound } from "@/server/domains/playoff";
 
 const ROUND_LABELS: Record<string, string> = {
     play_in: "Play-in",

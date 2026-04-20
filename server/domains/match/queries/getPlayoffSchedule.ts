@@ -5,7 +5,7 @@ import {logger} from "@/server/utils/logger";
 import {findMatchesWithDetailsBySeasonAndRound} from "@/server/db/playoff.repo";
 import {MatchWithDetails} from "../types";
 import {toMatchWithDetails} from "../helpers/toMatchWithDetails";
-import {GetPlayoffScheduleInput} from "@/server/dto/playoff.dto";
+import {GetPlayoffScheduleInput} from "@/server/domains/playoff";
 
 export async function getPlayoffSchedule(
     supabase: DBClient,
@@ -16,7 +16,7 @@ export async function getPlayoffSchedule(
 
         if (error) {
             logger.error({ seasonId: p.seasonId, round: p.round, error }, "Failed to fetch playoff schedule");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {

@@ -29,13 +29,14 @@ export async function saveOfficial(
 
         if (error) {
             logger.error({robloxUserId: p.robloxUserId, error}, "Failed to upsert official");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "UpsertError",
-                message: "Failed to save official"
+                message: "Failed to save official",
+                code: "DB_ERROR"
             });
         }
 

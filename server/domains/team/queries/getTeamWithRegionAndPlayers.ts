@@ -4,7 +4,7 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findTeamBySlugAndSeasonWithRegion} from "@/server/db/teams.repo";
 import {findAllTeamPlayers} from "@/server/db/players.repo";
-import {PlayerRole} from "@/server/dto/player.dto";
+import {PlayerRole} from "@/server/domains/player";
 import {TeamWithRegion, TeamWithRegionAndPlayers} from "../types";
 
 export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
@@ -16,13 +16,14 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
 
         if (teamError) {
             logger.error({slug: p.slug, seasonId: p.seasonId, error: teamError}, "Failed to fetch team with region");
-            return Err(serializeError(teamError));
+            return Err(serializeError(teamError, "DB_ERROR"));
         }
 
         if (!teamData) {
             return Err({
                 message: "Team not found",
-                name: "NotFoundError"
+                name: "NotFoundError",
+                code: "NOT_FOUND"
             });
         }
 
@@ -30,7 +31,7 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
 
         if (playersError) {
             logger.error({teamId: teamData.id, seasonId: p.seasonId, error: playersError}, "Failed to fetch team players");
-            return Err(serializeError(playersError));
+            return Err(serializeError(playersError, "DB_ERROR"));
         }
 
         const playersWithRoles = playersData?.map(record => ({

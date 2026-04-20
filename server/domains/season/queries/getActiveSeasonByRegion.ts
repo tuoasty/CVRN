@@ -13,13 +13,14 @@ export async function getActiveSeasonByRegion(
 
         if (error) {
             logger.error({regionId, error}, "Failed to fetch active season by region");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "No active season found for region",
-                name: "NotFoundError"
+                name: "NotFoundError",
+                code: "NOT_FOUND"
             });
         }
 

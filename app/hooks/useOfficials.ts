@@ -13,7 +13,7 @@ import {
     removeAllOfficialsOfTypeAction,
 } from '@/app/actions/matchOfficial.actions';
 import { MatchOfficialWithDetails } from '@/server/domains/matchOfficial';
-import { OfficialType } from '@/server/dto/matchOfficial.dto';
+import { OfficialType } from '@/server/domains/matchOfficial';
 
 const OFFICIALS_TTL = 30 * 60 * 1000;
 

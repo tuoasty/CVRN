@@ -14,7 +14,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Badge } from "@/app/components/ui/badge";
-import { PlayerWithTeamInfo } from "@/server/dto/player.dto";
+import { PlayerWithTeamInfo } from "@/server/domains/player";
 import {toast} from "@/app/utils/toast";
 import {Player} from "@/shared/types/db";
 

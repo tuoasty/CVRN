@@ -10,13 +10,14 @@ export async function getPlayoffBracketBySeasonId(supabase: DBClient, seasonId: 
 
         if (error) {
             logger.error({ error }, "Failed to fetch playoff bracket matches");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "FetchError",
-                message: "Failed to fetch playoff brackets"
+                message: "Failed to fetch playoff brackets",
+                code: "DB_ERROR"
             });
         }
 

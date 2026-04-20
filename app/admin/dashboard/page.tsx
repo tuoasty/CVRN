@@ -43,14 +43,14 @@ export default function AdminDashboard() {
                                     (() => {
                                         const activeSeasonsByRegion = seasons
                                             .filter(s => s.is_active)
-                                            .reduce((acc, season) => {
+                                            .reduce<Record<string, typeof seasons>>((acc, season) => {
                                                 const regionId = season.region_id;
                                                 if (!acc[regionId]) {
                                                     acc[regionId] = [];
                                                 }
                                                 acc[regionId].push(season);
                                                 return acc;
-                                            }, {} as Record<string, typeof seasons>);
+                                            }, {});
 
                                         return Object.entries(activeSeasonsByRegion).length > 0 ? (
                                             Object.entries(activeSeasonsByRegion).map(([regionId, regionSeasons]) => {

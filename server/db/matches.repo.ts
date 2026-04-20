@@ -1,5 +1,5 @@
 import {DBClient} from "@/shared/types/db";
-import {InsertMatchDto} from "@/server/dto/match.dto";
+import {InsertMatchDto} from "@/server/domains/match";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
@@ -414,7 +414,7 @@ export async function resetDownstreamBrackets(
             .single();
 
         if (bracketError) {
-            return Err(serializeError(bracketError));
+            return Err(serializeError(bracketError, "DB_ERROR"));
         }
 
         if (!bracket) {

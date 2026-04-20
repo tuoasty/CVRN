@@ -14,13 +14,14 @@ export async function getTeamPlayers(
         const {data, error} = await findAllTeamPlayers(supabase, p.teamId, p.seasonId);
         if (error) {
             logger.error({teamId: p.teamId, seasonId: p.seasonId, error}, "Failed to fetch team players");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to fetch team players",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 

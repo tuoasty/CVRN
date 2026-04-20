@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { Region } from "@/shared/types/db";
-import { SeasonWithPlayoffConfig } from "@/server/dto/season.dto";
+import { SeasonWithPlayoffConfig } from "@/server/domains/season";
 
 interface PublicContextState {
     selectedRegionId: string | null;

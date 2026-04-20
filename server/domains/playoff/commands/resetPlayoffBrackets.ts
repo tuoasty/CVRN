@@ -16,14 +16,16 @@ export async function resetPlayoffBracketsService(
             logger.error({ seasonId, error: seasonError }, "Season not found");
             return Err({
                 name: "NotFoundError",
-                message: "Season not found"
+                message: "Season not found",
+                code: "NOT_FOUND"
             });
         }
 
         if (!season.playoff_started) {
             return Err({
                 name: "ValidationError",
-                message: "Playoffs have not been started for this season"
+                message: "Playoffs have not been started for this season",
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -35,7 +37,7 @@ export async function resetPlayoffBracketsService(
 
         if (matchesError) {
             logger.error({ seasonId, error: matchesError }, "Failed to fetch playoff matches");
-            return Err(serializeError(matchesError));
+            return Err(serializeError(matchesError, "DB_ERROR"));
         }
 
         const hasCompletedMatches = playoffMatches?.some(m => m.status === "completed");
@@ -43,7 +45,8 @@ export async function resetPlayoffBracketsService(
         if (hasCompletedMatches) {
             return Err({
                 name: "ValidationError",
-                message: "Cannot reset brackets - some playoff matches have been completed"
+                message: "Cannot reset brackets - some playoff matches have been completed",
+                code: "CONFLICT"
             });
         }
 
@@ -51,7 +54,7 @@ export async function resetPlayoffBracketsService(
 
         if (deleteError) {
             logger.error({ seasonId, error: deleteError }, "Failed to delete playoff matches");
-            return Err(serializeError(deleteError));
+            return Err(serializeError(deleteError, "DB_ERROR"));
         }
 
         const { error: updateError } = await updateSeasonPlayoffStatus(supabase, seasonId, {
@@ -60,7 +63,7 @@ export async function resetPlayoffBracketsService(
 
         if (updateError) {
             logger.error({ seasonId, error: updateError }, "Failed to update season playoff status");
-            return Err(serializeError(updateError));
+            return Err(serializeError(updateError, "DB_ERROR"));
         }
 
         logger.info({ seasonId }, "Playoff brackets reset successfully");

@@ -1,5 +1,5 @@
 import { DBClient } from "@/shared/types/db";
-import {InsertPlayoffBracketDto, InsertPlayoffMatchDto} from "@/server/dto/playoff.dto";
+import {InsertPlayoffBracketDto, InsertPlayoffMatchDto} from "@/server/domains/playoff";
 
 export async function findPlayoffConfigById(
     supabase: DBClient,

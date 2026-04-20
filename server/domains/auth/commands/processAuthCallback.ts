@@ -14,7 +14,8 @@ export async function processAuthCallback(
             logger.error({url}, "Missing hash in auth callback URL");
             return Err({
                 message:"Missing auth tokens",
-                name:"AuthError"
+                name:"AuthError",
+                code:"UNAUTHORIZED"
             });
         }
         const params = new URLSearchParams(hash)
@@ -25,7 +26,8 @@ export async function processAuthCallback(
             logger.error("Missing access_token or refresh_token in auth callback");
             return Err({
                 message:"Invalid auth callback",
-                name:"AuthError"
+                name:"AuthError",
+                code:"UNAUTHORIZED"
             })
         }
 
@@ -36,14 +38,15 @@ export async function processAuthCallback(
 
         if (error) {
             logger.error({error}, "Failed to set session from auth callback");
-            return Err(serializeError(error))
+            return Err(serializeError(error, "UNAUTHORIZED"))
         }
 
         if(!data.session){
             logger.error("Session creation failed in auth callback");
             return Err({
                 message:"Session creation failed",
-                name:"AuthError"
+                name:"AuthError",
+                code:"UNAUTHORIZED"
             })
         }
         return Ok(null)

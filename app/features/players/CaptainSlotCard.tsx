@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/app/components/ui/card";
 import Image from "next/image";
-import { PlayerWithRole } from "@/server/dto/player.dto";
+import { PlayerWithRole } from "@/server/domains/player";
 import { Button } from "@/app/components/ui/button";
 import { useState } from "react";
 import {

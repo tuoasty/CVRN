@@ -9,13 +9,14 @@ export async function getRegionByCode(supabase: DBClient, code: string): Promise
         const {data, error} = await findRegionByCode(supabase, code)
         if (error) {
             logger.error({code, error}, "Failed to fetch region by code");
-            return Err(serializeError(error))
+            return Err(serializeError(error, "DB_ERROR"))
         }
 
         if (!data) {
             return Err({
                 message: "Region not found",
-                name: "NotFoundError"
+                name: "NotFoundError",
+                code: "NOT_FOUND"
             })
         }
 

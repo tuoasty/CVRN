@@ -18,7 +18,8 @@ async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buf
         if (file.size > IMAGE_VALIDATION.MAX_FILE_SIZE) {
             return Err({
                 message: `File size exceeds ${IMAGE_VALIDATION.MAX_FILE_SIZE / 1024 / 1024}MB`,
-                name: "FileSizeExceeded"
+                name: "FileSizeExceeded",
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -26,7 +27,8 @@ async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buf
         if (fileType !== 'unknown' && !IMAGE_VALIDATION.ALLOWED_TYPES.includes(fileType)) {
             return Err({
                 message: `Invalid file type. Allowed: ${IMAGE_VALIDATION.ALLOWED_TYPES.join(', ')}`,
-                name: "InvalidFileType"
+                name: "InvalidFileType",
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -37,7 +39,8 @@ async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buf
         if (!metadata.width || !metadata.height) {
             return Err({
                 message: "Unable to read image dimensions",
-                name: "InvalidImage"
+                name: "InvalidImage",
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -65,7 +68,8 @@ async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buf
         logger.error({ error }, "Failed to validate and compress image");
         return Err({
             message: "Failed to process image",
-            name: "ImageProcessingError"
+            name: "ImageProcessingError",
+            code: "INTEGRATION_ERROR"
         });
     }
 }
@@ -93,7 +97,8 @@ export async function uploadFile(supabase: DBClient, p: {
             logger.warn({ userId: p.userId, resetAt: resetDate }, "Upload rate limit exceeded");
             return Err({
                 message: `Upload rate limit exceeded. Try again after ${resetDate.toISOString()}`,
-                name: "RateLimitExceeded"
+                name: "RateLimitExceeded",
+                code: "FORBIDDEN"
             });
         }
 
@@ -116,13 +121,14 @@ export async function uploadFile(supabase: DBClient, p: {
 
         if(error){
             logger.error({bucket: p.bucket, path: p.path, contentType: contentType, error}, "Failed to upload file");
-            return Err(serializeError(error))
+            return Err(serializeError(error, "DB_ERROR"))
         }
         if(!data){
             logger.error({bucket: p.bucket, path: p.path}, "Upload succeeded but no data returned");
             return Err({
                 message:"Failed to insert data",
-                name:"ImageInsertFailed"
+                name:"ImageInsertFailed",
+                code:"DB_ERROR"
             });
         }
 
@@ -145,7 +151,7 @@ export async function deleteFile(supabase: DBClient, p:{
         const {error} = await supabase.storage.from(p.bucket).remove([p.path])
         if(error) {
             logger.error({bucket: p.bucket, path: p.path, error}, "Failed to delete file");
-            return Err(serializeError(error))
+            return Err(serializeError(error, "DB_ERROR"))
         }
         return Ok(null)
     } catch (error){
@@ -166,13 +172,14 @@ export async function createSignedUrl(supabase: DBClient, p: {
 
         if(error){
             logger.error({bucket: p.bucket, path: p.path, expiresIn: p.expiresIn, error}, "Failed to create signed URL");
-            return Err(serializeError(error))
+            return Err(serializeError(error, "DB_ERROR"))
         }
         if(!data){
             logger.error({bucket: p.bucket, path: p.path}, "Signed URL creation succeeded but no data returned");
             return Err({
                 message:"Failed to create signed url",
-                name:"SignedUrlFailure"
+                name:"SignedUrlFailure",
+                code:"DB_ERROR"
             });
         }
 

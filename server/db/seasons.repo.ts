@@ -1,5 +1,5 @@
 import {DBClient} from "@/shared/types/db";
-import {InsertSeasonDto} from "@/server/dto/season.dto";
+import {InsertSeasonDto} from "@/server/domains/season";
 
 export async function insertSeason(supabase: DBClient, p: InsertSeasonDto) {
     return supabase

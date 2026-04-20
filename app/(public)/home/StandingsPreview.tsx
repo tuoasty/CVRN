@@ -1,6 +1,6 @@
 "use client";
 
-import { StandingWithInfo } from "@/server/dto/standing.dto";
+import { StandingWithInfo } from "@/server/domains/standing";
 import { ArrowRight, Trophy } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
