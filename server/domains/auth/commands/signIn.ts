@@ -17,12 +17,12 @@ export async function signIn(
 
         if(error){
             logger.error({email, error}, "Failed to sign in");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "UNAUTHORIZED"));
         }
 
         if(!data.user || !data.session){
             logger.error({email}, "Sign in succeeded but no user or session returned");
-            return Err(createError("Failed to login", "NO_SESSION", 401));
+            return Err(createError("Failed to login", "UNAUTHORIZED", 401));
         }
 
         return Ok({

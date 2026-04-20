@@ -14,13 +14,14 @@ export async function searchOfficialsInDatabase(
 
         if (error) {
             logger.error({ query: p.query, error }, "Failed to search officials in database");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to search officials",
-                name: "SearchError"
+                name: "SearchError",
+                code: "DB_ERROR"
             });
         }
 

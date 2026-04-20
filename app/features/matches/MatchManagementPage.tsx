@@ -7,7 +7,7 @@ import AdminSchedulePanel from "@/app/features/matches/AdminSchedulePanel";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
-import { PlayoffRound } from "@/server/dto/playoff.dto";
+import { PlayoffRound } from "@/server/domains/playoff";
 import { Calendar } from "lucide-react";
 
 export default function MatchManagementPage() {

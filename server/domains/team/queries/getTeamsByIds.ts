@@ -18,13 +18,14 @@ export async function getTeamsByIds(
 
         if (error) {
             logger.error({teamIds, error}, "Failed to fetch teams by IDs");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to fetch teams",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 

@@ -180,14 +180,14 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         }
     };
 
-    const seasonsByRegion = seasons.reduce((acc, season) => {
+    const seasonsByRegion = seasons.reduce<Record<string, typeof seasons>>((acc, season) => {
         const regionId = season.region_id;
         if (!acc[regionId]) {
             acc[regionId] = [];
         }
         acc[regionId].push(season);
         return acc;
-    }, {} as Record<string, typeof seasons>);
+    }, {});
 
     return (
         <div className="space-y-6">

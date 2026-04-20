@@ -16,7 +16,7 @@ export async function advancePlayoffWinner(
 
         if (bracketError) {
             logger.error({ matchId, error: bracketError }, "Failed to find playoff bracket");
-            return Err(serializeError(bracketError));
+            return Err(serializeError(bracketError, "DB_ERROR"));
         }
 
         if (!bracket) {
@@ -30,7 +30,8 @@ export async function advancePlayoffWinner(
             logger.error({ matchId }, "Match not found for bracket");
             return Err({
                 name: "NotFoundError",
-                message: "Match not found"
+                message: "Match not found",
+                code: "NOT_FOUND"
             });
         }
 
@@ -54,7 +55,7 @@ export async function advancePlayoffWinner(
 
             if (nextBracketError || !nextBracket) {
                 logger.error({ nextBracketId: bracket.next_bracket_id, error: nextBracketError }, "Failed to find next bracket");
-                return Err(serializeError(nextBracketError));
+                return Err(serializeError(nextBracketError, "DB_ERROR"));
             }
 
             const { error: updateError } = await updateMatchTeam(
@@ -66,7 +67,7 @@ export async function advancePlayoffWinner(
 
             if (updateError) {
                 logger.error({ matchId: nextBracket.match_id, position: bracket.winner_position, error: updateError }, "Failed to advance winner");
-                return Err(serializeError(updateError));
+                return Err(serializeError(updateError, "DB_ERROR"));
             }
 
             const seedField = bracket.winner_position === "home" ? "seed_home" : "seed_away";
@@ -77,7 +78,7 @@ export async function advancePlayoffWinner(
 
             if (seedError) {
                 logger.error({ bracketId: bracket.next_bracket_id, seedField, error: seedError }, "Failed to update winner seed");
-                return Err(serializeError(seedError));
+                return Err(serializeError(seedError, "DB_ERROR"));
             }
 
             logger.info({ matchId, winnerTeamId, winnerSeed, nextMatchId: nextBracket.match_id, position: bracket.winner_position }, "Winner advanced to next bracket");
@@ -92,7 +93,7 @@ export async function advancePlayoffWinner(
 
             if (loserBracketError || !loserBracket) {
                 logger.error({ loserNextBracketId: bracket.loser_next_bracket_id, error: loserBracketError }, "Failed to find loser bracket");
-                return Err(serializeError(loserBracketError));
+                return Err(serializeError(loserBracketError, "DB_ERROR"));
             }
 
             const { error: updateError } = await updateMatchTeam(
@@ -104,7 +105,7 @@ export async function advancePlayoffWinner(
 
             if (updateError) {
                 logger.error({ matchId: loserBracket.match_id, position: bracket.loser_position, error: updateError }, "Failed to advance loser");
-                return Err(serializeError(updateError));
+                return Err(serializeError(updateError, "DB_ERROR"));
             }
 
             const seedField = bracket.loser_position === "home" ? "seed_home" : "seed_away";
@@ -115,7 +116,7 @@ export async function advancePlayoffWinner(
 
             if (seedError) {
                 logger.error({ bracketId: bracket.loser_next_bracket_id, seedField, error: seedError }, "Failed to update loser seed");
-                return Err(serializeError(seedError));
+                return Err(serializeError(seedError, "DB_ERROR"));
             }
 
             logger.info({ matchId, loserTeamId, loserSeed, thirdPlaceMatchId: loserBracket.match_id, position: bracket.loser_position }, "Loser advanced to third place match");

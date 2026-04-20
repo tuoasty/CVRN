@@ -1,18 +1,21 @@
+import type {ErrorCode} from "@/shared/types/errorCode";
+
 export interface SerializableError {
     message: string;
+    code: ErrorCode;
     name?: string;
     stack?: string;
-    code?: string;
     statusCode?: number;
 }
 
-export function serializeError(error: unknown): SerializableError {
+export function serializeError(error: unknown, code: ErrorCode = "UNKNOWN"): SerializableError {
 
     if (error instanceof Error) {
         return {
             message: error.message,
             name: error.name,
             stack: error.stack,
+            code,
         };
     }
     if (
@@ -31,7 +34,7 @@ export function serializeError(error: unknown): SerializableError {
         return {
             message: e.message,
             name: e.name ?? "Error",
-            code: e.code,
+            code,
             statusCode: e.statusCode ?? e.status ?? undefined,
         };
     }
@@ -39,17 +42,19 @@ export function serializeError(error: unknown): SerializableError {
         return {
             message: error,
             name: "Error",
+            code,
         };
     }
     return {
         message: "Unknown error occurred",
         name: "UnknownError",
+        code,
     };
 }
 
 export function createError(
     message: string,
-    code?: string,
+    code: ErrorCode,
     statusCode?: number
 ): SerializableError {
     return {

@@ -24,7 +24,7 @@ import { clientLogger } from "@/app/utils/clientLogger";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 import {toast} from "@/app/utils/toast";
-import {PlayerWithRole} from "@/server/dto/player.dto";
+import {PlayerWithRole} from "@/server/domains/player";
 import {Trophy} from "lucide-react";
 
 interface CompleteMatchDialogProps {

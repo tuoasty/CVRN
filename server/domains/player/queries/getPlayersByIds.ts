@@ -19,13 +19,14 @@ export async function getPlayersByIds(
 
         if (error) {
             logger.error({playerIds: p.playerIds, error}, "Failed to fetch players by IDs");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to fetch players",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 

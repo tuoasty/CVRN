@@ -16,8 +16,8 @@ import {
     updateMatchScheduleAction,
     voidMatchAction,
 } from '@/app/actions/match.actions';
-import { CompleteMatchInput, MatchWithDetails, UpdateMatchScheduleInput, VoidMatchInput } from '@/server/dto/match.dto';
-import { PlayoffRound } from '@/server/dto/playoff.dto';
+import { CompleteMatchInput, MatchWithDetails, UpdateMatchScheduleInput, VoidMatchInput } from '@/server/domains/match';
+import { PlayoffRound } from '@/server/domains/playoff';
 
 const MATCHES_TTL = 2 * 60 * 1000;
 const AVAILABLE_TEAMS_TTL = 60 * 1000;

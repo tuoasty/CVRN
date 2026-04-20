@@ -10,13 +10,14 @@ export async function getAllTeamsWithRegions(supabase: DBClient): Promise<Result
         const {data, error} = await findAllTeamsWithRegions(supabase);
         if (error) {
             logger.error({error}, "Failed to fetch teams with regions");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to fetch teams with regions",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 

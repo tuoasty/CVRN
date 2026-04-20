@@ -8,7 +8,7 @@ import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { ChevronLeft, Users } from "lucide-react";
-import { PlayerWithRole } from "@/server/dto/player.dto";
+import { PlayerWithRole } from "@/server/domains/player";
 import { Card, CardContent } from "@/app/components/ui/card";
 
 const ROLE_BADGE_CONFIG = {

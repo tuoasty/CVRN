@@ -11,9 +11,19 @@ export {generateSlug} from "./helpers/generateSlug";
 export type {
     GetTeamByNameSeason,
     TeamIdInput,
+    TeamSlugSeasonInput,
     TeamWithRegion,
     TeamWithRegionAndPlayers,
     InsertTeamDto,
     CreateTeamInput,
     UpdateTeamInput,
+    CreateTeamFormInput,
+    UpdateTeamFormInput,
+} from "./types";
+export {
+    GetTeamByNameSeasonSchema,
+    TeamIdSchema,
+    TeamSlugSeasonSchema,
+    CreateTeamFormSchema,
+    UpdateTeamFormSchema,
 } from "./types";

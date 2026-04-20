@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/components/ui/select";
-import { PlayoffRound } from "@/server/dto/playoff.dto";
+import { PlayoffRound } from "@/server/domains/playoff";
 
 interface SeasonWeekPickerProps {
     selectedSeasonId: string;

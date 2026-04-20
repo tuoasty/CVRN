@@ -2,7 +2,7 @@
 
 import React from "react";
 import { PlayoffBracket, Match } from "@/shared/types/db";
-import { TeamWithRegion } from "@/server/dto/team.dto";
+import { TeamWithRegion } from "@/server/domains/team";
 import { Badge } from "@/app/components/ui/badge";
 import {
     Tooltip,

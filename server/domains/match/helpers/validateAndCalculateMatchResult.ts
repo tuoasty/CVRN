@@ -19,7 +19,8 @@ export function validateAndCalculateMatchResult(
         if (!input.forfeitingTeam) {
             return Err({
                 name: "ValidationError",
-                message: "Forfeiting team must be specified"
+                message: "Forfeiting team must be specified",
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -58,7 +59,8 @@ export function validateAndCalculateMatchResult(
         if (input.sets.length < expectedMinSets || input.sets.length > expectedMaxSets) {
             return Err({
                 name: "ValidationError",
-                message: `BO${match.best_of} must have ${expectedMinSets}-${expectedMaxSets} sets`
+                message: `BO${match.best_of} must have ${expectedMinSets}-${expectedMaxSets} sets`,
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -70,21 +72,24 @@ export function validateAndCalculateMatchResult(
             if (maxScore < minWinningScore) {
                 return Err({
                     name: "ValidationError",
-                    message: `Set ${set.setNumber}: Winning score must be at least ${minWinningScore}`
+                    message: `Set ${set.setNumber}: Winning score must be at least ${minWinningScore}`,
+                    code: "VALIDATION_ERROR"
                 });
             }
 
             if (maxScore - minScore < 2) {
                 return Err({
                     name: "ValidationError",
-                    message: `Set ${set.setNumber}: Winner must win by at least 2 points`
+                    message: `Set ${set.setNumber}: Winner must win by at least 2 points`,
+                    code: "VALIDATION_ERROR"
                 });
             }
 
             if (maxScore < minWinningScore + 2 && minScore >= minWinningScore) {
                 return Err({
                     name: "ValidationError",
-                    message: `Set ${set.setNumber}: Invalid deuce score`
+                    message: `Set ${set.setNumber}: Invalid deuce score`,
+                    code: "VALIDATION_ERROR"
                 });
             }
         }
