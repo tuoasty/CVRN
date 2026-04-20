@@ -22,6 +22,31 @@ export async function getRobloxUserByName(username: string): Promise<Result<Robl
     }
 }
 
+export async function getRobloxUsersById(userIds: string[]): Promise<Result<RobloxUser[]>> {
+    try {
+        const { data } = await robloxUsersApi.post<{ data: Array<{
+            hasVerifiedBadge: boolean;
+            id: number;
+            name: string;
+            displayName: string;
+        }> }>(`/v1/users`, {
+            userIds: userIds.map(Number),
+            excludeBannedUsers: false,
+        });
+
+        return Ok(data.data.map(u => ({
+            requestedUsername: u.name,
+            hasVerifiedBadge: u.hasVerifiedBadge,
+            id: String(u.id),
+            name: u.name,
+            displayName: u.displayName,
+        })));
+    } catch (error) {
+        logger.error({ error, userIds }, "Failed to fetch Roblox users by ID");
+        return Err({ message: "Roblox API is temporarily unavailable", code: "INTEGRATION_ERROR", name: "RobloxApiError" });
+    }
+}
+
 export async function getRobloxAvatarsById(userIds: string[]): Promise<Result<RobloxThumbnail[]>>{
     try {
         const {data} = await robloxThumbnailsApi.get<{data: RobloxThumbnail[]}>(
