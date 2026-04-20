@@ -5,3 +5,4 @@ export {assignMultipleOfficialsToMatch} from "./commands/assignMultipleOfficials
 export {removeOfficialFromMatch} from "./commands/removeOfficialFromMatch";
 export {removeAllOfficialsOfType} from "./commands/removeAllOfficialsOfType";
 export type {MatchOfficialWithDetails, AssignOfficialInput, AssignMultipleOfficialsInput, MatchIdInput, OfficialType} from "./types";
+export {OfficialTypeSchema, AssignOfficialSchema, AssignMultipleOfficialsSchema} from "./types";
