@@ -5,7 +5,7 @@ import {
     AddPlayerToTeamInput,
     RemovePlayerFromTeamInput,
     SetPlayerRoleInput, PlayerRole
-} from "@/server/dto/player.dto";
+} from "@/server/domains/player";
 
 export async function upsertPlayer(
     supabase: DBClient,

@@ -23,7 +23,7 @@ import {
     DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { toast } from "@/app/utils/toast";
-import { PlayerRole, PlayerWithRole } from "@/server/dto/player.dto";
+import { PlayerRole, PlayerWithRole } from "@/server/domains/player";
 
 interface Props {
     player: PlayerWithRole;

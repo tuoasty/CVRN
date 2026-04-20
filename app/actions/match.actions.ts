@@ -111,15 +111,19 @@ export async function deleteMatchAction(matchId: string) {
 }
 
 export async function getUpcomingMatchesAction(seasonId: string, limit: number = 5) {
-    const parsed = z.uuid().safeParse(seasonId);
-    if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const seasonParsed = z.uuid().safeParse(seasonId);
+    if (!seasonParsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const limitParsed = z.number().int().min(1).max(100).safeParse(limit);
+    if (!limitParsed.success) return Err({message: "Invalid limit", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return getUpcomingMatches(supabase, parsed.data, limit);
+    return getUpcomingMatches(supabase, seasonParsed.data, limitParsed.data);
 }
 
 export async function getRecentMatchesAction(seasonId: string, limit: number = 5) {
-    const parsed = z.uuid().safeParse(seasonId);
-    if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const seasonParsed = z.uuid().safeParse(seasonId);
+    if (!seasonParsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const limitParsed = z.number().int().min(1).max(100).safeParse(limit);
+    if (!limitParsed.success) return Err({message: "Invalid limit", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return getRecentMatches(supabase, parsed.data, limit);
+    return getRecentMatches(supabase, seasonParsed.data, limitParsed.data);
 }

@@ -25,7 +25,7 @@ import { MatchSet } from "@/shared/types/db";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 import {toast} from "@/app/utils/toast";
-import {PlayerWithRole} from "@/server/dto/player.dto";
+import {PlayerWithRole} from "@/server/domains/player";
 import {Pencil} from "lucide-react";
 
 interface UpdateMatchDialogProps {
