@@ -16,7 +16,7 @@ export async function getMatchesForWeek(
 
         if (error) {
             logger.error({seasonId: p.seasonId, week: p.week, error}, "Failed to fetch matches for week");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {

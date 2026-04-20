@@ -59,13 +59,14 @@ export async function lazySyncOfficial(
 
         if (error) {
             logger.error({robloxUserId: String(user.id), error}, "Failed to update official during lazy sync");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "UpdateError",
-                message: "Failed to update official"
+                message: "Failed to update official",
+                code: "DB_ERROR"
             });
         }
 

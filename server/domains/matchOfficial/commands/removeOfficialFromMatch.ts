@@ -16,7 +16,7 @@ export async function removeOfficialFromMatch(
 
         if (error) {
             logger.error({matchId, officialId, officialType, error}, "Failed to remove official from match");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         return Ok(true);

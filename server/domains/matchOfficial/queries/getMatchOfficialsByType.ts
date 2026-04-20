@@ -16,13 +16,14 @@ export async function getMatchOfficialsByType(
 
         if (error) {
             logger.error({matchId, officialType, error}, "Failed to fetch match officials by type");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to fetch match officials by type",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 

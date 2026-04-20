@@ -26,13 +26,14 @@ export async function createSeason(
 
         if (error) {
             logger.error({input: p, error}, "Failed to insert season");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "InsertError",
-                message: "Failed to create season"
+                message: "Failed to create season",
+                code: "DB_ERROR"
             });
         }
 

@@ -14,13 +14,14 @@ export async function assignOfficialToMatch(
 
         if (error) {
             logger.error({input: p, error}, "Failed to assign official to match");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "AssignError",
-                message: "Failed to assign official to match"
+                message: "Failed to assign official to match",
+                code: "DB_ERROR"
             });
         }
 

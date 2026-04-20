@@ -16,7 +16,8 @@ export async function removeOfficial(
             logger.error({robloxUserId: p.robloxUserId}, "Official not found");
             return Err({
                 name: "OfficialNotFound",
-                message: "Official does not exist"
+                message: "Official does not exist",
+                code: "NOT_FOUND"
             });
         }
 
@@ -24,7 +25,7 @@ export async function removeOfficial(
 
         if (error) {
             logger.error({robloxUserId: p.robloxUserId, error}, "Failed to delete official");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         return Ok(true);
