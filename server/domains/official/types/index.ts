@@ -1,6 +1,14 @@
 export type {
-    SaveOfficialInput,
     UpdateOfficialInput,
     OfficialWithInfo,
-    SearchOfficialsInput
 } from "@/server/dto/official.dto";
+
+export type {
+    SaveOfficialInput,
+    SearchOfficialsInput,
+} from "./schemas";
+
+export {
+    SaveOfficialSchema,
+    SearchOfficialsSchema,
+} from "./schemas";
