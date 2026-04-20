@@ -4,9 +4,16 @@ export interface MatchOfficialWithDetails extends MatchOfficial {
     official: Official;
 }
 
+export type {MatchIdInput} from "@/server/dto/matchOfficial.dto";
+
 export type {
+    OfficialType,
     AssignOfficialInput,
     AssignMultipleOfficialsInput,
-    MatchIdInput,
-    OfficialType
-} from "@/server/dto/matchOfficial.dto";
+} from "./schemas";
+
+export {
+    OfficialTypeSchema,
+    AssignOfficialSchema,
+    AssignMultipleOfficialsSchema,
+} from "./schemas";

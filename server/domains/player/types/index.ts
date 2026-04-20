@@ -3,16 +3,31 @@ export type {
     SavePlayerInput,
     UpdatePlayerInput,
     AddPlayerToTeamInput,
+    PlayerCurrentTeamInput,
+    PlayerWithTeamInfo,
+    PlayerWithRole,
+} from "@/server/dto/player.dto";
+
+export type {
+    PlayerRole,
+    SavePlayerToTeamInput,
     RemovePlayerFromTeamInput,
     TeamPlayersInput,
-    PlayerCurrentTeamInput,
-    SavePlayerToTeamInput,
     PlayersByIdsInput,
     SearchPlayersInput,
-    PlayerWithTeamInfo,
     AddExistingPlayerToTeamInput,
-    PlayerRole,
-    PlayerWithRole,
     SetPlayerRoleInput,
     TransferCaptainInput,
-} from "@/server/dto/player.dto";
+} from "./schemas";
+
+export {
+    PlayerRoleSchema,
+    SavePlayerToTeamSchema,
+    RemovePlayerFromTeamSchema,
+    TeamPlayersSchema,
+    PlayersByIdsSchema,
+    SearchPlayersSchema,
+    AddExistingPlayerToTeamSchema,
+    SetPlayerRoleSchema,
+    TransferCaptainSchema,
+} from "./schemas";
