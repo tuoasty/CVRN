@@ -18,14 +18,16 @@ export async function createMatches(
             if (match.homeId === match.awayId) {
                 return Err({
                     name: "ValidationError",
-                    message: "Team A and Team B cannot be the same"
+                    message: "Team A and Team B cannot be the same",
+                    code: "VALIDATION_ERROR"
                 });
             }
 
             if (teamIds.has(match.homeId) || teamIds.has(match.awayId)) {
                 return Err({
                     name: "ValidationError",
-                    message: "Duplicate teams found across matches"
+                    message: "Duplicate teams found across matches",
+                    code: "VALIDATION_ERROR"
                 });
             }
 
@@ -36,7 +38,8 @@ export async function createMatches(
         if (p.defaultTimezone && !isValidTimezone(p.defaultTimezone)) {
             return Err({
                 name: "ValidationError",
-                message: "Invalid default timezone"
+                message: "Invalid default timezone",
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -51,7 +54,8 @@ export async function createMatches(
             if (!defaultScheduledAt) {
                 return Err({
                     name: "ValidationError",
-                    message: "Invalid default date/time/timezone combination"
+                    message: "Invalid default date/time/timezone combination",
+                    code: "VALIDATION_ERROR"
                 });
             }
         }
@@ -87,13 +91,14 @@ export async function createMatches(
 
         if (error) {
             logger.error({input: p, error}, "Failed to insert matches");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "InsertError",
-                message: "Failed to create matches"
+                message: "Failed to create matches",
+                code: "DB_ERROR"
             });
         }
 

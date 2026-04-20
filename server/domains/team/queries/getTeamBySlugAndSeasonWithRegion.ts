@@ -12,12 +12,13 @@ export async function getTeamBySlugAndSeasonWithRegion(supabase: DBClient, p: {
         const {data, error} = await findTeamBySlugAndSeasonWithRegion(supabase, p);
         if (error) {
             logger.error({slug: p.slug, seasonId: p.seasonId, error}, "Failed to fetch team by slug and season");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
         if (!data) {
             return Err({
                 message: "Failed to fetch team",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 

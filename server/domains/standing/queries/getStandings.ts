@@ -14,13 +14,14 @@ export async function getStandings(
 
         if (error) {
             logger.error({ params: p, error }, "Failed to fetch standings");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to fetch standings",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 

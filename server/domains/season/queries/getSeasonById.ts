@@ -14,13 +14,14 @@ export async function getSeasonById(
 
         if (error) {
             logger.error({seasonId: p.seasonId, error}, "Failed to fetch season by id");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Season not found",
-                name: "NotFoundError"
+                name: "NotFoundError",
+                code: "NOT_FOUND"
             });
         }
 

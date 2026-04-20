@@ -19,13 +19,14 @@ export async function assignMultipleOfficialsToMatch(
 
         if (error) {
             logger.error({input: p, error}, "Failed to assign multiple officials to match");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "AssignError",
-                message: "Failed to assign officials to match"
+                message: "Failed to assign officials to match",
+                code: "DB_ERROR"
             });
         }
 

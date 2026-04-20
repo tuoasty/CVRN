@@ -22,7 +22,8 @@ export async function addExistingPlayerToTeam(
             logger.error({ teamId: p.teamId }, "Team not found when adding existing player");
             return Err({
                 name: "TeamNotFound",
-                message: "Team does not exist"
+                message: "Team does not exist",
+                code: "NOT_FOUND"
             });
         }
 
@@ -32,14 +33,15 @@ export async function addExistingPlayerToTeam(
 
         if (countError) {
             logger.error({ teamId: p.teamId, seasonId, error: countError }, "Failed to count team players");
-            return Err(serializeError(countError));
+            return Err(serializeError(countError, "DB_ERROR"));
         }
 
         if (count !== null && count >= 16) {
             logger.warn({ teamId: p.teamId, seasonId, currentCount: count }, "Team is at maximum capacity");
             return Err({
                 name: "TeamAtCapacity",
-                message: "Team already has 16 players (maximum capacity)"
+                message: "Team already has 16 players (maximum capacity)",
+                code: "CONFLICT"
             });
         }
 
@@ -48,7 +50,8 @@ export async function addExistingPlayerToTeam(
             logger.error({ playerId: p.playerId }, "Player not found when adding to team");
             return Err({
                 name: "PlayerNotFound",
-                message: "Player does not exist"
+                message: "Player does not exist",
+                code: "NOT_FOUND"
             });
         }
 
@@ -63,7 +66,8 @@ export async function addExistingPlayerToTeam(
                 logger.warn({ playerId: p.playerId, teamId: p.teamId, seasonId }, "Player already in this team for this season");
                 return Err({
                     name: "PlayerAlreadyInTeam",
-                    message: "Player is already a member of this team for this season"
+                    message: "Player is already a member of this team for this season",
+                    code: "CONFLICT"
                 });
             } else {
                 logger.warn({
@@ -74,7 +78,8 @@ export async function addExistingPlayerToTeam(
                 }, "Player already in another team for this season");
                 return Err({
                     name: "PlayerAlreadyInTeam",
-                    message: "Player is already a member of another team for this season"
+                    message: "Player is already a member of another team for this season",
+                    code: "CONFLICT"
                 });
             }
         }
@@ -87,13 +92,14 @@ export async function addExistingPlayerToTeam(
 
         if (teamSeasonError) {
             logger.error({ playerId: p.playerId, teamId: p.teamId, seasonId, error: teamSeasonError }, "Failed to add existing player to team");
-            return Err(serializeError(teamSeasonError));
+            return Err(serializeError(teamSeasonError, "DB_ERROR"));
         }
 
         if (!teamSeason) {
             return Err({
                 name: "AddToTeamError",
-                message: "Failed to add player to team"
+                message: "Failed to add player to team",
+                code: "DB_ERROR"
             });
         }
 

@@ -16,7 +16,7 @@ export async function getRecentMatches(
 
         if (error) {
             logger.error({ seasonId, limit, error }, "Failed to fetch recent matches");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {

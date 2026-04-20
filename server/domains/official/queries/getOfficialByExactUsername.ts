@@ -14,7 +14,7 @@ export async function getOfficialByExactUsername(
 
         if (error) {
             logger.error({ query: p.query, error }, "Failed to find official by exact username");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!official || !official.username) {

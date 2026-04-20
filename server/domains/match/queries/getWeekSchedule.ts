@@ -15,7 +15,7 @@ export async function getWeekSchedule(
 
         if (error) {
             logger.error({ seasonId: p.seasonId, week: p.week, error }, "Failed to fetch week schedule");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {

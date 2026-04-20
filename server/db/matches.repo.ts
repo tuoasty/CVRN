@@ -414,7 +414,7 @@ export async function resetDownstreamBrackets(
             .single();
 
         if (bracketError) {
-            return Err(serializeError(bracketError));
+            return Err(serializeError(bracketError, "DB_ERROR"));
         }
 
         if (!bracket) {

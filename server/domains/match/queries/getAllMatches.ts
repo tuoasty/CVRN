@@ -10,13 +10,14 @@ export async function getAllMatches(supabase: DBClient): Promise<Result<Match[]>
 
         if (error) {
             logger.error({error}, "Failed to fetch all matches");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "FetchError",
-                message: "Failed to fetch matches"
+                message: "Failed to fetch matches",
+                code: "DB_ERROR"
             });
         }
 

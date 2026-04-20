@@ -14,7 +14,7 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
         const {data: existing, error: fetchError} = await findTeamById(supabase, p.teamId);
 
         if (fetchError || !existing || existing.deleted_at) {
-            return Err({name: "NotFoundError", message: "Team not found"});
+            return Err({name: "NotFoundError", message: "Team not found", code: "NOT_FOUND"});
         }
 
         const slug = generateSlug(p.name);
@@ -40,7 +40,7 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
 
             if (!uploadRes.ok) {
                 logger.error({teamId: p.teamId, error: uploadRes.error}, "Failed to upload new team logo");
-                return Err({name: "UploadError", message: "Failed to upload team logo"});
+                return Err({name: "UploadError", message: "Failed to upload team logo", code: "INTEGRATION_ERROR"});
             }
 
             logoUrl = uploadRes.value.url;
@@ -57,13 +57,13 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
 
         if (error || !data) {
             logger.error({teamId: p.teamId, error}, "Failed to update team");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         const {data: teamWithRegion, error: regionFetchError} = await findTeamByIdWithRegion(supabase, p.teamId);
 
         if (regionFetchError || !teamWithRegion) {
-            return Err({name: "FetchError", message: "Failed to fetch updated team"});
+            return Err({name: "FetchError", message: "Failed to fetch updated team", code: "DB_ERROR"});
         }
 
         return Ok(teamWithRegion as TeamWithRegion);

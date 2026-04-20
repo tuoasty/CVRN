@@ -22,7 +22,8 @@ export async function savePlayerToTeam(
             logger.error({teamId: p.teamId}, "Team not found when saving player to team");
             return Err({
                 name: "TeamNotFound",
-                message: "Team does not exist"
+                message: "Team does not exist",
+                code: "NOT_FOUND"
             });
         }
 
@@ -32,14 +33,15 @@ export async function savePlayerToTeam(
 
         if (countError) {
             logger.error({ teamId: p.teamId, seasonId, error: countError }, "Failed to count team players");
-            return Err(serializeError(countError));
+            return Err(serializeError(countError, "DB_ERROR"));
         }
 
         if (count !== null && count >= 16) {
             logger.warn({ teamId: p.teamId, seasonId, currentCount: count }, "Team is at maximum capacity");
             return Err({
                 name: "TeamAtCapacity",
-                message: "Team already has 16 players (maximum capacity)"
+                message: "Team already has 16 players (maximum capacity)",
+                code: "CONFLICT"
             });
         }
 
@@ -57,7 +59,8 @@ export async function savePlayerToTeam(
                     logger.warn({robloxUserId: p.robloxUserId, teamId: p.teamId, seasonId}, "Player already in this team for this season");
                     return Err({
                         name: "PlayerAlreadyInTeam",
-                        message: "Player is already a member of this team for this season"
+                        message: "Player is already a member of this team for this season",
+                        code: "CONFLICT"
                     });
                 } else {
                     logger.warn({
@@ -68,7 +71,8 @@ export async function savePlayerToTeam(
                     }, "Player already in another team for this season");
                     return Err({
                         name: "PlayerAlreadyInTeam",
-                        message: "Player is already a member of another team for this season"
+                        message: "Player is already a member of another team for this season",
+                        code: "CONFLICT"
                     });
                 }
             }
@@ -85,13 +89,14 @@ export async function savePlayerToTeam(
 
         if (playerError) {
             logger.error({robloxUserId: p.robloxUserId, error: playerError}, "Failed to upsert player");
-            return Err(serializeError(playerError));
+            return Err(serializeError(playerError, "DB_ERROR"));
         }
 
         if (!player) {
             return Err({
                 name: "UpsertError",
-                message: "Failed to save player"
+                message: "Failed to save player",
+                code: "DB_ERROR"
             });
         }
 
@@ -103,13 +108,14 @@ export async function savePlayerToTeam(
 
         if (teamSeasonError) {
             logger.error({playerId: player.id, teamId: p.teamId, seasonId, error: teamSeasonError}, "Failed to add player to team");
-            return Err(serializeError(teamSeasonError));
+            return Err(serializeError(teamSeasonError, "DB_ERROR"));
         }
 
         if (!teamSeason) {
             return Err({
                 name: "AddToTeamError",
-                message: "Failed to add player to team"
+                message: "Failed to add player to team",
+                code: "DB_ERROR"
             });
         }
 

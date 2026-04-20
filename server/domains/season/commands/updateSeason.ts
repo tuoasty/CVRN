@@ -21,13 +21,14 @@ export async function updateSeason(
 
         if (error) {
             logger.error({input: p, error}, "Failed to update season");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Season not found",
-                name: "NotFoundError"
+                name: "NotFoundError",
+                code: "NOT_FOUND"
             });
         }
 

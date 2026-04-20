@@ -8,7 +8,7 @@ export async function signOut(supabase: DBClient): Promise<Result<void, Serializ
         const {error} = await supabase.auth.signOut();
         if(error){
             logger.error({error}, "Failed to sign out");
-            return Err(serializeError(error))
+            return Err(serializeError(error, "UNAUTHORIZED"))
         }
         return Ok(undefined)
     } catch (error){

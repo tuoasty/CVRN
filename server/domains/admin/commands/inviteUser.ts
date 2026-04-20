@@ -14,7 +14,7 @@ export async function inviteUser(
         });
         if(inviteError){
             logger.error({email, role, invitedBy, error: inviteError}, "Failed to send invite email");
-            return Err(serializeError(inviteError))
+            return Err(serializeError(inviteError, "INTEGRATION_ERROR"))
         }
 
         const {error:dbError} = await supabaseAdmin.from("pending_users").insert({
@@ -22,7 +22,7 @@ export async function inviteUser(
         });
         if(dbError){
             logger.error({email, role, invitedBy, error: dbError}, "Failed to insert pending user");
-            return Err(serializeError(dbError))
+            return Err(serializeError(dbError, "DB_ERROR"))
         }
         return Ok(null)
     } catch(error){

@@ -13,13 +13,14 @@ export async function getAllSeasons(
 
         if (error) {
             logger.error({error}, "Failed to fetch all seasons");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to fetch seasons",
-                name: "FetchError"
+                name: "FetchError",
+                code: "DB_ERROR"
             });
         }
 
