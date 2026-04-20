@@ -55,13 +55,14 @@ export async function lazySyncPlayer(
 
         if (error) {
             logger.error({robloxUserId: String(user.id), error}, "Failed to update player during lazy sync");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 name: "UpdateError",
-                message: "Failed to update player"
+                message: "Failed to update player",
+                code: "DB_ERROR"
             });
         }
 

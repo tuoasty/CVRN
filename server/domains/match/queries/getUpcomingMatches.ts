@@ -16,7 +16,7 @@ export async function getUpcomingMatches(
 
         if (error) {
             logger.error({ seasonId, limit, error }, "Failed to fetch upcoming matches");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {

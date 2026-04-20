@@ -19,14 +19,16 @@ export async function completeMatchService(
             logger.error({ matchId: p.matchId, error: matchError }, "Match not found");
             return Err({
                 name: "NotFoundError",
-                message: "Match not found"
+                message: "Match not found",
+                code: "NOT_FOUND"
             });
         }
 
         if (match.status !== "scheduled") {
             return Err({
                 name: "ValidationError",
-                message: "Can only complete scheduled matches"
+                message: "Can only complete scheduled matches",
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -38,7 +40,7 @@ export async function completeMatchService(
 
         if (setsError) {
             logger.error({ matchId: p.matchId, error: setsError }, "Failed to insert match sets");
-            return Err(serializeError(setsError));
+            return Err(serializeError(setsError, "DB_ERROR"));
         }
 
         let scheduledAt: string | null | undefined = undefined;
@@ -48,7 +50,8 @@ export async function completeMatchService(
                 if (!isValidTimezone(p.timezone)) {
                     return Err({
                         name: "ValidationError",
-                        message: "Invalid timezone"
+                        message: "Invalid timezone",
+                        code: "VALIDATION_ERROR"
                     });
                 }
 
@@ -57,7 +60,8 @@ export async function completeMatchService(
                 if (!scheduledAt) {
                     return Err({
                         name: "ValidationError",
-                        message: "Invalid date/time/timezone combination"
+                        message: "Invalid date/time/timezone combination",
+                        code: "VALIDATION_ERROR"
                     });
                 }
             } else {
@@ -83,7 +87,7 @@ export async function completeMatchService(
 
         if (updateError || !completedMatch) {
             logger.error({ matchId: p.matchId, error: updateError }, "Failed to update match completion");
-            return Err(serializeError(updateError));
+            return Err(serializeError(updateError, "DB_ERROR"));
         }
 
         if (match.match_type === "playoffs" && match.home_team_id && match.away_team_id) {

@@ -15,13 +15,14 @@ export async function getSeasonBySlugAndRegion(
 
         if (error) {
             logger.error({slug, regionId, error}, "Failed to fetch season by slug and region");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Season not found",
-                name: "NotFoundError"
+                name: "NotFoundError",
+                code: "NOT_FOUND"
             });
         }
 

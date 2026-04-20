@@ -16,7 +16,8 @@ export async function transferCaptainService(
             logger.error({ currentCaptainPlayerId: p.currentCaptainPlayerId }, "Current captain invalid");
             return Err({
                 name: "InvalidCaptain",
-                message: "Current player is not the team captain"
+                message: "Current player is not the team captain",
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -26,7 +27,8 @@ export async function transferCaptainService(
             logger.error({ newCaptainPlayerId: p.newCaptainPlayerId }, "New captain not in team");
             return Err({
                 name: "PlayerNotInTeam",
-                message: "New captain must be in the team"
+                message: "New captain must be in the team",
+                code: "NOT_FOUND"
             });
         }
 
@@ -39,7 +41,7 @@ export async function transferCaptainService(
 
         if (demoteError || !oldCaptain) {
             logger.error({ error: demoteError }, "Failed to demote current captain");
-            return Err(serializeError(demoteError));
+            return Err(serializeError(demoteError, "DB_ERROR"));
         }
 
         const { data: newCaptain, error: promoteError } = await setPlayerRole(supabase, {
@@ -59,7 +61,7 @@ export async function transferCaptainService(
                 role: 'captain'
             });
 
-            return Err(serializeError(promoteError));
+            return Err(serializeError(promoteError, "DB_ERROR"));
         }
 
         return Ok({ oldCaptain, newCaptain });

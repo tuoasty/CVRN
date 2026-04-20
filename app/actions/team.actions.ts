@@ -35,7 +35,7 @@ export async function createTeamAction(formData: FormData) {
     const brickColor = formData.get('brickColor') as string;
     const startingLvr = formData.get('startingLvr') as string;
     const user = await requireAuth(supabase);
-    if (!user) return Err({ message: "User not authenticated", name: "AuthError" });
+    if (!user) return Err({ message: "User not authenticated", code: "UNAUTHORIZED" });
 
     return createTeam(supabase, {
         name,
@@ -92,7 +92,7 @@ export async function updateTeamAction(formData: FormData) {
     const startingLvr = formData.get('startingLvr') as string;
 
     const user = await requireAuth(supabase);
-    if (!user) return Err({ message: "User not authenticated", name: "AuthError" });
+    if (!user) return Err({ message: "User not authenticated", code: "UNAUTHORIZED" });
 
     return updateTeam(supabase, {
         teamId,

@@ -16,7 +16,8 @@ export async function deleteSeason(
             logger.warn({seasonId: p.seasonId}, "Attempted to delete non-existent season");
             return Err({
                 name: "SeasonNotFound",
-                message: "Season does not exist"
+                message: "Season does not exist",
+                code: "NOT_FOUND"
             });
         }
 
@@ -24,7 +25,7 @@ export async function deleteSeason(
 
         if (error) {
             logger.error({seasonId: p.seasonId, error}, "Failed to delete season");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         return Ok(undefined);

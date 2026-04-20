@@ -26,14 +26,16 @@ export async function generatePlayoffBracket(
             logger.error({ seasonId: p.seasonId, error: seasonError }, "Season not found");
             return Err({
                 name: "NotFoundError",
-                message: "Season not found"
+                message: "Season not found",
+                code: "NOT_FOUND"
             });
         }
 
         if (season.playoff_started) {
             return Err({
                 name: "ValidationError",
-                message: "Playoffs have already been generated for this season"
+                message: "Playoffs have already been generated for this season",
+                code: "CONFLICT"
             });
         }
 
@@ -43,7 +45,8 @@ export async function generatePlayoffBracket(
             logger.error({ seasonId: p.seasonId, error: configError }, "Playoff config not found");
             return Err({
                 name: "NotFoundError",
-                message: "No playoff configuration found for this season"
+                message: "No playoff configuration found for this season",
+                code: "NOT_FOUND"
             });
         }
 
@@ -51,7 +54,7 @@ export async function generatePlayoffBracket(
 
         if (standingsError || !standings) {
             logger.error({ seasonId: p.seasonId, error: standingsError }, "Failed to fetch standings");
-            return Err(serializeError(standingsError));
+            return Err(serializeError(standingsError, "DB_ERROR"));
         }
 
         const totalTeams = config.qualified_teams + config.playin_teams;
@@ -59,7 +62,8 @@ export async function generatePlayoffBracket(
         if (standings.length < totalTeams) {
             return Err({
                 name: "ValidationError",
-                message: `Not enough teams in standings. Need ${totalTeams}, found ${standings.length}`
+                message: `Not enough teams in standings. Need ${totalTeams}, found ${standings.length}`,
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -332,7 +336,7 @@ export async function generatePlayoffBracket(
 
         if (matchesError || !matches) {
             logger.error({ seasonId: p.seasonId, error: matchesError }, "Failed to insert playoff matches");
-            return Err(serializeError(matchesError));
+            return Err(serializeError(matchesError, "DB_ERROR"));
         }
 
         const matchIdMap = new Map<string, string>();
@@ -358,7 +362,7 @@ export async function generatePlayoffBracket(
 
         if (bracketsError || !brackets) {
             logger.error({ seasonId: p.seasonId, error: bracketsError }, "Failed to insert playoff brackets");
-            return Err(serializeError(bracketsError));
+            return Err(serializeError(bracketsError, "DB_ERROR"));
         }
 
         const matchToBracketIdMap = new Map<string, string>();
@@ -411,7 +415,7 @@ export async function generatePlayoffBracket(
 
             if (updateError?.error) {
                 logger.error({ seasonId: p.seasonId, error: updateError.error }, "Failed to update bracket references");
-                return Err(serializeError(updateError.error));
+                return Err(serializeError(updateError.error, "DB_ERROR"));
             }
         }
 
@@ -421,7 +425,7 @@ export async function generatePlayoffBracket(
 
         if (updateError) {
             logger.error({ seasonId: p.seasonId, error: updateError }, "Failed to update season playoff status");
-            return Err(serializeError(updateError));
+            return Err(serializeError(updateError, "DB_ERROR"));
         }
 
         logger.info({

@@ -19,7 +19,7 @@ export async function getAvailableTeamsForWeek(
 
         if (teamsError) {
             logger.error({seasonId:p.seasonId, week:p.week, error: teamsError}, "Failed to fetch teams");
-            return Err(serializeError(teamsError));
+            return Err(serializeError(teamsError, "DB_ERROR"));
         }
 
         if (!allTeams) {
@@ -35,7 +35,7 @@ export async function getAvailableTeamsForWeek(
 
         if (matchesError) {
             logger.error({seasonId:p.seasonId, week:p.week, error: matchesError}, "Failed to fetch matches for week");
-            return Err(serializeError(matchesError));
+            return Err(serializeError(matchesError, "DB_ERROR"));
         }
 
         const usedTeamIds = new Set<string>();

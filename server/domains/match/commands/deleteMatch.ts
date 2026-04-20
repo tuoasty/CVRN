@@ -15,21 +15,24 @@ export async function deleteMatchService(
             logger.error({ matchId, error: matchError }, "Match not found");
             return Err({
                 name: "NotFoundError",
-                message: "Match not found"
+                message: "Match not found",
+                code: "NOT_FOUND"
             });
         }
 
         if (match.match_type === "playoffs") {
             return Err({
                 name: "ValidationError",
-                message: "Playoff matches cannot be deleted"
+                message: "Playoff matches cannot be deleted",
+                code: "VALIDATION_ERROR"
             });
         }
 
         if (match.status === "completed") {
             return Err({
                 name: "ValidationError",
-                message: "Cannot delete completed matches"
+                message: "Cannot delete completed matches",
+                code: "VALIDATION_ERROR"
             });
         }
 
@@ -37,7 +40,7 @@ export async function deleteMatchService(
 
         if (deleteError) {
             logger.error({ matchId, error: deleteError }, "Failed to delete match");
-            return Err(serializeError(deleteError));
+            return Err(serializeError(deleteError, "DB_ERROR"));
         }
 
         logger.info({ matchId, seasonId: match.season_id, week: match.week }, "Match deleted successfully");

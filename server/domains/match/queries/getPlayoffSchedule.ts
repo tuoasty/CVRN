@@ -16,7 +16,7 @@ export async function getPlayoffSchedule(
 
         if (error) {
             logger.error({ seasonId: p.seasonId, round: p.round, error }, "Failed to fetch playoff schedule");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {

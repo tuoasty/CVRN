@@ -14,13 +14,14 @@ export async function searchPlayersInDatabase(
 
         if (error) {
             logger.error({ query: p.query, error }, "Failed to search players in database");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         if (!data) {
             return Err({
                 message: "Failed to search players",
-                name: "SearchError"
+                name: "SearchError",
+                code: "DB_ERROR"
             });
         }
 

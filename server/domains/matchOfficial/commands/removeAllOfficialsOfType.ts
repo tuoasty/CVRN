@@ -15,7 +15,7 @@ export async function removeAllOfficialsOfType(
 
         if (error) {
             logger.error({matchId, officialType, error}, "Failed to remove all officials of type from match");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         return Ok(true);
