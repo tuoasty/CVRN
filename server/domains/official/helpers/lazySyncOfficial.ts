@@ -1,4 +1,4 @@
-import {getRobloxAvatarsById, getRobloxUserByName} from "@/server/roblox/users";
+import {getRobloxAvatarsById, getRobloxUsersById} from "@/server/roblox/users";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {DBClient, Official} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
@@ -16,15 +16,15 @@ export async function lazySyncOfficial(
             return Ok(official);
         }
 
-        if (!official.username) {
+        if (!official.roblox_user_id) {
             return Ok(official);
         }
 
-        const userResult = await getRobloxUserByName(official.username);
+        const userResult = await getRobloxUsersById([official.roblox_user_id]);
 
         if (!userResult.ok || userResult.value.length === 0) {
             logger.error({
-                username: official.username,
+                robloxUserId: official.roblox_user_id,
                 error: userResult.ok ? null : userResult.error
             }, "Failed to fetch Roblox user during lazy sync");
             return Ok(official);
