@@ -2,9 +2,8 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {DBClient, Match} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {findMatchById, deleteMatchSets, voidMatch} from "@/server/db/matches.repo";
+import {findMatchById, rpcVoidMatch} from "@/server/db/matches.repo";
 import {VoidMatchInput} from "../types";
-import {removeAllMatchOfficials} from "@/server/db/matchOfficial.repo";
 
 export async function voidMatchService(
     supabase: DBClient,
@@ -30,26 +29,15 @@ export async function voidMatchService(
             });
         }
 
-        const { error: setsError } = await deleteMatchSets(supabase, p.matchId);
-        if (setsError) {
-            logger.error({ matchId: p.matchId, error: setsError }, "Failed to delete match sets");
-            return Err(serializeError(setsError));
-        }
+        const result = await rpcVoidMatch(supabase, p.matchId);
 
-        const { error: officialsError } = await removeAllMatchOfficials(supabase, p.matchId);
-        if (officialsError) {
-            logger.error({ matchId: p.matchId, error: officialsError }, "Failed to remove match officials");
-            return Err(serializeError(officialsError));
-        }
-
-        const { data: voidedMatch, error: voidError } = await voidMatch(supabase, p.matchId);
-        if (voidError || !voidedMatch) {
-            logger.error({ matchId: p.matchId, error: voidError }, "Failed to void match");
-            return Err(serializeError(voidError));
+        if (!result.ok) {
+            logger.error({ matchId: p.matchId, error: result.error }, "Failed to void match via RPC");
+            return result;
         }
 
         logger.info({ matchId: p.matchId }, "Match voided successfully");
-        return Ok(voidedMatch as Match);
+        return Ok(result.value);
     } catch (error) {
         logger.error({ error }, "Unexpected error voiding match");
         return Err(serializeError(error));

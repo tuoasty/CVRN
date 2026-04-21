@@ -1,8 +1,7 @@
-import {DBClient} from "@/shared/types/db";
+import {DBClient, Match} from "@/shared/types/db";
 import {InsertMatchDto} from "@/server/domains/match";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
-import {logger} from "@/server/utils/logger";
 
 export async function insertMatches(
     supabase: DBClient,
@@ -94,120 +93,75 @@ export async function updateMatchSchedule(
         .single();
 }
 
-export async function insertMatchSets(
+export async function rpcCompleteMatch(
     supabase: DBClient,
-    matchId: string,
-    sets: Array<{ setNumber: number; homeScore: number; awayScore: number }>
-) {
-    const rows = sets.map(s => ({
-        match_id: matchId,
-        set_number: s.setNumber,
-        home_score: s.homeScore,
-        away_score: s.awayScore,
-    }));
-
-    return supabase
-        .from("match_sets")
-        .insert(rows)
-        .select();
-}
-
-export async function updateMatchCompletion(
-    supabase: DBClient,
-    matchId: string,
-    data: {
-        status: "completed";
+    params: {
+        matchId: string;
+        sets: Array<{ setNumber: number; homeScore: number; awayScore: number }>;
         homeSetsWon: number;
         awaySetsWon: number;
-        homeTeamLvr: number | null;
-        awayTeamLvr: number | null;
-        matchMvpPlayerId: string | null;
+        homeLvr: number | null;
+        awayLvr: number | null;
+        mvpPlayerId: string | null;
         loserMvpPlayerId: string | null;
         isForfeit: boolean;
-        scheduledAt?: string | null;
+        scheduledAt: string | null;
     }
-) {
-    const updateData: Record<string, unknown> = {
-        status: data.status,
-        home_sets_won: data.homeSetsWon,
-        away_sets_won: data.awaySetsWon,
-        home_team_lvr: data.homeTeamLvr,
-        away_team_lvr: data.awayTeamLvr,
-        match_mvp_player_id: data.matchMvpPlayerId,
-        loser_mvp_player_id: data.loserMvpPlayerId,
-        is_forfeit: data.isForfeit,
-    };
-
-    if (data.scheduledAt !== undefined) {
-        updateData.scheduled_at = data.scheduledAt;
-    }
-
-    return supabase
-        .from("matches")
-        .update(updateData)
-        .eq("id", matchId)
-        .select()
-        .single();
+): Promise<Result<Match>> {
+    const { data, error } = await supabase.rpc("complete_match", {
+        p_match_id:            params.matchId,
+        p_sets:                params.sets.map(s => ({ set_number: s.setNumber, home_score: s.homeScore, away_score: s.awayScore })),
+        p_home_sets_won:       params.homeSetsWon,
+        p_away_sets_won:       params.awaySetsWon,
+        p_home_lvr:            params.homeLvr,
+        p_away_lvr:            params.awayLvr,
+        p_mvp_player_id:       params.mvpPlayerId,
+        p_loser_mvp_player_id: params.loserMvpPlayerId,
+        p_is_forfeit:          params.isForfeit,
+        p_scheduled_at:        params.scheduledAt,
+    });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data as Match);
 }
 
-export async function voidMatch(
+export async function rpcVoidMatch(
     supabase: DBClient,
     matchId: string
-) {
-    return supabase
-        .from("matches")
-        .update({
-            status: "pending",
-            scheduled_at: null,
-            home_sets_won: 0,
-            away_sets_won: 0,
-            home_team_lvr: null,
-            away_team_lvr: null,
-            match_mvp_player_id: null,
-            loser_mvp_player_id: null,
-            is_forfeit: false
-        })
-        .eq("id", matchId)
-        .select()
-        .single();
+): Promise<Result<Match>> {
+    const { data, error } = await supabase.rpc("void_match", {
+        p_match_id: matchId,
+    });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data as Match);
 }
-export async function updateMatchResults(
+
+export async function rpcReapplyMatchResult(
     supabase: DBClient,
-    matchId: string,
-    data: {
+    params: {
+        matchId: string;
+        sets: Array<{ setNumber: number; homeScore: number; awayScore: number }>;
         homeSetsWon: number;
         awaySetsWon: number;
-        homeTeamLvr: number | null;
-        awayTeamLvr: number | null;
-        matchMvpPlayerId: string | null;
+        homeLvr: number | null;
+        awayLvr: number | null;
+        mvpPlayerId: string | null;
         loserMvpPlayerId: string | null;
         isForfeit: boolean;
     }
-) {
-    return supabase
-        .from("matches")
-        .update({
-            home_sets_won: data.homeSetsWon,
-            away_sets_won: data.awaySetsWon,
-            home_team_lvr: data.homeTeamLvr,
-            away_team_lvr: data.awayTeamLvr,
-            match_mvp_player_id: data.matchMvpPlayerId,
-            loser_mvp_player_id: data.loserMvpPlayerId,
-            is_forfeit: data.isForfeit,
-        })
-        .eq("id", matchId)
-        .select()
-        .single();
-}
-
-export async function deleteMatchSets(
-    supabase: DBClient,
-    matchId: string
-) {
-    return supabase
-        .from("match_sets")
-        .delete()
-        .eq("match_id", matchId);
+): Promise<Result<Match>> {
+    const { data, error } = await supabase.rpc("reapply_match_result", {
+        p_match_id:            params.matchId,
+        p_sets:                params.sets.map(s => ({ set_number: s.setNumber, home_score: s.homeScore, away_score: s.awayScore })),
+        p_home_sets_won:       params.homeSetsWon,
+        p_away_sets_won:       params.awaySetsWon,
+        p_home_lvr:            params.homeLvr,
+        p_away_lvr:            params.awayLvr,
+        p_mvp_player_id:       params.mvpPlayerId,
+        p_loser_mvp_player_id: params.loserMvpPlayerId,
+        p_is_forfeit:          params.isForfeit,
+    });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data as Match);
 }
 
 export async function findMatchSets(
@@ -324,114 +278,3 @@ export async function findRecentMatches(
         .limit(limit);
 }
 
-
-const PENDING_MATCH_RESET = {
-    status: "pending" as const,
-    home_sets_won: null,
-    away_sets_won: null,
-    home_team_lvr: null,
-    away_team_lvr: null,
-    match_mvp_player_id: null,
-    loser_mvp_player_id: null,
-    is_forfeit: false,
-};
-
-async function resetBracketPath(
-    supabase: DBClient,
-    nextBracketId: string,
-    position: string,
-): Promise<void> {
-    const { data: nextBracket } = await supabase
-        .from("playoff_brackets")
-        .select("match_id, id")
-        .eq("id", nextBracketId)
-        .single();
-
-    if (!nextBracket) return;
-
-    const teamField = position === "home" ? "home_team_id" : "away_team_id";
-    const seedField = position === "home" ? "seed_home" : "seed_away";
-
-    const { data: nextMatch } = await findMatchById(supabase, nextBracket.match_id);
-
-    if (nextMatch?.status === "completed") {
-        const otherTeamField = position === "home" ? "away_team_id" : "home_team_id";
-        const otherTeamId = nextMatch[otherTeamField];
-
-        // Recurse first before resetting this bracket
-        await resetDownstreamBrackets(supabase, nextBracket.id);
-
-        await supabase
-            .from("match_sets")
-            .delete()
-            .eq("match_id", nextBracket.match_id);
-
-        if (otherTeamId) {
-            // Both sides filled — full reset
-            await supabase
-                .from("matches")
-                .update({ ...PENDING_MATCH_RESET, home_team_id: null, away_team_id: null })
-                .eq("id", nextBracket.match_id);
-
-            await supabase
-                .from("playoff_brackets")
-                .update({ seed_home: null, seed_away: null })
-                .eq("id", nextBracketId);
-        } else {
-            // Only one side filled — partial reset
-            await supabase
-                .from("matches")
-                .update({ ...PENDING_MATCH_RESET, [teamField]: null })
-                .eq("id", nextBracket.match_id);
-
-            await supabase
-                .from("playoff_brackets")
-                .update({ [seedField]: null })
-                .eq("id", nextBracketId);
-        }
-    } else if (nextMatch?.status === "scheduled" || nextMatch?.status === "pending") {
-        await supabase
-            .from("matches")
-            .update({ [teamField]: null })
-            .eq("id", nextBracket.match_id);
-
-        await supabase
-            .from("playoff_brackets")
-            .update({ [seedField]: null })
-            .eq("id", nextBracketId);
-    }
-}
-
-export async function resetDownstreamBrackets(
-    supabase: DBClient,
-    bracketId: string
-): Promise<Result<void>> {
-    try {
-        const { data: bracket, error: bracketError } = await supabase
-            .from("playoff_brackets")
-            .select("next_bracket_id, loser_next_bracket_id, match_id, winner_position, loser_position")
-            .eq("id", bracketId)
-            .single();
-
-        if (bracketError) {
-            return Err(serializeError(bracketError, "DB_ERROR"));
-        }
-
-        if (!bracket) {
-            return Ok(undefined);
-        }
-
-        if (bracket.next_bracket_id && bracket.winner_position) {
-            await resetBracketPath(supabase, bracket.next_bracket_id, bracket.winner_position);
-        }
-
-        if (bracket.loser_next_bracket_id && bracket.loser_position) {
-            await resetBracketPath(supabase, bracket.loser_next_bracket_id, bracket.loser_position);
-        }
-
-        return Ok(undefined);
-    } catch (error) {
-        logger.error({ bracketId, error }, "Failed to reset downstream brackets");
-        return Err(serializeError(error));
-    }
-}
