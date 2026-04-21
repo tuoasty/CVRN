@@ -113,15 +113,15 @@ export async function rpcCompleteMatch(
         p_sets:                params.sets.map(s => ({ set_number: s.setNumber, home_score: s.homeScore, away_score: s.awayScore })),
         p_home_sets_won:       params.homeSetsWon,
         p_away_sets_won:       params.awaySetsWon,
-        p_home_lvr:            params.homeLvr,
-        p_away_lvr:            params.awayLvr,
-        p_mvp_player_id:       params.mvpPlayerId,
-        p_loser_mvp_player_id: params.loserMvpPlayerId,
         p_is_forfeit:          params.isForfeit,
-        p_scheduled_at:        params.scheduledAt,
+        p_home_lvr:            params.homeLvr          ?? undefined,
+        p_away_lvr:            params.awayLvr          ?? undefined,
+        p_mvp_player_id:       params.mvpPlayerId      ?? undefined,
+        p_loser_mvp_player_id: params.loserMvpPlayerId ?? undefined,
+        p_scheduled_at:        params.scheduledAt      ?? undefined,
     });
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok(data as Match);
+    return Ok(data);
 }
 
 export async function rpcVoidMatch(
@@ -132,7 +132,7 @@ export async function rpcVoidMatch(
         p_match_id: matchId,
     });
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok(data as Match);
+    return Ok(data);
 }
 
 export async function rpcReapplyMatchResult(
@@ -154,14 +154,14 @@ export async function rpcReapplyMatchResult(
         p_sets:                params.sets.map(s => ({ set_number: s.setNumber, home_score: s.homeScore, away_score: s.awayScore })),
         p_home_sets_won:       params.homeSetsWon,
         p_away_sets_won:       params.awaySetsWon,
-        p_home_lvr:            params.homeLvr,
-        p_away_lvr:            params.awayLvr,
-        p_mvp_player_id:       params.mvpPlayerId,
-        p_loser_mvp_player_id: params.loserMvpPlayerId,
         p_is_forfeit:          params.isForfeit,
+        p_home_lvr:            params.homeLvr          ?? undefined,
+        p_away_lvr:            params.awayLvr          ?? undefined,
+        p_mvp_player_id:       params.mvpPlayerId      ?? undefined,
+        p_loser_mvp_player_id: params.loserMvpPlayerId ?? undefined,
     });
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok(data as Match);
+    return Ok(data);
 }
 
 export async function findMatchSets(
