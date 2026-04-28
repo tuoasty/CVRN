@@ -16,7 +16,6 @@ export async function updateMatchScheduleService(
         if (p.scheduledDate && p.scheduledTime && p.timezone) {
             if (!isValidTimezone(p.timezone)) {
                 return Err({
-                    name: "ValidationError",
                     message: "Invalid timezone",
                     code: "VALIDATION_ERROR"
                 });
@@ -26,7 +25,6 @@ export async function updateMatchScheduleService(
 
             if (!scheduledAt) {
                 return Err({
-                    name: "ValidationError",
                     message: "Invalid date/time/timezone combination",
                     code: "VALIDATION_ERROR"
                 });
@@ -46,7 +44,6 @@ export async function updateMatchScheduleService(
 
         if (!data) {
             return Err({
-                name: "UpdateError",
                 message: "Failed to update match schedule",
                 code: "DB_ERROR"
             });

@@ -19,7 +19,6 @@ export async function assignOfficialToMatch(
 
         if (!data) {
             return Err({
-                name: "AssignError",
                 message: "Failed to assign official to match",
                 code: "DB_ERROR"
             });

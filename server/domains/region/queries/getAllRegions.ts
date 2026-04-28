@@ -15,7 +15,6 @@ export async function getAllRegions(supabase: DBClient): Promise<Result<Region[]
         if (!data) {
             return Err({
                 message: "Failed to fetch regions",
-                name: "FetchError",
                 code: "DB_ERROR"
             })
         }

@@ -15,7 +15,6 @@ export async function voidMatchService(
         if (matchError || !match) {
             logger.error({ matchId: p.matchId, error: matchError }, "Match not found");
             return Err({
-                name: "NotFoundError",
                 message: "Match not found",
                 code: "NOT_FOUND"
             });
@@ -23,7 +22,6 @@ export async function voidMatchService(
 
         if (match.status !== "completed") {
             return Err({
-                name: "ValidationError",
                 message: "Can only void completed matches",
                 code: "VALIDATION_ERROR"
             });

@@ -15,7 +15,6 @@ export async function setPlayerRoleService(
         if (!currentRecord || currentRecord.team_id !== p.teamId) {
             logger.error({ playerId: p.playerId, teamId: p.teamId, seasonId: p.seasonId }, "Player not in team");
             return Err({
-                name: "PlayerNotInTeam",
                 message: "Player is not in this team",
                 code: "NOT_FOUND"
             });
@@ -27,7 +26,6 @@ export async function setPlayerRoleService(
             if (existingRole && existingRole.player_id !== p.playerId) {
                 logger.warn({ teamId: p.teamId, seasonId: p.seasonId, role: p.role }, "Role already assigned");
                 return Err({
-                    name: "RoleAlreadyTaken",
                     message: `This role is already assigned to another player`,
                     code: "CONFLICT"
                 });
@@ -43,7 +41,6 @@ export async function setPlayerRoleService(
 
         if (!data) {
             return Err({
-                name: "UpdateError",
                 message: "Failed to update player role",
                 code: "DB_ERROR"
             });

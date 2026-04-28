@@ -17,7 +17,6 @@ export async function completeMatchService(
         if (matchError || !match) {
             logger.error({ matchId: p.matchId, error: matchError }, "Match not found");
             return Err({
-                name: "NotFoundError",
                 message: "Match not found",
                 code: "NOT_FOUND"
             });
@@ -25,7 +24,6 @@ export async function completeMatchService(
 
         if (match.status !== "scheduled") {
             return Err({
-                name: "ValidationError",
                 message: "Can only complete scheduled matches",
                 code: "VALIDATION_ERROR"
             });
@@ -41,7 +39,6 @@ export async function completeMatchService(
             if (p.scheduledDate && p.scheduledTime && p.timezone) {
                 if (!isValidTimezone(p.timezone)) {
                     return Err({
-                        name: "ValidationError",
                         message: "Invalid timezone",
                         code: "VALIDATION_ERROR"
                     });
@@ -50,7 +47,6 @@ export async function completeMatchService(
                 const converted = convertToUTC(p.scheduledDate, p.scheduledTime, p.timezone);
                 if (!converted) {
                     return Err({
-                        name: "ValidationError",
                         message: "Invalid date/time/timezone combination",
                         code: "VALIDATION_ERROR"
                     });

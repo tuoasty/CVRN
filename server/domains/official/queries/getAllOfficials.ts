@@ -19,7 +19,6 @@ export async function getAllOfficials(
         if (!data) {
             return Err({
                 message: "Failed to fetch officials",
-                name: "FetchError",
                 code: "DB_ERROR"
             });
         }

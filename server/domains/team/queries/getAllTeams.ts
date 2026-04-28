@@ -15,7 +15,6 @@ export async function getAllTeams(supabase: DBClient): Promise<Result<Team[]>> {
         if (!data) {
             return Err({
                 message: "Failed to fetch teams",
-                name: "FetchError",
                 code: "DB_ERROR"
             });
         }

@@ -15,7 +15,6 @@ export async function transferCaptainService(
         if (!currentCaptain || currentCaptain.team_id !== p.teamId || currentCaptain.role !== 'captain') {
             logger.error({ currentCaptainPlayerId: p.currentCaptainPlayerId }, "Current captain invalid");
             return Err({
-                name: "InvalidCaptain",
                 message: "Current player is not the team captain",
                 code: "VALIDATION_ERROR"
             });
@@ -26,7 +25,6 @@ export async function transferCaptainService(
         if (!newCaptainRecord || newCaptainRecord.team_id !== p.teamId) {
             logger.error({ newCaptainPlayerId: p.newCaptainPlayerId }, "New captain not in team");
             return Err({
-                name: "PlayerNotInTeam",
                 message: "New captain must be in the team",
                 code: "NOT_FOUND"
             });

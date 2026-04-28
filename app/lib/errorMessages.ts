@@ -11,6 +11,6 @@ const messages: Record<ErrorCode, string> = {
     UNKNOWN: "Something went wrong. Please try again.",
 };
 
-export function errorCodeToUserMessage(code: ErrorCode): string {
-    return messages[code];
+export function errorCodeToUserMessage(code: ErrorCode | string): string {
+    return messages[code as ErrorCode] ?? messages.UNKNOWN;
 }

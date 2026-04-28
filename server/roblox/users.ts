@@ -18,7 +18,7 @@ export async function getRobloxUserByName(username: string): Promise<Result<Robl
         return Ok(data.data);
     } catch (error){
         logger.error({ error }, "Failed to fetch Roblox user by name");
-        return Err({ message: "Roblox API is temporarily unavailable", code: "INTEGRATION_ERROR", name: "RobloxApiError" });
+        return Err({ message: "Roblox API is temporarily unavailable", code: "INTEGRATION_ERROR" });
     }
 }
 
@@ -43,7 +43,7 @@ export async function getRobloxUsersById(userIds: string[]): Promise<Result<Robl
         })));
     } catch (error) {
         logger.error({ error, userIds }, "Failed to fetch Roblox users by ID");
-        return Err({ message: "Roblox API is temporarily unavailable", code: "INTEGRATION_ERROR", name: "RobloxApiError" });
+        return Err({ message: "Roblox API is temporarily unavailable", code: "INTEGRATION_ERROR" });
     }
 }
 
@@ -63,6 +63,6 @@ export async function getRobloxAvatarsById(userIds: string[]): Promise<Result<Ro
         return Ok(data.data);
     } catch(error){
         logger.error({ error }, "Failed to fetch Roblox avatars by ID");
-        return Err({ message: "Roblox API is temporarily unavailable", code: "INTEGRATION_ERROR", name: "RobloxApiError" });
+        return Err({ message: "Roblox API is temporarily unavailable", code: "INTEGRATION_ERROR" });
     }
 }

@@ -15,7 +15,6 @@ export async function resetPlayoffBracketsService(
         if (seasonError || !season) {
             logger.error({ seasonId, error: seasonError }, "Season not found");
             return Err({
-                name: "NotFoundError",
                 message: "Season not found",
                 code: "NOT_FOUND"
             });
@@ -23,7 +22,6 @@ export async function resetPlayoffBracketsService(
 
         if (!season.playoff_started) {
             return Err({
-                name: "ValidationError",
                 message: "Playoffs have not been started for this season",
                 code: "VALIDATION_ERROR"
             });
@@ -44,7 +42,6 @@ export async function resetPlayoffBracketsService(
 
         if (hasCompletedMatches) {
             return Err({
-                name: "ValidationError",
                 message: "Cannot reset brackets - some playoff matches have been completed",
                 code: "CONFLICT"
             });

@@ -18,6 +18,7 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { transferCaptainAction, setPlayerRoleAction } from "@/app/actions/player.actions";
 import { toast } from "@/app/utils/toast";
+import { errorCodeToUserMessage } from "@/app/lib/errorMessages";
 
 interface Props {
     role: 'captain' | 'vice_captain' | 'court_captain';
@@ -75,7 +76,7 @@ export default function CaptainSlotCard({
         });
 
         if (!result.ok) {
-            toast.error(result.error.message);
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setUpdating(false);
             return;
         }
@@ -100,7 +101,7 @@ export default function CaptainSlotCard({
         });
 
         if (!result.ok) {
-            toast.error(result.error.message);
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setUpdating(false);
             return;
         }
@@ -123,7 +124,7 @@ export default function CaptainSlotCard({
         });
 
         if (!result.ok) {
-            toast.error(result.error.message);
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setUpdating(false);
             return;
         }

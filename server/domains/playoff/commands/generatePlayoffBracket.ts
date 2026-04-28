@@ -25,7 +25,6 @@ export async function generatePlayoffBracket(
         if (seasonError || !season) {
             logger.error({ seasonId: p.seasonId, error: seasonError }, "Season not found");
             return Err({
-                name: "NotFoundError",
                 message: "Season not found",
                 code: "NOT_FOUND"
             });
@@ -33,7 +32,6 @@ export async function generatePlayoffBracket(
 
         if (season.playoff_started) {
             return Err({
-                name: "ValidationError",
                 message: "Playoffs have already been generated for this season",
                 code: "CONFLICT"
             });
@@ -44,7 +42,6 @@ export async function generatePlayoffBracket(
         if (configError || !config) {
             logger.error({ seasonId: p.seasonId, error: configError }, "Playoff config not found");
             return Err({
-                name: "NotFoundError",
                 message: "No playoff configuration found for this season",
                 code: "NOT_FOUND"
             });
@@ -61,7 +58,6 @@ export async function generatePlayoffBracket(
 
         if (standings.length < totalTeams) {
             return Err({
-                name: "ValidationError",
                 message: `Not enough teams in standings. Need ${totalTeams}, found ${standings.length}`,
                 code: "VALIDATION_ERROR"
             });

@@ -21,7 +21,6 @@ export async function getTeamWithRegionAndPlayers(supabase: DBClient, p: {
         if (!teamData) {
             return Err({
                 message: "Team not found",
-                name: "NotFoundError",
                 code: "NOT_FOUND"
             });
         }

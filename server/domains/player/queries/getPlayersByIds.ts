@@ -25,7 +25,6 @@ export async function getPlayersByIds(
         if (!data) {
             return Err({
                 message: "Failed to fetch players",
-                name: "FetchError",
                 code: "DB_ERROR"
             });
         }

@@ -20,7 +20,6 @@ export async function getStandings(
         if (!data) {
             return Err({
                 message: "Failed to fetch standings",
-                name: "FetchError",
                 code: "DB_ERROR"
             });
         }

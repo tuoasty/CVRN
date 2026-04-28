@@ -18,6 +18,7 @@ import { clientLogger } from "@/app/utils/clientLogger";
 import { compressImage } from "@/app/utils/imageCompression";
 import { TeamWithRegion } from "@/server/domains/team";
 import { toast } from "@/app/utils/toast";
+import { errorCodeToUserMessage } from "@/app/lib/errorMessages";
 import { Pencil } from "lucide-react";
 
 interface UpdateTeamDialogProps {
@@ -128,7 +129,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
 
             if (!result.ok) {
                 clientLogger.error("UpdateTeamDialog", "Failed to update team", { error: result.error });
-                toast.error("Failed to update team", result.error.message);
+                toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
                 return;
             }
 

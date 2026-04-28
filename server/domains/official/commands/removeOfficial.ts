@@ -15,7 +15,6 @@ export async function removeOfficial(
         if (!existingOfficial) {
             logger.error({robloxUserId: p.robloxUserId}, "Official not found");
             return Err({
-                name: "OfficialNotFound",
                 message: "Official does not exist",
                 code: "NOT_FOUND"
             });

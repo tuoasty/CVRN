@@ -21,7 +21,6 @@ export async function addExistingPlayerToTeam(
         if (!team) {
             logger.error({ teamId: p.teamId }, "Team not found when adding existing player");
             return Err({
-                name: "TeamNotFound",
                 message: "Team does not exist",
                 code: "NOT_FOUND"
             });
@@ -39,7 +38,6 @@ export async function addExistingPlayerToTeam(
         if (count !== null && count >= 16) {
             logger.warn({ teamId: p.teamId, seasonId, currentCount: count }, "Team is at maximum capacity");
             return Err({
-                name: "TeamAtCapacity",
                 message: "Team already has 16 players (maximum capacity)",
                 code: "CONFLICT"
             });
@@ -49,7 +47,6 @@ export async function addExistingPlayerToTeam(
         if (!player) {
             logger.error({ playerId: p.playerId }, "Player not found when adding to team");
             return Err({
-                name: "PlayerNotFound",
                 message: "Player does not exist",
                 code: "NOT_FOUND"
             });
@@ -65,7 +62,6 @@ export async function addExistingPlayerToTeam(
             if (currentTeamSeason.team_id === p.teamId) {
                 logger.warn({ playerId: p.playerId, teamId: p.teamId, seasonId }, "Player already in this team for this season");
                 return Err({
-                    name: "PlayerAlreadyInTeam",
                     message: "Player is already a member of this team for this season",
                     code: "CONFLICT"
                 });
@@ -77,7 +73,6 @@ export async function addExistingPlayerToTeam(
                     seasonId
                 }, "Player already in another team for this season");
                 return Err({
-                    name: "PlayerAlreadyInTeam",
                     message: "Player is already a member of another team for this season",
                     code: "CONFLICT"
                 });
@@ -97,7 +92,6 @@ export async function addExistingPlayerToTeam(
 
         if (!teamSeason) {
             return Err({
-                name: "AddToTeamError",
                 message: "Failed to add player to team",
                 code: "DB_ERROR"
             });

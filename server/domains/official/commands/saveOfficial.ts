@@ -34,7 +34,6 @@ export async function saveOfficial(
 
         if (!data) {
             return Err({
-                name: "UpsertError",
                 message: "Failed to save official",
                 code: "DB_ERROR"
             });

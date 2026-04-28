@@ -20,7 +20,6 @@ export async function searchOfficialsInDatabase(
         if (!data) {
             return Err({
                 message: "Failed to search officials",
-                name: "SearchError",
                 code: "DB_ERROR"
             });
         }

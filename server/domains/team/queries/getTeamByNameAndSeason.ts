@@ -16,7 +16,6 @@ export async function getTeamByNameAndSeason(supabase: DBClient, p: GetTeamByNam
         if (!data) {
             return Err({
                 message: "Failed to fetch team",
-                name: "FetchError",
                 code: "DB_ERROR"
             });
         }

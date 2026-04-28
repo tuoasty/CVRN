@@ -14,7 +14,6 @@ export async function removePlayerFromTeamService(
         if (!player) {
             logger.error({playerId: p.playerId}, "Player not found when removing from team");
             return Err({
-                name: "PlayerNotFound",
                 message: "Player does not exist",
                 code: "NOT_FOUND"
             });
@@ -29,7 +28,6 @@ export async function removePlayerFromTeamService(
         if (!currentTeamSeason) {
             logger.warn({playerId: p.playerId, seasonId: p.seasonId}, "Attempted to remove player not in a team for this season");
             return Err({
-                name: "PlayerNotInTeam",
                 message: "Player is not in a team for this season",
                 code: "NOT_FOUND"
             });
@@ -44,7 +42,6 @@ export async function removePlayerFromTeamService(
 
         if (!data) {
             return Err({
-                name: "RemoveError",
                 message: "Failed to remove player from team",
                 code: "DB_ERROR"
             });

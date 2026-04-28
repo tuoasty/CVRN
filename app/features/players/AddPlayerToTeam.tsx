@@ -16,6 +16,7 @@ import { Label } from "@/app/components/ui/label";
 import { Badge } from "@/app/components/ui/badge";
 import { PlayerWithTeamInfo } from "@/server/domains/player";
 import {toast} from "@/app/utils/toast";
+import {errorCodeToUserMessage} from "@/app/lib/errorMessages";
 import {Player} from "@/shared/types/db";
 
 interface Props {
@@ -97,7 +98,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
 
             if (!result.ok) {
                 clientLogger.error('AddPlayerToTeam', 'Roblox search failed', { username, error: result.error });
-                toast.error(result.error.message);
+                toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
                 setLoading(false);
                 return;
             }
@@ -134,7 +135,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
 
             if (!result.ok) {
                 clientLogger.error('AddPlayerToTeam', 'Failed to add Roblox player', { userId: user.id, teamId, error: result.error });
-                toast.error(result.error.message);
+                toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
                 return;
             }
 
@@ -171,7 +172,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
 
             if (!result.ok) {
                 clientLogger.error('AddPlayerToTeam', 'Failed to add DB player', { playerId: player.id, teamId, error: result.error });
-                toast.error(result.error.message);
+                toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
                 return;
             }
 
