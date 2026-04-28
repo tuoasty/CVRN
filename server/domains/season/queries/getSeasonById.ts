@@ -20,7 +20,6 @@ export async function getSeasonById(
         if (!data) {
             return Err({
                 message: "Season not found",
-                name: "NotFoundError",
                 code: "NOT_FOUND"
             });
         }

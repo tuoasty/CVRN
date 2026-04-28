@@ -64,7 +64,6 @@ export async function lazySyncOfficial(
 
         if (!data) {
             return Err({
-                name: "UpdateError",
                 message: "Failed to update official",
                 code: "DB_ERROR"
             });

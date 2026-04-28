@@ -20,7 +20,6 @@ export async function getTeamPlayers(
         if (!data) {
             return Err({
                 message: "Failed to fetch team players",
-                name: "FetchError",
                 code: "DB_ERROR"
             });
         }

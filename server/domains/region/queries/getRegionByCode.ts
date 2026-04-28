@@ -15,7 +15,6 @@ export async function getRegionByCode(supabase: DBClient, code: string): Promise
         if (!data) {
             return Err({
                 message: "Region not found",
-                name: "NotFoundError",
                 code: "NOT_FOUND"
             })
         }

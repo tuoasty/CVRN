@@ -19,7 +19,6 @@ export async function getSeasonsByRegion(
         if (!data) {
             return Err({
                 message: "Failed to fetch seasons",
-                name: "FetchError",
                 code: "DB_ERROR"
             });
         }

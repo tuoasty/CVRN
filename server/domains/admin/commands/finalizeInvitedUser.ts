@@ -11,7 +11,6 @@ export async function finalizeInvitedUser(userId:string, email:string):Promise<R
             logger.error({userId, email, error: pendingError}, "Pending user invite not found");
             return Err({
                 message:"Invite not found",
-                name:"InviteNotFound",
                 code:"NOT_FOUND"
             });
         }

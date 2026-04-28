@@ -16,7 +16,6 @@ export async function updateMatchResultsService(
         if (matchError || !match) {
             logger.error({ matchId: p.matchId, error: matchError }, "Match not found");
             return Err({
-                name: "NotFoundError",
                 message: "Match not found",
                 code: "NOT_FOUND"
             });
@@ -24,7 +23,6 @@ export async function updateMatchResultsService(
 
         if (match.status !== "completed") {
             return Err({
-                name: "ValidationError",
                 message: "Can only update results for completed matches",
                 code: "VALIDATION_ERROR"
             });

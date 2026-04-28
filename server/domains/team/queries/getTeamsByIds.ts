@@ -24,7 +24,6 @@ export async function getTeamsByIds(
         if (!data) {
             return Err({
                 message: "Failed to fetch teams",
-                name: "FetchError",
                 code: "DB_ERROR"
             });
         }
