@@ -60,7 +60,6 @@ export async function lazySyncPlayer(
 
         if (!data) {
             return Err({
-                name: "UpdateError",
                 message: "Failed to update player",
                 code: "DB_ERROR"
             });

@@ -12,7 +12,6 @@ export async function deleteTeam(supabase: DBClient, p: TeamIdInput): Promise<Re
         if (!team || team.deleted_at) {
             logger.warn({teamId: p.teamId}, "Attempted to delete non-existent or already deleted team");
             return Err({
-                name: "TeamNotFound",
                 message: "Team does not exist",
                 code: "NOT_FOUND"
             });

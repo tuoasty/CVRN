@@ -21,7 +21,6 @@ export async function getMatchOfficials(
         if (!data) {
             return Err({
                 message: "Failed to fetch match officials",
-                name: "FetchError",
                 code: "DB_ERROR"
             });
         }

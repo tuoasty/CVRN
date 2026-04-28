@@ -17,7 +17,6 @@ export async function createMatches(
         for (const match of p.matches) {
             if (match.homeId === match.awayId) {
                 return Err({
-                    name: "ValidationError",
                     message: "Team A and Team B cannot be the same",
                     code: "VALIDATION_ERROR"
                 });
@@ -25,7 +24,6 @@ export async function createMatches(
 
             if (teamIds.has(match.homeId) || teamIds.has(match.awayId)) {
                 return Err({
-                    name: "ValidationError",
                     message: "Duplicate teams found across matches",
                     code: "VALIDATION_ERROR"
                 });
@@ -37,7 +35,6 @@ export async function createMatches(
 
         if (p.defaultTimezone && !isValidTimezone(p.defaultTimezone)) {
             return Err({
-                name: "ValidationError",
                 message: "Invalid default timezone",
                 code: "VALIDATION_ERROR"
             });
@@ -53,7 +50,6 @@ export async function createMatches(
 
             if (!defaultScheduledAt) {
                 return Err({
-                    name: "ValidationError",
                     message: "Invalid default date/time/timezone combination",
                     code: "VALIDATION_ERROR"
                 });
@@ -96,7 +92,6 @@ export async function createMatches(
 
         if (!data) {
             return Err({
-                name: "InsertError",
                 message: "Failed to create matches",
                 code: "DB_ERROR"
             });

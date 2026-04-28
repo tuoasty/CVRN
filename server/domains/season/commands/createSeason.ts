@@ -31,7 +31,6 @@ export async function createSeason(
 
         if (!data) {
             return Err({
-                name: "InsertError",
                 message: "Failed to create season",
                 code: "DB_ERROR"
             });

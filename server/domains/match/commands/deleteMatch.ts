@@ -14,7 +14,6 @@ export async function deleteMatchService(
         if (matchError || !match) {
             logger.error({ matchId, error: matchError }, "Match not found");
             return Err({
-                name: "NotFoundError",
                 message: "Match not found",
                 code: "NOT_FOUND"
             });
@@ -22,7 +21,6 @@ export async function deleteMatchService(
 
         if (match.match_type === "playoffs") {
             return Err({
-                name: "ValidationError",
                 message: "Playoff matches cannot be deleted",
                 code: "VALIDATION_ERROR"
             });
@@ -30,7 +28,6 @@ export async function deleteMatchService(
 
         if (match.status === "completed") {
             return Err({
-                name: "ValidationError",
                 message: "Cannot delete completed matches",
                 code: "VALIDATION_ERROR"
             });

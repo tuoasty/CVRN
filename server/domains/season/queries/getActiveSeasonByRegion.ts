@@ -19,7 +19,6 @@ export async function getActiveSeasonByRegion(
         if (!data) {
             return Err({
                 message: "No active season found for region",
-                name: "NotFoundError",
                 code: "NOT_FOUND"
             });
         }

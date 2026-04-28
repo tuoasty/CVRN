@@ -20,7 +20,6 @@ export async function searchPlayersInDatabase(
         if (!data) {
             return Err({
                 message: "Failed to search players",
-                name: "SearchError",
                 code: "DB_ERROR"
             });
         }

@@ -24,7 +24,6 @@ export async function assignMultipleOfficialsToMatch(
 
         if (!data) {
             return Err({
-                name: "AssignError",
                 message: "Failed to assign officials to match",
                 code: "DB_ERROR"
             });
