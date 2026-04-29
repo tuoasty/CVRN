@@ -16,6 +16,7 @@ import { Button } from "@/app/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteMatch } from "@/app/hooks/useMatches";
 import { toast } from "@/app/utils/toast";
+import { errorCodeToUserMessage } from "@/app/lib/errorMessages";
 import { clientLogger } from "@/app/utils/clientLogger";
 
 interface DeleteMatchDialogProps {
@@ -31,22 +32,19 @@ export default function DeleteMatchDialog({ matchId, onSuccess }: DeleteMatchDia
     const handleDelete = async () => {
         setLoading(true);
 
-        try {
-            const success = await deleteMatch(matchId);
+        const result = await deleteMatch(matchId);
 
-            if (success) {
-                toast.success("Match deleted", "The match has been removed from the schedule");
-                setOpen(false);
-                onSuccess?.();
-            } else {
-                toast.error("Failed to delete match", "Please try again");
-            }
-        } catch (error) {
-            clientLogger.error("DeleteMatchDialog", "Error deleting match", { matchId, error });
-            toast.error("Failed to delete match", "An unexpected error occurred");
-        } finally {
+        if (!result.ok) {
+            clientLogger.error("DeleteMatchDialog", "Delete failed", { matchId, error: result.error });
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setLoading(false);
+            return;
         }
+
+        toast.success("Match deleted", "The match has been removed from the schedule");
+        setOpen(false);
+        onSuccess?.();
+        setLoading(false);
     };
 
     return (
