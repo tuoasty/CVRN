@@ -19,6 +19,8 @@ import {
     AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
 import { toast } from "@/app/utils/toast";
+import { errorCodeToUserMessage } from "@/app/lib/errorMessages";
+import { clientLogger } from "@/app/utils/clientLogger";
 import { PlayoffBracketDisplay } from "./PlayoffBracketDisplay";
 import { Loader2, Trash2, Trophy } from "lucide-react";
 import { useAdminReady } from "@/app/admin/AdminReadyContext";
@@ -46,16 +48,18 @@ export default function PlayoffManagementPage() {
         }
 
         setIsProcessing(true);
-        try {
-            await generateBracket({ seasonId: selectedSeasonId });
-            toast.success("Playoff bracket generated successfully");
-            await mutate("seasons");
-        } catch (error) {
-            const message = error instanceof Error ? error.message : undefined;
-            toast.error("Failed to generate bracket", message);
-        } finally {
+        const result = await generateBracket({ seasonId: selectedSeasonId });
+
+        if (!result.ok) {
+            clientLogger.error("PlayoffManagementPage", "Generate bracket failed", { seasonId: selectedSeasonId, error: result.error });
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setIsProcessing(false);
+            return;
         }
+
+        toast.success("Playoff bracket generated successfully");
+        await mutate("seasons");
+        setIsProcessing(false);
     };
 
     const handleResetBrackets = async () => {
@@ -65,17 +69,19 @@ export default function PlayoffManagementPage() {
         }
 
         setIsProcessing(true);
-        try {
-            await resetBrackets(selectedSeasonId);
-            toast.success("Playoff brackets reset successfully");
-            setIsResetDialogOpen(false);
-            await mutate("seasons");
-        } catch (error) {
-            const message = error instanceof Error ? error.message : undefined;
-            toast.error("Failed to reset brackets", message);
-        } finally {
+        const result = await resetBrackets(selectedSeasonId);
+
+        if (!result.ok) {
+            clientLogger.error("PlayoffManagementPage", "Reset brackets failed", { seasonId: selectedSeasonId, error: result.error });
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setIsProcessing(false);
+            return;
         }
+
+        toast.success("Playoff brackets reset successfully");
+        setIsResetDialogOpen(false);
+        await mutate("seasons");
+        setIsProcessing(false);
     };
 
     const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId);

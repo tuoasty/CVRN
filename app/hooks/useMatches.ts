@@ -18,6 +18,8 @@ import {
 } from '@/app/actions/match.actions';
 import { CompleteMatchInput, MatchWithDetails, UpdateMatchScheduleInput, VoidMatchInput } from '@/server/domains/match';
 import { PlayoffRound } from '@/server/domains/playoff';
+import { Ok, Result } from '@/shared/types/result';
+import { SerializableError } from '@/server/utils/serializeableError';
 
 const MATCHES_TTL = 2 * 60 * 1000;
 const AVAILABLE_TEAMS_TTL = 60 * 1000;
@@ -147,55 +149,54 @@ export function useRecentMatches(seasonId: string | null, limit: number = 5) {
 
 // --- Mutation actions ---
 
-export async function updateMatchSchedule(input: UpdateMatchScheduleInput): Promise<boolean> {
+export async function updateMatchSchedule(input: UpdateMatchScheduleInput): Promise<Result<true, SerializableError>> {
     const result = await updateMatchScheduleAction(input);
-    if (!result.ok) throw new Error(result.error.message);
-    // Revalidate affected caches
+    if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
         globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule'), undefined, { revalidate: true }),
     ]);
-    return true;
+    return Ok(true);
 }
 
-export async function completeMatch(input: CompleteMatchInput): Promise<boolean> {
+export async function completeMatch(input: CompleteMatchInput): Promise<Result<true, SerializableError>> {
     const result = await completeMatchAction(input);
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
         globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'upcoming' || key[0] === 'recent'), undefined, { revalidate: true }),
     ]);
-    return true;
+    return Ok(true);
 }
 
-export async function voidMatch(input: VoidMatchInput): Promise<boolean> {
+export async function voidMatch(input: VoidMatchInput): Promise<Result<true, SerializableError>> {
     const result = await voidMatchAction(input);
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
         globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule'), undefined, { revalidate: true }),
     ]);
-    return true;
+    return Ok(true);
 }
 
-export async function updateMatchResults(input: CompleteMatchInput): Promise<boolean> {
+export async function updateMatchResults(input: CompleteMatchInput): Promise<Result<true, SerializableError>> {
     const result = await updateMatchResultsAction(input);
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
         globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'matchSets'), undefined, { revalidate: true }),
     ]);
-    return true;
+    return Ok(true);
 }
 
-export async function deleteMatch(matchId: string): Promise<boolean> {
+export async function deleteMatch(matchId: string): Promise<Result<true, SerializableError>> {
     const result = await deleteMatchAction(matchId);
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
         globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'availableTeams'), undefined, { revalidate: true }),
     ]);
-    return true;
+    return Ok(true);
 }
 
 // Utility for invalidating match related caches from outside

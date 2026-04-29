@@ -34,6 +34,7 @@ import { updateMatchSchedule, voidMatch } from "@/app/hooks/useMatches";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Match } from "@/shared/types/db";
 import {toast} from "@/app/utils/toast";
+import {errorCodeToUserMessage} from "@/app/lib/errorMessages";
 import {Settings} from "lucide-react";
 
 interface ManageMatchDialogProps {
@@ -70,21 +71,23 @@ export default function ManageMatchDialog({
         setUpdating(true);
         clientLogger.info("ManageMatchDialog", "Updating match schedule", { matchId });
 
-        const success = await updateMatchSchedule({
+        const result = await updateMatchSchedule({
             matchId,
             scheduledDate: editSchedule.date,
             scheduledTime: editSchedule.time,
             timezone: editSchedule.timezone,
         });
 
-        if (success) {
-            clientLogger.info("ManageMatchDialog", "Schedule updated successfully", { matchId });
-            setOpen(false);
-            onSuccess();
-        } else {
-            toast.error("Failed to update schedule");
+        if (!result.ok) {
+            clientLogger.error("ManageMatchDialog", "Schedule update failed", { matchId, error: result.error });
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
+            setUpdating(false);
+            return;
         }
 
+        clientLogger.info("ManageMatchDialog", "Schedule updated successfully", { matchId });
+        setOpen(false);
+        onSuccess();
         setUpdating(false);
     };
 
@@ -92,21 +95,23 @@ export default function ManageMatchDialog({
         setUpdating(true);
         clientLogger.info("ManageMatchDialog", "Clearing match schedule", { matchId });
 
-        const success = await updateMatchSchedule({
+        const result = await updateMatchSchedule({
             matchId,
             scheduledDate: null,
             scheduledTime: null,
             timezone: null,
         });
 
-        if (success) {
-            clientLogger.info("ManageMatchDialog", "Schedule cleared successfully", { matchId });
-            setOpen(false);
-            onSuccess();
-        } else {
-            toast.error("Failed to clear schedule");
+        if (!result.ok) {
+            clientLogger.error("ManageMatchDialog", "Schedule clear failed", { matchId, error: result.error });
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
+            setUpdating(false);
+            return;
         }
 
+        clientLogger.info("ManageMatchDialog", "Schedule cleared successfully", { matchId });
+        setOpen(false);
+        onSuccess();
         setUpdating(false);
     };
 
@@ -114,17 +119,19 @@ export default function ManageMatchDialog({
         setUpdating(true);
         clientLogger.info("ManageMatchDialog", "Voiding match", { matchId });
 
-        const success = await voidMatch({ matchId });
+        const result = await voidMatch({ matchId });
 
-        if (success) {
-            clientLogger.info("ManageMatchDialog", "Match voided successfully", { matchId });
-            setVoidDialogOpen(false);
-            setOpen(false);
-            onSuccess();
-        } else {
-            toast.error("Failed to void match");
+        if (!result.ok) {
+            clientLogger.error("ManageMatchDialog", "Void failed", { matchId, error: result.error });
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
+            setUpdating(false);
+            return;
         }
 
+        clientLogger.info("ManageMatchDialog", "Match voided successfully", { matchId });
+        setVoidDialogOpen(false);
+        setOpen(false);
+        onSuccess();
         setUpdating(false);
     };
 

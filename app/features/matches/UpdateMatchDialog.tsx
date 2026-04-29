@@ -25,6 +25,7 @@ import { MatchSet } from "@/shared/types/db";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 import {toast} from "@/app/utils/toast";
+import {errorCodeToUserMessage} from "@/app/lib/errorMessages";
 import {PlayerWithRole} from "@/server/domains/player";
 import {Pencil} from "lucide-react";
 
@@ -235,21 +236,23 @@ export default function UpdateMatchDialog({
             setSubmitting(true);
             clientLogger.info("UpdateMatchDialog", "Updating match as forfeit", { matchId, forfeitingTeam });
 
-            const success = await updateMatchResults({
+            const result = await updateMatchResults({
                 matchId,
                 sets: [],
                 isForfeit: true,
                 forfeitingTeam,
             });
 
-            if (success) {
-                clientLogger.info("UpdateMatchDialog", "Match updated as forfeit", { matchId });
-                setOpen(false);
-                onSuccess();
-            } else {
-                toast.error("Failed to update match results");
+            if (!result.ok) {
+                clientLogger.error("UpdateMatchDialog", "Forfeit update failed", { matchId, error: result.error });
+                toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
+                setSubmitting(false);
+                return;
             }
 
+            clientLogger.info("UpdateMatchDialog", "Match updated as forfeit", { matchId });
+            setOpen(false);
+            onSuccess();
             setSubmitting(false);
             return;
         }
@@ -268,7 +271,7 @@ export default function UpdateMatchDialog({
         setSubmitting(true);
         clientLogger.info("UpdateMatchDialog", "Updating match results", { matchId, sets });
 
-        const success = await updateMatchResults({
+        const result = await updateMatchResults({
             matchId,
             sets,
             matchMvpPlayerId: matchMvpId,
@@ -276,14 +279,16 @@ export default function UpdateMatchDialog({
             isForfeit: false,
         });
 
-        if (success) {
-            clientLogger.info("UpdateMatchDialog", "Match results updated successfully", { matchId });
-            setOpen(false);
-            onSuccess();
-        } else {
-            toast.error("Failed to update match results");
+        if (!result.ok) {
+            clientLogger.error("UpdateMatchDialog", "Update failed", { matchId, error: result.error });
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
+            setSubmitting(false);
+            return;
         }
 
+        clientLogger.info("UpdateMatchDialog", "Match results updated successfully", { matchId });
+        setOpen(false);
+        onSuccess();
         setSubmitting(false);
     };
 
