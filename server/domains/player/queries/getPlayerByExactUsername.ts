@@ -10,13 +10,12 @@ export async function getPlayerByExactUsername(
     p: SearchPlayersInput
 ): Promise<Result<PlayerWithTeamInfo | null>> {
     try {
-        const { data: player, error } = await findPlayerByExactUsername(supabase, p.query);
-
-        if (error) {
-            logger.error({ query: p.query, error }, "Failed to find player by exact username");
-            return Err(serializeError(error, "DB_ERROR"));
+        const lookup = await findPlayerByExactUsername(supabase, p.query);
+        if (!lookup.ok) {
+            logger.error({ query: p.query, error: lookup.error }, "Failed to find player by exact username");
+            return lookup;
         }
-
+        const player = lookup.value;
         if (!player) {
             return Ok(null);
         }
@@ -33,7 +32,7 @@ export async function getPlayerByExactUsername(
             .is("left_at", null)
             .maybeSingle();
 
-        const result: PlayerWithTeamInfo = {
+        return Ok({
             id: player.id,
             roblox_user_id: player.roblox_user_id,
             username: player.username,
@@ -42,9 +41,7 @@ export async function getPlayerByExactUsername(
             current_team_id: activeTeamSeasons?.team_id || null,
             current_season_id: activeTeamSeasons?.season_id || null,
             current_team_name: activeTeamSeasons?.team?.name || null
-        };
-
-        return Ok(result);
+        });
     } catch (error) {
         logger.error({ error }, "Unexpected error finding player by exact username");
         return Err(serializeError(error));

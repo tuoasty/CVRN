@@ -10,21 +10,12 @@ export async function assignOfficialToMatch(
     p: AssignOfficialInput
 ): Promise<Result<MatchOfficial>> {
     try {
-        const {data, error} = await assignOfficial(supabase, p);
-
-        if (error) {
-            logger.error({input: p, error}, "Failed to assign official to match");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await assignOfficial(supabase, p);
+        if (!result.ok) {
+            logger.error({input: p, error: result.error}, "Failed to assign official to match");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to assign official to match",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error assigning official to match");
         return Err(serializeError(error));

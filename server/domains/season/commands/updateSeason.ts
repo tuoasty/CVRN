@@ -10,7 +10,7 @@ export async function updateSeason(
     p: UpdateSeasonInput
 ): Promise<Result<Season>> {
     try {
-        const {data, error} = await updateSeasonById(supabase, p.seasonId, {
+        const result = await updateSeasonById(supabase, p.seasonId, {
             name: p.name,
             startDate: p.startDate,
             endDate: p.endDate,
@@ -18,20 +18,11 @@ export async function updateSeason(
             slug: p.slug,
             theme: p.theme
         });
-
-        if (error) {
-            logger.error({input: p, error}, "Failed to update season");
-            return Err(serializeError(error, "DB_ERROR"));
+        if (!result.ok) {
+            logger.error({input: p, error: result.error}, "Failed to update season");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Season not found",
-                code: "NOT_FOUND"
-            });
-        }
-
-        return Ok(data as Season);
+        return Ok(result.value as Season);
     } catch (error) {
         logger.error({error}, "Unexpected error updating season");
         return Err(serializeError(error));

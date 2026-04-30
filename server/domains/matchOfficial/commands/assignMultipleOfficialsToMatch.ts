@@ -10,26 +10,17 @@ export async function assignMultipleOfficialsToMatch(
     p: AssignMultipleOfficialsInput
 ): Promise<Result<MatchOfficial[]>> {
     try {
-        const {data, error} = await assignMultipleOfficials(
+        const result = await assignMultipleOfficials(
             supabase,
             p.matchId,
             p.officialIds,
             p.officialType
         );
-
-        if (error) {
-            logger.error({input: p, error}, "Failed to assign multiple officials to match");
-            return Err(serializeError(error, "DB_ERROR"));
+        if (!result.ok) {
+            logger.error({input: p, error: result.error}, "Failed to assign multiple officials to match");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to assign officials to match",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error assigning multiple officials to match");
         return Err(serializeError(error));

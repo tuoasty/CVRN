@@ -11,13 +11,11 @@ export async function removeAllOfficialsOfType(
     officialType: OfficialType
 ): Promise<Result<boolean>> {
     try {
-        const {error} = await removeAllOfficialsByType(supabase, matchId, officialType);
-
-        if (error) {
-            logger.error({matchId, officialType, error}, "Failed to remove all officials of type from match");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await removeAllOfficialsByType(supabase, matchId, officialType);
+        if (!result.ok) {
+            logger.error({matchId, officialType, error: result.error}, "Failed to remove all officials of type from match");
+            return result;
         }
-
         return Ok(true);
     } catch (error) {
         logger.error({error}, "Unexpected error removing all officials of type from match");

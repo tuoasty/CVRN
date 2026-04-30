@@ -12,10 +12,14 @@ export async function completeMatchService(
     p: CompleteMatchInput
 ): Promise<Result<Match>> {
     try {
-        const { data: match, error: matchError } = await findMatchById(supabase, p.matchId);
-
-        if (matchError || !match) {
-            logger.error({ matchId: p.matchId, error: matchError }, "Match not found");
+        const matchLookup = await findMatchById(supabase, p.matchId);
+        if (!matchLookup.ok) {
+            logger.error({ matchId: p.matchId, error: matchLookup.error }, "Failed to look up match");
+            return matchLookup;
+        }
+        const match = matchLookup.value;
+        if (!match) {
+            logger.error({ matchId: p.matchId }, "Match not found");
             return Err({
                 message: "Match not found",
                 code: "NOT_FOUND"

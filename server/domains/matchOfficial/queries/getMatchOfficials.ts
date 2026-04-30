@@ -11,29 +11,21 @@ export async function getMatchOfficials(
     p: MatchIdInput
 ): Promise<Result<MatchOfficialWithDetails[]>> {
     try {
-        const {data, error} = await findMatchOfficials(supabase, p.matchId);
-
-        if (error) {
-            logger.error({matchId: p.matchId, error}, "Failed to fetch match officials");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findMatchOfficials(supabase, p.matchId);
+        if (!result.ok) {
+            logger.error({matchId: p.matchId, error: result.error}, "Failed to fetch match officials");
+            return result;
         }
 
-        if (!data) {
-            return Err({
-                message: "Failed to fetch match officials",
-                code: "DB_ERROR"
-            });
-        }
-
-        const syncedOfficials: MatchOfficialWithDetails[] = await Promise.all(
-            data.map(async (matchOfficial) => {
+        const syncedOfficials = await Promise.all(
+            result.value.map(async (matchOfficial) => {
                 if (!matchOfficial.official) return matchOfficial;
-                const result = await lazySyncOfficial(supabase, matchOfficial.official);
-                return result.ok
-                    ? { ...matchOfficial, official: result.value }
+                const syncResult = await lazySyncOfficial(supabase, matchOfficial.official);
+                return syncResult.ok
+                    ? { ...matchOfficial, official: syncResult.value }
                     : matchOfficial;
             })
-        );
+        ) as unknown as MatchOfficialWithDetails[];
 
         return Ok(syncedOfficials);
     } catch (error) {

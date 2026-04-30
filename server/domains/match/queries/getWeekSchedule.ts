@@ -3,7 +3,7 @@ import {DBClient} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findMatchesWithDetailsBySeasonAndWeek} from "@/server/db/matches.repo";
-import {MatchWithDetails} from "../types";
+import {MatchWithDetails, MatchWithDetailsRow} from "../types";
 import {toMatchWithDetails} from "../helpers/toMatchWithDetails";
 
 export async function getWeekSchedule(
@@ -11,20 +11,12 @@ export async function getWeekSchedule(
     p: { seasonId: string; week: number }
 ): Promise<Result<MatchWithDetails[]>> {
     try {
-        const { data, error } = await findMatchesWithDetailsBySeasonAndWeek(supabase, p.seasonId, p.week);
-
-        if (error) {
-            logger.error({ seasonId: p.seasonId, week: p.week, error }, "Failed to fetch week schedule");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findMatchesWithDetailsBySeasonAndWeek(supabase, p.seasonId, p.week);
+        if (!result.ok) {
+            logger.error({ seasonId: p.seasonId, week: p.week, error: result.error }, "Failed to fetch week schedule");
+            return result;
         }
-
-        if (!data) {
-            return Ok([]);
-        }
-
-        const result: MatchWithDetails[] = data.map(toMatchWithDetails);
-
-        return Ok(result);
+        return Ok((result.value as unknown as MatchWithDetailsRow[]).map(toMatchWithDetails));
     } catch (error) {
         logger.error({ error }, "Unexpected error fetching week schedule");
         return Err(serializeError(error));

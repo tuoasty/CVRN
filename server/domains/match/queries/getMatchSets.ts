@@ -10,18 +10,12 @@ export async function getMatchSets(
     p: MatchSetsInput
 ): Promise<Result<MatchSet[]>> {
     try {
-        const {data, error} = await findMatchSets(supabase, p.matchId);
-
-        if (error) {
-            logger.error({matchId: p.matchId, error}, "Failed to fetch match sets");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findMatchSets(supabase, p.matchId);
+        if (!result.ok) {
+            logger.error({matchId: p.matchId, error: result.error}, "Failed to fetch match sets");
+            return result;
         }
-
-        if (!data) {
-            return Ok([]);
-        }
-
-        return Ok(data as MatchSet[]);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching match sets");
         return Err(serializeError(error));

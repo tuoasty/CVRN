@@ -3,7 +3,7 @@ import {DBClient} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findRecentMatches} from "@/server/db/matches.repo";
-import {MatchWithDetails} from "../types";
+import {MatchWithDetails, MatchWithDetailsRow} from "../types";
 import {toMatchWithDetails} from "../helpers/toMatchWithDetails";
 
 export async function getRecentMatches(
@@ -12,20 +12,12 @@ export async function getRecentMatches(
     limit: number = 5
 ): Promise<Result<MatchWithDetails[]>> {
     try {
-        const { data, error } = await findRecentMatches(supabase, seasonId, limit);
-
-        if (error) {
-            logger.error({ seasonId, limit, error }, "Failed to fetch recent matches");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findRecentMatches(supabase, seasonId, limit);
+        if (!result.ok) {
+            logger.error({ seasonId, limit, error: result.error }, "Failed to fetch recent matches");
+            return result;
         }
-
-        if (!data) {
-            return Ok([]);
-        }
-
-        const result: MatchWithDetails[] = data.map(toMatchWithDetails);
-
-        return Ok(result);
+        return Ok((result.value as unknown as MatchWithDetailsRow[]).map(toMatchWithDetails));
     } catch (error) {
         logger.error({ error }, "Unexpected error fetching recent matches");
         return Err(serializeError(error));

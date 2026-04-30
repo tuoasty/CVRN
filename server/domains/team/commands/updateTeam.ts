@@ -11,9 +11,13 @@ import {TeamWithRegion, UpdateTeamInput} from "../types";
 
 export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promise<Result<TeamWithRegion>> {
     try {
-        const {data: existing, error: fetchError} = await findTeamById(supabase, p.teamId);
-
-        if (fetchError || !existing || existing.deleted_at) {
+        const lookup = await findTeamById(supabase, p.teamId);
+        if (!lookup.ok) {
+            logger.error({teamId: p.teamId, error: lookup.error}, "Failed to look up team");
+            return lookup;
+        }
+        const existing = lookup.value;
+        if (!existing || existing.deleted_at) {
             return Err({message: "Team not found", code: "NOT_FOUND"});
         }
 
@@ -46,7 +50,7 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
             logoUrl = uploadRes.value.url;
         }
 
-        const {data, error} = await updateTeamById(supabase, p.teamId, {
+        const updateResult = await updateTeamById(supabase, p.teamId, {
             name: p.name,
             slug,
             ...(logoUrl !== undefined && {logoUrl}),
@@ -54,19 +58,17 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
             brickColor: p.brickColor,
             startingLvr: p.startingLvr,
         });
-
-        if (error || !data) {
-            logger.error({teamId: p.teamId, error}, "Failed to update team");
-            return Err(serializeError(error, "DB_ERROR"));
+        if (!updateResult.ok) {
+            logger.error({teamId: p.teamId, error: updateResult.error}, "Failed to update team");
+            return updateResult;
         }
 
-        const {data: teamWithRegion, error: regionFetchError} = await findTeamByIdWithRegion(supabase, p.teamId);
-
-        if (regionFetchError || !teamWithRegion) {
+        const regionLookup = await findTeamByIdWithRegion(supabase, p.teamId);
+        if (!regionLookup.ok || !regionLookup.value) {
             return Err({message: "Failed to fetch updated team", code: "DB_ERROR"});
         }
 
-        return Ok(teamWithRegion as TeamWithRegion);
+        return Ok(regionLookup.value as TeamWithRegion);
     } catch (error) {
         logger.error({error}, "Unexpected error updating team");
         return Err(serializeError(error));

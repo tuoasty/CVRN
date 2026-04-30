@@ -9,21 +9,12 @@ export async function getAllSeasons(
     supabase: DBClient
 ): Promise<Result<SeasonWithPlayoffConfig[]>> {
     try {
-        const {data, error} = await findAllSeasons(supabase);
-
-        if (error) {
-            logger.error({error}, "Failed to fetch all seasons");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findAllSeasons(supabase);
+        if (!result.ok) {
+            logger.error({error: result.error}, "Failed to fetch all seasons");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to fetch seasons",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data as SeasonWithPlayoffConfig[]);
+        return Ok(result.value as SeasonWithPlayoffConfig[]);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching all seasons");
         return Err(serializeError(error));

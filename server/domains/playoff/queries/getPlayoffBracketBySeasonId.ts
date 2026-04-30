@@ -6,21 +6,12 @@ import {findPlayoffBracketsBySeasonId} from "@/server/db/playoff.repo";
 
 export async function getPlayoffBracketBySeasonId(supabase: DBClient, seasonId: string): Promise<Result<PlayoffBracket[]>> {
     try {
-        const { data, error } = await findPlayoffBracketsBySeasonId(supabase, seasonId);
-
-        if (error) {
-            logger.error({ error }, "Failed to fetch playoff bracket matches");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findPlayoffBracketsBySeasonId(supabase, seasonId);
+        if (!result.ok) {
+            logger.error({ error: result.error }, "Failed to fetch playoff bracket matches");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to fetch playoff brackets",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({ error }, "Unexpected error fetching playoff brackets");
         return Err(serializeError(error));

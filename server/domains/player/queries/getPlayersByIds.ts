@@ -15,24 +15,16 @@ export async function getPlayersByIds(
             return Ok([]);
         }
 
-        const {data, error} = await findPlayersByIds(supabase, p.playerIds);
-
-        if (error) {
-            logger.error({playerIds: p.playerIds, error}, "Failed to fetch players by IDs");
-            return Err(serializeError(error, "DB_ERROR"));
-        }
-
-        if (!data) {
-            return Err({
-                message: "Failed to fetch players",
-                code: "DB_ERROR"
-            });
+        const result = await findPlayersByIds(supabase, p.playerIds);
+        if (!result.ok) {
+            logger.error({playerIds: p.playerIds, error: result.error}, "Failed to fetch players by IDs");
+            return result;
         }
 
         const syncedPlayers: Player[] = await Promise.all(
-            data.map(async (player) => {
-                const result = await lazySyncPlayer(supabase, player as Player);
-                return result.ok ? result.value : (player as Player);
+            result.value.map(async (player) => {
+                const syncResult = await lazySyncPlayer(supabase, player as Player);
+                return syncResult.ok ? syncResult.value : (player as Player);
             })
         );
 

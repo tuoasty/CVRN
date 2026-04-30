@@ -13,7 +13,7 @@ export async function createSeason(
     try {
         const seasonId = randomUUID();
 
-        const {data, error} = await insertSeason(supabase, {
+        const result = await insertSeason(supabase, {
             id: seasonId,
             name: p.name,
             regionId: p.regionId,
@@ -23,20 +23,11 @@ export async function createSeason(
             slug: p.slug,
             theme: p.theme ?? null
         });
-
-        if (error) {
-            logger.error({input: p, error}, "Failed to insert season");
-            return Err(serializeError(error, "DB_ERROR"));
+        if (!result.ok) {
+            logger.error({input: p, error: result.error}, "Failed to insert season");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to create season",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data as Season);
+        return Ok(result.value as Season);
     } catch (error) {
         logger.error({error}, "Unexpected error creating season");
         return Err(serializeError(error));

@@ -12,18 +12,12 @@ export async function getMatchesForWeek(
     }
 ): Promise<Result<Match[]>> {
     try {
-        const {data, error} = await findMatchesBySeasonAndWeek(supabase, p.seasonId, p.week);
-
-        if (error) {
-            logger.error({seasonId: p.seasonId, week: p.week, error}, "Failed to fetch matches for week");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findMatchesBySeasonAndWeek(supabase, p.seasonId, p.week);
+        if (!result.ok) {
+            logger.error({seasonId: p.seasonId, week: p.week, error: result.error}, "Failed to fetch matches for week");
+            return result;
         }
-
-        if (!data) {
-            return Ok([]);
-        }
-
-        return Ok(data as Match[]);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching matches for week");
         return Err(serializeError(error));

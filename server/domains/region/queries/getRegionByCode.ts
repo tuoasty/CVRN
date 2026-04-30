@@ -6,22 +6,19 @@ import {logger} from "@/server/utils/logger";
 
 export async function getRegionByCode(supabase: DBClient, code: string): Promise<Result<Region, SerializableError>> {
     try {
-        const {data, error} = await findRegionByCode(supabase, code)
-        if (error) {
-            logger.error({code, error}, "Failed to fetch region by code");
-            return Err(serializeError(error, "DB_ERROR"))
+        const result = await findRegionByCode(supabase, code);
+        if (!result.ok) {
+            logger.error({code, error: result.error}, "Failed to fetch region by code");
+            return result;
         }
 
-        if (!data) {
-            return Err({
-                message: "Region not found",
-                code: "NOT_FOUND"
-            })
+        if (!result.value) {
+            return Err({message: "Region not found", code: "NOT_FOUND"});
         }
 
-        return Ok(data)
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching region by code");
-        return Err(serializeError(error))
+        return Err(serializeError(error));
     }
 }

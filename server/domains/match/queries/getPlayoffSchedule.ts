@@ -3,7 +3,7 @@ import {DBClient} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findMatchesWithDetailsBySeasonAndRound} from "@/server/db/playoff.repo";
-import {MatchWithDetails} from "../types";
+import {MatchWithDetails, MatchWithDetailsRow} from "../types";
 import {toMatchWithDetails} from "../helpers/toMatchWithDetails";
 import {GetPlayoffScheduleInput} from "@/server/domains/playoff";
 
@@ -12,20 +12,12 @@ export async function getPlayoffSchedule(
     p: GetPlayoffScheduleInput
 ): Promise<Result<MatchWithDetails[]>> {
     try {
-        const { data, error } = await findMatchesWithDetailsBySeasonAndRound(supabase, p.seasonId, p.round);
-
-        if (error) {
-            logger.error({ seasonId: p.seasonId, round: p.round, error }, "Failed to fetch playoff schedule");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findMatchesWithDetailsBySeasonAndRound(supabase, p.seasonId, p.round);
+        if (!result.ok) {
+            logger.error({ seasonId: p.seasonId, round: p.round, error: result.error }, "Failed to fetch playoff schedule");
+            return result;
         }
-
-        if (!data) {
-            return Ok([]);
-        }
-
-        const result: MatchWithDetails[] = data.map(row => toMatchWithDetails(row.matches));
-
-        return Ok(result);
+        return Ok(result.value.map(row => toMatchWithDetails(row.matches as unknown as MatchWithDetailsRow)));
     } catch (error) {
         logger.error({ error }, "Unexpected error fetching playoff schedule");
         return Err(serializeError(error));

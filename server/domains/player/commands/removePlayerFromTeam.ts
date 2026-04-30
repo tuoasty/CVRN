@@ -10,8 +10,12 @@ export async function removePlayerFromTeamService(
     p: RemovePlayerFromTeamInput
 ): Promise<Result<PlayerTeamSeason>> {
     try {
-        const {data: player} = await findPlayerById(supabase, p.playerId);
-        if (!player) {
+        const playerLookup = await findPlayerById(supabase, p.playerId);
+        if (!playerLookup.ok) {
+            logger.error({playerId: p.playerId, error: playerLookup.error}, "Failed to look up player");
+            return playerLookup;
+        }
+        if (!playerLookup.value) {
             logger.error({playerId: p.playerId}, "Player not found when removing from team");
             return Err({
                 message: "Player does not exist",
@@ -19,13 +23,12 @@ export async function removePlayerFromTeamService(
             });
         }
 
-        const {data: currentTeamSeason} = await findPlayerCurrentTeam(
-            supabase,
-            p.playerId,
-            p.seasonId
-        );
-
-        if (!currentTeamSeason) {
+        const currentLookup = await findPlayerCurrentTeam(supabase, p.playerId, p.seasonId);
+        if (!currentLookup.ok) {
+            logger.error({playerId: p.playerId, seasonId: p.seasonId, error: currentLookup.error}, "Failed to look up player team");
+            return currentLookup;
+        }
+        if (!currentLookup.value) {
             logger.warn({playerId: p.playerId, seasonId: p.seasonId}, "Attempted to remove player not in a team for this season");
             return Err({
                 message: "Player is not in a team for this season",
@@ -33,21 +36,12 @@ export async function removePlayerFromTeamService(
             });
         }
 
-        const {data, error} = await removePlayerFromTeam(supabase, p);
-
-        if (error) {
-            logger.error({playerId: p.playerId, seasonId: p.seasonId, error}, "Failed to remove player from team");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await removePlayerFromTeam(supabase, p);
+        if (!result.ok) {
+            logger.error({playerId: p.playerId, seasonId: p.seasonId, error: result.error}, "Failed to remove player from team");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to remove player from team",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error removing player from team");
         return Err(serializeError(error));

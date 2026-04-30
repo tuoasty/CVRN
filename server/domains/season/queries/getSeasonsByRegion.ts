@@ -9,21 +9,12 @@ export async function getSeasonsByRegion(
     regionId: string
 ): Promise<Result<Season[]>> {
     try {
-        const {data, error} = await findSeasonsByRegion(supabase, regionId);
-
-        if (error) {
-            logger.error({regionId, error}, "Failed to fetch seasons by region");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findSeasonsByRegion(supabase, regionId);
+        if (!result.ok) {
+            logger.error({regionId, error: result.error}, "Failed to fetch seasons by region");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to fetch seasons",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching seasons by region");
         return Err(serializeError(error));

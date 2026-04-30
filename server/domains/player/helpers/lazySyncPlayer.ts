@@ -1,7 +1,6 @@
 import {getRobloxAvatarsById, getRobloxUsersById} from "@/server/roblox/users";
-import {Err, Ok, Result} from "@/shared/types/result";
+import {Ok, Result} from "@/shared/types/result";
 import {DBClient, Player} from "@/shared/types/db";
-import {serializeError} from "@/server/utils/serializeableError";
 import {updatePlayer} from "@/server/db/players.repo";
 import {logger} from "@/server/utils/logger";
 
@@ -45,27 +44,18 @@ export async function lazySyncPlayer(
             logger.error({userId: user.id, error: avatarResult.error}, "Failed to fetch avatar during lazy sync");
         }
 
-        const {data, error} = await updatePlayer(supabase, {
+        const updateResult = await updatePlayer(supabase, {
             robloxUserId: String(user.id),
             username: user.name,
             displayName: user.displayName ?? null,
             avatarUrl,
             lastSyncedAt: new Date().toISOString(),
         });
-
-        if (error) {
-            logger.error({robloxUserId: String(user.id), error}, "Failed to update player during lazy sync");
-            return Err(serializeError(error, "DB_ERROR"));
+        if (!updateResult.ok) {
+            logger.error({robloxUserId: String(user.id), error: updateResult.error}, "Failed to update player during lazy sync");
+            return updateResult;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to update player",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(updateResult.value);
 
     } catch (err) {
         logger.error({error: err}, "Unexpected error during lazy sync");
