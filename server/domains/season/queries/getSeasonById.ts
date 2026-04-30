@@ -10,21 +10,18 @@ export async function getSeasonById(
     p: SeasonIdInput
 ): Promise<Result<Season>> {
     try {
-        const {data, error} = await findSeasonById(supabase, p.seasonId);
-
-        if (error) {
-            logger.error({seasonId: p.seasonId, error}, "Failed to fetch season by id");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findSeasonById(supabase, p.seasonId);
+        if (!result.ok) {
+            logger.error({seasonId: p.seasonId, error: result.error}, "Failed to fetch season by id");
+            return result;
         }
-
-        if (!data) {
+        if (!result.value) {
             return Err({
                 message: "Season not found",
                 code: "NOT_FOUND"
             });
         }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching season by id");
         return Err(serializeError(error));

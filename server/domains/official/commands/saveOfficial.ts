@@ -11,35 +11,20 @@ export async function saveOfficial(
     p: SaveOfficialInput
 ): Promise<Result<Official>> {
     try {
-        const {data: existingOfficial} = await findOfficialByRobloxId(supabase, p.robloxUserId);
-
-        if (existingOfficial) {
+        const lookup = await findOfficialByRobloxId(supabase, p.robloxUserId);
+        if (lookup.ok && lookup.value) {
+            const existingOfficial = lookup.value;
             logger.info({robloxUserId: p.robloxUserId}, "Official already exists, syncing latest data");
-
             const syncResult = await lazySyncOfficial(supabase, existingOfficial);
-
-            if (syncResult.ok) {
-                return Ok(syncResult.value);
-            }
-
-            return Ok(existingOfficial);
+            return syncResult.ok ? Ok(syncResult.value) : Ok(existingOfficial);
         }
 
-        const {data, error} = await upsertOfficial(supabase, p);
-
-        if (error) {
-            logger.error({robloxUserId: p.robloxUserId, error}, "Failed to upsert official");
-            return Err(serializeError(error, "DB_ERROR"));
+        const upsertResult = await upsertOfficial(supabase, p);
+        if (!upsertResult.ok) {
+            logger.error({robloxUserId: p.robloxUserId, error: upsertResult.error}, "Failed to upsert official");
+            return upsertResult;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to save official",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(upsertResult.value);
     } catch (error) {
         logger.error({error}, "Unexpected error saving official");
         return Err(serializeError(error));

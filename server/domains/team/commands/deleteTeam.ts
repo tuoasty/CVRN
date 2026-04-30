@@ -8,7 +8,12 @@ import {TeamIdInput} from "../types";
 
 export async function deleteTeam(supabase: DBClient, p: TeamIdInput): Promise<Result<void>> {
     try {
-        const {data: team} = await findTeamById(supabase, p.teamId);
+        const teamLookup = await findTeamById(supabase, p.teamId);
+        if (!teamLookup.ok) {
+            logger.error({teamId: p.teamId, error: teamLookup.error}, "Failed to look up team");
+            return teamLookup;
+        }
+        const team = teamLookup.value;
         if (!team || team.deleted_at) {
             logger.warn({teamId: p.teamId}, "Attempted to delete non-existent or already deleted team");
             return Err({
@@ -17,31 +22,29 @@ export async function deleteTeam(supabase: DBClient, p: TeamIdInput): Promise<Re
             });
         }
 
-        const {data: activePlayersResult, error: checkError} = await findAllTeamPlayers(supabase, p.teamId, team.season_id);
-        if (checkError) {
-            logger.error({teamId: p.teamId, error: checkError}, "Failed to check team players during deletion");
-            return Err(serializeError(checkError, "DB_ERROR"));
+        const playersResult = await findAllTeamPlayers(supabase, p.teamId, team.season_id);
+        if (!playersResult.ok) {
+            logger.error({teamId: p.teamId, error: playersResult.error}, "Failed to check team players during deletion");
+            return playersResult;
         }
 
-        if (activePlayersResult && activePlayersResult.length > 0) {
-            for (const record of activePlayersResult) {
-                if (record.player) {
-                    const {error: removeError} = await removePlayerFromTeam(supabase, {
-                        playerId: record.player.id,
-                        seasonId: team.season_id
-                    });
-                    if (removeError) {
-                        logger.error({teamId: p.teamId, playerId: record.player.id, error: removeError}, "Failed to remove player from team during deletion");
-                        return Err(serializeError(removeError, "DB_ERROR"));
-                    }
+        for (const record of playersResult.value) {
+            if (record.player) {
+                const removeResult = await removePlayerFromTeam(supabase, {
+                    playerId: record.player.id,
+                    seasonId: team.season_id
+                });
+                if (!removeResult.ok) {
+                    logger.error({teamId: p.teamId, playerId: record.player.id, error: removeResult.error}, "Failed to remove player from team during deletion");
+                    return removeResult;
                 }
             }
         }
 
-        const {error} = await softDeleteTeamById(supabase, p.teamId);
-        if (error) {
-            logger.error({teamId: p.teamId, error}, "Failed to soft delete team");
-            return Err(serializeError(error, "DB_ERROR"));
+        const deleteResult = await softDeleteTeamById(supabase, p.teamId);
+        if (!deleteResult.ok) {
+            logger.error({teamId: p.teamId, error: deleteResult.error}, "Failed to soft delete team");
+            return deleteResult;
         }
 
         return Ok(undefined);

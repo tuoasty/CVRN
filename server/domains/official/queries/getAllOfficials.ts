@@ -9,24 +9,16 @@ export async function getAllOfficials(
     supabase: DBClient
 ): Promise<Result<Official[]>> {
     try {
-        const {data, error} = await findAllOfficials(supabase);
-
-        if (error) {
-            logger.error({error}, "Failed to fetch all officials");
-            return Err(serializeError(error, "DB_ERROR"));
-        }
-
-        if (!data) {
-            return Err({
-                message: "Failed to fetch officials",
-                code: "DB_ERROR"
-            });
+        const result = await findAllOfficials(supabase);
+        if (!result.ok) {
+            logger.error({error: result.error}, "Failed to fetch all officials");
+            return result;
         }
 
         const syncedOfficials: Official[] = await Promise.all(
-            data.map(async (official) => {
-                const result = await lazySyncOfficial(supabase, official);
-                return result.ok ? result.value : official;
+            result.value.map(async (official) => {
+                const syncResult = await lazySyncOfficial(supabase, official);
+                return syncResult.ok ? syncResult.value : official;
             })
         );
 

@@ -10,21 +10,12 @@ export async function searchPlayersInDatabase(
     p: SearchPlayersInput
 ): Promise<Result<PlayerWithTeamInfo[]>> {
     try {
-        const { data, error } = await findPlayersBySimilarity(supabase, p.query);
-
-        if (error) {
-            logger.error({ query: p.query, error }, "Failed to search players in database");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findPlayersBySimilarity(supabase, p.query);
+        if (!result.ok) {
+            logger.error({ query: p.query, error: result.error }, "Failed to search players in database");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to search players",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({ error }, "Unexpected error searching players in database");
         return Err(serializeError(error));

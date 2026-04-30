@@ -10,8 +10,12 @@ export async function setPlayerRoleService(
     p: SetPlayerRoleInput
 ): Promise<Result<PlayerTeamSeason>> {
     try {
-        const { data: currentRecord } = await findPlayerCurrentTeam(supabase, p.playerId, p.seasonId);
-
+        const currentLookup = await findPlayerCurrentTeam(supabase, p.playerId, p.seasonId);
+        if (!currentLookup.ok) {
+            logger.error({ playerId: p.playerId, error: currentLookup.error }, "Failed to look up player team");
+            return currentLookup;
+        }
+        const currentRecord = currentLookup.value;
         if (!currentRecord || currentRecord.team_id !== p.teamId) {
             logger.error({ playerId: p.playerId, teamId: p.teamId, seasonId: p.seasonId }, "Player not in team");
             return Err({
@@ -21,8 +25,12 @@ export async function setPlayerRoleService(
         }
 
         if (p.role !== 'player') {
-            const { data: existingRole } = await findPlayerByRole(supabase, p.teamId, p.seasonId, p.role);
-
+            const roleLookup = await findPlayerByRole(supabase, p.teamId, p.seasonId, p.role);
+            if (!roleLookup.ok) {
+                logger.error({ teamId: p.teamId, seasonId: p.seasonId, role: p.role, error: roleLookup.error }, "Failed to look up role assignment");
+                return roleLookup;
+            }
+            const existingRole = roleLookup.value;
             if (existingRole && existingRole.player_id !== p.playerId) {
                 logger.warn({ teamId: p.teamId, seasonId: p.seasonId, role: p.role }, "Role already assigned");
                 return Err({
@@ -32,21 +40,12 @@ export async function setPlayerRoleService(
             }
         }
 
-        const { data, error } = await setPlayerRole(supabase, p);
-
-        if (error) {
-            logger.error({ ...p, error }, "Failed to set player role");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await setPlayerRole(supabase, p);
+        if (!result.ok) {
+            logger.error({ ...p, error: result.error }, "Failed to set player role");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to update player role",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({ error }, "Unexpected error setting player role");
         return Err(serializeError(error));

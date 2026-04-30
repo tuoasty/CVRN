@@ -12,29 +12,21 @@ export async function getMatchOfficialsByType(
     officialType: OfficialType
 ): Promise<Result<MatchOfficialWithDetails[]>> {
     try {
-        const {data, error} = await findMatchOfficialsByType(supabase, matchId, officialType);
-
-        if (error) {
-            logger.error({matchId, officialType, error}, "Failed to fetch match officials by type");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findMatchOfficialsByType(supabase, matchId, officialType);
+        if (!result.ok) {
+            logger.error({matchId, officialType, error: result.error}, "Failed to fetch match officials by type");
+            return result;
         }
 
-        if (!data) {
-            return Err({
-                message: "Failed to fetch match officials by type",
-                code: "DB_ERROR"
-            });
-        }
-
-        const syncedOfficials: MatchOfficialWithDetails[] = await Promise.all(
-            data.map(async (matchOfficial) => {
+        const syncedOfficials = await Promise.all(
+            result.value.map(async (matchOfficial) => {
                 if (!matchOfficial.official) return matchOfficial;
-                const result = await lazySyncOfficial(supabase, matchOfficial.official);
-                return result.ok
-                    ? { ...matchOfficial, official: result.value }
+                const syncResult = await lazySyncOfficial(supabase, matchOfficial.official);
+                return syncResult.ok
+                    ? { ...matchOfficial, official: syncResult.value }
                     : matchOfficial;
             })
-        );
+        ) as unknown as MatchOfficialWithDetails[];
 
         return Ok(syncedOfficials);
     } catch (error) {

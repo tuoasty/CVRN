@@ -11,26 +11,19 @@ export async function getTeamPlayers(
     p: TeamPlayersInput
 ): Promise<Result<PlayerWithRole[]>> {
     try {
-        const {data, error} = await findAllTeamPlayers(supabase, p.teamId, p.seasonId);
-        if (error) {
-            logger.error({teamId: p.teamId, seasonId: p.seasonId, error}, "Failed to fetch team players");
-            return Err(serializeError(error, "DB_ERROR"));
-        }
-
-        if (!data) {
-            return Err({
-                message: "Failed to fetch team players",
-                code: "DB_ERROR"
-            });
+        const result = await findAllTeamPlayers(supabase, p.teamId, p.seasonId);
+        if (!result.ok) {
+            logger.error({teamId: p.teamId, seasonId: p.seasonId, error: result.error}, "Failed to fetch team players");
+            return result;
         }
 
         const syncedPlayers: PlayerWithRole[] = await Promise.all(
-            data
+            result.value
                 .filter(record => record.player)
                 .map(async (record) => {
-                    const result = await lazySyncPlayer(supabase, record.player!);
+                    const syncResult = await lazySyncPlayer(supabase, record.player!);
                     const role: PlayerRole = (record.role as PlayerRole) || 'player';
-                    const player = result.ok ? result.value : record.player!;
+                    const player = syncResult.ok ? syncResult.value : record.player!;
                     return { ...player, role };
                 })
         );

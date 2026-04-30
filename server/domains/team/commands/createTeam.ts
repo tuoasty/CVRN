@@ -38,7 +38,7 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
         }
 
         uploadedPath = path;
-        const {data, error} = await insertTeam(supabase, {
+        const insertResult = await insertTeam(supabase, {
             id: teamId,
             name: p.name,
             slug,
@@ -48,27 +48,18 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
             brickColor: p.brickColor,
             startingLvr: p.startingLvr,
         });
-        if (error || !data) {
-            logger.error({teamId, error}, "Failed to insert team, cleaning up uploaded file");
+        if (!insertResult.ok) {
+            logger.error({teamId, error: insertResult.error}, "Failed to insert team, cleaning up uploaded file");
             await deleteFile(supabase, {
                 bucket: BUCKETS.PUBLIC,
                 path,
             });
-        }
-        if (error) {
-            return Err(serializeError(error, "DB_ERROR"));
-        }
-        if (!data) {
-            return Err({
-                message: "Failed to insert new team",
-                code: "DB_ERROR"
-            });
+            return insertResult;
         }
 
-        const {data: teamWithRegion, error: fetchError} = await findTeamByIdWithRegion(supabase, teamId);
-
-        if (fetchError || !teamWithRegion) {
-            logger.error({teamId, error: fetchError}, "Failed to fetch created team with region");
+        const regionLookup = await findTeamByIdWithRegion(supabase, teamId);
+        if (!regionLookup.ok || !regionLookup.value) {
+            logger.error({teamId, error: regionLookup.ok ? null : regionLookup.error}, "Failed to fetch created team with region");
             return Err({
                 message: "Failed to fetch created team with region",
                 code: "DB_ERROR"
@@ -76,7 +67,7 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
         }
 
         success = true;
-        return Ok(teamWithRegion as TeamWithRegion);
+        return Ok(regionLookup.value as TeamWithRegion);
     } catch (error) {
         return Err(serializeError(error));
     } finally {

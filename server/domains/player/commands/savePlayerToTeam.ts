@@ -17,7 +17,12 @@ export async function savePlayerToTeam(
     p: SavePlayerToTeamInput
 ): Promise<Result<{player: Player, teamSeason: PlayerTeamSeason}>> {
     try {
-        const {data: team} = await findTeamById(supabase, p.teamId);
+        const teamLookup = await findTeamById(supabase, p.teamId);
+        if (!teamLookup.ok) {
+            logger.error({teamId: p.teamId, error: teamLookup.error}, "Failed to look up team");
+            return teamLookup;
+        }
+        const team = teamLookup.value;
         if (!team) {
             logger.error({teamId: p.teamId}, "Team not found when saving player to team");
             return Err({
@@ -28,29 +33,34 @@ export async function savePlayerToTeam(
 
         const seasonId = team.season_id;
 
-        const { count, error: countError } = await countActivePlayersInTeam(supabase, p.teamId, seasonId);
-
-        if (countError) {
-            logger.error({ teamId: p.teamId, seasonId, error: countError }, "Failed to count team players");
-            return Err(serializeError(countError, "DB_ERROR"));
+        const countResult = await countActivePlayersInTeam(supabase, p.teamId, seasonId);
+        if (!countResult.ok) {
+            logger.error({ teamId: p.teamId, seasonId, error: countResult.error }, "Failed to count team players");
+            return countResult;
         }
 
-        if (count !== null && count >= 16) {
-            logger.warn({ teamId: p.teamId, seasonId, currentCount: count }, "Team is at maximum capacity");
+        if (countResult.value >= 16) {
+            logger.warn({ teamId: p.teamId, seasonId, currentCount: countResult.value }, "Team is at maximum capacity");
             return Err({
                 message: "Team already has 16 players (maximum capacity)",
                 code: "CONFLICT"
             });
         }
 
-        const {data: existingPlayer} = await findPlayerByRobloxId(supabase, p.robloxUserId);
+        const existingLookup = await findPlayerByRobloxId(supabase, p.robloxUserId);
+        if (!existingLookup.ok) {
+            logger.error({robloxUserId: p.robloxUserId, error: existingLookup.error}, "Failed to look up player by roblox id");
+            return existingLookup;
+        }
+        const existingPlayer = existingLookup.value;
 
         if (existingPlayer) {
-            const {data: currentTeamSeason} = await findPlayerCurrentTeam(
-                supabase,
-                existingPlayer.id,
-                seasonId
-            );
+            const currentLookup = await findPlayerCurrentTeam(supabase, existingPlayer.id, seasonId);
+            if (!currentLookup.ok) {
+                logger.error({playerId: existingPlayer.id, seasonId, error: currentLookup.error}, "Failed to look up player team");
+                return currentLookup;
+            }
+            const currentTeamSeason = currentLookup.value;
 
             if (currentTeamSeason) {
                 if (currentTeamSeason.team_id === p.teamId) {
@@ -81,39 +91,24 @@ export async function savePlayerToTeam(
             avatarUrl: p.avatarUrl ?? null
         };
 
-        const {data: player, error: playerError} = await upsertPlayer(supabase, playerInput);
-
-        if (playerError) {
-            logger.error({robloxUserId: p.robloxUserId, error: playerError}, "Failed to upsert player");
-            return Err(serializeError(playerError, "DB_ERROR"));
+        const playerResult = await upsertPlayer(supabase, playerInput);
+        if (!playerResult.ok) {
+            logger.error({robloxUserId: p.robloxUserId, error: playerResult.error}, "Failed to upsert player");
+            return playerResult;
         }
+        const player = playerResult.value;
 
-        if (!player) {
-            return Err({
-                message: "Failed to save player",
-                code: "DB_ERROR"
-            });
-        }
-
-        const {data: teamSeason, error: teamSeasonError} = await addPlayerToTeam(supabase, {
+        const teamSeasonResult = await addPlayerToTeam(supabase, {
             playerId: player.id,
             teamId: p.teamId,
             seasonId
         });
-
-        if (teamSeasonError) {
-            logger.error({playerId: player.id, teamId: p.teamId, seasonId, error: teamSeasonError}, "Failed to add player to team");
-            return Err(serializeError(teamSeasonError, "DB_ERROR"));
+        if (!teamSeasonResult.ok) {
+            logger.error({playerId: player.id, teamId: p.teamId, seasonId, error: teamSeasonResult.error}, "Failed to add player to team");
+            return teamSeasonResult;
         }
 
-        if (!teamSeason) {
-            return Err({
-                message: "Failed to add player to team",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok({player, teamSeason});
+        return Ok({player, teamSeason: teamSeasonResult.value});
     } catch (error) {
         logger.error({error}, "Unexpected error saving player to team");
         return Err(serializeError(error));

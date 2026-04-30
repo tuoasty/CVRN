@@ -31,25 +31,12 @@ export async function updateMatchScheduleService(
             }
         }
 
-        const { data, error } = await updateMatchSchedule(
-            supabase,
-            p.matchId,
-            scheduledAt
-        );
-
-        if (error) {
-            logger.error({ matchId: p.matchId, error }, "Failed to update match schedule");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await updateMatchSchedule(supabase, p.matchId, scheduledAt);
+        if (!result.ok) {
+            logger.error({ matchId: p.matchId, error: result.error }, "Failed to update match schedule");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to update match schedule",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data as Match);
+        return Ok(result.value as Match);
     } catch (error) {
         logger.error({ error }, "Unexpected error updating match schedule");
         return Err(serializeError(error));

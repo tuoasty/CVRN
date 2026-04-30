@@ -10,8 +10,12 @@ export async function transferCaptainService(
     p: TransferCaptainInput
 ): Promise<Result<{ oldCaptain: PlayerTeamSeason, newCaptain: PlayerTeamSeason }>> {
     try {
-        const { data: currentCaptain } = await findPlayerCurrentTeam(supabase, p.currentCaptainPlayerId, p.seasonId);
-
+        const currentLookup = await findPlayerCurrentTeam(supabase, p.currentCaptainPlayerId, p.seasonId);
+        if (!currentLookup.ok) {
+            logger.error({ currentCaptainPlayerId: p.currentCaptainPlayerId, error: currentLookup.error }, "Failed to look up current captain");
+            return currentLookup;
+        }
+        const currentCaptain = currentLookup.value;
         if (!currentCaptain || currentCaptain.team_id !== p.teamId || currentCaptain.role !== 'captain') {
             logger.error({ currentCaptainPlayerId: p.currentCaptainPlayerId }, "Current captain invalid");
             return Err({
@@ -20,8 +24,12 @@ export async function transferCaptainService(
             });
         }
 
-        const { data: newCaptainRecord } = await findPlayerCurrentTeam(supabase, p.newCaptainPlayerId, p.seasonId);
-
+        const newLookup = await findPlayerCurrentTeam(supabase, p.newCaptainPlayerId, p.seasonId);
+        if (!newLookup.ok) {
+            logger.error({ newCaptainPlayerId: p.newCaptainPlayerId, error: newLookup.error }, "Failed to look up new captain");
+            return newLookup;
+        }
+        const newCaptainRecord = newLookup.value;
         if (!newCaptainRecord || newCaptainRecord.team_id !== p.teamId) {
             logger.error({ newCaptainPlayerId: p.newCaptainPlayerId }, "New captain not in team");
             return Err({
@@ -30,27 +38,25 @@ export async function transferCaptainService(
             });
         }
 
-        const { data: oldCaptain, error: demoteError } = await setPlayerRole(supabase, {
+        const demoteResult = await setPlayerRole(supabase, {
             playerId: p.currentCaptainPlayerId,
             teamId: p.teamId,
             seasonId: p.seasonId,
             role: 'player'
         });
-
-        if (demoteError || !oldCaptain) {
-            logger.error({ error: demoteError }, "Failed to demote current captain");
-            return Err(serializeError(demoteError, "DB_ERROR"));
+        if (!demoteResult.ok) {
+            logger.error({ error: demoteResult.error }, "Failed to demote current captain");
+            return demoteResult;
         }
 
-        const { data: newCaptain, error: promoteError } = await setPlayerRole(supabase, {
+        const promoteResult = await setPlayerRole(supabase, {
             playerId: p.newCaptainPlayerId,
             teamId: p.teamId,
             seasonId: p.seasonId,
             role: 'captain'
         });
-
-        if (promoteError || !newCaptain) {
-            logger.error({ error: promoteError }, "Failed to promote new captain");
+        if (!promoteResult.ok) {
+            logger.error({ error: promoteResult.error }, "Failed to promote new captain");
 
             await setPlayerRole(supabase, {
                 playerId: p.currentCaptainPlayerId,
@@ -59,10 +65,10 @@ export async function transferCaptainService(
                 role: 'captain'
             });
 
-            return Err(serializeError(promoteError, "DB_ERROR"));
+            return promoteResult;
         }
 
-        return Ok({ oldCaptain, newCaptain });
+        return Ok({ oldCaptain: demoteResult.value, newCaptain: promoteResult.value });
     } catch (error) {
         logger.error({ error }, "Unexpected error transferring captain");
         return Err(serializeError(error));

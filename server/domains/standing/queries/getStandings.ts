@@ -10,21 +10,12 @@ export async function getStandings(
     p: GetStandingsInput
 ): Promise<Result<StandingWithInfo[]>> {
     try {
-        const { data, error } = await findStandingsBySeasonAndRegion(supabase, p);
-
-        if (error) {
-            logger.error({ params: p, error }, "Failed to fetch standings");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findStandingsBySeasonAndRegion(supabase, p);
+        if (!result.ok) {
+            logger.error({ params: p, error: result.error }, "Failed to fetch standings");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to fetch standings",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({ error }, "Unexpected error fetching standings");
         return Err(serializeError(error));

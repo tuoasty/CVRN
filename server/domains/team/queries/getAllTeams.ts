@@ -6,20 +6,12 @@ import {findAllTeams} from "@/server/db/teams.repo";
 
 export async function getAllTeams(supabase: DBClient): Promise<Result<Team[]>> {
     try {
-        const {data, error} = await findAllTeams(supabase);
-        if (error) {
-            logger.error({error}, "Failed to fetch all teams");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findAllTeams(supabase);
+        if (!result.ok) {
+            logger.error({error: result.error}, "Failed to fetch all teams");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to fetch teams",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         return Err(serializeError(error));
     }

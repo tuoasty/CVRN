@@ -14,21 +14,13 @@ export async function getTeamsByIds(
             return Ok([]);
         }
 
-        const {data, error} = await findTeamsByIds(supabase, teamIds);
-
-        if (error) {
-            logger.error({teamIds, error}, "Failed to fetch teams by IDs");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findTeamsByIds(supabase, teamIds);
+        if (!result.ok) {
+            logger.error({teamIds, error: result.error}, "Failed to fetch teams by IDs");
+            return result;
         }
 
-        if (!data) {
-            return Err({
-                message: "Failed to fetch teams",
-                code: "DB_ERROR"
-            });
-        }
-
-        const teamsWithRegions = data.map(team => ({
+        const teamsWithRegions = result.value.map(team => ({
             ...team,
             region: team.seasons.regions
         }));

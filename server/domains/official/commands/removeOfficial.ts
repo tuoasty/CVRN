@@ -10,9 +10,12 @@ export async function removeOfficial(
     p: RobloxUserIdInput
 ): Promise<Result<boolean>> {
     try {
-        const {data: existingOfficial} = await findOfficialByRobloxId(supabase, p.robloxUserId);
-
-        if (!existingOfficial) {
+        const lookup = await findOfficialByRobloxId(supabase, p.robloxUserId);
+        if (!lookup.ok) {
+            logger.error({robloxUserId: p.robloxUserId, error: lookup.error}, "Failed to look up official");
+            return lookup;
+        }
+        if (!lookup.value) {
             logger.error({robloxUserId: p.robloxUserId}, "Official not found");
             return Err({
                 message: "Official does not exist",
@@ -20,13 +23,11 @@ export async function removeOfficial(
             });
         }
 
-        const {error} = await deleteOfficial(supabase, existingOfficial.id);
-
-        if (error) {
-            logger.error({robloxUserId: p.robloxUserId, error}, "Failed to delete official");
-            return Err(serializeError(error, "DB_ERROR"));
+        const deleteResult = await deleteOfficial(supabase, lookup.value.id);
+        if (!deleteResult.ok) {
+            logger.error({robloxUserId: p.robloxUserId, error: deleteResult.error}, "Failed to delete official");
+            return deleteResult;
         }
-
         return Ok(true);
     } catch (error) {
         logger.error({error}, "Unexpected error removing official");
