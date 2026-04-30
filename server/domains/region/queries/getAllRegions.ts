@@ -1,27 +1,19 @@
 import {DBClient, Region} from "@/shared/types/db";
 import {findAllRegions} from "@/server/db/regions.repo";
-import {Err, Ok, Result} from "@/shared/types/result";
+import {Err, Result} from "@/shared/types/result";
 import {serializeError, SerializableError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 
 export async function getAllRegions(supabase: DBClient): Promise<Result<Region[], SerializableError>> {
     try {
-        const {data, error} = await findAllRegions(supabase)
-        if (error) {
-            logger.error({error}, "Failed to fetch all regions");
-            return Err(serializeError(error, "DB_ERROR"))
+        const result = await findAllRegions(supabase);
+        if (!result.ok) {
+            logger.error({error: result.error}, "Failed to fetch all regions");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to fetch regions",
-                code: "DB_ERROR"
-            })
-        }
-
-        return Ok(data)
+        return result;
     } catch (error) {
         logger.error({error}, "Unexpected error fetching all regions");
-        return Err(serializeError(error))
+        return Err(serializeError(error));
     }
 }

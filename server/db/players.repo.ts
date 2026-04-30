@@ -1,4 +1,4 @@
-import {DBClient} from "@/shared/types/db";
+import {DBClient, Player, PlayerTeamSeason} from "@/shared/types/db";
 import {
     SavePlayerInput,
     UpdatePlayerInput,
@@ -6,12 +6,24 @@ import {
     RemovePlayerFromTeamInput,
     SetPlayerRoleInput, PlayerRole
 } from "@/server/domains/player";
+import {Database} from "@/database.types";
+import {Err, Ok, Result} from "@/shared/types/result";
+import {serializeError} from "@/server/utils/serializeableError";
 
-export async function upsertPlayer(
-    supabase: DBClient,
-    p: SavePlayerInput
-) {
-    return supabase.from("players")
+type PlayerTeamSeasonWithPlayer = PlayerTeamSeason & {player: Player | null};
+type PlayerTeamSeasonWithRefs = PlayerTeamSeason & {
+    team: Database["public"]["Tables"]["teams"]["Row"] | null;
+    season: Database["public"]["Tables"]["seasons"]["Row"] | null;
+};
+type PlayerSummary = Pick<Player, "id" | "roblox_user_id" | "username" | "display_name" | "avatar_url">;
+type PlayerSearchResult = PlayerSummary & {
+    current_team_id: string | null;
+    current_season_id: string | null;
+    current_team_name: string | null;
+};
+
+export async function upsertPlayer(supabase: DBClient, p: SavePlayerInput): Promise<Result<Player>> {
+    const {data, error} = await supabase.from("players")
         .upsert(
             {
                 roblox_user_id: String(p.robloxUserId),
@@ -20,40 +32,38 @@ export async function upsertPlayer(
                 avatar_url: p.avatarUrl ?? null,
                 last_synced_at: new Date().toISOString()
             },
-            {
-                onConflict: "roblox_user_id",
-            }
+            {onConflict: "roblox_user_id"}
         )
         .select()
-        .single()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
-export async function findPlayerByRobloxId(
-    supabase: DBClient,
-    robloxUserId: string
-) {
-    return supabase.from("players")
+export async function findPlayerByRobloxId(supabase: DBClient, robloxUserId: string): Promise<Result<Player | null>> {
+    const {data, error} = await supabase.from("players")
         .select("*")
         .eq("roblox_user_id", robloxUserId)
-        .maybeSingle()
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
-export async function findPlayerById(
-    supabase: DBClient,
-    playerId: string
-) {
-    return supabase.from("players")
+export async function findPlayerById(supabase: DBClient, playerId: string): Promise<Result<Player | null>> {
+    const {data, error} = await supabase.from("players")
         .select("*")
         .eq("id", playerId)
-        .maybeSingle()
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
 export async function findAllTeamPlayers(
     supabase: DBClient,
     teamId: string,
     seasonId: string
-) {
-    return supabase
+): Promise<Result<PlayerTeamSeasonWithPlayer[]>> {
+    const {data, error} = await supabase
         .from("player_team_seasons")
         .select(`
             *,
@@ -61,28 +71,29 @@ export async function findAllTeamPlayers(
         `)
         .eq("team_id", teamId)
         .eq("season_id", seasonId)
-        .is("left_at", null)
+        .is("left_at", null);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as PlayerTeamSeasonWithPlayer[]);
 }
 
 export async function findPlayerCurrentTeam(
     supabase: DBClient,
     playerId: string,
     seasonId: string
-) {
-    return supabase
+): Promise<Result<PlayerTeamSeason | null>> {
+    const {data, error} = await supabase
         .from("player_team_seasons")
         .select("*")
         .eq("player_id", playerId)
         .eq("season_id", seasonId)
         .is("left_at", null)
-        .maybeSingle()
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
-export async function addPlayerToTeam(
-    supabase: DBClient,
-    p: AddPlayerToTeamInput
-) {
-    return supabase
+export async function addPlayerToTeam(supabase: DBClient, p: AddPlayerToTeamInput): Promise<Result<PlayerTeamSeason>> {
+    const {data, error} = await supabase
         .from("player_team_seasons")
         .insert({
             player_id: p.playerId,
@@ -91,30 +102,29 @@ export async function addPlayerToTeam(
             joined_at: new Date().toISOString()
         })
         .select()
-        .single()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
-export async function removePlayerFromTeam(
-    supabase: DBClient,
-    p: RemovePlayerFromTeamInput
-) {
-    return supabase
+export async function removePlayerFromTeam(supabase: DBClient, p: RemovePlayerFromTeamInput): Promise<Result<PlayerTeamSeason>> {
+    const {data, error} = await supabase
         .from("player_team_seasons")
-        .update({
-            left_at: new Date().toISOString()
-        })
+        .update({left_at: new Date().toISOString()})
         .eq("player_id", p.playerId)
         .eq("season_id", p.seasonId)
         .is("left_at", null)
         .select()
-        .single()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
 export async function findPlayerSeasonHistory(
     supabase: DBClient,
     playerId: string
-) {
-    return supabase
+): Promise<Result<PlayerTeamSeasonWithRefs[]>> {
+    const {data, error} = await supabase
         .from("player_team_seasons")
         .select(`
             *,
@@ -122,82 +132,74 @@ export async function findPlayerSeasonHistory(
             season:seasons(*)
         `)
         .eq("player_id", playerId)
-        .order("joined_at", { ascending: false })
+        .order("joined_at", {ascending: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as PlayerTeamSeasonWithRefs[]);
 }
 
-export async function updatePlayer(
-    supabase: DBClient,
-    p: UpdatePlayerInput
-) {
-    const updates: Record<string, unknown> = {}
+export async function updatePlayer(supabase: DBClient, p: UpdatePlayerInput): Promise<Result<Player>> {
+    const updates: Record<string, unknown> = {};
 
-    if (p.username !== undefined) updates.username = p.username
-    if (p.displayName !== undefined) updates.display_name = p.displayName
-    if (p.avatarUrl !== undefined) updates.avatar_url = p.avatarUrl
-    if (p.lastSyncedAt !== undefined) updates.last_synced_at = p.lastSyncedAt
+    if (p.username !== undefined) updates.username = p.username;
+    if (p.displayName !== undefined) updates.display_name = p.displayName;
+    if (p.avatarUrl !== undefined) updates.avatar_url = p.avatarUrl;
+    if (p.lastSyncedAt !== undefined) updates.last_synced_at = p.lastSyncedAt;
 
-    return supabase
+    const {data, error} = await supabase
         .from("players")
         .update(updates)
         .eq("roblox_user_id", p.robloxUserId)
         .select()
-        .single()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
-export async function findPlayersByIds(
-    supabase: DBClient,
-    playerIds: string[]
-) {
-    return supabase
+export async function findPlayersByIds(supabase: DBClient, playerIds: string[]): Promise<Result<Player[]>> {
+    const {data, error} = await supabase
         .from("players")
         .select("*")
         .in("id", playerIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
 }
 
 export async function findActivePlayerTeamSeasons(
     supabase: DBClient,
     playerIds: string[]
-) {
-    return supabase
+): Promise<Result<{player_id: string; team_id: string}[]>> {
+    const {data, error} = await supabase
         .from("player_team_seasons")
         .select("player_id, team_id")
         .in("player_id", playerIds)
         .is("left_at", null);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
 }
 
-export async function findPlayersBySimilarity(
-    supabase: DBClient,
-    query: string
-) {
-    const { data, error } = await supabase.rpc('search_players_with_similarity', {
+export async function findPlayersBySimilarity(supabase: DBClient, query: string): Promise<Result<PlayerSearchResult[]>> {
+    const {data, error} = await supabase.rpc('search_players_with_similarity', {
         search_term: query.toLowerCase()
     });
 
-    if (error) {
-        return { data: null, error };
-    }
-
-    if (!data || data.length === 0) {
-        return { data: [], error: null };
-    }
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    if (!data || data.length === 0) return Ok([]);
 
     const topPlayers = data.slice(0, 5);
     const playerIds = topPlayers.map(p => p.id);
 
-    const { data: activeTeamSeasons, error: teamError } = await supabase
+    const {data: activeTeamSeasons, error: teamError} = await supabase
         .from("player_team_seasons")
         .select(`
-            player_id, 
-            team_id, 
+            player_id,
+            team_id,
             season_id,
             team:teams(name)
         `)
         .in("player_id", playerIds)
         .is("left_at", null);
 
-    if (teamError) {
-        return { data: null, error: teamError };
-    }
+    if (teamError) return Err(serializeError(teamError, "DB_ERROR"));
 
     const teamMap = new Map(
         (activeTeamSeasons || []).map(pts => [
@@ -210,7 +212,7 @@ export async function findPlayersBySimilarity(
         ])
     );
 
-    const results = topPlayers.map(player => {
+    const results: PlayerSearchResult[] = topPlayers.map(player => {
         const teamInfo = teamMap.get(player.id);
         return {
             id: player.id,
@@ -224,14 +226,11 @@ export async function findPlayersBySimilarity(
         };
     });
 
-    return { data: results, error: null };
+    return Ok(results);
 }
 
-export async function findPlayerByExactUsername(
-    supabase: DBClient,
-    username: string
-) {
-    return supabase
+export async function findPlayerByExactUsername(supabase: DBClient, username: string): Promise<Result<PlayerSummary | null>> {
+    const {data, error} = await supabase
         .from("players")
         .select(`
             id,
@@ -241,35 +240,38 @@ export async function findPlayerByExactUsername(
             avatar_url
         `)
         .ilike("username", username)
-        .maybeSingle()
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
-export async function setPlayerRole(
-    supabase: DBClient,
-    p: SetPlayerRoleInput
-) {
-    return supabase
+export async function setPlayerRole(supabase: DBClient, p: SetPlayerRoleInput): Promise<Result<PlayerTeamSeason>> {
+    const {data, error} = await supabase
         .from("player_team_seasons")
-        .update({ role: p.role })
+        .update({role: p.role})
         .eq("player_id", p.playerId)
         .eq("team_id", p.teamId)
         .eq("season_id", p.seasonId)
         .is("left_at", null)
         .select()
         .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
 export async function countActivePlayersInTeam(
     supabase: DBClient,
     teamId: string,
     seasonId: string
-) {
-    return supabase
+): Promise<Result<number>> {
+    const {count, error} = await supabase
         .from("player_team_seasons")
-        .select("id", { count: "exact", head: true })
+        .select("id", {count: "exact", head: true})
         .eq("team_id", teamId)
         .eq("season_id", seasonId)
         .is("left_at", null);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(count ?? 0);
 }
 
 export async function findPlayerByRole(
@@ -277,8 +279,8 @@ export async function findPlayerByRole(
     teamId: string,
     seasonId: string,
     role: PlayerRole
-) {
-    return supabase
+): Promise<Result<PlayerTeamSeason | null>> {
+    const {data, error} = await supabase
         .from("player_team_seasons")
         .select("*")
         .eq("team_id", teamId)
@@ -286,4 +288,6 @@ export async function findPlayerByRole(
         .eq("role", role)
         .is("left_at", null)
         .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }

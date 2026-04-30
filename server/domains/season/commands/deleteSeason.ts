@@ -10,9 +10,12 @@ export async function deleteSeason(
     p: SeasonIdInput
 ): Promise<Result<void>> {
     try {
-        const {data: season} = await findSeasonById(supabase, p.seasonId);
-
-        if (!season) {
+        const lookup = await findSeasonById(supabase, p.seasonId);
+        if (!lookup.ok) {
+            logger.error({seasonId: p.seasonId, error: lookup.error}, "Failed to look up season");
+            return lookup;
+        }
+        if (!lookup.value) {
             logger.warn({seasonId: p.seasonId}, "Attempted to delete non-existent season");
             return Err({
                 message: "Season does not exist",
@@ -20,13 +23,11 @@ export async function deleteSeason(
             });
         }
 
-        const {error} = await deleteSeasonById(supabase, p.seasonId);
-
-        if (error) {
-            logger.error({seasonId: p.seasonId, error}, "Failed to delete season");
-            return Err(serializeError(error, "DB_ERROR"));
+        const deleteResult = await deleteSeasonById(supabase, p.seasonId);
+        if (!deleteResult.ok) {
+            logger.error({seasonId: p.seasonId, error: deleteResult.error}, "Failed to delete season");
+            return deleteResult;
         }
-
         return Ok(undefined);
     } catch (error) {
         logger.error({error}, "Unexpected error deleting season");

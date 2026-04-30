@@ -83,21 +83,12 @@ export async function createMatches(
             };
         });
 
-        const {data, error} = await insertMatches(supabase, matchRows);
-
-        if (error) {
-            logger.error({input: p, error}, "Failed to insert matches");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await insertMatches(supabase, matchRows);
+        if (!result.ok) {
+            logger.error({input: p, error: result.error}, "Failed to insert matches");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to create matches",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data as Match[]);
+        return Ok(result.value as Match[]);
     } catch (error) {
         logger.error({error}, "Unexpected error creating matches");
         return Err(serializeError(error));

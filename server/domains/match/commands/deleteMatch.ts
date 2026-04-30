@@ -9,10 +9,14 @@ export async function deleteMatchService(
     matchId: string
 ): Promise<Result<void>> {
     try {
-        const { data: match, error: matchError } = await findMatchById(supabase, matchId);
-
-        if (matchError || !match) {
-            logger.error({ matchId, error: matchError }, "Match not found");
+        const matchLookup = await findMatchById(supabase, matchId);
+        if (!matchLookup.ok) {
+            logger.error({ matchId, error: matchLookup.error }, "Failed to look up match");
+            return matchLookup;
+        }
+        const match = matchLookup.value;
+        if (!match) {
+            logger.error({ matchId }, "Match not found");
             return Err({
                 message: "Match not found",
                 code: "NOT_FOUND"
@@ -33,11 +37,10 @@ export async function deleteMatchService(
             });
         }
 
-        const { error: deleteError } = await deleteMatch(supabase, matchId);
-
-        if (deleteError) {
-            logger.error({ matchId, error: deleteError }, "Failed to delete match");
-            return Err(serializeError(deleteError, "DB_ERROR"));
+        const deleteResult = await deleteMatch(supabase, matchId);
+        if (!deleteResult.ok) {
+            logger.error({ matchId, error: deleteResult.error }, "Failed to delete match");
+            return deleteResult;
         }
 
         logger.info({ matchId, seasonId: match.season_id, week: match.week }, "Match deleted successfully");

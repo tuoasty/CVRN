@@ -7,20 +7,18 @@ import {GetTeamByNameSeason} from "../types";
 
 export async function getTeamByNameAndSeason(supabase: DBClient, p: GetTeamByNameSeason): Promise<Result<Team>> {
     try {
-        const {data, error} = await findTeamByNameAndSeason(supabase, p);
-        if (error) {
-            logger.error({name: p.name, seasonId: p.seasonId, error}, "Failed to fetch team by name and season");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findTeamByNameAndSeason(supabase, p);
+        if (!result.ok) {
+            logger.error({name: p.name, seasonId: p.seasonId, error: result.error}, "Failed to fetch team by name and season");
+            return result;
         }
-
-        if (!data) {
+        if (!result.value) {
             return Err({
                 message: "Failed to fetch team",
                 code: "DB_ERROR"
             });
         }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         return Err(serializeError(error));
     }

@@ -11,21 +11,18 @@ export async function getSeasonBySlugAndRegion(
     regionId: string
 ): Promise<Result<SeasonWithPlayoffConfig>> {
     try {
-        const {data, error} = await findSeasonBySlugAndRegion(supabase, slug, regionId);
-
-        if (error) {
-            logger.error({slug, regionId, error}, "Failed to fetch season by slug and region");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findSeasonBySlugAndRegion(supabase, slug, regionId);
+        if (!result.ok) {
+            logger.error({slug, regionId, error: result.error}, "Failed to fetch season by slug and region");
+            return result;
         }
-
-        if (!data) {
+        if (!result.value) {
             return Err({
                 message: "Season not found",
                 code: "NOT_FOUND"
             });
         }
-
-        return Ok(data as SeasonWithPlayoffConfig);
+        return Ok(result.value as SeasonWithPlayoffConfig);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching season by slug and region");
         return Err(serializeError(error));

@@ -10,10 +10,14 @@ export async function resetPlayoffBracketsService(
     seasonId: string
 ): Promise<Result<{ message: string }>> {
     try {
-        const { data: season, error: seasonError } = await findSeasonById(supabase, seasonId);
-
-        if (seasonError || !season) {
-            logger.error({ seasonId, error: seasonError }, "Season not found");
+        const seasonResult = await findSeasonById(supabase, seasonId);
+        if (!seasonResult.ok) {
+            logger.error({ seasonId, error: seasonResult.error }, "Failed to look up season");
+            return seasonResult;
+        }
+        const season = seasonResult.value;
+        if (!season) {
+            logger.error({ seasonId }, "Season not found");
             return Err({
                 message: "Season not found",
                 code: "NOT_FOUND"
@@ -47,20 +51,18 @@ export async function resetPlayoffBracketsService(
             });
         }
 
-        const { error: deleteError } = await deletePlayoffMatchesBySeasonId(supabase, seasonId);
-
-        if (deleteError) {
-            logger.error({ seasonId, error: deleteError }, "Failed to delete playoff matches");
-            return Err(serializeError(deleteError, "DB_ERROR"));
+        const deleteResult = await deletePlayoffMatchesBySeasonId(supabase, seasonId);
+        if (!deleteResult.ok) {
+            logger.error({ seasonId, error: deleteResult.error }, "Failed to delete playoff matches");
+            return deleteResult;
         }
 
-        const { error: updateError } = await updateSeasonPlayoffStatus(supabase, seasonId, {
+        const updateResult = await updateSeasonPlayoffStatus(supabase, seasonId, {
             playoffStarted: false
         });
-
-        if (updateError) {
-            logger.error({ seasonId, error: updateError }, "Failed to update season playoff status");
-            return Err(serializeError(updateError, "DB_ERROR"));
+        if (!updateResult.ok) {
+            logger.error({ seasonId, error: updateResult.error }, "Failed to update season playoff status");
+            return updateResult;
         }
 
         logger.info({ seasonId }, "Playoff brackets reset successfully");

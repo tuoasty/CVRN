@@ -10,21 +10,12 @@ export async function searchOfficialsInDatabase(
     p: SearchOfficialsInput
 ): Promise<Result<OfficialWithInfo[]>> {
     try {
-        const { data, error } = await findOfficialsBySimilarity(supabase, p.query);
-
-        if (error) {
-            logger.error({ query: p.query, error }, "Failed to search officials in database");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findOfficialsBySimilarity(supabase, p.query);
+        if (!result.ok) {
+            logger.error({ query: p.query, error: result.error }, "Failed to search officials in database");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                message: "Failed to search officials",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value as OfficialWithInfo[]);
     } catch (error) {
         logger.error({ error }, "Unexpected error searching officials in database");
         return Err(serializeError(error));
