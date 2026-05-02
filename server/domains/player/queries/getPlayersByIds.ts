@@ -3,7 +3,8 @@ import {DBClient, Player} from "@/shared/types/db";
 import {PlayersByIdsInput} from "../types";
 import {serializeError} from "@/server/utils/serializeableError";
 import {findPlayersByIds} from "@/server/db/players.repo";
-import {lazySyncPlayer} from "../helpers/lazySyncPlayer";
+import {batchSyncPlayers} from "../helpers/batchSyncPlayers";
+import {runInBackground} from "@/server/utils/runInBackground";
 import {logger} from "@/server/utils/logger";
 
 export async function getPlayersByIds(
@@ -21,14 +22,9 @@ export async function getPlayersByIds(
             return result;
         }
 
-        const syncedPlayers: Player[] = await Promise.all(
-            result.value.map(async (player) => {
-                const syncResult = await lazySyncPlayer(supabase, player as Player);
-                return syncResult.ok ? syncResult.value : (player as Player);
-            })
-        );
+        runInBackground(() => batchSyncPlayers(supabase, result.value), "batchSyncPlayers");
 
-        return Ok(syncedPlayers);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching players by IDs");
         return Err(serializeError(error));

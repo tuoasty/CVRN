@@ -1,9 +1,10 @@
-import {DBClient} from "@/shared/types/db";
+import {DBClient, Official} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findMatchOfficials} from "@/server/db/matchOfficial.repo";
-import {lazySyncOfficial} from "@/server/domains/official";
+import {batchSyncOfficials} from "@/server/domains/official/helpers/batchSyncOfficials";
+import {runInBackground} from "@/server/utils/runInBackground";
 import {MatchOfficialWithDetails, MatchIdInput} from "../types";
 
 export async function getMatchOfficials(
@@ -17,17 +18,13 @@ export async function getMatchOfficials(
             return result;
         }
 
-        const syncedOfficials = await Promise.all(
-            result.value.map(async (matchOfficial) => {
-                if (!matchOfficial.official) return matchOfficial;
-                const syncResult = await lazySyncOfficial(supabase, matchOfficial.official);
-                return syncResult.ok
-                    ? { ...matchOfficial, official: syncResult.value }
-                    : matchOfficial;
-            })
-        ) as unknown as MatchOfficialWithDetails[];
+        const officials = result.value
+            .map(mo => mo.official)
+            .filter((o): o is Official => o !== null);
 
-        return Ok(syncedOfficials);
+        runInBackground(() => batchSyncOfficials(supabase, officials), "batchSyncOfficials");
+
+        return Ok(result.value as unknown as MatchOfficialWithDetails[]);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching match officials");
         return Err(serializeError(error));

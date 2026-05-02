@@ -11,13 +11,18 @@ import {
 } from "@/server/db/players.repo";
 import {lazySyncPlayer} from "../helpers/lazySyncPlayer";
 import {logger} from "@/server/utils/logger";
+import {runInBackground} from "@/server/utils/runInBackground";
 
 export async function addExistingPlayerToTeam(
     supabase: DBClient,
     p: AddExistingPlayerToTeamInput
 ): Promise<Result<{ player: Player, teamSeason: PlayerTeamSeason }>> {
     try {
-        const teamLookup = await findTeamById(supabase, p.teamId);
+        const [teamLookup, playerLookup] = await Promise.all([
+            findTeamById(supabase, p.teamId),
+            findPlayerById(supabase, p.playerId)
+        ]);
+
         if (!teamLookup.ok) {
             logger.error({ teamId: p.teamId, error: teamLookup.error }, "Failed to look up team");
             return teamLookup;
@@ -31,23 +36,6 @@ export async function addExistingPlayerToTeam(
             });
         }
 
-        const seasonId = team.season_id;
-
-        const countResult = await countActivePlayersInTeam(supabase, p.teamId, seasonId);
-        if (!countResult.ok) {
-            logger.error({ teamId: p.teamId, seasonId, error: countResult.error }, "Failed to count team players");
-            return countResult;
-        }
-
-        if (countResult.value >= 16) {
-            logger.warn({ teamId: p.teamId, seasonId, currentCount: countResult.value }, "Team is at maximum capacity");
-            return Err({
-                message: "Team already has 16 players (maximum capacity)",
-                code: "CONFLICT"
-            });
-        }
-
-        const playerLookup = await findPlayerById(supabase, p.playerId);
         if (!playerLookup.ok) {
             logger.error({ playerId: p.playerId, error: playerLookup.error }, "Failed to look up player");
             return playerLookup;
@@ -61,7 +49,26 @@ export async function addExistingPlayerToTeam(
             });
         }
 
-        const currentLookup = await findPlayerCurrentTeam(supabase, p.playerId, seasonId);
+        const seasonId = team.season_id;
+
+        const [countResult, currentLookup] = await Promise.all([
+            countActivePlayersInTeam(supabase, p.teamId, seasonId),
+            findPlayerCurrentTeam(supabase, p.playerId, seasonId)
+        ]);
+
+        if (!countResult.ok) {
+            logger.error({ teamId: p.teamId, seasonId, error: countResult.error }, "Failed to count team players");
+            return countResult;
+        }
+
+        if (countResult.value >= 16) {
+            logger.warn({ teamId: p.teamId, seasonId, currentCount: countResult.value }, "Team is at maximum capacity");
+            return Err({
+                message: "Team already has 16 players (maximum capacity)",
+                code: "CONFLICT"
+            });
+        }
+
         if (!currentLookup.ok) {
             logger.error({ playerId: p.playerId, seasonId, error: currentLookup.error }, "Failed to look up player team");
             return currentLookup;
@@ -99,10 +106,9 @@ export async function addExistingPlayerToTeam(
             return teamSeasonResult;
         }
 
-        const syncResult = await lazySyncPlayer(supabase, player);
-        const syncedPlayer = syncResult.ok ? syncResult.value : player;
+        runInBackground(() => lazySyncPlayer(supabase, player), "lazySyncPlayer");
 
-        return Ok({ player: syncedPlayer, teamSeason: teamSeasonResult.value });
+        return Ok({ player, teamSeason: teamSeasonResult.value });
     } catch (error) {
         logger.error({ error }, "Unexpected error adding existing player to team");
         return Err(serializeError(error));

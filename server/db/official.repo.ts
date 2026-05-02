@@ -2,6 +2,7 @@ import {DBClient, Official} from "@/shared/types/db";
 import {SaveOfficialInput, UpdateOfficialInput} from "@/server/domains/official";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
+import {logger} from "@/server/utils/logger";
 
 type OfficialSummary = Pick<Official, "id" | "roblox_user_id" | "username" | "display_name" | "avatar_url">;
 
@@ -56,6 +57,50 @@ export async function updateOfficial(supabase: DBClient, p: UpdateOfficialInput)
         .single();
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data);
+}
+
+export type BulkOfficialUpdate = {
+    robloxUserId: string;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    lastSyncedAt?: string;
+};
+
+export async function updateOfficialsBulk(
+    supabase: DBClient,
+    updates: BulkOfficialUpdate[]
+): Promise<Result<Official[]>> {
+    if (updates.length === 0) return Ok([]);
+
+    const rows = updates.map(u => {
+        const row: {
+            roblox_user_id: string;
+            username: string;
+            display_name: string | null;
+            avatar_url: string | null;
+            last_synced_at?: string;
+        } = {
+            roblox_user_id: u.robloxUserId,
+            username: u.username,
+            display_name: u.displayName,
+            avatar_url: u.avatarUrl
+        };
+        if (u.lastSyncedAt !== undefined) row.last_synced_at = u.lastSyncedAt;
+        return row;
+    });
+
+    logger.info({rowsCount: rows.length, sampleRow: rows[0]}, "updateOfficialsBulk: about to upsert");
+    const {data, error, status, statusText} = await supabase
+        .from("officials")
+        .upsert(rows, {onConflict: "roblox_user_id"})
+        .select();
+    if (error) {
+        logger.error({error, status, statusText, rowsCount: rows.length, sampleRow: rows[0]}, "updateOfficialsBulk: upsert failed");
+        return Err(serializeError(error, "DB_ERROR"));
+    }
+    logger.info({status, returnedCount: data?.length ?? 0, sentCount: rows.length, sampleReturned: data?.[0]}, "updateOfficialsBulk: upsert response");
+    return Ok(data ?? []);
 }
 
 export async function deleteOfficial(supabase: DBClient, id: string): Promise<Result<true>> {

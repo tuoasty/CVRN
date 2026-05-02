@@ -4,6 +4,7 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findOfficialByRobloxId, upsertOfficial} from "@/server/db/official.repo";
 import {lazySyncOfficial} from "../helpers/lazySyncOfficial";
+import {runInBackground} from "@/server/utils/runInBackground";
 import {SaveOfficialInput} from "../types";
 
 export async function saveOfficial(
@@ -15,8 +16,8 @@ export async function saveOfficial(
         if (lookup.ok && lookup.value) {
             const existingOfficial = lookup.value;
             logger.info({robloxUserId: p.robloxUserId}, "Official already exists, syncing latest data");
-            const syncResult = await lazySyncOfficial(supabase, existingOfficial);
-            return syncResult.ok ? Ok(syncResult.value) : Ok(existingOfficial);
+            runInBackground(() => lazySyncOfficial(supabase, existingOfficial), "lazySyncOfficial");
+            return Ok(existingOfficial);
         }
 
         const upsertResult = await upsertOfficial(supabase, p);
