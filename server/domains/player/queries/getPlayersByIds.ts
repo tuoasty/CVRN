@@ -3,7 +3,8 @@ import {DBClient, Player} from "@/shared/types/db";
 import {PlayersByIdsInput} from "../types";
 import {serializeError} from "@/server/utils/serializeableError";
 import {findPlayersByIds} from "@/server/db/players.repo";
-import {lazySyncPlayer} from "../helpers/lazySyncPlayer";
+import {batchSyncPlayers} from "../helpers/batchSyncPlayers";
+import {runInBackground} from "@/server/utils/runInBackground";
 import {logger} from "@/server/utils/logger";
 
 export async function getPlayersByIds(
@@ -15,29 +16,15 @@ export async function getPlayersByIds(
             return Ok([]);
         }
 
-        const {data, error} = await findPlayersByIds(supabase, p.playerIds);
-
-        if (error) {
-            logger.error({playerIds: p.playerIds, error}, "Failed to fetch players by IDs");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findPlayersByIds(supabase, p.playerIds);
+        if (!result.ok) {
+            logger.error({playerIds: p.playerIds, error: result.error}, "Failed to fetch players by IDs");
+            return result;
         }
 
-        if (!data) {
-            return Err({
-                message: "Failed to fetch players",
-                name: "FetchError",
-                code: "DB_ERROR"
-            });
-        }
+        runInBackground(() => batchSyncPlayers(supabase, result.value), "batchSyncPlayers");
 
-        const syncedPlayers: Player[] = await Promise.all(
-            data.map(async (player) => {
-                const result = await lazySyncPlayer(supabase, player as Player);
-                return result.ok ? result.value : (player as Player);
-            })
-        );
-
-        return Ok(syncedPlayers);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching players by IDs");
         return Err(serializeError(error));

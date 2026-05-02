@@ -17,7 +17,6 @@ export async function createMatches(
         for (const match of p.matches) {
             if (match.homeId === match.awayId) {
                 return Err({
-                    name: "ValidationError",
                     message: "Team A and Team B cannot be the same",
                     code: "VALIDATION_ERROR"
                 });
@@ -25,7 +24,6 @@ export async function createMatches(
 
             if (teamIds.has(match.homeId) || teamIds.has(match.awayId)) {
                 return Err({
-                    name: "ValidationError",
                     message: "Duplicate teams found across matches",
                     code: "VALIDATION_ERROR"
                 });
@@ -37,7 +35,6 @@ export async function createMatches(
 
         if (p.defaultTimezone && !isValidTimezone(p.defaultTimezone)) {
             return Err({
-                name: "ValidationError",
                 message: "Invalid default timezone",
                 code: "VALIDATION_ERROR"
             });
@@ -53,7 +50,6 @@ export async function createMatches(
 
             if (!defaultScheduledAt) {
                 return Err({
-                    name: "ValidationError",
                     message: "Invalid default date/time/timezone combination",
                     code: "VALIDATION_ERROR"
                 });
@@ -87,22 +83,12 @@ export async function createMatches(
             };
         });
 
-        const {data, error} = await insertMatches(supabase, matchRows);
-
-        if (error) {
-            logger.error({input: p, error}, "Failed to insert matches");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await insertMatches(supabase, matchRows);
+        if (!result.ok) {
+            logger.error({input: p, error: result.error}, "Failed to insert matches");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                name: "InsertError",
-                message: "Failed to create matches",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data as Match[]);
+        return Ok(result.value as Match[]);
     } catch (error) {
         logger.error({error}, "Unexpected error creating matches");
         return Err(serializeError(error));

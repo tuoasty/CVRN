@@ -17,7 +17,6 @@ export async function setUserPassword(
             logger.error("Attempted to set password without authentication");
             return Err({
                 message:"Not authenticated",
-                name:"Unauthorized",
                 code:"UNAUTHORIZED"
             });
         }
