@@ -1,34 +1,65 @@
-import { DBClient } from "@/shared/types/db";
+import {DBClient, Match, MatchSet, Official, PlayoffBracket, PlayoffConfig, Season, Standing} from "@/shared/types/db";
 import {InsertPlayoffBracketDto, InsertPlayoffMatchDto} from "@/server/domains/playoff";
+import {Err, Ok, Result} from "@/shared/types/result";
+import {serializeError} from "@/server/utils/serializeableError";
+
+type PlayoffBracketRoundRow = Pick<PlayoffBracket, "round">;
+
+type PlayoffMatchOfficialJoin = {
+    official_type: string;
+    officials: Pick<Official, "id" | "username" | "display_name" | "avatar_url"> | null;
+};
+
+type PlayoffMatchSetJoin = Pick<MatchSet, "set_number" | "home_score" | "away_score">;
+
+type PlayoffMatchWithDetails = Match & {
+    match_sets: PlayoffMatchSetJoin[];
+    match_officials: PlayoffMatchOfficialJoin[];
+};
+
+type PlayoffBracketWithMatch = {
+    round: string;
+    seed_home: number | null;
+    seed_away: number | null;
+    match_id: string;
+    matches: PlayoffMatchWithDetails;
+};
 
 export async function findPlayoffConfigById(
     supabase: DBClient,
     configId: string
-) {
-    return supabase
+): Promise<Result<PlayoffConfig | null>> {
+    const {data, error} = await supabase
         .from("playoff_configs")
         .select("*")
         .eq("id", configId)
         .single();
+    if (error) {
+        if (error.code === "PGRST116") return Ok(null);
+        return Err(serializeError(error, "DB_ERROR"));
+    }
+    return Ok(data);
 }
 
 export async function findStandingsBySeasonId(
     supabase: DBClient,
     seasonId: string
-) {
-    return supabase
+): Promise<Result<Standing[]>> {
+    const {data, error} = await supabase
         .from("standings")
         .select("*")
         .eq("season_id", seasonId)
-        .order("rank", { ascending: true });
+        .order("rank", {ascending: true});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as Standing[]);
 }
 
 export async function insertPlayoffBrackets(
     supabase: DBClient,
     brackets: InsertPlayoffBracketDto[]
-) {
+): Promise<Result<PlayoffBracket[]>> {
     const rows = brackets.map(b => ({
-        ...(b.id && { id: b.id }),
+        ...(b.id && {id: b.id}),
         season_id: b.seasonId,
         round: b.round,
         match_id: b.matchId,
@@ -40,11 +71,14 @@ export async function insertPlayoffBrackets(
         loser_position: b.loserPosition ?? null,
     }));
 
-    return supabase
+    const {data, error} = await supabase
         .from("playoff_brackets")
         .insert(rows)
         .select();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
 }
+
 export async function updateSeasonPlayoffStatus(
     supabase: DBClient,
     seasonId: string,
@@ -52,7 +86,7 @@ export async function updateSeasonPlayoffStatus(
         playoffStarted?: boolean;
         playoffCompleted?: boolean;
     }
-) {
+): Promise<Result<Season>> {
     const updateData: {
         playoff_started?: boolean;
         playoff_completed?: boolean;
@@ -64,34 +98,43 @@ export async function updateSeasonPlayoffStatus(
         updateData.playoff_completed = data.playoffCompleted;
     }
 
-    return supabase
+    const {data: row, error} = await supabase
         .from("seasons")
         .update(updateData)
         .eq("id", seasonId)
         .select()
         .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(row);
 }
 
 export async function findPlayoffBracketsBySeasonId(
     supabase: DBClient,
     seasonId: string
-) {
-    return supabase
+): Promise<Result<PlayoffBracket[]>> {
+    const {data, error} = await supabase
         .from("playoff_brackets")
         .select("*")
         .eq("season_id", seasonId)
-        .order("round", { ascending: true });
+        .order("round", {ascending: true});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
 }
 
 export async function findPlayoffBracketByMatchId(
     supabase: DBClient,
     matchId: string
-) {
-    return supabase
+): Promise<Result<PlayoffBracket | null>> {
+    const {data, error} = await supabase
         .from("playoff_brackets")
         .select("*")
         .eq("match_id", matchId)
         .single();
+    if (error) {
+        if (error.code === "PGRST116") return Ok(null);
+        return Err(serializeError(error, "DB_ERROR"));
+    }
+    return Ok(data);
 }
 
 export async function updateMatchTeam(
@@ -99,7 +142,7 @@ export async function updateMatchTeam(
     matchId: string,
     position: "home" | "away",
     teamId: string
-) {
+): Promise<Result<Match>> {
     const updateData: {
         home_team_id?: string;
         away_team_id?: string;
@@ -111,41 +154,47 @@ export async function updateMatchTeam(
         updateData.away_team_id = teamId;
     }
 
-    return supabase
+    const {data, error} = await supabase
         .from("matches")
         .update(updateData)
         .eq("id", matchId)
         .select()
         .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
 export async function findPlayoffConfigBySeasonId(
     supabase: DBClient,
     seasonId: string
-) {
-    const { data: season, error } = await supabase
+): Promise<Result<PlayoffConfig | null>> {
+    const {data: season, error: seasonError} = await supabase
         .from("seasons")
         .select("playoff_config_id")
         .eq("id", seasonId)
         .single();
 
-    if (error || !season?.playoff_config_id) {
-        return { data: null, error };
-    }
+    if (seasonError) return Err(serializeError(seasonError, "DB_ERROR"));
+    if (!season?.playoff_config_id) return Ok(null);
 
-    return supabase
+    const {data, error} = await supabase
         .from("playoff_configs")
         .select("*")
         .eq("id", season.playoff_config_id)
         .single();
+    if (error) {
+        if (error.code === "PGRST116") return Ok(null);
+        return Err(serializeError(error, "DB_ERROR"));
+    }
+    return Ok(data);
 }
 
 export async function insertPlayoffMatches(
     supabase: DBClient,
     matches: InsertPlayoffMatchDto[]
-) {
+): Promise<Result<Match[]>> {
     const rows = matches.map(m => ({
-        ...(m.id && { id: m.id }),
+        ...(m.id && {id: m.id}),
         season_id: m.seasonId,
         week: m.week,
         match_type: m.matchType,
@@ -159,29 +208,33 @@ export async function insertPlayoffMatches(
         away_team_lvr: 0,
     }));
 
-    return supabase
+    const {data, error} = await supabase
         .from("matches")
         .insert(rows)
         .select();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
 }
 
 export async function findUniquePlayoffRoundsBySeason(
     supabase: DBClient,
     seasonId: string
-) {
-    return supabase
+): Promise<Result<PlayoffBracketRoundRow[]>> {
+    const {data, error} = await supabase
         .from("playoff_brackets")
         .select("round")
         .eq("season_id", seasonId)
-        .order("round", { ascending: true });
+        .order("round", {ascending: true});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as PlayoffBracketRoundRow[]);
 }
 
 export async function findMatchesWithDetailsBySeasonAndRound(
     supabase: DBClient,
     seasonId: string,
     round: string
-) {
-    return supabase
+): Promise<Result<PlayoffBracketWithMatch[]>> {
+    const {data, error} = await supabase
         .from("playoff_brackets")
         .select(`
             round,
@@ -208,16 +261,20 @@ export async function findMatchesWithDetailsBySeasonAndRound(
         `)
         .eq("season_id", seasonId)
         .eq("round", round)
-        .order("seed_home", { ascending: true, nullsFirst: false });
+        .order("seed_home", {ascending: true, nullsFirst: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as PlayoffBracketWithMatch[]);
 }
 
 export async function deletePlayoffMatchesBySeasonId(
     supabase: DBClient,
     seasonId: string
-) {
-    return supabase
+): Promise<Result<true>> {
+    const {error} = await supabase
         .from("matches")
         .delete()
         .eq("season_id", seasonId)
         .eq("match_type", "playoffs");
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
 }

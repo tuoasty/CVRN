@@ -6,6 +6,8 @@ import {
     resetPlayoffBracketsAction,
 } from '@/app/actions/playoff.actions';
 import { GeneratePlayoffBracketInput } from '@/server/domains/playoff';
+import { Ok, Result } from '@/shared/types/result';
+import { SerializableError } from '@/server/utils/serializeableError';
 
 const BRACKETS_TTL = 5 * 60 * 1000;
 
@@ -37,16 +39,16 @@ export function usePlayoffBrackets(seasonId: string | null) {
 
 // Mutation actions
 
-export async function generateBracket(input: GeneratePlayoffBracketInput): Promise<boolean> {
+export async function generateBracket(input: GeneratePlayoffBracketInput): Promise<Result<true, SerializableError>> {
     const result = await generatePlayoffBracketAction(input);
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) return result;
     await globalMutate(['brackets', input.seasonId]);
-    return true;
+    return Ok(true);
 }
 
-export async function resetBrackets(seasonId: string): Promise<boolean> {
+export async function resetBrackets(seasonId: string): Promise<Result<true, SerializableError>> {
     const result = await resetPlayoffBracketsAction(seasonId);
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) return result;
     await globalMutate(['brackets', seasonId]);
-    return true;
+    return Ok(true);
 }

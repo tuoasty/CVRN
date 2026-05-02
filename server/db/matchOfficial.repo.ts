@@ -1,18 +1,21 @@
-import {DBClient} from "@/shared/types/db";
+import {DBClient, MatchOfficial, Official} from "@/shared/types/db";
 import {AssignOfficialInput, OfficialType} from "@/server/domains/matchOfficial";
+import {Err, Ok, Result} from "@/shared/types/result";
+import {serializeError} from "@/server/utils/serializeableError";
 
-export async function assignOfficial(
-    supabase: DBClient,
-    p: AssignOfficialInput
-) {
-    return supabase.from("match_officials")
+type MatchOfficialWithOfficial = MatchOfficial & {official: Official | null};
+
+export async function assignOfficial(supabase: DBClient, p: AssignOfficialInput): Promise<Result<MatchOfficial>> {
+    const {data, error} = await supabase.from("match_officials")
         .insert({
             match_id: p.matchId,
             official_id: p.officialId,
             official_type: p.officialType,
         })
         .select()
-        .single()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
 
 export async function assignMultipleOfficials(
@@ -20,52 +23,54 @@ export async function assignMultipleOfficials(
     matchId: string,
     officialIds: string[],
     officialType: OfficialType
-) {
+): Promise<Result<MatchOfficial[]>> {
     const inserts = officialIds.map(official_id => ({
         match_id: matchId,
         official_id,
         official_type: officialType,
     }));
 
-    return supabase.from("match_officials")
+    const {data, error} = await supabase.from("match_officials")
         .insert(inserts)
-        .select()
+        .select();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
 }
 
-export async function findMatchOfficials(
-    supabase: DBClient,
-    matchId: string
-) {
-    return supabase.from("match_officials")
+export async function findMatchOfficials(supabase: DBClient, matchId: string): Promise<Result<MatchOfficialWithOfficial[]>> {
+    const {data, error} = await supabase.from("match_officials")
         .select(`
             *,
             official:officials(*)
         `)
-        .eq("match_id", matchId)
+        .eq("match_id", matchId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as MatchOfficialWithOfficial[]);
 }
 
 export async function findMatchOfficialsByType(
     supabase: DBClient,
     matchId: string,
     officialType: OfficialType
-) {
-    return supabase.from("match_officials")
+): Promise<Result<MatchOfficialWithOfficial[]>> {
+    const {data, error} = await supabase.from("match_officials")
         .select(`
             *,
             official:officials(*)
         `)
         .eq("match_id", matchId)
-        .eq("official_type", officialType)
+        .eq("official_type", officialType);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as MatchOfficialWithOfficial[]);
 }
 
-export async function findOfficialMatches(
-    supabase: DBClient,
-    officialId: string
-) {
-    return supabase.from("match_officials")
+export async function findOfficialMatches(supabase: DBClient, officialId: string): Promise<Result<MatchOfficial[]>> {
+    const {data, error} = await supabase.from("match_officials")
         .select("*")
         .eq("official_id", officialId)
-        .order("created_at", { ascending: false })
+        .order("created_at", {ascending: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
 }
 
 export async function removeOfficial(
@@ -73,31 +78,34 @@ export async function removeOfficial(
     matchId: string,
     officialId: string,
     officialType: OfficialType
-) {
-    return supabase.from("match_officials")
+): Promise<Result<true>> {
+    const {error} = await supabase.from("match_officials")
         .delete()
         .eq("match_id", matchId)
         .eq("official_id", officialId)
-        .eq("official_type", officialType)
+        .eq("official_type", officialType);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
 }
 
 export async function removeAllOfficialsByType(
     supabase: DBClient,
     matchId: string,
     officialType: OfficialType
-) {
-    return supabase.from("match_officials")
+): Promise<Result<true>> {
+    const {error} = await supabase.from("match_officials")
         .delete()
         .eq("match_id", matchId)
-        .eq("official_type", officialType)
+        .eq("official_type", officialType);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
 }
 
-export async function removeAllMatchOfficials(
-    supabase: DBClient,
-    matchId: string
-) {
-    return supabase
+export async function removeAllMatchOfficials(supabase: DBClient, matchId: string): Promise<Result<true>> {
+    const {error} = await supabase
         .from("match_officials")
         .delete()
         .eq("match_id", matchId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
 }

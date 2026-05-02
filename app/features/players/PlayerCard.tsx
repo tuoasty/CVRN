@@ -23,6 +23,7 @@ import {
     DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { toast } from "@/app/utils/toast";
+import { errorCodeToUserMessage } from "@/app/lib/errorMessages";
 import { PlayerRole, PlayerWithRole } from "@/server/domains/player";
 
 interface Props {
@@ -59,7 +60,7 @@ export default function PlayerCard({
         });
 
         if (!result.ok) {
-            toast.error(result.error.message);
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setRemoving(false);
             return;
         }
@@ -80,7 +81,7 @@ export default function PlayerCard({
         });
 
         if (!result.ok) {
-            toast.error(result.error.message);
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setUpdating(false);
             return;
         }
