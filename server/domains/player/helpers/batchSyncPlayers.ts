@@ -36,7 +36,7 @@ export async function batchSyncPlayers(
             logger.error({error: usersResult.error}, "batchSyncPlayers: failed to fetch Roblox users");
             return Ok(players);
         }
-        const userMap = new Map(usersResult.value.map(u => [u.id, u]));
+        const userMap = new Map(usersResult.value.map(u => [String(u.id), u]));
         logger.info({
             sampleUserMapKey: usersResult.value[0]?.id,
             sampleUserMapKeyType: typeof usersResult.value[0]?.id,
@@ -57,20 +57,48 @@ export async function batchSyncPlayers(
                 allAvatars: avatarsResult.value.map(a => ({targetId: a.targetId, state: a.state, imageUrl: a.imageUrl}))
             }, "batchSyncPlayers: avatar response");
             for (const a of avatarsResult.value) {
-                if (a.imageUrl) avatarMap.set(a.targetId, a.imageUrl);
+                if (a.imageUrl) avatarMap.set(String(a.targetId), a.imageUrl);
             }
             logger.info({avatarMapSize: avatarMap.size}, "batchSyncPlayers: avatarMap built");
         } else {
             logger.error({error: avatarsResult.error}, "batchSyncPlayers: failed to fetch avatars");
         }
 
+        logger.info({
+            sampleAvatarKey: Array.from(avatarMap.keys())[0],
+            sampleAvatarKeyType: typeof Array.from(avatarMap.keys())[0],
+            samplePlayerId: stale[0]?.roblox_user_id,
+            samplePlayerIdType: typeof stale[0]?.roblox_user_id
+        }, "avatarMap type check");
+
         const now = new Date().toISOString();
         const updates: BulkPlayerUpdate[] = [];
+
         for (const p of stale) {
-            const user = userMap.get(p.roblox_user_id);
-            if (!user) continue;
-            const newAvatar = avatarMap.get(p.roblox_user_id);
+            const key = String(p.roblox_user_id);
+
+            const user = userMap.get(key);
+            const newAvatar = avatarMap.get(key);
+
+            logger.debug({
+                lookupKey: key,
+                lookupKeyType: typeof p.roblox_user_id,
+                userFound: !!user,
+                avatarFound: !!newAvatar,
+                sampleUserMapKeys: Array.from(userMap.keys()).slice(0, 5),
+                userMapSize: userMap.size
+            }, "batchSyncPlayers: lookup check");
+
+            if (!user) {
+                logger.warn({
+                    missingKey: key,
+                    availableKeysSample: Array.from(userMap.keys()).slice(0, 10)
+                }, "batchSyncPlayers: user not found in userMap");
+                continue;
+            }
+
             const fullySynced = !!newAvatar;
+
             updates.push({
                 robloxUserId: p.roblox_user_id,
                 username: user.name,
@@ -80,6 +108,8 @@ export async function batchSyncPlayers(
             });
         }
 
+        logger.debug({ updatesLength: updates.length }, "batchSyncPlayers: updates built");
+        logger.debug({updates:updates}, "Updating players in bulk")
         if (updates.length === 0) return Ok(players);
 
         const updateResult = await updatePlayersBulk(supabaseAdmin as unknown as DBClient, updates);
