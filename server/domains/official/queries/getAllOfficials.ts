@@ -3,7 +3,8 @@ import {DBClient, Official} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findAllOfficials} from "@/server/db/official.repo";
-import {lazySyncOfficial} from "../helpers/lazySyncOfficial";
+import {batchSyncOfficials} from "../helpers/batchSyncOfficials";
+import {runInBackground} from "@/server/utils/runInBackground";
 
 export async function getAllOfficials(
     supabase: DBClient
@@ -15,14 +16,9 @@ export async function getAllOfficials(
             return result;
         }
 
-        const syncedOfficials: Official[] = await Promise.all(
-            result.value.map(async (official) => {
-                const syncResult = await lazySyncOfficial(supabase, official);
-                return syncResult.ok ? syncResult.value : official;
-            })
-        );
+        runInBackground(() => batchSyncOfficials(supabase, result.value), "batchSyncOfficials");
 
-        return Ok(syncedOfficials);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching officials");
         return Err(serializeError(error));

@@ -17,7 +17,11 @@ export async function savePlayerToTeam(
     p: SavePlayerToTeamInput
 ): Promise<Result<{player: Player, teamSeason: PlayerTeamSeason}>> {
     try {
-        const teamLookup = await findTeamById(supabase, p.teamId);
+        const [teamLookup, existingLookup] = await Promise.all([
+            findTeamById(supabase, p.teamId),
+            findPlayerByRobloxId(supabase, p.robloxUserId)
+        ]);
+
         if (!teamLookup.ok) {
             logger.error({teamId: p.teamId, error: teamLookup.error}, "Failed to look up team");
             return teamLookup;
@@ -31,9 +35,19 @@ export async function savePlayerToTeam(
             });
         }
 
+        if (!existingLookup.ok) {
+            logger.error({robloxUserId: p.robloxUserId, error: existingLookup.error}, "Failed to look up player by roblox id");
+            return existingLookup;
+        }
+        const existingPlayer = existingLookup.value;
+
         const seasonId = team.season_id;
 
-        const countResult = await countActivePlayersInTeam(supabase, p.teamId, seasonId);
+        const [countResult, currentLookup] = await Promise.all([
+            countActivePlayersInTeam(supabase, p.teamId, seasonId),
+            existingPlayer ? findPlayerCurrentTeam(supabase, existingPlayer.id, seasonId) : Promise.resolve(null)
+        ]);
+
         if (!countResult.ok) {
             logger.error({ teamId: p.teamId, seasonId, error: countResult.error }, "Failed to count team players");
             return countResult;
@@ -47,15 +61,7 @@ export async function savePlayerToTeam(
             });
         }
 
-        const existingLookup = await findPlayerByRobloxId(supabase, p.robloxUserId);
-        if (!existingLookup.ok) {
-            logger.error({robloxUserId: p.robloxUserId, error: existingLookup.error}, "Failed to look up player by roblox id");
-            return existingLookup;
-        }
-        const existingPlayer = existingLookup.value;
-
-        if (existingPlayer) {
-            const currentLookup = await findPlayerCurrentTeam(supabase, existingPlayer.id, seasonId);
+        if (existingPlayer && currentLookup) {
             if (!currentLookup.ok) {
                 logger.error({playerId: existingPlayer.id, seasonId, error: currentLookup.error}, "Failed to look up player team");
                 return currentLookup;
