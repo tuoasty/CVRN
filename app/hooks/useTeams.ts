@@ -1,3 +1,4 @@
+import {useEffect} from 'react';
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import {
     getAllTeamsWithRegionsAction,
@@ -73,9 +74,18 @@ export function useTeamWithPlayers(
         }
     );
 
+    const typed = data as { team: TeamWithRegion; players: PlayerWithRole[] } | undefined;
+    const hasNullAvatars = typed?.players.some(p => !p.avatar_url) ?? false;
+
+    useEffect(() => {
+        if (!hasNullAvatars || !key) return;
+        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
+        return () => clearTimeout(id);
+    }, [hasNullAvatars, key, mutate]);
+
     return {
-        team: (data as { team: TeamWithRegion; players: PlayerWithRole[] } | undefined)?.team ?? null,
-        players: (data as { team: TeamWithRegion; players: PlayerWithRole[] } | undefined)?.players ?? [],
+        team: typed?.team ?? null,
+        players: typed?.players ?? [],
         isLoading,
         error: error?.message ?? null,
         mutate,

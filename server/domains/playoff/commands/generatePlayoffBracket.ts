@@ -20,7 +20,12 @@ export async function generatePlayoffBracket(
     p: GeneratePlayoffBracketInput
 ): Promise<Result<{ matchesCreated: number; bracketsCreated: number }>> {
     try {
-        const seasonResult = await findSeasonById(supabase, p.seasonId);
+        const [seasonResult, configResult, standingsResult] = await Promise.all([
+            findSeasonById(supabase, p.seasonId),
+            findPlayoffConfigBySeasonId(supabase, p.seasonId),
+            findStandingsBySeasonId(supabase, p.seasonId)
+        ]);
+
         if (!seasonResult.ok) {
             logger.error({ seasonId: p.seasonId, error: seasonResult.error }, "Failed to look up season");
             return seasonResult;
@@ -41,7 +46,6 @@ export async function generatePlayoffBracket(
             });
         }
 
-        const configResult = await findPlayoffConfigBySeasonId(supabase, p.seasonId);
         if (!configResult.ok) {
             logger.error({ seasonId: p.seasonId, error: configResult.error }, "Failed to look up playoff config");
             return configResult;
@@ -55,7 +59,6 @@ export async function generatePlayoffBracket(
             });
         }
 
-        const standingsResult = await findStandingsBySeasonId(supabase, p.seasonId);
         if (!standingsResult.ok) {
             logger.error({ seasonId: p.seasonId, error: standingsResult.error }, "Failed to fetch standings");
             return standingsResult;
