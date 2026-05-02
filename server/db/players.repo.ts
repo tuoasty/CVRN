@@ -168,7 +168,11 @@ export async function updatePlayersBulk(
     supabase: DBClient,
     updates: BulkPlayerUpdate[]
 ): Promise<Result<Player[]>> {
+
+    logger.debug("Update players bulk")
     if (updates.length === 0) return Ok([]);
+
+    logger.debug("Update players bulk p2")
 
     const rows = updates.map(u => {
         const row: {
