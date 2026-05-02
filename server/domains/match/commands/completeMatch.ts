@@ -2,23 +2,25 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {DBClient, Match} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {findMatchById, insertMatchSets, updateMatchCompletion} from "@/server/db/matches.repo";
+import {findMatchById, rpcCompleteMatch} from "@/server/db/matches.repo";
 import {CompleteMatchInput} from "../types";
 import {validateAndCalculateMatchResult} from "../helpers/validateAndCalculateMatchResult";
 import {convertToUTC, isValidTimezone} from "@/server/utils/timezone";
-import {advancePlayoffWinner} from "@/server/domains/playoff";
 
 export async function completeMatchService(
     supabase: DBClient,
     p: CompleteMatchInput
 ): Promise<Result<Match>> {
     try {
-        const { data: match, error: matchError } = await findMatchById(supabase, p.matchId);
-
-        if (matchError || !match) {
-            logger.error({ matchId: p.matchId, error: matchError }, "Match not found");
+        const matchLookup = await findMatchById(supabase, p.matchId);
+        if (!matchLookup.ok) {
+            logger.error({ matchId: p.matchId, error: matchLookup.error }, "Failed to look up match");
+            return matchLookup;
+        }
+        const match = matchLookup.value;
+        if (!match) {
+            logger.error({ matchId: p.matchId }, "Match not found");
             return Err({
-                name: "NotFoundError",
                 message: "Match not found",
                 code: "NOT_FOUND"
             });
@@ -26,7 +28,6 @@ export async function completeMatchService(
 
         if (match.status !== "scheduled") {
             return Err({
-                name: "ValidationError",
                 message: "Can only complete scheduled matches",
                 code: "VALIDATION_ERROR"
             });
@@ -36,74 +37,50 @@ export async function completeMatchService(
         if (!calcResult.ok) return calcResult;
         const { homeSetsWon, awaySetsWon, homeTeamLvr, awayTeamLvr, setsToInsert, matchMvpPlayerId, loserMvpPlayerId } = calcResult.value;
 
-        const { error: setsError } = await insertMatchSets(supabase, p.matchId, setsToInsert);
-
-        if (setsError) {
-            logger.error({ matchId: p.matchId, error: setsError }, "Failed to insert match sets");
-            return Err(serializeError(setsError, "DB_ERROR"));
-        }
-
-        let scheduledAt: string | null | undefined = undefined;
+        let scheduledAt: string | null = match.scheduled_at ?? null;
 
         if (p.scheduledDate !== undefined && p.scheduledTime !== undefined && p.timezone !== undefined) {
             if (p.scheduledDate && p.scheduledTime && p.timezone) {
                 if (!isValidTimezone(p.timezone)) {
                     return Err({
-                        name: "ValidationError",
                         message: "Invalid timezone",
                         code: "VALIDATION_ERROR"
                     });
                 }
 
-                scheduledAt = convertToUTC(p.scheduledDate, p.scheduledTime, p.timezone);
-
-                if (!scheduledAt) {
+                const converted = convertToUTC(p.scheduledDate, p.scheduledTime, p.timezone);
+                if (!converted) {
                     return Err({
-                        name: "ValidationError",
                         message: "Invalid date/time/timezone combination",
                         code: "VALIDATION_ERROR"
                     });
                 }
+                scheduledAt = converted;
             } else {
                 scheduledAt = null;
             }
         }
 
-        const { data: completedMatch, error: updateError } = await updateMatchCompletion(
-            supabase,
-            p.matchId,
-            {
-                status: "completed",
-                homeSetsWon,
-                awaySetsWon,
-                homeTeamLvr,
-                awayTeamLvr,
-                matchMvpPlayerId,
-                loserMvpPlayerId,
-                isForfeit: p.isForfeit || false,
-                ...(scheduledAt !== undefined && { scheduledAt }),
-            }
-        );
+        const result = await rpcCompleteMatch(supabase, {
+            matchId:         p.matchId,
+            sets:            setsToInsert,
+            homeSetsWon,
+            awaySetsWon,
+            homeLvr:         homeTeamLvr,
+            awayLvr:         awayTeamLvr,
+            mvpPlayerId:     matchMvpPlayerId,
+            loserMvpPlayerId,
+            isForfeit:       p.isForfeit || false,
+            scheduledAt,
+        });
 
-        if (updateError || !completedMatch) {
-            logger.error({ matchId: p.matchId, error: updateError }, "Failed to update match completion");
-            return Err(serializeError(updateError, "DB_ERROR"));
-        }
-
-        if (match.match_type === "playoffs" && match.home_team_id && match.away_team_id) {
-            const winnerTeamId = homeSetsWon > awaySetsWon ? match.home_team_id : match.away_team_id;
-            const loserTeamId = homeSetsWon > awaySetsWon ? match.away_team_id : match.home_team_id;
-
-            const advanceResult = await advancePlayoffWinner(supabase, p.matchId, winnerTeamId, loserTeamId);
-
-            if (!advanceResult.ok) {
-                logger.error({ matchId: p.matchId, error: advanceResult.error }, "Failed to advance playoff teams - match completed but bracket not updated");
-            }
+        if (!result.ok) {
+            logger.error({ matchId: p.matchId, error: result.error }, "Failed to complete match via RPC");
+            return result;
         }
 
         logger.info({ matchId: p.matchId, homeSetsWon, awaySetsWon, isForfeit: p.isForfeit }, "Match completed successfully");
-
-        return Ok(completedMatch as Match);
+        return Ok(result.value);
     } catch (error) {
         logger.error({ error }, "Unexpected error completing match");
         return Err(serializeError(error));

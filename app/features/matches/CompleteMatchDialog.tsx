@@ -24,6 +24,7 @@ import { clientLogger } from "@/app/utils/clientLogger";
 import { Badge } from "@/app/components/ui/badge";
 import Image from "next/image";
 import {toast} from "@/app/utils/toast";
+import {errorCodeToUserMessage} from "@/app/lib/errorMessages";
 import {PlayerWithRole} from "@/server/domains/player";
 import {Trophy} from "lucide-react";
 
@@ -190,22 +191,24 @@ export default function CompleteMatchDialog({
             setSubmitting(true);
             clientLogger.info("CompleteMatchDialog", "Completing match as forfeit", { matchId, forfeitingTeam });
 
-            try {
-                await completeMatchAction({
-                    matchId,
-                    sets: [],
-                    isForfeit: true,
-                    forfeitingTeam,
-                });
+            const result = await completeMatchAction({
+                matchId,
+                sets: [],
+                isForfeit: true,
+                forfeitingTeam,
+            });
 
-                clientLogger.info("CompleteMatchDialog", "Match completed as forfeit", { matchId });
-                setOpen(false);
-                resetForm();
-                onSuccess();
-            } catch {
-                toast.error("Failed to complete match");
+            if (!result.ok) {
+                clientLogger.error("CompleteMatchDialog", "Forfeit complete failed", { matchId, error: result.error });
+                toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
+                setSubmitting(false);
+                return;
             }
 
+            clientLogger.info("CompleteMatchDialog", "Match completed as forfeit", { matchId });
+            setOpen(false);
+            resetForm();
+            onSuccess();
             setSubmitting(false);
             return;
         }
@@ -229,23 +232,25 @@ export default function CompleteMatchDialog({
         setSubmitting(true);
         clientLogger.info("CompleteMatchDialog", "Completing match", { matchId, sets });
 
-        try {
-            await completeMatchAction({
-                matchId,
-                sets,
-                matchMvpPlayerId: matchMvpId,
-                loserMvpPlayerId: loserMvpId,
-                isForfeit: false,
-            });
+        const result = await completeMatchAction({
+            matchId,
+            sets,
+            matchMvpPlayerId: matchMvpId,
+            loserMvpPlayerId: loserMvpId,
+            isForfeit: false,
+        });
 
-            clientLogger.info("CompleteMatchDialog", "Match completed successfully", { matchId });
-            setOpen(false);
-            resetForm();
-            onSuccess();
-        } catch {
-            toast.error("Failed to complete match");
+        if (!result.ok) {
+            clientLogger.error("CompleteMatchDialog", "Complete failed", { matchId, error: result.error });
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
+            setSubmitting(false);
+            return;
         }
 
+        clientLogger.info("CompleteMatchDialog", "Match completed successfully", { matchId });
+        setOpen(false);
+        resetForm();
+        onSuccess();
         setSubmitting(false);
     };
     const resetForm = () => {

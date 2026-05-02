@@ -10,26 +10,24 @@ export async function getOfficialByExactUsername(
     p: SearchOfficialsInput
 ): Promise<Result<OfficialWithInfo | null>> {
     try {
-        const { data: official, error } = await findOfficialByExactUsername(supabase, p.query);
-
-        if (error) {
-            logger.error({ query: p.query, error }, "Failed to find official by exact username");
-            return Err(serializeError(error, "DB_ERROR"));
+        const lookup = await findOfficialByExactUsername(supabase, p.query);
+        if (!lookup.ok) {
+            logger.error({ query: p.query, error: lookup.error }, "Failed to find official by exact username");
+            return lookup;
         }
 
+        const official = lookup.value;
         if (!official || !official.username) {
             return Ok(null);
         }
 
-        const result: OfficialWithInfo = {
+        return Ok({
             id: official.id,
             roblox_user_id: official.roblox_user_id,
             username: official.username,
             display_name: official.display_name,
             avatar_url: official.avatar_url
-        };
-
-        return Ok(result);
+        });
     } catch (error) {
         logger.error({ error }, "Unexpected error finding official by exact username");
         return Err(serializeError(error));

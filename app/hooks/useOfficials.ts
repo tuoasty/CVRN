@@ -1,3 +1,4 @@
+import {useEffect} from 'react';
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { Official } from '@/shared/types/db';
 import { RobloxUserWithAvatar } from '@/shared/types/roblox';
@@ -36,7 +37,16 @@ export function useOfficials() {
         dedupingInterval: OFFICIALS_TTL,
         revalidateOnFocus: false,
     });
-    return { officials: data ?? [], isLoading, error: error?.message ?? null, mutate };
+    const officials = data ?? [];
+    const hasNullAvatars = officials.some(o => !o.avatar_url);
+
+    useEffect(() => {
+        if (!hasNullAvatars) return;
+        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
+        return () => clearTimeout(id);
+    }, [hasNullAvatars, mutate]);
+
+    return { officials, isLoading, error: error?.message ?? null, mutate };
 }
 
 export function useMatchOfficials(matchId: string | null) {
@@ -45,8 +55,17 @@ export function useMatchOfficials(matchId: string | null) {
         dedupingInterval: OFFICIALS_TTL,
         revalidateOnFocus: false,
     });
+    const officials = (data as MatchOfficialWithDetails[] | undefined) ?? [];
+    const hasNullAvatars = officials.some(mo => mo.official && !mo.official.avatar_url);
+
+    useEffect(() => {
+        if (!hasNullAvatars || !key) return;
+        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
+        return () => clearTimeout(id);
+    }, [hasNullAvatars, key, mutate]);
+
     return {
-        officials: (data as MatchOfficialWithDetails[] | undefined) ?? [],
+        officials,
         isLoading,
         error: error?.message ?? null,
         mutate,

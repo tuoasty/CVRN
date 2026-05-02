@@ -6,22 +6,12 @@ import {findAllMatches} from "@/server/db/matches.repo";
 
 export async function getAllMatches(supabase: DBClient): Promise<Result<Match[]>> {
     try {
-        const {data, error} = await findAllMatches(supabase);
-
-        if (error) {
-            logger.error({error}, "Failed to fetch all matches");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findAllMatches(supabase);
+        if (!result.ok) {
+            logger.error({error: result.error}, "Failed to fetch all matches");
+            return result;
         }
-
-        if (!data) {
-            return Err({
-                name: "FetchError",
-                message: "Failed to fetch matches",
-                code: "DB_ERROR"
-            });
-        }
-
-        return Ok(data);
+        return Ok(result.value);
     } catch (error) {
         logger.error({error}, "Unexpected error fetching matches");
         return Err(serializeError(error));
