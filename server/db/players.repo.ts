@@ -121,6 +121,22 @@ export async function removePlayerFromTeam(supabase: DBClient, p: RemovePlayerFr
     return Ok(data);
 }
 
+export async function bulkRemovePlayersFromTeam(
+    supabase: DBClient,
+    seasonId: string,
+    playerIds: string[]
+): Promise<Result<void>> {
+    if (playerIds.length === 0) return Ok(undefined);
+    const {error} = await supabase
+        .from("player_team_seasons")
+        .update({left_at: new Date().toISOString()})
+        .in("player_id", playerIds)
+        .eq("season_id", seasonId)
+        .is("left_at", null);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(undefined);
+}
+
 export async function findPlayerSeasonHistory(
     supabase: DBClient,
     playerId: string
@@ -168,11 +184,7 @@ export async function updatePlayersBulk(
     supabase: DBClient,
     updates: BulkPlayerUpdate[]
 ): Promise<Result<Player[]>> {
-
-    logger.debug("Update players bulk")
     if (updates.length === 0) return Ok([]);
-
-    logger.debug("Update players bulk p2")
 
     const rows = updates.map(u => {
         const row: {
@@ -191,16 +203,16 @@ export async function updatePlayersBulk(
         return row;
     });
 
-    logger.info({rowsCount: rows.length, sampleRow: rows[0]}, "updatePlayersBulk: about to upsert");
+    logger.info({rowsCount: rows.length}, "updatePlayersBulk: about to upsert");
     const {data, error, status, statusText} = await supabase
         .from("players")
         .upsert(rows, {onConflict: "roblox_user_id"})
         .select();
     if (error) {
-        logger.error({error, status, statusText, rowsCount: rows.length, sampleRow: rows[0]}, "updatePlayersBulk: upsert failed");
+        logger.error({error, status, statusText, rowsCount: rows.length}, "updatePlayersBulk: upsert failed");
         return Err(serializeError(error, "DB_ERROR"));
     }
-    logger.info({status, returnedCount: data?.length ?? 0, sentCount: rows.length, sampleReturned: data?.[0]}, "updatePlayersBulk: upsert response");
+    logger.info({status, returnedCount: data?.length ?? 0, sentCount: rows.length}, "updatePlayersBulk: upsert response");
     return Ok(data ?? []);
 }
 

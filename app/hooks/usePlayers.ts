@@ -1,4 +1,3 @@
-import {useEffect} from 'react';
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { getTeamPlayersAction, getPlayersByIdsAction } from '@/app/actions/player.actions';
 import { Player } from '@/shared/types/db';
@@ -39,13 +38,6 @@ export function useTeamPlayers(teamId: string | null, seasonId: string | null) {
     );
 
     const players = (data as PlayerWithRole[] | undefined) ?? [];
-    const hasNullAvatars = players.some(p => !p.avatar_url);
-
-    useEffect(() => {
-        if (!hasNullAvatars || !key) return;
-        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
-        return () => clearTimeout(id);
-    }, [hasNullAvatars, key, mutate]);
 
     const captain = players.find(p => p.role === 'captain') ?? null;
     const viceCaptain = players.find(p => p.role === 'vice_captain') ?? null;
@@ -80,13 +72,6 @@ export function usePlayersByIds(playerIds: string[]) {
     );
 
     const players = (data as Player[] | undefined) ?? [];
-    const hasNullAvatars = players.some(p => !p.avatar_url);
-
-    useEffect(() => {
-        if (!hasNullAvatars || !key) return;
-        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
-        return () => clearTimeout(id);
-    }, [hasNullAvatars, key, mutate]);
 
     return {
         players,
