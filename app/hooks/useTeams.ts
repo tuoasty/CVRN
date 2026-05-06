@@ -57,10 +57,10 @@ export function useTeamWithPlayers(
     seasonSlug: string | null,
     regionCode: string | null,
 ) {
-    const { region } = useRegionByCode(regionCode);
-    const { season } = useSeasonBySlugAndRegion(seasonSlug, region?.id ?? null);
+    const { region, isLoading: regionLoading } = useRegionByCode(regionCode);
+    const { season, isLoading: seasonLoading } = useSeasonBySlugAndRegion(seasonSlug, region?.id ?? null);
 
-    const key = teamSlug && season
+    const key = teamSlug && season && !regionLoading && !seasonLoading
         ? ['teamWithPlayers', teamSlug, season.id] as const
         : null;
 
@@ -73,10 +73,12 @@ export function useTeamWithPlayers(
         }
     );
 
+    const typed = data as { team: TeamWithRegion; players: PlayerWithRole[] } | undefined;
+
     return {
-        team: (data as { team: TeamWithRegion; players: PlayerWithRole[] } | undefined)?.team ?? null,
-        players: (data as { team: TeamWithRegion; players: PlayerWithRole[] } | undefined)?.players ?? [],
-        isLoading,
+        team: typed?.team ?? null,
+        players: typed?.players ?? [],
+        isLoading: regionLoading || seasonLoading || isLoading,
         error: error?.message ?? null,
         mutate,
     };

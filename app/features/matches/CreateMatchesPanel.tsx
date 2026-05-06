@@ -18,6 +18,7 @@ import { Input } from "@/app/components/ui/input";
 import { timezoneOptions } from "@/app/utils/timezoneOptions";
 import { X } from "lucide-react";
 import {toast} from "@/app/utils/toast";
+import {errorCodeToUserMessage} from "@/app/lib/errorMessages";
 
 interface MatchPair {
     id: string;
@@ -109,7 +110,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
 
             if (!result.ok) {
                 clientLogger.error("CreateMatchesPanel", "Failed to create matches", result.error);
-                toast.error(`Error: ${result.error.message}`);
+                toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
                 return;
             }
 

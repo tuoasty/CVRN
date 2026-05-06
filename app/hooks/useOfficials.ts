@@ -36,7 +36,9 @@ export function useOfficials() {
         dedupingInterval: OFFICIALS_TTL,
         revalidateOnFocus: false,
     });
-    return { officials: data ?? [], isLoading, error: error?.message ?? null, mutate };
+    const officials = data ?? [];
+
+    return { officials, isLoading, error: error?.message ?? null, mutate };
 }
 
 export function useMatchOfficials(matchId: string | null) {
@@ -45,8 +47,10 @@ export function useMatchOfficials(matchId: string | null) {
         dedupingInterval: OFFICIALS_TTL,
         revalidateOnFocus: false,
     });
+    const officials = (data as MatchOfficialWithDetails[] | undefined) ?? [];
+
     return {
-        officials: (data as MatchOfficialWithDetails[] | undefined) ?? [],
+        officials,
         isLoading,
         error: error?.message ?? null,
         mutate,
