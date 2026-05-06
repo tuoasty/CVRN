@@ -8,6 +8,7 @@ import LoadingComponent from "@/app/components/ui/LoadingComponent";
 
 const NAV_ITEMS = [
     { href: "/admin/dashboard", label: "Dashboard" },
+    { href: "/admin/seasons", label: "Seasons" },
     { href: "/admin/teams", label: "Teams" },
     { href: "/admin/matches", label: "Matches" },
     { href: "/admin/standings", label: "Standings" },

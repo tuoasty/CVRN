@@ -61,7 +61,6 @@ export default function PlayoffsPage() {
                             )}
                         </div>
                     </div>
-                    <RegionSeasonSelector />
                 </div>
 
                 {!selectedSeasonId ? (
