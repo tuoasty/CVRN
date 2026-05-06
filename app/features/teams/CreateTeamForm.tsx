@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { createTeamAction } from "@/app/actions/team.actions";
 import { Button } from "@/app/components/ui/button";
@@ -13,9 +13,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/components/ui/select";
-import { useTeamsStore } from "@/app/stores/teamStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
+import { mutateAllTeams } from "@/app/hooks/useTeams";
+import { useRegions } from "@/app/hooks/useRegions";
+import { useSeasons } from "@/app/hooks/useSeasons";
 import { clientLogger } from "@/app/utils/clientLogger";
 import {compressImage} from "@/app/utils/imageCompression";
 
@@ -24,9 +24,8 @@ interface CreateTeamFormProps {
 }
 
 export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
-    const { addTeamToCache } = useTeamsStore();
-    const { allRegionsCache, fetchAllRegions } = useRegionsStore();
-    const { allSeasonsCache, loading: seasonsLoading, fetchAllSeasons } = useSeasonsStore();
+    const { regions } = useRegions();
+    const { seasons, isLoading: seasonsLoading } = useSeasons();
 
     const [name, setName] = useState("");
     const [file, setFile] = useState<File | null>(null);
@@ -42,15 +41,6 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     const [preview, setPreview] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [compressing, setCompressing] = useState(false);
-
-    useEffect(() => {
-        clientLogger.info('CreateTeamForm', 'Component mounted, fetching data');
-        fetchAllRegions();
-        fetchAllSeasons();
-    }, []);
-
-    const regions = allRegionsCache?.data || [];
-    const seasons = allSeasonsCache?.data || [];
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -164,7 +154,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             }
 
             clientLogger.info('CreateTeamForm', 'Team created successfully', { teamId: result.value.id });
-            addTeamToCache(result.value);
+            await mutateAllTeams();
 
             setSuccess("Team created successfully!");
 
@@ -190,14 +180,14 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         }
     };
 
-    const seasonsByRegion = seasons.reduce((acc, season) => {
+    const seasonsByRegion = seasons.reduce<Record<string, typeof seasons>>((acc, season) => {
         const regionId = season.region_id;
         if (!acc[regionId]) {
             acc[regionId] = [];
         }
         acc[regionId].push(season);
         return acc;
-    }, {} as Record<string, typeof seasons>);
+    }, {});
 
     return (
         <div className="space-y-6">
@@ -209,7 +199,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="space-y-2">
                         <Label htmlFor="name">Team Name</Label>
                         <Input
@@ -266,7 +256,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                     >
                         {preview ? (
                             <div className="space-y-3">
-                                <div className="relative w-32 h-32 mx-auto">
+                                <div className="relative w-24 h-24 sm:w-32 sm:h-32 mx-auto">
                                     <Image
                                         src={preview}
                                         alt="Logo Preview"
@@ -306,7 +296,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="space-y-2">
                         <Label htmlFor="brickNumber">Brick Number</Label>
                         <Input

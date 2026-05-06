@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -21,13 +21,11 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { Button } from "@/app/components/ui/button";
 import { clientLogger } from "@/app/utils/clientLogger";
-import { useTeamsStore } from "@/app/stores/teamStore";
-import { usePlayerStore } from "@/app/stores/playerStore";
+import { useTeamWithPlayers, mutateAllTeams } from "@/app/hooks/useTeams";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
 import UpdateTeamDialog from "@/app/features/teams/UpdateTeamDialog";
-import {Player} from "@/shared/types/db";
 
 type TeamDetailPageProps = {
     regionCode: string;
@@ -50,51 +48,20 @@ export default function TeamDetailPage({
     const [showAddForm, setShowAddForm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    const teamsStore = useTeamsStore();
-    const playersStore = usePlayerStore();
+    // SWR hook for team and players (single fetch)
+    const {
+        team: teamData,
+        players,
+        isLoading: teamLoading,
+        error: teamError,
+        mutate: mutateTeam,
+    } = useTeamWithPlayers(teamSlug, seasonSlug, regionCode);
 
-    const teamData = teamsStore.getTeamBySlugAndSeason(teamSlug, seasonSlug);
-    const playersCacheKey = teamData?.id && teamData?.season_id ? `${teamData.id}-${teamData.season_id}` : null;
-    const players = playersCacheKey ? playersStore.playersByTeamCache.get(playersCacheKey)?.data ?? [] : [];
-
-    const loadTeamWithPlayers = async () => {
-        setError(null);
-
-        try {
-            const result = await teamsStore.fetchTeamWithPlayers(teamSlug, seasonSlug, regionCode);
-
-            if (teamsStore.error) {
-                setError(teamsStore.error);
-                setIsInitialLoad(false);
-                return;
-            }
-
-            if (result) {
-                playersStore.setTeamPlayersCache(result.team.id, result.team.season_id, result.players);
-
-                backgroundLazySync(result.team.id, result.team.season_id);
-            }
-
-            setIsInitialLoad(false);
-        } catch (err) {
-            clientLogger.error('TeamDetailPage', 'Exception loading team data', { error: err });
-            setError("Failed to load team data");
-            setIsInitialLoad(false);
-        }
-    };
-
-    const backgroundLazySync = async (teamId: string, seasonId: string) => {
-        clientLogger.info('TeamDetailPage', 'Starting background lazy sync for players');
-
-        try {
-            await playersStore.fetchTeamPlayers(teamId, seasonId);
-            clientLogger.info('TeamDetailPage', 'Background lazy sync completed');
-        } catch (err) {
-            clientLogger.error('TeamDetailPage', 'Background lazy sync failed', { error: err });
-        }
-    };
+    const captain = players.find(p => p.role === 'captain') ?? null;
+    const viceCaptain = players.find(p => p.role === 'vice_captain') ?? null;
+    const courtCaptain = players.find(p => p.role === 'court_captain') ?? null;
+    const regularPlayers = players.filter(p => p.role === 'player');
 
     const handleOpenAddForm = () => {
         setShowAddForm(true);
@@ -106,27 +73,12 @@ export default function TeamDetailPage({
         }, 100);
     };
 
-    useEffect(() => {
-        if (!regionCode || !seasonSlug || !teamSlug) return;
-
-        loadTeamWithPlayers();
-    }, [regionCode, seasonSlug, teamSlug]);
-
-    const handlePlayerAdded = (addedPlayer: Player) => {
-        if (teamData?.id && teamData?.season_id) {
-            const playerWithRole = {
-                ...addedPlayer,
-                role: 'player' as const
-            };
-
-            playersStore.addPlayerToCache(teamData.id, teamData.season_id, playerWithRole);
-        }
+    const handlePlayerAdded = () => {
+        mutateTeam();
     };
 
-    const handlePlayerRemoved = (playerId: string) => {
-        if (teamData?.id && teamData?.season_id) {
-            playersStore.removePlayerFromCache(teamData.id, teamData.season_id, playerId);
-        }
+    const handlePlayerRemoved = () => {
+        mutateTeam();
     };
 
     const handleDeleteTeam = async () => {
@@ -140,14 +92,23 @@ export default function TeamDetailPage({
             return;
         }
 
-        teamsStore.removeTeamFromCache(teamData.id);
+        await mutateAllTeams();
         router.push("/admin/teams");
     };
 
-    const loading = isInitialLoad && teamsStore.loading;
-    const displayError = error || teamsStore.error;
+    const handleRoleChanged = () => {
+        mutateTeam();
+    };
 
-    if (loading && !teamData) {
+    const handleTeamUpdated = () => {
+        mutateTeam();
+        mutateAllTeams();
+    };
+
+    const isLoading = teamLoading;
+    const displayError = error || teamError;
+
+    if (isLoading && !teamData) {
         return (
             <div className="admin-section">
                 <div className="panel p-6">
@@ -184,18 +145,10 @@ export default function TeamDetailPage({
     const regionCodeDisplay = teamData.seasons?.regions?.code?.toUpperCase() || "??";
     const seasonName = teamData.seasons?.name || "Unknown Season";
 
-    const sortedPlayers = playersStore.getSortedTeamPlayers(teamData.id, teamData.season_id);
-
     const availableRoles = {
-        captain: !sortedPlayers.captain,
-        viceCaptain: !sortedPlayers.viceCaptain,
-        courtCaptain: !sortedPlayers.courtCaptain,
-    };
-
-    const handleRoleChanged = () => {
-        if (teamData?.id && teamData?.season_id) {
-            playersStore.fetchTeamPlayers(teamData.id, teamData.season_id);
-        }
+        captain: !captain,
+        viceCaptain: !viceCaptain,
+        courtCaptain: !courtCaptain,
     };
 
     return (
@@ -217,7 +170,7 @@ export default function TeamDetailPage({
                         <span className="font-mono font-semibold">{regionCodeDisplay}</span> - {regionName} / {seasonName}
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <Button
                         variant={showAddForm ? "secondary" : "default"}
                         onClick={handleOpenAddForm}
@@ -227,7 +180,7 @@ export default function TeamDetailPage({
                         {showAddForm ? "Adding Player" : "Add Player"}
                     </Button>
 
-                    <UpdateTeamDialog team={teamData} onSuccess={loadTeamWithPlayers} />
+                    <UpdateTeamDialog team={teamData} onSuccess={handleTeamUpdated} />
 
                     <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
                         <AlertDialogTrigger asChild>
@@ -253,27 +206,27 @@ export default function TeamDetailPage({
                 </div>
             </div>
 
-            <div className="panel p-6">
-                <div className="flex items-start gap-6">
+            <div className="panel p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
                     {teamData.logo_url && (
-                        <div className="relative w-32 h-32 shrink-0">
+                        <div className="relative w-24 h-24 sm:w-32 sm:h-32 shrink-0 mx-auto sm:mx-0">
                             <Image
                                 src={teamData.logo_url}
                                 alt={teamData.name || ""}
                                 fill
-                                sizes="128px"
+                                sizes="(max-width: 640px) 96px, 128px"
                                 className="object-contain"
                             />
                         </div>
                     )}
-                    <div className="space-y-3">
+                    <div className="space-y-3 w-full min-w-0">
                         <div>
                             <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
                                 Team Name
                             </div>
                             <div className="text-xl font-semibold">{teamData.name}</div>
                         </div>
-                        <div className="grid grid-cols-3 gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
                             <div>
                                 <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
                                     Brick Number
@@ -345,10 +298,10 @@ export default function TeamDetailPage({
                     <>
                         <div>
                             <h3 className="text-sm uppercase tracking-wide text-muted-foreground mb-3">Leadership</h3>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <CaptainSlotCard
                                     role="captain"
-                                    player={sortedPlayers.captain}
+                                    player={captain}
                                     gradientFrom="#9e6bff"
                                     gradientTo="#9fc1ff"
                                     teamId={teamData.id}
@@ -359,7 +312,7 @@ export default function TeamDetailPage({
                                 />
                                 <CaptainSlotCard
                                     role="vice_captain"
-                                    player={sortedPlayers.viceCaptain}
+                                    player={viceCaptain}
                                     gradientFrom="#aea287"
                                     gradientTo="#f1f7ff"
                                     teamId={teamData.id}
@@ -370,7 +323,7 @@ export default function TeamDetailPage({
                                 />
                                 <CaptainSlotCard
                                     role="court_captain"
-                                    player={sortedPlayers.courtCaptain}
+                                    player={courtCaptain}
                                     gradientFrom="#907575"
                                     gradientTo="#ffcec6"
                                     teamId={teamData.id}
@@ -385,7 +338,7 @@ export default function TeamDetailPage({
                         <div>
                             <h3 className="text-sm uppercase tracking-wide text-muted-foreground mb-3">Players</h3>
                             <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-                                {sortedPlayers.players.map((player) => (
+                                {regularPlayers.map((player) => (
                                     <PlayerCard
                                         key={player.id}
                                         player={player}

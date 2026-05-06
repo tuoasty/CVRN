@@ -14,7 +14,7 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { Button } from "@/app/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { useMatchesStore } from "@/app/stores/matchStore";
+import { deleteMatch } from "@/app/hooks/useMatches";
 import { toast } from "@/app/utils/toast";
 import { clientLogger } from "@/app/utils/clientLogger";
 
@@ -26,7 +26,7 @@ interface DeleteMatchDialogProps {
 export default function DeleteMatchDialog({ matchId, onSuccess }: DeleteMatchDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const { deleteMatch } = useMatchesStore();
+
 
     const handleDelete = async () => {
         setLoading(true);
@@ -52,7 +52,7 @@ export default function DeleteMatchDialog({ matchId, onSuccess }: DeleteMatchDia
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm">
+                <Button variant="ghost" size="sm" className="h-10 w-10 sm:h-8 sm:w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm">
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </AlertDialogTrigger>

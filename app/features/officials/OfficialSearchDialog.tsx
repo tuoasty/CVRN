@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useOfficialStore } from "@/app/stores/officialStore";
+import { searchOfficials, saveOfficial, assignOfficialToMatch } from "@/app/hooks/useOfficials";
 import { RobloxUserWithAvatar } from "@/shared/types/roblox";
 import { clientLogger } from "@/app/utils/clientLogger";
 import Image from "next/image";
@@ -15,11 +15,11 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/app/components/ui/dialog";
-import { OfficialType } from "@/server/dto/matchOfficial.dto";
+import { OfficialType } from "@/server/domains/matchOfficial";
 import { Badge } from "@/app/components/ui/badge";
 import { toast } from "@/app/utils/toast";
 import {getOfficialByExactUsernameAction, searchOfficialsInDatabaseAction} from "@/app/actions/matchOfficial.actions";
-import { OfficialWithInfo } from "@/server/dto/official.dto";
+import { OfficialWithInfo } from "@/server/domains/official";
 
 interface OfficialSearchDialogProps {
     matchId: string;
@@ -34,7 +34,6 @@ export default function OfficialSearchDialog({
                                                  onAssigned,
                                                  trigger,
                                              }: OfficialSearchDialogProps) {
-    const { searchOfficials, saveOfficial, assignOfficialToMatch, loading } = useOfficialStore();
 
     const [open, setOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -229,13 +228,13 @@ export default function OfficialSearchDialog({
                                 value={searchQuery}
                                 onChange={handleSearchQueryChange}
                                 onKeyPress={handleKeyPress}
-                                disabled={searching || loading}
+                                disabled={searching}
                                 className="flex-1 rounded-sm"
                                 autoComplete="off"
                             />
                             <Button
                                 onClick={handleSearch}
-                                disabled={searching || loading || !searchQuery.trim()}
+                                disabled={searching || !searchQuery.trim()}
                                 className="rounded-sm"
                             >
                                 {searching ? "Searching..." : "Search"}
@@ -279,7 +278,7 @@ export default function OfficialSearchDialog({
                                     <Button
                                         size="sm"
                                         onClick={() => handleAssignRoblox(user)}
-                                        disabled={loading || assigning === user.id.toString()}
+                                        disabled={assigning === user.id.toString()}
                                         className="rounded-sm shrink-0"
                                     >
                                         {assigning === user.id.toString() ? "Assigning..." : "Assign"}
@@ -316,7 +315,7 @@ export default function OfficialSearchDialog({
                                     <Button
                                         size="sm"
                                         onClick={() => handleAssignDb(official)}
-                                        disabled={loading || assigning === official.id}
+                                        disabled={assigning === official.id}
                                         className="rounded-sm shrink-0"
                                     >
                                         {assigning === official.id ? "Assigning..." : "Assign"}

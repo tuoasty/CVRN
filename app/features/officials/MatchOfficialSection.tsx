@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useOfficialStore } from "@/app/stores/officialStore";
-import { MatchOfficialWithDetails } from "@/server/services/matchOfficial.service";
-import { OfficialType } from "@/server/dto/matchOfficial.dto";
+import React, { useState } from "react";
+import { useMatchOfficials, removeOfficialFromMatch } from "@/app/hooks/useOfficials";
+import { OfficialType } from "@/server/domains/matchOfficial";
 import { clientLogger } from "@/app/utils/clientLogger";
 import Image from "next/image";
 import { Button } from "@/app/components/ui/button";
@@ -22,29 +21,12 @@ export default function MatchOfficialSection({
                                                  officialType,
                                                  title,
                                              }: MatchOfficialSectionProps) {
-    const { fetchMatchOfficials, matchOfficialsCache, removeOfficialFromMatch } = useOfficialStore();
+    const { officials: allOfficials, mutate } = useMatchOfficials(matchId);
+    
+    // Filter officials by type
+    const officials = allOfficials.filter(mo => mo.official_type === officialType);
 
-    const [officials, setOfficials] = useState<MatchOfficialWithDetails[]>([]);
     const [removing, setRemoving] = useState<string | null>(null);
-
-    useEffect(() => {
-        loadOfficials();
-    }, [matchId]);
-
-    const loadOfficials = async () => {
-        await fetchMatchOfficials(matchId);
-
-        const cached = matchOfficialsCache.get(matchId);
-        if (cached) {
-            const filtered = cached.data.filter((mo) => mo.official_type === officialType);
-            setOfficials(filtered);
-            clientLogger.info("MatchOfficialsSection", "Officials loaded", {
-                matchId,
-                officialType,
-                count: filtered.length,
-            });
-        }
-    };
 
     const handleRemove = async (officialId: string) => {
         setRemoving(officialId);
@@ -54,15 +36,14 @@ export default function MatchOfficialSection({
             officialType,
         });
 
-        const success = await removeOfficialFromMatch(matchId, officialId, officialType);
-
-        if (success) {
+        try {
+            await removeOfficialFromMatch(matchId, officialId, officialType);
             clientLogger.info("MatchOfficialsSection", "Official removed successfully", {
                 matchId,
                 officialId,
             });
-            await loadOfficials();
-        } else {
+            mutate();
+        } catch {
             toast.error("Failed to remove official");
         }
 
@@ -81,7 +62,7 @@ export default function MatchOfficialSection({
                 <OfficialSearchDialog
                     matchId={matchId}
                     officialType={officialType}
-                    onAssigned={loadOfficials}
+                    onAssigned={() => mutate()}
                 />
             </div>
 

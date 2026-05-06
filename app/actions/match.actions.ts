@@ -1,98 +1,129 @@
 "use server"
 
-import {
-    CompleteMatchInput,
-    CreateMatchesInput,
-    MatchSetsInput,
-    UpdateMatchScheduleInput,
-    VoidMatchInput
-} from "@/server/dto/match.dto";
+import {z} from "zod"
 import {createServerSupabase} from "@/server/supabase/server";
+import {Err} from "@/shared/types/result";
+import {
+    CreateMatchesSchema,
+    UpdateMatchScheduleSchema,
+    CompleteMatchSchema,
+    VoidMatchSchema,
+    SeasonWeekSchema,
+} from "@/server/domains/match";
+import {GetPlayoffScheduleSchema} from "@/server/domains/playoff";
 import {
     completeMatchService,
-    createMatches, deleteMatchService,
-    getAllMatches, getAvailablePlayoffRounds,
+    createMatches,
+    deleteMatchService,
+    getAllMatches,
+    getAvailablePlayoffRounds,
     getAvailableTeamsForWeek,
     getMatchesForWeek,
-    getMatchSets, getPlayoffSchedule, getRecentMatches, getUpcomingMatches,
+    getPlayoffSchedule,
+    getRecentMatches,
+    getUpcomingMatches,
     getWeekSchedule,
     updateMatchResultsService,
     updateMatchScheduleService,
     voidMatchService
-} from "@/server/services/match.service";
-import {GetPlayoffScheduleInput} from "@/server/dto/playoff.dto";
+} from "@/server/domains/match";
 
-export async function createMatchesAction(input:CreateMatchesInput) {
-    const supabase = await createServerSupabase()
-    return await createMatches(supabase, input);
+export async function createMatchesAction(input: unknown) {
+    const parsed = CreateMatchesSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return createMatches(supabase, parsed.data);
 }
 
-export async function getAvailableTeamsForWeekAction(input: {seasonId: string, week:number}) {
-    const supabase = await createServerSupabase()
-    return await getAvailableTeamsForWeek(supabase, input);
+export async function getAvailableTeamsForWeekAction(input: unknown) {
+    const parsed = SeasonWeekSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getAvailableTeamsForWeek(supabase, parsed.data);
 }
 
 export async function getAllMatchesAction() {
-    const supabase = await createServerSupabase()
-    return await getAllMatches(supabase);
-}
-
-export async function getMatchesForWeekAction(input: {seasonId: string, week: number}) {
-    const supabase = await createServerSupabase()
-    return await getMatchesForWeek(supabase, input);
-}
-
-export async function updateMatchScheduleAction(input: UpdateMatchScheduleInput) {
     const supabase = await createServerSupabase();
-    return await updateMatchScheduleService(supabase, input);
+    return getAllMatches(supabase);
 }
 
-export async function completeMatchAction(input: CompleteMatchInput) {
+export async function getMatchesForWeekAction(input: unknown) {
+    const parsed = SeasonWeekSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await completeMatchService(supabase, input);
+    return getMatchesForWeek(supabase, parsed.data);
 }
 
-export async function voidMatchAction(input: VoidMatchInput) {
+export async function updateMatchScheduleAction(input: unknown) {
+    const parsed = UpdateMatchScheduleSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await voidMatchService(supabase, input);
+    return updateMatchScheduleService(supabase, parsed.data);
 }
 
-export async function getMatchSetsAction(input: MatchSetsInput) {
+export async function completeMatchAction(input: unknown) {
+    const parsed = CompleteMatchSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await getMatchSets(supabase, input);
+    return completeMatchService(supabase, parsed.data);
 }
 
-export async function updateMatchResultsAction(input: CompleteMatchInput) {
+export async function voidMatchAction(input: unknown) {
+    const parsed = VoidMatchSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await updateMatchResultsService(supabase, input);
+    return voidMatchService(supabase, parsed.data);
 }
 
-export async function getWeekScheduleAction(input: { seasonId: string; week: number }) {
+export async function updateMatchResultsAction(input: unknown) {
+    const parsed = CompleteMatchSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await getWeekSchedule(supabase, input);
+    return updateMatchResultsService(supabase, parsed.data);
 }
 
-export async function getPlayoffScheduleAction(input: GetPlayoffScheduleInput) {
+export async function getWeekScheduleAction(input: unknown) {
+    const parsed = SeasonWeekSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await getPlayoffSchedule(supabase, input);
+    return getWeekSchedule(supabase, parsed.data);
+}
+
+export async function getPlayoffScheduleAction(input: unknown) {
+    const parsed = GetPlayoffScheduleSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getPlayoffSchedule(supabase, parsed.data);
 }
 
 export async function getAvailablePlayoffRoundsAction(seasonId: string) {
+    const parsed = z.uuid().safeParse(seasonId);
+    if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await getAvailablePlayoffRounds(supabase, seasonId);
+    return getAvailablePlayoffRounds(supabase, parsed.data);
 }
 
 export async function deleteMatchAction(matchId: string) {
+    const parsed = z.uuid().safeParse(matchId);
+    if (!parsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await deleteMatchService(supabase, matchId);
+    return deleteMatchService(supabase, parsed.data);
 }
 
 export async function getUpcomingMatchesAction(seasonId: string, limit: number = 5) {
+    const seasonParsed = z.uuid().safeParse(seasonId);
+    if (!seasonParsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const limitParsed = z.number().int().min(1).max(100).safeParse(limit);
+    if (!limitParsed.success) return Err({message: "Invalid limit", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await getUpcomingMatches(supabase, seasonId, limit);
+    return getUpcomingMatches(supabase, seasonParsed.data, limitParsed.data);
 }
 
 export async function getRecentMatchesAction(seasonId: string, limit: number = 5) {
+    const seasonParsed = z.uuid().safeParse(seasonId);
+    if (!seasonParsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const limitParsed = z.number().int().min(1).max(100).safeParse(limit);
+    if (!limitParsed.success) return Err({message: "Invalid limit", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await getRecentMatches(supabase, seasonId, limit);
+    return getRecentMatches(supabase, seasonParsed.data, limitParsed.data);
 }

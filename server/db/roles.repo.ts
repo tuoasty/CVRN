@@ -29,7 +29,7 @@ export async function getUserRole(supabase: DBClient, userId: string): Promise<R
                 return Ok(null);
             }
             logger.error({ userId, error }, "Failed to fetch user role");
-            return Err(serializeError(error));
+            return Err(serializeError(error, "DB_ERROR"));
         }
 
         const role = data.role as UserRole;

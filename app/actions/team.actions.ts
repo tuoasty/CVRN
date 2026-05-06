@@ -1,51 +1,58 @@
-"use server";
+"use server"
 
-import { createServerSupabase } from "@/server/supabase/server";
-import { Result, Err } from "@/shared/types/result";
+import {createServerSupabase} from "@/server/supabase/server";
+import {z} from "zod"
+import {Result, Err} from "@/shared/types/result";
 import {
-    GetTeamByNameSeason,
-    TeamIdInput,
     TeamWithRegion,
     TeamWithRegionAndPlayers,
-} from "@/server/dto/team.dto";
+    GetTeamByNameSeasonSchema,
+    TeamIdSchema,
+    TeamSlugSeasonSchema,
+    CreateTeamFormSchema,
+    UpdateTeamFormSchema,
+} from "@/server/domains/team";
 import {
     createTeam,
     deleteTeam,
     getAllTeams,
     getAllTeamsWithRegions,
     getTeamByNameAndSeason,
-    getTeamBySlugAndSeasonWithRegion,
     getTeamsByIds,
     getTeamWithRegionAndPlayers,
     updateTeam
-} from "@/server/services/team.service";
-import { Team } from "@/shared/types/db";
+} from "@/server/domains/team";
+import {Team} from "@/shared/types/db";
+
+async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
+    const {data: {user}} = await supabase.auth.getUser();
+    return user;
+}
 
 export async function createTeamAction(formData: FormData) {
-    const supabase = await createServerSupabase();
+    const parsed = CreateTeamFormSchema.safeParse({
+        name: formData.get('name'),
+        seasonId: formData.get('seasonId'),
+        brickNumber: formData.get('brickNumber'),
+        brickColor: formData.get('brickColor'),
+        startingLvr: formData.get('startingLvr'),
+    });
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 
-    const name = formData.get('name') as string;
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+
     const file = formData.get('logo') as File;
-    const seasonId = formData.get('seasonId') as string;
-    const brickNumber = formData.get('brickNumber') as string;
-    const brickColor = formData.get('brickColor') as string;
-    const startingLvr = formData.get('startingLvr') as string;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return Err({
-            message: "User not authenticated",
-            name: "AuthError"
-        });
-    }
 
     return createTeam(supabase, {
-        name,
+        name: parsed.data.name,
         logoFile: file,
-        seasonId,
+        seasonId: parsed.data.seasonId,
         userId: user.id,
-        brickNumber: parseInt(brickNumber, 10),
-        brickColor: brickColor.toUpperCase(),
-        startingLvr: parseFloat(startingLvr),
+        brickNumber: parsed.data.brickNumber,
+        brickColor: parsed.data.brickColor,
+        startingLvr: parsed.data.startingLvr,
     });
 }
 
@@ -59,59 +66,57 @@ export async function getAllTeamsWithRegionsAction(): Promise<Result<TeamWithReg
     return getAllTeamsWithRegions(supabase);
 }
 
-export async function getTeamByNameAndSeasonAction(input: GetTeamByNameSeason): Promise<Result<Team>> {
+export async function getTeamByNameAndSeasonAction(input: unknown): Promise<Result<Team>> {
+    const parsed = GetTeamByNameSeasonSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return getTeamByNameAndSeason(supabase, input);
+    return getTeamByNameAndSeason(supabase, parsed.data);
 }
 
-export async function deleteTeamAction(input: TeamIdInput): Promise<Result<void>> {
+export async function deleteTeamAction(input: unknown): Promise<Result<void>> {
+    const parsed = TeamIdSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return deleteTeam(supabase, input);
+    return deleteTeam(supabase, parsed.data);
 }
 
-export async function getTeamBySlugAndSeasonAction(p: {
-    slug: string;
-    seasonId: string;
-}): Promise<Result<TeamWithRegion>> {
+export async function getTeamWithPlayersAction(params: unknown): Promise<Result<TeamWithRegionAndPlayers>> {
+    const parsed = TeamSlugSeasonSchema.safeParse(params);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return getTeamBySlugAndSeasonWithRegion(supabase, p);
+    return getTeamWithRegionAndPlayers(supabase, parsed.data);
 }
 
-export async function getTeamWithPlayersAction(params: {
-    slug: string;
-    seasonId: string;
-}): Promise<Result<TeamWithRegionAndPlayers>> {
+export async function getTeamsByIdsAction(teamIds: unknown): Promise<Result<TeamWithRegion[]>> {
+    const parsed = z.array(z.uuid()).safeParse(teamIds);
+    if (!parsed.success) return Err({message: "Invalid team IDs", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return getTeamWithRegionAndPlayers(supabase, params);
-}
-
-export async function getTeamsByIdsAction(teamIds: string[]): Promise<Result<TeamWithRegion[]>> {
-    const supabase = await createServerSupabase();
-    return await getTeamsByIds(supabase, teamIds);
+    return getTeamsByIds(supabase, parsed.data);
 }
 
 export async function updateTeamAction(formData: FormData) {
+    const parsed = UpdateTeamFormSchema.safeParse({
+        teamId: formData.get('teamId'),
+        name: formData.get('name'),
+        brickNumber: formData.get('brickNumber'),
+        brickColor: formData.get('brickColor'),
+        startingLvr: formData.get('startingLvr'),
+    });
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+
     const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
 
-    const teamId = formData.get('teamId') as string;
-    const name = formData.get('name') as string;
     const file = formData.get('logo') as File | null;
-    const brickNumber = formData.get('brickNumber') as string;
-    const brickColor = formData.get('brickColor') as string;
-    const startingLvr = formData.get('startingLvr') as string;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return Err({ message: "User not authenticated", name: "AuthError" });
-    }
 
     return updateTeam(supabase, {
-        teamId,
-        name,
+        teamId: parsed.data.teamId,
+        name: parsed.data.name,
         logoFile: file && file.size > 0 ? file : null,
         userId: user.id,
-        brickNumber: parseInt(brickNumber, 10),
-        brickColor: brickColor.toUpperCase(),
-        startingLvr: parseFloat(startingLvr),
+        brickNumber: parsed.data.brickNumber,
+        brickColor: parsed.data.brickColor,
+        startingLvr: parsed.data.startingLvr,
     });
 }

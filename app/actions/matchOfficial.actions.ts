@@ -1,6 +1,8 @@
 "use server"
 
-import { createServerSupabase } from "@/server/supabase/server";
+import {z} from "zod"
+import {createServerSupabase} from "@/server/supabase/server";
+import {Err} from "@/shared/types/result";
 import {
     assignOfficialToMatch,
     assignMultipleOfficialsToMatch,
@@ -8,77 +10,111 @@ import {
     getMatchOfficialsByType,
     removeOfficialFromMatch,
     removeAllOfficialsOfType
-} from "@/server/services/matchOfficial.service";
+} from "@/server/domains/matchOfficial";
+import {
+    AssignOfficialSchema,
+    AssignMultipleOfficialsSchema,
+    OfficialTypeSchema,
+} from "@/server/domains/matchOfficial";
 import {
     getAllOfficials,
     getOfficialsByName,
     saveOfficial,
-    removeOfficial, searchOfficialsInDatabase, getOfficialByExactUsername
-} from "@/server/services/official.service";
-import { AssignOfficialInput, AssignMultipleOfficialsInput, OfficialType } from "@/server/dto/matchOfficial.dto";
-import {SaveOfficialInput, SearchOfficialsInput} from "@/server/dto/official.dto";
-import { RobloxUserIdInput } from "@/server/dto/player.dto";
+    removeOfficial,
+    searchOfficialsInDatabase,
+    getOfficialByExactUsername
+} from "@/server/domains/official";
+import {
+    SaveOfficialSchema,
+    SearchOfficialsSchema,
+} from "@/server/domains/official";
 
 export async function searchOfficialsByNameAction(username: string) {
+    const parsed = z.string().min(1).safeParse(username);
+    if (!parsed.success) return Err({message: "Search query must not be empty", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await getOfficialsByName(supabase, username);
+    return getOfficialsByName(supabase, parsed.data);
 }
 
-export async function saveOfficialAction(input: SaveOfficialInput) {
+export async function saveOfficialAction(input: unknown) {
+    const parsed = SaveOfficialSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await saveOfficial(supabase, input);
+    return saveOfficial(supabase, parsed.data);
 }
 
 export async function getAllOfficialsAction() {
     const supabase = await createServerSupabase();
-    return await getAllOfficials(supabase);
+    return getAllOfficials(supabase);
 }
 
-export async function removeOfficialAction(input: RobloxUserIdInput) {
+export async function removeOfficialAction(input: unknown) {
+    const parsed = z.object({robloxUserId: z.string().min(1)}).safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await removeOfficial(supabase, input);
+    return removeOfficial(supabase, parsed.data);
 }
 
-export async function assignOfficialToMatchAction(input: AssignOfficialInput) {
+export async function assignOfficialToMatchAction(input: unknown) {
+    const parsed = AssignOfficialSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await assignOfficialToMatch(supabase, input);
+    return assignOfficialToMatch(supabase, parsed.data);
 }
 
-export async function assignMultipleOfficialsToMatchAction(input: AssignMultipleOfficialsInput) {
+export async function assignMultipleOfficialsToMatchAction(input: unknown) {
+    const parsed = AssignMultipleOfficialsSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await assignMultipleOfficialsToMatch(supabase, input);
+    return assignMultipleOfficialsToMatch(supabase, parsed.data);
 }
 
 export async function getMatchOfficialsAction(matchId: string) {
+    const parsed = z.uuid().safeParse(matchId);
+    if (!parsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await getMatchOfficials(supabase, { matchId });
+    return getMatchOfficials(supabase, {matchId: parsed.data});
 }
 
-export async function getMatchOfficialsByTypeAction(matchId: string, officialType: OfficialType) {
+export async function getMatchOfficialsByTypeAction(matchId: string, officialType: unknown) {
+    const matchParsed = z.uuid().safeParse(matchId);
+    if (!matchParsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
+    const typeParsed = OfficialTypeSchema.safeParse(officialType);
+    if (!typeParsed.success) return Err({message: "Invalid official type", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await getMatchOfficialsByType(supabase, matchId, officialType);
+    return getMatchOfficialsByType(supabase, matchParsed.data, typeParsed.data);
 }
 
-export async function removeOfficialFromMatchAction(
-    matchId: string,
-    officialId: string,
-    officialType: OfficialType
-) {
+export async function removeOfficialFromMatchAction(matchId: string, officialId: string, officialType: unknown) {
+    const matchParsed = z.uuid().safeParse(matchId);
+    if (!matchParsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
+    const officialParsed = z.uuid().safeParse(officialId);
+    if (!officialParsed.success) return Err({message: "Invalid official ID", code: "VALIDATION_ERROR"});
+    const typeParsed = OfficialTypeSchema.safeParse(officialType);
+    if (!typeParsed.success) return Err({message: "Invalid official type", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await removeOfficialFromMatch(supabase, matchId, officialId, officialType);
+    return removeOfficialFromMatch(supabase, matchParsed.data, officialParsed.data, typeParsed.data);
 }
 
-export async function removeAllOfficialsOfTypeAction(matchId: string, officialType: OfficialType) {
+export async function removeAllOfficialsOfTypeAction(matchId: string, officialType: unknown) {
+    const matchParsed = z.uuid().safeParse(matchId);
+    if (!matchParsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
+    const typeParsed = OfficialTypeSchema.safeParse(officialType);
+    if (!typeParsed.success) return Err({message: "Invalid official type", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return await removeAllOfficialsOfType(supabase, matchId, officialType);
+    return removeAllOfficialsOfType(supabase, matchParsed.data, typeParsed.data);
 }
 
-export async function searchOfficialsInDatabaseAction(input: SearchOfficialsInput) {
+export async function searchOfficialsInDatabaseAction(input: unknown) {
+    const parsed = SearchOfficialsSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return searchOfficialsInDatabase(supabase, input);
+    return searchOfficialsInDatabase(supabase, parsed.data);
 }
 
-export async function getOfficialByExactUsernameAction(input:SearchOfficialsInput) {
+export async function getOfficialByExactUsernameAction(input: unknown) {
+    const parsed = SearchOfficialsSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return getOfficialByExactUsername(supabase, input);
+    return getOfficialByExactUsername(supabase, parsed.data);
 }
