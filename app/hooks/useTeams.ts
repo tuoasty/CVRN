@@ -60,7 +60,7 @@ export function useTeamWithPlayers(
     const { region, isLoading: regionLoading } = useRegionByCode(regionCode);
     const { season, isLoading: seasonLoading } = useSeasonBySlugAndRegion(seasonSlug, region?.id ?? null);
 
-    const key = teamSlug && season
+    const key = teamSlug && season && !regionLoading && !seasonLoading
         ? ['teamWithPlayers', teamSlug, season.id] as const
         : null;
 
