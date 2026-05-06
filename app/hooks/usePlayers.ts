@@ -62,7 +62,7 @@ export function usePlayersByIds(playerIds: string[]) {
         ? ['playersByIds', ...sortedIds] as const
         : null;
 
-    const { data, error, isLoading } = useSWR(
+    const { data, error, isLoading, mutate } = useSWR(
         key,
         fetchPlayersByIds as BareFetcher<Player[]>,
         {
@@ -71,8 +71,10 @@ export function usePlayersByIds(playerIds: string[]) {
         }
     );
 
+    const players = (data as Player[] | undefined) ?? [];
+
     return {
-        players: (data as Player[] | undefined) ?? [],
+        players,
         isLoading,
         error: error?.message ?? null,
     };

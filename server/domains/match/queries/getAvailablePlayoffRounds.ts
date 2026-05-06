@@ -9,19 +9,12 @@ export async function getAvailablePlayoffRounds(
     seasonId: string
 ): Promise<Result<string[]>> {
     try {
-        const { data, error } = await findUniquePlayoffRoundsBySeason(supabase, seasonId);
-
-        if (error) {
-            logger.error({ seasonId, error }, "Failed to fetch playoff rounds");
-            return Err(serializeError(error, "DB_ERROR"));
+        const result = await findUniquePlayoffRoundsBySeason(supabase, seasonId);
+        if (!result.ok) {
+            logger.error({ seasonId, error: result.error }, "Failed to fetch playoff rounds");
+            return result;
         }
-
-        if (!data) {
-            return Ok([]);
-        }
-
-        const uniqueRounds = Array.from(new Set(data.map(r => r.round)));
-        return Ok(uniqueRounds);
+        return Ok(Array.from(new Set(result.value.map(r => r.round))));
     } catch (error) {
         logger.error({ error }, "Unexpected error fetching playoff rounds");
         return Err(serializeError(error));
