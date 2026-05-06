@@ -28,9 +28,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/app/components/ui/alert-dialog";
-import { getRegionTimezone, timezoneOptions } from "@/app/utils/timezoneOptions";
+import { timezoneOptions } from "@/app/utils/timezoneOptions";
 import MatchOfficialSection from "@/app/features/officials/MatchOfficialSection";
-import { useMatchesStore } from "@/app/stores/matchStore";
+import { updateMatchSchedule, voidMatch } from "@/app/hooks/useMatches";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Match } from "@/shared/types/db";
 import {toast} from "@/app/utils/toast";
@@ -47,11 +47,10 @@ interface ManageMatchDialogProps {
 export default function ManageMatchDialog({
                                               matchId,
                                               scheduledAt,
-                                              regionCode,
                                               match,
                                               onSuccess
                                           }: ManageMatchDialogProps) {
-    const { updateMatchSchedule, voidMatch } = useMatchesStore();
+
 
     const [open, setOpen] = useState(false);
     const [updating, setUpdating] = useState(false);
@@ -61,48 +60,6 @@ export default function ManageMatchDialog({
         time: string;
         timezone: string;
     } | null>(null);
-
-    const openDialog = () => {
-        if (scheduledAt) {
-            const tz = regionCode ? getRegionTimezone(regionCode) : "Asia/Singapore";
-            const date = new Date(scheduledAt);
-
-            const localDateString = date.toLocaleString('en-US', {
-                timeZone: tz,
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-
-            const parts = localDateString.match(/(\d{2})\/(\d{2})\/(\d{4}),\s(\d{2}):(\d{2})/);
-
-            if (parts) {
-                const [, month, day, year, hours, minutes] = parts;
-
-                setEditSchedule({
-                    date: `${year}-${month}-${day}`,
-                    time: `${hours}:${minutes}`,
-                    timezone: tz
-                });
-            } else {
-                setEditSchedule({
-                    date: "",
-                    time: "",
-                    timezone: tz
-                });
-            }
-        } else {
-            setEditSchedule({
-                date: "",
-                time: "",
-                timezone: regionCode ? getRegionTimezone(regionCode) : "Asia/Singapore"
-            });
-        }
-        setOpen(true);
-    };
 
     const handleUpdateSchedule = async () => {
         if (!editSchedule?.date || !editSchedule?.time || !editSchedule?.timezone) {
@@ -177,11 +134,11 @@ export default function ManageMatchDialog({
         <>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-sm">
+                    <Button variant="ghost" size="sm" className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm">
                         <Settings className="h-4 w-4" />
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
                     <DialogHeader>
                         <DialogTitle>Manage Match</DialogTitle>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -193,7 +150,7 @@ export default function ManageMatchDialog({
                         <div className="space-y-4">
                             <h3 className="font-semibold">Schedule</h3>
 
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="timezone">Timezone</Label>
                                     <Select

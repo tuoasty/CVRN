@@ -2,7 +2,7 @@
 
 import React from "react";
 import { PlayoffBracket, Match } from "@/shared/types/db";
-import { TeamWithRegion } from "@/server/dto/team.dto";
+import { TeamWithRegion } from "@/server/domains/team";
 import { Badge } from "@/app/components/ui/badge";
 import {
     Tooltip,
@@ -184,7 +184,7 @@ export function MatchBracketCard({
                 </TooltipTrigger>
                 <TooltipContent
                     side="right"
-                    className="w-80 p-4 border-2 border-primary/20 shadow-xl rounded-sm bg-card"
+                    className="max-w-[calc(100vw-2rem)] w-80 p-4 border-2 border-primary/20 shadow-xl rounded-sm bg-card"
                     sideOffset={10}
                 >
                     <div className="space-y-3">

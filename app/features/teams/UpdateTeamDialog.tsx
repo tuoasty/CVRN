@@ -13,10 +13,10 @@ import {
     DialogTrigger,
 } from "@/app/components/ui/dialog";
 import { updateTeamAction } from "@/app/actions/team.actions";
-import { useTeamsStore } from "@/app/stores/teamStore";
+import { mutateAllTeams } from "@/app/hooks/useTeams";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { compressImage } from "@/app/utils/imageCompression";
-import { TeamWithRegion } from "@/server/dto/team.dto";
+import { TeamWithRegion } from "@/server/domains/team";
 import { toast } from "@/app/utils/toast";
 import { Pencil } from "lucide-react";
 
@@ -26,7 +26,7 @@ interface UpdateTeamDialogProps {
 }
 
 export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogProps) {
-    const { updateTeamInCache } = useTeamsStore();
+
 
     const [open, setOpen] = useState(false);
     const [name, setName] = useState(team.name);
@@ -132,7 +132,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
                 return;
             }
 
-            updateTeamInCache(result.value);
+            await mutateAllTeams();
             toast.success("Team updated successfully");
             setOpen(false);
             onSuccess?.();
@@ -151,7 +151,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
                     <Pencil className="h-4 w-4 mr-2" /> Edit Team
                 </Button>
             </DialogTrigger>
-            <DialogContent className="!max-w-lg rounded-sm">
+            <DialogContent className="w-[calc(100%-2rem)] !max-w-lg max-h-[90vh] overflow-y-auto rounded-sm">
                 <DialogHeader>
                     <DialogTitle>Edit Team</DialogTitle>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -215,7 +215,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="update-brick-number">Brick Number</Label>
                             <Input

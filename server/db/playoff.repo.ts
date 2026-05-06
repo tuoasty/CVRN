@@ -1,5 +1,5 @@
 import { DBClient } from "@/shared/types/db";
-import {InsertPlayoffBracketDto, InsertPlayoffMatchDto} from "@/server/dto/playoff.dto";
+import {InsertPlayoffBracketDto, InsertPlayoffMatchDto} from "@/server/domains/playoff";
 
 export async function findPlayoffConfigById(
     supabase: DBClient,
@@ -69,17 +69,6 @@ export async function updateSeasonPlayoffStatus(
         .update(updateData)
         .eq("id", seasonId)
         .select()
-        .single();
-}
-
-export async function findSeasonById(
-    supabase: DBClient,
-    seasonId: string
-) {
-    return supabase
-        .from("seasons")
-        .select("*")
-        .eq("id", seasonId)
         .single();
 }
 

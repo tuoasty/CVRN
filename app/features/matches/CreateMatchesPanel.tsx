@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useMatchesStore } from "@/app/stores/matchStore";
+import React, { useState, useEffect, useMemo } from "react";
+import { useAvailableTeams, invalidateMatchCaches } from "@/app/hooks/useMatches";
 import { createMatchesAction } from "@/app/actions/match.actions";
 import { Button } from "@/app/components/ui/button";
 import { Label } from "@/app/components/ui/label";
@@ -12,7 +12,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/components/ui/select";
-import { Team } from "@/shared/types/db";
 import { clientLogger } from "@/app/utils/clientLogger";
 import Image from "next/image";
 import { Input } from "@/app/components/ui/input";
@@ -38,10 +37,9 @@ interface CreateMatchesPanelProps {
 }
 
 export default function CreateMatchesPanel({ seasonId, week, onSuccess }: CreateMatchesPanelProps) {
-    const { fetchAvailableTeams, availableTeamsCache, fetchMatchesForWeek, matchesForWeekCache, loading } = useMatchesStore();
+    const { teams: swrAvailableTeams, isLoading: loading, mutate: mutateAvailable } = useAvailableTeams(seasonId || null, week);
 
     const [matchPairs, setMatchPairs] = useState<MatchPair[]>([]);
-    const [availableTeams, setAvailableTeams] = useState<Team[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [defaultSchedule, setDefaultSchedule] = useState<{
         date: string;
@@ -53,29 +51,18 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
         timezone: "Asia/Singapore"
     });
 
+    // Reset match pairs when season/week changes
     useEffect(() => {
-        if (seasonId) {
-            loadAvailableTeams();
-            setMatchPairs([]);
-        }
+        setMatchPairs([]);
     }, [seasonId, week]);
 
-    const loadAvailableTeams = async () => {
-        if (!seasonId) return;
-
-        await fetchAvailableTeams(seasonId, week);
-        const cacheKey = `${seasonId}-${week}`;
-        const cached = availableTeamsCache.get(cacheKey);
-
-        if (cached) {
-            const usedTeamIds = new Set(
-                matchPairs.flatMap(m => [m.homeTeamId, m.awayTeamId]).filter(Boolean)
-            );
-            const filtered = cached.data.filter(t => !usedTeamIds.has(t.id));
-            setAvailableTeams(filtered);
-            clientLogger.info("CreateMatchesPanel", "Available teams loaded", { count: filtered.length });
-        }
-    };
+    // Compute available teams by filtering out teams already used in match pairs
+    const availableTeams = useMemo(() => {
+        const usedTeamIds = new Set(
+            matchPairs.flatMap(m => [m.homeTeamId, m.awayTeamId]).filter(Boolean)
+        );
+        return swrAvailableTeams.filter(t => !usedTeamIds.has(t.id));
+    }, [swrAvailableTeams, matchPairs]);
 
     const addMatchPair = () => {
         setMatchPairs([
@@ -88,50 +75,10 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
         setMatchPairs(prev =>
             prev.map(m => (m.id === id ? { ...m, [field]: value } : m))
         );
-
-        setTimeout(() => {
-            const cacheKey = `${seasonId}-${week}`;
-            const cached = availableTeamsCache.get(cacheKey);
-
-            if (cached) {
-                const updatedPairs = matchPairs.map(m =>
-                    m.id === id ? { ...m, [field]: value } : m
-                );
-
-                const usedTeamIds = new Set(
-                    updatedPairs.flatMap(m => [m.homeTeamId, m.awayTeamId]).filter(Boolean)
-                );
-
-                const filtered = cached.data.filter(t => !usedTeamIds.has(t.id));
-                setAvailableTeams(filtered);
-            }
-        }, 0);
     };
 
     const removeMatchPair = (id: string) => {
-        setMatchPairs(prev => {
-            const updated = prev.filter(m => m.id !== id);
-
-            setTimeout(() => {
-                const cacheKey = `${seasonId}-${week}`;
-                const cached = availableTeamsCache.get(cacheKey);
-
-                if (cached) {
-                    const usedTeamIds = new Set(
-                        updated.flatMap(m => [m.homeTeamId, m.awayTeamId]).filter(Boolean)
-                    );
-
-                    const filtered = cached.data.filter(t => !usedTeamIds.has(t.id));
-                    setAvailableTeams(filtered);
-                    clientLogger.info("CreateMatchesPanel", "Available teams reloaded after removal", {
-                        count: filtered.length,
-                        removedPairId: id
-                    });
-                }
-            }, 0);
-
-            return updated;
-        });
+        setMatchPairs(prev => prev.filter(m => m.id !== id));
     };
 
     const handleSubmit = async () => {
@@ -175,17 +122,9 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                 timezone: "Asia/Singapore"
             });
 
-            const cacheKey = `${seasonId}-${week}`;
-            availableTeamsCache.delete(cacheKey);
-            matchesForWeekCache.delete(cacheKey);
-
-            await fetchAvailableTeams(seasonId, week);
-            await fetchMatchesForWeek(seasonId, week);
-
-            const cached = availableTeamsCache.get(cacheKey);
-            if (cached) {
-                setAvailableTeams(cached.data);
-            }
+            // Invalidate SWR caches to trigger refetch
+            invalidateMatchCaches();
+            mutateAvailable();
 
             toast.success(`${result.value.length} matches created successfully`);
 
@@ -240,7 +179,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="default-timezone">Timezone</Label>
                             <Select
@@ -312,7 +251,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
             </div>
 
             <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                         <h3>Match Pairs</h3>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -322,7 +261,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                     <Button
                         onClick={handleSubmit}
                         disabled={submitting || matchPairs.length === 0 || matchPairs.some(m => !m.homeTeamId || !m.awayTeamId)}
-                        className="rounded-sm"
+                        className="w-full sm:w-auto rounded-sm"
                     >
                         {submitting ? "Creating..." : `Create ${matchPairs.filter(m => m.homeTeamId && m.awayTeamId).length} Matches`}
                     </Button>
@@ -343,10 +282,8 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                 <div className="flex items-center gap-3">
                                     <h4 className="font-semibold">Match {index + 1}</h4>
                                     {pair.homeTeamId && pair.awayTeamId && (() => {
-                                        const cacheKey = `${seasonId}-${week}`;
-                                        const cached = availableTeamsCache.get(cacheKey);
-                                        const homeTeam = cached?.data.find(t => t.id === pair.homeTeamId);
-                                        const awayTeam = cached?.data.find(t => t.id === pair.awayTeamId);
+                                        const homeTeam = swrAvailableTeams.find(t => t.id === pair.homeTeamId);
+                                        const awayTeam = swrAvailableTeams.find(t => t.id === pair.awayTeamId);
 
                                         return (
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -389,7 +326,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                 </Button>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Home Team</Label>
                                     <Select
@@ -402,9 +339,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                         <SelectContent>
                                             {pair.homeTeamId && !availableTeams.find(t => t.id === pair.homeTeamId) && (
                                                 (() => {
-                                                    const cacheKey = `${seasonId}-${week}`;
-                                                    const cached = availableTeamsCache.get(cacheKey);
-                                                    const selectedTeam = cached?.data.find(t => t.id === pair.homeTeamId);
+                                                    const selectedTeam = swrAvailableTeams.find(t => t.id === pair.homeTeamId);
                                                     return selectedTeam ? (
                                                         <SelectItem key={selectedTeam.id} value={selectedTeam.id}>
                                                             <div className="flex items-center gap-2">
@@ -461,9 +396,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                         <SelectContent>
                                             {pair.awayTeamId && !availableTeams.find(t => t.id === pair.awayTeamId) && (
                                                 (() => {
-                                                    const cacheKey = `${seasonId}-${week}`;
-                                                    const cached = availableTeamsCache.get(cacheKey);
-                                                    const selectedTeam = cached?.data.find(t => t.id === pair.awayTeamId);
+                                                    const selectedTeam = swrAvailableTeams.find(t => t.id === pair.awayTeamId);
                                                     return selectedTeam ? (
                                                         <SelectItem key={selectedTeam.id} value={selectedTeam.id}>
                                                             <div className="flex items-center gap-2">
@@ -527,7 +460,7 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                     Override default schedule for this specific match
                                 </p>
 
-                                <div className="grid grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div className="space-y-1">
                                         <Label className="text-xs">Timezone</Label>
                                         <Select

@@ -1,44 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
-import { usePlayoffStore } from "@/app/stores/playoffStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
-import { useRegionsStore } from "@/app/stores/regionStore";
+import { usePlayoffBrackets } from "@/app/hooks/usePlayoffs";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { useRegions } from "@/app/hooks/useRegions";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
 import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import { Trophy, Loader2 } from "lucide-react";
-import { PlayoffBracket } from "@/shared/types/db";
-import { toast } from "@/app/utils/toast";
 import { Badge } from "@/app/components/ui/badge";
 
 export default function PlayoffsPage() {
     const { selectedSeasonId } = usePublicContextStore();
-    const { fetchBrackets } = usePlayoffStore();
-    const { allSeasonsCache } = useSeasonsStore();
-    const { allRegionsCache } = useRegionsStore();
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
 
-    const [brackets, setBrackets] = useState<PlayoffBracket[]>([]);
-    const [loadingBrackets, setLoadingBrackets] = useState(false);
-
-    const selectedSeason = allSeasonsCache?.data?.find(s => s.id === selectedSeasonId);
-    const selectedRegion = allRegionsCache?.data?.find(r => r.id === selectedSeason?.region_id);
+    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
+    const selectedRegion = regions.find(r => r.id === selectedSeason?.region_id);
     const hasPlayoffs = selectedSeason?.playoff_started;
     const isCompleted = selectedSeason?.playoff_completed;
 
-    useEffect(() => {
-        if (!selectedSeasonId || !hasPlayoffs) {
-            setBrackets([]);
-            return;
-        }
-
-        setLoadingBrackets(true);
-        fetchBrackets(selectedSeasonId)
-            .then(setBrackets)
-            .catch((error) => toast.error("Failed to load brackets", error.message))
-            .finally(() => setLoadingBrackets(false));
-    }, [selectedSeasonId, hasPlayoffs]);
+    const { brackets, isLoading: loadingBrackets } = usePlayoffBrackets(
+        hasPlayoffs ? (selectedSeasonId || null) : null
+    );
 
     return (
         <>
@@ -114,11 +99,13 @@ export default function PlayoffsPage() {
                         </div>
                     </div>
                 ) : (
-                    <PlayoffBracketDisplay
-                        brackets={brackets}
-                        seasonId={selectedSeasonId}
-                        regionId={selectedSeason.region_id}
-                    />
+                    <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+                        <PlayoffBracketDisplay
+                            brackets={brackets}
+                            seasonId={selectedSeasonId}
+                            regionId={selectedSeason.region_id}
+                        />
+                    </div>
                 )}
             </div>
         </>
