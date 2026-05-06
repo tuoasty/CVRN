@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import {useEffect, useRef} from 'react';
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { Official } from '@/shared/types/db';
 import { RobloxUserWithAvatar } from '@/shared/types/roblox';
@@ -15,6 +15,7 @@ import {
 } from '@/app/actions/matchOfficial.actions';
 import { MatchOfficialWithDetails } from '@/server/domains/matchOfficial';
 import { OfficialType } from '@/server/domains/matchOfficial';
+import { needsClientRefresh } from './_internal/needsClientRefresh';
 
 const OFFICIALS_TTL = 30 * 60 * 1000;
 
@@ -38,13 +39,18 @@ export function useOfficials() {
         revalidateOnFocus: false,
     });
     const officials = data ?? [];
-    const hasNullAvatars = officials.some(o => !o.avatar_url);
+    const hasStale = needsClientRefresh(officials);
+    const pollCount = useRef(0);
 
     useEffect(() => {
-        if (!hasNullAvatars) return;
-        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
+        if (!hasStale) { pollCount.current = 0; return; }
+        if (pollCount.current >= 2) return;
+        const id = setTimeout(() => {
+            pollCount.current += 1;
+            mutate(undefined, {revalidate: true});
+        }, 3000);
         return () => clearTimeout(id);
-    }, [hasNullAvatars, mutate]);
+    }, [hasStale, mutate]);
 
     return { officials, isLoading, error: error?.message ?? null, mutate };
 }
@@ -56,13 +62,18 @@ export function useMatchOfficials(matchId: string | null) {
         revalidateOnFocus: false,
     });
     const officials = (data as MatchOfficialWithDetails[] | undefined) ?? [];
-    const hasNullAvatars = officials.some(mo => mo.official && !mo.official.avatar_url);
+    const hasStale = needsClientRefresh(officials.flatMap(mo => mo.official ? [mo.official] : []));
+    const pollCount = useRef(0);
 
     useEffect(() => {
-        if (!hasNullAvatars || !key) return;
-        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
+        if (!hasStale || !key) { pollCount.current = 0; return; }
+        if (pollCount.current >= 2) return;
+        const id = setTimeout(() => {
+            pollCount.current += 1;
+            mutate(undefined, {revalidate: true});
+        }, 3000);
         return () => clearTimeout(id);
-    }, [hasNullAvatars, key, mutate]);
+    }, [hasStale, key, mutate]);
 
     return {
         officials,

@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import {useEffect, useRef} from 'react';
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import {
     getAllTeamsWithRegionsAction,
@@ -9,6 +9,7 @@ import { TeamWithRegion } from '@/server/domains/team';
 import { PlayerWithRole } from '@/server/domains/player';
 import { useRegionByCode } from './useRegions';
 import { useSeasonBySlugAndRegion } from './useSeasons';
+import { needsClientRefresh } from './_internal/needsClientRefresh';
 
 const TEAMS_LIST_TTL = 5 * 60 * 1000;
 const TEAM_DETAILS_TTL = 5 * 60 * 1000;
@@ -58,8 +59,8 @@ export function useTeamWithPlayers(
     seasonSlug: string | null,
     regionCode: string | null,
 ) {
-    const { region } = useRegionByCode(regionCode);
-    const { season } = useSeasonBySlugAndRegion(seasonSlug, region?.id ?? null);
+    const { region, isLoading: regionLoading } = useRegionByCode(regionCode);
+    const { season, isLoading: seasonLoading } = useSeasonBySlugAndRegion(seasonSlug, region?.id ?? null);
 
     const key = teamSlug && season
         ? ['teamWithPlayers', teamSlug, season.id] as const
@@ -75,18 +76,23 @@ export function useTeamWithPlayers(
     );
 
     const typed = data as { team: TeamWithRegion; players: PlayerWithRole[] } | undefined;
-    const hasNullAvatars = typed?.players.some(p => !p.avatar_url) ?? false;
+    const hasStale = needsClientRefresh(typed?.players ?? []);
+    const pollCount = useRef(0);
 
     useEffect(() => {
-        if (!hasNullAvatars || !key) return;
-        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
+        if (!hasStale || !key) { pollCount.current = 0; return; }
+        if (pollCount.current >= 2) return;
+        const id = setTimeout(() => {
+            pollCount.current += 1;
+            mutate(undefined, {revalidate: true});
+        }, 3000);
         return () => clearTimeout(id);
-    }, [hasNullAvatars, key, mutate]);
+    }, [hasStale, key, mutate]);
 
     return {
         team: typed?.team ?? null,
         players: typed?.players ?? [],
-        isLoading,
+        isLoading: regionLoading || seasonLoading || isLoading,
         error: error?.message ?? null,
         mutate,
     };
