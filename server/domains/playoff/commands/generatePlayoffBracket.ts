@@ -20,12 +20,20 @@ export async function generatePlayoffBracket(
     p: GeneratePlayoffBracketInput
 ): Promise<Result<{ matchesCreated: number; bracketsCreated: number }>> {
     try {
-        const { data: season, error: seasonError } = await findSeasonById(supabase, p.seasonId);
+        const [seasonResult, configResult, standingsResult] = await Promise.all([
+            findSeasonById(supabase, p.seasonId),
+            findPlayoffConfigBySeasonId(supabase, p.seasonId),
+            findStandingsBySeasonId(supabase, p.seasonId)
+        ]);
 
-        if (seasonError || !season) {
-            logger.error({ seasonId: p.seasonId, error: seasonError }, "Season not found");
+        if (!seasonResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: seasonResult.error }, "Failed to look up season");
+            return seasonResult;
+        }
+        const season = seasonResult.value;
+        if (!season) {
+            logger.error({ seasonId: p.seasonId }, "Season not found");
             return Err({
-                name: "NotFoundError",
                 message: "Season not found",
                 code: "NOT_FOUND"
             });
@@ -33,35 +41,34 @@ export async function generatePlayoffBracket(
 
         if (season.playoff_started) {
             return Err({
-                name: "ValidationError",
                 message: "Playoffs have already been generated for this season",
                 code: "CONFLICT"
             });
         }
 
-        const { data: config, error: configError } = await findPlayoffConfigBySeasonId(supabase, p.seasonId);
-
-        if (configError || !config) {
-            logger.error({ seasonId: p.seasonId, error: configError }, "Playoff config not found");
+        if (!configResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: configResult.error }, "Failed to look up playoff config");
+            return configResult;
+        }
+        const config = configResult.value;
+        if (!config) {
+            logger.error({ seasonId: p.seasonId }, "Playoff config not found");
             return Err({
-                name: "NotFoundError",
                 message: "No playoff configuration found for this season",
                 code: "NOT_FOUND"
             });
         }
 
-        const { data: standings, error: standingsError } = await findStandingsBySeasonId(supabase, p.seasonId);
-
-        if (standingsError || !standings) {
-            logger.error({ seasonId: p.seasonId, error: standingsError }, "Failed to fetch standings");
-            return Err(serializeError(standingsError, "DB_ERROR"));
+        if (!standingsResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: standingsResult.error }, "Failed to fetch standings");
+            return standingsResult;
         }
+        const standings = standingsResult.value;
 
         const totalTeams = config.qualified_teams + config.playin_teams;
 
         if (standings.length < totalTeams) {
             return Err({
-                name: "ValidationError",
                 message: `Not enough teams in standings. Need ${totalTeams}, found ${standings.length}`,
                 code: "VALIDATION_ERROR"
             });
@@ -332,12 +339,12 @@ export async function generatePlayoffBracket(
             }
         }
 
-        const { data: matches, error: matchesError } = await insertPlayoffMatches(supabase, allMatches);
-
-        if (matchesError || !matches) {
-            logger.error({ seasonId: p.seasonId, error: matchesError }, "Failed to insert playoff matches");
-            return Err(serializeError(matchesError, "DB_ERROR"));
+        const matchesResult = await insertPlayoffMatches(supabase, allMatches);
+        if (!matchesResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: matchesResult.error }, "Failed to insert playoff matches");
+            return matchesResult;
         }
+        const matches = matchesResult.value;
 
         const matchIdMap = new Map<string, string>();
         allMatches.forEach((match, index) => {
@@ -358,12 +365,12 @@ export async function generatePlayoffBracket(
             loserPosition: b.loserPosition
         }));
 
-        const { data: brackets, error: bracketsError } = await insertPlayoffBrackets(supabase, bracketsWithoutNext);
-
-        if (bracketsError || !brackets) {
-            logger.error({ seasonId: p.seasonId, error: bracketsError }, "Failed to insert playoff brackets");
-            return Err(serializeError(bracketsError, "DB_ERROR"));
+        const bracketsResult = await insertPlayoffBrackets(supabase, bracketsWithoutNext);
+        if (!bracketsResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: bracketsResult.error }, "Failed to insert playoff brackets");
+            return bracketsResult;
         }
+        const brackets = bracketsResult.value;
 
         const matchToBracketIdMap = new Map<string, string>();
         brackets.forEach(b => {
@@ -419,13 +426,12 @@ export async function generatePlayoffBracket(
             }
         }
 
-        const { error: updateError } = await updateSeasonPlayoffStatus(supabase, p.seasonId, {
+        const statusResult = await updateSeasonPlayoffStatus(supabase, p.seasonId, {
             playoffStarted: true
         });
-
-        if (updateError) {
-            logger.error({ seasonId: p.seasonId, error: updateError }, "Failed to update season playoff status");
-            return Err(serializeError(updateError, "DB_ERROR"));
+        if (!statusResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: statusResult.error }, "Failed to update season playoff status");
+            return statusResult;
         }
 
         logger.info({

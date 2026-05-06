@@ -14,7 +14,6 @@ export async function processAuthCallback(
             logger.error({url}, "Missing hash in auth callback URL");
             return Err({
                 message:"Missing auth tokens",
-                name:"AuthError",
                 code:"UNAUTHORIZED"
             });
         }
@@ -26,7 +25,6 @@ export async function processAuthCallback(
             logger.error("Missing access_token or refresh_token in auth callback");
             return Err({
                 message:"Invalid auth callback",
-                name:"AuthError",
                 code:"UNAUTHORIZED"
             })
         }
@@ -45,7 +43,6 @@ export async function processAuthCallback(
             logger.error("Session creation failed in auth callback");
             return Err({
                 message:"Session creation failed",
-                name:"AuthError",
                 code:"UNAUTHORIZED"
             })
         }
