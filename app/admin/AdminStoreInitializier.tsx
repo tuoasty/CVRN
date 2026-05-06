@@ -1,20 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRegionsStore } from "@/app/stores/regionStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
+import { useRegions } from "@/app/hooks/useRegions";
+import { useSeasons } from "@/app/hooks/useSeasons";
 import { AdminReadyContext } from "./AdminReadyContext";
 
 export function AdminStoreInitializer({ children }: { children: React.ReactNode }) {
-    const [ready, setReady] = useState(false);
-    const { fetchAllRegions } = useRegionsStore();
-    const { fetchAllSeasons } = useSeasonsStore();
+    const { isLoading: regionsLoading } = useRegions();
+    const { isLoading: seasonsLoading } = useSeasons();
 
-    useEffect(() => {
-        Promise.all([fetchAllRegions(), fetchAllSeasons()]).finally(() => {
-            setReady(true);
-        });
-    }, []);
+    const ready = !regionsLoading && !seasonsLoading;
 
     return (
         <AdminReadyContext.Provider value={ready}>

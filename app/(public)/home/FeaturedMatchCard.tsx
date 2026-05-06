@@ -1,11 +1,11 @@
 "use client";
 
-import { MatchWithDetails } from "@/server/dto/match.dto";
-import { TeamWithRegion } from "@/server/dto/team.dto";
+import { MatchWithDetails } from "@/server/domains/match";
+import { TeamWithRegion } from "@/server/domains/team";
 import Image from "next/image";
 import { Badge } from "@/app/components/ui/badge";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 interface FeaturedMatchCardProps {
     matchDetails: MatchWithDetails;

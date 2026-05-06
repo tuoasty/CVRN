@@ -1,26 +1,17 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
-import { useTeamsStore } from "@/app/stores/teamStore";
+import { useSeasons } from "@/app/hooks/useSeasons";
+import { useTeams } from "@/app/hooks/useTeams";
 import { ArrowRight, Users, Calendar, LayoutDashboard } from "lucide-react";
-import { useRegionsStore } from "@/app/stores/regionStore";
+import { useRegions } from "@/app/hooks/useRegions";
 
 export default function AdminDashboard() {
-    const { allSeasonsCache, fetchAllSeasons } = useSeasonsStore();
-    const { allTeamsCache, fetchAllTeams } = useTeamsStore();
-    const { allRegionsCache, fetchAllRegions } = useRegionsStore();
-
-    useEffect(() => {
-        fetchAllSeasons();
-        fetchAllTeams();
-        fetchAllRegions();
-    }, []);
-
-    const seasons = allSeasonsCache?.data || [];
-    const teams = allTeamsCache?.data || [];
+    const { seasons } = useSeasons();
+    const { teams } = useTeams();
+    const { regions } = useRegions();
 
     return (
         <div className="admin-container">
@@ -39,7 +30,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <Card className="rounded-sm border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
                         <CardHeader className="pb-3">
                             <CardTitle className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">
@@ -52,16 +43,14 @@ export default function AdminDashboard() {
                                     (() => {
                                         const activeSeasonsByRegion = seasons
                                             .filter(s => s.is_active)
-                                            .reduce((acc, season) => {
+                                            .reduce<Record<string, typeof seasons>>((acc, season) => {
                                                 const regionId = season.region_id;
                                                 if (!acc[regionId]) {
                                                     acc[regionId] = [];
                                                 }
                                                 acc[regionId].push(season);
                                                 return acc;
-                                            }, {} as Record<string, typeof seasons>);
-
-                                        const regions = allRegionsCache?.data || [];
+                                            }, {});
 
                                         return Object.entries(activeSeasonsByRegion).length > 0 ? (
                                             Object.entries(activeSeasonsByRegion).map(([regionId, regionSeasons]) => {
@@ -121,8 +110,6 @@ export default function AdminDashboard() {
                         <CardContent>
                             <div className="space-y-2">
                                 {(() => {
-                                    const regions = allRegionsCache?.data || [];
-
                                     if (regions.length === 0) {
                                         return <p className="text-sm text-muted-foreground">No regions</p>;
                                     }
@@ -156,7 +143,7 @@ export default function AdminDashboard() {
                     </Card>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <Link href="/admin/teams">
                         <Card className="rounded-sm border-l-4 border-l-primary/20 hover:border-l-primary hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer h-full bg-gradient-to-r from-primary/5 to-transparent">
                             <CardHeader className="pb-3">

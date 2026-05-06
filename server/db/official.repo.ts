@@ -1,5 +1,5 @@
 import {DBClient} from "@/shared/types/db";
-import {SaveOfficialInput, UpdateOfficialInput} from "@/server/dto/official.dto";
+import {SaveOfficialInput, UpdateOfficialInput} from "@/server/domains/official";
 
 export async function upsertOfficial(
     supabase: DBClient,
@@ -20,16 +20,6 @@ export async function upsertOfficial(
         )
         .select()
         .single()
-}
-
-export async function findOfficialById(
-    supabase: DBClient,
-    id: string
-) {
-    return supabase.from("officials")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle()
 }
 
 export async function findOfficialByRobloxId(

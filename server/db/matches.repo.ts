@@ -1,5 +1,8 @@
 import {DBClient} from "@/shared/types/db";
-import {InsertMatchDto} from "@/server/dto/match.dto";
+import {InsertMatchDto} from "@/server/domains/match";
+import {Err, Ok, Result} from "@/shared/types/result";
+import {serializeError} from "@/server/utils/serializeableError";
+import {logger} from "@/server/utils/logger";
 
 export async function insertMatches(
     supabase: DBClient,
@@ -124,7 +127,7 @@ export async function updateMatchCompletion(
         scheduledAt?: string | null;
     }
 ) {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
         status: data.status,
         home_sets_won: data.homeSetsWon,
         away_sets_won: data.awaySetsWon,
@@ -319,4 +322,116 @@ export async function findRecentMatches(
         .eq("status", "completed")
         .order("scheduled_at", { ascending: false, nullsFirst: false })
         .limit(limit);
+}
+
+
+const PENDING_MATCH_RESET = {
+    status: "pending" as const,
+    home_sets_won: null,
+    away_sets_won: null,
+    home_team_lvr: null,
+    away_team_lvr: null,
+    match_mvp_player_id: null,
+    loser_mvp_player_id: null,
+    is_forfeit: false,
+};
+
+async function resetBracketPath(
+    supabase: DBClient,
+    nextBracketId: string,
+    position: string,
+): Promise<void> {
+    const { data: nextBracket } = await supabase
+        .from("playoff_brackets")
+        .select("match_id, id")
+        .eq("id", nextBracketId)
+        .single();
+
+    if (!nextBracket) return;
+
+    const teamField = position === "home" ? "home_team_id" : "away_team_id";
+    const seedField = position === "home" ? "seed_home" : "seed_away";
+
+    const { data: nextMatch } = await findMatchById(supabase, nextBracket.match_id);
+
+    if (nextMatch?.status === "completed") {
+        const otherTeamField = position === "home" ? "away_team_id" : "home_team_id";
+        const otherTeamId = nextMatch[otherTeamField];
+
+        // Recurse first before resetting this bracket
+        await resetDownstreamBrackets(supabase, nextBracket.id);
+
+        await supabase
+            .from("match_sets")
+            .delete()
+            .eq("match_id", nextBracket.match_id);
+
+        if (otherTeamId) {
+            // Both sides filled — full reset
+            await supabase
+                .from("matches")
+                .update({ ...PENDING_MATCH_RESET, home_team_id: null, away_team_id: null })
+                .eq("id", nextBracket.match_id);
+
+            await supabase
+                .from("playoff_brackets")
+                .update({ seed_home: null, seed_away: null })
+                .eq("id", nextBracketId);
+        } else {
+            // Only one side filled — partial reset
+            await supabase
+                .from("matches")
+                .update({ ...PENDING_MATCH_RESET, [teamField]: null })
+                .eq("id", nextBracket.match_id);
+
+            await supabase
+                .from("playoff_brackets")
+                .update({ [seedField]: null })
+                .eq("id", nextBracketId);
+        }
+    } else if (nextMatch?.status === "scheduled" || nextMatch?.status === "pending") {
+        await supabase
+            .from("matches")
+            .update({ [teamField]: null })
+            .eq("id", nextBracket.match_id);
+
+        await supabase
+            .from("playoff_brackets")
+            .update({ [seedField]: null })
+            .eq("id", nextBracketId);
+    }
+}
+
+export async function resetDownstreamBrackets(
+    supabase: DBClient,
+    bracketId: string
+): Promise<Result<void>> {
+    try {
+        const { data: bracket, error: bracketError } = await supabase
+            .from("playoff_brackets")
+            .select("next_bracket_id, loser_next_bracket_id, match_id, winner_position, loser_position")
+            .eq("id", bracketId)
+            .single();
+
+        if (bracketError) {
+            return Err(serializeError(bracketError, "DB_ERROR"));
+        }
+
+        if (!bracket) {
+            return Ok(undefined);
+        }
+
+        if (bracket.next_bracket_id && bracket.winner_position) {
+            await resetBracketPath(supabase, bracket.next_bracket_id, bracket.winner_position);
+        }
+
+        if (bracket.loser_next_bracket_id && bracket.loser_position) {
+            await resetBracketPath(supabase, bracket.loser_next_bracket_id, bracket.loser_position);
+        }
+
+        return Ok(undefined);
+    } catch (error) {
+        logger.error({ bracketId, error }, "Failed to reset downstream brackets");
+        return Err(serializeError(error));
+    }
 }

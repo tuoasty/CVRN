@@ -1,5 +1,5 @@
 import {DBClient} from "@/shared/types/db";
-import {AssignOfficialInput, OfficialType} from "@/server/dto/matchOfficial.dto";
+import {AssignOfficialInput, OfficialType} from "@/server/domains/matchOfficial";
 
 export async function assignOfficial(
     supabase: DBClient,

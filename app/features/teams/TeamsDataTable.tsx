@@ -1,15 +1,15 @@
 "use client";
 
-import React, {useEffect, useState, useTransition} from "react";
+import React, {useState, useTransition} from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import { TeamWithRegion } from "@/server/dto/team.dto";
-import { useTeamsStore } from "@/app/stores/teamStore";
+import { TeamWithRegion } from "@/server/domains/team";
+import { useTeams } from "@/app/hooks/useTeams";
 import { clientLogger } from "@/app/utils/clientLogger";
-import { useRegionsStore } from "@/app/stores/regionStore";
-import { useSeasonsStore } from "@/app/stores/seasonStore";
+import { useRegions } from "@/app/hooks/useRegions";
+import { useSeasons } from "@/app/hooks/useSeasons";
 import {
     Select,
     SelectContent,
@@ -20,26 +20,15 @@ import {
 import LoadingComponent from "@/app/components/ui/LoadingComponent";
 
 export default function TeamsDataTable() {
-    const { allTeamsCache, loading, error, fetchAllTeams } = useTeamsStore();
-    const { allRegionsCache, fetchAllRegions } = useRegionsStore();
-    const { allSeasonsCache, fetchAllSeasons } = useSeasonsStore();
+    const { teams, isLoading, error } = useTeams();
+    const { regions } = useRegions();
+    const { seasons } = useSeasons();
     const router = useRouter();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedRegion, setSelectedRegion] = useState<string>("all");
     const [selectedSeason, setSelectedSeason] = useState<string>("all");
     const [isPending, startTransition] = useTransition();
-
-    useEffect(() => {
-        clientLogger.info('TeamsDataTable', 'Component mounted, fetching teams');
-        fetchAllTeams();
-        fetchAllRegions();
-        fetchAllSeasons();
-    }, []);
-
-    const teams = allTeamsCache?.data || [];
-    const regions = allRegionsCache?.data || [];
-    const seasons = allSeasonsCache?.data || [];
 
     const filteredTeams = teams.filter((team) => {
         const searchLower = searchQuery.toLowerCase();
@@ -74,7 +63,7 @@ export default function TeamsDataTable() {
         })
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="panel p-6">
                 <p className="text-muted-foreground">Loading teams...</p>
@@ -93,8 +82,8 @@ export default function TeamsDataTable() {
     return (
         <div className="space-y-4">
             <LoadingComponent isPending={isPending}/>
-            <div className="flex items-center gap-3">
-                <div className="flex-1 max-w-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="w-full sm:flex-1 sm:max-w-sm">
                     <Input
                         type="text"
                         placeholder="Search teams..."
@@ -108,7 +97,7 @@ export default function TeamsDataTable() {
                     setSelectedRegion(value);
                     setSelectedSeason("all");
                 }}>
-                    <SelectTrigger className="w-[300px] rounded-sm">
+                    <SelectTrigger className="w-full sm:w-[300px] rounded-sm">
                         <SelectValue placeholder="All Regions" />
                     </SelectTrigger>
                     <SelectContent>
@@ -126,7 +115,7 @@ export default function TeamsDataTable() {
                     onValueChange={setSelectedSeason}
                     disabled={selectedRegion === "all"}
                 >
-                    <SelectTrigger className="w-[200px] rounded-sm">
+                    <SelectTrigger className="w-full sm:w-[200px] rounded-sm">
                         <SelectValue placeholder={selectedRegion === "all" ? "Select region first" : "All Seasons"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -139,7 +128,7 @@ export default function TeamsDataTable() {
                     </SelectContent>
                 </Select>
 
-                <div className="text-sm text-muted-foreground ml-auto">
+                <div className="text-sm text-muted-foreground sm:ml-auto">
                     {filteredTeams.length} {filteredTeams.length === 1 ? 'team' : 'teams'}
                 </div>
             </div>
@@ -149,7 +138,7 @@ export default function TeamsDataTable() {
                     <p className="text-muted-foreground text-center">No teams found</p>
                 </div>
             ) : (
-                <div className="panel overflow-hidden">
+                <div className="panel overflow-x-auto">
                     <table className="table-dense">
                         <thead>
                         <tr>
