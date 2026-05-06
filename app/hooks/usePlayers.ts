@@ -1,8 +1,9 @@
-import {useEffect} from 'react';
+import {useEffect, useRef} from 'react';
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { getTeamPlayersAction, getPlayersByIdsAction } from '@/app/actions/player.actions';
 import { Player } from '@/shared/types/db';
 import { PlayerWithRole } from '@/server/domains/player';
+import { needsClientRefresh } from './_internal/needsClientRefresh';
 
 const TEAM_PLAYERS_TTL = 2 * 60 * 1000;
 const PLAYER_TTL = 5 * 60 * 1000;
@@ -39,13 +40,18 @@ export function useTeamPlayers(teamId: string | null, seasonId: string | null) {
     );
 
     const players = (data as PlayerWithRole[] | undefined) ?? [];
-    const hasNullAvatars = players.some(p => !p.avatar_url);
+    const hasStale = needsClientRefresh(players);
+    const pollCount = useRef(0);
 
     useEffect(() => {
-        if (!hasNullAvatars || !key) return;
-        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
+        if (!hasStale || !key) { pollCount.current = 0; return; }
+        if (pollCount.current >= 2) return;
+        const id = setTimeout(() => {
+            pollCount.current += 1;
+            mutate(undefined, {revalidate: true});
+        }, 3000);
         return () => clearTimeout(id);
-    }, [hasNullAvatars, key, mutate]);
+    }, [hasStale, key, mutate]);
 
     const captain = players.find(p => p.role === 'captain') ?? null;
     const viceCaptain = players.find(p => p.role === 'vice_captain') ?? null;
@@ -80,13 +86,18 @@ export function usePlayersByIds(playerIds: string[]) {
     );
 
     const players = (data as Player[] | undefined) ?? [];
-    const hasNullAvatars = players.some(p => !p.avatar_url);
+    const hasStale = needsClientRefresh(players);
+    const pollCount = useRef(0);
 
     useEffect(() => {
-        if (!hasNullAvatars || !key) return;
-        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
+        if (!hasStale || !key) { pollCount.current = 0; return; }
+        if (pollCount.current >= 2) return;
+        const id = setTimeout(() => {
+            pollCount.current += 1;
+            mutate(undefined, {revalidate: true});
+        }, 3000);
         return () => clearTimeout(id);
-    }, [hasNullAvatars, key, mutate]);
+    }, [hasStale, key, mutate]);
 
     return {
         players,
