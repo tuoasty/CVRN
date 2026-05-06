@@ -1,4 +1,3 @@
-import {useEffect} from 'react';
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { Official } from '@/shared/types/db';
 import { RobloxUserWithAvatar } from '@/shared/types/roblox';
@@ -38,13 +37,6 @@ export function useOfficials() {
         revalidateOnFocus: false,
     });
     const officials = data ?? [];
-    const hasNullAvatars = officials.some(o => !o.avatar_url);
-
-    useEffect(() => {
-        if (!hasNullAvatars) return;
-        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
-        return () => clearTimeout(id);
-    }, [hasNullAvatars, mutate]);
 
     return { officials, isLoading, error: error?.message ?? null, mutate };
 }
@@ -56,13 +48,6 @@ export function useMatchOfficials(matchId: string | null) {
         revalidateOnFocus: false,
     });
     const officials = (data as MatchOfficialWithDetails[] | undefined) ?? [];
-    const hasNullAvatars = officials.some(mo => mo.official && !mo.official.avatar_url);
-
-    useEffect(() => {
-        if (!hasNullAvatars || !key) return;
-        const id = setTimeout(() => { mutate(undefined, {revalidate: true}); }, 3000);
-        return () => clearTimeout(id);
-    }, [hasNullAvatars, key, mutate]);
 
     return {
         officials,

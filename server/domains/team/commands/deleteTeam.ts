@@ -3,7 +3,7 @@ import {DBClient} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findTeamById, softDeleteTeamById} from "@/server/db/teams.repo";
-import {findAllTeamPlayers, removePlayerFromTeam} from "@/server/db/players.repo";
+import {findAllTeamPlayers, bulkRemovePlayersFromTeam} from "@/server/db/players.repo";
 import {TeamIdInput} from "../types";
 
 export async function deleteTeam(supabase: DBClient, p: TeamIdInput): Promise<Result<void>> {
@@ -28,17 +28,14 @@ export async function deleteTeam(supabase: DBClient, p: TeamIdInput): Promise<Re
             return playersResult;
         }
 
-        for (const record of playersResult.value) {
-            if (record.player) {
-                const removeResult = await removePlayerFromTeam(supabase, {
-                    playerId: record.player.id,
-                    seasonId: team.season_id
-                });
-                if (!removeResult.ok) {
-                    logger.error({teamId: p.teamId, playerId: record.player.id, error: removeResult.error}, "Failed to remove player from team during deletion");
-                    return removeResult;
-                }
-            }
+        const playerIds = playersResult.value
+            .filter(r => r.player)
+            .map(r => r.player!.id);
+
+        const removeResult = await bulkRemovePlayersFromTeam(supabase, team.season_id, playerIds);
+        if (!removeResult.ok) {
+            logger.error({teamId: p.teamId, playerCount: playerIds.length, error: removeResult.error}, "Failed to bulk remove players from team during deletion");
+            return removeResult;
         }
 
         const deleteResult = await softDeleteTeamById(supabase, p.teamId);
