@@ -1,7 +1,8 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import {RefreshCw, Plus, Trash2, Eye, Sheet, Pencil, Play} from 'lucide-react';
+import {RefreshCw, Plus, Trash2, Eye, Sheet, Pencil, Play, History, RotateCcw} from 'lucide-react';
+import {useRouter} from 'next/navigation';
 import {Button} from '@/app/components/ui/button';
 import {Badge} from '@/app/components/ui/badge';
 import {Input} from '@/app/components/ui/input';
@@ -21,6 +22,7 @@ import {
     deleteSheetConfigAction,
     previewSheetAction,
     runSyncAction,
+    resetConfigAction,
 } from '@/app/actions/sheets.actions';
 
 const SHEET_TYPES = ['teams', 'qualifier', 'playoff'] as const;
@@ -49,6 +51,7 @@ const DEFAULT_FORM: FormState = {
 
 export default function AdminSyncPage() {
     const {seasons} = useSeasons();
+    const router = useRouter();
 
     const [configs, setConfigs] = useState<SheetConfig[]>([]);
     const [configsLoading, setConfigsLoading] = useState(true);
@@ -62,6 +65,11 @@ export default function AdminSyncPage() {
     const [deleting, setDeleting] = useState(false);
 
     const [syncingId, setSyncingId] = useState<string | null>(null);
+
+    const [resetTarget, setResetTarget] = useState<SheetConfig | null>(null);
+    const [resetWipeData, setResetWipeData] = useState(true);
+    const [resetClearLogs, setResetClearLogs] = useState(false);
+    const [resetting, setResetting] = useState(false);
 
     const [previewConfig, setPreviewConfig] = useState<SheetConfig | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
@@ -181,6 +189,29 @@ export default function AdminSyncPage() {
             toast.error('Something went wrong');
         } finally {
             setSyncingId(null);
+        }
+    };
+
+    const handleReset = async () => {
+        if (!resetTarget) return;
+        setResetting(true);
+        try {
+            const result = await resetConfigAction(resetTarget.id, {
+                wipeData: resetWipeData,
+                clearLogs: resetClearLogs,
+            });
+            if (!result.ok) {
+                toast.error('Reset failed', result.error.message);
+                return;
+            }
+            toast.success('Reset complete');
+            setResetTarget(null);
+            await loadConfigs();
+        } catch (err) {
+            clientLogger.error('AdminSyncPage', 'Exception resetting config', {err});
+            toast.error('Something went wrong');
+        } finally {
+            setResetting(false);
         }
     };
 
@@ -309,6 +340,24 @@ export default function AdminSyncPage() {
                                                     onClick={() => handleOpenEdit(cfg)}
                                                 >
                                                     <Pencil className="h-3 w-3" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="rounded-sm"
+                                                    onClick={() => router.push(`/admin/sync/history?config=${cfg.id}`)}
+                                                    title="View sync history"
+                                                >
+                                                    <History className="h-3 w-3" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="rounded-sm text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                                                    onClick={() => { setResetTarget(cfg); setResetWipeData(true); setResetClearLogs(false); }}
+                                                    title="Reset config data"
+                                                >
+                                                    <RotateCcw className="h-3 w-3" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -493,16 +542,15 @@ export default function AdminSyncPage() {
                                                         {team.brickNumber ?? <span className="text-muted-foreground">—</span>}
                                                     </td>
                                                     <td>
-                                                        {team.teamColor
-                                                            ? <div className="flex items-center gap-2">
-                                                                <div
-                                                                    className="w-5 h-5 rounded-sm border border-border/50 shrink-0"
-                                                                    style={{backgroundColor: team.teamColor}}
-                                                                />
-                                                                <span className="text-xs font-mono">{team.teamColor.toUpperCase()}</span>
-                                                              </div>
-                                                            : <span className="text-xs text-muted-foreground">—</span>
-                                                        }
+                                                        <div className="flex items-center gap-2">
+                                                            <div
+                                                                className="w-5 h-5 rounded-sm border border-border/50 shrink-0"
+                                                                style={{backgroundColor: team.teamColor ?? '#9ca3af'}}
+                                                            />
+                                                            <span className="text-xs font-mono text-muted-foreground">
+                                                                {team.teamColor ? team.teamColor.toUpperCase() : 'none'}
+                                                            </span>
+                                                        </div>
                                                     </td>
                                                     <td className="text-sm text-muted-foreground">{team.players.length}</td>
                                                 </tr>
@@ -512,6 +560,65 @@ export default function AdminSyncPage() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Reset Confirm */}
+            <Dialog open={!!resetTarget} onOpenChange={(open) => { if (!open) setResetTarget(null); }}>
+                <DialogContent className="w-[calc(100%-2rem)] !max-w-md rounded-sm" aria-describedby={undefined}>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-orange-500">
+                            <RotateCcw className="h-4 w-4" />
+                            Reset — {resetTarget?.tab_name}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-2">
+                        <p className="text-sm text-muted-foreground">
+                            Choose what to reset for this config. This cannot be undone.
+                        </p>
+                        <div className="space-y-3">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="mt-0.5"
+                                    checked={resetWipeData}
+                                    onChange={e => setResetWipeData(e.target.checked)}
+                                    disabled={resetting}
+                                />
+                                <div>
+                                    <p className="text-sm font-medium">Wipe season data</p>
+                                    <p className="text-xs text-muted-foreground">Hard-deletes all teams and player rosters for this season. Next sync starts fresh.</p>
+                                </div>
+                            </label>
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="mt-0.5"
+                                    checked={resetClearLogs}
+                                    onChange={e => setResetClearLogs(e.target.checked)}
+                                    disabled={resetting}
+                                />
+                                <div>
+                                    <p className="text-sm font-medium">Clear sync logs</p>
+                                    <p className="text-xs text-muted-foreground">Permanently deletes all sync history for this config.</p>
+                                </div>
+                            </label>
+                        </div>
+                        <div className="flex gap-3 pt-1">
+                            <Button
+                                variant="destructive"
+                                className="rounded-sm"
+                                disabled={resetting || (!resetWipeData && !resetClearLogs)}
+                                onClick={handleReset}
+                            >
+                                {resetting ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : null}
+                                {resetting ? 'Resetting...' : 'Confirm Reset'}
+                            </Button>
+                            <Button variant="outline" className="rounded-sm" onClick={() => setResetTarget(null)} disabled={resetting}>
+                                Cancel
+                            </Button>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>

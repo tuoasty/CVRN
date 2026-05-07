@@ -151,8 +151,8 @@ export async function upsertTeamByNumber(supabase: DBClient, p: UpsertTeamByNumb
             slug: p.slug,
             season_id: p.seasonId,
             team_number: p.teamNumber,
-            brick_number: p.brickNumber ?? p.teamNumber,
-            brick_color: p.brickColor ?? '#FFFFFF',
+            brick_number: p.brickNumber ?? null,
+            brick_color: p.brickColor ?? null,
             starting_lvr: 1000,
         })
         .select()
@@ -268,6 +268,16 @@ export async function findTeamByIdWithRegion(supabase: DBClient, teamId: string)
         return Err(serializeError(error, "DB_ERROR"));
     }
     return Ok(data as unknown as TeamWithRegionRow);
+}
+
+export async function hardDeleteTeamsBySeasonId(supabase: DBClient, seasonId: string): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("teams")
+        .delete()
+        .eq("season_id", seasonId)
+        .eq("is_bye", false);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
 }
 
 export async function softDeleteTeamById(supabase: DBClient, id: string): Promise<Result<true>> {
