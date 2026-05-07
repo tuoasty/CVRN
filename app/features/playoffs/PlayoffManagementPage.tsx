@@ -2,10 +2,8 @@
 
 import React, { useState } from "react";
 import { usePlayoffBrackets, generateBracket, resetBrackets } from "@/app/hooks/usePlayoffs";
-import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { mutate } from "swr";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { Button } from "@/app/components/ui/button";
 import {
     AlertDialog,
@@ -23,35 +21,33 @@ import { errorCodeToUserMessage } from "@/app/lib/errorMessages";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { PlayoffBracketDisplay } from "./PlayoffBracketDisplay";
 import { Loader2, Trash2, Trophy } from "lucide-react";
-import { useAdminReady } from "@/app/admin/AdminReadyContext";
-import { Skeleton } from "@/app/components/ui/skeleton";
+import { useAdminContextStore } from "@/app/stores/adminContextStore";
 
 export default function PlayoffManagementPage() {
-    const [selectedRegionId, setSelectedRegionId] = useState<string>("");
-    const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
+    const { selectedSeasonId, selectedRegionId } = useAdminContextStore();
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const ready = useAdminReady();
 
-    const { regions } = useRegions();
     const { seasons: allSeasons } = useSeasons();
-    const { brackets, isLoading: loadingBrackets } = usePlayoffBrackets(selectedSeasonId || null);
+    const { brackets, isLoading: loadingBrackets } = usePlayoffBrackets(selectedSeasonId ?? null);
 
-    const filteredSeasons = selectedRegionId
-        ? allSeasons.filter((s) => s.region_id === selectedRegionId)
-        : [];
+    const selectedSeason = allSeasons.find((s) => s.id === selectedSeasonId);
+    const hasPlayoffStarted = selectedSeason?.playoff_started || false;
+
+    const seasonIdValue = selectedSeasonId ?? "";
+    const regionIdValue = selectedRegionId ?? "";
 
     const handleGenerateBracket = async () => {
-        if (!selectedSeasonId) {
+        if (!seasonIdValue) {
             toast.error("No season selected");
             return;
         }
 
         setIsProcessing(true);
-        const result = await generateBracket({ seasonId: selectedSeasonId });
+        const result = await generateBracket({ seasonId: seasonIdValue });
 
         if (!result.ok) {
-            clientLogger.error("PlayoffManagementPage", "Generate bracket failed", { seasonId: selectedSeasonId, error: result.error });
+            clientLogger.error("PlayoffManagementPage", "Generate bracket failed", { seasonId: seasonIdValue, error: result.error });
             toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setIsProcessing(false);
             return;
@@ -63,16 +59,16 @@ export default function PlayoffManagementPage() {
     };
 
     const handleResetBrackets = async () => {
-        if (!selectedSeasonId) {
+        if (!seasonIdValue) {
             toast.error("No season selected");
             return;
         }
 
         setIsProcessing(true);
-        const result = await resetBrackets(selectedSeasonId);
+        const result = await resetBrackets(seasonIdValue);
 
         if (!result.ok) {
-            clientLogger.error("PlayoffManagementPage", "Reset brackets failed", { seasonId: selectedSeasonId, error: result.error });
+            clientLogger.error("PlayoffManagementPage", "Reset brackets failed", { seasonId: seasonIdValue, error: result.error });
             toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
             setIsProcessing(false);
             return;
@@ -83,9 +79,6 @@ export default function PlayoffManagementPage() {
         await mutate("seasons");
         setIsProcessing(false);
     };
-
-    const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId);
-    const hasPlayoffStarted = selectedSeason?.playoff_started || false;
 
     return (
         <div className="admin-container">
@@ -106,54 +99,9 @@ export default function PlayoffManagementPage() {
                     </div>
                 </div>
 
-                <div className="panel p-4 sm:p-6 max-w-2xl mb-6 border-l-4 border-l-primary/30">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Region</label>
-                            {ready ? (
-                                <Select value={selectedRegionId} onValueChange={setSelectedRegionId}>
-                                    <SelectTrigger className="rounded-sm w-full">
-                                        <SelectValue placeholder="Select region" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {regions.map((region) => (
-                                            <SelectItem key={region.id} value={region.id}>
-                                                {region.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            ) : (
-                                <Skeleton className="h-9 w-full rounded-sm" />
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Season</label>
-                            {ready ? (
-                                <Select
-                                    value={selectedSeasonId}
-                                    onValueChange={setSelectedSeasonId}
-                                    disabled={!selectedRegionId}
-                                >
-                                    <SelectTrigger className="rounded-sm w-full">
-                                        <SelectValue placeholder={selectedRegionId ? "Select season" : "Select region first"} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {filteredSeasons.map((season) => (
-                                            <SelectItem key={season.id} value={season.id}>
-                                                {season.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            ) : (
-                                <Skeleton className="h-9 w-full rounded-sm" />
-                            )}
-                        </div>
-                    </div>
-
-                    {ready && selectedSeasonId && !hasPlayoffStarted && (
-                        <div className="mt-4">
+                {seasonIdValue && (
+                    <div className="panel p-4 sm:p-6 max-w-2xl mb-6 border-l-4 border-l-primary/30">
+                        {!hasPlayoffStarted && (
                             <Button
                                 onClick={handleGenerateBracket}
                                 disabled={isProcessing || brackets.length > 0}
@@ -171,16 +119,14 @@ export default function PlayoffManagementPage() {
                                     </>
                                 )}
                             </Button>
-                        </div>
-                    )}
+                        )}
 
-                    {ready && selectedSeasonId && hasPlayoffStarted && (
-                        <div className="mt-4">
+                        {hasPlayoffStarted && (
                             <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
                                 <AlertDialogTrigger asChild>
                                     <Button
                                         variant="destructive"
-                                        disabled={isProcessing || brackets.length == 0}
+                                        disabled={isProcessing || brackets.length === 0}
                                         className="w-full rounded-sm"
                                     >
                                         <Trash2 className="mr-2 h-4 w-4" />
@@ -213,9 +159,9 @@ export default function PlayoffManagementPage() {
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
 
                 {loadingBrackets ? (
                     <div className="panel p-12 border-l-4 border-l-primary/30">
@@ -224,13 +170,22 @@ export default function PlayoffManagementPage() {
                             <p className="text-sm text-muted-foreground">Loading bracket...</p>
                         </div>
                     </div>
-                ) : selectedSeasonId && brackets.length > 0 ? (
-                    <PlayoffBracketDisplay brackets={brackets} seasonId={selectedSeasonId} regionId={selectedRegionId} />
-                ) : selectedSeasonId && !isProcessing ? (
+                ) : seasonIdValue && brackets.length > 0 ? (
+                    <PlayoffBracketDisplay brackets={brackets} seasonId={seasonIdValue} regionId={regionIdValue} />
+                ) : seasonIdValue && !isProcessing ? (
                     <div className="panel p-12 border-l-4 border-l-muted">
                         <p className="text-sm text-muted-foreground text-center">
                             {hasPlayoffStarted ? "No brackets found" : "Click 'Generate Playoff Bracket' to create the bracket structure"}
                         </p>
+                    </div>
+                ) : !seasonIdValue ? (
+                    <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
+                        <div className="text-center space-y-3">
+                            <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
+                            <p className="text-sm text-muted-foreground font-medium">
+                                Select a season in the navbar to manage playoffs
+                            </p>
+                        </div>
                     </div>
                 ) : null}
             </div>
