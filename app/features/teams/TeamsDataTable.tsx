@@ -1,34 +1,29 @@
 "use client";
 
-import React, {useState, useTransition} from "react";
+import React, { useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { X, ImageOff } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { TeamWithRegion } from "@/server/domains/team";
 import { useTeams } from "@/app/hooks/useTeams";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { useRegions } from "@/app/hooks/useRegions";
-import { useSeasons } from "@/app/hooks/useSeasons";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/app/components/ui/select";
+import { useAdminContextStore } from "@/app/stores/adminContextStore";
 import LoadingComponent from "@/app/components/ui/LoadingComponent";
 
 export default function TeamsDataTable() {
     const { teams, isLoading, error } = useTeams();
     const { regions } = useRegions();
-    const { seasons } = useSeasons();
     const router = useRouter();
+    const { selectedSeasonId, selectedRegionId } = useAdminContextStore();
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedRegion, setSelectedRegion] = useState<string>("all");
-    const [selectedSeason, setSelectedSeason] = useState<string>("all");
+    const [viewAllInRegion, setViewAllInRegion] = useState(false);
     const [isPending, startTransition] = useTransition();
+
+    const selectedRegion = regions.find((r) => r.id === selectedRegionId);
 
     const filteredTeams = teams.filter((team) => {
         const searchLower = searchQuery.toLowerCase();
@@ -38,19 +33,16 @@ export default function TeamsDataTable() {
             team.seasons?.regions?.name?.toLowerCase().includes(searchLower) ||
             team.seasons?.name?.toLowerCase().includes(searchLower);
 
-        const matchesRegion = selectedRegion === "all" || team.seasons?.regions?.id === selectedRegion;
-        const matchesSeason = selectedSeason === "all" || team.seasons?.id === selectedSeason;
+        const matchesFilter = viewAllInRegion
+            ? team.seasons?.regions?.id === selectedRegionId
+            : team.seasons?.id === selectedSeasonId;
 
-        return matchesSearch && matchesRegion && matchesSeason;
+        return matchesSearch && matchesFilter;
     });
-
-    const availableSeasons = selectedRegion === "all"
-        ? []
-        : seasons.filter(s => s.region_id === selectedRegion);
 
     const handleTeamClick = (team: TeamWithRegion) => {
         if (!team.seasons?.regions?.code || !team.seasons?.slug) {
-            clientLogger.warn('TeamsDataTable', 'Cannot navigate - missing season or region data', { teamId: team.id });
+            clientLogger.warn("TeamsDataTable", "Cannot navigate - missing season or region data", { teamId: team.id });
             return;
         }
 
@@ -60,7 +52,7 @@ export default function TeamsDataTable() {
 
         startTransition(() => {
             router.push(`/admin/teams/${regionCode}/${seasonSlug}/${teamSlug}`);
-        })
+        });
     };
 
     if (isLoading) {
@@ -81,7 +73,7 @@ export default function TeamsDataTable() {
 
     return (
         <div className="space-y-4">
-            <LoadingComponent isPending={isPending}/>
+            <LoadingComponent isPending={isPending} />
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="w-full sm:flex-1 sm:max-w-sm">
                     <Input
@@ -93,47 +85,39 @@ export default function TeamsDataTable() {
                     />
                 </div>
 
-                <Select value={selectedRegion} onValueChange={(value) => {
-                    setSelectedRegion(value);
-                    setSelectedSeason("all");
-                }}>
-                    <SelectTrigger className="w-full sm:w-[300px] rounded-sm">
-                        <SelectValue placeholder="All Regions" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Regions</SelectItem>
-                        {regions.map((region) => (
-                            <SelectItem key={region.id} value={region.id}>
-                                {region.code.toUpperCase()} - {region.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select
-                    value={selectedSeason}
-                    onValueChange={setSelectedSeason}
-                    disabled={selectedRegion === "all"}
-                >
-                    <SelectTrigger className="w-full sm:w-[200px] rounded-sm">
-                        <SelectValue placeholder={selectedRegion === "all" ? "Select region first" : "All Seasons"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Seasons</SelectItem>
-                        {availableSeasons.map((season) => (
-                            <SelectItem key={season.id} value={season.id}>
-                                {season.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                {!viewAllInRegion ? (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-sm"
+                        onClick={() => setViewAllInRegion(true)}
+                        disabled={!selectedRegionId}
+                    >
+                        View all in {selectedRegion?.code ?? "region"}
+                    </Button>
+                ) : (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-primary/10 border border-primary/20 text-sm">
+                        <span className="font-medium">{selectedRegion?.code} — all seasons</span>
+                        <button
+                            onClick={() => setViewAllInRegion(false)}
+                            className="text-muted-foreground hover:text-foreground"
+                            aria-label="Exit view all"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                )}
 
                 <div className="text-sm text-muted-foreground sm:ml-auto">
-                    {filteredTeams.length} {filteredTeams.length === 1 ? 'team' : 'teams'}
+                    {filteredTeams.length} {filteredTeams.length === 1 ? "team" : "teams"}
                 </div>
             </div>
 
-            {filteredTeams.length === 0 ? (
+            {!selectedSeasonId && !viewAllInRegion ? (
+                <div className="panel p-6">
+                    <p className="text-muted-foreground text-center">Select a season in the navbar</p>
+                </div>
+            ) : filteredTeams.length === 0 ? (
                 <div className="panel p-6">
                     <p className="text-muted-foreground text-center">No teams found</p>
                 </div>
@@ -141,71 +125,62 @@ export default function TeamsDataTable() {
                 <div className="panel overflow-x-auto">
                     <table className="table-dense">
                         <thead>
-                        <tr>
-                            <th className="w-16">Logo</th>
-                            <th>Team Name</th>
-                            <th>Region</th>
-                            <th>Season</th>
-                            <th>Brick</th>
-                            <th className="w-24">Actions</th>
-                        </tr>
+                            <tr>
+                                <th className="w-16">Logo</th>
+                                <th>Team Name</th>
+                                {viewAllInRegion && <th>Season</th>}
+                                <th>Brick</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        {filteredTeams.map((team) => {
-                            const hasRequiredData = team.seasons?.regions?.code && team.seasons?.slug;
-                            const regionCode = team.seasons?.regions?.code?.toUpperCase() || "??";
-                            const regionName = team.seasons?.regions?.name || "Unknown";
-                            const seasonName = team.seasons?.name || "Unknown Season";
+                            {filteredTeams.map((team) => {
+                                const hasRequiredData = team.seasons?.regions?.code && team.seasons?.slug;
+                                const seasonName = team.seasons?.name || "Unknown Season";
 
-                            return (
-                                <tr key={team.id} className={!hasRequiredData ? 'opacity-50' : ''}>
-                                    <td>
-                                        {team.logo_url && (
-                                            <div className="relative w-10 h-10">
-                                                <Image
-                                                    src={team.logo_url}
-                                                    alt={team.name || ""}
-                                                    fill
-                                                    sizes="40px"
-                                                    className="object-contain"
-                                                />
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <div className="font-medium">{team.name}</div>
-                                        <div className="text-xs text-muted-foreground">{team.slug}</div>
-                                    </td>
-                                    <td>
-                                        <div className="font-mono text-xs font-semibold">{regionCode}</div>
-                                        <div className="text-xs text-muted-foreground">{regionName}</div>
-                                    </td>
-                                    <td className="text-sm">{seasonName}</td>
-                                    <td>
-                                        <div className="flex items-center gap-2">
-                                            {team.brick_color && (
-                                                <div
-                                                    className="w-4 h-4 rounded-sm border border-border"
-                                                    style={{ backgroundColor: team.brick_color }}
-                                                />
+                                return (
+                                    <tr
+                                        key={team.id}
+                                        className={`cursor-pointer hover:bg-muted/50 transition-colors${!hasRequiredData ? " opacity-50" : ""}`}
+                                        onClick={() => hasRequiredData && handleTeamClick(team)}
+                                    >
+                                        <td>
+                                            {team.logo_url ? (
+                                                <div className="relative w-10 h-10">
+                                                    <Image
+                                                        src={team.logo_url}
+                                                        alt={team.name || ""}
+                                                        fill
+                                                        sizes="40px"
+                                                        className="object-contain"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="w-10 h-10 flex items-center justify-center rounded-sm border border-dashed border-warning/60 bg-warning/10" title="No logo">
+                                                    <ImageOff className="h-4 w-4 text-warning/70" />
+                                                </div>
                                             )}
-                                            <span className="text-sm font-mono">{team.brick_number}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="rounded-sm"
-                                            onClick={() => handleTeamClick(team)}
-                                            disabled={!hasRequiredData}
-                                        >
-                                            View
-                                        </Button>
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                                        </td>
+                                        <td>
+                                            <div className="font-medium">{team.name}</div>
+                                            <div className="text-xs text-muted-foreground">{team.slug}</div>
+                                        </td>
+                                        {viewAllInRegion && (
+                                            <td className="text-sm">{seasonName}</td>
+                                        )}
+                                        <td>
+                                            <div className="flex items-center gap-2">
+                                                {team.brick_color && (
+                                                    <div
+                                                        className="w-4 h-4 rounded-sm border border-border"
+                                                        style={{ backgroundColor: team.brick_color }}
+                                                    />
+                                                )}
+                                                <span className="text-sm font-mono">{team.brick_number}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
