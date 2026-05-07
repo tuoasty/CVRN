@@ -13,7 +13,7 @@ export function parseTeamsSheet(
     rows: string[][],
     headerRow: number,
     blockHeight: number,
-    blockStride: number = 5
+    blockStride: number = 4
 ): ParsedTeamResult[] {
     const results: ParsedTeamResult[] = [];
 
