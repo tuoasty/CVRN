@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useMatchOfficials, removeOfficialFromMatch } from "@/app/hooks/useOfficials";
 import { OfficialType } from "@/server/domains/matchOfficial";
 import { clientLogger } from "@/app/utils/clientLogger";
-import Image from "next/image";
+import AvatarImage from "@/app/components/ui/AvatarImage";
 import { Button } from "@/app/components/ui/button";
 import OfficialSearchDialog from "./OfficialSearchDialog";
 import { X } from "lucide-react";
@@ -80,17 +80,9 @@ export default function MatchOfficialSection({
                             className="panel p-3 flex items-center justify-between"
                         >
                             <div className="flex items-center gap-3">
-                                {mo.official.avatar_url && (
-                                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border">
-                                        <Image
-                                            src={mo.official.avatar_url}
-                                            alt={mo.official.username || "Official"}
-                                            fill
-                                            sizes="40px"
-                                            className="object-cover"
-                                        />
-                                    </div>
-                                )}
+                                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border">
+                                    <AvatarImage src={mo.official.avatar_url} alt={mo.official.username || "Official"} sizes="40px" />
+                                </div>
                                 <div>
                                     <div className="text-sm font-medium">
                                         {mo.official.display_name || mo.official.username}

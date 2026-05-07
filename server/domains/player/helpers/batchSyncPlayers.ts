@@ -37,6 +37,8 @@ export async function batchSyncPlayers(
             return Ok(players);
         }
         const userMap = new Map(usersResult.value.map(u => [String(u.id), u]));
+        logger.info({usersResult: avatarsResult}, "batchSyncPlayers: user results");
+        logger.info({avatarsResult: avatarsResult}, "batchSyncPlayers: avatars results");
 
         const avatarMap = new Map<string, string>();
         if (avatarsResult.ok) {
@@ -59,14 +61,12 @@ export async function batchSyncPlayers(
 
             if (!user) continue;
 
-            const fullySynced = !!newAvatar;
-
             updates.push({
                 robloxUserId: p.roblox_user_id,
                 username: user.name,
                 displayName: user.displayName ?? null,
                 avatarUrl: newAvatar ?? p.avatar_url,
-                lastSyncedAt: fullySynced ? now : undefined
+                lastSyncedAt: now
             });
         }
 

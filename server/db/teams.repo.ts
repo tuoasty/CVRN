@@ -153,7 +153,7 @@ export async function upsertTeamByNumber(supabase: DBClient, p: UpsertTeamByNumb
             team_number: p.teamNumber,
             brick_number: p.brickNumber ?? null,
             brick_color: p.brickColor ?? null,
-            starting_lvr: 1000,
+            starting_lvr: 100,
         })
         .select()
         .single();

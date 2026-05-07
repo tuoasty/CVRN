@@ -155,8 +155,8 @@ export default function TeamsDataTable() {
                                                     />
                                                 </div>
                                             ) : (
-                                                <div className="w-10 h-10 flex items-center justify-center rounded-sm border border-dashed border-warning/60 bg-warning/10" title="No logo">
-                                                    <ImageOff className="h-4 w-4 text-warning/70" />
+                                                <div className="w-10 h-10 flex items-center justify-center rounded-sm border border-dashed border-amber-500/60 bg-amber-500/10" title="No logo">
+                                                    <ImageOff className="h-4 w-4 text-amber-500/70" />
                                                 </div>
                                             )}
                                         </td>
