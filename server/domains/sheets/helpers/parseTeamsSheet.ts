@@ -13,7 +13,8 @@ export function parseTeamsSheet(
     rows: string[][],
     headerRow: number,
     blockHeight: number,
-    blockStride: number = 4
+    blockStride: number = 4,
+    bgColors?: (string | null)[][]
 ): ParsedTeamResult[] {
     const results: ParsedTeamResult[] = [];
 
@@ -23,7 +24,6 @@ export function parseTeamsSheet(
 
         const headerData = rows[headerRowIdx] ?? [];
 
-        // Stop if no team names found in any slot of this header row
         const hasAnyTeam = Array.from({length: TEAMS_PER_ROW}, (_, s) =>
             headerData[s * blockStride + 2]?.trim()
         ).some(Boolean);
@@ -38,6 +38,11 @@ export function parseTeamsSheet(
             const teamNumber = isNaN(teamNumberRaw)
                 ? k * TEAMS_PER_ROW + slot + 1
                 : teamNumberRaw;
+
+            const teamColor = bgColors?.[headerRowIdx]?.[col + 2] ?? null;
+
+            const brickRaw = parseInt(headerData[col + 3]?.trim() ?? '', 10);
+            const brickNumber = isNaN(brickRaw) ? null : brickRaw;
 
             const players: ParsedRosterEntry[] = [];
             for (let pr = 1; pr <= PLAYER_ROWS; pr++) {
@@ -56,7 +61,7 @@ export function parseTeamsSheet(
                 });
             }
 
-            results.push({teamNumber, teamName, players, headerCol: col});
+            results.push({teamNumber, teamName, teamColor, brickNumber, players, headerCol: col});
         }
     }
 
