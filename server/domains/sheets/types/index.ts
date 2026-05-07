@@ -33,6 +33,8 @@ export interface ParsedRosterEntry {
 export interface ParsedTeamResult {
     teamNumber: number
     teamName: string
+    teamColor: string | null
+    brickNumber: number | null
     players: ParsedRosterEntry[]
     headerCol: number
 }

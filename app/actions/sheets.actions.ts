@@ -4,7 +4,7 @@ import {z} from "zod";
 import {revalidatePath} from "next/cache";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
-import {readSheetRange} from "@/server/utils/googleSheets";
+import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
 import {parseTeamsSheet} from "@/server/domains/sheets/helpers/parseTeamsSheet";
 import {
     findAllSheetConfigs,
@@ -12,6 +12,7 @@ import {
     updateSheetConfig,
     deleteSheetConfig,
 } from "@/server/db/sheetConfig.repo";
+import {syncSheet} from "@/server/domains/sheets/commands/syncSheet";
 
 const SaveSheetConfigSchema = z.object({
     seasonId: z.string().uuid(),
@@ -48,8 +49,8 @@ export async function previewSheetAction(input: {
     blockStride: number;
 }) {
     try {
-        const rows = await readSheetRange(input.sheetId, input.tabName) as string[][];
-        const teams = parseTeamsSheet(rows, input.headerRow, input.blockHeight, input.blockStride);
+        const {values, bgColors} = await readSheetRangeWithColors(input.sheetId, input.tabName);
+        const teams = parseTeamsSheet(values, input.headerRow, input.blockHeight, input.blockStride, bgColors);
         return Ok(teams);
     } catch (error) {
         return Err({
@@ -92,6 +93,15 @@ export async function deleteSheetConfigAction(id: string) {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
     const result = await deleteSheetConfig(supabase, id);
+    if (result.ok) revalidatePath('/admin/sync');
+    return result;
+}
+
+export async function runSyncAction(configId: string) {
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const result = await syncSheet(supabase, configId, 'manual');
     if (result.ok) revalidatePath('/admin/sync');
     return result;
 }
