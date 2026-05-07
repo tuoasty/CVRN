@@ -1,0 +1,38 @@
+export type SheetType = 'qualifier' | 'playoff' | 'teams'
+export type SyncStatus = 'success' | 'partial' | 'failed'
+export type SyncTrigger = 'cron' | 'manual' | 'rollback'
+export type SyncChangeType = 'team_rename' | 'player_add' | 'player_remove' | 'role_change'
+
+export interface SyncChange {
+    type: SyncChangeType
+    entityId: string
+    before: Record<string, unknown>
+    after: Record<string, unknown>
+}
+
+export interface SyncError {
+    row: number
+    message: string
+}
+
+export interface SyncResult {
+    rowsProcessed: number
+    rowsErrored: number
+    errors: SyncError[]
+    changes: SyncChange[]
+}
+
+export type PlayerRole = 'captain' | 'vice_captain' | 'court_captain' | 'player'
+
+export interface ParsedRosterEntry {
+    role: PlayerRole
+    username: string
+    rowNumber: number
+}
+
+export interface ParsedTeamResult {
+    teamNumber: number
+    teamName: string
+    players: ParsedRosterEntry[]
+    headerCol: number
+}
