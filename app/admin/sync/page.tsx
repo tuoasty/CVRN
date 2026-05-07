@@ -1,7 +1,7 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import {RefreshCw, Plus, Trash2, Eye, Sheet, Pencil} from 'lucide-react';
+import {RefreshCw, Plus, Trash2, Eye, Sheet, Pencil, Play} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
 import {Badge} from '@/app/components/ui/badge';
 import {Input} from '@/app/components/ui/input';
@@ -20,6 +20,7 @@ import {
     updateSheetConfigAction,
     deleteSheetConfigAction,
     previewSheetAction,
+    runSyncAction,
 } from '@/app/actions/sheets.actions';
 
 const SHEET_TYPES = ['teams', 'qualifier', 'playoff'] as const;
@@ -42,7 +43,7 @@ const DEFAULT_FORM: FormState = {
     sheetType: 'teams',
     headerRow: '9',
     blockHeight: '18',
-    blockStride: '5',
+    blockStride: '4',
     isActive: true,
 };
 
@@ -59,6 +60,8 @@ export default function AdminSyncPage() {
 
     const [deleteTarget, setDeleteTarget] = useState<SheetConfig | null>(null);
     const [deleting, setDeleting] = useState(false);
+
+    const [syncingId, setSyncingId] = useState<string | null>(null);
 
     const [previewConfig, setPreviewConfig] = useState<SheetConfig | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
@@ -154,6 +157,30 @@ export default function AdminSyncPage() {
             toast.error('Something went wrong');
         } finally {
             setDeleting(false);
+        }
+    };
+
+    const handleSync = async (config: SheetConfig) => {
+        setSyncingId(config.id);
+        try {
+            const result = await runSyncAction(config.id);
+            if (!result.ok) {
+                toast.error('Sync failed', result.error.message);
+                return;
+            }
+            const {rowsProcessed, rowsErrored, changes} = result.value;
+            const msg = `${rowsProcessed} teams processed, ${changes.length} changes, ${rowsErrored} errors`;
+            if (rowsErrored > 0) {
+                toast.warning('Sync completed with errors', msg);
+            } else {
+                toast.success('Sync complete', msg);
+            }
+            await loadConfigs();
+        } catch (err) {
+            clientLogger.error('AdminSyncPage', 'Exception running sync', {err});
+            toast.error('Something went wrong');
+        } finally {
+            setSyncingId(null);
         }
     };
 
@@ -253,6 +280,19 @@ export default function AdminSyncPage() {
                                         </td>
                                         <td>
                                             <div className="flex gap-1">
+                                                <Button
+                                                    variant="default"
+                                                    size="sm"
+                                                    className="rounded-sm gap-1"
+                                                    onClick={() => handleSync(cfg)}
+                                                    disabled={syncingId !== null}
+                                                >
+                                                    {syncingId === cfg.id
+                                                        ? <RefreshCw className="h-3 w-3 animate-spin" />
+                                                        : <Play className="h-3 w-3" />
+                                                    }
+                                                    Sync
+                                                </Button>
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -439,7 +479,9 @@ export default function AdminSyncPage() {
                                             <tr>
                                                 <th className="w-12">#</th>
                                                 <th>Team Name</th>
-                                                <th className="w-24">Players</th>
+                                                <th className="w-20">Brick #</th>
+                                                <th className="w-36">Color</th>
+                                                <th className="w-20">Players</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -447,6 +489,21 @@ export default function AdminSyncPage() {
                                                 <tr key={team.teamNumber}>
                                                     <td className="text-sm font-mono text-muted-foreground">{team.teamNumber}</td>
                                                     <td className="text-sm font-medium">{team.teamName}</td>
+                                                    <td className="text-sm font-mono">
+                                                        {team.brickNumber ?? <span className="text-muted-foreground">—</span>}
+                                                    </td>
+                                                    <td>
+                                                        {team.teamColor
+                                                            ? <div className="flex items-center gap-2">
+                                                                <div
+                                                                    className="w-5 h-5 rounded-sm border border-border/50 shrink-0"
+                                                                    style={{backgroundColor: team.teamColor}}
+                                                                />
+                                                                <span className="text-xs font-mono">{team.teamColor.toUpperCase()}</span>
+                                                              </div>
+                                                            : <span className="text-xs text-muted-foreground">—</span>
+                                                        }
+                                                    </td>
                                                     <td className="text-sm text-muted-foreground">{team.players.length}</td>
                                                 </tr>
                                             ))}

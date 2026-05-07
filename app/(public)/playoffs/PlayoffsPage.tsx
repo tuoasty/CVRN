@@ -6,7 +6,6 @@ import { usePlayoffBrackets } from "@/app/hooks/usePlayoffs";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
-import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import { Trophy, Loader2 } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
