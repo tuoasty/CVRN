@@ -16,6 +16,7 @@ import {
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import { LogoutButton } from "@/app/components/ui/LogoutButton";
 import AdminNavItems from "@/app/components/admin/navigation/AdminNavItems";
+import AdminRegionSeasonSelector from "@/app/components/admin/navigation/AdminRegionSeasonSelector";
 
 export default function AdminNavbar() {
     const pathname = usePathname();
@@ -38,6 +39,10 @@ export default function AdminNavbar() {
                         </Link>
 
                         <AdminNavItems />
+                    </div>
+
+                    <div className="flex-1 flex justify-center px-8">
+                        <AdminRegionSeasonSelector />
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -90,6 +95,8 @@ export default function AdminNavbar() {
                                         layout="vertical"
                                         onNavigate={() => setOpen(false)}
                                     />
+                                    <div className="h-px bg-border" />
+                                    <AdminRegionSeasonSelector />
                                     <div className="h-px bg-border" />
                                     <Link
                                         href="/home"
