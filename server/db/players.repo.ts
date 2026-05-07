@@ -122,6 +122,15 @@ export async function removePlayerFromTeam(supabase: DBClient, p: RemovePlayerFr
     return Ok(data);
 }
 
+export async function clearSeasonRosters(supabase: DBClient, seasonId: string): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("player_team_seasons")
+        .delete()
+        .eq("season_id", seasonId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
 export async function bulkRemovePlayersFromTeam(
     supabase: DBClient,
     seasonId: string,

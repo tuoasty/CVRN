@@ -63,3 +63,22 @@ export async function findSyncLogById(supabase: DBClient, id: string): Promise<R
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data);
 }
+
+export async function deleteSyncLogsByConfigId(supabase: DBClient, configId: string): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("sheet_sync_logs")
+        .delete()
+        .eq("sheet_config_id", configId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
+export async function findAllSyncLogs(supabase: DBClient, limit = 100): Promise<Result<SheetSyncLog[]>> {
+    const {data, error} = await supabase
+        .from("sheet_sync_logs")
+        .select("*")
+        .order("synced_at", {ascending: false})
+        .limit(limit);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}

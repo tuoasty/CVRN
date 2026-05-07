@@ -16,7 +16,7 @@ import {
     setPlayerRole,
     upsertPlayer,
 } from "@/server/db/players.repo";
-import {getRobloxUserByName} from "@/server/roblox/users";
+import {getRobloxUserByName, getRobloxAvatarsById} from "@/server/roblox/users";
 import {generateSlug} from "@/server/domains/team/helpers/generateSlug";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
@@ -51,7 +51,6 @@ export async function syncTeamRoster(
         let rowsErrored = 0;
         const errors: {row: number; message: string}[] = [];
 
-        // Disband teams that no longer appear on the sheet
         for (const [num, team] of existingByNumber) {
             if (!parsedNumbers.has(num)) {
                 const disbandResult = await softDeleteTeamById(supabase, team.id);
@@ -70,7 +69,6 @@ export async function syncTeamRoster(
             }
         }
 
-        // Upsert each parsed team and sync players
         for (const parsedTeam of parsed) {
             rowsProcessed++;
             const slug = generateSlug(parsedTeam.teamName);
@@ -172,10 +170,14 @@ export async function syncTeamRoster(
                     }
 
                     const robloxUser = robloxResult.value[0];
+                    const avatarResult = await getRobloxAvatarsById([String(robloxUser.id)]);
+                    const avatarUrl = avatarResult.ok ? (avatarResult.value[0]?.imageUrl ?? null) : null;
+
                     const upsertResult = await upsertPlayer(supabase, {
                         robloxUserId: String(robloxUser.id),
                         username: robloxUser.name,
                         displayName: robloxUser.displayName ?? null,
+                        avatarUrl,
                     });
                     if (!upsertResult.ok) {
                         logger.error({username: parsedPlayer.username, error: upsertResult.error}, "Failed to upsert player");
