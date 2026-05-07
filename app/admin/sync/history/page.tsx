@@ -94,7 +94,32 @@ function AdminSyncHistoryContent() {
             </div>
 
             {loading ? (
-                <p className="text-sm text-muted-foreground">Loading...</p>
+                <div className="rounded-md border">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b bg-muted/40">
+                                <th className="text-left px-4 py-2 font-medium">Date</th>
+                                <th className="text-left px-4 py-2 font-medium">Config</th>
+                                <th className="text-left px-4 py-2 font-medium">Status</th>
+                                <th className="text-left px-4 py-2 font-medium">Trigger</th>
+                                <th className="text-right px-4 py-2 font-medium">Processed</th>
+                                <th className="text-right px-4 py-2 font-medium">Errors</th>
+                                <th className="text-right px-4 py-2 font-medium">Changes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {[...Array(5)].map((_, i) => (
+                                <tr key={i} className="border-b last:border-0">
+                                    {[...Array(7)].map((_, j) => (
+                                        <td key={j} className="px-4 py-2">
+                                            <div className="h-4 bg-muted/40 rounded animate-pulse" />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             ) : logs.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No sync history found.</p>
             ) : (

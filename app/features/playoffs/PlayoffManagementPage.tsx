@@ -100,7 +100,7 @@ export default function PlayoffManagementPage() {
                 </div>
 
                 {seasonIdValue && (
-                    <div className="panel p-4 sm:p-6 max-w-2xl mb-6 border-l-4 border-l-primary/30">
+                    <div className="panel p-4 sm:p-6 mb-6 border-l-4 border-l-primary/30">
                         {!hasPlayoffStarted && (
                             <Button
                                 onClick={handleGenerateBracket}

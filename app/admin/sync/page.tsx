@@ -264,8 +264,30 @@ export default function AdminSyncPage() {
 
                 {/* Config table */}
                 {configsLoading && (
-                    <div className="panel p-6 mt-6">
-                        <p className="text-muted-foreground">Loading...</p>
+                    <div className="panel overflow-x-auto mt-6">
+                        <table className="table-dense">
+                            <thead>
+                                <tr>
+                                    <th>Season</th>
+                                    <th>Tab</th>
+                                    <th>Type</th>
+                                    <th>Header Row</th>
+                                    <th>Block Height</th>
+                                    <th>Stride</th>
+                                    <th>Active</th>
+                                    <th className="w-48">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {[...Array(3)].map((_, i) => (
+                                    <tr key={i}>
+                                        {[...Array(8)].map((_, j) => (
+                                            <td key={j}><div className="h-4 bg-muted/40 rounded animate-pulse" /></td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
 

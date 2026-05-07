@@ -2,6 +2,7 @@
 
 import { User } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
+import LoadingComponent from "@/app/components/ui/LoadingComponent";
 import { usePathname, useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 import {useEffect, useState, useTransition} from "react";
@@ -86,11 +87,7 @@ export default function UserButton() {
 
     return (
         <>
-            {isPending && (
-                <div className="fixed top-[80px] left-0 right-0 bottom-0 bg-background/80 backdrop-blur-sm z-[60] flex items-center justify-center">
-                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                </div>
-            )}
+            <LoadingComponent isPending={isPending} />
             <Button
                 variant="ghost"
                 size="sm"
