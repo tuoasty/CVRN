@@ -3,6 +3,13 @@ import {InsertTeamDto} from "@/server/domains/team";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 
+type UpsertTeamByNumberDto = {
+    seasonId: string;
+    teamNumber: number;
+    name: string;
+    slug: string;
+};
+
 type TeamWithRegionRow = Team & {
     seasons: {
         id: string;
