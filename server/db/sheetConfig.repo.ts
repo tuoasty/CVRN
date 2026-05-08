@@ -96,3 +96,26 @@ export async function deleteSheetConfig(supabase: DBClient, id: string): Promise
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);
 }
+
+export async function findCronEnabledConfigs(supabase: DBClient): Promise<Result<SheetConfig[]>> {
+    const {data, error} = await supabase
+        .from("sheet_configs")
+        .select("*")
+        .eq("is_active", true)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq("cron_enabled" as any, true)
+        .order("created_at", {ascending: true});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+export async function updateCronEnabled(supabase: DBClient, id: string, enabled: boolean): Promise<Result<SheetConfig>> {
+    const {data, error} = await supabase
+        .from("sheet_configs")
+        .update({cron_enabled: enabled, updated_at: new Date().toISOString()} as Record<string, unknown>)
+        .eq("id", id)
+        .select()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}

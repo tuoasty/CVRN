@@ -1,0 +1,1 @@
+ALTER TABLE sheet_configs ADD COLUMN cron_enabled BOOLEAN NOT NULL DEFAULT TRUE;

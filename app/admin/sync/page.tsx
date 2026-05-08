@@ -1,7 +1,7 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import {RefreshCw, Plus, Trash2, Eye, Sheet, Pencil, Play, History, RotateCcw} from 'lucide-react';
+import {RefreshCw, Plus, Trash2, Eye, Sheet, Pencil, Play, History, RotateCcw, Clock} from 'lucide-react';
 import {useRouter} from 'next/navigation';
 import {Button} from '@/app/components/ui/button';
 import {Badge} from '@/app/components/ui/badge';
@@ -23,6 +23,7 @@ import {
     previewSheetAction,
     runSyncAction,
     resetConfigAction,
+    toggleCronEnabledAction,
 } from '@/app/actions/sheets.actions';
 
 const SHEET_TYPES = ['teams', 'qualifier', 'playoff'] as const;
@@ -70,6 +71,8 @@ export default function AdminSyncPage() {
     const [resetWipeData, setResetWipeData] = useState(true);
     const [resetClearLogs, setResetClearLogs] = useState(false);
     const [resetting, setResetting] = useState(false);
+
+    const [togglingCronId, setTogglingCronId] = useState<string | null>(null);
 
     const [previewConfig, setPreviewConfig] = useState<SheetConfig | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
@@ -192,6 +195,25 @@ export default function AdminSyncPage() {
         }
     };
 
+    const handleToggleCron = async (cfg: SheetConfig) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const current = (cfg as any).cron_enabled as boolean;
+        setTogglingCronId(cfg.id);
+        try {
+            const result = await toggleCronEnabledAction(cfg.id, !current);
+            if (!result.ok) {
+                toast.error('Failed to update auto-sync', result.error.message);
+                return;
+            }
+            await loadConfigs();
+        } catch (err) {
+            clientLogger.error('AdminSyncPage', 'Exception toggling cron', {err});
+            toast.error('Something went wrong');
+        } finally {
+            setTogglingCronId(null);
+        }
+    };
+
     const handleReset = async () => {
         if (!resetTarget) return;
         setResetting(true);
@@ -275,13 +297,14 @@ export default function AdminSyncPage() {
                                     <th>Block Height</th>
                                     <th>Stride</th>
                                     <th>Active</th>
+                                    <th>Auto</th>
                                     <th className="w-48">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {[...Array(3)].map((_, i) => (
                                     <tr key={i}>
-                                        {[...Array(8)].map((_, j) => (
+                                        {[...Array(9)].map((_, j) => (
                                             <td key={j}><div className="h-4 bg-muted/40 rounded animate-pulse" /></td>
                                         ))}
                                     </tr>
@@ -309,11 +332,15 @@ export default function AdminSyncPage() {
                                     <th>Block Height</th>
                                     <th>Stride</th>
                                     <th>Active</th>
+                                    <th>Auto</th>
                                     <th className="w-48">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {configs.map((cfg) => (
+                                {configs.map((cfg) => {
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    const cronEnabled = (cfg as any).cron_enabled as boolean ?? true;
+                                    return (
                                     <tr key={cfg.id}>
                                         <td className="text-sm">{seasonName(cfg.season_id)}</td>
                                         <td className="text-sm font-mono">{cfg.tab_name}</td>
@@ -330,6 +357,21 @@ export default function AdminSyncPage() {
                                                 ? <Badge variant="default" className="rounded-sm text-xs">Active</Badge>
                                                 : <Badge variant="secondary" className="rounded-sm text-xs">Inactive</Badge>
                                             }
+                                        </td>
+                                        <td>
+                                            <Button
+                                                variant={cronEnabled ? "default" : "ghost"}
+                                                size="sm"
+                                                className={`rounded-sm gap-1 ${cronEnabled ? '' : 'text-muted-foreground'}`}
+                                                onClick={() => handleToggleCron(cfg)}
+                                                disabled={togglingCronId !== null}
+                                                title={cronEnabled ? 'Auto-sync on — click to disable' : 'Auto-sync off — click to enable'}
+                                            >
+                                                {togglingCronId === cfg.id
+                                                    ? <RefreshCw className="h-3 w-3 animate-spin" />
+                                                    : <Clock className="h-3 w-3" />
+                                                }
+                                            </Button>
                                         </td>
                                         <td>
                                             <div className="flex gap-1">
@@ -392,7 +434,8 @@ export default function AdminSyncPage() {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

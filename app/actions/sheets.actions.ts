@@ -12,6 +12,7 @@ import {
     insertSheetConfig,
     updateSheetConfig,
     deleteSheetConfig,
+    updateCronEnabled,
 } from "@/server/db/sheetConfig.repo";
 import {
     findAllSyncLogs,
@@ -150,6 +151,15 @@ export async function runSyncAction(configId: string) {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
     const result = await syncSheet(supabase, configId, 'manual');
+    if (result.ok) revalidatePath('/admin/sync');
+    return result;
+}
+
+export async function toggleCronEnabledAction(configId: string, enabled: boolean) {
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const result = await updateCronEnabled(supabase, configId, enabled);
     if (result.ok) revalidatePath('/admin/sync');
     return result;
 }
