@@ -1,4 +1,4 @@
-import useSWR, { type BareFetcher } from 'swr';
+import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
 import { getAllSeasonsAction, getSeasonBySlugAndRegionAction } from '@/app/actions/season.actions';
 import { SeasonWithPlayoffConfig } from '@/server/domains/season';
 
@@ -50,4 +50,8 @@ export function useSeasonBySlugAndRegion(slug: string | null, regionId: string |
         isLoading,
         error: error?.message ?? null,
     };
+}
+
+export function mutateAllSeasons() {
+    return globalMutate('seasons');
 }

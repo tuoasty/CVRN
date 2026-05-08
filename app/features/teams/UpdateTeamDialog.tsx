@@ -31,8 +31,8 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
 
     const [open, setOpen] = useState(false);
     const [name, setName] = useState(team.name);
-    const [brickNumber, setBrickNumber] = useState(team.brick_number.toString());
-    const [brickColor, setBrickColor] = useState(team.brick_color);
+    const [brickNumber, setBrickNumber] = useState(team.brick_number?.toString() ?? "");
+    const [brickColor, setBrickColor] = useState(team.brick_color ?? "");
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(team.logo_url);
     const [isDragging, setIsDragging] = useState(false);
@@ -42,8 +42,8 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
 
     const resetForm = () => {
         setName(team.name);
-        setBrickNumber(team.brick_number.toString());
-        setBrickColor(team.brick_color);
+        setBrickNumber(team.brick_number?.toString() ?? "");
+        setBrickColor(team.brick_color ?? "");
         setFile(null);
         setPreview(team.logo_url);
         setStartingLvr(team.starting_lvr.toString());
@@ -92,18 +92,18 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!name.trim() || !brickNumber.trim() || !brickColor.trim()) {
-            toast.error("All fields are required");
+        if (!name.trim()) {
+            toast.error("Team name is required");
             return;
         }
 
-        const brickNum = parseInt(brickNumber.trim(), 10);
-        if (isNaN(brickNum) || brickNum < 0) {
+        const brickNum = brickNumber.trim() ? parseInt(brickNumber.trim(), 10) : null;
+        if (brickNum !== null && (isNaN(brickNum) || brickNum < 0)) {
             toast.error("Brick number must be a valid positive number");
             return;
         }
 
-        if (!/^#[0-9A-Fa-f]{6}$/.test(brickColor)) {
+        if (brickColor.trim() && !/^#[0-9A-Fa-f]{6}$/.test(brickColor)) {
             toast.error("Brick color must be in #RRGGBB format");
             return;
         }
@@ -120,8 +120,8 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
             const formData = new FormData();
             formData.append("teamId", team.id);
             formData.append("name", name.trim());
-            formData.append("brickNumber", brickNum.toString());
-            formData.append("brickColor", brickColor.toUpperCase());
+            if (brickNum !== null) formData.append("brickNumber", brickNum.toString());
+            if (brickColor.trim()) formData.append("brickColor", brickColor.toUpperCase());
             if (file) formData.append("logo", file);
             formData.append("startingLvr", lvrVal.toString());
 

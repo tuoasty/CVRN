@@ -93,14 +93,15 @@ export async function findPlayerCurrentTeam(
     return Ok(data);
 }
 
-export async function addPlayerToTeam(supabase: DBClient, p: AddPlayerToTeamInput): Promise<Result<PlayerTeamSeason>> {
+export async function addPlayerToTeam(supabase: DBClient, p: AddPlayerToTeamInput & {role?: PlayerRole}): Promise<Result<PlayerTeamSeason>> {
     const {data, error} = await supabase
         .from("player_team_seasons")
         .insert({
             player_id: p.playerId,
             team_id: p.teamId,
             season_id: p.seasonId,
-            joined_at: new Date().toISOString()
+            joined_at: new Date().toISOString(),
+            ...(p.role && {role: p.role}),
         })
         .select()
         .single();
@@ -119,6 +120,15 @@ export async function removePlayerFromTeam(supabase: DBClient, p: RemovePlayerFr
         .single();
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data);
+}
+
+export async function clearSeasonRosters(supabase: DBClient, seasonId: string): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("player_team_seasons")
+        .delete()
+        .eq("season_id", seasonId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
 }
 
 export async function bulkRemovePlayersFromTeam(

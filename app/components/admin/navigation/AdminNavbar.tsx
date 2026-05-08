@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, Users } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
+import LoadingComponent from "@/app/components/ui/LoadingComponent";
 import {
     Sheet,
     SheetContent,
@@ -16,16 +17,21 @@ import {
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import { LogoutButton } from "@/app/components/ui/LogoutButton";
 import AdminNavItems from "@/app/components/admin/navigation/AdminNavItems";
+import AdminRegionSeasonSelector from "@/app/components/admin/navigation/AdminRegionSeasonSelector";
 
 export default function AdminNavbar() {
     const pathname = usePathname();
+    const router = useRouter();
     const [open, setOpen] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
     useEffect(() => {
         setOpen(false);
     }, [pathname]);
 
     return (
+        <>
+        <LoadingComponent isPending={isPending} />
         <header className="sticky top-0 z-50 border-b border-border bg-card">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
                 {/* Desktop: Single Row */}
@@ -40,20 +46,23 @@ export default function AdminNavbar() {
                         <AdminNavItems />
                     </div>
 
+                    <div className="flex-1 flex justify-center px-8">
+                        <AdminRegionSeasonSelector />
+                    </div>
+
                     <div className="flex items-center gap-3">
                         <LogoutButton />
                         <div className="h-6 w-px bg-border" />
                         <ModeToggle />
                         <div className="h-6 w-px bg-border" />
-                        <Link href="/home">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm"
-                            >
-                                <Users className="h-4 w-4" />
-                            </Button>
-                        </Link>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm"
+                            onClick={() => startTransition(() => router.push("/home"))}
+                        >
+                            <Users className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
 
@@ -91,14 +100,15 @@ export default function AdminNavbar() {
                                         onNavigate={() => setOpen(false)}
                                     />
                                     <div className="h-px bg-border" />
-                                    <Link
-                                        href="/home"
-                                        onClick={() => setOpen(false)}
-                                        className="flex items-center gap-2 px-3 py-2 rounded-sm text-sm hover:bg-accent"
+                                    <AdminRegionSeasonSelector />
+                                    <div className="h-px bg-border" />
+                                    <button
+                                        onClick={() => { setOpen(false); startTransition(() => router.push("/home")); }}
+                                        className="flex items-center gap-2 px-3 py-2 rounded-sm text-sm hover:bg-accent w-full text-left"
                                     >
                                         <Users className="h-4 w-4" />
                                         <span>Public Site</span>
-                                    </Link>
+                                    </button>
                                     <div className="h-px bg-border" />
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-muted-foreground">
@@ -113,5 +123,6 @@ export default function AdminNavbar() {
                 </div>
             </div>
         </header>
+        </>
     );
 }

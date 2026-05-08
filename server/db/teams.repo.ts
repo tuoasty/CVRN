@@ -3,6 +3,15 @@ import {InsertTeamDto} from "@/server/domains/team";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 
+type UpsertTeamByNumberDto = {
+    seasonId: string;
+    teamNumber: number;
+    name: string;
+    slug: string;
+    brickColor?: string | null;
+    brickNumber?: number | null;
+};
+
 type TeamWithRegionRow = Team & {
     seasons: {
         id: string;
@@ -73,12 +82,81 @@ export async function insertTeam(supabase: DBClient, p: InsertTeamDto): Promise<
         ...(p.id && {id: p.id}),
         name: p.name,
         slug: p.slug,
-        logo_url: p.logoUrl,
+        logo_url: p.logoUrl ?? null,
         season_id: p.seasonId,
         brick_number: p.brickNumber,
         brick_color: p.brickColor,
         starting_lvr: p.startingLvr,
     }).select().single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
+export async function findTeamsBySeasonId(supabase: DBClient, seasonId: string): Promise<Result<Team[]>> {
+    const {data, error} = await supabase
+        .from("teams")
+        .select("*")
+        .eq("season_id", seasonId)
+        .is("deleted_at", null)
+        .eq("is_bye", false);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+export async function findTeamByNumberAndSeason(supabase: DBClient, p: {
+    teamNumber: number;
+    seasonId: string;
+}): Promise<Result<Team | null>> {
+    const {data, error} = await supabase
+        .from("teams")
+        .select("*")
+        .eq("team_number", p.teamNumber)
+        .eq("season_id", p.seasonId)
+        .is("deleted_at", null)
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
+export async function upsertTeamByNumber(supabase: DBClient, p: UpsertTeamByNumberDto): Promise<Result<Team>> {
+    const existing = await findTeamByNumberAndSeason(supabase, {
+        teamNumber: p.teamNumber,
+        seasonId: p.seasonId,
+    });
+    if (!existing.ok) return existing;
+
+    if (existing.value) {
+        const updates: Record<string, unknown> = {};
+        if (existing.value.name !== p.name) updates.name = p.name;
+        if (existing.value.name !== p.name) updates.slug = p.slug;
+        if (p.brickColor != null && existing.value.brick_color !== p.brickColor) updates.brick_color = p.brickColor;
+        if (p.brickNumber != null && existing.value.brick_number !== p.brickNumber) updates.brick_number = p.brickNumber;
+
+        if (Object.keys(updates).length === 0) return Ok(existing.value);
+
+        const {data, error} = await supabase
+            .from("teams")
+            .update(updates)
+            .eq("id", existing.value.id)
+            .select()
+            .single();
+        if (error) return Err(serializeError(error, "DB_ERROR"));
+        return Ok(data);
+    }
+
+    const {data, error} = await supabase
+        .from("teams")
+        .insert({
+            name: p.name,
+            slug: p.slug,
+            season_id: p.seasonId,
+            team_number: p.teamNumber,
+            brick_number: p.brickNumber ?? null,
+            brick_color: p.brickColor ?? null,
+            starting_lvr: 100,
+        })
+        .select()
+        .single();
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data);
 }
@@ -190,6 +268,16 @@ export async function findTeamByIdWithRegion(supabase: DBClient, teamId: string)
         return Err(serializeError(error, "DB_ERROR"));
     }
     return Ok(data as unknown as TeamWithRegionRow);
+}
+
+export async function hardDeleteTeamsBySeasonId(supabase: DBClient, seasonId: string): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("teams")
+        .delete()
+        .eq("season_id", seasonId)
+        .eq("is_bye", false);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
 }
 
 export async function softDeleteTeamById(supabase: DBClient, id: string): Promise<Result<true>> {

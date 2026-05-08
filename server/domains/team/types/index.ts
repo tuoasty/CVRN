@@ -33,7 +33,7 @@ export interface InsertTeamDto {
     id?: string;
     name: string;
     slug: string;
-    logoUrl: string;
+    logoUrl?: string | null;
     seasonId: string;
     brickNumber: number;
     brickColor: string;

@@ -37,4 +37,10 @@ export type PlayoffConfig =
 export type PlayoffBracket =
     Database["public"]["Tables"]["playoff_brackets"]["Row"];
 
+export type SheetConfig =
+    Database["public"]["Tables"]["sheet_configs"]["Row"];
+
+export type SheetSyncLog =
+    Database["public"]["Tables"]["sheet_sync_logs"]["Row"];
+
 export type DBClient = SupabaseClient<Database>;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
+import AvatarImage from "@/app/components/ui/AvatarImage";
 import { RobloxUserWithAvatar } from "@/shared/types/roblox";
 import {
     savePlayerToTeamAction,
@@ -226,13 +226,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
                             className="panel p-4 flex items-center gap-4 border-l-4 border-l-blue-500/50 bg-blue-500/5"
                         >
                             <div className="relative w-16 h-16 rounded-sm overflow-hidden border border-border shrink-0">
-                                <Image
-                                    src={user.avatarUrl}
-                                    alt={user.name}
-                                    fill
-                                    sizes="64px"
-                                    className="object-cover"
-                                />
+                                <AvatarImage src={user.avatarUrl} alt={user.name} sizes="64px" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
@@ -270,17 +264,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
                                 className="panel p-4 flex items-center gap-4 border-l-4 border-l-amber-500/50 bg-amber-500/5"
                             >
                                 <div className="relative w-16 h-16 rounded-sm overflow-hidden border border-border shrink-0">
-                                    {player.avatar_url ? (
-                                        <Image
-                                            src={player.avatar_url}
-                                            alt={player.username || "Player"}
-                                            fill
-                                            sizes="64px"
-                                            className="object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full bg-muted" />
-                                    )}
+                                    <AvatarImage src={player.avatar_url} alt={player.username || "Player"} sizes="64px" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="font-semibold truncate">

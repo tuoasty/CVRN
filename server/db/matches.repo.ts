@@ -28,6 +28,7 @@ export async function insertMatches(
         scheduled_at: m.scheduledAt,
         status: m.status,
         match_type: m.matchType,
+        ...(m.matchCode && {match_code: m.matchCode}),
     }));
 
     const {data, error} = await supabase
@@ -250,6 +251,19 @@ export async function deleteMatch(
     return Ok(data);
 }
 
+export async function deleteSeasonMatchesBySeasonId(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("matches")
+        .delete()
+        .eq("season_id", seasonId)
+        .eq("match_type", "season");
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
 export async function findUpcomingMatches(
     supabase: DBClient,
     seasonId: string,
@@ -313,4 +327,19 @@ export async function findRecentMatches(
         .limit(limit);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as MatchWithDetails[]);
+}
+
+export async function findMatchByCode(
+    supabase: DBClient,
+    code: string,
+    seasonId: string
+): Promise<Result<Match | null>> {
+    const {data, error} = await supabase
+        .from("matches")
+        .select("*")
+        .eq("match_code", code)
+        .eq("season_id", seasonId)
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }
