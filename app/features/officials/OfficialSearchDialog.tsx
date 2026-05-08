@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { searchOfficials, saveOfficial, assignOfficialToMatch } from "@/app/hooks/useOfficials";
 import { RobloxUserWithAvatar } from "@/shared/types/roblox";
 import { clientLogger } from "@/app/utils/clientLogger";
-import Image from "next/image";
+import AvatarImage from "@/app/components/ui/AvatarImage";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -250,17 +250,9 @@ export default function OfficialSearchDialog({
                                     className="panel p-3 flex items-center justify-between border-l-4 border-l-blue-500/50 bg-blue-500/5"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        {user.avatarUrl && (
-                                            <div className="relative w-10 h-10 rounded-sm overflow-hidden border border-border shrink-0">
-                                                <Image
-                                                    src={user.avatarUrl}
-                                                    alt={user.name}
-                                                    fill
-                                                    sizes="40px"
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                        )}
+                                        <div className="relative w-10 h-10 rounded-sm overflow-hidden border border-border shrink-0">
+                                            <AvatarImage src={user.avatarUrl} alt={user.name} sizes="40px" />
+                                        </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <span className="font-medium truncate">{user.displayName || user.name}</span>
@@ -292,17 +284,9 @@ export default function OfficialSearchDialog({
                                     className="panel p-3 flex items-center justify-between border-l-4 border-l-amber-500/50 bg-amber-500/5"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        {official.avatar_url && (
-                                            <div className="relative w-10 h-10 rounded-sm overflow-hidden border border-border shrink-0">
-                                                <Image
-                                                    src={official.avatar_url}
-                                                    alt={official.username}
-                                                    fill
-                                                    sizes="40px"
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                        )}
+                                        <div className="relative w-10 h-10 rounded-sm overflow-hidden border border-border shrink-0">
+                                            <AvatarImage src={official.avatar_url} alt={official.username} sizes="40px" />
+                                        </div>
                                         <div className="min-w-0">
                                             <div className="font-medium truncate">
                                                 {official.display_name || official.username}

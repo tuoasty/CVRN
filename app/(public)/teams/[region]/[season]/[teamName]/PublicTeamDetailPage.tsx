@@ -2,12 +2,13 @@
 
 
 import Image from "next/image";
+import AvatarImage from "@/app/components/ui/AvatarImage";
 import { useRouter } from "next/navigation";
 import { useTeamWithPlayers } from "@/app/hooks/useTeams";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { ChevronLeft, Users } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { PlayerWithRole } from "@/server/domains/player";
 import { Card, CardContent } from "@/app/components/ui/card";
 
@@ -32,21 +33,9 @@ function PublicPlayerCard({ player, index }: { player: PlayerWithRole; index: nu
                     {displayBadge}
                 </Badge>
                 <div className="flex flex-col items-center text-center space-y-2 pt-2">
-                    {player.avatar_url ? (
-                        <div className="relative w-14 h-14 rounded-sm overflow-hidden border border-border">
-                            <Image
-                                src={player.avatar_url}
-                                alt={player.username || ""}
-                                fill
-                                sizes="56px"
-                                className="object-cover"
-                            />
-                        </div>
-                    ) : (
-                        <div className="relative w-14 h-14 rounded-sm overflow-hidden border border-border bg-muted/50 flex items-center justify-center">
-                            <Users className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                    )}
+                    <div className="relative w-14 h-14 rounded-sm overflow-hidden border border-border">
+                        <AvatarImage src={player.avatar_url} alt={player.username || ""} sizes="56px" />
+                    </div>
                     <div className="w-full">
                         <h4 className="font-semibold text-xs truncate">
                             {player.display_name || player.username}
@@ -179,7 +168,7 @@ export default function PublicTeamDetailPage({
                                 <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
                                     Brick Number
                                 </div>
-                                <div className="font-mono font-semibold">{teamData.brick_number}</div>
+                                <div className="font-mono font-semibold">{teamData.brick_number ? teamData.brick_number : "-" }</div>
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">

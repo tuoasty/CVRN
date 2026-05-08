@@ -79,7 +79,7 @@ export async function updateSeasonById(
     updates: {
         name?: string;
         startDate?: string;
-        endDate?: string;
+        endDate?: string | null;
         isActive?: boolean;
         slug?: string;
         theme?: string | null;

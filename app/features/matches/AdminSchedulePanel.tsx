@@ -5,6 +5,7 @@ import { useWeekSchedule, usePlayoffSchedule } from "@/app/hooks/useMatches";
 import { useTeamsByIds } from "@/app/hooks/useTeams";
 import { usePlayersByIds } from "@/app/hooks/usePlayers";
 import Image from "next/image";
+import AvatarImage from "@/app/components/ui/AvatarImage";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import ManageMatchDialog from "@/app/features/matches/ManageMatchDialog";
 import CompleteMatchDialog from "@/app/features/matches/CompleteMatchDialog";
@@ -373,11 +374,9 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                             <div className="flex gap-1.5 flex-wrap">
                                                 {referees.map((official) => (
                                                     <div key={official.id} className="flex items-center gap-1">
-                                                        {official.avatar_url && (
-                                                            <div className="relative w-5 h-5 rounded-full overflow-hidden border border-border">
-                                                                <Image src={official.avatar_url} alt={official.username || "Official"} fill sizes="20px" className="object-cover" />
-                                                            </div>
-                                                        )}
+                                                        <div className="relative w-5 h-5 rounded-full overflow-hidden border border-border">
+                                                            <AvatarImage src={official.avatar_url} alt={official.username || "Official"} sizes="20px" />
+                                                        </div>
                                                         <span className="text-xs">{official.display_name || official.username || "Unknown"}</span>
                                                     </div>
                                                 ))}
@@ -392,11 +391,9 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                             <div className="flex gap-1.5 flex-wrap">
                                                 {media.map((official) => (
                                                     <div key={official.id} className="flex items-center gap-1">
-                                                        {official.avatar_url && (
-                                                            <div className="relative w-5 h-5 rounded-full overflow-hidden border border-border">
-                                                                <Image src={official.avatar_url} alt={official.username || "Official"} fill sizes="20px" className="object-cover" />
-                                                            </div>
-                                                        )}
+                                                        <div className="relative w-5 h-5 rounded-full overflow-hidden border border-border">
+                                                            <AvatarImage src={official.avatar_url} alt={official.username || "Official"} sizes="20px" />
+                                                        </div>
                                                         <span className="text-xs">{official.display_name || official.username || "Unknown"}</span>
                                                     </div>
                                                 ))}
