@@ -14,7 +14,11 @@ import {useSeasons} from '@/app/hooks/useSeasons';
 import {toast} from '@/app/utils/toast';
 import {clientLogger} from '@/app/utils/clientLogger';
 import {SheetConfig} from '@/shared/types/db';
-import {ParsedTeamResult} from '@/server/domains/sheets/types';
+import {ParsedTeamResult, ParsedMatchResult} from '@/server/domains/sheets/types';
+
+type PreviewResult =
+    | { type: 'teams'; data: ParsedTeamResult[] }
+    | { type: 'qualifier'; data: ParsedMatchResult[]; errors: { row: number; message: string }[]; totalRows: number; sampleCodes: string }
 import {
     getSheetConfigsAction,
     saveSheetConfigAction,
@@ -24,6 +28,7 @@ import {
     runSyncAction,
     resetConfigAction,
     toggleCronEnabledAction,
+    getLastSyncTimesAction,
 } from '@/app/actions/sheets.actions';
 
 const SHEET_TYPES = ['teams', 'qualifier', 'playoff'] as const;
@@ -56,6 +61,7 @@ export default function AdminSyncPage() {
 
     const [configs, setConfigs] = useState<SheetConfig[]>([]);
     const [configsLoading, setConfigsLoading] = useState(true);
+    const [lastSyncTimes, setLastSyncTimes] = useState<Record<string, string | null>>({});
 
     const [formOpen, setFormOpen] = useState(false);
     const [editingConfig, setEditingConfig] = useState<SheetConfig | null>(null);
@@ -76,13 +82,17 @@ export default function AdminSyncPage() {
 
     const [previewConfig, setPreviewConfig] = useState<SheetConfig | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
-    const [previewResult, setPreviewResult] = useState<ParsedTeamResult[] | null>(null);
+    const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
     const [previewError, setPreviewError] = useState<string | null>(null);
 
     const loadConfigs = useCallback(async () => {
         setConfigsLoading(true);
         const result = await getSheetConfigsAction();
-        if (result.ok) setConfigs(result.value);
+        if (result.ok) {
+            setConfigs(result.value);
+            const timesResult = await getLastSyncTimesAction(result.value.map(c => c.id));
+            if (timesResult.ok) setLastSyncTimes(timesResult.value);
+        }
         setConfigsLoading(false);
     }, []);
 
@@ -246,10 +256,13 @@ export default function AdminSyncPage() {
             const result = await previewSheetAction({
                 sheetId: config.sheet_id,
                 tabName: config.tab_name,
+                sheetType: config.sheet_type,
                 headerRow: config.header_row,
                 blockHeight: config.block_height,
                 blockStride: config.block_stride,
             });
+            clientLogger.debug('AdminSyncPage', 'Preview Result', {PreviewResult:result})
+            console.log(result)
             if (result.ok) {
                 setPreviewResult(result.value);
             } else {
@@ -293,10 +306,8 @@ export default function AdminSyncPage() {
                                     <th>Season</th>
                                     <th>Tab</th>
                                     <th>Type</th>
-                                    <th>Header Row</th>
-                                    <th>Block Height</th>
-                                    <th>Stride</th>
                                     <th>Active</th>
+                                    <th>Last Synced</th>
                                     <th>Auto</th>
                                     <th className="w-48">Actions</th>
                                 </tr>
@@ -304,7 +315,7 @@ export default function AdminSyncPage() {
                             <tbody>
                                 {[...Array(3)].map((_, i) => (
                                     <tr key={i}>
-                                        {[...Array(9)].map((_, j) => (
+                                        {[...Array(7)].map((_, j) => (
                                             <td key={j}><div className="h-4 bg-muted/40 rounded animate-pulse" /></td>
                                         ))}
                                     </tr>
@@ -328,10 +339,8 @@ export default function AdminSyncPage() {
                                     <th>Season</th>
                                     <th>Tab</th>
                                     <th>Type</th>
-                                    <th>Header Row</th>
-                                    <th>Block Height</th>
-                                    <th>Stride</th>
                                     <th>Active</th>
+                                    <th>Last Synced</th>
                                     <th>Auto</th>
                                     <th className="w-48">Actions</th>
                                 </tr>
@@ -349,14 +358,16 @@ export default function AdminSyncPage() {
                                                 {cfg.sheet_type}
                                             </Badge>
                                         </td>
-                                        <td className="text-sm">{cfg.header_row}</td>
-                                        <td className="text-sm">{cfg.block_height}</td>
-                                        <td className="text-sm">{cfg.block_stride}</td>
                                         <td>
                                             {cfg.is_active
                                                 ? <Badge variant="default" className="rounded-sm text-xs">Active</Badge>
                                                 : <Badge variant="secondary" className="rounded-sm text-xs">Inactive</Badge>
                                             }
+                                        </td>
+                                        <td className="text-xs text-muted-foreground whitespace-nowrap">
+                                            {lastSyncTimes[cfg.id]
+                                                ? new Date(lastSyncTimes[cfg.id]!).toLocaleString()
+                                                : <span className="text-muted-foreground/50">Never</span>}
                                         </td>
                                         <td>
                                             <Button
@@ -488,7 +499,14 @@ export default function AdminSyncPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>Sheet Type</Label>
-                            <Select value={form.sheetType} onValueChange={(v) => setForm(f => ({...f, sheetType: v}))}>
+                            <Select
+                                value={form.sheetType}
+                                onValueChange={(v) => setForm(f => ({
+                                    ...f,
+                                    sheetType: v,
+                                    headerRow: v === 'qualifier' ? '8' : v === 'teams' ? '9' : f.headerRow,
+                                }))}
+                            >
                                 <SelectTrigger className="rounded-sm">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -499,7 +517,7 @@ export default function AdminSyncPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        {form.sheetType === 'teams' && (
+                        {(form.sheetType === 'teams' || form.sheetType === 'qualifier') && (
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-2">
                                     <Label htmlFor="header-row">Header Row</Label>
@@ -512,28 +530,30 @@ export default function AdminSyncPage() {
                                         className="rounded-sm"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="block-height">Block Height</Label>
-                                    <Input
-                                        id="block-height"
-                                        inputMode="numeric"
-                                        value={form.blockHeight}
-                                        onChange={e => setForm(f => ({...f, blockHeight: e.target.value}))}
-                                        disabled={saving}
-                                        className="rounded-sm"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="block-stride">Stride</Label>
-                                    <Input
-                                        id="block-stride"
-                                        inputMode="numeric"
-                                        value={form.blockStride}
-                                        onChange={e => setForm(f => ({...f, blockStride: e.target.value}))}
-                                        disabled={saving}
-                                        className="rounded-sm"
-                                    />
-                                </div>
+                                {form.sheetType === 'teams' && (<>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="block-height">Block Height</Label>
+                                        <Input
+                                            id="block-height"
+                                            inputMode="numeric"
+                                            value={form.blockHeight}
+                                            onChange={e => setForm(f => ({...f, blockHeight: e.target.value}))}
+                                            disabled={saving}
+                                            className="rounded-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="block-stride">Stride</Label>
+                                        <Input
+                                            id="block-stride"
+                                            inputMode="numeric"
+                                            value={form.blockStride}
+                                            onChange={e => setForm(f => ({...f, blockStride: e.target.value}))}
+                                            disabled={saving}
+                                            className="rounded-sm"
+                                        />
+                                    </div>
+                                </>)}
                             </div>
                         )}
                         <div className="space-y-2">
@@ -579,13 +599,21 @@ export default function AdminSyncPage() {
                         {previewError && (
                             <p className="text-sm text-destructive p-4 bg-destructive/10 rounded-sm">{previewError}</p>
                         )}
-                        {previewResult && previewResult.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-8">No teams detected. Check header row and tab name.</p>
+                        {previewResult && previewResult.data.length === 0 &&
+                         !(previewResult.type === 'qualifier' && previewResult.errors.length > 0) && (
+                            <div className="text-sm text-muted-foreground text-center py-8 space-y-1">
+                                <p>{previewResult.type === 'qualifier' ? 'No matches detected.' : 'No teams detected.'} Check header row and tab name.</p>
+                                {previewResult.type === 'qualifier' && (
+                                    <p className="text-xs font-mono text-muted-foreground/70">
+                                        {previewResult.totalRows} rows fetched · header_row={previewConfig?.header_row} · {previewResult.sampleCodes || 'no data at expected rows'}
+                                    </p>
+                                )}
+                            </div>
                         )}
-                        {previewResult && previewResult.length > 0 && (
+                        {previewResult && previewResult.type === 'teams' && previewResult.data.length > 0 && (
                             <div className="space-y-1">
                                 <p className="text-xs text-muted-foreground mb-3">
-                                    {previewResult.length} team{previewResult.length !== 1 ? 's' : ''} detected
+                                    {previewResult.data.length} team{previewResult.data.length !== 1 ? 's' : ''} detected
                                 </p>
                                 <div className="panel overflow-hidden">
                                     <table className="table-dense">
@@ -599,7 +627,7 @@ export default function AdminSyncPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {previewResult.map((team) => (
+                                            {previewResult.data.map((team) => (
                                                 <tr key={team.teamNumber}>
                                                     <td className="text-sm font-mono text-muted-foreground">{team.teamNumber}</td>
                                                     <td className="text-sm font-medium">{team.teamName}</td>
@@ -623,6 +651,56 @@ export default function AdminSyncPage() {
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                        )}
+                        {previewResult && previewResult.type === 'qualifier' && previewResult.data.length > 0 && (
+                            <div className="space-y-2">
+                                <p className="text-xs text-muted-foreground mb-3">
+                                    {previewResult.data.length} match{previewResult.data.length !== 1 ? 'es' : ''} detected
+                                    {previewResult.errors.length > 0 && (
+                                        <span className="text-destructive ml-2">· {previewResult.errors.length} parse error{previewResult.errors.length !== 1 ? 's' : ''}</span>
+                                    )}
+                                </p>
+                                <div className="panel overflow-hidden">
+                                    <table className="table-dense">
+                                        <thead>
+                                            <tr>
+                                                <th className="w-16">Code</th>
+                                                <th>Home</th>
+                                                <th>Away</th>
+                                                <th className="w-20">Sets</th>
+                                                <th className="w-16">FF</th>
+                                                <th>Schedule</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {previewResult.data.map((match) => (
+                                                <tr key={match.matchCode}>
+                                                    <td className="text-sm font-mono text-muted-foreground">{match.matchCode}</td>
+                                                    <td className="text-sm font-medium">{match.homeTeamName}</td>
+                                                    <td className="text-sm font-medium">{match.awayTeamName}</td>
+                                                    <td className="text-sm text-muted-foreground">
+                                                        {match.sets.length > 0 ? match.sets.map(s => `${s.homeScore}-${s.awayScore}`).join(', ') : <span className="text-muted-foreground/50">—</span>}
+                                                    </td>
+                                                    <td className="text-sm">
+                                                        {match.isForfeit ? <span className="text-destructive font-medium">FF</span> : <span className="text-muted-foreground/50">—</span>}
+                                                    </td>
+                                                    <td className="text-xs text-muted-foreground">
+                                                        {match.scheduleRaw ?? <span className="text-muted-foreground/50">—</span>}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                        {previewResult && previewResult.type === 'qualifier' && previewResult.errors.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                                <p className="text-xs font-medium text-destructive">Parse errors:</p>
+                                {previewResult.errors.map((e, i) => (
+                                    <p key={i} className="text-xs text-destructive/80">Row {e.row}: {e.message}</p>
+                                ))}
                             </div>
                         )}
                     </div>
@@ -653,7 +731,14 @@ export default function AdminSyncPage() {
                                 />
                                 <div>
                                     <p className="text-sm font-medium">Wipe season data</p>
-                                    <p className="text-xs text-muted-foreground">Hard-deletes all teams and player rosters for this season. Next sync starts fresh.</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {resetTarget?.sheet_type === 'teams'
+                                            ? 'Hard-deletes teams, rosters, and all matches (season + playoff) for this season.'
+                                            : resetTarget?.sheet_type === 'qualifier'
+                                            ? 'Hard-deletes all season matches and playoff matches for this season.'
+                                            : 'Hard-deletes all playoff matches for this season.'}
+                                        {' '}Next sync starts fresh.
+                                    </p>
                                 </div>
                             </label>
                             <label className="flex items-start gap-3 cursor-pointer">
