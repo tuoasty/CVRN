@@ -16,7 +16,7 @@ function formatLog(level: LogLevel, context: string, message: string, data?: unk
             console.warn(...logData);
             break;
         case 'debug':
-            console.debug(...logData);
+            console.log(...logData);
             break;
         default:
             console.log(...logData);

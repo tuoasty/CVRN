@@ -4,6 +4,7 @@ import {SyncResult, SyncTrigger} from "@/server/domains/sheets/types";
 import {findSheetConfigById} from "@/server/db/sheetConfig.repo";
 import {insertSyncLog} from "@/server/db/sheetSyncLog.repo";
 import {syncTeamRoster} from "./syncTeamRoster";
+import {syncMatchResults} from "./syncMatchResults";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 
@@ -23,6 +24,8 @@ export async function syncSheet(
         let syncResult: Result<SyncResult>;
         if (config.sheet_type === 'teams') {
             syncResult = await syncTeamRoster(supabase, config);
+        } else if (config.sheet_type === 'qualifier') {
+            syncResult = await syncMatchResults(supabase, config);
         } else {
             return Err({message: `Sheet type "${config.sheet_type}" sync not yet implemented`, code: "VALIDATION_ERROR"});
         }

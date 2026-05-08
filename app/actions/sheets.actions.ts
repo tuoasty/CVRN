@@ -6,6 +6,7 @@ import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
 import {parseTeamsSheet} from "@/server/domains/sheets/helpers/parseTeamsSheet";
+import {parseQualifierRows} from "@/server/domains/sheets/helpers/parseQualifierRows";
 import {
     findAllSheetConfigs,
     findSheetConfigById,
@@ -17,10 +18,13 @@ import {
 import {
     findAllSyncLogs,
     findSyncLogsByConfigId,
+    findLatestSyncLogByConfigId,
     deleteSyncLogsByConfigId,
 } from "@/server/db/sheetSyncLog.repo";
 import {clearSeasonRosters} from "@/server/db/players.repo";
 import {hardDeleteTeamsBySeasonId} from "@/server/db/teams.repo";
+import {deleteSeasonMatchesBySeasonId} from "@/server/db/matches.repo";
+import {deletePlayoffMatchesBySeasonId} from "@/server/db/playoff.repo";
 import {syncSheet} from "@/server/domains/sheets/commands/syncSheet";
 
 const SaveSheetConfigSchema = z.object({
@@ -53,14 +57,24 @@ async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupab
 export async function previewSheetAction(input: {
     sheetId: string;
     tabName: string;
+    sheetType: string;
     headerRow: number;
     blockHeight: number;
     blockStride: number;
 }) {
     try {
         const {values, bgColors} = await readSheetRangeWithColors(input.sheetId, input.tabName);
+        if (input.sheetType === 'qualifier') {
+            const {results, errors} = parseQualifierRows(values, input.headerRow);
+            const totalRows = values.length;
+            const sampleCodes = values
+                .slice(input.headerRow, input.headerRow + 5)
+                .map((r, i) => `row${input.headerRow + i + 1}[E]="${r[4] ?? ''}"`)
+                .join(', ');
+            return Ok({type: 'qualifier' as const, data: results, errors, totalRows, sampleCodes});
+        }
         const teams = parseTeamsSheet(values, input.headerRow, input.blockHeight, input.blockStride, bgColors);
-        return Ok(teams);
+        return Ok({type: 'teams' as const, data: teams});
     } catch (error) {
         return Err({
             message: error instanceof Error ? error.message : 'Failed to read sheet',
@@ -128,10 +142,23 @@ export async function resetConfigAction(configId: string, options: {
 
     if (options.wipeData) {
         const seasonId = configResult.value.season_id;
-        const r1 = await clearSeasonRosters(supabase, seasonId);
-        if (!r1.ok) errs.push(`Rosters: ${r1.error.message}`);
-        const r2 = await hardDeleteTeamsBySeasonId(supabase, seasonId);
-        if (!r2.ok) errs.push(`Teams: ${r2.error.message}`);
+        const sheetType = configResult.value.sheet_type;
+
+        // FK-safe order: playoff → season matches → rosters → teams
+        if (sheetType === 'playoff' || sheetType === 'qualifier' || sheetType === 'teams') {
+            const r = await deletePlayoffMatchesBySeasonId(supabase, seasonId);
+            if (!r.ok) errs.push(`Playoff matches: ${r.error.message}`);
+        }
+        if (sheetType === 'qualifier' || sheetType === 'teams') {
+            const r = await deleteSeasonMatchesBySeasonId(supabase, seasonId);
+            if (!r.ok) errs.push(`Season matches: ${r.error.message}`);
+        }
+        if (sheetType === 'teams') {
+            const r1 = await clearSeasonRosters(supabase, seasonId);
+            if (!r1.ok) errs.push(`Rosters: ${r1.error.message}`);
+            const r2 = await hardDeleteTeamsBySeasonId(supabase, seasonId);
+            if (!r2.ok) errs.push(`Teams: ${r2.error.message}`);
+        }
     }
 
     if (options.clearLogs) {
@@ -153,6 +180,18 @@ export async function runSyncAction(configId: string) {
     const result = await syncSheet(supabase, configId, 'manual');
     if (result.ok) revalidatePath('/admin/sync');
     return result;
+}
+
+export async function getLastSyncTimesAction(configIds: string[]): Promise<{ok: true; value: Record<string, string | null>} | {ok: false; error: {message: string; code: string}}> {
+    const supabase = await createServerSupabase();
+    const results = await Promise.all(
+        configIds.map(id => findLatestSyncLogByConfigId(supabase, id).then(r => ({id, r})))
+    );
+    const times: Record<string, string | null> = {};
+    for (const {id, r} of results) {
+        times[id] = r.ok && r.value ? r.value.synced_at : null;
+    }
+    return {ok: true, value: times};
 }
 
 export async function toggleCronEnabledAction(configId: string, enabled: boolean) {
