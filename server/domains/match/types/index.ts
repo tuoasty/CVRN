@@ -9,6 +9,7 @@ export interface InsertMatchDto {
     scheduledAt: string | null;
     status: "pending" | "scheduled" | "completed";
     matchType: "season" | "playoffs";
+    matchCode?: string;
 }
 
 export type MatchOfficialEntry = {

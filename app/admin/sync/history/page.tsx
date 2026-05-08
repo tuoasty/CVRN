@@ -22,6 +22,7 @@ const CHANGE_LABELS: Record<string, string> = {
     player_add: 'Added',
     player_remove: 'Removed',
     role_change: 'Role',
+    match_result: 'Match',
 };
 
 function describeChange(c: SyncChange): string {
@@ -36,6 +37,20 @@ function describeChange(c: SyncChange): string {
             return String(c.before.username ?? c.entityId);
         case 'role_change':
             return `${c.before.role} → ${c.after.role}`;
+        case 'match_result': {
+            const after = c.after as {matchCode?: string; status?: string; scheduledAt?: string | null; created?: boolean; homeSetsWon?: number; awaySetsWon?: number; isForfeit?: boolean};
+            const code = after.matchCode ?? c.entityId.slice(0, 8);
+            if (after.created) return `Created ${code} (${after.status ?? 'pending'})`;
+            if (after.status === 'scheduled') {
+                const when = after.scheduledAt ? new Date(after.scheduledAt).toLocaleString() : '—';
+                return `${code} → scheduled ${when}`;
+            }
+            if (after.status === 'completed') {
+                if (after.isForfeit) return `${code} → FF`;
+                return `${code} → sets ${after.homeSetsWon}-${after.awaySetsWon}`;
+            }
+            return `${code} → ${after.status}`;
+        }
         default:
             return JSON.stringify(c.after);
     }
