@@ -140,7 +140,7 @@ export async function syncTeamRoster(
                     });
                     if (!removeResult.ok) {
                         logger.error({playerId: pts.player_id, error: removeResult.error}, "Failed to remove player");
-                        errors.push({row: 0, message: `Remove ${uname}: ${removeResult.error.message}`});
+                        errors.push({row: 0, message: `[${parsedTeam.teamName}] Remove ${uname}: ${removeResult.error.message}`});
                         rowsErrored++;
                     } else {
                         changes.push({
@@ -164,7 +164,7 @@ export async function syncTeamRoster(
                         logger.warn({username: parsedPlayer.username}, "Roblox user not found");
                         errors.push({
                             row: parsedPlayer.rowNumber,
-                            message: `Player "${parsedPlayer.username}" not found on Roblox`,
+                            message: `[${parsedTeam.teamName}] Player "${parsedPlayer.username}" not found on Roblox`,
                         });
                         rowsErrored++;
                         continue;
@@ -182,7 +182,7 @@ export async function syncTeamRoster(
                     });
                     if (!upsertResult.ok) {
                         logger.error({username: parsedPlayer.username, error: upsertResult.error}, "Failed to upsert player");
-                        errors.push({row: parsedPlayer.rowNumber, message: `Upsert ${parsedPlayer.username}: ${upsertResult.error.message}`});
+                        errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Upsert ${parsedPlayer.username}: ${upsertResult.error.message}`});
                         rowsErrored++;
                         continue;
                     }
@@ -195,7 +195,7 @@ export async function syncTeamRoster(
                     });
                     if (!addResult.ok) {
                         logger.error({playerId: upsertResult.value.id, teamId: team.id, error: addResult.error}, "Failed to add player to team");
-                        errors.push({row: parsedPlayer.rowNumber, message: `Add ${parsedPlayer.username}: ${addResult.error.message}`});
+                        errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Add ${parsedPlayer.username}: ${addResult.error.message}`});
                         rowsErrored++;
                         continue;
                     }
@@ -216,7 +216,7 @@ export async function syncTeamRoster(
                     });
                     if (!roleResult.ok) {
                         logger.error({playerId: existing.player_id, error: roleResult.error}, "Failed to update role");
-                        errors.push({row: parsedPlayer.rowNumber, message: `Role ${parsedPlayer.username}: ${roleResult.error.message}`});
+                        errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Role ${parsedPlayer.username}: ${roleResult.error.message}`});
                         rowsErrored++;
                     } else {
                         changes.push({

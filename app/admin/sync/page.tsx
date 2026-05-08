@@ -671,6 +671,8 @@ export default function AdminSyncPage() {
                                                 <th className="w-20">Sets</th>
                                                 <th className="w-16">FF</th>
                                                 <th>Schedule</th>
+                                                <th>Referee</th>
+                                                <th>Media</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -687,6 +689,12 @@ export default function AdminSyncPage() {
                                                     </td>
                                                     <td className="text-xs text-muted-foreground">
                                                         {match.scheduleRaw ?? <span className="text-muted-foreground/50">—</span>}
+                                                    </td>
+                                                    <td className="text-xs text-muted-foreground">
+                                                        {match.referees.length > 0 ? match.referees.join(', ') : <span className="text-muted-foreground/50">—</span>}
+                                                    </td>
+                                                    <td className="text-xs text-muted-foreground">
+                                                        {match.media.length > 0 ? match.media.join(', ') : <span className="text-muted-foreground/50">—</span>}
                                                     </td>
                                                 </tr>
                                             ))}
