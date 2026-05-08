@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import AvatarImage from "@/app/components/ui/AvatarImage";
 import { removePlayerFromTeamAction, setPlayerRoleAction } from "@/app/actions/player.actions";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
@@ -97,17 +97,9 @@ export default function PlayerCard({
         <Card className="rounded-sm hover:border-primary/50 transition-colors h-[280px]">
             <CardContent className="p-4">
                 <div className="flex flex-col items-center text-center space-y-3">
-                    {player.avatar_url && (
-                        <div className="relative w-20 h-20 rounded-sm overflow-hidden border border-border">
-                            <Image
-                                src={player.avatar_url}
-                                alt={player.username || ""}
-                                fill
-                                sizes="80px"
-                                className="object-cover"
-                            />
-                        </div>
-                    )}
+                    <div className="relative w-20 h-20 rounded-sm overflow-hidden border border-border">
+                        <AvatarImage src={player.avatar_url} alt={player.username || ""} sizes="80px" />
+                    </div>
 
                     <div className="w-full">
                         <h4 className="font-semibold text-sm truncate">

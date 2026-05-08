@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/app/components/ui/card";
-import Image from "next/image";
+import AvatarImage from "@/app/components/ui/AvatarImage";
 import { PlayerWithRole } from "@/server/domains/player";
 import { Button } from "@/app/components/ui/button";
 import { useState } from "react";
@@ -168,17 +168,9 @@ export default function CaptainSlotCard({
                         {roleLabels[role]}
                     </div>
 
-                    {player.avatar_url && (
-                        <div className="relative w-20 h-20 rounded-sm overflow-hidden border-2 border-border">
-                            <Image
-                                src={player.avatar_url}
-                                alt={player.username || ""}
-                                fill
-                                sizes="80px"
-                                className="object-cover"
-                            />
-                        </div>
-                    )}
+                    <div className="relative w-20 h-20 rounded-sm overflow-hidden border-2 border-border">
+                        <AvatarImage src={player.avatar_url} alt={player.username || ""} sizes="80px" />
+                    </div>
 
                     <div className="w-full">
                         <h4 className="font-semibold text-sm truncate">

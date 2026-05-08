@@ -23,6 +23,7 @@ interface SeasonWeekPickerProps {
     onWeekChange?: (week: number) => void;
     onMatchTypeChange?: (type: "season" | "playoff") => void;
     onRoundChange?: (round: PlayoffRound) => void;
+    hideSeason?: boolean;
 }
 
 const ROUND_LABELS: Record<string, string> = {
@@ -52,6 +53,7 @@ export default function SeasonWeekPicker({
                                              onWeekChange,
                                              onMatchTypeChange,
                                              onRoundChange,
+                                             hideSeason = false,
                                          }: SeasonWeekPickerProps) {
     const { seasons } = useSeasons();
     const { regions } = useRegions();
@@ -92,31 +94,33 @@ export default function SeasonWeekPicker({
 
     return (
         <div className="space-y-4">
-            <div>
-                <Label>Season</Label>
-                <Select value={selectedSeasonId} onValueChange={onSeasonChange}>
-                    <SelectTrigger className="rounded-sm">
-                        <SelectValue placeholder="Select season" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-sm">
-                        {groupedSeasons.map(({ region, seasons }) => (
-                            <React.Fragment key={region.id}>
-                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                                    {region.name}
-                                </div>
-                                {seasons.map(season => (
-                                    <SelectItem key={season.id} value={season.id} className="rounded-sm">
-                                        {season.name}
-                                        {season.is_active && (
-                                            <span className="ml-2 text-xs text-primary">(Active)</span>
-                                        )}
-                                    </SelectItem>
-                                ))}
-                            </React.Fragment>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+            {!hideSeason && (
+                <div>
+                    <Label>Season</Label>
+                    <Select value={selectedSeasonId} onValueChange={onSeasonChange}>
+                        <SelectTrigger className="rounded-sm">
+                            <SelectValue placeholder="Select season" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-sm">
+                            {groupedSeasons.map(({ region, seasons }) => (
+                                <React.Fragment key={region.id}>
+                                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                        {region.name}
+                                    </div>
+                                    {seasons.map(season => (
+                                        <SelectItem key={season.id} value={season.id} className="rounded-sm">
+                                            {season.name}
+                                            {season.is_active && (
+                                                <span className="ml-2 text-xs text-primary">(Active)</span>
+                                            )}
+                                        </SelectItem>
+                                    ))}
+                                </React.Fragment>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
 
             {showMatchTypePicker && selectedMatchType && onMatchTypeChange && (
                 <div>

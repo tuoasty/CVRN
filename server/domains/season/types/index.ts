@@ -13,7 +13,7 @@ export interface UpdateSeasonInput {
     seasonId: string;
     name?: string;
     startDate?: string;
-    endDate?: string;
+    endDate?: string | null;
     isActive?: boolean;
     slug?: string;
     theme?: string | null;
@@ -37,9 +37,13 @@ export interface SeasonWithPlayoffConfig extends Season {
 export type {
     SeasonIdInput,
     SeasonSlugRegionInput,
+    CreateSeasonSchemaInput,
+    UpdateSeasonSchemaInput,
 } from "./schemas";
 
 export {
     SeasonIdSchema,
     SeasonSlugRegionSchema,
+    CreateSeasonSchema,
+    UpdateSeasonSchema,
 } from "./schemas";

@@ -57,10 +57,12 @@ export default function RobloxPlayerSearch(){
                             <p>Name: {user.name}</p>
                             <p>Display Name: {user.displayName}</p>
                             <p>Has Verified Badge: {user.hasVerifiedBadge ? "Yes" : "No"}</p>
-                            <Image src={user.avatarUrl}
-                                   alt={"Roblox Avatar"}
-                                   width={150}
-                                   height={150}/>
+                            {user.avatarUrl && (
+                                <Image src={user.avatarUrl}
+                                       alt={"Roblox Avatar"}
+                                       width={150}
+                                       height={150}/>
+                            )}
                             <hr />
                         </div>
                     ))}
