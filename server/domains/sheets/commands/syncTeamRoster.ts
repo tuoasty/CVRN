@@ -45,31 +45,32 @@ export async function syncTeamRoster(
                 .map(t => [t.team_number!, t])
         );
 
-        const parsedNumbers = new Set(parsed.map(p => p.teamNumber));
+        const disbandedNumbers = new Set(parsed.filter(p => p.disbanded).map(p => p.teamNumber));
+        const activeTeams = parsed.filter(p => !p.disbanded);
         const changes: SyncChange[] = [];
         let rowsProcessed = 0;
         let rowsErrored = 0;
         const errors: {row: number; message: string}[] = [];
 
-        for (const [num, team] of existingByNumber) {
-            if (!parsedNumbers.has(num)) {
-                const disbandResult = await softDeleteTeamById(supabase, team.id);
-                if (!disbandResult.ok) {
-                    logger.error({teamId: team.id, error: disbandResult.error}, "Failed to disband team");
-                    errors.push({row: 0, message: `Failed to disband team ${team.name}: ${disbandResult.error.message}`});
-                    rowsErrored++;
-                } else {
-                    changes.push({
-                        type: 'team_rename',
-                        entityId: team.id,
-                        before: {name: team.name, disbanded: false},
-                        after: {name: team.name, disbanded: true},
-                    });
-                }
+        for (const num of disbandedNumbers) {
+            const team = existingByNumber.get(num);
+            if (!team) continue;
+            const disbandResult = await softDeleteTeamById(supabase, team.id);
+            if (!disbandResult.ok) {
+                logger.error({teamId: team.id, error: disbandResult.error}, "Failed to disband team");
+                errors.push({row: 0, message: `Failed to disband team ${team.name}: ${disbandResult.error.message}`});
+                rowsErrored++;
+            } else {
+                changes.push({
+                    type: 'team_disband',
+                    entityId: team.id,
+                    before: {name: team.name},
+                    after: {},
+                });
             }
         }
 
-        for (const parsedTeam of parsed) {
+        for (const parsedTeam of activeTeams) {
             rowsProcessed++;
             const slug = generateSlug(parsedTeam.teamName);
             const teamResult = await upsertTeamByNumber(supabase, {

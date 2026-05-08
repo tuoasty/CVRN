@@ -39,6 +39,11 @@ export function parseTeamsSheet(
                 ? k * TEAMS_PER_ROW + slot + 1
                 : teamNumberRaw;
 
+            if (teamName.toUpperCase() === 'DISBANDED') {
+                results.push({teamNumber, teamName: '', teamColor: null, brickNumber: null, players: [], headerCol: col, disbanded: true});
+                continue;
+            }
+
             const teamColor = bgColors?.[headerRowIdx]?.[col + 2] ?? null;
 
             const brickRaw = parseInt(headerData[col + 3]?.trim() ?? '', 10);
@@ -61,7 +66,7 @@ export function parseTeamsSheet(
                 });
             }
 
-            results.push({teamNumber, teamName, teamColor, brickNumber, players, headerCol: col});
+            results.push({teamNumber, teamName, teamColor, brickNumber, players, headerCol: col, disbanded: false});
         }
     }
 
