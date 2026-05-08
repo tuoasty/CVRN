@@ -12,9 +12,11 @@ import {
     updateMatchSchedule,
     rpcCompleteMatch,
     rpcReapplyMatchResult,
+    rpcVoidMatch,
 } from "@/server/db/matches.repo";
 import {findSeasonById} from "@/server/db/seasons.repo";
 import {validateAndCalculateMatchResult} from "@/server/domains/match/helpers/validateAndCalculateMatchResult";
+import {resolveAndAssignMatchOfficials} from "@/server/domains/sheets/helpers/resolveMatchOfficials";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {randomUUID} from "node:crypto";
@@ -50,33 +52,35 @@ export async function syncMatchResults(
             const homeTeamId = nameMap.get(result.homeTeamName.toLowerCase().trim());
             const awayTeamId = nameMap.get(result.awayTeamName.toLowerCase().trim());
 
+            const mc = result.matchCode;
+
             if (!homeTeamId) {
-                errors.push({row: result.rowNumber, message: `Home team "${result.homeTeamName}" not found in season`});
+                errors.push({row: result.rowNumber, message: `[${mc}] Home team "${result.homeTeamName}" not found in season`});
                 rowsErrored++;
                 continue;
             }
             if (!awayTeamId) {
-                errors.push({row: result.rowNumber, message: `Away team "${result.awayTeamName}" not found in season`});
+                errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" not found in season`});
                 rowsErrored++;
                 continue;
             }
 
-            const week = parseInt(result.matchCode.split('-')[0], 10);
+            const week = parseInt(mc.split('-')[0], 10);
             if (isNaN(week)) {
-                errors.push({row: result.rowNumber, message: `Match code "${result.matchCode}": cannot parse week number`});
+                errors.push({row: result.rowNumber, message: `[${mc}] Cannot parse week number from match code`});
                 rowsErrored++;
                 continue;
             }
 
             const scheduledAt = result.scheduleRaw ? parseScheduleCell(result.scheduleRaw, year) : null;
             if (result.scheduleRaw && !scheduledAt) {
-                errors.push({row: result.rowNumber, message: `Schedule "${result.scheduleRaw}": unrecognized format — expected "Month Dth, H:MM AM/PM [GMT±N]" (e.g. "May 2nd, 5:00 PM [GMT+8]")`});
+                errors.push({row: result.rowNumber, message: `[${mc}] Schedule "${result.scheduleRaw}": unrecognized format — expected "Month Dth, H:MM AM/PM [GMT±N]" (e.g. "May 2nd, 5:00 PM [GMT+8]")`});
                 rowsErrored++;
             }
 
-            const existingResult = await findMatchByCode(supabase, result.matchCode, config.season_id);
+            const existingResult = await findMatchByCode(supabase, mc, config.season_id);
             if (!existingResult.ok) {
-                errors.push({row: result.rowNumber, message: `DB error looking up match: ${existingResult.error.message}`});
+                errors.push({row: result.rowNumber, message: `[${mc}] DB error looking up match: ${existingResult.error.message}`});
                 rowsErrored++;
                 continue;
             }
@@ -84,12 +88,6 @@ export async function syncMatchResults(
 
             const hasScores = result.isForfeit || result.sets.length > 0;
             const hasSchedule = scheduledAt !== null;
-
-            if (!hasScores && match?.status === 'completed') {
-                // Don't touch completed matches when sheet has no scores
-                rowsProcessed--;
-                continue;
-            }
 
             // Create match if it doesn't exist
             const wasCreated = !match;
@@ -107,21 +105,70 @@ export async function syncMatchResults(
                     matchCode: result.matchCode,
                 }]);
                 if (!insertResult.ok) {
-                    errors.push({row: result.rowNumber, message: `Failed to create match: ${insertResult.error.message}`});
+                    errors.push({row: result.rowNumber, message: `[${mc}] Failed to create match: ${insertResult.error.message}`});
                     rowsErrored++;
                     continue;
                 }
                 match = insertResult.value[0];
             }
 
+            // Resolve and assign referees/media from sheet
+            if (result.referees.length > 0 || result.media.length > 0) {
+                const officialErrors = await resolveAndAssignMatchOfficials(
+                    supabase,
+                    match.id,
+                    result.referees,
+                    result.media,
+                    result.rowNumber,
+                    mc,
+                );
+                if (officialErrors.length > 0) {
+                    errors.push(...officialErrors);
+                    rowsErrored += officialErrors.length;
+                }
+            }
+
             if (!hasScores) {
-                // Case B/C: schedule only or nothing
-                if (hasSchedule && match.status !== 'completed') {
-                    if (!wasCreated) {
-                        // Existing match — update schedule in DB
+                if (match.status === 'completed') {
+                    // Sheet has no scores — revert completed match
+                    const voidResult = await rpcVoidMatch(supabase, match.id);
+                    if (!voidResult.ok) {
+                        errors.push({row: result.rowNumber, message: `[${mc}] Failed to revert completed match: ${voidResult.error.message}`});
+                        rowsErrored++;
+                        continue;
+                    }
+                    // void_match deletes match_officials — re-assign from sheet
+                    if (result.referees.length > 0 || result.media.length > 0) {
+                        const officialErrors = await resolveAndAssignMatchOfficials(
+                            supabase, match.id, result.referees, result.media, result.rowNumber, mc,
+                        );
+                        if (officialErrors.length > 0) {
+                            errors.push(...officialErrors);
+                            rowsErrored += officialErrors.length;
+                        }
+                    }
+                    changes.push({
+                        type: 'match_result',
+                        entityId: match.id,
+                        before: {status: 'completed'},
+                        after: {matchCode: mc, status: hasSchedule ? 'scheduled' : 'pending', reverted: true},
+                    });
+                    if (hasSchedule) {
                         const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt);
                         if (!scheduleResult.ok) {
-                            errors.push({row: result.rowNumber, message: `Failed to update schedule: ${scheduleResult.error.message}`});
+                            errors.push({row: result.rowNumber, message: `[${mc}] Failed to update schedule after revert: ${scheduleResult.error.message}`});
+                            rowsErrored++;
+                        }
+                    }
+                    continue;
+                }
+
+                // Not completed — normal schedule/created logic
+                if (hasSchedule) {
+                    if (!wasCreated) {
+                        const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt);
+                        if (!scheduleResult.ok) {
+                            errors.push({row: result.rowNumber, message: `[${mc}] Failed to update schedule: ${scheduleResult.error.message}`});
                             rowsErrored++;
                             continue;
                         }
@@ -130,15 +177,14 @@ export async function syncMatchResults(
                         type: 'match_result',
                         entityId: match.id,
                         before: wasCreated ? {} : {status: match.status},
-                        after: {matchCode: result.matchCode, status: 'scheduled', scheduledAt, created: wasCreated},
+                        after: {matchCode: mc, status: 'scheduled', scheduledAt, created: wasCreated},
                     });
                 } else if (wasCreated) {
-                    // New match with no schedule — still record creation
                     changes.push({
                         type: 'match_result',
                         entityId: match.id,
                         before: {},
-                        after: {matchCode: result.matchCode, status: 'pending', created: true},
+                        after: {matchCode: mc, status: 'pending', created: true},
                     });
                 }
                 continue;
@@ -171,7 +217,7 @@ export async function syncMatchResults(
 
             const calcResult = validateAndCalculateMatchResult(matchInput, matchContext);
             if (!calcResult.ok) {
-                errors.push({row: result.rowNumber, message: `Invalid match result: ${calcResult.error.message}`});
+                errors.push({row: result.rowNumber, message: `[${mc}] Invalid match result: ${calcResult.error.message}`});
                 rowsErrored++;
                 continue;
             }
@@ -199,7 +245,7 @@ export async function syncMatchResults(
             }
 
             if (!completeResult.ok) {
-                errors.push({row: result.rowNumber, message: `Failed to complete match: ${completeResult.error.message}`});
+                errors.push({row: result.rowNumber, message: `[${mc}] Failed to complete match: ${completeResult.error.message}`});
                 rowsErrored++;
                 continue;
             }

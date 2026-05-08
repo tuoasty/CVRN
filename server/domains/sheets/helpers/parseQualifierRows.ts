@@ -9,6 +9,8 @@ const COL_SET_START = 12; // M (Sets 1-5: M=12, N=13, O=14, P=15, Q=16)
 const COL_SET_END = 16;   // Q
 const COL_WINNER = 18;   // S
 const COL_NOTE = 19;     // T
+const COL_REFEREE = 21;  // V
+const COL_MEDIA = 23;    // X
 
 function parseSetScore(
     cell: string,
@@ -61,6 +63,8 @@ export function parseQualifierRows(
         const winnerRaw = row[COL_WINNER]?.trim() || null;
         const noteRaw = row[COL_NOTE]?.trim() ?? '';
         const isForfeit = noteRaw.toUpperCase() === 'FF';
+        const referees = (row[COL_REFEREE]?.trim() || '').split('/').map(s => s.trim()).filter(Boolean);
+        const media = (row[COL_MEDIA]?.trim() || '').split('/').map(s => s.trim()).filter(Boolean);
 
         const sets: { setNumber: number; homeScore: number; awayScore: number }[] = [];
         let hasParseError = false;
@@ -90,6 +94,8 @@ export function parseQualifierRows(
             winner: winnerRaw,
             isForfeit,
             scheduleRaw,
+            referees,
+            media,
             rowNumber,
         });
     }
