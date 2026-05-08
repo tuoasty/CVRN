@@ -175,7 +175,7 @@ export default function TeamsDataTable() {
                                                         style={{ backgroundColor: team.brick_color }}
                                                     />
                                                 )}
-                                                <span className="text-sm font-mono">{team.brick_number}</span>
+                                                <span className="text-sm font-mono">{team.brick_number ?? "—"}</span>
                                             </div>
                                         </td>
                                     </tr>

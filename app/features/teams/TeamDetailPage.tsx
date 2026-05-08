@@ -231,7 +231,7 @@ export default function TeamDetailPage({
                                 <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
                                     Brick Number
                                 </div>
-                                <div className="font-mono font-semibold">{teamData.brick_number}</div>
+                                <div className="font-mono font-semibold">{teamData.brick_number ? teamData.brick_number : "-" }</div>
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
