@@ -12,8 +12,12 @@ export function LogoutButton() {
 
     const handleLogout = async () => {
         setLoading(true);
-        await logoutAction();
-        router.push("/auth/login");
+        try {
+            await logoutAction();
+        } finally {
+            setLoading(false);
+            router.push("/auth/login");
+        }
     };
 
     return (

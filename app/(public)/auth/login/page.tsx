@@ -28,13 +28,11 @@ export default function LoginPage() {
         if ("error" in result) {
             setError(result.error.message);
             setLoading(false);
-        } else {
-            if (returnUrl) {
-                router.push(returnUrl);
-            } else {
-                router.push("/admin/dashboard");
-            }
+            return;
         }
+
+        setLoading(false);
+        router.push(returnUrl ?? "/admin/dashboard");
     }
 
     return (
