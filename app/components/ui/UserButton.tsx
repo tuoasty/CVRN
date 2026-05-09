@@ -22,20 +22,23 @@ export default function UserButton() {
         );
 
         const checkAuth = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            setIsAuthenticated(!!user);
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                setIsAuthenticated(!!user);
+                setIsLoading(false);
 
-            if (user) {
-                const { data: roleData } = await supabase
-                    .from("user_roles")
-                    .select("role")
-                    .eq("user_id", user.id)
-                    .single();
+                if (user) {
+                    const { data: roleData } = await supabase
+                        .from("user_roles")
+                        .select("role")
+                        .eq("user_id", user.id)
+                        .single();
 
-                setIsAdmin(!!roleData?.role);
+                    setIsAdmin(!!roleData?.role);
+                }
+            } catch {
+                setIsLoading(false);
             }
-
-            setIsLoading(false);
         };
 
         checkAuth();
@@ -44,7 +47,17 @@ export default function UserButton() {
             setIsAuthenticated(!!session?.user);
             if (!session?.user) {
                 setIsAdmin(false);
+                return;
             }
+            const userId = session.user.id;
+            setTimeout(async () => {
+                const { data: roleData } = await supabase
+                    .from("user_roles")
+                    .select("role")
+                    .eq("user_id", userId)
+                    .single();
+                setIsAdmin(!!roleData?.role);
+            }, 0);
         });
 
         return () => subscription.unsubscribe();
@@ -52,9 +65,8 @@ export default function UserButton() {
 
     const handleClick = () => {
         if (!isAuthenticated) {
-            const returnUrl = encodeURIComponent(pathname);
             startTransition(() => {
-                router.push(`/auth/login?returnUrl=${returnUrl}`);
+                router.push("/auth/login");
             });
             return;
         }
