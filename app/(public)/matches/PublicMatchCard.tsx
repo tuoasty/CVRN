@@ -42,11 +42,11 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
     const awayWon = (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0);
 
     return (
-        <div className="panel p-4">
+        <div className="panel p-3 sm:p-4">
             <div className="space-y-3">
                 {/* Header with status */}
-                <div className="flex items-center justify-between pb-2 border-b border-border">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-start justify-between gap-2 pb-2 border-b border-border">
+                    <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Match {index + 1}
             </span>
@@ -68,7 +68,7 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                             </Badge>
                         )}
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="hidden sm:inline text-xs text-muted-foreground shrink-0">
             {regionTimezone
                 ? formatDateInTimezone(match.scheduled_at, regionTimezone)
                 : match.scheduled_at
@@ -80,12 +80,12 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                 {/* Team matchup - vertical stacking within each column */}
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 py-2">
                     {/* Home Team */}
-                    <div className="flex flex-col items-end gap-1">
+                    <div className="flex flex-col items-end gap-1 min-w-0">
                         {/* Empty space for symmetry */}
                         <div className="min-h-[20px]"></div>
 
                         {/* Team name and logo */}
-                        <div className="flex items-center gap-2 justify-end w-full">
+                        <div className="flex items-center gap-2 justify-end w-full min-w-0">
             <span className={`font-semibold text-xs sm:text-sm text-right truncate ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>
                 {homeTeam?.name || "TBD"}
             </span>
@@ -134,12 +134,12 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                     )}
 
                     {/* Away Team */}
-                    <div className="flex flex-col items-start gap-1">
+                    <div className="flex flex-col items-start gap-1 min-w-0">
                         {/* Empty space for symmetry */}
                         <div className="min-h-[20px]"></div>
 
                         {/* Team name and logo */}
-                        <div className="flex items-center gap-2 justify-start w-full">
+                        <div className="flex items-center gap-2 justify-start w-full min-w-0">
                             <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0">
                                 {awayTeam?.is_bye ? (
                                     <div className="w-full h-full rounded-sm bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
@@ -225,7 +225,7 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                 )}
 
                 {(referees.length > 0 || media.length > 0) && (
-                    <div className="flex items-center gap-4 pt-2 border-t border-border text-xs">
+                    <div className="hidden sm:flex items-center gap-4 pt-2 border-t border-border text-xs">
                         {referees.length > 0 && (
                             <div className="flex items-center gap-2">
                                 <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">Refs</span>

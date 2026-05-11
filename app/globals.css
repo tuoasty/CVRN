@@ -146,7 +146,7 @@
 
   /* Admin Layout */
   .admin-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 py-6;
+    @apply page-narrow py-6;
   }
 
   .admin-section {

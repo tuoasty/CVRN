@@ -14,7 +14,7 @@ const STAFF = [
 export default function PublicFooter(){
     return (
         <footer className="border-t border-border bg-card">
-            <div className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="page-wide py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
 
                 {/* Game Info */}
                 <div className="space-y-4">
@@ -97,7 +97,8 @@ export default function PublicFooter(){
                 </div>
             </div>
 
-            <div className="border-t border-border px-6 py-3 max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+            <div className="border-t border-border">
+                <div className="page-wide py-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                     © 2025 CVRN · Confederate Volleyball Roblox Network
                 </p>
@@ -108,6 +109,7 @@ export default function PublicFooter(){
                 >
                     League Hub →
                 </Link>
+                </div>
             </div>
         </footer>
     )

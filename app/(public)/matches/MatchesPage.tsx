@@ -109,7 +109,7 @@ export default function MatchesPage() {
         <>
             <SeasonSelectionMiddleware />
 
-            <div className="space-y-6 py-6">
+            <div className="page-narrow space-y-6 py-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
