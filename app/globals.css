@@ -93,6 +93,19 @@
 }
 
 @layer components {
+  /* Public Page Container Widths */
+  .page-narrow {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .page-wide {
+    @apply max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .page-bleed {
+    @apply max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
   /* Panel Components */
   .panel {
     @apply bg-card border border-border rounded-sm;
@@ -180,8 +193,3 @@
   }
 }
 
-.user-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1rem;
-}
