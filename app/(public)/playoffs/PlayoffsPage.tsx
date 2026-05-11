@@ -28,7 +28,7 @@ export default function PlayoffsPage() {
         <>
             <SeasonSelectionMiddleware />
 
-            <div className="space-y-6 py-6">
+            <div className="page-narrow space-y-6 py-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
@@ -63,7 +63,7 @@ export default function PlayoffsPage() {
                 </div>
 
                 {!selectedSeasonId ? (
-                    <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
+                    <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">
                         <div className="text-center space-y-3">
                             <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
                             <p className="text-sm text-muted-foreground font-medium">
@@ -72,7 +72,7 @@ export default function PlayoffsPage() {
                         </div>
                     </div>
                 ) : !hasPlayoffs ? (
-                    <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
+                    <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">
                         <div className="text-center space-y-3">
                             <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
                             <p className="text-sm text-muted-foreground font-medium">
@@ -88,7 +88,7 @@ export default function PlayoffsPage() {
                         </div>
                     </div>
                 ) : brackets.length === 0 ? (
-                    <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
+                    <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">
                         <div className="text-center space-y-3">
                             <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
                             <p className="text-sm text-muted-foreground font-medium">
@@ -96,16 +96,18 @@ export default function PlayoffsPage() {
                             </p>
                         </div>
                     </div>
-                ) : (
-                    <div className="-mx-4 sm:-mx-6 lg:-mx-8">
-                        <PlayoffBracketDisplay
-                            brackets={brackets}
-                            seasonId={selectedSeasonId}
-                            regionId={selectedSeason.region_id}
-                        />
-                    </div>
-                )}
+                ) : null}
             </div>
+
+            {selectedSeasonId && hasPlayoffs && !loadingBrackets && brackets.length > 0 && (
+                <div className="page-bleed pb-6">
+                    <PlayoffBracketDisplay
+                        brackets={brackets}
+                        seasonId={selectedSeasonId}
+                        regionId={selectedSeason.region_id}
+                    />
+                </div>
+            )}
         </>
     );
 }

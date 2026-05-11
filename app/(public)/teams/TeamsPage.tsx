@@ -24,7 +24,7 @@ export default function TeamsPage() {
         <>
             <SeasonSelectionMiddleware />
 
-            <div className="space-y-6 py-6">
+            <div className="page-wide space-y-6 py-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
@@ -55,9 +55,14 @@ export default function TeamsPage() {
                         </div>
                     </div>
                 ) : loading && teams.length === 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                        {[...Array(10)].map((_, i) => (
-                            <Skeleton key={i} className="h-32 rounded-sm" />
+                    <div className="rounded-sm border border-border divide-y divide-border overflow-hidden">
+                        {[...Array(8)].map((_, i) => (
+                            <div key={i} className="flex items-center gap-3 px-4 py-3">
+                                <Skeleton className="w-1 h-8 rounded-full shrink-0" />
+                                <Skeleton className="w-9 h-9 rounded-sm shrink-0" />
+                                <Skeleton className="h-4 flex-1 rounded-sm" />
+                                <Skeleton className="h-4 w-10 rounded-sm shrink-0" />
+                            </div>
                         ))}
                     </div>
                 ) : teams.length === 0 ? (
@@ -70,7 +75,7 @@ export default function TeamsPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    <div className="rounded-sm border border-border divide-y divide-border overflow-hidden">
                         {teams.map(team => (
                             <PublicTeamCard key={team.id} team={team} />
                         ))}

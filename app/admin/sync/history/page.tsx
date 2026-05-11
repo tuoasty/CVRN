@@ -85,7 +85,7 @@ function AdminSyncHistoryContent() {
     const logErrors = selectedLog ? (selectedLog.errors as unknown as SyncError[]) : [];
 
     return (
-        <div className="p-6 max-w-5xl mx-auto space-y-6">
+        <div className="admin-container space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-xl font-semibold">Sync History</h1>
                 <div className="flex items-center gap-2">
