@@ -198,7 +198,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                     <div className="flex items-center gap-1.5 bg-muted/50 rounded-sm p-1 border border-border">
                         <button
                             onClick={() => setSortMode("wins")}
-                            className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide rounded-sm transition-all duration-200 ${
+                            className={`px-2 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold uppercase tracking-wide rounded-sm transition-all duration-200 ${
                                 sortMode === "wins"
                                     ? "bg-primary text-primary-foreground shadow-sm"
                                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -208,7 +208,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                         </button>
                         <button
                             onClick={() => setSortMode("lvr")}
-                            className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide rounded-sm transition-all duration-200 ${
+                            className={`px-2 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold uppercase tracking-wide rounded-sm transition-all duration-200 ${
                                 sortMode === "lvr"
                                     ? "bg-primary text-primary-foreground shadow-sm"
                                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -220,7 +220,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                 </div>
             </div>
 
-            <div className="rounded-sm border border-border overflow-hidden shadow-sm">
+            <div className="rounded-sm border border-border overflow-x-auto shadow-sm">
                 <Table>
                     <TableHeader>
                         <TableRow className="hover:bg-transparent border-b-2 border-border bg-muted/30">

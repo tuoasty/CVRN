@@ -28,7 +28,7 @@ export default function PublicNavbar() {
 
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-card">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="page-wide">
                 {/* Desktop: Single Row */}
                 <div className="hidden lg:flex items-center justify-between py-3">
                     <div className="flex items-center gap-8">
@@ -70,7 +70,7 @@ export default function PublicNavbar() {
                                     <Menu className="h-5 w-5" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="right" className="w-72 sm:max-w-sm">
+                            <SheetContent side="right" className="w-[min(288px,calc(100vw-32px))] sm:max-w-sm">
                                 <SheetHeader>
                                     <SheetTitle>CVRN</SheetTitle>
                                     <SheetDescription className="sr-only">
