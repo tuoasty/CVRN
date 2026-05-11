@@ -42,7 +42,7 @@ export default function HomePage() {
         <>
             <SeasonSelectionMiddleware />
 
-            <div className="max-w-[1440px] mx-auto px-4 py-6">
+            <div className="page-wide py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-6">
                     {/* Left Sidebar - Recent/Upcoming Matches */}
                     <aside className="space-y-6">
@@ -130,7 +130,7 @@ export default function HomePage() {
                     </aside>
 
                     {/* Center Column - Featured Match + Standings */}
-                    <main className="space-y-6">
+                    <section className="space-y-6">
                         {/* Featured Match */}
                         {loading ? (
                             <Skeleton className="h-64 rounded-sm" />
@@ -165,7 +165,7 @@ export default function HomePage() {
                                 />
                             </div>
                         </div>
-                    </main>
+                    </section>
 
                     {/* Right Sidebar - Media */}
                     <aside>
