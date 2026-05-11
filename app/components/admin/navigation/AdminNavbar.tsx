@@ -33,7 +33,7 @@ export default function AdminNavbar() {
         <>
         <LoadingComponent isPending={isPending} />
         <header className="sticky top-0 z-50 border-b border-border bg-card">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="page-narrow">
                 {/* Desktop: Single Row */}
                 <div className="hidden lg:flex items-center justify-between py-3">
                     <div className="flex items-center gap-8">

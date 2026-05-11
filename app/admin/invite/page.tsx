@@ -48,6 +48,7 @@ export default function InvitePage() {
     };
 
     return (
+        <div className="admin-container">
         <div className="max-w-2xl">
             <div className="mb-6">
                 <h1>Invite User</h1>
@@ -115,6 +116,7 @@ export default function InvitePage() {
                     )}
                 </CardContent>
             </Card>
+        </div>
         </div>
     );
 }
