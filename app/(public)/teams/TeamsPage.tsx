@@ -76,7 +76,7 @@ export default function TeamsPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="rounded-sm border border-border divide-y divide-border overflow-hidden">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {teams.map((team, index) => (
                             <PublicTeamCard key={team.id} team={team} isPriority={index < 3} />
                         ))}

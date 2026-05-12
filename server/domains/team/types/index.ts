@@ -13,6 +13,10 @@ export interface TeamWithRegion {
     starting_lvr: number;
     is_bye: boolean;
     playerCount?: number;
+    captain?: {
+        displayName: string | null;
+        avatarUrl: string | null;
+    } | null;
     seasons: {
         id: string;
         name: string;
