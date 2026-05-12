@@ -4,7 +4,6 @@ import {DBClient} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {BUCKETS, STORAGE_PATHS} from "@/server/storage/storage.paths";
-import {getFileExtension} from "@/server/utils/fileExtension";
 import {deleteFile, uploadFile} from "@/server/storage/storage.service";
 import {findTeamByIdWithRegion, insertTeam} from "@/server/db/teams.repo";
 import {generateSlug} from "../helpers/generateSlug";
@@ -17,8 +16,7 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
     try {
         const teamId = randomUUID();
         const slug = generateSlug(p.name);
-        const ext = getFileExtension(p.logoFile);
-        const path = STORAGE_PATHS.teamLogo(teamId, ext);
+        const path = STORAGE_PATHS.teamLogo(teamId, 'webp');
 
         const uploadRes = await uploadFile(supabase, {
             bucket: BUCKETS.PUBLIC,
