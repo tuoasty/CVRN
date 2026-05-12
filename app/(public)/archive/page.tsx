@@ -2,6 +2,7 @@
 
 import {BookOpen, Trophy, Medal, Award} from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import {useArchive} from "@/app/hooks/useArchive";
 import {useRegions} from "@/app/hooks/useRegions";
 import {ArchiveSeason} from "@/server/domains/season";
@@ -52,7 +53,8 @@ function SeasonCard({season, regionName}: {season: ArchiveSeason; regionName: st
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 
     return (
-        <div className="panel p-5 space-y-4">
+        <Link href={`/archive/${season.slug}`} className="block group">
+        <div className="panel p-5 space-y-4 group-hover:border-primary/40 transition-colors cursor-pointer">
             <div>
                 <h2 className="text-lg font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                     {season.name}
@@ -84,6 +86,7 @@ function SeasonCard({season, regionName}: {season: ArchiveSeason; regionName: st
                 </div>
             )}
         </div>
+        </Link>
     );
 }
 
