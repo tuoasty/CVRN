@@ -76,8 +76,8 @@ export default function TeamsPage() {
                     </div>
                 ) : (
                     <div className="rounded-sm border border-border divide-y divide-border overflow-hidden">
-                        {teams.map(team => (
-                            <PublicTeamCard key={team.id} team={team} />
+                        {teams.map((team, index) => (
+                            <PublicTeamCard key={team.id} team={team} isPriority={index < 3} />
                         ))}
                     </div>
                 )}
