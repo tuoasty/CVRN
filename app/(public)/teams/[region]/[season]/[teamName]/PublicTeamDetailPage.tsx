@@ -5,6 +5,7 @@ import Image from "next/image";
 import AvatarImage from "@/app/components/ui/AvatarImage";
 import { useRouter } from "next/navigation";
 import { useTeamWithPlayers } from "@/app/hooks/useTeams";
+import { useTeamNameHistory } from "@/app/hooks/useTeamNameHistory";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -68,10 +69,11 @@ export default function PublicTeamDetailPage({
     const teamSlug = safeDecodeURIComponent(teamSlugProp).toLowerCase();
 
     const { team: teamData, players, isLoading: loading, error: displayError } = useTeamWithPlayers(teamSlug, seasonSlug, regionCode);
+    const { history } = useTeamNameHistory(teamData?.id ?? null);
 
     if (loading && !teamData) {
         return (
-            <div className="admin-section">
+            <div className="page-wide py-6">
                 <div className="panel p-6">
                     <div className="flex flex-col items-center justify-center gap-3 py-12">
                         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -84,7 +86,7 @@ export default function PublicTeamDetailPage({
 
     if (displayError) {
         return (
-            <div className="admin-section">
+            <div className="page-wide py-6">
                 <div className="panel p-6">
                     <p className="text-destructive">{displayError}</p>
                 </div>
@@ -94,7 +96,7 @@ export default function PublicTeamDetailPage({
 
     if (!teamData) {
         return (
-            <div className="admin-section">
+            <div className="page-wide py-6">
                 <div className="panel p-6">
                     <p className="text-muted-foreground">Team not found</p>
                 </div>
@@ -120,9 +122,11 @@ export default function PublicTeamDetailPage({
         ...otherPlayers,
     ];
 
+    const formerNames = [...history].reverse().map(h => h.oldName);
+
     return (
-        <div className="admin-section">
-            <div className="admin-header">
+        <div className="page-wide space-y-6 py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-border">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <Button
@@ -136,6 +140,11 @@ export default function PublicTeamDetailPage({
                         </Button>
                     </div>
                     <h1>{teamData.name}</h1>
+                    {formerNames.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            Formerly: {formerNames.join(", ")}
+                        </p>
+                    )}
                     <p className="text-sm text-muted-foreground mt-1">
                         <span className="font-mono font-semibold">{regionCodeDisplay}</span>
                         {" - "}{regionName}{" / "}{seasonName}

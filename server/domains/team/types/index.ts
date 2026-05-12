@@ -12,6 +12,7 @@ export interface TeamWithRegion {
     brick_color: string;
     starting_lvr: number;
     is_bye: boolean;
+    playerCount?: number;
     seasons: {
         id: string;
         name: string;
