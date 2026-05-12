@@ -110,7 +110,7 @@ export default function TeamDetailPage({
 
     if (isLoading && !teamData) {
         return (
-            <div className="admin-section">
+            <div className="admin-container">
                 <div className="panel p-6">
                     <div className="flex flex-col items-center justify-center gap-3 py-12">
                         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -123,7 +123,7 @@ export default function TeamDetailPage({
 
     if (displayError) {
         return (
-            <div className="admin-section">
+            <div className="admin-container">
                 <div className="panel p-6">
                     <p className="text-destructive">{displayError}</p>
                 </div>
@@ -133,7 +133,7 @@ export default function TeamDetailPage({
 
     if (!teamData) {
         return (
-            <div className="admin-section">
+            <div className="admin-container">
                 <div className="panel p-6">
                     <p className="text-muted-foreground">Team not found</p>
                 </div>
@@ -152,6 +152,7 @@ export default function TeamDetailPage({
     };
 
     return (
+        <div className="admin-container">
         <div className="admin-section">
             <div className="admin-header">
                 <div>
@@ -389,6 +390,7 @@ export default function TeamDetailPage({
                     </>
                 )}
             </div>
+        </div>
         </div>
     );
 }

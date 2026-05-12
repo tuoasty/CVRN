@@ -26,7 +26,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <PublicStoreInitializer>
                 <main className="flex-1">{children}</main>
             </PublicStoreInitializer>
-            <PublicFooter />
+            <Suspense fallback={null}>
+                <PublicFooter />
+            </Suspense>
         </div>
     );
 }
