@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 import { TeamWithRegion } from "@/server/domains/team";
 
 interface PublicTeamCardProps {
@@ -28,18 +27,23 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
     return (
         <div
             onClick={handleClick}
-            className={`flex items-center gap-3 px-4 py-3 bg-card transition-colors duration-150 ${
-                canNavigate
-                    ? "cursor-pointer hover:bg-muted/50"
-                    : "opacity-60"
+            className={`group flex flex-col overflow-hidden rounded-sm border border-border bg-card transition-all duration-150 ${
+                canNavigate ? "cursor-pointer hover:border-primary/40 hover:shadow-md" : "opacity-60"
             }`}
         >
+            {/* Hero area */}
             <div
-                className="w-1 self-stretch rounded-full shrink-0"
-                style={{ backgroundColor: brickColor ?? "transparent" }}
-            />
+                className="relative flex items-center justify-center h-36"
+                style={{ backgroundColor: brickColor ? `${brickColor}18` : undefined }}
+            >
+                {/* Left color bar */}
+                {brickColor && (
+                    <div
+                        className="absolute left-0 top-0 bottom-0 w-1"
+                        style={{ backgroundColor: brickColor }}
+                    />
+                )}
 
-            <div className="relative w-9 h-9 shrink-0">
                 {team.logo_url ? (
                     <Image
                         src={team.logo_url}
@@ -50,34 +54,39 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                         className="object-contain mix-blend-multiply dark:mix-blend-screen"
                     />
                 ) : (
-                    <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
-                        <span className="text-[10px] text-muted-foreground font-semibold uppercase">
+                    <div
+                        className="w-20 h-20 rounded-sm border border-border flex items-center justify-center"
+                        style={{ backgroundColor: brickColor ? `${brickColor}30` : undefined }}
+                    >
+                        <span
+                            className="text-2xl font-bold uppercase"
+                            style={{ color: brickColor ?? undefined }}
+                        >
                             {team.name?.slice(0, 2) || "??"}
                         </span>
                     </div>
                 )}
             </div>
 
-            <span className="flex-1 text-sm font-semibold truncate min-w-0">
-                {team.name}
-            </span>
-
-            {team.brick_number && brickColor && (
-                <span
-                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shrink-0"
-                    style={{
-                        backgroundColor: `${brickColor}20`,
-                        color: brickColor,
-                        border: `1px solid ${brickColor}40`,
-                    }}
-                >
-                    #{team.brick_number}
+            {/* Info area */}
+            <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-t border-border">
+                <span className="text-sm font-bold truncate min-w-0 leading-tight">
+                    {team.name}
                 </span>
-            )}
 
-            {canNavigate && (
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-            )}
+                {team.brick_number && brickColor && (
+                    <span
+                        className="text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shrink-0 tabular-nums"
+                        style={{
+                            backgroundColor: `${brickColor}20`,
+                            color: brickColor,
+                            border: `1px solid ${brickColor}40`,
+                        }}
+                    >
+                        #{team.brick_number}
+                    </span>
+                )}
+            </div>
         </div>
     );
 }
