@@ -11,8 +11,9 @@ import {SheetConfig, SheetSyncLog} from '@/shared/types/db';
 import {SyncChange, SyncError} from '@/server/domains/sheets/types';
 import {getSheetConfigsAction, getSyncLogsAction} from '@/app/actions/sheets.actions';
 
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive'> = {
+const STATUS_VARIANT: Record<string, 'default' | 'warning' | 'secondary' | 'destructive'> = {
     success: 'default',
+    warning: 'warning',
     partial: 'secondary',
     failed: 'destructive',
 };
