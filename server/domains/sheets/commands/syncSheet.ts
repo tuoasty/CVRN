@@ -36,7 +36,9 @@ export async function syncSheet(
               ? 'failed'
               : syncResult.value.rowsErrored > 0
                 ? 'partial'
-                : 'success';
+                : syncResult.value.errors.length > 0
+                  ? 'warning'
+                  : 'success';
 
         const result = syncResult.ok ? syncResult.value : {
             rowsProcessed: 0,
