@@ -6,6 +6,7 @@ import {Result, Err} from "@/shared/types/result";
 import {
     TeamWithRegion,
     TeamWithRegionAndPlayers,
+    TeamNameHistoryEntry,
     GetTeamByNameSeasonSchema,
     TeamIdSchema,
     TeamSlugSeasonSchema,
@@ -20,6 +21,7 @@ import {
     getTeamByNameAndSeason,
     getTeamsByIds,
     getTeamWithRegionAndPlayers,
+    getTeamNameHistory,
     updateTeam
 } from "@/server/domains/team";
 import {Team} from "@/shared/types/db";
@@ -92,6 +94,13 @@ export async function getTeamsByIdsAction(teamIds: unknown): Promise<Result<Team
     if (!parsed.success) return Err({message: "Invalid team IDs", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return getTeamsByIds(supabase, parsed.data);
+}
+
+export async function getTeamNameHistoryAction(teamId: string): Promise<Result<TeamNameHistoryEntry[]>> {
+    const parsed = TeamIdSchema.safeParse({teamId});
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getTeamNameHistory(supabase, parsed.data.teamId);
 }
 
 export async function updateTeamAction(formData: FormData) {

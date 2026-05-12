@@ -1,4 +1,6 @@
 export {getAllTeams} from "./queries/getAllTeams";
+export {getTeamNameHistory} from "./queries/getTeamNameHistory";
+export type {TeamNameHistoryEntry} from "@/server/db/teamNameHistory.repo";
 export {getAllTeamsWithRegions} from "./queries/getAllTeamsWithRegions";
 export {getTeamByNameAndSeason} from "./queries/getTeamByNameAndSeason";
 export {getTeamBySlugAndSeasonWithRegion} from "./queries/getTeamBySlugAndSeasonWithRegion";

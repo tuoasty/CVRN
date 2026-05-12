@@ -9,6 +9,7 @@ import {
     upsertTeamByNumber,
     softDeleteTeamById,
 } from "@/server/db/teams.repo";
+import {insertTeamNameHistory} from "@/server/db/teamNameHistory.repo";
 import {
     findAllTeamPlayers,
     addPlayerToTeam,
@@ -108,6 +109,14 @@ export async function syncTeamRoster(
                         before: {name: prev.name},
                         after: {name: parsedTeam.teamName},
                     });
+                    const historyResult = await insertTeamNameHistory(supabase, {
+                        teamId: team.id,
+                        oldName: prev.name,
+                        newName: parsedTeam.teamName,
+                    });
+                    if (!historyResult.ok) {
+                        logger.error({teamId: team.id, error: historyResult.error}, "Failed to record team rename");
+                    }
                 }
             }
 

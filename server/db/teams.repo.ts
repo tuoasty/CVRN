@@ -19,6 +19,8 @@ type TeamWithRegionRow = Team & {
         slug: string;
         regions: {id: string; code: string; name: string};
     };
+    player_team_seasons?: {count: string}[] | null;
+    playerCount?: number;
 };
 
 export async function findAllTeams(supabase: DBClient): Promise<Result<Team[]>> {
@@ -41,12 +43,17 @@ export async function findAllTeamsWithRegions(supabase: DBClient): Promise<Resul
                     code,
                     name
                 )
-            )
+            ),
+            player_team_seasons (count)
         `)
         .is("deleted_at", null)
         .eq("is_bye", false);
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok((data ?? []) as unknown as TeamWithRegionRow[]);
+    const rows = (data ?? []) as unknown as TeamWithRegionRow[];
+    return Ok(rows.map(row => ({
+        ...row,
+        playerCount: parseInt(row.player_team_seasons?.[0]?.count ?? "0", 10),
+    })));
 }
 
 export async function findTeamById(supabase: DBClient, id: string): Promise<Result<Team | null>> {
