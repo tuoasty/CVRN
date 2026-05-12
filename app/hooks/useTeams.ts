@@ -3,7 +3,9 @@ import {
     getAllTeamsWithRegionsAction,
     getTeamsByIdsAction,
     getTeamWithPlayersAction,
+    getTeamsBySeasonAction,
 } from '@/app/actions/team.actions';
+import {Team} from '@/shared/types/db';
 import { TeamWithRegion } from '@/server/domains/team';
 import { PlayerWithRole } from '@/server/domains/player';
 import { useRegionByCode } from './useRegions';
@@ -101,6 +103,34 @@ export function useTeamsByIds(teamIds: string[]) {
 
     return {
         teams: (data as TeamWithRegion[] | undefined) ?? [],
+        isLoading,
+        error: error?.message ?? null,
+        mutate,
+    };
+}
+
+const SEASON_TEAMS_TTL = 5 * 60 * 1000;
+
+async function fetchTeamsBySeason([, seasonId]: [string, string]): Promise<Team[]> {
+    const result = await getTeamsBySeasonAction({seasonId});
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+export function useTeamsBySeason(seasonId: string | null) {
+    const key = seasonId ? ['teamsBySeason', seasonId] as const : null;
+
+    const {data, error, isLoading, mutate} = useSWR(
+        key,
+        fetchTeamsBySeason as BareFetcher<Team[]>,
+        {
+            dedupingInterval: SEASON_TEAMS_TTL,
+            revalidateOnFocus: false,
+        }
+    );
+
+    return {
+        teams: (data as Team[] | undefined) ?? [],
         isLoading,
         error: error?.message ?? null,
         mutate,

@@ -12,6 +12,7 @@ const NAV_ITEMS = [
     { href: "/standings", label: "Standings" },
     { href: "/playoffs", label: "Playoffs" },
     { href: "/teams", label: "Teams" },
+    { href: "/archive", label: "Archive" },
 ];
 
 interface PublicNavItemsProps {
