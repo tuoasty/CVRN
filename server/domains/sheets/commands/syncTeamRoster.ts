@@ -141,18 +141,13 @@ export async function syncTeamRoster(
                 parsedTeam.players.map(p => [p.username.toLowerCase(), p])
             );
 
-            const currentByRobloxId = new Map(
-                currentPlayers
-                    .filter(pts => pts.player?.roblox_user_id)
-                    .map(pts => [pts.player!.roblox_user_id!, pts])
-            );
-
             // Resolve Roblox IDs for all unmatched parsed players upfront
             type Resolution = {parsedPlayer: typeof parsedTeam.players[number]; robloxUser: RobloxUser; avatarUrl: string | null};
             const resolvedByRobloxId = new Map<string, Resolution>();
             const resolvedUsernameToRobloxId = new Map<string, string>();
             const failedResolutions = new Set<string>();
-            const renamedUsernames = new Set<string>();
+            const renamedUsernames = new Set<string>(); // sheet usernames (lowercase) that are outdated
+            const canonicalNamesToSkip = new Set<string>(); // DB usernames (lowercase) to protect from remove
 
             for (const [uname, parsedPlayer] of parsedByUsername) {
                 if (currentByUsername.has(uname)) continue;
@@ -166,6 +161,7 @@ export async function syncTeamRoster(
                     continue;
                 }
                 const robloxUser = robloxResult.value[0];
+                const canonicalName = robloxUser.name.toLowerCase();
                 const robloxId = String(robloxUser.id);
                 const avatarResult = await getRobloxAvatarsById([robloxId]);
                 const avatarUrl = avatarResult.ok ? (avatarResult.value[0]?.imageUrl ?? null) : null;
@@ -173,23 +169,21 @@ export async function syncTeamRoster(
                 resolvedByRobloxId.set(robloxId, {parsedPlayer, robloxUser, avatarUrl});
                 resolvedUsernameToRobloxId.set(uname, robloxId);
 
-                if (currentByRobloxId.has(robloxId)) {
-                    // Same player, outdated username in sheet — warn instead of remove+add
+                // requestedUsername !== name means player renamed on Roblox since sheet was last updated
+                if (canonicalName !== uname && currentByUsername.has(canonicalName)) {
                     errors.push({
                         row: parsedPlayer.rowNumber,
                         message: `[${parsedTeam.teamName}] Username "${parsedPlayer.username}" is outdated — Roblox username is now "${robloxUser.name}". Update the sheet.`,
                     });
                     renamedUsernames.add(uname);
+                    canonicalNamesToSkip.add(canonicalName);
                 }
             }
 
-            const incomingRobloxIds = new Set(resolvedByRobloxId.keys());
-
-            // Remove players not on sheet (skip renamed players)
+            // Remove players not on sheet (skip players whose sheet entry uses their old username)
             for (const [uname, pts] of currentByUsername) {
                 if (parsedByUsername.has(uname)) continue;
-                const currentRobloxId = pts.player?.roblox_user_id ?? null;
-                if (currentRobloxId && incomingRobloxIds.has(currentRobloxId)) continue;
+                if (canonicalNamesToSkip.has(uname)) continue;
 
                 const removeResult = await removePlayerFromTeam(supabase, {
                     playerId: pts.player_id,
