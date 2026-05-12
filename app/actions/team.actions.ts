@@ -23,6 +23,7 @@ import {
     updateTeam
 } from "@/server/domains/team";
 import {Team} from "@/shared/types/db";
+import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
     const {data: {user}} = await supabase.auth.getUser();
@@ -92,6 +93,13 @@ export async function getTeamsByIdsAction(teamIds: unknown): Promise<Result<Team
     if (!parsed.success) return Err({message: "Invalid team IDs", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return getTeamsByIds(supabase, parsed.data);
+}
+
+export async function getTeamsBySeasonAction(input: unknown): Promise<Result<Team[]>> {
+    const parsed = z.object({seasonId: z.string().uuid()}).safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return findTeamsBySeasonId(supabase, parsed.data.seasonId);
 }
 
 export async function updateTeamAction(formData: FormData) {

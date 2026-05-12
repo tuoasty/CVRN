@@ -34,11 +34,68 @@ export interface SeasonWithPlayoffConfig extends Season {
     playoff_configs: PlayoffConfig | null;
 }
 
+export interface SeasonPodiumEntryWithTeam {
+    id: string;
+    season_id: string;
+    team_id: string;
+    place: 1 | 2 | 3;
+    is_override: boolean;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+    teams: {
+        id: string;
+        name: string;
+        slug: string;
+        logo_url: string | null;
+    };
+}
+
+export interface SeasonAwardEntryWithPlayer {
+    id: string;
+    season_id: string;
+    player_id: string;
+    award_name: string;
+    awarded_at: string;
+    created_by: string | null;
+    created_at: string;
+    players: {
+        id: string;
+        username: string;
+    };
+}
+
+export interface ArchiveSeason {
+    id: string;
+    name: string;
+    slug: string;
+    region_id: string;
+    start_date: string;
+    end_date: string | null;
+    season_podium: Array<{
+        place: number;
+        is_override: boolean;
+        notes: string | null;
+        teams: { id: string; name: string; slug: string; logo_url: string | null };
+    }>;
+    season_awards: Array<{
+        id: string;
+        award_name: string;
+        awarded_at: string;
+        players: { id: string; username: string };
+    }>;
+}
+
 export type {
     SeasonIdInput,
     SeasonSlugRegionInput,
     CreateSeasonSchemaInput,
     UpdateSeasonSchemaInput,
+    UpsertSeasonPodiumSlotInput,
+    DeleteSeasonPodiumSlotInput,
+    DeriveSeasonPodiumInput,
+    UpsertSeasonAwardInput,
+    DeleteSeasonAwardInput,
 } from "./schemas";
 
 export {
@@ -46,4 +103,9 @@ export {
     SeasonSlugRegionSchema,
     CreateSeasonSchema,
     UpdateSeasonSchema,
+    UpsertSeasonPodiumSlotSchema,
+    DeleteSeasonPodiumSlotSchema,
+    DeriveSeasonPodiumSchema,
+    UpsertSeasonAwardSchema,
+    DeleteSeasonAwardSchema,
 } from "./schemas";
