@@ -137,10 +137,12 @@ export default function AdminSeasonsPage() {
                                         <td className="text-sm">{formatDate(season.start_date)}</td>
                                         <td className="text-sm">{formatDate(season.end_date)}</td>
                                         <td>
-                                            {season.is_active ? (
+                                            {season.end_date ? (
+                                                <Badge variant="secondary" className="rounded-sm text-xs">Completed</Badge>
+                                            ) : season.is_active ? (
                                                 <Badge variant="default" className="rounded-sm text-xs">Active</Badge>
                                             ) : (
-                                                <Badge variant="secondary" className="rounded-sm text-xs">Inactive</Badge>
+                                                <Badge variant="outline" className="rounded-sm text-xs">Inactive</Badge>
                                             )}
                                         </td>
                                         <td>

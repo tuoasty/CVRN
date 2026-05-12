@@ -256,7 +256,7 @@ export default function SeasonResultsDialog({season, open, onOpenChange}: Season
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Podium</h3>
-                        {season.playoff_completed && (
+                        {!!season.end_date && (
                             <Button variant="outline" size="sm" className="rounded-sm gap-2 text-xs"
                                 onClick={handleDerive} disabled={deriving || loading}
                             >
