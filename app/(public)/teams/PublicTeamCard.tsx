@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { TeamWithRegion } from "@/server/domains/team";
+import { getBrickDisplayColor } from "@/app/lib/brickColor";
 
 interface PublicTeamCardProps {
     team: TeamWithRegion;
@@ -11,13 +13,14 @@ interface PublicTeamCardProps {
 
 export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps) {
     const router = useRouter();
+    const { resolvedTheme } = useTheme();
 
     const regionCode = team.seasons?.regions?.code?.toLowerCase();
     const seasonSlug = team.seasons?.slug?.toLowerCase();
     const teamSlug = team.slug?.toLowerCase();
 
     const canNavigate = !!regionCode && !!seasonSlug && !!teamSlug;
-    const brickColor = team.brick_color;
+    const brickColor = getBrickDisplayColor(team.brick_color, resolvedTheme === "dark");
 
     const hasMeta = team.captain != null || (team.playerCount ?? 0) > 0;
 
