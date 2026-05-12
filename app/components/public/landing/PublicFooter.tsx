@@ -5,7 +5,6 @@ const STAFF = [
     { name: "Sonny", role: "Commissioner" },
     { name: "Ard", role: "Acting Commissioner" },
     { name: "Roppy", role: "Staff" },
-    { name: "Vader", role: "Staff" },
     { name: "Toast", role: "Staff" },
     { name: "Michiru", role: "Staff" },
 ];
@@ -21,12 +20,12 @@ export default function PublicFooter(){
                     <div className="border-l-4 border-l-primary/40 pl-3">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Game</p>
                         <p className="text-sm font-bold">Confederate Volleyball Roblox</p>
-                        <p className="text-xs text-muted-foreground">CVR</p>
+                        <p className="text-xs text-muted-foreground">CVR: Retro</p>
                     </div>
 
                     <div className="space-y-2">
                         <a
-                            href="https://www.roblox.com/games/114786545831333/CVR"
+                            href="https://www.roblox.com/games/79010415692181/CVR-Retro"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors"
