@@ -47,7 +47,8 @@ export async function findAllTeamsWithRegions(supabase: DBClient): Promise<Resul
             player_team_seasons (count)
         `)
         .is("deleted_at", null)
-        .eq("is_bye", false);
+        .eq("is_bye", false)
+        .is("player_team_seasons.left_at", null);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     const rows = (data ?? []) as unknown as TeamWithRegionRow[];
     return Ok(rows.map(row => ({
