@@ -15,6 +15,7 @@ import {
     AlertDialogTitle,
 } from "@/app/components/ui/alert-dialog";
 import SeasonFormDialog from "@/app/features/seasons/SeasonFormDialog";
+import SeasonResultsDialog from "@/app/features/seasons/SeasonResultsDialog";
 import {useSeasons, mutateAllSeasons} from "@/app/hooks/useSeasons";
 import {useRegions} from "@/app/hooks/useRegions";
 import {SeasonWithPlayoffConfig} from "@/server/domains/season";
@@ -30,6 +31,7 @@ export default function AdminSeasonsPage() {
     const [editSeason, setEditSeason] = useState<SeasonWithPlayoffConfig | undefined>(undefined);
     const [deleteTarget, setDeleteTarget] = useState<SeasonWithPlayoffConfig | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [resultsTarget, setResultsTarget] = useState<SeasonWithPlayoffConfig | null>(null);
 
     const regionName = (regionId: string) => {
         const r = regions.find((reg) => reg.id === regionId);
@@ -152,6 +154,14 @@ export default function AdminSeasonsPage() {
                                                     Edit
                                                 </Button>
                                                 <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="rounded-sm"
+                                                    onClick={() => setResultsTarget(season)}
+                                                >
+                                                    Results
+                                                </Button>
+                                                <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -173,6 +183,12 @@ export default function AdminSeasonsPage() {
                 season={editSeason}
                 open={formOpen}
                 onOpenChange={setFormOpen}
+            />
+
+            <SeasonResultsDialog
+                season={resultsTarget}
+                open={!!resultsTarget}
+                onOpenChange={(open) => { if (!open) setResultsTarget(null); }}
             />
 
             <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>

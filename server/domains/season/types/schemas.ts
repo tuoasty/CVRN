@@ -31,3 +31,35 @@ export const UpdateSeasonSchema = z.object({
     theme: z.string().nullable().optional(),
 })
 export type UpdateSeasonSchemaInput = z.infer<typeof UpdateSeasonSchema>
+
+export const UpsertSeasonPodiumSlotSchema = z.object({
+    seasonId: z.uuid(),
+    place: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    teamId: z.uuid(),
+    isOverride: z.boolean().default(false),
+    notes: z.string().nullable().optional(),
+})
+export type UpsertSeasonPodiumSlotInput = z.infer<typeof UpsertSeasonPodiumSlotSchema>
+
+export const DeleteSeasonPodiumSlotSchema = z.object({
+    seasonId: z.uuid(),
+    place: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+})
+export type DeleteSeasonPodiumSlotInput = z.infer<typeof DeleteSeasonPodiumSlotSchema>
+
+export const DeriveSeasonPodiumSchema = z.object({
+    seasonId: z.uuid(),
+})
+export type DeriveSeasonPodiumInput = z.infer<typeof DeriveSeasonPodiumSchema>
+
+export const UpsertSeasonAwardSchema = z.object({
+    seasonId: z.uuid(),
+    playerId: z.uuid(),
+    awardName: z.string().min(1, "Award name is required"),
+})
+export type UpsertSeasonAwardInput = z.infer<typeof UpsertSeasonAwardSchema>
+
+export const DeleteSeasonAwardSchema = z.object({
+    awardId: z.uuid(),
+})
+export type DeleteSeasonAwardInput = z.infer<typeof DeleteSeasonAwardSchema>

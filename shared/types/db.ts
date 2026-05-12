@@ -43,4 +43,10 @@ export type SheetConfig =
 export type SheetSyncLog =
     Database["public"]["Tables"]["sheet_sync_logs"]["Row"];
 
+export type SeasonPodium =
+    Database["public"]["Tables"]["season_podium"]["Row"];
+
+export type SeasonAward =
+    Database["public"]["Tables"]["season_awards"]["Row"];
+
 export type DBClient = SupabaseClient<Database>;
