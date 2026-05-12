@@ -12,15 +12,21 @@ type UpsertTeamByNumberDto = {
     brickNumber?: number | null;
 };
 
+type ActiveMember = {
+    role: string;
+    player: { display_name: string | null; avatar_url: string | null } | null;
+};
+
 type TeamWithRegionRow = Team & {
     seasons: {
         id: string;
         name: string;
         slug: string;
-        regions: {id: string; code: string; name: string};
+        regions: { id: string; code: string; name: string };
     };
-    player_team_seasons?: {count: string}[] | null;
+    player_team_seasons?: ActiveMember[] | null;
     playerCount?: number;
+    captain?: { displayName: string | null; avatarUrl: string | null } | null;
 };
 
 export async function findAllTeams(supabase: DBClient): Promise<Result<Team[]>> {
@@ -44,17 +50,30 @@ export async function findAllTeamsWithRegions(supabase: DBClient): Promise<Resul
                     name
                 )
             ),
-            player_team_seasons (count)
+            player_team_seasons (
+                role,
+                player:players (display_name, avatar_url)
+            )
         `)
         .is("deleted_at", null)
         .eq("is_bye", false)
         .is("player_team_seasons.left_at", null);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     const rows = (data ?? []) as unknown as TeamWithRegionRow[];
-    return Ok(rows.map(row => ({
-        ...row,
-        playerCount: parseInt(row.player_team_seasons?.[0]?.count ?? "0", 10),
-    })));
+    return Ok(rows.map(row => {
+        const members = row.player_team_seasons ?? [];
+        const captainRow = members.find(m => m.role === "captain");
+        return {
+            ...row,
+            playerCount: members.length,
+            captain: captainRow
+                ? {
+                    displayName: captainRow.player?.display_name ?? null,
+                    avatarUrl: captainRow.player?.avatar_url ?? null,
+                  }
+                : null,
+        };
+    }));
 }
 
 export async function findTeamById(supabase: DBClient, id: string): Promise<Result<Team | null>> {
