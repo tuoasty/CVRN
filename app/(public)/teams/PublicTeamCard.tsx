@@ -6,9 +6,10 @@ import { TeamWithRegion } from "@/server/domains/team";
 
 interface PublicTeamCardProps {
     team: TeamWithRegion;
+    isPriority?: boolean;
 }
 
-export default function PublicTeamCard({ team }: PublicTeamCardProps) {
+export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps) {
     const router = useRouter();
 
     const regionCode = team.seasons?.regions?.code?.toLowerCase();
@@ -44,15 +45,14 @@ export default function PublicTeamCard({ team }: PublicTeamCardProps) {
                 )}
 
                 {team.logo_url ? (
-                    <div className="relative w-20 h-20 transition-transform duration-150 group-hover:scale-105">
-                        <Image
-                            src={team.logo_url}
-                            alt={team.name || "Team"}
-                            fill
-                            sizes="80px"
-                            className="object-contain mix-blend-multiply dark:mix-blend-screen"
-                        />
-                    </div>
+                    <Image
+                        src={team.logo_url}
+                        alt={team.name || "Team"}
+                        fill
+                        sizes="36px"
+                        priority={isPriority}
+                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                    />
                 ) : (
                     <div
                         className="w-20 h-20 rounded-sm border border-border flex items-center justify-center"
