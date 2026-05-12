@@ -8,7 +8,7 @@ import {checkUploadRateLimit} from "@/server/utils/rateLimiter";
 
 const IMAGE_VALIDATION = {
     MAX_FILE_SIZE: 2 * 1024 * 1024,
-    MAX_DIMENSION: 512,
+    MAX_DIMENSION: 256,
     ALLOWED_TYPES: ['image/png', 'image/jpeg', 'image/webp'] as string[],
     COMPRESSION_QUALITY: 85,
 } as const;
@@ -49,21 +49,9 @@ async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buf
             withoutEnlargement: true
         });
 
-        let compressed: Buffer;
-        let outputType: string;
+        const compressed = await resized.webp({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
 
-        if (metadata.format === 'png') {
-            compressed = await resized.png({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
-            outputType = 'image/png';
-        } else if (metadata.format === 'webp') {
-            compressed = await resized.webp({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
-            outputType = 'image/webp';
-        } else {
-            compressed = await resized.jpeg({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
-            outputType = 'image/jpeg';
-        }
-
-        return Ok({ buffer: compressed, contentType: outputType });
+        return Ok({ buffer: compressed, contentType: 'image/webp' });
     } catch (error) {
         logger.error({ error }, "Failed to validate and compress image");
         return Err({
