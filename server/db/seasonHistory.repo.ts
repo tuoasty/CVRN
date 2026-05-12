@@ -99,6 +99,24 @@ export async function deleteSeasonAwardById(
     return Ok(true);
 }
 
+export async function findSeasonBySlug(
+    supabase: DBClient,
+    slug: string
+): Promise<Result<unknown>> {
+    const {data, error} = await supabase
+        .from("seasons")
+        .select(`
+            id, name, slug, region_id, start_date, end_date,
+            season_podium(place, is_override, notes, teams(id, name, slug, logo_url)),
+            season_awards(id, award_name, awarded_at, full_avatar_url, full_avatar_synced_at, players(id, username))
+        `)
+        .eq("slug", slug)
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    if (!data) return Err({message: "Season not found", code: "NOT_FOUND"});
+    return Ok(data);
+}
+
 export async function findArchiveSeasons(
     supabase: DBClient
 ): Promise<Result<unknown[]>> {

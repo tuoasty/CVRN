@@ -86,6 +86,29 @@ export interface ArchiveSeason {
     }>;
 }
 
+export interface SeasonDetail {
+    id: string;
+    name: string;
+    slug: string;
+    region_id: string;
+    start_date: string;
+    end_date: string | null;
+    season_podium: Array<{
+        place: number;
+        is_override: boolean;
+        notes: string | null;
+        teams: { id: string; name: string; slug: string; logo_url: string | null };
+    }>;
+    season_awards: Array<{
+        id: string;
+        award_name: string;
+        awarded_at: string;
+        full_avatar_url: string | null;
+        full_avatar_synced_at: string | null;
+        players: { id: string; username: string };
+    }>;
+}
+
 export type {
     SeasonIdInput,
     SeasonSlugRegionInput,

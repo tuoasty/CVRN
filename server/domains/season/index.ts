@@ -12,6 +12,7 @@ export {SeasonIdSchema, SeasonSlugRegionSchema, CreateSeasonSchema, UpdateSeason
 export {getSeasonPodium} from "./queries/getSeasonPodium";
 export {getSeasonAwards} from "./queries/getSeasonAwards";
 export {getArchive} from "./queries/getArchive";
+export {getSeasonDetail} from "./queries/getSeasonDetail";
 export {upsertSeasonPodiumSlot} from "./commands/upsertSeasonPodiumSlot";
 export {deleteSeasonPodiumSlot} from "./commands/deleteSeasonPodiumSlot";
 export {deriveAndSaveSeasonPodium} from "./commands/deriveAndSaveSeasonPodium";
@@ -21,6 +22,7 @@ export type {
     SeasonPodiumEntryWithTeam,
     SeasonAwardEntryWithPlayer,
     ArchiveSeason,
+    SeasonDetail,
     UpsertSeasonPodiumSlotInput,
     DeleteSeasonPodiumSlotInput,
     DeriveSeasonPodiumInput,
