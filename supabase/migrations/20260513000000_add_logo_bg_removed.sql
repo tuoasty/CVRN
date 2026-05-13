@@ -1,7 +1,9 @@
 ALTER TABLE "public"."teams"
   ADD COLUMN "logo_bg_removed" boolean NOT NULL DEFAULT false;
 
-CREATE OR REPLACE VIEW "public"."standings" AS
+DROP VIEW IF EXISTS "public"."standings";
+
+CREATE VIEW "public"."standings" AS
  SELECT "s"."id" AS "season_id",
     "s"."region_id",
     "t"."id" AS "team_id",
