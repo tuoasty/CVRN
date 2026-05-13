@@ -50,14 +50,14 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                 )}
 
                 {team.logo_url ? (
-                    <div className="relative w-28 h-24 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
+                    <div className="relative w-28 h-24">
                         <Image
                             src={team.logo_url}
                             alt={team.name || "Team"}
                             fill
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             priority={isPriority}
-                            className={`${getLogoClassName(team.logo_bg_removed)} p-2`}
+                            className={getLogoClassName(team.logo_bg_removed)}
                         />
                     </div>
                 ) : (
