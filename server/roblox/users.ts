@@ -73,3 +73,24 @@ export async function getRobloxAvatarsById(userIds: string[]): Promise<Result<Ro
         }
     });
 }
+
+export async function getRobloxFullAvatarsById(userIds: string[]): Promise<Result<RobloxThumbnail[]>> {
+    return withBreaker(async () => {
+        try {
+            const {data} = await robloxThumbnailsApi.get<{data: RobloxThumbnail[]}>(
+                "/v1/users/avatar", {
+                    params: {
+                        userIds: userIds.join(","),
+                        size: "420x420",
+                        format: "Png",
+                        isCircular: false,
+                    },
+                }
+            );
+            return Ok(data.data);
+        } catch (error) {
+            logger.error({error}, "Failed to fetch Roblox full avatars by ID");
+            return Err({message: "Roblox API is temporarily unavailable", code: "INTEGRATION_ERROR"});
+        }
+    });
+}
