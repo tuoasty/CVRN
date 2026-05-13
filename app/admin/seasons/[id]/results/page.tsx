@@ -440,52 +440,95 @@ export default function SeasonResultsPage() {
                                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
                                             {CATEGORY_LABELS[cat]}
                                         </p>
-                                        <div className="panel overflow-x-auto">
-                                            <table className="table-dense text-sm w-full">
-                                                <thead>
-                                                    <tr>
-                                                        <th className="w-12">Avatar</th>
-                                                        <th className="text-left">Award</th>
-                                                        <th className="text-left">Player</th>
-                                                        <th className="w-8"></th>
-                                                        <th className="w-8"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {group.map(a => (
-                                                        <tr key={a.id}>
-                                                            <td>
-                                                                <AwardAvatarCell url={a.full_avatar_url} />
-                                                            </td>
-                                                            <td className="font-medium">{a.award_name}</td>
-                                                            <td className="text-muted-foreground">{a.players.username}</td>
-                                                            <td>
+                                        {cat === "first_team" ? (
+                                            <div className="grid grid-cols-7 gap-2">
+                                                {group.map(a => (
+                                                    <div key={a.id} className="flex flex-col items-center gap-1 relative group/card">
+                                                        <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-primary/10">
+                                                            {a.full_avatar_url ? (
+                                                                <Image
+                                                                    src={a.full_avatar_url}
+                                                                    alt={a.players.username}
+                                                                    fill
+                                                                    className="object-cover object-top"
+                                                                    sizes="14vw"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                                                </div>
+                                                            )}
+                                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center gap-1">
                                                                 <Button variant="ghost" size="sm"
-                                                                    className="rounded-sm h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                                                                    className="h-7 w-7 p-0 text-white hover:bg-white/20 rounded-sm"
                                                                     onClick={() => handlePreviewForRefresh(a)}
                                                                     disabled={previewLoading === a.id}
-                                                                    title="Refresh Avatar"
                                                                 >
                                                                     {previewLoading === a.id
-                                                                        ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                                                                        : <ImageIcon className="h-3.5 w-3.5" />
-                                                                    }
+                                                                        ? <RefreshCw className="h-3 w-3 animate-spin" />
+                                                                        : <ImageIcon className="h-3 w-3" />}
                                                                 </Button>
-                                                            </td>
-                                                            <td>
                                                                 <Button variant="ghost" size="sm"
-                                                                    className="rounded-sm h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                    className="h-7 w-7 p-0 text-red-400 hover:bg-white/20 rounded-sm"
                                                                     onClick={() => handleDeleteAward(a.id)}
                                                                     disabled={deletingAward === a.id}
                                                                 >
-                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                    <Trash2 className="h-3 w-3" />
                                                                 </Button>
-                                                            </td>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-[10px] font-medium text-center truncate w-full">{a.players.username}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="panel overflow-x-auto">
+                                                <table className="table-dense text-sm w-full">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="w-12">Avatar</th>
+                                                            <th className="text-left">Award</th>
+                                                            <th className="text-left">Player</th>
+                                                            <th className="w-8"></th>
+                                                            <th className="w-8"></th>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                    </thead>
+                                                    <tbody>
+                                                        {group.map(a => (
+                                                            <tr key={a.id}>
+                                                                <td>
+                                                                    <AwardAvatarCell url={a.full_avatar_url} />
+                                                                </td>
+                                                                <td className="font-medium">{a.award_name}</td>
+                                                                <td className="text-muted-foreground">{a.players.username}</td>
+                                                                <td>
+                                                                    <Button variant="ghost" size="sm"
+                                                                        className="rounded-sm h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                                                                        onClick={() => handlePreviewForRefresh(a)}
+                                                                        disabled={previewLoading === a.id}
+                                                                        title="Refresh Avatar"
+                                                                    >
+                                                                        {previewLoading === a.id
+                                                                            ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                                                            : <ImageIcon className="h-3.5 w-3.5" />
+                                                                        }
+                                                                    </Button>
+                                                                </td>
+                                                                <td>
+                                                                    <Button variant="ghost" size="sm"
+                                                                        className="rounded-sm h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                        onClick={() => handleDeleteAward(a.id)}
+                                                                        disabled={deletingAward === a.id}
+                                                                    >
+                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
