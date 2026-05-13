@@ -25,6 +25,7 @@ import { useTeamWithPlayers, mutateAllTeams } from "@/app/hooks/useTeams";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
+import { getLogoClassName } from "@/app/lib/logoClass";
 import UpdateTeamDialog from "@/app/features/teams/UpdateTeamDialog";
 
 type TeamDetailPageProps = {
@@ -216,7 +217,7 @@ export default function TeamDetailPage({
                                 alt={teamData.name || ""}
                                 fill
                                 sizes="(max-width: 640px) 96px, 128px"
-                                className="object-contain"
+                                className={getLogoClassName(teamData.logo_bg_removed ?? false)}
                             />
                         </div>
                     )}
