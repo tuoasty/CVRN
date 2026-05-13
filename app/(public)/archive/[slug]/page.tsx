@@ -192,7 +192,7 @@ function FirstTeamCard({
                 {award_name}
             </p>
 
-            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-muted">
+            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-yellow-500/10 dark:bg-yellow-500/5 border border-yellow-500/10 dark:border-yellow-500/5">
                 {full_avatar_url ? (
                     <Image
                         src={full_avatar_url}
@@ -262,7 +262,7 @@ function StaffTeamCard({
 
     return (
         <div className="flex flex-col items-center gap-2">
-            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-muted">
+            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-yellow-500/10 dark:bg-yellow-500/5 border border-yellow-500/10 dark:border-yellow-500/5">
                 {full_avatar_url ? (
                     <Image
                         src={full_avatar_url}
