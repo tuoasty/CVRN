@@ -110,7 +110,16 @@ export interface SeasonDetail {
         awarded_at: string;
         full_avatar_url: string | null;
         avatar_bucket_path: string | null;
-        players: { id: string; username: string };
+        players: {
+            id: string;
+            username: string;
+            display_name: string | null;
+            player_team_seasons: Array<{
+                team_id: string;
+                season_id: string;
+                teams: { id: string; name: string; logo_url: string | null; brick_color: string | null } | null;
+            }>;
+        };
     }>;
 }
 
