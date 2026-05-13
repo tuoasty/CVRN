@@ -280,7 +280,7 @@ export default function CompleteMatchDialog({
                     <Trophy className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
+            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>Complete Match</DialogTitle>
                     <p className="text-sm text-muted-foreground mt-1">

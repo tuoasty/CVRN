@@ -1,8 +1,8 @@
 "use server";
 
 import { supabaseAdmin } from "@/server/supabase/admin";
-import { processLogoBackground } from "@/server/storage/imageProcessing";
-import { BUCKETS, extractStoragePath } from "@/server/storage/storage.paths";
+import { processLogoBackground, processLogoBackgroundAggressive } from "@/server/storage/imageProcessing";
+import { BUCKETS, extractStoragePath, STORAGE_PATHS } from "@/server/storage/storage.paths";
 import { Ok, Err, Result } from "@/shared/types/result";
 import { serializeError } from "@/server/utils/serializeableError";
 
@@ -39,12 +39,56 @@ export async function previewLogoProcessing(
 
         const buffer = Buffer.from(await resp.arrayBuffer());
         const result = await processLogoBackground(buffer);
-        const processedBase64 = result.buffer.toString("base64");
 
-        return Ok({ processedBase64, bgRemoved: result.bgRemoved });
+        return Ok({ processedBase64: result.buffer.toString("base64"), bgRemoved: result.bgRemoved });
     } catch (error) {
         return Err(serializeError(error));
     }
+}
+
+export async function previewLogoProcessingAggressive(
+    logoUrl: string
+): Promise<Result<{ processedBase64: string; bgRemoved: boolean }>> {
+    try {
+        const resp = await fetch(logoUrl);
+        if (!resp.ok) return Err({ message: "Failed to fetch logo", name: "FetchError", code: "INTEGRATION_ERROR" });
+
+        const buffer = Buffer.from(await resp.arrayBuffer());
+        const result = await processLogoBackgroundAggressive(buffer);
+
+        return Ok({ processedBase64: result.buffer.toString("base64"), bgRemoved: result.bgRemoved });
+    } catch (error) {
+        return Err(serializeError(error));
+    }
+}
+
+async function applyProcessedLogo(
+    teamId: string,
+    oldLogoUrl: string,
+    processedBuffer: Buffer
+): Promise<Result<true>> {
+    const newPath = STORAGE_PATHS.teamLogoVersioned(teamId, "webp");
+
+    const { error: uploadError } = await supabaseAdmin.storage
+        .from(BUCKETS.PUBLIC)
+        .upload(newPath, processedBuffer, { contentType: "image/webp", upsert: false });
+
+    if (uploadError) return Err(serializeError(uploadError, "DB_ERROR"));
+
+    const { data: urlData } = supabaseAdmin.storage.from(BUCKETS.PUBLIC).getPublicUrl(newPath);
+    const newLogoUrl = urlData.publicUrl;
+
+    const { error: dbError } = await supabaseAdmin
+        .from("teams")
+        .update({ logo_url: newLogoUrl, logo_bg_removed: true })
+        .eq("id", teamId);
+
+    if (dbError) return Err(serializeError(dbError, "DB_ERROR"));
+
+    const oldPath = extractStoragePath(oldLogoUrl, BUCKETS.PUBLIC);
+    await supabaseAdmin.storage.from(BUCKETS.PUBLIC).remove([oldPath]);
+
+    return Ok(true);
 }
 
 export async function applyLogoProcessing(
@@ -62,25 +106,28 @@ export async function applyLogoProcessing(
             return Err({ message: "Logo background could not be removed", name: "NotProcessable", code: "VALIDATION_ERROR" });
         }
 
-        const storagePath = extractStoragePath(logoUrl, BUCKETS.PUBLIC);
+        return applyProcessedLogo(teamId, logoUrl, result.buffer);
+    } catch (error) {
+        return Err(serializeError(error));
+    }
+}
 
-        const { error: uploadError } = await supabaseAdmin.storage
-            .from(BUCKETS.PUBLIC)
-            .upload(storagePath, result.buffer, {
-                contentType: "image/webp",
-                upsert: true,
-            });
+export async function applyLogoProcessingAggressive(
+    teamId: string,
+    logoUrl: string
+): Promise<Result<true>> {
+    try {
+        const resp = await fetch(logoUrl);
+        if (!resp.ok) return Err({ message: "Failed to fetch logo", name: "FetchError", code: "INTEGRATION_ERROR" });
 
-        if (uploadError) return Err(serializeError(uploadError, "DB_ERROR"));
+        const buffer = Buffer.from(await resp.arrayBuffer());
+        const result = await processLogoBackgroundAggressive(buffer);
 
-        const { error: dbError } = await supabaseAdmin
-            .from("teams")
-            .update({ logo_bg_removed: true })
-            .eq("id", teamId);
+        if (!result.bgRemoved) {
+            return Err({ message: "Logo background could not be removed", name: "NotProcessable", code: "VALIDATION_ERROR" });
+        }
 
-        if (dbError) return Err(serializeError(dbError, "DB_ERROR"));
-
-        return Ok(true);
+        return applyProcessedLogo(teamId, logoUrl, result.buffer);
     } catch (error) {
         return Err(serializeError(error));
     }
