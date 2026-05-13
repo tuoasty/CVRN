@@ -311,7 +311,7 @@ export default function UpdateMatchDialog({
                     <Pencil className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl max-h-[85vh] flex flex-col rounded-sm">
+            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl max-h-[85vh] flex flex-col rounded-sm" aria-describedby={undefined}>
                 <DialogHeader className="shrink-0">
                     <DialogTitle>Update Match Results</DialogTitle>
                     <p className="text-sm text-muted-foreground mt-1">
