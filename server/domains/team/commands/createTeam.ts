@@ -41,6 +41,7 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
             name: p.name,
             slug,
             logoUrl: uploadRes.value.url,
+            logoBgRemoved: uploadRes.value.bgRemoved,
             seasonId: p.seasonId,
             brickNumber: p.brickNumber,
             brickColor: p.brickColor,

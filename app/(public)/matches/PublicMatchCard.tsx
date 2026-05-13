@@ -7,6 +7,7 @@ import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
 import { Player } from "@/shared/types/db";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
+import { getLogoClassName } from "@/app/lib/logoClass";
 
 interface PublicMatchCardProps {
     matchDetails: MatchWithDetails;
@@ -89,9 +90,9 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
             <span className={`font-semibold text-xs sm:text-sm text-right truncate ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>
                 {homeTeam?.name || "TBD"}
             </span>
-                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0">
+                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                 {homeTeam?.is_bye ? (
-                                    <div className="w-full h-full rounded-sm bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
+                                    <div className="w-full h-full bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
                                         <span className="text-[10px] sm:text-xs text-orange-600 font-bold">BYE</span>
                                     </div>
                                 ) : homeTeam?.logo_url ? (
@@ -100,7 +101,7 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                                         alt={homeTeam.name}
                                         fill
                                         sizes="40px"
-                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                        className={getLogoClassName(homeTeam.logo_bg_removed)}
                                     />
                                 ) : (
                                     <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
@@ -140,9 +141,9 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
 
                         {/* Team name and logo */}
                         <div className="flex items-center gap-2 justify-start w-full min-w-0">
-                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0">
+                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                 {awayTeam?.is_bye ? (
-                                    <div className="w-full h-full rounded-sm bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
+                                    <div className="w-full h-full bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
                                         <span className="text-[10px] sm:text-xs text-orange-600 font-bold">BYE</span>
                                     </div>
                                 ) : awayTeam?.logo_url ? (
@@ -151,7 +152,7 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                                         alt={awayTeam.name}
                                         fill
                                         sizes="40px"
-                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                        className={getLogoClassName(awayTeam.logo_bg_removed)}
                                     />
                                 ) : (
                                     <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">

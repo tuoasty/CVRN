@@ -14,6 +14,7 @@ import { Calendar, Trophy, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import {formatDateInTimezone, getRegionTimezone} from "@/app/utils/timezoneOptions";
+import { getLogoClassName } from "@/app/lib/logoClass";
 
 type MatchBracketCardProps = {
     bracket: PlayoffBracket;
@@ -98,13 +99,13 @@ export function MatchBracketCard({
                                         </div>
                                     )}
                                     {homeTeam?.logo_url && (
-                                        <div className="relative w-6 h-6 shrink-0">
+                                        <div className="relative w-6 h-6 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                             <Image
                                                 src={homeTeam.logo_url}
                                                 alt={homeTeam.name}
                                                 fill
                                                 sizes="24px"
-                                                className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                className={getLogoClassName(homeTeam.logo_bg_removed)}
                                             />
                                         </div>
                                     )}
@@ -142,13 +143,13 @@ export function MatchBracketCard({
                                         </div>
                                     )}
                                     {awayTeam?.logo_url && (
-                                        <div className="relative w-6 h-6 shrink-0">
+                                        <div className="relative w-6 h-6 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                             <Image
                                                 src={awayTeam.logo_url}
                                                 alt={awayTeam.name}
                                                 fill
                                                 sizes="24px"
-                                                className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                className={getLogoClassName(awayTeam.logo_bg_removed)}
                                             />
                                         </div>
                                     )}
@@ -217,13 +218,13 @@ export function MatchBracketCard({
                                     )}>
                                         <div className="flex items-center gap-2">
                                             {homeTeam?.logo_url && (
-                                                <div className="relative w-4 h-4">
+                                                <div className="relative w-4 h-4 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                                     <Image
                                                         src={homeTeam.logo_url}
                                                         alt={homeTeam.name}
                                                         fill
                                                         sizes="16px"
-                                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                        className={getLogoClassName(homeTeam.logo_bg_removed)}
                                                     />
                                                 </div>
                                             )}
@@ -239,13 +240,13 @@ export function MatchBracketCard({
                                     )}>
                                         <div className="flex items-center gap-2">
                                             {awayTeam?.logo_url && (
-                                                <div className="relative w-4 h-4">
+                                                <div className="relative w-4 h-4 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                                     <Image
                                                         src={awayTeam.logo_url}
                                                         alt={awayTeam.name}
                                                         fill
                                                         sizes="16px"
-                                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                        className={getLogoClassName(awayTeam.logo_bg_removed)}
                                                     />
                                                 </div>
                                             )}
