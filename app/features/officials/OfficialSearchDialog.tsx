@@ -208,7 +208,7 @@ export default function OfficialSearchDialog({
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="max-w-md rounded-sm">
+            <DialogContent className="max-w-md rounded-sm" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>
                         Add {officialType === "referee" ? "Referee" : "Media"}

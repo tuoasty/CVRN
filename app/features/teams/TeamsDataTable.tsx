@@ -126,10 +126,11 @@ export default function TeamsDataTable() {
                     <table className="table-dense">
                         <thead>
                             <tr>
-                                <th className="w-16">Logo</th>
+                                <th className="w-10">Logo</th>
                                 <th>Team Name</th>
                                 {viewAllInRegion && <th>Season</th>}
-                                <th>Brick</th>
+                                <th>Color</th>
+                                <th className="w-20 text-right">Players</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -145,38 +146,48 @@ export default function TeamsDataTable() {
                                     >
                                         <td>
                                             {team.logo_url ? (
-                                                <div className="relative w-10 h-10">
+                                                <div className="relative w-8 h-8">
                                                     <Image
                                                         src={team.logo_url}
                                                         alt={team.name || ""}
                                                         fill
-                                                        sizes="40px"
+                                                        sizes="32px"
                                                         className="object-contain"
                                                     />
                                                 </div>
                                             ) : (
-                                                <div className="w-10 h-10 flex items-center justify-center rounded-sm border border-dashed border-amber-500/60 bg-amber-500/10" title="No logo">
-                                                    <ImageOff className="h-4 w-4 text-amber-500/70" />
+                                                <div className="w-8 h-8 flex items-center justify-center rounded-sm border border-dashed border-amber-500/60 bg-amber-500/10" title="No logo">
+                                                    <ImageOff className="h-3.5 w-3.5 text-amber-500/70" />
                                                 </div>
                                             )}
                                         </td>
                                         <td>
-                                            <div className="font-medium">{team.name}</div>
-                                            <div className="text-xs text-muted-foreground">{team.slug}</div>
+                                            <span className="font-medium">{team.name}</span>
                                         </td>
                                         {viewAllInRegion && (
                                             <td className="text-sm">{seasonName}</td>
                                         )}
                                         <td>
                                             <div className="flex items-center gap-2">
-                                                {team.brick_color && (
-                                                    <div
-                                                        className="w-4 h-4 rounded-sm border border-border"
-                                                        style={{ backgroundColor: team.brick_color }}
-                                                    />
+                                                {team.brick_color ? (
+                                                    <>
+                                                        <div
+                                                            className="w-3.5 h-3.5 rounded-sm border border-border shrink-0"
+                                                            style={{ backgroundColor: team.brick_color }}
+                                                        />
+                                                        <span className="text-xs font-mono text-muted-foreground">
+                                                            {team.brick_color}
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-muted-foreground">—</span>
                                                 )}
-                                                <span className="text-sm font-mono">{team.brick_number ?? "—"}</span>
                                             </div>
+                                        </td>
+                                        <td className="text-right">
+                                            <span className="text-sm font-mono tabular-nums">
+                                                {team.playerCount ?? "—"}<span className="text-muted-foreground">/16</span>
+                                            </span>
                                         </td>
                                     </tr>
                                 );

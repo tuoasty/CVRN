@@ -6,6 +6,7 @@ import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
+import { getLogoClassName } from "@/app/lib/logoClass";
 
 type StandingsTableProps = {
     standings: StandingWithInfo[];
@@ -259,7 +260,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                                         alt={standing.team_name || "Team"}
                                                         width={40}
                                                         height={40}
-                                                        className="rounded object-contain w-full h-full mix-blend-multiply dark:mix-blend-screen"
+                                                        className={`rounded w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
                                                     />
                                                 </div>
                                             )}
