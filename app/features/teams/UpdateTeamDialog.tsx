@@ -152,7 +152,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
                     <Pencil className="h-4 w-4 mr-2" /> Edit Team
                 </Button>
             </DialogTrigger>
-            <DialogContent className="w-[calc(100%-2rem)] !max-w-lg max-h-[90vh] overflow-y-auto rounded-sm">
+            <DialogContent className="w-[calc(100%-2rem)] !max-w-lg max-h-[90vh] overflow-y-auto rounded-sm" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>Edit Team</DialogTitle>
                     <p className="text-sm text-muted-foreground mt-1">

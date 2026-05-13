@@ -197,7 +197,7 @@ function AdminSyncHistoryContent() {
             )}
 
             <Dialog open={!!selectedLog} onOpenChange={open => { if (!open) setSelectedLog(null); }}>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby={undefined}>
                     <DialogHeader>
                         <DialogTitle>
                             Sync Log — {selectedLog && new Date(selectedLog.synced_at).toLocaleString()}
