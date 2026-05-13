@@ -22,6 +22,7 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
 
         const slug = generateSlug(p.name);
         let logoUrl: string | undefined = undefined;
+        let logoBgRemoved: boolean | undefined = undefined;
 
         if (p.logoFile) {
             if (existing.logo_url) {
@@ -46,12 +47,14 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
             }
 
             logoUrl = uploadRes.value.url;
+            logoBgRemoved = uploadRes.value.bgRemoved;
         }
 
         const updateResult = await updateTeamById(supabase, p.teamId, {
             name: p.name,
             slug,
             ...(logoUrl !== undefined && {logoUrl}),
+            ...(logoBgRemoved !== undefined && {logoBgRemoved}),
             brickNumber: p.brickNumber,
             brickColor: p.brickColor,
             startingLvr: p.startingLvr,

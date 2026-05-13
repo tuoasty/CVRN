@@ -111,6 +111,7 @@ export async function insertTeam(supabase: DBClient, p: InsertTeamDto): Promise<
         name: p.name,
         slug: p.slug,
         logo_url: p.logoUrl ?? null,
+        logo_bg_removed: p.logoBgRemoved,
         season_id: p.seasonId,
         brick_number: p.brickNumber,
         brick_color: p.brickColor,
@@ -193,6 +194,7 @@ export async function updateTeamById(supabase: DBClient, id: string, p: {
     name?: string;
     slug?: string;
     logoUrl?: string;
+    logoBgRemoved?: boolean;
     brickNumber?: number;
     brickColor?: string;
     startingLvr?: number;
@@ -203,6 +205,7 @@ export async function updateTeamById(supabase: DBClient, id: string, p: {
             ...(p.name !== undefined && {name: p.name}),
             ...(p.slug !== undefined && {slug: p.slug}),
             ...(p.logoUrl !== undefined && {logo_url: p.logoUrl}),
+            ...(p.logoBgRemoved !== undefined && {logo_bg_removed: p.logoBgRemoved}),
             ...(p.brickNumber !== undefined && {brick_number: p.brickNumber}),
             ...(p.brickColor !== undefined && {brick_color: p.brickColor}),
             ...(p.startingLvr !== undefined && {starting_lvr: p.startingLvr}),

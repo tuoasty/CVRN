@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { TeamWithRegion } from "@/server/domains/team";
 import { getBrickDisplayColor } from "@/app/lib/brickColor";
+import { getLogoClassName } from "@/app/lib/logoClass";
 
 interface PublicTeamCardProps {
     team: TeamWithRegion;
@@ -55,7 +56,7 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         priority={isPriority}
-                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                        className={getLogoClassName(team.logo_bg_removed)}
                     />
                 ) : (
                     <div
