@@ -27,12 +27,15 @@ export async function storeAwardAvatar(
         }
 
         const {data: {publicUrl}} = supabaseAdmin.storage.from(BUCKETS.PUBLIC).getPublicUrl(path);
+        const versionedUrl = `${publicUrl}?t=${Date.now()}`;
 
         const {error: updateError} = await supabaseAdmin
             .from("season_awards")
-            .update({full_avatar_url: publicUrl, avatar_bucket_path: path})
+            .update({
+                full_avatar_url: versionedUrl,
+                avatar_bucket_path: path
+            })
             .eq("id", awardId);
-
         if (updateError) {
             logger.error({error: updateError, awardId}, "storeAwardAvatar: DB update failed");
             return Err(serializeError(updateError, "DB_ERROR"));
