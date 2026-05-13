@@ -109,7 +109,7 @@ export async function findSeasonBySlug(
         .select(`
             id, name, slug, region_id, start_date, end_date,
             season_podium(place, is_override, notes, teams(id, name, slug, logo_url)),
-            season_awards(id, award_name, category, awarded_at, full_avatar_url, avatar_bucket_path, players(id, username))
+            season_awards(id, award_name, category, awarded_at, full_avatar_url, avatar_bucket_path, players(id, username, display_name, player_team_seasons(team_id, season_id, teams(id, name, logo_url, brick_color))))
         `)
         .eq("slug", slug)
         .maybeSingle();
