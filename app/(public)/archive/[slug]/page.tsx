@@ -4,15 +4,21 @@ import Image from "next/image";
 import {Trophy, Medal, Award, ChevronLeft} from "lucide-react";
 import {getSeasonDetailAction} from "@/app/actions/season.actions";
 import {getAllRegionsAction} from "@/app/actions/region.actions";
-import {syncAwardAvatars, needsAvatarSync} from "@/server/domains/season/helpers/syncAwardAvatars";
-import {runInBackground} from "@/server/utils/runInBackground";
-import {SeasonDetail} from "@/server/domains/season";
+import {SeasonDetail, AwardCategory} from "@/server/domains/season";
 
 const PLACE_META = {
     1: {label: "Champion",  color: "text-yellow-500", Icon: Trophy},
     2: {label: "Runner-Up", color: "text-slate-400",  Icon: Medal},
     3: {label: "3rd Place", color: "text-amber-700",  Icon: Medal},
 } as const;
+
+const CATEGORY_LABELS: Record<AwardCategory, string> = {
+    individual_winners: "Individual Awards",
+    first_team: "First Team",
+    staff_team: "Staff Team",
+};
+
+const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "first_team", "staff_team"];
 
 function TeamLogo({name, logoUrl}: {name: string; logoUrl: string | null}) {
     if (logoUrl) {
@@ -83,6 +89,20 @@ function AwardCard({award}: {award: SeasonDetail["season_awards"][number]}) {
     );
 }
 
+function AwardSection({category, awards}: {category: AwardCategory; awards: SeasonDetail["season_awards"]}) {
+    if (awards.length === 0) return null;
+    return (
+        <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                {CATEGORY_LABELS[category]}
+            </p>
+            <div className="flex flex-wrap gap-3">
+                {awards.map(a => <AwardCard key={a.id} award={a} />)}
+            </div>
+        </div>
+    );
+}
+
 export default async function SeasonDetailPage({params}: {params: Promise<{slug: string}>}) {
     const {slug} = await params;
 
@@ -97,10 +117,6 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
     }
 
     const season = seasonResult.value;
-
-    if (season.season_awards.some(a => needsAvatarSync(a.full_avatar_synced_at))) {
-        runInBackground(() => syncAwardAvatars(season.id), "syncAwardAvatars");
-    }
     const regions = regionsResult.ok ? regionsResult.value : [];
     const regionName = regions.find(r => r.id === season.region_id)?.name ?? "Unknown";
 
@@ -108,6 +124,13 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 
     const sorted = [...season.season_podium].sort((a, b) => a.place - b.place);
+
+    const groupedAwards = CATEGORY_ORDER.reduce((acc, cat) => {
+        acc[cat] = season.season_awards.filter(a => a.category === cat);
+        return acc;
+    }, {} as Record<AwardCategory, SeasonDetail["season_awards"]>);
+
+    const hasAwards = season.season_awards.length > 0;
 
     return (
         <div className="page-narrow space-y-6 py-6">
@@ -139,20 +162,18 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
                 </div>
             )}
 
-            {season.season_awards.length > 0 && (
-                <div className="space-y-3">
+            {hasAwards && (
+                <div className="space-y-5">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                         <Award className="h-3 w-3" /> Awards
                     </p>
-                    <div className="flex flex-wrap gap-3">
-                        {season.season_awards.map(a => (
-                            <AwardCard key={a.id} award={a} />
-                        ))}
-                    </div>
+                    {CATEGORY_ORDER.map(cat => (
+                        <AwardSection key={cat} category={cat} awards={groupedAwards[cat]} />
+                    ))}
                 </div>
             )}
 
-            {sorted.length === 0 && season.season_awards.length === 0 && (
+            {sorted.length === 0 && !hasAwards && (
                 <div className="panel p-6 text-center">
                     <p className="text-muted-foreground text-sm">Results not yet recorded.</p>
                 </div>
