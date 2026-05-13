@@ -171,10 +171,22 @@ function IndividualAwardCard({
     );
 }
 
-function FirstTeamCard({award}: {award: SeasonDetail["season_awards"][number]}) {
+function FirstTeamCard({
+    award,
+    seasonId,
+}: {
+    award: SeasonDetail["season_awards"][number];
+    seasonId: string;
+}) {
     const {award_name, full_avatar_url, players} = award;
+    const team = getAwardTeam(award, seasonId);
+
     return (
         <div className="flex flex-col items-center gap-2">
+            <p className="text-[10px] uppercase tracking-wide text-amber-500 dark:text-yellow-400 font-semibold text-center line-clamp-2 min-h-[24px]">
+                {award_name}
+            </p>
+
             <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-neutral-900">
                 {full_avatar_url ? (
                     <Image
@@ -187,27 +199,37 @@ function FirstTeamCard({award}: {award: SeasonDetail["season_awards"][number]}) 
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
                         <span className="text-sm font-bold text-primary">
-                            {(players.username ?? "?").slice(0, 2).toUpperCase()}
+                            {(players.username ?? "?")
+                                .slice(0, 2)
+                                .toUpperCase()}
                         </span>
                     </div>
                 )}
             </div>
+
             <div className="flex flex-col items-center gap-0.5 w-full">
-                <p className="text-[10px] uppercase tracking-wide text-amber-500 dark:text-yellow-400 font-semibold text-center truncate w-full">
-                    {award_name}
-                </p>
                 <p className="text-xs font-semibold text-center leading-tight truncate w-full">
                     {players.display_name ?? players.username}
                 </p>
+
                 <p className="text-[10px] text-muted-foreground text-center truncate w-full">
                     @{players.username}
                 </p>
+
+                {team && (
+                    <p
+                        className="text-[10px] font-semibold mt-1 tracking-wide"
+                        style={{color: team.brick_color ?? undefined}}
+                    >
+                        {team.name}
+                    </p>
+                )}
             </div>
         </div>
     );
 }
 
-function FirstTeamSection({awards}: {awards: SeasonDetail["season_awards"]}) {
+function FirstTeamSection({awards, seasonId}: {awards: SeasonDetail["season_awards"]; seasonId:string}) {
     if (awards.length === 0) return null;
     const slots = Array.from({length: 7}, (_, i) => awards[i] ?? null);
     return (
@@ -218,7 +240,7 @@ function FirstTeamSection({awards}: {awards: SeasonDetail["season_awards"]}) {
             <div className="rounded-sm border border-yellow-500/25 bg-yellow-500/[0.03] p-4 grid grid-cols-7 gap-4">
                 {slots.map((award, i) =>
                     award
-                        ? <FirstTeamCard key={award.id} award={award} />
+                        ? <FirstTeamCard key={award.id} award={award} seasonId={seasonId} />
                         : <div key={i} className="aspect-[3/4] rounded-sm bg-muted/20" />
                 )}
             </div>
@@ -292,7 +314,7 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
                 </div>
             )}
 
-            {firstTeamAwards.length > 0 && <FirstTeamSection awards={firstTeamAwards} />}
+            {firstTeamAwards.length > 0 && <FirstTeamSection awards={firstTeamAwards} seasonId={season.id}/>}
 
             {!hasContent && (
                 <div className="panel p-6 text-center">
