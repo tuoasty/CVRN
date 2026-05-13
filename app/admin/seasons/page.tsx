@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useState} from "react";
+import Link from "next/link";
 import {CalendarDays, Plus} from "lucide-react";
 import {Button} from "@/app/components/ui/button";
 import {Badge} from "@/app/components/ui/badge";
@@ -15,7 +16,6 @@ import {
     AlertDialogTitle,
 } from "@/app/components/ui/alert-dialog";
 import SeasonFormDialog from "@/app/features/seasons/SeasonFormDialog";
-import SeasonResultsDialog from "@/app/features/seasons/SeasonResultsDialog";
 import {useSeasons, mutateAllSeasons} from "@/app/hooks/useSeasons";
 import {useRegions} from "@/app/hooks/useRegions";
 import {SeasonWithPlayoffConfig} from "@/server/domains/season";
@@ -31,8 +31,6 @@ export default function AdminSeasonsPage() {
     const [editSeason, setEditSeason] = useState<SeasonWithPlayoffConfig | undefined>(undefined);
     const [deleteTarget, setDeleteTarget] = useState<SeasonWithPlayoffConfig | null>(null);
     const [deleting, setDeleting] = useState(false);
-    const [resultsTarget, setResultsTarget] = useState<SeasonWithPlayoffConfig | null>(null);
-
     const regionName = (regionId: string) => {
         const r = regions.find((reg) => reg.id === regionId);
         return r ? `${r.code.toUpperCase()} — ${r.name}` : regionId;
@@ -159,9 +157,9 @@ export default function AdminSeasonsPage() {
                                                     variant="outline"
                                                     size="sm"
                                                     className="rounded-sm"
-                                                    onClick={() => setResultsTarget(season)}
+                                                    asChild
                                                 >
-                                                    Results
+                                                    <Link href={`/admin/seasons/${season.id}/results`}>Results</Link>
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -185,12 +183,6 @@ export default function AdminSeasonsPage() {
                 season={editSeason}
                 open={formOpen}
                 onOpenChange={setFormOpen}
-            />
-
-            <SeasonResultsDialog
-                season={resultsTarget}
-                open={!!resultsTarget}
-                onOpenChange={(open) => { if (!open) setResultsTarget(null); }}
             />
 
             <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>

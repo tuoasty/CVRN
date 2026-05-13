@@ -2,7 +2,7 @@
 
 import {createServerSupabase} from "@/server/supabase/server";
 import {Err, Ok} from "@/shared/types/result";
-import {getAllSeasons, getSeasonBySlugAndRegion, createSeason, updateSeason, deleteSeason} from "@/server/domains/season";
+import {getAllSeasons, getSeasonBySlugAndRegion, createSeason, updateSeason, deleteSeason, getSeasonById} from "@/server/domains/season";
 import {SeasonSlugRegionSchema, SeasonIdSchema, CreateSeasonSchema, UpdateSeasonSchema} from "@/server/domains/season";
 import {
     getSeasonPodium, getSeasonAwards, getArchive, getSeasonDetail,
@@ -23,6 +23,13 @@ async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupab
 export async function getAllSeasonsAction() {
     const supabase = await createServerSupabase();
     return getAllSeasons(supabase);
+}
+
+export async function getSeasonByIdAction(input: unknown) {
+    const parsed = SeasonIdSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getSeasonById(supabase, parsed.data);
 }
 
 export async function getSeasonBySlugAndRegionAction(input: unknown) {

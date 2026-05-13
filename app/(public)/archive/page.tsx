@@ -1,18 +1,12 @@
 "use client";
 
-import {BookOpen, Trophy, Medal, Award} from "lucide-react";
+import {BookOpen, Trophy, Medal} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import {useArchive} from "@/app/hooks/useArchive";
 import {useRegions} from "@/app/hooks/useRegions";
-import {ArchiveSeason, AwardCategory} from "@/server/domains/season";
+import {ArchiveSeason} from "@/server/domains/season";
 import {Skeleton} from "@/app/components/ui/skeleton";
-
-const CATEGORY_SHORT: Record<AwardCategory, string> = {
-    individual_winners: "Individual",
-    first_team: "First Team",
-    staff_team: "Staff",
-};
 
 const PLACE_META = {
     1: {label: "Champion",  color: "text-yellow-500", Icon: Trophy},
@@ -78,22 +72,6 @@ function SeasonCard({season, regionName}: {season: ArchiveSeason; regionName: st
                 <p className="text-xs text-muted-foreground italic">Results not yet recorded.</p>
             )}
 
-            {season.season_awards.length > 0 && (
-                <div className="space-y-1 pt-2 border-t border-border">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                        <Award className="h-3 w-3" /> Awards
-                    </p>
-                    {season.season_awards.map(a => (
-                        <p key={a.id} className="text-sm flex items-center gap-1.5 flex-wrap">
-                            <span className="font-medium">{a.award_name}</span>
-                            <span className="text-muted-foreground">— {a.players.username}</span>
-                            <span className="text-[10px] uppercase tracking-wide text-primary/60 bg-primary/10 px-1 py-0.5 rounded-sm">
-                                {CATEGORY_SHORT[a.category as AwardCategory] ?? a.category}
-                            </span>
-                        </p>
-                    ))}
-                </div>
-            )}
         </div>
         </Link>
     );
