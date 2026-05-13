@@ -10,6 +10,7 @@ import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { ChevronLeft } from "lucide-react";
+import { getLogoClassName } from "@/app/lib/logoClass";
 import { PlayerWithRole } from "@/server/domains/player";
 import { Card, CardContent } from "@/app/components/ui/card";
 
@@ -155,13 +156,13 @@ export default function PublicTeamDetailPage({
             <div className="panel p-6">
                 <div className="flex items-start gap-6">
                     {teamData.logo_url && (
-                        <div className="relative w-32 h-32 shrink-0">
+                        <div className="relative w-32 h-32 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                             <Image
                                 src={teamData.logo_url}
                                 alt={teamData.name || ""}
                                 fill
                                 sizes="128px"
-                                className="object-contain"
+                                className={`${getLogoClassName(teamData.logo_bg_removed)} p-2`}
                             />
                         </div>
                     )}

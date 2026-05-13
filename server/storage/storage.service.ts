@@ -5,6 +5,7 @@ import {logger} from "@/server/utils/logger";
 import sharp from 'sharp';
 import {getUserRole} from "@/server/db/roles.repo";
 import {checkUploadRateLimit} from "@/server/utils/rateLimiter";
+import {processLogoBackground} from "./imageProcessing";
 
 const IMAGE_VALIDATION = {
     MAX_FILE_SIZE: 2 * 1024 * 1024,
@@ -13,7 +14,7 @@ const IMAGE_VALIDATION = {
     COMPRESSION_QUALITY: 85,
 } as const;
 
-async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buffer: Buffer; contentType: string }>> {
+async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buffer: Buffer; contentType: string; bgRemoved: boolean }>> {
     try {
         if (file.size > IMAGE_VALIDATION.MAX_FILE_SIZE) {
             return Err({
@@ -44,14 +45,14 @@ async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buf
             });
         }
 
-        const resized = image.resize(IMAGE_VALIDATION.MAX_DIMENSION, IMAGE_VALIDATION.MAX_DIMENSION, {
+        const resizedBuffer = await image.resize(IMAGE_VALIDATION.MAX_DIMENSION, IMAGE_VALIDATION.MAX_DIMENSION, {
             fit: 'inside',
             withoutEnlargement: true
-        });
+        }).webp({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
 
-        const compressed = await resized.webp({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
+        const processed = await processLogoBackground(resizedBuffer);
 
-        return Ok({ buffer: compressed, contentType: 'image/webp' });
+        return Ok({ buffer: processed.buffer, contentType: 'image/webp', bgRemoved: processed.bgRemoved });
     } catch (error) {
         logger.error({ error }, "Failed to validate and compress image");
         return Err({
@@ -70,7 +71,7 @@ export async function uploadFile(supabase: DBClient, p: {
     upsert?:boolean;
     compress?: boolean;
     userId: string;
-}): Promise<Result<{ url:string;path:string }>> {
+}): Promise<Result<{ url:string;path:string;bgRemoved:boolean }>> {
     try {
         const roleResult = await getUserRole(supabase, p.userId);
         if (!roleResult.ok) {
@@ -92,6 +93,7 @@ export async function uploadFile(supabase: DBClient, p: {
 
         let fileToUpload: File | Blob | Buffer = p.file;
         let contentType = p.contentType;
+        let bgRemoved = false;
 
         if (p.compress) {
             const compressionResult = await validateAndCompressImage(p.file);
@@ -100,6 +102,7 @@ export async function uploadFile(supabase: DBClient, p: {
             }
             fileToUpload = compressionResult.value.buffer;
             contentType = compressionResult.value.contentType;
+            bgRemoved = compressionResult.value.bgRemoved;
         }
 
         const {data, error} = await supabase.storage.from(p.bucket).upload(p.path, fileToUpload, {
@@ -123,7 +126,8 @@ export async function uploadFile(supabase: DBClient, p: {
         const { data: publicUrlData } = supabase.storage.from(p.bucket).getPublicUrl(data.path)
         return Ok({
             url:publicUrlData.publicUrl,
-            path:data.path
+            path:data.path,
+            bgRemoved,
         })
     } catch (error) {
         logger.error({error}, "Unexpected error uploading file");

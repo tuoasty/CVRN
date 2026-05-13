@@ -8,9 +8,10 @@ type Props = {
     src: string | null | undefined;
     alt: string;
     sizes: string;
+    priority?: boolean;
 };
 
-export default function AvatarImage({ src, alt, sizes }: Props) {
+export default function AvatarImage({ src, alt, sizes, priority }: Props) {
     const [errored, setErrored] = useState(false);
 
     if (!src || errored) {
@@ -28,6 +29,7 @@ export default function AvatarImage({ src, alt, sizes }: Props) {
             fill
             sizes={sizes}
             className="object-cover"
+            priority={priority}
             onError={() => setErrored(true)}
         />
     );
