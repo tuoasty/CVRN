@@ -248,6 +248,76 @@ function FirstTeamSection({awards, seasonId}: {awards: SeasonDetail["season_awar
     );
 }
 
+function StaffTeamCard({
+    award,
+}: {
+    award: SeasonDetail["season_awards"][number];
+}) {
+    const {full_avatar_url, players} = award;
+
+    return (
+        <div className="flex flex-col items-center gap-2">
+            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-neutral-900">
+                {full_avatar_url ? (
+                    <Image
+                        src={full_avatar_url}
+                        alt={players.username ?? "Player"}
+                        fill
+                        className="object-cover object-top"
+                        sizes="15vw"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-sm font-bold text-primary">
+                            {(players.username ?? "?")
+                                .slice(0, 2)
+                                .toUpperCase()}
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            <div className="flex flex-col items-center gap-0.5 w-full">
+                <p className="text-xs font-semibold text-center leading-tight truncate w-full">
+                    {players.display_name ?? players.username}
+                </p>
+
+                <p className="text-[10px] text-muted-foreground text-center truncate w-full">
+                    @{players.username}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+function StaffTeamSection({awards}: {awards: SeasonDetail["season_awards"]}) {
+    if (awards.length === 0) return null;
+
+    return (
+        <div className="space-y-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Award className="h-3 w-3" /> Staff Team
+            </p>
+
+            <div
+                className="
+                    rounded-sm border border-yellow-500/25 bg-yellow-500/[0.03] p-4
+                    grid gap-4
+                    [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]
+                "
+            >
+                {awards.map((award) => (
+                    <StaffTeamCard
+                        key={award.id}
+                        award={award}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function SeasonDetailPage({params}: {params: Promise<{slug: string}>}) {
@@ -272,6 +342,7 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
 
     const individualAwards = season.season_awards.filter(a => a.category === "individual_winners");
     const firstTeamAwards = season.season_awards.filter(a => a.category === "first_team");
+    const staffTeamAwards = season.season_awards.filter(a => a.category === "staff_team");
     const hasPodium = season.season_podium.length > 0;
     const hasContent = hasPodium || individualAwards.length > 0 || firstTeamAwards.length > 0;
 
@@ -315,6 +386,7 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
             )}
 
             {firstTeamAwards.length > 0 && <FirstTeamSection awards={firstTeamAwards} seasonId={season.id}/>}
+            {staffTeamAwards.length > 0 && <StaffTeamSection awards={staffTeamAwards}/>}
 
             {!hasContent && (
                 <div className="panel p-6 text-center">
