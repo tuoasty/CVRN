@@ -33,7 +33,7 @@ function TeamLogoSmall({name, logoUrl, size = 28}: {name: string; logoUrl: strin
 function ChampionCard({entry}: {entry: SeasonDetail["season_podium"][number]}) {
     return (
         <div className="panel p-6 flex flex-col items-center gap-3 bg-yellow-500/5 border border-yellow-500/20">
-            <div className="flex items-center gap-2 text-yellow-500">
+            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                 <Trophy className="h-4 w-4" />
                 <span className="text-[20px] uppercase tracking-[0.2em] font-semibold">Champion</span>
             </div>
@@ -47,8 +47,13 @@ function PlacementCard({entry}: {entry: SeasonDetail["season_podium"][number]}) 
     const place = entry.place as 2 | 3;
     const isSecond = place === 2;
     const label = isSecond ? "Runner-Up" : "3rd Place";
-    const borderClass = isSecond ? "border-slate-400/20 bg-slate-400/5" : "border-amber-700/20 bg-amber-700/5";
-    const accentClass = isSecond ? "text-slate-400" : "text-amber-700";
+    const borderClass = isSecond
+    ? "border-slate-400/20 bg-slate-400/5"
+    : "border-amber-500/20 bg-amber-500/5";
+
+    const accentClass = isSecond
+    ? "text-slate-500 dark:text-slate-300"
+    : "text-amber-600 dark:text-amber-400";
 
     return (
         <div className={`panel p-4 flex flex-col items-center gap-2 border ${borderClass}`}>
@@ -125,7 +130,7 @@ function IndividualAwardCard({
     );
 
     const teamBlock = (
-        <div className="w-[20%] shrink-0 relative overflow-hidden bg-muted/10">
+        <div className="w-[20%] shrink-0 relative overflow-hidden bg-muted/30 dark:bg-muted/10">
             {team?.logo_url ? (
                 <Image
                     src={team.logo_url}
@@ -145,7 +150,7 @@ function IndividualAwardCard({
     );
 
     return (
-        <div className="panel flex overflow-hidden h-64 bg-yellow-500/[0.03] border-yellow-500/25">
+        <div className="panel flex overflow-hidden h-64 bg-yellow-500/[0.04] dark:bg-yellow-500/[0.06] border-yellow-500/25">
             {reversed ? teamBlock : avatarBlock}
 
             <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-5 text-center">
