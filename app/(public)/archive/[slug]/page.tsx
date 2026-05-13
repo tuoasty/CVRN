@@ -4,104 +4,174 @@ import Image from "next/image";
 import {Trophy, Medal, Award, ChevronLeft} from "lucide-react";
 import {getSeasonDetailAction} from "@/app/actions/season.actions";
 import {getAllRegionsAction} from "@/app/actions/region.actions";
-import {SeasonDetail, AwardCategory} from "@/server/domains/season";
+import {SeasonDetail} from "@/server/domains/season";
 
-const PLACE_META = {
-    1: {label: "Champion",  color: "text-yellow-500", Icon: Trophy},
-    2: {label: "Runner-Up", color: "text-slate-400",  Icon: Medal},
-    3: {label: "3rd Place", color: "text-amber-700",  Icon: Medal},
-} as const;
+// ─── Podium ──────────────────────────────────────────────────────────────────
 
-const CATEGORY_LABELS: Record<AwardCategory, string> = {
-    individual_winners: "Individual Awards",
-    first_team: "First Team",
-    staff_team: "Staff Team",
-};
-
-const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "first_team", "staff_team"];
-
-function TeamLogo({name, logoUrl}: {name: string; logoUrl: string | null}) {
+function TeamLogoSmall({name, logoUrl, size = 28}: {name: string; logoUrl: string | null; size?: number}) {
     if (logoUrl) {
         return (
-            <Image src={logoUrl} alt={name} width={28} height={28}
-                className="rounded-sm object-contain mix-blend-multiply dark:mix-blend-screen" />
+            <Image
+                src={logoUrl}
+                alt={name}
+                width={size}
+                height={size}
+                className="rounded-sm object-contain mix-blend-multiply dark:mix-blend-screen"
+            />
         );
     }
     return (
-        <div className="w-7 h-7 rounded-sm flex items-center justify-center text-[10px] font-bold bg-primary/10 text-primary">
+        <div
+            className="rounded-sm flex items-center justify-center font-bold bg-primary/10 text-primary shrink-0"
+            style={{width: size, height: size, fontSize: Math.round(size * 0.35)}}
+        >
             {name.slice(0, 2).toUpperCase()}
         </div>
     );
 }
 
-function PodiumEntry({entry}: {entry: SeasonDetail["season_podium"][number]}) {
-    const place = entry.place as 1 | 2 | 3;
-    const meta = PLACE_META[place] ?? {label: `${place}th`, color: "text-muted-foreground", Icon: Medal};
-    const {label, color, Icon} = meta;
-
+function ChampionCard({entry}: {entry: SeasonDetail["season_podium"][number]}) {
     return (
-        <div className={`flex items-center gap-3 ${place !== 1 ? "opacity-80" : ""}`}>
-            <Icon className={`h-5 w-5 shrink-0 ${color}`} />
-            <TeamLogo name={entry.teams.name} logoUrl={entry.teams.logo_url} />
-            <div>
-                <p className={`font-semibold leading-none ${place === 1 ? "text-base" : "text-sm"}`}>
-                    {entry.teams.name}
-                </p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
+        <div className="panel p-6 flex flex-col items-center gap-3 bg-yellow-500/5 border border-yellow-500/20">
+            <div className="flex items-center gap-2 text-yellow-500">
+                <Trophy className="h-4 w-4" />
+                <span className="text-[10px] uppercase tracking-[0.2em] font-semibold">Champion</span>
             </div>
+            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={56} />
+            <p className="text-xl font-bold text-center">{entry.teams.name}</p>
         </div>
     );
 }
 
-function AvatarPlaceholder({username}: {username: string}) {
-    return (
-        <div className="w-full aspect-[3/4] rounded-sm bg-primary/10 flex items-center justify-center">
-            <span className="text-2xl font-bold text-primary">
-                {(username ?? "?").slice(0, 2).toUpperCase()}
-            </span>
-        </div>
-    );
-}
-
-function AwardCard({award}: {award: SeasonDetail["season_awards"][number]}) {
-    const {award_name, full_avatar_url, players} = award;
+function PlacementCard({entry}: {entry: SeasonDetail["season_podium"][number]}) {
+    const place = entry.place as 2 | 3;
+    const isSecond = place === 2;
+    const label = isSecond ? "Runner-Up" : "3rd Place";
+    const borderClass = isSecond ? "border-slate-400/20 bg-slate-400/5" : "border-amber-700/20 bg-amber-700/5";
+    const accentClass = isSecond ? "text-slate-400" : "text-amber-700";
 
     return (
-        <div className="panel p-3 flex flex-col gap-2 w-36 shrink-0">
-            {full_avatar_url ? (
-                <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden">
-                    <Image
-                        src={full_avatar_url}
-                        alt={players.username ?? "Player"}
-                        fill
-                        className="object-cover object-top"
-                        sizes="144px"
-                    />
-                </div>
-            ) : (
-                <AvatarPlaceholder username={players.username ?? "?"} />
-            )}
-            <div>
-                <p className="font-semibold text-sm leading-snug">{award_name}</p>
-                <p className="text-xs text-muted-foreground">{players.username}</p>
+        <div className={`panel p-4 flex flex-col items-center gap-2 border ${borderClass}`}>
+            <div className={`flex items-center gap-1.5 ${accentClass}`}>
+                <Medal className="h-3.5 w-3.5" />
+                <span className="text-[10px] uppercase tracking-[0.15em] font-semibold">{label}</span>
             </div>
+            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={40} />
+            <p className="text-sm font-semibold text-center leading-tight">{entry.teams.name}</p>
         </div>
     );
 }
 
-function AwardSection({category, awards}: {category: AwardCategory; awards: SeasonDetail["season_awards"]}) {
-    if (awards.length === 0) return null;
+function PodiumSection({entries}: {entries: SeasonDetail["season_podium"]}) {
+    const sorted = [...entries].sort((a, b) => a.place - b.place);
+    const champion = sorted.find(e => e.place === 1);
+    const rest = sorted.filter(e => e.place !== 1);
+
     return (
         <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {CATEGORY_LABELS[category]}
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Trophy className="h-3 w-3" /> Podium
             </p>
-            <div className="flex flex-wrap gap-3">
-                {awards.map(a => <AwardCard key={a.id} award={a} />)}
+            <div className="space-y-2">
+                {champion && <ChampionCard entry={champion} />}
+                {rest.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2">
+                        {rest.map(e => <PlacementCard key={e.place} entry={e} />)}
+                    </div>
+                )}
             </div>
         </div>
     );
 }
+
+// ─── Awards ──────────────────────────────────────────────────────────────────
+
+function getAwardTeam(award: SeasonDetail["season_awards"][number], seasonId: string) {
+    const pts = award.players.player_team_seasons?.find(p => p.season_id === seasonId);
+    return pts?.teams ?? null;
+}
+
+function IndividualAwardCard({
+    award,
+    index,
+    seasonId,
+}: {
+    award: SeasonDetail["season_awards"][number];
+    index: number;
+    seasonId: string;
+}) {
+    const {award_name, full_avatar_url, players} = award;
+    const team = getAwardTeam(award, seasonId);
+    const reversed = index % 2 === 1;
+
+    const avatarBlock = (
+        <div className="w-[20%] shrink-0 relative overflow-hidden">
+            {full_avatar_url ? (
+                <Image
+                    src={full_avatar_url}
+                    alt={players.username ?? "Player"}
+                    fill
+                    className="object-cover object-top"
+                    sizes="20vw"
+                />
+            ) : (
+                <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-primary">
+                        {(players.username ?? "?").slice(0, 2).toUpperCase()}
+                    </span>
+                </div>
+            )}
+        </div>
+    );
+
+    const teamBlock = (
+        <div className="w-[20%] shrink-0 relative overflow-hidden bg-muted/10">
+            {team?.logo_url ? (
+                <Image
+                    src={team.logo_url}
+                    alt={team.name}
+                    fill
+                    className="object-contain p-4 mix-blend-multiply dark:mix-blend-screen"
+                    sizes="20vw"
+                />
+            ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-xl font-bold text-muted-foreground/40">
+                        {team?.name.slice(0, 2).toUpperCase() ?? "—"}
+                    </span>
+                </div>
+            )}
+        </div>
+    );
+
+    return (
+        <div className="panel flex overflow-hidden h-64 bg-yellow-500/[0.03] border-yellow-500/25">
+            {reversed ? teamBlock : avatarBlock}
+
+            <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-5 text-center">
+                <p className="text-xs uppercase tracking-[0.18em] text-yellow-500/80 font-semibold">
+                    {award_name}
+                </p>
+                <p className="text-xl font-bold text-foreground leading-tight">
+                    {players.display_name ?? players.username}
+                </p>
+                <p className="text-xs text-muted-foreground/70">@{players.username}</p>
+                {team && (
+                    <p
+                        className="text-[11px] font-semibold mt-1 tracking-wide"
+                        style={{color: team.brick_color ?? undefined}}
+                    >
+                        {team.name}
+                    </p>
+                )}
+            </div>
+
+            {reversed ? avatarBlock : teamBlock}
+        </div>
+    );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function SeasonDetailPage({params}: {params: Promise<{slug: string}>}) {
     const {slug} = await params;
@@ -123,14 +193,9 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
     const fmt = (d: string | null) =>
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 
-    const sorted = [...season.season_podium].sort((a, b) => a.place - b.place);
-
-    const groupedAwards = CATEGORY_ORDER.reduce((acc, cat) => {
-        acc[cat] = season.season_awards.filter(a => a.category === cat);
-        return acc;
-    }, {} as Record<AwardCategory, SeasonDetail["season_awards"]>);
-
-    const hasAwards = season.season_awards.length > 0;
+    const individualAwards = season.season_awards.filter(a => a.category === "individual_winners");
+    const hasAwards = individualAwards.length > 0;
+    const hasPodium = season.season_podium.length > 0;
 
     return (
         <div className="page-narrow space-y-6 py-6">
@@ -151,29 +216,27 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
                 </p>
             </div>
 
-            {sorted.length > 0 && (
-                <div className="panel p-5">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-1">
-                        <Trophy className="h-3 w-3" /> Podium
+            {hasPodium && <PodiumSection entries={season.season_podium} />}
+
+            {hasAwards && (
+                <div className="space-y-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <Award className="h-3 w-3" /> Individual Awards
                     </p>
-                    <div className="space-y-3 border-l-2 border-primary/20 pl-4">
-                        {sorted.map(e => <PodiumEntry key={e.place} entry={e} />)}
+                    <div className="flex flex-col gap-2">
+                        {individualAwards.map((award, i) => (
+                            <IndividualAwardCard
+                                key={award.id}
+                                award={award}
+                                index={i}
+                                seasonId={season.id}
+                            />
+                        ))}
                     </div>
                 </div>
             )}
 
-            {hasAwards && (
-                <div className="space-y-5">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                        <Award className="h-3 w-3" /> Awards
-                    </p>
-                    {CATEGORY_ORDER.map(cat => (
-                        <AwardSection key={cat} category={cat} awards={groupedAwards[cat]} />
-                    ))}
-                </div>
-            )}
-
-            {sorted.length === 0 && !hasAwards && (
+            {!hasPodium && !hasAwards && (
                 <div className="panel p-6 text-center">
                     <p className="text-muted-foreground text-sm">Results not yet recorded.</p>
                 </div>
