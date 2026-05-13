@@ -156,13 +156,13 @@ export default function PublicTeamDetailPage({
             <div className="panel p-6">
                 <div className="flex items-start gap-6">
                     {teamData.logo_url && (
-                        <div className="relative w-32 h-32 shrink-0">
+                        <div className="relative w-32 h-32 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                             <Image
                                 src={teamData.logo_url}
                                 alt={teamData.name || ""}
                                 fill
                                 sizes="128px"
-                                className={getLogoClassName(teamData.logo_bg_removed)}
+                                className={`${getLogoClassName(teamData.logo_bg_removed)} p-2`}
                             />
                         </div>
                     )}

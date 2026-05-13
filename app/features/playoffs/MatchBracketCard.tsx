@@ -99,7 +99,7 @@ export function MatchBracketCard({
                                         </div>
                                     )}
                                     {homeTeam?.logo_url && (
-                                        <div className="relative w-6 h-6 shrink-0">
+                                        <div className="relative w-6 h-6 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                             <Image
                                                 src={homeTeam.logo_url}
                                                 alt={homeTeam.name}
@@ -143,7 +143,7 @@ export function MatchBracketCard({
                                         </div>
                                     )}
                                     {awayTeam?.logo_url && (
-                                        <div className="relative w-6 h-6 shrink-0">
+                                        <div className="relative w-6 h-6 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                             <Image
                                                 src={awayTeam.logo_url}
                                                 alt={awayTeam.name}
@@ -218,7 +218,7 @@ export function MatchBracketCard({
                                     )}>
                                         <div className="flex items-center gap-2">
                                             {homeTeam?.logo_url && (
-                                                <div className="relative w-4 h-4">
+                                                <div className="relative w-4 h-4 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                                     <Image
                                                         src={homeTeam.logo_url}
                                                         alt={homeTeam.name}
@@ -240,7 +240,7 @@ export function MatchBracketCard({
                                     )}>
                                         <div className="flex items-center gap-2">
                                             {awayTeam?.logo_url && (
-                                                <div className="relative w-4 h-4">
+                                                <div className="relative w-4 h-4 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
                                                     <Image
                                                         src={awayTeam.logo_url}
                                                         alt={awayTeam.name}
