@@ -10,6 +10,7 @@ import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { ChevronLeft } from "lucide-react";
+import { getLogoClassName } from "@/app/lib/logoClass";
 import { PlayerWithRole } from "@/server/domains/player";
 import { Card, CardContent } from "@/app/components/ui/card";
 
@@ -161,7 +162,7 @@ export default function PublicTeamDetailPage({
                                 alt={teamData.name || ""}
                                 fill
                                 sizes="128px"
-                                className="object-contain"
+                                className={getLogoClassName(teamData.logo_bg_removed)}
                             />
                         </div>
                     )}

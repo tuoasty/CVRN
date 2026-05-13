@@ -7,6 +7,7 @@ import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
 import { Player } from "@/shared/types/db";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
+import { getLogoClassName } from "@/app/lib/logoClass";
 
 interface PublicMatchCardProps {
     matchDetails: MatchWithDetails;
@@ -100,7 +101,7 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                                         alt={homeTeam.name}
                                         fill
                                         sizes="40px"
-                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                        className={getLogoClassName(homeTeam.logo_bg_removed)}
                                     />
                                 ) : (
                                     <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
@@ -151,7 +152,7 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                                         alt={awayTeam.name}
                                         fill
                                         sizes="40px"
-                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                        className={getLogoClassName(awayTeam.logo_bg_removed)}
                                     />
                                 ) : (
                                     <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">

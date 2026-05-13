@@ -14,6 +14,7 @@ import { Calendar, Trophy, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import {formatDateInTimezone, getRegionTimezone} from "@/app/utils/timezoneOptions";
+import { getLogoClassName } from "@/app/lib/logoClass";
 
 type MatchBracketCardProps = {
     bracket: PlayoffBracket;
@@ -104,7 +105,7 @@ export function MatchBracketCard({
                                                 alt={homeTeam.name}
                                                 fill
                                                 sizes="24px"
-                                                className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                className={getLogoClassName(homeTeam.logo_bg_removed)}
                                             />
                                         </div>
                                     )}
@@ -148,7 +149,7 @@ export function MatchBracketCard({
                                                 alt={awayTeam.name}
                                                 fill
                                                 sizes="24px"
-                                                className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                className={getLogoClassName(awayTeam.logo_bg_removed)}
                                             />
                                         </div>
                                     )}
@@ -223,7 +224,7 @@ export function MatchBracketCard({
                                                         alt={homeTeam.name}
                                                         fill
                                                         sizes="16px"
-                                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                        className={getLogoClassName(homeTeam.logo_bg_removed)}
                                                     />
                                                 </div>
                                             )}
@@ -245,7 +246,7 @@ export function MatchBracketCard({
                                                         alt={awayTeam.name}
                                                         fill
                                                         sizes="16px"
-                                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                                        className={getLogoClassName(awayTeam.logo_bg_removed)}
                                                     />
                                                 </div>
                                             )}
