@@ -171,6 +171,61 @@ function IndividualAwardCard({
     );
 }
 
+function FirstTeamCard({award}: {award: SeasonDetail["season_awards"][number]}) {
+    const {award_name, full_avatar_url, players} = award;
+    return (
+        <div className="flex flex-col items-center gap-2">
+            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-neutral-900">
+                {full_avatar_url ? (
+                    <Image
+                        src={full_avatar_url}
+                        alt={players.username ?? "Player"}
+                        fill
+                        className="object-cover object-top"
+                        sizes="14vw"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-sm font-bold text-primary">
+                            {(players.username ?? "?").slice(0, 2).toUpperCase()}
+                        </span>
+                    </div>
+                )}
+            </div>
+            <div className="flex flex-col items-center gap-0.5 w-full">
+                <p className="text-[10px] uppercase tracking-wide text-amber-500 dark:text-yellow-400 font-semibold text-center truncate w-full">
+                    {award_name}
+                </p>
+                <p className="text-xs font-semibold text-center leading-tight truncate w-full">
+                    {players.display_name ?? players.username}
+                </p>
+                <p className="text-[10px] text-muted-foreground text-center truncate w-full">
+                    @{players.username}
+                </p>
+            </div>
+        </div>
+    );
+}
+
+function FirstTeamSection({awards}: {awards: SeasonDetail["season_awards"]}) {
+    if (awards.length === 0) return null;
+    const slots = Array.from({length: 7}, (_, i) => awards[i] ?? null);
+    return (
+        <div className="space-y-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Award className="h-3 w-3" /> First Team
+            </p>
+            <div className="rounded-sm border border-yellow-500/25 bg-yellow-500/[0.03] p-4 grid grid-cols-7 gap-4">
+                {slots.map((award, i) =>
+                    award
+                        ? <FirstTeamCard key={award.id} award={award} />
+                        : <div key={i} className="aspect-[3/4] rounded-sm bg-muted/20" />
+                )}
+            </div>
+        </div>
+    );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function SeasonDetailPage({params}: {params: Promise<{slug: string}>}) {
@@ -194,8 +249,9 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 
     const individualAwards = season.season_awards.filter(a => a.category === "individual_winners");
-    const hasAwards = individualAwards.length > 0;
+    const firstTeamAwards = season.season_awards.filter(a => a.category === "first_team");
     const hasPodium = season.season_podium.length > 0;
+    const hasContent = hasPodium || individualAwards.length > 0 || firstTeamAwards.length > 0;
 
     return (
         <div className="page-narrow space-y-6 py-6">
@@ -218,7 +274,7 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
 
             {hasPodium && <PodiumSection entries={season.season_podium} />}
 
-            {hasAwards && (
+            {individualAwards.length > 0 && (
                 <div className="space-y-3">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                         <Award className="h-3 w-3" /> Individual Awards
@@ -236,7 +292,9 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
                 </div>
             )}
 
-            {!hasPodium && !hasAwards && (
+            {firstTeamAwards.length > 0 && <FirstTeamSection awards={firstTeamAwards} />}
+
+            {!hasContent && (
                 <div className="panel p-6 text-center">
                     <p className="text-muted-foreground text-sm">Results not yet recorded.</p>
                 </div>
