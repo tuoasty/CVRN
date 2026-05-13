@@ -1,14 +1,15 @@
 "use client";
 
 import React, {useState, useEffect, useCallback, useRef} from "react";
-import {Trophy, Medal, Award, Plus, Trash2, RefreshCw, Search} from "lucide-react";
-import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/app/components/ui/dialog";
+import Image from "next/image";
+import {Trophy, Medal, Award, Plus, Trash2, RefreshCw, Search, ImageIcon} from "lucide-react";
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter} from "@/app/components/ui/dialog";
 import {Button} from "@/app/components/ui/button";
 import {Badge} from "@/app/components/ui/badge";
 import {Input} from "@/app/components/ui/input";
 import {Label} from "@/app/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/app/components/ui/select";
-import {SeasonWithPlayoffConfig, SeasonPodiumEntryWithTeam, SeasonAwardEntryWithPlayer} from "@/server/domains/season";
+import {SeasonWithPlayoffConfig, SeasonPodiumEntryWithTeam, SeasonAwardEntryWithPlayer, AwardCategory} from "@/server/domains/season";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
 import {
     getSeasonPodiumAction,
@@ -18,6 +19,8 @@ import {
     deleteSeasonPodiumSlotAction,
     upsertSeasonAwardAction,
     deleteSeasonAwardAction,
+    previewAwardAvatarAction,
+    saveAwardAvatarAction,
 } from "@/app/actions/season.actions";
 import {searchPlayersInDatabaseAction} from "@/app/actions/player.actions";
 import {useTeamsBySeason} from "@/app/hooks/useTeams";
@@ -29,6 +32,14 @@ const PLACE_META = {
     2: {label: "Runner-Up", color: "text-slate-400",  Icon: Medal},
     3: {label: "3rd Place", color: "text-amber-700",  Icon: Medal},
 } as const;
+
+const CATEGORY_LABELS: Record<AwardCategory, string> = {
+    individual_winners: "Individual Awards",
+    first_team: "First Team",
+    staff_team: "Staff Team",
+};
+
+const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "first_team", "staff_team"];
 
 function PodiumSlot({place, slot, seasonTeams, saving, onSave, onDelete}: {
     place: 1 | 2 | 3;
@@ -141,6 +152,55 @@ function PlayerSearchInput({onSelect}: {onSelect: (player: PlayerWithTeamInfo) =
     );
 }
 
+interface AvatarPreviewDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    playerName: string;
+    cdnUrl: string;
+    confirmLabel: string;
+    onConfirm: () => Promise<void>;
+    confirming: boolean;
+}
+
+function AvatarPreviewDialog({open, onOpenChange, playerName, cdnUrl, confirmLabel, onConfirm, confirming}: AvatarPreviewDialogProps) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="rounded-sm max-w-xs">
+                <DialogHeader>
+                    <DialogTitle className="text-base font-bold uppercase tracking-wider">
+                        Confirm Avatar
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col items-center gap-3 py-2">
+                    <div className="relative w-32 aspect-[3/4] rounded-sm overflow-hidden bg-primary/10">
+                        <Image
+                            src={cdnUrl}
+                            alt={playerName}
+                            fill
+                            className="object-cover object-top"
+                            sizes="128px"
+                            unoptimized
+                        />
+                    </div>
+                    <p className="text-sm text-center">
+                        <span className="font-semibold">{playerName}</span>
+                        <br />
+                        <span className="text-xs text-muted-foreground">This avatar will be saved permanently.</span>
+                    </p>
+                </div>
+                <DialogFooter className="gap-2">
+                    <Button variant="outline" size="sm" className="rounded-sm" onClick={() => onOpenChange(false)} disabled={confirming}>
+                        Cancel
+                    </Button>
+                    <Button size="sm" className="rounded-sm" onClick={onConfirm} disabled={confirming}>
+                        {confirming ? "Saving..." : confirmLabel}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 interface SeasonResultsDialogProps {
     season: SeasonWithPlayoffConfig | null;
     open: boolean;
@@ -155,9 +215,19 @@ export default function SeasonResultsDialog({season, open, onOpenChange}: Season
     const [deriving, setDeriving] = useState(false);
     const [saving, setSaving] = useState<number | null>(null);
     const [deletingAward, setDeletingAward] = useState<string | null>(null);
+
     const [newAwardName, setNewAwardName] = useState("");
+    const [newCategory, setNewCategory] = useState<AwardCategory>("individual_winners");
     const [selectedPlayer, setSelectedPlayer] = useState<PlayerWithTeamInfo | null>(null);
-    const [addingAward, setAddingAward] = useState(false);
+    const [previewLoading, setPreviewLoading] = useState<string | null>(null);
+
+    const [previewDialog, setPreviewDialog] = useState<{
+        mode: "create" | "refresh";
+        playerName: string;
+        cdnUrl: string;
+        awardId?: string;
+    } | null>(null);
+    const [confirming, setConfirming] = useState(false);
 
     const load = useCallback(async () => {
         if (!season) return;
@@ -216,21 +286,56 @@ export default function SeasonResultsDialog({season, open, onOpenChange}: Season
         } finally { setSaving(null); }
     };
 
-    const handleAddAward = async () => {
+    const handlePreviewForCreate = async () => {
         if (!season || !newAwardName.trim() || !selectedPlayer) return;
-        setAddingAward(true);
+        setPreviewLoading("create");
         try {
-            const result = await upsertSeasonAwardAction({
-                seasonId: season.id,
-                playerId: selectedPlayer.id,
-                awardName: newAwardName.trim(),
-            });
-            if (!result.ok) { toast.error("Failed to add award", result.error.message); return; }
-            toast.success("Award added");
-            setNewAwardName("");
-            setSelectedPlayer(null);
+            const res = await previewAwardAvatarAction({playerId: selectedPlayer.id});
+            if (!res.ok) { toast.error("Could not fetch avatar", res.error.message); return; }
+            setPreviewDialog({mode: "create", playerName: selectedPlayer.username ?? selectedPlayer.id, cdnUrl: res.value.cdnUrl});
+        } finally {
+            setPreviewLoading(null);
+        }
+    };
+
+    const handlePreviewForRefresh = async (award: SeasonAwardEntryWithPlayer) => {
+        setPreviewLoading(award.id);
+        try {
+            const res = await previewAwardAvatarAction({playerId: award.players.id});
+            if (!res.ok) { toast.error("Could not fetch avatar", res.error.message); return; }
+            setPreviewDialog({mode: "refresh", playerName: award.players.username, cdnUrl: res.value.cdnUrl, awardId: award.id});
+        } finally {
+            setPreviewLoading(null);
+        }
+    };
+
+    const handleConfirm = async () => {
+        if (!previewDialog || !season) return;
+        setConfirming(true);
+        try {
+            if (previewDialog.mode === "create") {
+                const result = await upsertSeasonAwardAction({
+                    seasonId: season.id,
+                    playerId: selectedPlayer!.id,
+                    awardName: newAwardName.trim(),
+                    category: newCategory,
+                    cdnUrl: previewDialog.cdnUrl,
+                });
+                if (!result.ok) { toast.error("Failed to add award", result.error.message); return; }
+                toast.success("Award added");
+                setNewAwardName("");
+                setNewCategory("individual_winners");
+                setSelectedPlayer(null);
+            } else {
+                const result = await saveAwardAvatarAction({awardId: previewDialog.awardId!, cdnUrl: previewDialog.cdnUrl});
+                if (!result.ok) { toast.error("Failed to update avatar", result.error.message); return; }
+                toast.success("Avatar updated");
+            }
+            setPreviewDialog(null);
             await load();
-        } finally { setAddingAward(false); }
+        } finally {
+            setConfirming(false);
+        }
     };
 
     const handleDeleteAward = async (awardId: string) => {
@@ -242,101 +347,170 @@ export default function SeasonResultsDialog({season, open, onOpenChange}: Season
         } finally { setDeletingAward(null); }
     };
 
+    const groupedAwards = CATEGORY_ORDER.reduce((acc, cat) => {
+        acc[cat] = awards.filter(a => a.category === cat);
+        return acc;
+    }, {} as Record<AwardCategory, SeasonAwardEntryWithPlayer[]>);
+
     if (!season) return null;
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="rounded-sm max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle className="text-lg font-bold uppercase tracking-wider">
-                        Season Results — {season.name}
-                    </DialogTitle>
-                </DialogHeader>
+        <>
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="rounded-sm max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-bold uppercase tracking-wider">
+                            Season Results — {season.name}
+                        </DialogTitle>
+                    </DialogHeader>
 
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Podium</h3>
-                        {!!season.end_date && (
-                            <Button variant="outline" size="sm" className="rounded-sm gap-2 text-xs"
-                                onClick={handleDerive} disabled={deriving || loading}
-                            >
-                                <RefreshCw className={`h-3 w-3 ${deriving ? "animate-spin" : ""}`} />
-                                Auto-Derive from Playoffs
-                            </Button>
-                        )}
-                    </div>
-                    {loading
-                        ? <p className="text-sm text-muted-foreground">Loading...</p>
-                        : ([1, 2, 3] as const).map(place => (
-                            <PodiumSlot key={place} place={place}
-                                slot={podium.find(p => p.place === place)}
-                                seasonTeams={seasonTeams}
-                                saving={saving}
-                                onSave={handleSaveSlot}
-                                onDelete={handleDeleteSlot}
-                            />
-                        ))
-                    }
-                </div>
-
-                <div className="space-y-3 pt-4 border-t border-border">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Award className="h-4 w-4" /> Awards
-                    </h3>
-
-                    {awards.length > 0 && (
-                        <div className="panel overflow-x-auto">
-                            <table className="table-dense text-sm w-full">
-                                <thead><tr><th className="text-left">Award</th><th className="text-left">Player</th><th className="w-10"></th></tr></thead>
-                                <tbody>
-                                    {awards.map(a => (
-                                        <tr key={a.id}>
-                                            <td className="font-medium">{a.award_name}</td>
-                                            <td className="text-muted-foreground">{a.players.username}</td>
-                                            <td>
-                                                <Button variant="ghost" size="sm"
-                                                    className="rounded-sm h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                    onClick={() => handleDeleteAward(a.id)}
-                                                    disabled={deletingAward === a.id}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Podium</h3>
+                            {!!season.end_date && (
+                                <Button variant="outline" size="sm" className="rounded-sm gap-2 text-xs"
+                                    onClick={handleDerive} disabled={deriving || loading}
+                                >
+                                    <RefreshCw className={`h-3 w-3 ${deriving ? "animate-spin" : ""}`} />
+                                    Auto-Derive from Playoffs
+                                </Button>
+                            )}
                         </div>
-                    )}
-                    {awards.length === 0 && !loading && (
-                        <p className="text-sm text-muted-foreground">No awards yet.</p>
-                    )}
+                        {loading
+                            ? <p className="text-sm text-muted-foreground">Loading...</p>
+                            : ([1, 2, 3] as const).map(place => (
+                                <PodiumSlot key={place} place={place}
+                                    slot={podium.find(p => p.place === place)}
+                                    seasonTeams={seasonTeams}
+                                    saving={saving}
+                                    onSave={handleSaveSlot}
+                                    onDelete={handleDeleteSlot}
+                                />
+                            ))
+                        }
+                    </div>
 
-                    <div className="panel p-3 space-y-2">
-                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Add Award</p>
-                        <div className="flex gap-2 flex-wrap items-end">
-                            <div className="flex-1 min-w-32 space-y-1">
-                                <Label className="text-xs">Award Name</Label>
-                                <Input className="rounded-sm h-8 text-sm" placeholder="e.g. Best Spiker"
-                                    value={newAwardName} onChange={e => setNewAwardName(e.target.value)} />
+                    <div className="space-y-3 pt-4 border-t border-border">
+                        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <Award className="h-4 w-4" /> Awards
+                        </h3>
+
+                        {awards.length > 0 && (
+                            <div className="space-y-3">
+                                {CATEGORY_ORDER.map(cat => {
+                                    const group = groupedAwards[cat];
+                                    if (group.length === 0) return null;
+                                    return (
+                                        <div key={cat}>
+                                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                                                {CATEGORY_LABELS[cat]}
+                                            </p>
+                                            <div className="panel overflow-x-auto">
+                                                <table className="table-dense text-sm w-full">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="text-left">Award</th>
+                                                            <th className="text-left">Player</th>
+                                                            <th className="w-8"></th>
+                                                            <th className="w-8"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {group.map(a => (
+                                                            <tr key={a.id}>
+                                                                <td className="font-medium">{a.award_name}</td>
+                                                                <td className="text-muted-foreground">{a.players.username}</td>
+                                                                <td>
+                                                                    <Button variant="ghost" size="sm"
+                                                                        className="rounded-sm h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                                                                        onClick={() => handlePreviewForRefresh(a)}
+                                                                        disabled={previewLoading === a.id}
+                                                                        title="Refresh Avatar"
+                                                                    >
+                                                                        {previewLoading === a.id
+                                                                            ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                                                            : <ImageIcon className="h-3.5 w-3.5" />
+                                                                        }
+                                                                    </Button>
+                                                                </td>
+                                                                <td>
+                                                                    <Button variant="ghost" size="sm"
+                                                                        className="rounded-sm h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                        onClick={() => handleDeleteAward(a.id)}
+                                                                        disabled={deletingAward === a.id}
+                                                                    >
+                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                            <PlayerSearchInput onSelect={setSelectedPlayer} />
-                            <Button size="sm" className="rounded-sm h-8 gap-1.5"
-                                onClick={handleAddAward}
-                                disabled={addingAward || !newAwardName.trim() || !selectedPlayer}
-                            >
-                                <Plus className="h-3.5 w-3.5" /> Add
-                            </Button>
-                        </div>
-                        {selectedPlayer && (
-                            <p className="text-xs text-muted-foreground">
-                                Selected: <span className="font-medium text-foreground">{selectedPlayer.username}</span>
-                                {selectedPlayer.current_team_name && ` · ${selectedPlayer.current_team_name}`}
-                            </p>
                         )}
+                        {awards.length === 0 && !loading && (
+                            <p className="text-sm text-muted-foreground">No awards yet.</p>
+                        )}
+
+                        <div className="panel p-3 space-y-2">
+                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Add Award</p>
+                            <div className="flex gap-2 flex-wrap items-end">
+                                <div className="flex-1 min-w-32 space-y-1">
+                                    <Label className="text-xs">Award Name</Label>
+                                    <Input className="rounded-sm h-8 text-sm" placeholder="e.g. MVP"
+                                        value={newAwardName} onChange={e => setNewAwardName(e.target.value)} />
+                                </div>
+                                <div className="min-w-40 space-y-1">
+                                    <Label className="text-xs">Category</Label>
+                                    <Select value={newCategory} onValueChange={v => setNewCategory(v as AwardCategory)}>
+                                        <SelectTrigger className="rounded-sm h-8 text-sm">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {CATEGORY_ORDER.map(cat => (
+                                                <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <PlayerSearchInput onSelect={setSelectedPlayer} />
+                                <Button size="sm" className="rounded-sm h-8 gap-1.5"
+                                    onClick={handlePreviewForCreate}
+                                    disabled={previewLoading === "create" || !newAwardName.trim() || !selectedPlayer}
+                                >
+                                    {previewLoading === "create"
+                                        ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                        : <Plus className="h-3.5 w-3.5" />
+                                    }
+                                    Add
+                                </Button>
+                            </div>
+                            {selectedPlayer && (
+                                <p className="text-xs text-muted-foreground">
+                                    Selected: <span className="font-medium text-foreground">{selectedPlayer.username}</span>
+                                    {selectedPlayer.current_team_name && ` · ${selectedPlayer.current_team_name}`}
+                                </p>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+                </DialogContent>
+            </Dialog>
+
+            {previewDialog && (
+                <AvatarPreviewDialog
+                    open={true}
+                    onOpenChange={open => { if (!open) setPreviewDialog(null); }}
+                    playerName={previewDialog.playerName}
+                    cdnUrl={previewDialog.cdnUrl}
+                    confirmLabel={previewDialog.mode === "create" ? "Confirm & Save" : "Confirm & Replace"}
+                    onConfirm={handleConfirm}
+                    confirming={confirming}
+                />
+            )}
+        </>
     );
 }

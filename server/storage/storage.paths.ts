@@ -8,7 +8,10 @@ export const STORAGE_PATHS = {
     },
     teamLogoVersioned(teamId: string, ext: string) {
         return `teams/${teamId}_${Date.now()}.${ext}`;
-    }
+    },
+    awardAvatar(awardId: string) {
+        return `awards/${awardId}.png`;
+    },
 }
 export function extractStoragePath(url: string, bucket: string): string {
     const marker = `/object/public/${bucket}/`
