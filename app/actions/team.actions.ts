@@ -6,6 +6,7 @@ import {Result, Err} from "@/shared/types/result";
 import {
     TeamWithRegion,
     TeamWithRegionAndPlayers,
+    TeamNameHistoryEntry,
     GetTeamByNameSeasonSchema,
     TeamIdSchema,
     TeamSlugSeasonSchema,
@@ -20,6 +21,7 @@ import {
     getTeamByNameAndSeason,
     getTeamsByIds,
     getTeamWithRegionAndPlayers,
+    getTeamNameHistory,
     updateTeam
 } from "@/server/domains/team";
 import {Team} from "@/shared/types/db";

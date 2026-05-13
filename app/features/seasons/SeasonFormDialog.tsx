@@ -104,7 +104,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-[calc(100%-2rem)] !max-w-lg rounded-sm">
+            <DialogContent className="w-[calc(100%-2rem)] !max-w-lg rounded-sm" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>{isEdit ? "Edit Season" : "New Season"}</DialogTitle>
                 </DialogHeader>

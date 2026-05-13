@@ -1,3 +1,6 @@
+"use client";
+
+import {usePathname} from "next/navigation";
 import {Code2, ExternalLink, MessageSquare, Users} from "lucide-react";
 import Link from "next/link";
 
@@ -10,7 +13,9 @@ const STAFF = [
 ];
 
 
-export default function PublicFooter(){
+export default function PublicFooter() {
+    const pathname = usePathname();
+    if (pathname === "/playoffs") return null;
     return (
         <footer className="border-t border-border bg-card">
             <div className="page-wide py-10 grid grid-cols-1 md:grid-cols-3 gap-8">

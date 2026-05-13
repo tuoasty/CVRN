@@ -6,6 +6,7 @@ import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useMemo } from "react";
+import { getLogoClassName } from "@/app/lib/logoClass";
 
 interface StandingsPreviewProps {
     standings: StandingWithInfo[];
@@ -81,7 +82,7 @@ export default function StandingsPreview({
                                             alt={standing.team_name || ""}
                                             fill
                                             sizes="24px"
-                                            className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                            className={getLogoClassName(standing.team_logo_bg_removed ?? false)}
                                         />
                                     </div>
                                 )}
