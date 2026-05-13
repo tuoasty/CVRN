@@ -5,6 +5,7 @@ export interface TeamWithRegion {
     name: string;
     slug: string;
     logo_url: string | null;
+    logo_bg_removed: boolean;
     season_id: string;
     deleted_at: string | null;
     created_at: string;
@@ -12,6 +13,11 @@ export interface TeamWithRegion {
     brick_color: string;
     starting_lvr: number;
     is_bye: boolean;
+    playerCount?: number;
+    captain?: {
+        displayName: string | null;
+        avatarUrl: string | null;
+    } | null;
     seasons: {
         id: string;
         name: string;
@@ -34,6 +40,7 @@ export interface InsertTeamDto {
     name: string;
     slug: string;
     logoUrl?: string | null;
+    logoBgRemoved: boolean;
     seasonId: string;
     brickNumber: number;
     brickColor: string;

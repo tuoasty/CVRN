@@ -12,13 +12,21 @@ type UpsertTeamByNumberDto = {
     brickNumber?: number | null;
 };
 
+type ActiveMember = {
+    role: string;
+    player: { display_name: string | null; avatar_url: string | null } | null;
+};
+
 type TeamWithRegionRow = Team & {
     seasons: {
         id: string;
         name: string;
         slug: string;
-        regions: {id: string; code: string; name: string};
+        regions: { id: string; code: string; name: string };
     };
+    player_team_seasons?: ActiveMember[] | null;
+    playerCount?: number;
+    captain?: { displayName: string | null; avatarUrl: string | null } | null;
 };
 
 export async function findAllTeams(supabase: DBClient): Promise<Result<Team[]>> {
@@ -41,12 +49,32 @@ export async function findAllTeamsWithRegions(supabase: DBClient): Promise<Resul
                     code,
                     name
                 )
+            ),
+            player_team_seasons (
+                role,
+                player:players (display_name, avatar_url)
             )
         `)
         .is("deleted_at", null)
-        .eq("is_bye", false);
+        .eq("is_bye", false)
+        .is("player_team_seasons.left_at", null)
+        .order("name", { ascending: true });
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok((data ?? []) as unknown as TeamWithRegionRow[]);
+    const rows = (data ?? []) as unknown as TeamWithRegionRow[];
+    return Ok(rows.map(row => {
+        const members = row.player_team_seasons ?? [];
+        const captainRow = members.find(m => m.role === "captain");
+        return {
+            ...row,
+            playerCount: members.length,
+            captain: captainRow
+                ? {
+                    displayName: captainRow.player?.display_name ?? null,
+                    avatarUrl: captainRow.player?.avatar_url ?? null,
+                  }
+                : null,
+        };
+    }));
 }
 
 export async function findTeamById(supabase: DBClient, id: string): Promise<Result<Team | null>> {
@@ -83,6 +111,7 @@ export async function insertTeam(supabase: DBClient, p: InsertTeamDto): Promise<
         name: p.name,
         slug: p.slug,
         logo_url: p.logoUrl ?? null,
+        logo_bg_removed: p.logoBgRemoved,
         season_id: p.seasonId,
         brick_number: p.brickNumber,
         brick_color: p.brickColor,
@@ -165,6 +194,7 @@ export async function updateTeamById(supabase: DBClient, id: string, p: {
     name?: string;
     slug?: string;
     logoUrl?: string;
+    logoBgRemoved?: boolean;
     brickNumber?: number;
     brickColor?: string;
     startingLvr?: number;
@@ -175,6 +205,7 @@ export async function updateTeamById(supabase: DBClient, id: string, p: {
             ...(p.name !== undefined && {name: p.name}),
             ...(p.slug !== undefined && {slug: p.slug}),
             ...(p.logoUrl !== undefined && {logo_url: p.logoUrl}),
+            ...(p.logoBgRemoved !== undefined && {logo_bg_removed: p.logoBgRemoved}),
             ...(p.brickNumber !== undefined && {brick_number: p.brickNumber}),
             ...(p.brickColor !== undefined && {brick_color: p.brickColor}),
             ...(p.startingLvr !== undefined && {starting_lvr: p.startingLvr}),

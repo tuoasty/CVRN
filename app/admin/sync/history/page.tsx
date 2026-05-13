@@ -11,8 +11,9 @@ import {SheetConfig, SheetSyncLog} from '@/shared/types/db';
 import {SyncChange, SyncError} from '@/server/domains/sheets/types';
 import {getSheetConfigsAction, getSyncLogsAction} from '@/app/actions/sheets.actions';
 
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive'> = {
+const STATUS_VARIANT: Record<string, 'default' | 'warning' | 'secondary' | 'destructive'> = {
     success: 'default',
+    warning: 'warning',
     partial: 'secondary',
     failed: 'destructive',
 };
@@ -196,7 +197,7 @@ function AdminSyncHistoryContent() {
             )}
 
             <Dialog open={!!selectedLog} onOpenChange={open => { if (!open) setSelectedLog(null); }}>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby={undefined}>
                     <DialogHeader>
                         <DialogTitle>
                             Sync Log — {selectedLog && new Date(selectedLog.synced_at).toLocaleString()}

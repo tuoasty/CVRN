@@ -9,6 +9,7 @@ import {
     upsertTeamByNumber,
     softDeleteTeamById,
 } from "@/server/db/teams.repo";
+import {insertTeamNameHistory} from "@/server/db/teamNameHistory.repo";
 import {
     findAllTeamPlayers,
     addPlayerToTeam,
@@ -17,6 +18,7 @@ import {
     upsertPlayer,
 } from "@/server/db/players.repo";
 import {getRobloxUserByName, getRobloxAvatarsById} from "@/server/roblox/users";
+import {RobloxUser} from "@/shared/types/roblox";
 import {generateSlug} from "@/server/domains/team/helpers/generateSlug";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
@@ -108,6 +110,14 @@ export async function syncTeamRoster(
                         before: {name: prev.name},
                         after: {name: parsedTeam.teamName},
                     });
+                    const historyResult = await insertTeamNameHistory(supabase, {
+                        teamId: team.id,
+                        oldName: prev.name,
+                        newName: parsedTeam.teamName,
+                    });
+                    if (!historyResult.ok) {
+                        logger.error({teamId: team.id, error: historyResult.error}, "Failed to record team rename");
+                    }
                 }
             }
 
@@ -131,25 +141,65 @@ export async function syncTeamRoster(
                 parsedTeam.players.map(p => [p.username.toLowerCase(), p])
             );
 
-            // Remove players not on sheet
-            for (const [uname, pts] of currentByUsername) {
-                if (!parsedByUsername.has(uname)) {
-                    const removeResult = await removePlayerFromTeam(supabase, {
-                        playerId: pts.player_id,
-                        seasonId: config.season_id,
+            // Resolve Roblox IDs for all unmatched parsed players upfront
+            type Resolution = {parsedPlayer: typeof parsedTeam.players[number]; robloxUser: RobloxUser; avatarUrl: string | null};
+            const resolvedByRobloxId = new Map<string, Resolution>();
+            const resolvedUsernameToRobloxId = new Map<string, string>();
+            const failedResolutions = new Set<string>();
+            const renamedUsernames = new Set<string>(); // sheet usernames (lowercase) that are outdated
+            const canonicalNamesToSkip = new Set<string>(); // DB usernames (lowercase) to protect from remove
+
+            for (const [uname, parsedPlayer] of parsedByUsername) {
+                if (currentByUsername.has(uname)) continue;
+
+                const robloxResult = await getRobloxUserByName(parsedPlayer.username);
+                if (!robloxResult.ok || robloxResult.value.length === 0) {
+                    logger.warn({username: parsedPlayer.username}, "Roblox user not found");
+                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Player "${parsedPlayer.username}" not found on Roblox`});
+                    rowsErrored++;
+                    failedResolutions.add(uname);
+                    continue;
+                }
+                const robloxUser = robloxResult.value[0];
+                const canonicalName = robloxUser.name.toLowerCase();
+                const robloxId = String(robloxUser.id);
+                const avatarResult = await getRobloxAvatarsById([robloxId]);
+                const avatarUrl = avatarResult.ok ? (avatarResult.value[0]?.imageUrl ?? null) : null;
+
+                resolvedByRobloxId.set(robloxId, {parsedPlayer, robloxUser, avatarUrl});
+                resolvedUsernameToRobloxId.set(uname, robloxId);
+
+                // requestedUsername !== name means player renamed on Roblox since sheet was last updated
+                if (canonicalName !== uname && currentByUsername.has(canonicalName)) {
+                    errors.push({
+                        row: parsedPlayer.rowNumber,
+                        message: `[${parsedTeam.teamName}] Username "${parsedPlayer.username}" is outdated — Roblox username is now "${robloxUser.name}". Update the sheet.`,
                     });
-                    if (!removeResult.ok) {
-                        logger.error({playerId: pts.player_id, error: removeResult.error}, "Failed to remove player");
-                        errors.push({row: 0, message: `[${parsedTeam.teamName}] Remove ${uname}: ${removeResult.error.message}`});
-                        rowsErrored++;
-                    } else {
-                        changes.push({
-                            type: 'player_remove',
-                            entityId: pts.player_id,
-                            before: {username: uname, teamId: team.id},
-                            after: {},
-                        });
-                    }
+                    renamedUsernames.add(uname);
+                    canonicalNamesToSkip.add(canonicalName);
+                }
+            }
+
+            // Remove players not on sheet (skip players whose sheet entry uses their old username)
+            for (const [uname, pts] of currentByUsername) {
+                if (parsedByUsername.has(uname)) continue;
+                if (canonicalNamesToSkip.has(uname)) continue;
+
+                const removeResult = await removePlayerFromTeam(supabase, {
+                    playerId: pts.player_id,
+                    seasonId: config.season_id,
+                });
+                if (!removeResult.ok) {
+                    logger.error({playerId: pts.player_id, error: removeResult.error}, "Failed to remove player");
+                    errors.push({row: 0, message: `[${parsedTeam.teamName}] Remove ${uname}: ${removeResult.error.message}`});
+                    rowsErrored++;
+                } else {
+                    changes.push({
+                        type: 'player_remove',
+                        entityId: pts.player_id,
+                        before: {username: uname, teamId: team.id},
+                        after: {},
+                    });
                 }
             }
 
@@ -158,24 +208,13 @@ export async function syncTeamRoster(
                 const existing = currentByUsername.get(uname);
 
                 if (!existing) {
-                    // Resolve via Roblox API
-                    const robloxResult = await getRobloxUserByName(parsedPlayer.username);
-                    if (!robloxResult.ok || robloxResult.value.length === 0) {
-                        logger.warn({username: parsedPlayer.username}, "Roblox user not found");
-                        errors.push({
-                            row: parsedPlayer.rowNumber,
-                            message: `[${parsedTeam.teamName}] Player "${parsedPlayer.username}" not found on Roblox`,
-                        });
-                        rowsErrored++;
-                        continue;
-                    }
+                    if (failedResolutions.has(uname) || renamedUsernames.has(uname)) continue;
 
-                    const robloxUser = robloxResult.value[0];
-                    const avatarResult = await getRobloxAvatarsById([String(robloxUser.id)]);
-                    const avatarUrl = avatarResult.ok ? (avatarResult.value[0]?.imageUrl ?? null) : null;
+                    const robloxId = resolvedUsernameToRobloxId.get(uname)!;
+                    const {robloxUser, avatarUrl} = resolvedByRobloxId.get(robloxId)!;
 
                     const upsertResult = await upsertPlayer(supabase, {
-                        robloxUserId: String(robloxUser.id),
+                        robloxUserId: robloxId,
                         username: robloxUser.name,
                         displayName: robloxUser.displayName ?? null,
                         avatarUrl,
