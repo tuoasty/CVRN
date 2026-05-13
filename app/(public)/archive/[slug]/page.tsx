@@ -35,9 +35,9 @@ function ChampionCard({entry}: {entry: SeasonDetail["season_podium"][number]}) {
         <div className="panel p-6 flex flex-col items-center gap-3 bg-yellow-500/5 border border-yellow-500/20">
             <div className="flex items-center gap-2 text-yellow-500">
                 <Trophy className="h-4 w-4" />
-                <span className="text-[10px] uppercase tracking-[0.2em] font-semibold">Champion</span>
+                <span className="text-[20px] uppercase tracking-[0.2em] font-semibold">Champion</span>
             </div>
-            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={56} />
+            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={144} />
             <p className="text-xl font-bold text-center">{entry.teams.name}</p>
         </div>
     );
@@ -54,9 +54,9 @@ function PlacementCard({entry}: {entry: SeasonDetail["season_podium"][number]}) 
         <div className={`panel p-4 flex flex-col items-center gap-2 border ${borderClass}`}>
             <div className={`flex items-center gap-1.5 ${accentClass}`}>
                 <Medal className="h-3.5 w-3.5" />
-                <span className="text-[10px] uppercase tracking-[0.15em] font-semibold">{label}</span>
+                <span className="text-[15px] uppercase tracking-[0.15em] font-semibold">{label}</span>
             </div>
-            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={40} />
+            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={108} />
             <p className="text-sm font-semibold text-center leading-tight">{entry.teams.name}</p>
         </div>
     );

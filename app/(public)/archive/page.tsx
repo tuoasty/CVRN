@@ -14,15 +14,36 @@ const PLACE_META = {
     3: {label: "3rd Place", color: "text-amber-700",  Icon: Medal},
 } as const;
 
-function TeamLogo({name, logoUrl}: {name: string; logoUrl: string | null}) {
+function TeamLogo({
+    name,
+    logoUrl,
+    size = 24,
+}: {
+    name: string;
+    logoUrl: string | null;
+    size?: number;
+}) {
     if (logoUrl) {
         return (
-            <Image src={logoUrl} alt={name} width={24} height={24}
-                className="rounded-sm object-contain mix-blend-multiply dark:mix-blend-screen" />
+            <Image
+                src={logoUrl}
+                alt={name}
+                width={size}
+                height={size}
+                className="rounded-sm object-contain mix-blend-multiply dark:mix-blend-screen"
+            />
         );
     }
+
     return (
-        <div className="w-6 h-6 rounded-sm flex items-center justify-center text-[10px] font-bold bg-primary/10 text-primary">
+        <div
+            className="rounded-sm flex items-center justify-center font-bold bg-primary/10 text-primary shrink-0"
+            style={{
+                width: size,
+                height: size,
+                fontSize: Math.round(size * 0.35),
+            }}
+        >
             {name.slice(0, 2).toUpperCase()}
         </div>
     );
@@ -36,7 +57,11 @@ function PodiumEntry({entry}: {entry: ArchiveSeason["season_podium"][number]}) {
     return (
         <div className={`flex items-center gap-2 ${place !== 1 ? "opacity-80" : ""}`}>
             <Icon className={`h-4 w-4 shrink-0 ${color}`} />
-            <TeamLogo name={entry.teams.name} logoUrl={entry.teams.logo_url} />
+            <TeamLogo
+                name={entry.teams.name}
+                logoUrl={entry.teams.logo_url}
+                size={place === 1 ? 36 : 24}
+            />
             <div>
                 <p className={`font-semibold leading-none ${place === 1 ? "text-base" : "text-sm"}`}>
                     {entry.teams.name}
