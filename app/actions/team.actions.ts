@@ -97,6 +97,13 @@ export async function getTeamsByIdsAction(teamIds: unknown): Promise<Result<Team
     return getTeamsByIds(supabase, parsed.data);
 }
 
+export async function getTeamNameHistoryAction(teamId: string): Promise<Result<TeamNameHistoryEntry[]>> {
+    const parsed = TeamIdSchema.safeParse({teamId});
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getTeamNameHistory(supabase, parsed.data.teamId);
+}
+
 export async function getTeamsBySeasonAction(input: unknown): Promise<Result<Team[]>> {
     const parsed = z.object({seasonId: z.string().uuid()}).safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
