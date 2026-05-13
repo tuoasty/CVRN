@@ -5,8 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import {useArchive} from "@/app/hooks/useArchive";
 import {useRegions} from "@/app/hooks/useRegions";
-import {ArchiveSeason} from "@/server/domains/season";
+import {ArchiveSeason, AwardCategory} from "@/server/domains/season";
 import {Skeleton} from "@/app/components/ui/skeleton";
+
+const CATEGORY_SHORT: Record<AwardCategory, string> = {
+    individual_winners: "Individual",
+    first_team: "First Team",
+    staff_team: "Staff",
+};
 
 const PLACE_META = {
     1: {label: "Champion",  color: "text-yellow-500", Icon: Trophy},
@@ -78,9 +84,12 @@ function SeasonCard({season, regionName}: {season: ArchiveSeason; regionName: st
                         <Award className="h-3 w-3" /> Awards
                     </p>
                     {season.season_awards.map(a => (
-                        <p key={a.id} className="text-sm">
+                        <p key={a.id} className="text-sm flex items-center gap-1.5 flex-wrap">
                             <span className="font-medium">{a.award_name}</span>
-                            <span className="text-muted-foreground"> — {a.players.username}</span>
+                            <span className="text-muted-foreground">— {a.players.username}</span>
+                            <span className="text-[10px] uppercase tracking-wide text-primary/60 bg-primary/10 px-1 py-0.5 rounded-sm">
+                                {CATEGORY_SHORT[a.category as AwardCategory] ?? a.category}
+                            </span>
                         </p>
                     ))}
                 </div>

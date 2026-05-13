@@ -56,9 +56,12 @@ export interface SeasonAwardEntryWithPlayer {
     season_id: string;
     player_id: string;
     award_name: string;
+    category: import("./schemas").AwardCategory;
     awarded_at: string;
     created_by: string | null;
     created_at: string;
+    full_avatar_url: string | null;
+    avatar_bucket_path: string | null;
     players: {
         id: string;
         username: string;
@@ -81,6 +84,7 @@ export interface ArchiveSeason {
     season_awards: Array<{
         id: string;
         award_name: string;
+        category: import("./schemas").AwardCategory;
         awarded_at: string;
         players: { id: string; username: string };
     }>;
@@ -102,9 +106,10 @@ export interface SeasonDetail {
     season_awards: Array<{
         id: string;
         award_name: string;
+        category: import("./schemas").AwardCategory;
         awarded_at: string;
         full_avatar_url: string | null;
-        full_avatar_synced_at: string | null;
+        avatar_bucket_path: string | null;
         players: { id: string; username: string };
     }>;
 }
@@ -119,6 +124,7 @@ export type {
     DeriveSeasonPodiumInput,
     UpsertSeasonAwardInput,
     DeleteSeasonAwardInput,
+    AwardCategory,
 } from "./schemas";
 
 export {
@@ -131,4 +137,5 @@ export {
     DeriveSeasonPodiumSchema,
     UpsertSeasonAwardSchema,
     DeleteSeasonAwardSchema,
+    AwardCategoryEnum,
 } from "./schemas";

@@ -1,17 +1,19 @@
 "use server"
 
 import {createServerSupabase} from "@/server/supabase/server";
-import {Err} from "@/shared/types/result";
+import {Err, Ok} from "@/shared/types/result";
 import {getAllSeasons, getSeasonBySlugAndRegion, createSeason, updateSeason, deleteSeason} from "@/server/domains/season";
 import {SeasonSlugRegionSchema, SeasonIdSchema, CreateSeasonSchema, UpdateSeasonSchema} from "@/server/domains/season";
 import {
     getSeasonPodium, getSeasonAwards, getArchive, getSeasonDetail,
     upsertSeasonPodiumSlot, deleteSeasonPodiumSlot, deriveAndSaveSeasonPodium,
-    upsertSeasonAward, deleteSeasonAward,
+    upsertSeasonAward, deleteSeasonAward, storeAwardAvatar,
     UpsertSeasonPodiumSlotSchema, DeleteSeasonPodiumSlotSchema,
     DeriveSeasonPodiumSchema, UpsertSeasonAwardSchema, DeleteSeasonAwardSchema,
 } from "@/server/domains/season";
+import {getRobloxFullAvatarsById} from "@/server/roblox/users";
 import {revalidatePath} from "next/cache";
+import {z} from "zod";
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
     const {data: {user}} = await supabase.auth.getUser();
@@ -142,4 +144,38 @@ export async function deleteSeasonAwardAction(input: unknown) {
     const result = await deleteSeasonAward(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
     return result;
+}
+
+export async function previewAwardAvatarAction(input: unknown) {
+    const parsed = z.object({playerId: z.uuid()}).safeParse(input);
+    if (!parsed.success) return Err({message: "Invalid player ID", code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+
+    const {data: player} = await supabase
+        .from("players")
+        .select("roblox_user_id")
+        .eq("id", parsed.data.playerId)
+        .single();
+
+    if (!player?.roblox_user_id) return Err({message: "Player not found", code: "NOT_FOUND"});
+
+    const robloxId = String(player.roblox_user_id);
+    const avatarResult = await getRobloxFullAvatarsById([robloxId]);
+    if (!avatarResult.ok) return avatarResult;
+
+    const avatar = avatarResult.value.find(a => String(a.targetId) === robloxId);
+    if (!avatar?.imageUrl) return Err({message: "Could not fetch avatar from Roblox", code: "INTEGRATION_ERROR"});
+
+    return Ok({cdnUrl: avatar.imageUrl});
+}
+
+export async function saveAwardAvatarAction(input: unknown) {
+    const parsed = z.object({awardId: z.uuid(), cdnUrl: z.string().url()}).safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    return storeAwardAvatar(parsed.data.awardId, parsed.data.cdnUrl);
 }

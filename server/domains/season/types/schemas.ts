@@ -52,10 +52,15 @@ export const DeriveSeasonPodiumSchema = z.object({
 })
 export type DeriveSeasonPodiumInput = z.infer<typeof DeriveSeasonPodiumSchema>
 
+export const AwardCategoryEnum = z.enum(["individual_winners", "first_team", "staff_team"]);
+export type AwardCategory = z.infer<typeof AwardCategoryEnum>;
+
 export const UpsertSeasonAwardSchema = z.object({
     seasonId: z.uuid(),
     playerId: z.uuid(),
     awardName: z.string().min(1, "Award name is required"),
+    category: AwardCategoryEnum,
+    cdnUrl: z.string().url("Invalid avatar URL"),
 })
 export type UpsertSeasonAwardInput = z.infer<typeof UpsertSeasonAwardSchema>
 

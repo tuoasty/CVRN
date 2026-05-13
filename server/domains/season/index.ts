@@ -18,6 +18,7 @@ export {deleteSeasonPodiumSlot} from "./commands/deleteSeasonPodiumSlot";
 export {deriveAndSaveSeasonPodium} from "./commands/deriveAndSaveSeasonPodium";
 export {upsertSeasonAward} from "./commands/upsertSeasonAward";
 export {deleteSeasonAward} from "./commands/deleteSeasonAward";
+export {storeAwardAvatar} from "./commands/storeAwardAvatar";
 export type {
     SeasonPodiumEntryWithTeam,
     SeasonAwardEntryWithPlayer,
@@ -28,6 +29,7 @@ export type {
     DeriveSeasonPodiumInput,
     UpsertSeasonAwardInput,
     DeleteSeasonAwardInput,
+    AwardCategory,
 } from "./types";
 export {
     UpsertSeasonPodiumSlotSchema,
@@ -35,4 +37,5 @@ export {
     DeriveSeasonPodiumSchema,
     UpsertSeasonAwardSchema,
     DeleteSeasonAwardSchema,
+    AwardCategoryEnum,
 } from "./types";

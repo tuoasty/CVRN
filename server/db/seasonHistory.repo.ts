@@ -62,16 +62,16 @@ export async function findSeasonAwards(
 ): Promise<Result<SeasonAwardRow[]>> {
     const {data, error} = await supabase
         .from("season_awards")
-        .select("*, players(id, username)")
+        .select("id, season_id, player_id, award_name, category, awarded_at, created_by, created_at, full_avatar_url, avatar_bucket_path, players(id, username)")
         .eq("season_id", seasonId)
         .order("awarded_at");
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok((data ?? []) as SeasonAwardRow[]);
+    return Ok((data ?? []) as unknown as SeasonAwardRow[]);
 }
 
 export async function insertSeasonAward(
     supabase: DBClient,
-    p: {seasonId: string; playerId: string; awardName: string; createdBy: string}
+    p: {seasonId: string; playerId: string; awardName: string; category: string; createdBy: string}
 ): Promise<Result<SeasonAwardRow>> {
     const {data, error} = await supabase
         .from("season_awards")
@@ -79,6 +79,7 @@ export async function insertSeasonAward(
             season_id: p.seasonId,
             player_id: p.playerId,
             award_name: p.awardName,
+            category: p.category as "individual_winners" | "first_team" | "staff_team",
             created_by: p.createdBy,
         })
         .select()
@@ -108,7 +109,7 @@ export async function findSeasonBySlug(
         .select(`
             id, name, slug, region_id, start_date, end_date,
             season_podium(place, is_override, notes, teams(id, name, slug, logo_url)),
-            season_awards(id, award_name, awarded_at, full_avatar_url, full_avatar_synced_at, players(id, username))
+            season_awards(id, award_name, category, awarded_at, full_avatar_url, avatar_bucket_path, players(id, username))
         `)
         .eq("slug", slug)
         .maybeSingle();
@@ -125,7 +126,7 @@ export async function findArchiveSeasons(
         .select(`
             id, name, slug, region_id, start_date, end_date,
             season_podium(place, is_override, notes, teams(id, name, slug, logo_url)),
-            season_awards(id, award_name, awarded_at, players(id, username))
+            season_awards(id, award_name, category, awarded_at, players(id, username))
         `)
         .order("start_date", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
