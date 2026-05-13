@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useState} from "react";
+import Link from "next/link";
 import {CalendarDays, Plus} from "lucide-react";
 import {Button} from "@/app/components/ui/button";
 import {Badge} from "@/app/components/ui/badge";
@@ -30,7 +31,6 @@ export default function AdminSeasonsPage() {
     const [editSeason, setEditSeason] = useState<SeasonWithPlayoffConfig | undefined>(undefined);
     const [deleteTarget, setDeleteTarget] = useState<SeasonWithPlayoffConfig | null>(null);
     const [deleting, setDeleting] = useState(false);
-
     const regionName = (regionId: string) => {
         const r = regions.find((reg) => reg.id === regionId);
         return r ? `${r.code.toUpperCase()} — ${r.name}` : regionId;
@@ -135,10 +135,12 @@ export default function AdminSeasonsPage() {
                                         <td className="text-sm">{formatDate(season.start_date)}</td>
                                         <td className="text-sm">{formatDate(season.end_date)}</td>
                                         <td>
-                                            {season.is_active ? (
+                                            {season.end_date ? (
+                                                <Badge variant="secondary" className="rounded-sm text-xs">Completed</Badge>
+                                            ) : season.is_active ? (
                                                 <Badge variant="default" className="rounded-sm text-xs">Active</Badge>
                                             ) : (
-                                                <Badge variant="secondary" className="rounded-sm text-xs">Inactive</Badge>
+                                                <Badge variant="outline" className="rounded-sm text-xs">Inactive</Badge>
                                             )}
                                         </td>
                                         <td>
@@ -150,6 +152,14 @@ export default function AdminSeasonsPage() {
                                                     onClick={() => handleEdit(season)}
                                                 >
                                                     Edit
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="rounded-sm"
+                                                    asChild
+                                                >
+                                                    <Link href={`/admin/seasons/${season.id}/results`}>Results</Link>
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
