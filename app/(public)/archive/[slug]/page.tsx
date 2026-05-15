@@ -109,6 +109,7 @@ function IndividualAwardCard({
     const team = getAwardTeam(award, seasonId);
     const reversed = index % 2 === 1;
 
+    // ── Desktop blocks ─────────────────────────────────────────────
     const avatarBlock = (
         <div className="w-[20%] shrink-0 relative overflow-hidden">
             {full_avatar_url ? (
@@ -136,7 +137,7 @@ function IndividualAwardCard({
                     src={team.logo_url}
                     alt={team.name}
                     fill
-                    className="object-contain p-4 mix-blend-multiply dark:mix-blend-screen"
+                    className="object-contain p-3 mix-blend-multiply dark:mix-blend-screen"
                     sizes="20vw"
                 />
             ) : (
@@ -149,29 +150,96 @@ function IndividualAwardCard({
         </div>
     );
 
-    return (
-        <div className="panel flex overflow-hidden h-64 bg-yellow-500/[0.04] dark:bg-yellow-500/[0.06] border-yellow-500/25">
-            {reversed ? teamBlock : avatarBlock}
-
-            <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-5 text-center">
-                <p className="text-xs uppercase tracking-[0.18em] text-yellow-500/80 font-semibold">
+    // ── Mobile halves ──────────────────────────────────────────────
+    const mobileContentHalf = (
+        <div className="w-1/2 flex flex-col p-4 min-w-0">
+            <div className="flex flex-col gap-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-yellow-500/80 font-semibold truncate">
                     {award_name}
                 </p>
-                <p className="text-xl font-bold text-foreground leading-tight">
+                <p className="text-sm font-bold leading-tight line-clamp-2">
                     {players.display_name ?? players.username}
                 </p>
-                <p className="text-xs text-muted-foreground/70">@{players.username}</p>
+                <p className="text-[10px] text-muted-foreground/70 truncate">
+                    @{players.username}
+                </p>
                 {team && (
                     <p
-                        className="text-[11px] font-semibold mt-1 tracking-wide"
+                        className="text-[10px] font-semibold tracking-wide truncate"
                         style={{color: team.brick_color ?? undefined}}
                     >
                         {team.name}
                     </p>
                 )}
             </div>
+            {team?.logo_url && (
+                <div className="mt-auto pt-3">
+                    <div className="relative w-10 h-10">
+                        <Image
+                            src={team.logo_url}
+                            alt={team.name}
+                            fill
+                            className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                            sizes="40px"
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 
-            {reversed ? avatarBlock : teamBlock}
+    const mobileAvatarHalf = (
+        <div className="w-1/2 relative shrink-0 overflow-hidden">
+            {full_avatar_url ? (
+                <Image
+                    src={full_avatar_url}
+                    alt={players.username ?? "Player"}
+                    fill
+                    className="object-cover object-top"
+                    sizes="50vw"
+                />
+            ) : (
+                <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-primary">
+                        {(players.username ?? "?").slice(0, 2).toUpperCase()}
+                    </span>
+                </div>
+            )}
+        </div>
+    );
+
+    return (
+        <div className="panel overflow-hidden bg-yellow-500/[0.04] dark:bg-yellow-500/[0.06] border-yellow-500/25">
+            {/* Mobile: 50/50 split with zigzag */}
+            <div className="flex sm:hidden h-40">
+                {reversed ? mobileAvatarHalf : mobileContentHalf}
+                {reversed ? mobileContentHalf : mobileAvatarHalf}
+            </div>
+
+            {/* Desktop: original 3-column layout */}
+            <div className="hidden sm:flex h-64">
+                {reversed ? teamBlock : avatarBlock}
+                <div className="flex-1 min-w-0 flex flex-col items-center justify-center gap-1.5 px-5 text-center">
+                    <p className="text-xs uppercase tracking-[0.18em] text-yellow-500/80 font-semibold">
+                        {award_name}
+                    </p>
+                    <p className="text-xl font-bold text-foreground leading-tight line-clamp-2">
+                        {players.display_name ?? players.username}
+                    </p>
+                    <p className="text-xs text-muted-foreground/70 truncate w-full text-center">
+                        @{players.username}
+                    </p>
+                    {team && (
+                        <p
+                            className="text-[11px] font-semibold mt-1 tracking-wide"
+                            style={{color: team.brick_color ?? undefined}}
+                        >
+                            {team.name}
+                        </p>
+                    )}
+                </div>
+                {reversed ? avatarBlock : teamBlock}
+            </div>
         </div>
     );
 }
@@ -234,20 +302,103 @@ function FirstTeamCard({
     );
 }
 
-function FirstTeamSection({awards, seasonId}: {awards: SeasonDetail["season_awards"]; seasonId:string}) {
+function FirstTeamMobileCard({
+    award,
+    seasonId,
+}: {
+    award: SeasonDetail["season_awards"][number];
+    seasonId: string;
+}) {
+    const {award_name, full_avatar_url, players} = award;
+    const team = getAwardTeam(award, seasonId);
+
+    return (
+        <div className="flex overflow-hidden rounded-sm border border-yellow-500/20 bg-yellow-500/5 h-28">
+            {/* Content + logo — left */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between p-4">
+                <div className="flex flex-col gap-0.5 min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-amber-500 font-semibold truncate">
+                        {award_name}
+                    </p>
+                    <p className="text-sm font-bold leading-tight line-clamp-1">
+                        {players.display_name ?? players.username}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/70 truncate">
+                        @{players.username}
+                    </p>
+                </div>
+                {team && (
+                    <div className="flex items-center gap-1.5">
+                        {team.logo_url && (
+                            <div className="relative w-4 h-4 shrink-0">
+                                <Image
+                                    src={team.logo_url}
+                                    alt={team.name}
+                                    fill
+                                    className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                    sizes="16px"
+                                />
+                            </div>
+                        )}
+                        <p
+                            className="text-[10px] font-semibold tracking-wide truncate"
+                            style={{color: team.brick_color ?? undefined}}
+                        >
+                            {team.name}
+                        </p>
+                    </div>
+                )}
+            </div>
+            {/* Avatar — right */}
+            <div className="relative w-20 shrink-0 overflow-hidden">
+                {full_avatar_url ? (
+                    <Image
+                        src={full_avatar_url}
+                        alt={players.username ?? "Player"}
+                        fill
+                        className="object-cover object-top"
+                        sizes="80px"
+                    />
+                ) : (
+                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-lg font-bold text-primary">
+                            {(players.username ?? "?").slice(0, 2).toUpperCase()}
+                        </span>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function FirstTeamSection({awards, seasonId}: {awards: SeasonDetail["season_awards"]; seasonId: string}) {
     if (awards.length === 0) return null;
     const slots = Array.from({length: 7}, (_, i) => awards[i] ?? null);
+
     return (
         <div className="space-y-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Award className="h-3 w-3" /> First Team
             </p>
-            <div className="rounded-sm border border-yellow-500/25 bg-yellow-500/[0.03] p-4 grid grid-cols-7 gap-4">
-                {slots.map((award, i) =>
-                    award
-                        ? <FirstTeamCard key={award.id} award={award} seasonId={seasonId} />
-                        : <div key={i} className="aspect-[3/4] rounded-sm bg-muted/20" />
-                )}
+
+            <div className="rounded-sm border border-yellow-500/25 bg-yellow-500/[0.03] p-4">
+                {/* Desktop: 7-col grid */}
+                <div className="hidden sm:grid grid-cols-7 gap-4">
+                    {slots.map((award, i) =>
+                        award
+                            ? <FirstTeamCard key={award.id} award={award} seasonId={seasonId} />
+                            : <div key={i} className="aspect-[3/4] rounded-sm bg-muted/20" />
+                    )}
+                </div>
+
+                {/* Mobile: uniform horizontal cards */}
+                <div className="sm:hidden space-y-2">
+                    {slots.map((award, i) =>
+                        award
+                            ? <FirstTeamMobileCard key={award.id} award={award} seasonId={seasonId} />
+                            : <div key={i} className="h-28 rounded-sm bg-muted/20" />
+                    )}
+                </div>
             </div>
         </div>
     );
