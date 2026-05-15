@@ -14,6 +14,7 @@ import {
     findAllTeamPlayers,
     addPlayerToTeam,
     removePlayerFromTeam,
+    bulkRemovePlayersFromTeam,
     setPlayerRole,
     upsertPlayer,
 } from "@/server/db/players.repo";
@@ -57,6 +58,25 @@ export async function syncTeamRoster(
         for (const num of disbandedNumbers) {
             const team = existingByNumber.get(num);
             if (!team) continue;
+
+            const playersResult = await findAllTeamPlayers(supabase, team.id, config.season_id);
+            if (!playersResult.ok) {
+                logger.error({teamId: team.id, error: playersResult.error}, "Failed to load players for disbanded team");
+                errors.push({row: 0, message: `Failed to load players for team ${team.name}: ${playersResult.error.message}`});
+                rowsErrored++;
+                continue;
+            }
+            const playerIds = playersResult.value.filter(r => r.player).map(r => r.player!.id);
+            if (playerIds.length > 0) {
+                const removeResult = await bulkRemovePlayersFromTeam(supabase, config.season_id, playerIds);
+                if (!removeResult.ok) {
+                    logger.error({teamId: team.id, error: removeResult.error}, "Failed to remove players from disbanded team");
+                    errors.push({row: 0, message: `Failed to remove players from team ${team.name}: ${removeResult.error.message}`});
+                    rowsErrored++;
+                    continue;
+                }
+            }
+
             const disbandResult = await softDeleteTeamById(supabase, team.id);
             if (!disbandResult.ok) {
                 logger.error({teamId: team.id, error: disbandResult.error}, "Failed to disband team");
