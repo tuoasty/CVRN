@@ -100,6 +100,20 @@ export async function deleteSeasonAwardById(
     return Ok(true);
 }
 
+export async function deleteSeasonAwardsByCategory(
+    supabase: DBClient,
+    seasonId: string,
+    category: Database["public"]["Enums"]["award_category"]
+): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("season_awards")
+        .delete()
+        .eq("season_id", seasonId)
+        .eq("category", category);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
 export async function findSeasonBySlug(
     supabase: DBClient,
     slug: string

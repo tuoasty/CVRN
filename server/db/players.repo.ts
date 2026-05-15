@@ -77,6 +77,23 @@ export async function findAllTeamPlayers(
     return Ok((data ?? []) as unknown as PlayerTeamSeasonWithPlayer[]);
 }
 
+export async function findAllTeamPlayersForSeason(
+    supabase: DBClient,
+    teamId: string,
+    seasonId: string
+): Promise<Result<PlayerTeamSeasonWithPlayer[]>> {
+    const {data, error} = await supabase
+        .from("player_team_seasons")
+        .select(`
+            *,
+            player:players(*)
+        `)
+        .eq("team_id", teamId)
+        .eq("season_id", seasonId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as PlayerTeamSeasonWithPlayer[]);
+}
+
 export async function findPlayerCurrentTeam(
     supabase: DBClient,
     playerId: string,
