@@ -11,7 +11,7 @@ import {
     addExistingPlayerToTeam,
     getPlayerByExactUsername,
     setPlayerRoleService,
-    transferCaptainService
+    transferCaptainService,
 } from "@/server/domains/player";
 import {createServerSupabase} from "@/server/supabase/server";
 import {Err} from "@/shared/types/result";
@@ -95,3 +95,4 @@ export async function transferCaptainAction(input: unknown) {
     const supabase = await createServerSupabase();
     return transferCaptainService(supabase, parsed.data);
 }
+

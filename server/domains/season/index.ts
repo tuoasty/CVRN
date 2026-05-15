@@ -19,6 +19,7 @@ export {deriveAndSaveSeasonPodium} from "./commands/deriveAndSaveSeasonPodium";
 export {upsertSeasonAward} from "./commands/upsertSeasonAward";
 export {deleteSeasonAward} from "./commands/deleteSeasonAward";
 export {storeAwardAvatar} from "./commands/storeAwardAvatar";
+export {fetchChampionRosterAwards} from "./commands/fetchChampionRosterAwards";
 export type {
     SeasonPodiumEntryWithTeam,
     SeasonAwardEntryWithPlayer,
