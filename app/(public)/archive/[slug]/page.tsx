@@ -1,7 +1,7 @@
 import {notFound} from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import {Trophy, Medal, Award, ChevronLeft} from "lucide-react";
+import {Trophy, Medal, Award, ChevronLeft, Users} from "lucide-react";
 import {getSeasonDetailAction} from "@/app/actions/season.actions";
 import {getAllRegionsAction} from "@/app/actions/region.actions";
 import {SeasonDetail} from "@/server/domains/season";
@@ -474,6 +474,137 @@ function StaffTeamSection({awards}: {awards: SeasonDetail["season_awards"]}) {
 }
 
 
+// ─── Champion Roster ─────────────────────────────────────────────────────────
+
+type RosterEntry = SeasonDetail["season_awards"][number];
+
+function ChampionRosterCard({award}: {award: RosterEntry}) {
+    const {award_name, full_avatar_url, players} = award;
+    const username = players.username;
+    const display_name = players.display_name;
+    const roleLabel = ROSTER_ROLE_LABEL[award_name];
+    return (
+        <div className="flex flex-col items-center gap-1.5">
+            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-muted/30">
+                {full_avatar_url ? (
+                    <Image
+                        src={full_avatar_url}
+                        alt={award_name}
+                        fill
+                        className="object-cover object-top"
+                        sizes="10vw"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-xs font-bold text-muted-foreground">
+                            {username.slice(0, 2).toUpperCase()}
+                        </span>
+                    </div>
+                )}
+            </div>
+            <div className="flex flex-col items-center gap-0.5 w-full">
+                <p className="text-xs font-semibold text-center leading-tight truncate w-full">
+                    {display_name ?? username}
+                </p>
+                <p className="text-[10px] text-muted-foreground text-center truncate w-full">
+                    @{username}
+                </p>
+                {roleLabel && (
+                    <p className="text-[9px] uppercase tracking-wider text-yellow-500/80 font-bold text-center">
+                        {roleLabel}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function ChampionRosterMobileCard({award, index}: {award: RosterEntry; index: number}) {
+    const {award_name, full_avatar_url, players} = award;
+    const username = players.username;
+    const display_name = players.display_name;
+    const isRight = index % 2 === 1;
+
+    const avatarEl = (
+        <div className="relative w-[52%] shrink-0 self-stretch rounded-sm overflow-hidden bg-muted/30 min-h-[112px]">
+            {full_avatar_url ? (
+                <Image
+                    src={full_avatar_url}
+                    alt={award_name}
+                    fill
+                    className="object-cover object-top"
+                    sizes="29vw"
+                />
+            ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-sm font-bold text-muted-foreground">
+                        {username.slice(0, 2).toUpperCase()}
+                    </span>
+                </div>
+            )}
+        </div>
+    );
+
+    const roleLabel = ROSTER_ROLE_LABEL[award_name];
+    const textEl = (
+        <div className={`flex-1 flex flex-col justify-center gap-0.5 min-w-0 px-2 ${isRight ? "items-start" : "items-end"}`}>
+            <p className={`text-xs font-semibold leading-tight line-clamp-2 ${isRight ? "text-left" : "text-right"}`}>
+                {display_name ?? username}
+            </p>
+            <p className={`text-[10px] text-muted-foreground break-all w-full ${isRight ? "text-left" : "text-right"}`}>
+                @{username}
+            </p>
+            {roleLabel && (
+                <p className={`text-[9px] uppercase tracking-wider text-yellow-500/80 font-bold w-full ${isRight ? "text-left" : "text-right"}`}>
+                    {roleLabel}
+                </p>
+            )}
+        </div>
+    );
+
+    return (
+        <div className="flex items-stretch min-h-[112px]">
+            {isRight ? avatarEl : textEl}
+            {isRight ? textEl : avatarEl}
+        </div>
+    );
+}
+
+const ROSTER_ROLE_RANK: Record<string, number> = {captain: 0, vice_captain: 1, court_captain: 2};
+const ROSTER_ROLE_LABEL: Record<string, string> = {captain: "C", vice_captain: "VC", court_captain: "CC"};
+
+function ChampionRosterSection({awards}: {awards: SeasonDetail["season_awards"]}) {
+    if (awards.length === 0) return null;
+    const sorted = [...awards].sort(
+        (a, b) => (ROSTER_ROLE_RANK[a.award_name] ?? 3) - (ROSTER_ROLE_RANK[b.award_name] ?? 3)
+    );
+    const cols = Math.ceil(sorted.length / 2);
+    return (
+        <div className="space-y-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Users className="h-3 w-3" /> Champion Roster
+            </p>
+            <div className="rounded-sm border border-border bg-muted/20 p-4">
+                {/* Desktop: equal two-row grid */}
+                <div
+                    className="hidden sm:grid gap-3"
+                    style={{gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`}}
+                >
+                    {sorted.map(a => (
+                        <ChampionRosterCard key={a.id} award={a} />
+                    ))}
+                </div>
+                {/* Mobile: mirrored 2-col — avatars meet in center, names frame outside */}
+                <div className="sm:hidden grid grid-cols-2 gap-2">
+                    {sorted.map((a, i) => (
+                        <ChampionRosterMobileCard key={a.id} award={a} index={i} />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function SeasonDetailPage({params}: {params: Promise<{slug: string}>}) {
@@ -491,6 +622,9 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
 
     const season = seasonResult.value;
     const regions = regionsResult.ok ? regionsResult.value : [];
+
+    const championRoster = season.season_awards.filter(a => a.category === "champion_roster");
+
     const regionName = regions.find(r => r.id === season.region_id)?.name ?? "Unknown";
 
     const fmt = (d: string | null) =>
@@ -500,7 +634,7 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
     const firstTeamAwards = season.season_awards.filter(a => a.category === "first_team");
     const staffTeamAwards = season.season_awards.filter(a => a.category === "staff_team");
     const hasPodium = season.season_podium.length > 0;
-    const hasContent = hasPodium || individualAwards.length > 0 || firstTeamAwards.length > 0;
+    const hasContent = hasPodium || championRoster.length > 0 || individualAwards.length > 0 || firstTeamAwards.length > 0;
 
     return (
         <div className="page-narrow space-y-6 py-6">
@@ -522,6 +656,8 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
             </div>
 
             {hasPodium && <PodiumSection entries={season.season_podium} />}
+
+            {championRoster.length > 0 && <ChampionRosterSection awards={championRoster} />}
 
             {individualAwards.length > 0 && (
                 <div className="space-y-3">

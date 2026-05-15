@@ -7,7 +7,7 @@ import {SeasonSlugRegionSchema, SeasonIdSchema, CreateSeasonSchema, UpdateSeason
 import {
     getSeasonPodium, getSeasonAwards, getArchive, getSeasonDetail,
     upsertSeasonPodiumSlot, deleteSeasonPodiumSlot, deriveAndSaveSeasonPodium,
-    upsertSeasonAward, deleteSeasonAward, storeAwardAvatar,
+    upsertSeasonAward, deleteSeasonAward, storeAwardAvatar, fetchChampionRosterAwards,
     UpsertSeasonPodiumSlotSchema, DeleteSeasonPodiumSlotSchema,
     DeriveSeasonPodiumSchema, UpsertSeasonAwardSchema, DeleteSeasonAwardSchema,
 } from "@/server/domains/season";
@@ -185,4 +185,15 @@ export async function saveAwardAvatarAction(input: unknown) {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
     return storeAwardAvatar(parsed.data.awardId, parsed.data.cdnUrl);
+}
+
+export async function fetchChampionRosterAwardsAction(input: unknown) {
+    const parsed = z.object({seasonId: z.uuid()}).safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    const result = await fetchChampionRosterAwards(supabase, parsed.data.seasonId, user.id);
+    if (result.ok) revalidatePath('/admin/seasons');
+    return result;
 }

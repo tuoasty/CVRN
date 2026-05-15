@@ -25,6 +25,7 @@ import {
     deleteSeasonAwardAction,
     previewAwardAvatarAction,
     saveAwardAvatarAction,
+    fetchChampionRosterAwardsAction,
 } from "@/app/actions/season.actions";
 import {searchPlayersInDatabaseAction} from "@/app/actions/player.actions";
 import {useTeamsBySeason} from "@/app/hooks/useTeams";
@@ -41,9 +42,10 @@ const CATEGORY_LABELS: Record<AwardCategory, string> = {
     individual_winners: "Individual Awards",
     first_team: "First Team",
     staff_team: "Staff Team",
+    champion_roster: "Champion Roster",
 };
 
-const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "first_team", "staff_team"];
+const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "first_team", "staff_team", "champion_roster"];
 
 function PodiumSlot({place, slot, seasonTeams, saving, onSave, onDelete}: {
     place: 1 | 2 | 3;
@@ -229,6 +231,7 @@ export default function SeasonResultsPage() {
     const [awards, setAwards] = useState<SeasonAwardEntryWithPlayer[]>([]);
     const [loading, setLoading] = useState(true);
     const [deriving, setDeriving] = useState(false);
+    const [fetchingRoster, setFetchingRoster] = useState(false);
     const [saving, setSaving] = useState<number | null>(null);
     const [deletingAward, setDeletingAward] = useState<string | null>(null);
 
@@ -303,6 +306,25 @@ export default function SeasonResultsPage() {
         } finally { setSaving(null); }
     };
 
+    const handleFetchRoster = async () => {
+        setFetchingRoster(true);
+        try {
+            const result = await fetchChampionRosterAwardsAction({seasonId});
+            if (!result.ok) { toast.error("Failed to fetch champion roster", result.error.message); return; }
+            if (result.value.skipped) {
+                toast.info("No champion found — set podium first");
+            } else {
+                toast.success(`Champion roster saved (${result.value.count} players)`);
+            }
+            await load();
+        } catch (err) {
+            clientLogger.error("SeasonResultsPage", "Error fetching champion roster", {err});
+            toast.error("Something went wrong");
+        } finally {
+            setFetchingRoster(false);
+        }
+    };
+
     const handlePreviewForCreate = async () => {
         if (!newAwardName.trim() || !selectedPlayer) return;
         setPreviewLoading("create");
@@ -364,8 +386,13 @@ export default function SeasonResultsPage() {
         } finally { setDeletingAward(null); }
     };
 
+    const ROSTER_ROLE_RANK: Record<string, number> = {captain: 0, vice_captain: 1, court_captain: 2};
     const groupedAwards = CATEGORY_ORDER.reduce((acc, cat) => {
-        acc[cat] = awards.filter(a => a.category === cat);
+        const group = awards.filter(a => a.category === cat);
+        if (cat === "champion_roster") {
+            group.sort((a, b) => (ROSTER_ROLE_RANK[a.award_name] ?? 3) - (ROSTER_ROLE_RANK[b.award_name] ?? 3));
+        }
+        acc[cat] = group;
         return acc;
     }, {} as Record<AwardCategory, SeasonAwardEntryWithPlayer[]>);
 
@@ -422,9 +449,17 @@ export default function SeasonResultsPage() {
 
                 {/* Awards */}
                 <div className="space-y-4 pt-4 border-t border-border">
-                    <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Award className="h-4 w-4" /> Awards
-                    </h2>
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <Award className="h-4 w-4" /> Awards
+                        </h2>
+                        <Button variant="outline" size="sm" className="rounded-sm gap-2 text-xs"
+                            onClick={handleFetchRoster} disabled={fetchingRoster || loading}
+                        >
+                            <RefreshCw className={`h-3 w-3 ${fetchingRoster ? "animate-spin" : ""}`} />
+                            Reset & Re-fetch Roster
+                        </Button>
+                    </div>
 
                     {!loading && awards.length === 0 && (
                         <p className="text-sm text-muted-foreground">No awards yet.</p>
