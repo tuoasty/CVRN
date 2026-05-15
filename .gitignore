@@ -49,3 +49,5 @@ next-env.d.ts
 docs
 CLAUDE.md
 .claude
+
+/supabase/migrations
