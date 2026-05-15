@@ -52,7 +52,7 @@ export const DeriveSeasonPodiumSchema = z.object({
 })
 export type DeriveSeasonPodiumInput = z.infer<typeof DeriveSeasonPodiumSchema>
 
-export const AwardCategoryEnum = z.enum(["individual_winners", "first_team", "staff_team"]);
+export const AwardCategoryEnum = z.enum(["individual_winners", "first_team", "staff_team", "champion_roster"]);
 export type AwardCategory = z.infer<typeof AwardCategoryEnum>;
 
 export const UpsertSeasonAwardSchema = z.object({
