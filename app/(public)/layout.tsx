@@ -16,7 +16,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             >
                 <PublicNavbar />
             </Suspense>
-            <MobileSeasonBar />
+            <Suspense fallback={<div className="lg:hidden border-b border-border bg-card"><div className="page-wide h-[52px]" /></div>}>
+                <MobileSeasonBar />
+            </Suspense>
             <PublicStoreInitializer>
                 <main className="flex-1">{children}</main>
             </PublicStoreInitializer>

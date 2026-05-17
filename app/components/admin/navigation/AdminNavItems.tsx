@@ -4,8 +4,6 @@ import { usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
-import LoadingComponent from "@/app/components/ui/LoadingComponent";
-
 const NAV_ITEMS = [
     { href: "/admin/dashboard", label: "Dashboard" },
     { href: "/admin/seasons", label: "Seasons" },
@@ -28,7 +26,7 @@ export default function AdminNavItems({
 }: AdminNavItemsProps) {
     const pathname = usePathname();
     const router = useRouter();
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
 
     const navClasses =
         layout === "vertical"
@@ -41,9 +39,7 @@ export default function AdminNavItems({
             : "rounded-sm text-sm";
 
     return (
-        <>
-            <LoadingComponent isPending={isPending} />
-            <nav className={navClasses}>
+        <nav className={navClasses}>
                 {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -64,6 +60,5 @@ export default function AdminNavItems({
                     );
                 })}
             </nav>
-        </>
     );
 }
