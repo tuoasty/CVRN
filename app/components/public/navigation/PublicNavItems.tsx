@@ -4,8 +4,6 @@ import { usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
-import LoadingComponent from "@/app/components/ui/LoadingComponent";
-
 const NAV_ITEMS = [
     { href: "/home", label: "Home" },
     { href: "/matches", label: "Matches" },
@@ -26,7 +24,7 @@ export default function PublicNavItems({
 }: PublicNavItemsProps) {
     const pathname = usePathname();
     const router = useRouter();
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
 
     const navClasses =
         layout === "vertical"
@@ -39,10 +37,7 @@ export default function PublicNavItems({
             : "rounded-sm text-sm";
 
     return (
-        <>
-            <LoadingComponent isPending={isPending} />
-
-            <nav className={navClasses}>
+        <nav className={navClasses}>
                 {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -63,6 +58,5 @@ export default function PublicNavItems({
                     );
                 })}
             </nav>
-        </>
     );
 }

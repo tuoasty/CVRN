@@ -2,7 +2,6 @@
 
 import { User } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import LoadingComponent from "@/app/components/ui/LoadingComponent";
 import { usePathname, useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 import {useEffect, useState, useTransition} from "react";
@@ -13,7 +12,7 @@ export default function UserButton() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
 
     useEffect(() => {
         const supabase = createBrowserClient(
@@ -98,9 +97,7 @@ export default function UserButton() {
     }
 
     return (
-        <>
-            <LoadingComponent isPending={isPending} />
-            <Button
+        <Button
                 variant="ghost"
                 size="sm"
                 className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm"
@@ -108,6 +105,5 @@ export default function UserButton() {
             >
                 <User className="h-4 w-4" />
             </Button>
-        </>
     );
 }

@@ -11,7 +11,6 @@ import { useTeams } from "@/app/hooks/useTeams";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { useRegions } from "@/app/hooks/useRegions";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
-import LoadingComponent from "@/app/components/ui/LoadingComponent";
 
 export default function TeamsDataTable() {
     const { teams, isLoading, error } = useTeams();
@@ -21,7 +20,7 @@ export default function TeamsDataTable() {
 
     const [searchQuery, setSearchQuery] = useState("");
     const [viewAllInRegion, setViewAllInRegion] = useState(false);
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
 
     const selectedRegion = regions.find((r) => r.id === selectedRegionId);
 
@@ -73,7 +72,6 @@ export default function TeamsDataTable() {
 
     return (
         <div className="space-y-4">
-            <LoadingComponent isPending={isPending} />
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="w-full sm:flex-1 sm:max-w-sm">
                     <Input

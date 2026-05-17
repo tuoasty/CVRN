@@ -5,7 +5,6 @@ import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Users } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import LoadingComponent from "@/app/components/ui/LoadingComponent";
 import {
     Sheet,
     SheetContent,
@@ -23,15 +22,13 @@ export default function AdminNavbar() {
     const pathname = usePathname();
     const router = useRouter();
     const [open, setOpen] = useState(false);
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
 
     useEffect(() => {
         setOpen(false);
     }, [pathname]);
 
     return (
-        <>
-        <LoadingComponent isPending={isPending} />
         <header className="sticky top-0 z-50 border-b border-border bg-card">
             <div className="page-narrow">
                 {/* Desktop: Single Row */}
@@ -123,6 +120,5 @@ export default function AdminNavbar() {
                 </div>
             </div>
         </header>
-        </>
     );
 }

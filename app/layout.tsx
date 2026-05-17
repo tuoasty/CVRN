@@ -6,6 +6,7 @@ import {Toaster} from "@/app/components/ui/sonner";
 import {Analytics} from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import {SWRProvider} from "@/app/providers/SWRProvider";
+import NextTopLoader from "nextjs-toploader";
 
 const siteUrl = "https://cvrn.vercel.app";
 
@@ -66,6 +67,12 @@ export default function RootLayout({
             defaultTheme="system"
             enableSystem
         >
+            <NextTopLoader
+                color="hsl(var(--primary))"
+                height={3}
+                showSpinner={false}
+                shadow={false}
+            />
             <SWRProvider>
             {children}
             </SWRProvider>
