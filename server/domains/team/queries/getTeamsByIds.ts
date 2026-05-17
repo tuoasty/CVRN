@@ -20,10 +20,20 @@ export async function getTeamsByIds(
             return result;
         }
 
-        const teamsWithRegions = result.value.map(team => ({
-            ...team,
-            region: team.seasons.regions
-        }));
+        const teamsWithRegions = result.value.map(team => {
+            const members = (team as any).player_team_seasons ?? [];
+            const captainRow = members.find((m: any) => m.role === "captain");
+            return {
+                ...team,
+                region: team.seasons.regions,
+                captain: captainRow
+                    ? {
+                        displayName: captainRow.player?.display_name ?? null,
+                        avatarUrl: captainRow.player?.avatar_url ?? null,
+                      }
+                    : null,
+            };
+        });
 
         return Ok(teamsWithRegions as TeamWithRegion[]);
     } catch (error) {

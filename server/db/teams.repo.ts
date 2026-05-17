@@ -335,10 +335,15 @@ export async function findTeamsByIds(supabase: DBClient, teamIds: string[]): Pro
                     code,
                     name
                 )
+            ),
+            player_team_seasons (
+                role,
+                player:players (display_name, avatar_url)
             )
         `)
         .in("id", teamIds)
-        .is("deleted_at", null);
+        .is("deleted_at", null)
+        .is("player_team_seasons.left_at", null);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as TeamWithRegionRow[]);
 }

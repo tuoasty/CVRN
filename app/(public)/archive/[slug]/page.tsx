@@ -109,136 +109,62 @@ function IndividualAwardCard({
     const team = getAwardTeam(award, seasonId);
     const reversed = index % 2 === 1;
 
-    // ── Desktop blocks ─────────────────────────────────────────────
-    const avatarBlock = (
-        <div className="w-[20%] shrink-0 relative overflow-hidden">
-            {full_avatar_url ? (
-                <Image
-                    src={full_avatar_url}
-                    alt={players.username ?? "Player"}
-                    fill
-                    className="object-cover object-top"
-                    sizes="20vw"
-                />
-            ) : (
-                <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary">
-                        {(players.username ?? "?").slice(0, 2).toUpperCase()}
-                    </span>
-                </div>
-            )}
-        </div>
-    );
-
-    const teamBlock = (
-        <div className="w-[20%] shrink-0 relative overflow-hidden bg-muted/30 dark:bg-muted/10">
-            {team?.logo_url ? (
-                <Image
-                    src={team.logo_url}
-                    alt={team.name}
-                    fill
-                    className="object-contain p-3 mix-blend-multiply dark:mix-blend-screen"
-                    sizes="20vw"
-                />
-            ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-xl font-bold text-muted-foreground/40">
-                        {team?.name.slice(0, 2).toUpperCase() ?? "—"}
-                    </span>
-                </div>
-            )}
-        </div>
-    );
-
-    // ── Mobile halves ──────────────────────────────────────────────
-    const mobileContentHalf = (
-        <div className="w-1/2 flex flex-col p-4 min-w-0">
-            <div className="flex flex-col gap-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-yellow-500/80 font-semibold truncate">
-                    {award_name}
-                </p>
-                <p className="text-sm font-bold leading-tight line-clamp-2">
-                    {players.display_name ?? players.username}
-                </p>
-                <p className="text-[10px] text-muted-foreground/70 truncate">
-                    @{players.username}
-                </p>
-                {team && (
-                    <p
-                        className="text-[10px] font-semibold tracking-wide truncate"
-                        style={{color: team.brick_color ?? undefined}}
-                    >
-                        {team.name}
-                    </p>
-                )}
-            </div>
-            {team?.logo_url && (
-                <div className="mt-auto pt-3">
-                    <div className="relative w-10 h-10">
-                        <Image
-                            src={team.logo_url}
-                            alt={team.name}
-                            fill
-                            className="object-contain mix-blend-multiply dark:mix-blend-screen"
-                            sizes="40px"
-                        />
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-
-    const mobileAvatarHalf = (
-        <div className="w-1/2 relative shrink-0 overflow-hidden">
-            {full_avatar_url ? (
-                <Image
-                    src={full_avatar_url}
-                    alt={players.username ?? "Player"}
-                    fill
-                    className="object-cover object-top"
-                    sizes="50vw"
-                />
-            ) : (
-                <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-primary">
-                        {(players.username ?? "?").slice(0, 2).toUpperCase()}
-                    </span>
-                </div>
-            )}
-        </div>
-    );
-
     return (
         <div className="panel overflow-hidden bg-yellow-500/[0.04] dark:bg-yellow-500/[0.06] border-yellow-500/25">
-            {/* Mobile: 50/50 split with zigzag */}
-            <div className="flex sm:hidden h-40">
-                {reversed ? mobileAvatarHalf : mobileContentHalf}
-                {reversed ? mobileContentHalf : mobileAvatarHalf}
+            {/* Award name — full width */}
+            <div className="px-5 py-2.5 border-b border-yellow-500/20 bg-yellow-500/[0.04]">
+                <p className="text-[10px] sm:text-xs uppercase tracking-[0.18em] text-yellow-500/80 font-semibold text-center">
+                    {award_name}
+                </p>
             </div>
-
-            {/* Desktop: original 3-column layout */}
-            <div className="hidden sm:flex h-64">
-                {reversed ? teamBlock : avatarBlock}
-                <div className="flex-1 min-w-0 flex flex-col items-center justify-center gap-1.5 px-5 text-center">
-                    <p className="text-xs uppercase tracking-[0.18em] text-yellow-500/80 font-semibold">
-                        {award_name}
-                    </p>
-                    <p className="text-xl font-bold text-foreground leading-tight line-clamp-2">
+            {/* Avatar | info — 50/50 with zigzag */}
+            <div className="flex h-40 sm:h-52">
+                <div className={`w-1/2 relative shrink-0 overflow-hidden ${reversed ? "order-2" : "order-1"}`}>
+                    {full_avatar_url ? (
+                        <Image
+                            src={full_avatar_url}
+                            alt={players.username ?? "Player"}
+                            fill
+                            className="object-cover object-top"
+                            sizes="50vw"
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-3xl font-bold text-primary">
+                                {(players.username ?? "?").slice(0, 2).toUpperCase()}
+                            </span>
+                        </div>
+                    )}
+                </div>
+                <div className={`w-1/2 flex flex-col justify-center gap-1.5 p-4 min-w-0 ${reversed ? "order-1" : "order-2"}`}>
+                    <p className="text-sm sm:text-lg font-bold leading-tight line-clamp-2">
                         {players.display_name ?? players.username}
                     </p>
-                    <p className="text-xs text-muted-foreground/70 truncate w-full text-center">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground/70 break-all">
                         @{players.username}
                     </p>
                     {team && (
-                        <p
-                            className="text-[11px] font-semibold mt-1 tracking-wide"
-                            style={{color: team.brick_color ?? undefined}}
-                        >
-                            {team.name}
-                        </p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            {team.logo_url && (
+                                <div className="relative w-3 h-3 sm:w-4 sm:h-4 shrink-0">
+                                    <Image
+                                        src={team.logo_url}
+                                        alt={team.name}
+                                        fill
+                                        className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                                        sizes="16px"
+                                    />
+                                </div>
+                            )}
+                            <p
+                                className="text-[10px] sm:text-xs font-semibold tracking-wide truncate"
+                                style={{color: team.brick_color ?? undefined}}
+                            >
+                                {team.name}
+                            </p>
+                        </div>
                     )}
                 </div>
-                {reversed ? avatarBlock : teamBlock}
             </div>
         </div>
     );
@@ -285,7 +211,7 @@ function FirstTeamCard({
                     {players.display_name ?? players.username}
                 </p>
 
-                <p className="text-[10px] text-muted-foreground text-center truncate w-full">
+                <p className="text-[10px] text-muted-foreground text-center break-all w-full">
                     @{players.username}
                 </p>
 
@@ -323,7 +249,7 @@ function FirstTeamMobileCard({
                     <p className="text-sm font-bold leading-tight line-clamp-1">
                         {players.display_name ?? players.username}
                     </p>
-                    <p className="text-[10px] text-muted-foreground/70 truncate">
+                    <p className="text-[10px] text-muted-foreground/70 break-all">
                         @{players.username}
                     </p>
                 </div>
@@ -438,7 +364,7 @@ function StaffTeamCard({
                     {players.display_name ?? players.username}
                 </p>
 
-                <p className="text-[10px] text-muted-foreground text-center truncate w-full">
+                <p className="text-[10px] text-muted-foreground text-center break-all w-full">
                     @{players.username}
                 </p>
             </div>
@@ -506,7 +432,7 @@ function ChampionRosterCard({award}: {award: RosterEntry}) {
                 <p className="text-xs font-semibold text-center leading-tight truncate w-full">
                     {display_name ?? username}
                 </p>
-                <p className="text-[10px] text-muted-foreground text-center truncate w-full">
+                <p className="text-[10px] text-muted-foreground text-center break-all w-full">
                     @{username}
                 </p>
                 {roleLabel && (
@@ -548,7 +474,7 @@ function ChampionRosterMobileCard({award, index}: {award: RosterEntry; index: nu
     const roleLabel = ROSTER_ROLE_LABEL[award_name];
     const textEl = (
         <div className={`flex-1 flex flex-col justify-center gap-0.5 min-w-0 px-2 ${isRight ? "items-start" : "items-end"}`}>
-            <p className={`text-xs font-semibold leading-tight line-clamp-2 ${isRight ? "text-left" : "text-right"}`}>
+            <p className={`text-xs font-semibold leading-tight line-clamp-2 break-all ${isRight ? "text-left" : "text-right"}`}>
                 {display_name ?? username}
             </p>
             <p className={`text-[10px] text-muted-foreground break-all w-full ${isRight ? "text-left" : "text-right"}`}>
