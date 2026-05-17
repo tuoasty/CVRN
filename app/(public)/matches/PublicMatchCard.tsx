@@ -43,82 +43,76 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
     const awayWon = (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0);
 
     return (
-        <div className="panel p-3 sm:p-4">
+        <div className="panel p-3 sm:p-4 transition-colors">
             <div className="space-y-3">
                 {/* Header with status */}
                 <div className="flex items-start justify-between gap-2 pb-2 border-b border-border">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Match {index + 1}
-            </span>
-                        {match.is_forfeit ? (
-                            <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider bg-red-600/10 text-red-600 border-red-600/20">
-                                Forfeit
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                Match {index + 1}
+                            </span>
+                            {match.is_forfeit ? (
+                                <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider bg-red-600/10 text-red-600 border-red-600/20">
+                                    Forfeit
+                                </Badge>
+                            ) : (
+                                <Badge variant="outline" className={`rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider ${statusConfig.className}`}>
+                                    {statusConfig.label}
+                                </Badge>
+                            )}
+                            <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2">
+                                BO{match.best_of}
                             </Badge>
-                        ) : (
-                            <Badge variant="outline" className={`rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider ${statusConfig.className}`}>
-                                {statusConfig.label}
-                            </Badge>
-                        )}
-                        <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2">
-                            BO{match.best_of}
-                        </Badge>
-                        {match.match_type === "playoffs" && (
-                            <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 bg-purple-600/10 text-purple-600 border-purple-600/20">
-                                Playoff
-                            </Badge>
-                        )}
-                    </div>
-                    <span className="hidden sm:inline text-xs text-muted-foreground shrink-0">
-            {regionTimezone
-                ? formatDateInTimezone(match.scheduled_at, regionTimezone)
-                : match.scheduled_at
-                    ? new Date(match.scheduled_at).toLocaleString()
-                    : "Time TBD"}
-        </span>
-                </div>
-
-                {/* Team matchup - vertical stacking within each column */}
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 py-2">
-                    {/* Home Team */}
-                    <div className="flex flex-col items-end gap-1 min-w-0">
-                        {/* Empty space for symmetry */}
-                        <div className="min-h-[20px]"></div>
-
-                        {/* Team name and logo */}
-                        <div className="flex items-center gap-2 justify-end w-full min-w-0">
-            <span className={`font-semibold text-xs sm:text-sm text-right truncate ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>
-                {homeTeam?.name || "TBD"}
-            </span>
-                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
-                                {homeTeam?.is_bye ? (
-                                    <div className="w-full h-full bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
-                                        <span className="text-[10px] sm:text-xs text-orange-600 font-bold">BYE</span>
-                                    </div>
-                                ) : homeTeam?.logo_url ? (
-                                    <Image
-                                        src={homeTeam.logo_url}
-                                        alt={homeTeam.name}
-                                        fill
-                                        sizes="40px"
-                                        className={getLogoClassName(homeTeam.logo_bg_removed)}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
-                                        <span className="text-xs text-muted-foreground font-bold">?</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* LVR below */}
-                        <div className="min-h-[20px] flex justify-end">
-                            {match.status === "completed" && match.home_team_lvr !== null && match.home_team_lvr !== undefined && (
-                                <Badge variant="outline" className={`h-4 px-1.5 text-[9px] font-semibold tabular-nums ${match.home_team_lvr >= 0 ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-red-600/10 text-red-600 border-red-600/20'}`}>
-                                    {match.home_team_lvr >= 0 ? '+' : ''}{match.home_team_lvr.toFixed(1)} LVR
+                            {match.match_type === "playoffs" && (
+                                <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 bg-purple-600/10 text-purple-600 border-purple-600/20">
+                                    Playoff
                                 </Badge>
                             )}
                         </div>
+                        <span className="sm:hidden text-[10px] text-muted-foreground">
+                            {regionTimezone
+                                ? formatDateInTimezone(match.scheduled_at, regionTimezone)
+                                : match.scheduled_at
+                                    ? new Date(match.scheduled_at).toLocaleString()
+                                    : "Time TBD"}
+                        </span>
+                    </div>
+                    <span className="hidden sm:inline text-xs text-muted-foreground shrink-0">
+                        {regionTimezone
+                            ? formatDateInTimezone(match.scheduled_at, regionTimezone)
+                            : match.scheduled_at
+                                ? new Date(match.scheduled_at).toLocaleString()
+                                : "Time TBD"}
+                    </span>
+                </div>
+
+                {/* Team matchup */}
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 py-2">
+                    {/* Home Team */}
+                    <div className="flex flex-col items-center gap-1.5 min-w-0">
+                        <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-sm overflow-hidden">
+                            {homeTeam?.is_bye ? (
+                                <div className="w-full h-full bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
+                                    <span className="text-sm text-orange-600 font-bold">BYE</span>
+                                </div>
+                            ) : homeTeam?.logo_url ? (
+                                <Image
+                                    src={homeTeam.logo_url}
+                                    alt={homeTeam.name}
+                                    fill
+                                    sizes="64px"
+                                    className={getLogoClassName(homeTeam.logo_bg_removed)}
+                                />
+                            ) : (
+                                <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
+                                    <span className="text-sm text-muted-foreground font-bold">?</span>
+                                </div>
+                            )}
+                        </div>
+                        <span className={`w-full text-xs sm:text-sm text-center truncate ${homeTeam?.is_bye ? "invisible" : ""} ${homeWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>
+                            {homeTeam?.name || "TBD"}
+                        </span>
                     </div>
 
                     {/* Score/VS - Centered */}
@@ -135,46 +129,51 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                     )}
 
                     {/* Away Team */}
-                    <div className="flex flex-col items-start gap-1 min-w-0">
-                        {/* Empty space for symmetry */}
-                        <div className="min-h-[20px]"></div>
-
-                        {/* Team name and logo */}
-                        <div className="flex items-center gap-2 justify-start w-full min-w-0">
-                            <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
-                                {awayTeam?.is_bye ? (
-                                    <div className="w-full h-full bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
-                                        <span className="text-[10px] sm:text-xs text-orange-600 font-bold">BYE</span>
-                                    </div>
-                                ) : awayTeam?.logo_url ? (
-                                    <Image
-                                        src={awayTeam.logo_url}
-                                        alt={awayTeam.name}
-                                        fill
-                                        sizes="40px"
-                                        className={getLogoClassName(awayTeam.logo_bg_removed)}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
-                                        <span className="text-xs text-muted-foreground font-bold">?</span>
-                                    </div>
-                                )}
-                            </div>
-                            <span className={`font-semibold text-xs sm:text-sm text-left truncate ${awayWon ? "text-foreground" : "text-muted-foreground"}`}>
-                {awayTeam?.name || "TBD"}
-            </span>
+                    <div className="flex flex-col items-center gap-1.5 min-w-0">
+                        <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-sm overflow-hidden">
+                            {awayTeam?.is_bye ? (
+                                <div className="w-full h-full bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
+                                    <span className="text-sm text-orange-600 font-bold">BYE</span>
+                                </div>
+                            ) : awayTeam?.logo_url ? (
+                                <Image
+                                    src={awayTeam.logo_url}
+                                    alt={awayTeam.name}
+                                    fill
+                                    sizes="64px"
+                                    className={getLogoClassName(awayTeam.logo_bg_removed)}
+                                />
+                            ) : (
+                                <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
+                                    <span className="text-sm text-muted-foreground font-bold">?</span>
+                                </div>
+                            )}
                         </div>
+                        <span className={`w-full text-xs sm:text-sm text-center truncate ${awayTeam?.is_bye ? "invisible" : ""} ${awayWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>
+                            {awayTeam?.name || "TBD"}
+                        </span>
+                    </div>
+                </div>
 
-                        {/* LVR below */}
-                        <div className="min-h-[20px] flex justify-start">
-                            {match.status === "completed" && match.away_team_lvr !== null && match.away_team_lvr !== undefined && (
-                                <Badge variant="outline" className={`h-4 px-1.5 text-[9px] font-semibold tabular-nums ${match.away_team_lvr >= 0 ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-red-600/10 text-red-600 border-red-600/20'}`}>
+                {/* LVR row — always rendered for completed matches to hold height; badges hidden for bye teams */}
+                {match.status === "completed" && (
+                    <div className="flex items-center justify-between gap-2 min-h-4">
+                        <div>
+                            {!homeTeam?.is_bye && match.home_team_lvr !== null && match.home_team_lvr !== undefined && (
+                                <Badge variant="outline" className={`h-4 px-1.5 text-[10px] font-semibold tabular-nums ${match.home_team_lvr >= 0 ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-red-600/10 text-red-600 border-red-600/20'}`}>
+                                    {match.home_team_lvr >= 0 ? '+' : ''}{match.home_team_lvr.toFixed(1)} LVR
+                                </Badge>
+                            )}
+                        </div>
+                        <div>
+                            {!awayTeam?.is_bye && match.away_team_lvr !== null && match.away_team_lvr !== undefined && (
+                                <Badge variant="outline" className={`h-4 px-1.5 text-[10px] font-semibold tabular-nums ${match.away_team_lvr >= 0 ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-red-600/10 text-red-600 border-red-600/20'}`}>
                                     {match.away_team_lvr >= 0 ? '+' : ''}{match.away_team_lvr.toFixed(1)} LVR
                                 </Badge>
                             )}
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Rest remains the same - set scores, MVPs, officials */}
 

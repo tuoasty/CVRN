@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import PublicNavbar from "@/app/components/public/navigation/PublicNavbar";
 import PublicFooter from "@/app/components/public/landing/PublicFooter";
 import { PublicStoreInitializer } from "@/app/(public)/PublicStoreInitializer";
-import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
+import MobileSeasonBar from "@/app/components/ui/MobileSeasonBar";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -16,13 +16,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             >
                 <PublicNavbar />
             </Suspense>
-            <div className="lg:hidden border-b border-border bg-card">
-                <div className="page-wide py-2">
-                    <Suspense fallback={<div className="h-9" />}>
-                        <RegionSeasonSelector />
-                    </Suspense>
-                </div>
-            </div>
+            <MobileSeasonBar />
             <PublicStoreInitializer>
                 <main className="flex-1">{children}</main>
             </PublicStoreInitializer>
