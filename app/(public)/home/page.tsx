@@ -9,7 +9,6 @@ import { useTeams } from "@/app/hooks/useTeams";
 import { useRegions } from "@/app/hooks/useRegions";
 import { Calendar, Clock, Trophy } from "lucide-react";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import CompactMatchCard from "@/app/(public)/home/CompactMatchCard";
 import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
@@ -40,12 +39,10 @@ export default function HomePage() {
 
     return (
         <>
-            <SeasonSelectionMiddleware />
-
             <div className="page-wide py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-6">
                     {/* Left Sidebar - Recent/Upcoming Matches */}
-                    <aside className="space-y-6">
+                    <aside className="hidden lg:block space-y-6">
                         {/* Upcoming Matches */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
