@@ -69,6 +69,15 @@ export async function syncMatchResults(
                 continue;
             }
 
+            const homeTeam = teamsResult.value.find(t => t.id === homeTeamId);
+            if (homeTeam && homeTeam.name.toLowerCase().trim() !== result.homeTeamName.toLowerCase().trim()) {
+                errors.push({row: result.rowNumber, message: `[${mc}] Home team "${result.homeTeamName}" is an outdated name — current name is "${homeTeam.name}". Update the sheet.`});
+            }
+            const awayTeam = teamsResult.value.find(t => t.id === awayTeamId);
+            if (awayTeam && awayTeam.name.toLowerCase().trim() !== result.awayTeamName.toLowerCase().trim()) {
+                errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" is an outdated name — current name is "${awayTeam.name}". Update the sheet.`});
+            }
+
             const week = parseInt(mc.split('-')[0], 10);
             if (isNaN(week)) {
                 errors.push({row: result.rowNumber, message: `[${mc}] Cannot parse week number from match code`});
