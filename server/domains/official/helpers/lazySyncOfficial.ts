@@ -5,7 +5,7 @@ import {logger} from "@/server/utils/logger";
 import {updateOfficial} from "@/server/db/official.repo";
 import {supabaseAdmin} from "@/server/supabase/admin";
 
-const SYNC_INTERVAL = 1000 * 60 * 60;
+const SYNC_INTERVAL = 1000 * 60 * 60 * 24;
 
 export async function lazySyncOfficial(
     supabase: DBClient,

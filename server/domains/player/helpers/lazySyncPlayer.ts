@@ -5,7 +5,7 @@ import {updatePlayer} from "@/server/db/players.repo";
 import {supabaseAdmin} from "@/server/supabase/admin";
 import {logger} from "@/server/utils/logger";
 
-const SYNC_INTERVAL = 1000 * 60 * 60;
+const SYNC_INTERVAL = 1000 * 60 * 60 * 24;
 
 export async function lazySyncPlayer(
     supabase: DBClient,
