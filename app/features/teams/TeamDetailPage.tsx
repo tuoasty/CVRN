@@ -27,6 +27,7 @@ import CaptainSlotCard from "@/app/features/players/CaptainSlotCard";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { getLogoClassName } from "@/app/lib/logoClass";
 import UpdateTeamDialog from "@/app/features/teams/UpdateTeamDialog";
+import { useTeamNameHistory } from "@/app/hooks/useTeamNameHistory";
 
 type TeamDetailPageProps = {
     regionCode: string;
@@ -58,6 +59,8 @@ export default function TeamDetailPage({
         error: teamError,
         mutate: mutateTeam,
     } = useTeamWithPlayers(teamSlug, seasonSlug, regionCode);
+
+    const { history: nameHistory } = useTeamNameHistory(teamData?.id ?? null);
 
     const captain = players.find(p => p.role === 'captain') ?? null;
     const viceCaptain = players.find(p => p.role === 'vice_captain') ?? null;
@@ -391,6 +394,34 @@ export default function TeamDetailPage({
                     </>
                 )}
             </div>
+
+            {nameHistory.length > 0 && (
+                <div className="space-y-4">
+                    <h2>Name History</h2>
+                    <div className="panel rounded-md border">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b bg-muted/40">
+                                    <th className="text-left px-4 py-2 font-medium">Date</th>
+                                    <th className="text-left px-4 py-2 font-medium">Old Name</th>
+                                    <th className="text-left px-4 py-2 font-medium">New Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {nameHistory.map(entry => (
+                                    <tr key={entry.id} className="border-b last:border-0">
+                                        <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">
+                                            {new Date(entry.changedAt).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-4 py-2 text-muted-foreground">{entry.oldName}</td>
+                                        <td className="px-4 py-2 font-medium">{entry.newName}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
         </div>
     );
