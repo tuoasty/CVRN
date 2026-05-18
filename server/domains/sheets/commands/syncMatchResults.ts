@@ -6,6 +6,7 @@ import {parseScheduleCell} from "@/server/domains/sheets/helpers/parseScheduleCe
 import {resolveTeamNames} from "@/server/domains/sheets/helpers/resolveTeamNames";
 import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
 import {findTeamsBySeasonId} from "@/server/db/teams.repo";
+import {findTeamNameHistoryByTeamIds} from "@/server/db/teamNameHistory.repo";
 import {
     insertMatches,
     findMatchByCode,
@@ -39,7 +40,10 @@ export async function syncMatchResults(
 
         const teamsResult = await findTeamsBySeasonId(supabase, config.season_id);
         if (!teamsResult.ok) return teamsResult;
-        const nameMap = resolveTeamNames(teamsResult.value);
+        const teamIds = teamsResult.value.map(t => t.id);
+        const historyResult = await findTeamNameHistoryByTeamIds(supabase, teamIds);
+        if (!historyResult.ok) return historyResult;
+        const nameMap = resolveTeamNames(teamsResult.value, historyResult.value);
 
         const changes: SyncChange[] = [];
         let rowsProcessed = 0;
