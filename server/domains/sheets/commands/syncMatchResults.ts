@@ -6,6 +6,7 @@ import {parseScheduleCell} from "@/server/domains/sheets/helpers/parseScheduleCe
 import {resolveTeamNames} from "@/server/domains/sheets/helpers/resolveTeamNames";
 import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
 import {findTeamsBySeasonId} from "@/server/db/teams.repo";
+import {findTeamNameHistoryByTeamIds} from "@/server/db/teamNameHistory.repo";
 import {
     insertMatches,
     findMatchByCode,
@@ -39,7 +40,10 @@ export async function syncMatchResults(
 
         const teamsResult = await findTeamsBySeasonId(supabase, config.season_id);
         if (!teamsResult.ok) return teamsResult;
-        const nameMap = resolveTeamNames(teamsResult.value);
+        const teamIds = teamsResult.value.map(t => t.id);
+        const historyResult = await findTeamNameHistoryByTeamIds(supabase, teamIds);
+        if (!historyResult.ok) return historyResult;
+        const nameMap = resolveTeamNames(teamsResult.value, historyResult.value);
 
         const changes: SyncChange[] = [];
         let rowsProcessed = 0;
@@ -63,6 +67,15 @@ export async function syncMatchResults(
                 errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" not found in season`});
                 rowsErrored++;
                 continue;
+            }
+
+            const homeTeam = teamsResult.value.find(t => t.id === homeTeamId);
+            if (homeTeam && homeTeam.name.toLowerCase().trim() !== result.homeTeamName.toLowerCase().trim()) {
+                errors.push({row: result.rowNumber, message: `[${mc}] Home team "${result.homeTeamName}" is an outdated name — current name is "${homeTeam.name}". Update the sheet.`});
+            }
+            const awayTeam = teamsResult.value.find(t => t.id === awayTeamId);
+            if (awayTeam && awayTeam.name.toLowerCase().trim() !== result.awayTeamName.toLowerCase().trim()) {
+                errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" is an outdated name — current name is "${awayTeam.name}". Update the sheet.`});
             }
 
             const week = parseInt(mc.split('-')[0], 10);

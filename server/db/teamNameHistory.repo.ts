@@ -53,3 +53,16 @@ export async function findTeamNameHistoryByTeamId(
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []).map(row => toEntry(row as unknown as TeamNameHistoryRow)));
 }
+
+export async function findTeamNameHistoryByTeamIds(
+    supabase: DBClient,
+    teamIds: string[]
+): Promise<Result<TeamNameHistoryEntry[]>> {
+    if (teamIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("team_name_history")
+        .select("*")
+        .in("team_id", teamIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(row => toEntry(row as unknown as TeamNameHistoryRow)));
+}
