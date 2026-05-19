@@ -1,6 +1,6 @@
 "use client"
 
-import { Dialog, DialogContent } from '@/app/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
 
 function toEmbedUrl(url: string): string | null {
     try {
@@ -37,6 +37,9 @@ export default function VideoEmbedDialog({ url, open, onOpenChange }: VideoEmbed
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-sm border-border bg-black">
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Video Player</DialogTitle>
+                </DialogHeader>
                 {embed ? (
                     <div className="aspect-video w-full">
                         <iframe
