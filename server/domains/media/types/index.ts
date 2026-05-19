@@ -12,6 +12,8 @@ export interface MediaPost {
     team_id: string | null
     season_id: string | null
     published_at: string
+    is_pinned: boolean
+    pinned_at: string | null
     created_by: string
     created_at: string
     updated_at: string | null

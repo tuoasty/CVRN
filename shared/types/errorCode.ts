@@ -6,4 +6,5 @@ export type ErrorCode =
     | "FORBIDDEN"
     | "DB_ERROR"
     | "INTEGRATION_ERROR"
-    | "UNKNOWN";
+    | "UNKNOWN"
+    | "MEDIA_PIN_LIMIT_EXCEEDED";

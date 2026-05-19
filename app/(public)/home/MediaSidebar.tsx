@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Image as ImageIcon, Play, ArrowRight } from 'lucide-react'
+import { Image as ImageIcon, Play, ArrowRight, Pin } from 'lucide-react'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { useRecentMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
@@ -78,6 +78,11 @@ export default function MediaSidebar() {
                                                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
                                                     <Play className="h-3.5 w-3.5 text-white fill-white ml-0.5" />
                                                 </div>
+                                            </div>
+                                        )}
+                                        {post.is_pinned && (
+                                            <div className="absolute top-1 right-1 z-10">
+                                                <Pin className="h-2.5 w-2.5 text-white/70 fill-white/70" />
                                             </div>
                                         )}
                                     </div>
