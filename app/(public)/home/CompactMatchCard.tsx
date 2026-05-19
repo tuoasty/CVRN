@@ -12,6 +12,7 @@ interface CompactMatchCardProps {
     homeTeam?: TeamWithRegion;
     awayTeam?: TeamWithRegion;
     regionCode?: string;
+    matchLabel: string;
 }
 
 const getStatusConfig = (status: string) => {
@@ -41,6 +42,7 @@ export default function CompactMatchCard({
                                              homeTeam,
                                              awayTeam,
                                              regionCode,
+                                             matchLabel,
                                          }: CompactMatchCardProps) {
     const { match } = matchDetails;
     const statusConfig = getStatusConfig(match.status);
@@ -57,11 +59,9 @@ export default function CompactMatchCard({
                     <Badge className={`rounded-sm text-[9px] h-4 px-1.5 font-semibold uppercase tracking-wider ${statusConfig.className}`}>
                         {statusConfig.label}
                     </Badge>
-                    {match.match_type === "playoffs" && (
-                        <Badge variant="outline" className="rounded-sm text-[9px] h-4 px-1.5 bg-purple-600/10 text-purple-600 border-purple-600/20">
-                            Playoff
-                        </Badge>
-                    )}
+                    <span className={`text-[9px] font-semibold uppercase tracking-wider ${match.match_type === "playoffs" ? "text-purple-500" : "text-muted-foreground"}`}>
+                        {matchLabel}
+                    </span>
                 </div>
 
                 <div className="space-y-1.5">
