@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Image as ImageIcon, Play } from 'lucide-react'
+import { Image as ImageIcon, Play, Pin } from 'lucide-react'
 import { Badge } from '@/app/components/ui/badge'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { useAllMediaPosts } from '@/app/hooks/useMediaPosts'
@@ -59,6 +59,11 @@ function PostRow({ post, onVideoClick, onGfxClick }: { post: MediaPost; onVideoC
                         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
                             <Play className="h-4 w-4 text-white fill-white ml-0.5" />
                         </div>
+                    </div>
+                )}
+                {post.is_pinned && (
+                    <div className="absolute top-1.5 right-1.5 z-10">
+                        <Pin className="h-3 w-3 text-white/70 fill-white/70" />
                     </div>
                 )}
             </div>
