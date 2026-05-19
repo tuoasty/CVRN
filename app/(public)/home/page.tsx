@@ -7,80 +7,114 @@ import { useUpcomingMatches, useRecentMatches } from "@/app/hooks/useMatches";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { useTeams } from "@/app/hooks/useTeams";
 import { useRegions } from "@/app/hooks/useRegions";
+import { useSeasonPodium } from "@/app/hooks/useSeasonPodium";
 import { Calendar, Clock, Trophy } from "lucide-react";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import CompactMatchCard from "@/app/(public)/home/CompactMatchCard";
 import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
+import SeasonChampionCard from "@/app/(public)/home/SeasonChampionCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import StandingsPreview from "@/app/(public)/home/StandingsPreview";
 import { useStandings } from "@/app/hooks/useStandings";
 import { MatchWithDetails } from "@/server/domains/match";
+import { computeMatchLabels } from "@/app/utils/matchLabel";
 
 export default function HomePage() {
     const { selectedSeasonId, selectedRegionId } = usePublicContextStore();
-    
+
     const { seasons } = useSeasons();
     const { regions } = useRegions();
     const { teams, isLoading: loadingTeams } = useTeams();
-    
+
     const { matches: upcomingMatches, isLoading: loadingUpcoming } = useUpcomingMatches(selectedSeasonId || null, 5);
     const { matches: recentMatches, isLoading: loadingRecent } = useRecentMatches(selectedSeasonId || null, 5);
-
     const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId || undefined, selectedRegionId || undefined);
 
     const selectedSeason = seasons.find((s) => s.id === selectedSeasonId);
     const regionCode = regions.find((r) => r.id === selectedRegionId)?.code;
 
-    const featuredMatch = upcomingMatches[0];
+    const isSeasonCompleted = selectedSeason?.end_date
+        ? new Date(selectedSeason.end_date) < new Date()
+        : false;
+
+    const { podium, isLoading: podiumLoading } = useSeasonPodium(
+        isSeasonCompleted ? (selectedSeasonId || null) : null
+    );
+
+    // Determine featured match: completed season skips this entirely
+    const hasFeaturedUpcoming = !isSeasonCompleted && upcomingMatches.length > 0;
+    const hasFeaturedRecent = !isSeasonCompleted && upcomingMatches.length === 0 && recentMatches.length > 0;
+    const featuredMatch = hasFeaturedUpcoming
+        ? upcomingMatches[0]
+        : hasFeaturedRecent
+        ? recentMatches[0]
+        : undefined;
+
     const featuredHomeTeam = teams.find((t) => t.id === featuredMatch?.match.home_team_id);
     const featuredAwayTeam = teams.find((t) => t.id === featuredMatch?.match.away_team_id);
+
+    // Compute match type labels for sidebar cards
+    const upcomingLabels = computeMatchLabels(upcomingMatches);
+    const recentLabels = computeMatchLabels(recentMatches);
+
+    // Label for featured match
+    const featuredLabel = hasFeaturedUpcoming
+        ? upcomingLabels[0]
+        : hasFeaturedRecent
+        ? computeMatchLabels([recentMatches[0]])[0]
+        : "";
+
+    const featuredLoading = loadingUpcoming || loadingTeams || (isSeasonCompleted && podiumLoading);
 
     return (
         <>
             <div className="page-wide py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-6">
-                    {/* Left Sidebar - Recent/Upcoming Matches */}
+                    {/* Left Sidebar - Upcoming (hidden for completed seasons) + Recent Matches */}
                     <aside className="hidden lg:block space-y-6">
-                        {/* Upcoming Matches */}
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 pb-2 border-b border-border">
-                                <Clock className="h-4 w-4 text-primary" />
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                                    Upcoming
-                                </h3>
+                        {/* Upcoming Matches — only shown when season is not completed */}
+                        {!isSeasonCompleted && (
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2 pb-2 border-b border-border">
+                                    <Clock className="h-4 w-4 text-primary" />
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                                        Upcoming
+                                    </h3>
+                                </div>
+
+                                {(loadingUpcoming || loadingTeams) ? (
+                                    <div className="space-y-2">
+                                        {[1, 2, 3].map((i) => (
+                                            <Skeleton key={i} className="h-32 rounded-sm" />
+                                        ))}
+                                    </div>
+                                ) : upcomingMatches.length === 0 ? (
+                                    <div className="panel p-4 text-center">
+                                        <p className="text-xs text-muted-foreground">
+                                            No upcoming matches
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {upcomingMatches.map((matchDetails: MatchWithDetails, i) => {
+                                            const homeTeam = teams.find((t) => t.id === matchDetails.match.home_team_id);
+                                            const awayTeam = teams.find((t) => t.id === matchDetails.match.away_team_id);
+
+                                            return (
+                                                <CompactMatchCard
+                                                    key={matchDetails.match.id}
+                                                    matchDetails={matchDetails}
+                                                    homeTeam={homeTeam}
+                                                    awayTeam={awayTeam}
+                                                    regionCode={regionCode}
+                                                    matchLabel={upcomingLabels[i]}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
-
-                            {(loadingUpcoming || loadingTeams) ? (
-                                <div className="space-y-2">
-                                    {[1, 2, 3].map((i) => (
-                                        <Skeleton key={i} className="h-32 rounded-sm" />
-                                    ))}
-                                </div>
-                            ) : upcomingMatches.length === 0 ? (
-                                <div className="panel p-4 text-center">
-                                    <p className="text-xs text-muted-foreground">
-                                        No upcoming matches
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {upcomingMatches.map((matchDetails: MatchWithDetails) => {
-                                        const homeTeam = teams.find((t) => t.id === matchDetails.match.home_team_id);
-                                        const awayTeam = teams.find((t) => t.id === matchDetails.match.away_team_id);
-
-                                        return (
-                                            <CompactMatchCard
-                                                key={matchDetails.match.id}
-                                                matchDetails={matchDetails}
-                                                homeTeam={homeTeam}
-                                                awayTeam={awayTeam}
-                                                regionCode={regionCode}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
+                        )}
 
                         {/* Recent Matches */}
                         <div className="space-y-3">
@@ -105,7 +139,7 @@ export default function HomePage() {
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {recentMatches.map((matchDetails: MatchWithDetails) => {
+                                    {recentMatches.map((matchDetails: MatchWithDetails, i) => {
                                         const homeTeam = teams.find((t) => t.id === matchDetails.match.home_team_id);
                                         const awayTeam = teams.find((t) => t.id === matchDetails.match.away_team_id);
 
@@ -116,6 +150,7 @@ export default function HomePage() {
                                                 homeTeam={homeTeam}
                                                 awayTeam={awayTeam}
                                                 regionCode={regionCode}
+                                                matchLabel={recentLabels[i]}
                                             />
                                         );
                                     })}
@@ -126,15 +161,19 @@ export default function HomePage() {
 
                     {/* Center Column - Featured Match + Standings */}
                     <section className="space-y-6">
-                        {/* Featured Match */}
-                        {(loadingUpcoming || loadingTeams) ? (
+                        {/* Featured area */}
+                        {featuredLoading ? (
                             <Skeleton className="h-64 rounded-sm" />
+                        ) : isSeasonCompleted ? (
+                            <SeasonChampionCard podium={podium} seasonName={selectedSeason?.name} />
                         ) : featuredMatch ? (
                             <FeaturedMatchCard
                                 matchDetails={featuredMatch}
                                 homeTeam={featuredHomeTeam}
                                 awayTeam={featuredAwayTeam}
                                 regionCode={regionCode}
+                                matchLabel={featuredLabel}
+                                isRecent={hasFeaturedRecent}
                             />
                         ) : (
                             <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">

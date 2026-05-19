@@ -286,7 +286,8 @@ export async function findUpcomingMatches(
                     display_name,
                     avatar_url
                 )
-            )
+            ),
+            playoff_brackets (round)
         `)
         .eq("season_id", seasonId)
         .in("status", ["scheduled", "pending"])
@@ -319,7 +320,8 @@ export async function findRecentMatches(
                     display_name,
                     avatar_url
                 )
-            )
+            ),
+            playoff_brackets (round)
         `)
         .eq("season_id", seasonId)
         .eq("status", "completed")
