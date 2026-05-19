@@ -228,6 +228,7 @@ export default function PublicTeamDetailPage({
                     </div>
                 )}
             </div>
+
         </div>
     );
 }

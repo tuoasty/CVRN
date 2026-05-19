@@ -1,0 +1,59 @@
+import { DBClient } from '@/shared/types/db'
+import { Err, Ok, Result } from '@/shared/types/result'
+import { serializeError } from '@/server/utils/serializeableError'
+import { InsertMediaPostDto, MediaPost } from '@/server/domains/media/types'
+
+export async function insertMediaPost(supabase: DBClient, p: InsertMediaPostDto): Promise<Result<MediaPost>> {
+    const { data, error } = await supabase
+        .from('media_posts')
+        .insert(p)
+        .select()
+        .single()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as unknown as MediaPost)
+}
+
+export async function findAllMediaPosts(
+    supabase: DBClient,
+    filters: { type?: string; matchId?: string; teamId?: string; seasonId?: string } = {}
+): Promise<Result<MediaPost[]>> {
+    let query = supabase
+        .from('media_posts')
+        .select('*')
+        .order('published_at', { ascending: false })
+
+    if (filters.type)     query = query.eq('type', filters.type)
+    if (filters.matchId)  query = query.eq('match_id', filters.matchId)
+    if (filters.teamId)   query = query.eq('team_id', filters.teamId)
+    if (filters.seasonId) query = query.eq('season_id', filters.seasonId)
+
+    const { data, error } = await query
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []) as unknown as MediaPost[])
+}
+
+export async function findRecentMediaPosts(supabase: DBClient, limit: number): Promise<Result<MediaPost[]>> {
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .order('published_at', { ascending: false })
+        .limit(limit)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []) as unknown as MediaPost[])
+}
+
+export async function findMediaPostById(supabase: DBClient, id: string): Promise<Result<MediaPost | null>> {
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as unknown as MediaPost | null)
+}
+
+export async function deleteMediaPostById(supabase: DBClient, id: string): Promise<Result<null>> {
+    const { error } = await supabase.from('media_posts').delete().eq('id', id)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(null)
+}

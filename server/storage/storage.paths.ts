@@ -1,6 +1,7 @@
 export const BUCKETS = {
-    PUBLIC: "public-assets"
-}  as const
+    PUBLIC: "public-assets",
+    MEDIA:  "public-assets",
+} as const
 
 export const STORAGE_PATHS = {
     teamLogo(teamId: string, ext: string) {
@@ -11,6 +12,9 @@ export const STORAGE_PATHS = {
     },
     awardAvatar(awardId: string) {
         return `awards/${awardId}.png`;
+    },
+    mediaPost(postId: string, ext: string) {
+        return `media/${postId}.${ext}`;
     },
 }
 export function extractStoragePath(url: string, bucket: string): string {
