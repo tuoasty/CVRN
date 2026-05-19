@@ -1,0 +1,152 @@
+"use client"
+
+import { useState } from 'react'
+import Image from 'next/image'
+import { Image as ImageIcon, Trash2, Plus } from 'lucide-react'
+import { Button } from '@/app/components/ui/button'
+import { Badge } from '@/app/components/ui/badge'
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/app/components/ui/alert-dialog'
+import { useAllMediaPosts, mutateAllMedia } from '@/app/hooks/useMediaPosts'
+import { deleteMediaPostAction } from '@/app/actions/media.actions'
+import CreateMediaPostDialog from '@/app/features/media/CreateMediaPostDialog'
+import { toast } from '@/app/utils/toast'
+import { cn } from '@/lib/utils'
+
+const TYPE_COLORS: Record<string, string> = {
+    gfx:   'bg-violet-500/20 text-violet-400 border-violet-500/30',
+    video: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    news:  'bg-green-500/20 text-green-400 border-green-500/30',
+    recap: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+}
+
+type FilterType = 'all' | 'gfx' | 'video' | 'news' | 'recap'
+const FILTER_OPTIONS: FilterType[] = ['all', 'gfx', 'video', 'news', 'recap']
+
+export default function AdminMediaPage() {
+    const { posts, isLoading } = useAllMediaPosts()
+    const [createOpen, setCreateOpen] = useState(false)
+    const [deleting, setDeleting] = useState<string | null>(null)
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
+    const [filterType, setFilterType] = useState<FilterType>('all')
+
+    const filtered = filterType === 'all' ? posts : posts.filter(p => p.type === filterType)
+
+    async function confirmDelete() {
+        if (!deleteTarget) return
+        setDeleting(deleteTarget.id)
+        try {
+            const result = await deleteMediaPostAction({ postId: deleteTarget.id })
+            if (!result.ok) { toast.error(result.error.message); return }
+            toast.success('Post deleted')
+            await mutateAllMedia()
+        } finally {
+            setDeleting(null)
+            setDeleteTarget(null)
+        }
+    }
+
+    return (
+        <div className="admin-container">
+            <div className="admin-section">
+                <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
+                    <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
+                        <ImageIcon className="h-7 w-7 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                        <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                            Media
+                        </h1>
+                        <p className="text-sm text-muted-foreground mt-1">GFX, video embeds, and announcements</p>
+                    </div>
+                    <Button size="sm" className="rounded-sm gap-1" onClick={() => setCreateOpen(true)}>
+                        <Plus className="h-4 w-4" /> New Post
+                    </Button>
+                </div>
+
+                <div className="flex gap-1.5 flex-wrap mt-4">
+                    {FILTER_OPTIONS.map(t => (
+                        <button
+                            key={t}
+                            onClick={() => setFilterType(t)}
+                            className={cn(
+                                'rounded-sm px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide transition-colors',
+                                filterType === t
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            )}
+                        >
+                            {t === 'all' ? 'All' : t}
+                        </button>
+                    ))}
+                </div>
+
+                {isLoading ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">Loading...</p>
+                ) : filtered.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">
+                        {posts.length === 0 ? 'No media posts yet.' : `No ${filterType} posts.`}
+                    </p>
+                ) : (
+                    <div className="mt-4 space-y-2">
+                        {filtered.map(post => (
+                            <div key={post.id} className="flex items-center gap-3 p-3 rounded-sm border border-border bg-card hover:bg-muted/30 transition-colors">
+                                {post.image_url && (
+                                    <div className="relative w-12 h-12 flex-shrink-0 rounded-sm border border-border overflow-hidden">
+                                        <Image src={post.image_url} alt={post.title} fill sizes="48px" className="object-cover" />
+                                    </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{post.title}</p>
+                                    <p className="text-xs text-muted-foreground">{new Date(post.published_at).toLocaleDateString()}</p>
+                                </div>
+                                <Badge variant="outline" className={`rounded-sm text-xs uppercase ${TYPE_COLORS[post.type] ?? ''}`}>
+                                    {post.type}
+                                </Badge>
+                                {post.video_url && (
+                                    <a href={post.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline">
+                                        Link
+                                    </a>
+                                )}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-sm text-destructive hover:bg-destructive/10"
+                                    disabled={deleting === post.id}
+                                    onClick={() => setDeleteTarget({ id: post.id, title: post.title })}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <AlertDialog open={!!deleteTarget} onOpenChange={open => !open && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete post?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            &ldquo;{deleteTarget?.title}&rdquo; will be permanently deleted. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="rounded-sm bg-destructive hover:bg-destructive/90"
+                            onClick={confirmDelete}
+                            disabled={!!deleting}
+                        >
+                            {deleting ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <CreateMediaPostDialog open={createOpen} onOpenChange={setCreateOpen} />
+        </div>
+    )
+}
