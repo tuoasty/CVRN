@@ -1,5 +1,6 @@
 export { createMediaPost } from './commands/createMediaPost'
 export { deleteMediaPost } from './commands/deleteMediaPost'
+export { togglePinMediaPost } from './commands/togglePinMediaPost'
 export { getAllMediaPosts } from './queries/getAllMediaPosts'
 export { getRecentMediaPosts } from './queries/getRecentMediaPosts'
 export { getMediaPostById } from './queries/getMediaPostById'

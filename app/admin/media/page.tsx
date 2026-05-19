@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Image as ImageIcon, Trash2, Plus } from 'lucide-react'
+import { Image as ImageIcon, Trash2, Plus, Pin } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import {
@@ -10,7 +10,8 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog'
 import { useAllMediaPosts, mutateAllMedia } from '@/app/hooks/useMediaPosts'
-import { deleteMediaPostAction } from '@/app/actions/media.actions'
+import { deleteMediaPostAction, togglePinMediaPostAction } from '@/app/actions/media.actions'
+import { errorCodeToUserMessage } from '@/app/lib/errorMessages'
 import CreateMediaPostDialog from '@/app/features/media/CreateMediaPostDialog'
 import { toast } from '@/app/utils/toast'
 import { cn } from '@/lib/utils'
@@ -29,10 +30,22 @@ export default function AdminMediaPage() {
     const { posts, isLoading } = useAllMediaPosts()
     const [createOpen, setCreateOpen] = useState(false)
     const [deleting, setDeleting] = useState<string | null>(null)
+    const [pinning, setPinning] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
     const [filterType, setFilterType] = useState<FilterType>('all')
 
     const filtered = filterType === 'all' ? posts : posts.filter(p => p.type === filterType)
+
+    async function handleTogglePin(id: string) {
+        setPinning(id)
+        try {
+            const result = await togglePinMediaPostAction({ postId: id })
+            if (!result.ok) { toast.error(errorCodeToUserMessage(result.error.code)); return }
+            await mutateAllMedia()
+        } finally {
+            setPinning(null)
+        }
+    }
 
     async function confirmDelete() {
         if (!deleteTarget) return
@@ -92,7 +105,12 @@ export default function AdminMediaPage() {
                 ) : (
                     <div className="mt-4 space-y-2">
                         {filtered.map(post => (
-                            <div key={post.id} className="flex items-center gap-3 p-3 rounded-sm border border-border bg-card hover:bg-muted/30 transition-colors">
+                            <div key={post.id} className={cn(
+                                'flex items-center gap-3 p-3 rounded-sm border transition-colors',
+                                post.is_pinned
+                                    ? 'border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/15'
+                                    : 'border-border bg-card hover:bg-muted/30'
+                            )}>
                                 {post.image_url && (
                                     <div className="relative w-12 h-12 flex-shrink-0 rounded-sm border border-border overflow-hidden">
                                         <Image src={post.image_url} alt={post.title} fill sizes="48px" className="object-cover" />
@@ -110,6 +128,16 @@ export default function AdminMediaPage() {
                                         Link
                                     </a>
                                 )}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={cn('h-8 w-8 rounded-sm', post.is_pinned ? 'text-blue-400 hover:bg-blue-500/10' : 'text-muted-foreground hover:bg-muted')}
+                                    disabled={pinning === post.id}
+                                    onClick={() => handleTogglePin(post.id)}
+                                    title={post.is_pinned ? 'Unpin post' : 'Pin post'}
+                                >
+                                    <Pin className={cn('h-4 w-4', post.is_pinned && 'fill-blue-400')} />
+                                </Button>
                                 <Button
                                     variant="ghost"
                                     size="icon"

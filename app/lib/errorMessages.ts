@@ -9,6 +9,7 @@ const messages: Record<ErrorCode, string> = {
     DB_ERROR: "A database error occurred. Please try again.",
     INTEGRATION_ERROR: "An external service error occurred. Please try again.",
     UNKNOWN: "Something went wrong. Please try again.",
+    MEDIA_PIN_LIMIT_EXCEEDED: "Only 3 posts can be pinned at a time. Unpin one first.",
 };
 
 export function errorCodeToUserMessage(code: ErrorCode | string): string {

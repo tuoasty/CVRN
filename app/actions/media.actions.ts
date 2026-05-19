@@ -7,6 +7,8 @@ import {
     deleteMediaPost,
     getAllMediaPosts,
     getRecentMediaPosts,
+    togglePinMediaPost,
+    getMediaPostById,
     MediaPost,
     CreateMediaFormSchema,
     MediaPostIdSchema,
@@ -70,4 +72,19 @@ export async function getAllMediaPostsAction(filters?: unknown): Promise<Result<
 export async function getRecentMediaPostsAction(limit = 4): Promise<Result<MediaPost[]>> {
     const supabase = await createServerSupabase()
     return getRecentMediaPosts(supabase, limit)
+}
+
+export async function togglePinMediaPostAction(input: unknown): Promise<Result<MediaPost>> {
+    const parsed = MediaPostIdSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: 'Invalid post ID', code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const user = await requireAuth(supabase)
+    if (!user) return Err({ message: 'Not authenticated', code: 'UNAUTHORIZED' })
+
+    const postResult = await getMediaPostById(supabase, parsed.data.postId)
+    if (!postResult.ok) return postResult
+    if (!postResult.value) return Err({ message: 'Post not found', code: 'NOT_FOUND' })
+
+    return togglePinMediaPost(supabase, parsed.data.postId, !postResult.value.is_pinned)
 }

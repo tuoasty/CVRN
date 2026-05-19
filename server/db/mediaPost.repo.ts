@@ -20,6 +20,7 @@ export async function findAllMediaPosts(
     let query = supabase
         .from('media_posts')
         .select('*')
+        .order('pinned_at', { ascending: false, nullsFirst: false })
         .order('published_at', { ascending: false })
 
     if (filters.type)     query = query.eq('type', filters.type)
@@ -36,10 +37,36 @@ export async function findRecentMediaPosts(supabase: DBClient, limit: number): P
     const { data, error } = await supabase
         .from('media_posts')
         .select('*')
+        .order('pinned_at', { ascending: false, nullsFirst: false })
         .order('published_at', { ascending: false })
         .limit(limit)
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok((data ?? []) as unknown as MediaPost[])
+}
+
+export async function countPinnedMediaPosts(supabase: DBClient): Promise<Result<number>> {
+    const { count, error } = await supabase
+        .from('media_posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_pinned', true)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(count ?? 0)
+}
+
+export async function updateMediaPostPin(supabase: DBClient, id: string, is_pinned: boolean): Promise<Result<MediaPost>> {
+    const now = new Date().toISOString()
+    const { data, error } = await supabase
+        .from('media_posts')
+        .update({
+            is_pinned,
+            pinned_at: is_pinned ? now : null,
+            updated_at: now,
+        })
+        .eq('id', id)
+        .select()
+        .single()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as unknown as MediaPost)
 }
 
 export async function findMediaPostById(supabase: DBClient, id: string): Promise<Result<MediaPost | null>> {
