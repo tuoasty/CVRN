@@ -1,7 +1,15 @@
-const MAX_DIMENSION = 512;
-const QUALITY = 0.85;
+const DEFAULT_MAX_DIMENSION = 512;
+const DEFAULT_QUALITY = 0.85;
 
-export async function compressImage(file: File): Promise<File> {
+interface CompressOptions {
+    maxDimension?: number;
+    quality?: number;
+}
+
+export async function compressImage(file: File, options: CompressOptions = {}): Promise<File> {
+    const MAX_DIMENSION = options.maxDimension ?? DEFAULT_MAX_DIMENSION;
+    const QUALITY = options.quality ?? DEFAULT_QUALITY;
+
     return new Promise((resolve, reject) => {
         const url = URL.createObjectURL(file);
         const img = new window.Image();

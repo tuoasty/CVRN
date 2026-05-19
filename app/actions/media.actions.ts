@@ -1,0 +1,73 @@
+"use server"
+
+import { Err, Result } from '@/shared/types/result'
+import { createServerSupabase } from '@/server/supabase/server'
+import {
+    createMediaPost,
+    deleteMediaPost,
+    getAllMediaPosts,
+    getRecentMediaPosts,
+    MediaPost,
+    CreateMediaFormSchema,
+    MediaPostIdSchema,
+    GetAllMediaSchema,
+} from '@/server/domains/media'
+
+async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
+    const { data: { user } } = await supabase.auth.getUser()
+    return user
+}
+
+export async function createMediaPostAction(formData: FormData): Promise<Result<MediaPost>> {
+    const parsed = CreateMediaFormSchema.safeParse({
+        type:        formData.get('type'),
+        title:       formData.get('title'),
+        description: formData.get('description') || undefined,
+        videoUrl:    formData.get('videoUrl') || undefined,
+        matchId:     formData.get('matchId') || undefined,
+        teamId:      formData.get('teamId') || undefined,
+        seasonId:    formData.get('seasonId') || undefined,
+    })
+    if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const user = await requireAuth(supabase)
+    if (!user) return Err({ message: 'Not authenticated', code: 'UNAUTHORIZED' })
+
+    const imageFile = formData.get('imageFile') as File | null
+
+    return createMediaPost(supabase, {
+        type:        parsed.data.type,
+        title:       parsed.data.title,
+        description: parsed.data.description ?? null,
+        imageFile:   imageFile && imageFile.size > 0 ? imageFile : null,
+        videoUrl:    parsed.data.videoUrl || null,
+        matchId:     parsed.data.matchId || null,
+        teamId:      parsed.data.teamId || null,
+        seasonId:    parsed.data.seasonId || null,
+        userId:      user.id,
+    })
+}
+
+export async function deleteMediaPostAction(input: unknown): Promise<Result<void>> {
+    const parsed = MediaPostIdSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: 'Invalid post ID', code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const user = await requireAuth(supabase)
+    if (!user) return Err({ message: 'Not authenticated', code: 'UNAUTHORIZED' })
+
+    return deleteMediaPost(supabase, { postId: parsed.data.postId, userId: user.id })
+}
+
+export async function getAllMediaPostsAction(filters?: unknown): Promise<Result<MediaPost[]>> {
+    const parsed = GetAllMediaSchema.safeParse(filters ?? {})
+    if (!parsed.success) return Err({ message: 'Invalid filters', code: 'VALIDATION_ERROR' })
+    const supabase = await createServerSupabase()
+    return getAllMediaPosts(supabase, parsed.data)
+}
+
+export async function getRecentMediaPostsAction(limit = 4): Promise<Result<MediaPost[]>> {
+    const supabase = await createServerSupabase()
+    return getRecentMediaPosts(supabase, limit)
+}

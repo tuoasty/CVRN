@@ -28,8 +28,6 @@ export default function HomePage() {
 
     const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId || undefined, selectedRegionId || undefined);
 
-    const loading = loadingTeams || loadingUpcoming || loadingRecent;
-
     const selectedSeason = seasons.find((s) => s.id === selectedSeasonId);
     const regionCode = regions.find((r) => r.id === selectedRegionId)?.code;
 
@@ -52,7 +50,7 @@ export default function HomePage() {
                                 </h3>
                             </div>
 
-                            {loading ? (
+                            {(loadingUpcoming || loadingTeams) ? (
                                 <div className="space-y-2">
                                     {[1, 2, 3].map((i) => (
                                         <Skeleton key={i} className="h-32 rounded-sm" />
@@ -93,7 +91,7 @@ export default function HomePage() {
                                 </h3>
                             </div>
 
-                            {loading ? (
+                            {(loadingRecent || loadingTeams) ? (
                                 <div className="space-y-2">
                                     {[1, 2].map((i) => (
                                         <Skeleton key={i} className="h-32 rounded-sm" />
@@ -129,7 +127,7 @@ export default function HomePage() {
                     {/* Center Column - Featured Match + Standings */}
                     <section className="space-y-6">
                         {/* Featured Match */}
-                        {loading ? (
+                        {(loadingUpcoming || loadingTeams) ? (
                             <Skeleton className="h-64 rounded-sm" />
                         ) : featuredMatch ? (
                             <FeaturedMatchCard
