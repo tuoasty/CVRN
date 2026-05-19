@@ -7,22 +7,9 @@ import { Image as ImageIcon, Play, ArrowRight } from 'lucide-react'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { useRecentMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
-
-function getYoutubeThumbnail(url: string): string | null {
-    try {
-        const u = new URL(url)
-        if (u.hostname.includes('youtube.com')) {
-            const v = u.searchParams.get('v')
-            return v ? `https://img.youtube.com/vi/${v}/hqdefault.jpg` : null
-        }
-        if (u.hostname.includes('youtu.be')) {
-            return `https://img.youtube.com/vi/${u.pathname.slice(1)}/hqdefault.jpg`
-        }
-        return null
-    } catch {
-        return null
-    }
-}
+import GFXImageDialog from '@/app/features/media/GFXImageDialog'
+import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
+import type { MediaPost } from '@/server/domains/media'
 
 function TypeDot({ type }: { type: string }) {
     const colors: Record<string, string> = {
@@ -37,6 +24,7 @@ function TypeDot({ type }: { type: string }) {
 export default function MediaSidebar() {
     const { posts, isLoading } = useRecentMediaPosts(4)
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
+    const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
 
     if (isLoading) {
         return (
@@ -71,13 +59,16 @@ export default function MediaSidebar() {
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">Media</h4>
                     {posts.map(post => {
                         const isVideo = post.type === 'video' && !!post.video_url
-                        const thumbnail = post.image_url ?? (isVideo ? getYoutubeThumbnail(post.video_url!) : null)
+                        const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
 
                         return (
                             <div
                                 key={post.id}
                                 className="space-y-1 rounded-sm p-1 -mx-1 hover:bg-muted/40 cursor-pointer transition-colors"
-                                onClick={() => isVideo ? setVideoUrl(post.video_url!) : undefined}
+                                onClick={() => {
+                                    if (isVideo) setVideoUrl(post.video_url!)
+                                    else if (post.type === 'gfx' && post.image_url) setGfxPost(post)
+                                }}
                             >
                                 {thumbnail && (
                                     <div className="relative aspect-video w-full overflow-hidden rounded-sm border border-border">
@@ -112,6 +103,15 @@ export default function MediaSidebar() {
                     url={videoUrl}
                     open={!!videoUrl}
                     onOpenChange={open => !open && setVideoUrl(null)}
+                />
+            )}
+
+            {gfxPost?.image_url && (
+                <GFXImageDialog
+                    url={gfxPost.image_url}
+                    title={gfxPost.title}
+                    open={!!gfxPost}
+                    onOpenChange={open => !open && setGfxPost(null)}
                 />
             )}
         </>
