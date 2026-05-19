@@ -2,16 +2,14 @@
 
 
 import Image from "next/image";
-import Link from "next/link";
 import AvatarImage from "@/app/components/ui/AvatarImage";
 import { useRouter } from "next/navigation";
 import { useTeamWithPlayers } from "@/app/hooks/useTeams";
 import { useTeamNameHistory } from "@/app/hooks/useTeamNameHistory";
-import { useTeamMediaPosts } from "@/app/hooks/useMediaPosts";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { ChevronLeft, Image as ImageIcon } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { getLogoClassName } from "@/app/lib/logoClass";
 import { PlayerWithRole } from "@/server/domains/player";
 import { Card, CardContent } from "@/app/components/ui/card";
@@ -73,7 +71,6 @@ export default function PublicTeamDetailPage({
 
     const { team: teamData, players, isLoading: loading, error: displayError } = useTeamWithPlayers(teamSlug, seasonSlug, regionCode);
     const { history } = useTeamNameHistory(teamData?.id ?? null);
-    const { posts: mediaPosts } = useTeamMediaPosts(teamData?.id ?? null);
 
     if (loading && !teamData) {
         return (
@@ -232,43 +229,6 @@ export default function PublicTeamDetailPage({
                 )}
             </div>
 
-            {mediaPosts.length > 0 && (
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                            <h3 className="text-sm uppercase tracking-wide text-muted-foreground">Media</h3>
-                        </div>
-                        <Link href="/media" className="text-xs text-primary font-medium hover:underline">
-                            View all →
-                        </Link>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {mediaPosts.slice(0, 4).map(post => (
-                            <Link key={post.id} href="/media" className="group panel overflow-hidden hover:border-primary/30 transition-colors">
-                                <div className="relative aspect-[4/3] bg-muted">
-                                    {post.image_url ? (
-                                        <Image
-                                            src={post.image_url}
-                                            alt={post.title}
-                                            fill
-                                            sizes="(max-width: 640px) 50vw, 25vw"
-                                            className="object-cover"
-                                        />
-                                    ) : (
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="p-2">
-                                    <p className="text-[11px] font-semibold truncate">{post.title}</p>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

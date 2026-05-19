@@ -19,7 +19,7 @@ const TYPE_COLORS: Record<string, string> = {
 
 type FilterType = 'all' | 'videos'
 
-function PostCard({ post, onVideoClick }: { post: MediaPost; onVideoClick: (url: string) => void }) {
+function PostRow({ post, onVideoClick }: { post: MediaPost; onVideoClick: (url: string) => void }) {
     const isVideo = post.type === 'video'
 
     function handleClick() {
@@ -29,67 +29,75 @@ function PostCard({ post, onVideoClick }: { post: MediaPost; onVideoClick: (url:
     return (
         <div
             className={cn(
-                'panel overflow-hidden transition-colors hover:border-primary/30',
+                'panel flex gap-0 overflow-hidden transition-colors hover:border-primary/30',
                 isVideo && post.video_url ? 'cursor-pointer' : ''
             )}
             onClick={handleClick}
         >
-            <div className="relative aspect-[4/3] bg-muted">
+            {/* Thumbnail */}
+            <div className="relative w-48 sm:w-64 flex-shrink-0 aspect-video bg-muted self-stretch">
                 {post.image_url ? (
                     <Image
                         src={post.image_url}
                         alt={post.title}
                         fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        sizes="(max-width: 640px) 192px, 256px"
                         className="object-cover"
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                        <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
                     </div>
                 )}
                 {isVideo && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
-                            <Play className="h-5 w-5 text-white fill-white ml-0.5" />
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+                            <Play className="h-4 w-4 text-white fill-white ml-0.5" />
                         </div>
                     </div>
                 )}
-                <Badge
-                    variant="outline"
-                    className={cn(
-                        'absolute top-2 left-2 rounded-sm text-[10px] uppercase tracking-wide font-semibold backdrop-blur-sm',
-                        TYPE_COLORS[post.type] ?? ''
-                    )}
-                >
-                    {post.type}
-                </Badge>
-                {post.match_id && (
-                    <Badge
-                        variant="outline"
-                        className="absolute top-2 right-2 rounded-sm text-[9px] uppercase tracking-wide bg-black/40 text-white border-white/20 backdrop-blur-sm"
-                    >
-                        Match
-                    </Badge>
-                )}
             </div>
-            <div className="p-3 space-y-0.5">
-                <p className="text-sm font-semibold truncate">{post.title}</p>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0 p-4 flex flex-col justify-between gap-2">
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Badge
+                            variant="outline"
+                            className={cn(
+                                'rounded-sm text-[10px] uppercase tracking-wide font-semibold',
+                                TYPE_COLORS[post.type] ?? ''
+                            )}
+                        >
+                            {post.type}
+                        </Badge>
+                        {post.match_id && (
+                            <Badge variant="outline" className="rounded-sm text-[9px] uppercase tracking-wide">
+                                Match
+                            </Badge>
+                        )}
+                    </div>
+                    <p className="text-sm font-semibold leading-snug line-clamp-2">{post.title}</p>
+                    {post.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">{post.description}</p>
+                    )}
+                </div>
                 <p className="text-[10px] text-muted-foreground">
-                    {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </p>
             </div>
         </div>
     )
 }
 
-function PostCardSkeleton() {
+function PostRowSkeleton() {
     return (
-        <div className="panel overflow-hidden">
-            <Skeleton className="aspect-[4/3] w-full rounded-none" />
-            <div className="p-3 space-y-1.5">
-                <Skeleton className="h-4 w-3/4 rounded-sm" />
-                <Skeleton className="h-2.5 w-1/3 rounded-sm" />
+        <div className="panel flex overflow-hidden gap-0">
+            <Skeleton className="w-48 sm:w-64 flex-shrink-0 aspect-video rounded-none" />
+            <div className="flex-1 p-4 space-y-2">
+                <Skeleton className="h-4 w-16 rounded-sm" />
+                <Skeleton className="h-5 w-3/4 rounded-sm" />
+                <Skeleton className="h-3 w-1/2 rounded-sm" />
             </div>
         </div>
     )
@@ -134,8 +142,8 @@ export default function MediaFeedPage() {
             </div>
 
             {isLoading ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {[...Array(8)].map((_, i) => <PostCardSkeleton key={i} />)}
+                <div className="space-y-3">
+                    {[...Array(4)].map((_, i) => <PostRowSkeleton key={i} />)}
                 </div>
             ) : filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 space-y-3">
@@ -145,9 +153,9 @@ export default function MediaFeedPage() {
                     </p>
                 </div>
             ) : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="space-y-3">
                     {filtered.map(post => (
-                        <PostCard key={post.id} post={post} onVideoClick={setVideoUrl} />
+                        <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} />
                     ))}
                 </div>
             )}

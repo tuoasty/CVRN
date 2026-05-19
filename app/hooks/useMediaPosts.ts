@@ -27,19 +27,6 @@ export function useRecentMediaPosts(limit = 4) {
     return { posts: data ?? [], error, isLoading }
 }
 
-export function useTeamMediaPosts(teamId: string | null) {
-    const key = teamId ? `media/team/${teamId}` : null
-    const { data, error, isLoading } = useSWR(
-        key,
-        async () => {
-            const result = await getAllMediaPostsAction({ teamId: teamId! })
-            if (!result.ok) throw new Error(result.error.message)
-            return result.value
-        }
-    )
-    return { posts: data ?? [], error, isLoading }
-}
-
 export function mutateAllMedia() {
     return globalMutate(ALL_MEDIA_KEY)
 }
