@@ -1,0 +1,104 @@
+"use client";
+
+import Image from "next/image";
+import { Trophy, Medal } from "lucide-react";
+import { SeasonPodiumEntryWithTeam } from "@/server/domains/season";
+
+interface SeasonChampionCardProps {
+    podium: SeasonPodiumEntryWithTeam[];
+    seasonName?: string;
+}
+
+function TeamLogo({
+    name,
+    logoUrl,
+    size,
+}: {
+    name: string;
+    logoUrl: string | null;
+    size: number;
+}) {
+    if (logoUrl) {
+        return (
+            <div className="relative shrink-0" style={{ width: size, height: size }}>
+                <Image
+                    src={logoUrl}
+                    alt={name}
+                    fill
+                    sizes={`${size}px`}
+                    className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                />
+            </div>
+        );
+    }
+    return (
+        <div
+            className="rounded-sm flex items-center justify-center font-bold bg-primary/10 text-primary shrink-0"
+            style={{ width: size, height: size, fontSize: Math.round(size * 0.35) }}
+        >
+            {name.slice(0, 2).toUpperCase()}
+        </div>
+    );
+}
+
+export default function SeasonChampionCard({ podium, seasonName }: SeasonChampionCardProps) {
+    const sorted = [...podium].sort((a, b) => a.place - b.place);
+    const champion = sorted.find((e) => e.place === 1);
+    const runnerUp = sorted.find((e) => e.place === 2);
+    const third = sorted.find((e) => e.place === 3);
+
+    return (
+        <div className="panel border-l-4 border-l-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b-2 border-yellow-500/20">
+                <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                    <Trophy className="h-4 w-4" />
+                    <h3 className="text-sm font-bold uppercase tracking-wider">Season Champion</h3>
+                </div>
+                {seasonName && (
+                    <span className="text-xs text-muted-foreground font-medium">{seasonName}</span>
+                )}
+            </div>
+
+            {/* Champion */}
+            {champion ? (
+                <div className="flex flex-col items-center gap-3 py-8 px-6">
+                    <TeamLogo name={champion.teams.name} logoUrl={champion.teams.logo_url} size={112} />
+                    <span className="text-xl font-bold text-center">{champion.teams.name}</span>
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-8 px-6">
+                    <Trophy className="h-10 w-10 text-yellow-500/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">Champion not yet set</p>
+                </div>
+            )}
+
+            {/* Runner-up and 3rd place */}
+            {(runnerUp || third) && (
+                <div className="grid grid-cols-2 gap-px border-t border-yellow-500/20">
+                    {runnerUp ? (
+                        <div className="flex flex-col items-center gap-2 py-4 px-4 bg-slate-400/5">
+                            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-300">
+                                <Medal className="h-3 w-3" />
+                                <span className="text-[10px] font-semibold uppercase tracking-wider">Runner-Up</span>
+                            </div>
+                            <TeamLogo name={runnerUp.teams.name} logoUrl={runnerUp.teams.logo_url} size={52} />
+                            <span className="text-xs font-semibold text-center leading-tight">{runnerUp.teams.name}</span>
+                        </div>
+                    ) : <div />}
+
+                    {third ? (
+                        <div className="flex flex-col items-center gap-2 py-4 px-4 bg-amber-500/5 border-l border-yellow-500/20">
+                            <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                                <Medal className="h-3 w-3" />
+                                <span className="text-[10px] font-semibold uppercase tracking-wider">3rd Place</span>
+                            </div>
+                            <TeamLogo name={third.teams.name} logoUrl={third.teams.logo_url} size={52} />
+                            <span className="text-xs font-semibold text-center leading-tight">{third.teams.name}</span>
+                        </div>
+                    ) : <div />}
+                </div>
+            )}
+        </div>
+    );
+}

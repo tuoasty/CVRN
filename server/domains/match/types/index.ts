@@ -24,6 +24,7 @@ export type MatchWithDetails = {
     match: Match;
     sets: MatchSet[];
     officials: MatchOfficialEntry[];
+    playoff_round?: string | null;
 };
 
 export type {

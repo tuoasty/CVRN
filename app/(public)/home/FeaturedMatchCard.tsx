@@ -12,38 +12,55 @@ interface FeaturedMatchCardProps {
     homeTeam?: TeamWithRegion;
     awayTeam?: TeamWithRegion;
     regionCode?: string;
+    matchLabel: string;
+    isRecent?: boolean;
 }
 
 export default function FeaturedMatchCard({
-                                              matchDetails,
-                                              homeTeam,
-                                              awayTeam,
-                                              regionCode,
-                                          }: FeaturedMatchCardProps) {
+    matchDetails,
+    homeTeam,
+    awayTeam,
+    regionCode,
+    matchLabel,
+    isRecent = false,
+}: FeaturedMatchCardProps) {
     const { match } = matchDetails;
     const regionTimezone = regionCode ? getRegionTimezone(regionCode) : undefined;
 
+    const isCompleted = match.status === "completed";
+    const homeWon = isCompleted && (match.home_sets_won ?? 0) > (match.away_sets_won ?? 0);
+    const awayWon = isCompleted && (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0);
+
+    const isPlayoff = match.match_type === "playoffs";
+
     return (
         <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-            <div className="space-y-4">
+            <div className="flex flex-col justify-between min-h-[260px]">
+                {/* Header */}
                 <div className="flex items-center justify-between pb-3 border-b-2 border-primary/20">
                     <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                        Next Match
+                        {isRecent ? "Most Recent Match" : "Next Match"}
                     </h3>
                     <div className="flex items-center gap-2">
                         <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2">
                             BO{match.best_of}
                         </Badge>
-                        {match.match_type === "playoffs" && (
-                            <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 bg-purple-600/10 text-purple-600 border-purple-600/20">
-                                Playoff
-                            </Badge>
-                        )}
+                        <Badge
+                            variant="outline"
+                            className={`rounded-sm text-[10px] h-5 px-2 ${
+                                isPlayoff
+                                    ? "bg-purple-600/10 text-purple-600 border-purple-600/20"
+                                    : "bg-muted/50 text-muted-foreground"
+                            }`}
+                        >
+                            {matchLabel}
+                        </Badge>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-4">
-                    <div className="flex flex-col items-center gap-3">
+                {/* Teams */}
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-8">
+                    <div className={`flex flex-col items-center gap-3 ${homeWon ? "opacity-100" : isCompleted ? "opacity-60" : ""}`}>
                         {homeTeam?.logo_url && (
                             <div className="relative w-20 h-20">
                                 <Image
@@ -60,11 +77,17 @@ export default function FeaturedMatchCard({
                         </span>
                     </div>
 
-                    <div className="flex items-center justify-center px-4">
-                        <span className="text-2xl font-bold text-muted-foreground/50">VS</span>
+                    <div className="flex flex-col items-center justify-center px-4 gap-1">
+                        {isCompleted ? (
+                            <span className="text-2xl font-bold tabular-nums">
+                                {match.home_sets_won} – {match.away_sets_won}
+                            </span>
+                        ) : (
+                            <span className="text-2xl font-bold text-muted-foreground/50">VS</span>
+                        )}
                     </div>
 
-                    <div className="flex flex-col items-center gap-3">
+                    <div className={`flex flex-col items-center gap-3 ${awayWon ? "opacity-100" : isCompleted ? "opacity-60" : ""}`}>
                         {awayTeam?.logo_url && (
                             <div className="relative w-20 h-20">
                                 <Image
@@ -82,6 +105,7 @@ export default function FeaturedMatchCard({
                     </div>
                 </div>
 
+                {/* Footer */}
                 <div className="flex items-center justify-center gap-4 pt-3 border-t border-border">
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-primary" />
@@ -89,9 +113,8 @@ export default function FeaturedMatchCard({
                             {regionTimezone && match.scheduled_at
                                 ? formatDateInTimezone(match.scheduled_at, regionTimezone)
                                 : match.scheduled_at
-                                    ? new Date(match.scheduled_at).toLocaleString()
-                                    : "Time TBD"
-                            }
+                                ? new Date(match.scheduled_at).toLocaleString()
+                                : "Time TBD"}
                         </span>
                     </div>
                 </div>
