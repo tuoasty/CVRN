@@ -36,7 +36,7 @@ export default function VideoEmbedDialog({ url, open, onOpenChange }: VideoEmbed
     const embed = toEmbedUrl(url)
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-sm border-border bg-black">
+            <DialogContent className="max-w-4xl sm:max-w-4xl w-[95vw] p-0 overflow-hidden rounded-sm border-border bg-black">
                 <DialogHeader className="sr-only">
                     <DialogTitle>Video Player</DialogTitle>
                 </DialogHeader>

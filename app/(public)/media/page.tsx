@@ -7,6 +7,8 @@ import { Badge } from '@/app/components/ui/badge'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { useAllMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
+import GFXImageDialog from '@/app/features/media/GFXImageDialog'
+import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import { cn } from '@/lib/utils'
 import type { MediaPost } from '@/server/domains/media'
 
@@ -19,26 +21,29 @@ const TYPE_COLORS: Record<string, string> = {
 
 type FilterType = 'all' | 'videos'
 
-function PostRow({ post, onVideoClick }: { post: MediaPost; onVideoClick: (url: string) => void }) {
+function PostRow({ post, onVideoClick, onGfxClick }: { post: MediaPost; onVideoClick: (url: string) => void; onGfxClick: (post: MediaPost) => void }) {
     const isVideo = post.type === 'video'
+    const isGfx = post.type === 'gfx'
+    const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
 
     function handleClick() {
         if (isVideo && post.video_url) onVideoClick(post.video_url)
+        else if (isGfx && post.image_url) onGfxClick(post)
     }
 
     return (
         <div
             className={cn(
                 'panel flex gap-0 overflow-hidden transition-colors hover:border-primary/30',
-                isVideo && post.video_url ? 'cursor-pointer' : ''
+                (isVideo && post.video_url) || (isGfx && post.image_url) ? 'cursor-pointer' : ''
             )}
             onClick={handleClick}
         >
             {/* Thumbnail */}
             <div className="relative w-48 sm:w-64 flex-shrink-0 aspect-video bg-muted self-stretch">
-                {post.image_url ? (
+                {thumbnail ? (
                     <Image
-                        src={post.image_url}
+                        src={thumbnail}
                         alt={post.title}
                         fill
                         sizes="(max-width: 640px) 192px, 256px"
@@ -107,6 +112,7 @@ export default function MediaFeedPage() {
     const { posts, isLoading } = useAllMediaPosts()
     const [filter, setFilter] = useState<FilterType>('all')
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
+    const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
 
     const filtered = filter === 'all' ? posts : posts.filter(p => p.type === 'video')
 
@@ -155,7 +161,7 @@ export default function MediaFeedPage() {
             ) : (
                 <div className="space-y-3">
                     {filtered.map(post => (
-                        <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} />
+                        <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
                     ))}
                 </div>
             )}
@@ -165,6 +171,15 @@ export default function MediaFeedPage() {
                     url={videoUrl}
                     open={!!videoUrl}
                     onOpenChange={open => !open && setVideoUrl(null)}
+                />
+            )}
+
+            {gfxPost?.image_url && (
+                <GFXImageDialog
+                    url={gfxPost.image_url}
+                    title={gfxPost.title}
+                    open={!!gfxPost}
+                    onOpenChange={open => !open && setGfxPost(null)}
                 />
             )}
         </main>
