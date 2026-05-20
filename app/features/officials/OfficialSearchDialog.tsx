@@ -19,7 +19,7 @@ import { OfficialType } from "@/server/domains/matchOfficial";
 import { Badge } from "@/app/components/ui/badge";
 import { toast } from "@/app/utils/toast";
 import {getOfficialByExactUsernameAction, searchOfficialsInDatabaseAction} from "@/app/actions/matchOfficial.actions";
-import { OfficialWithInfo } from "@/server/domains/official";
+import { PlayerWithTeamInfo } from "@/server/domains/player";
 
 interface OfficialSearchDialogProps {
     matchId: string;
@@ -37,7 +37,7 @@ export default function OfficialSearchDialog({
 
     const [open, setOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [dbSuggestions, setDbSuggestions] = useState<OfficialWithInfo[]>([]);
+    const [dbSuggestions, setDbSuggestions] = useState<PlayerWithTeamInfo[]>([]);
     const [robloxResults, setRobloxResults] = useState<RobloxUserWithAvatar[]>([]);
     const [searching, setSearching] = useState(false);
     const [assigning, setAssigning] = useState<string | null>(null);
@@ -161,7 +161,7 @@ export default function OfficialSearchDialog({
         setAssigning(null);
     };
 
-    const handleAssignDb = async (official: OfficialWithInfo) => {
+    const handleAssignDb = async (official: PlayerWithTeamInfo) => {
         setAssigning(official.id);
         clientLogger.info("OfficialSearchDialog", "Assigning DB official", {
             matchId,
@@ -285,7 +285,7 @@ export default function OfficialSearchDialog({
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="relative w-10 h-10 rounded-sm overflow-hidden border border-border shrink-0">
-                                            <AvatarImage src={official.avatar_url} alt={official.username} sizes="40px" />
+                                            <AvatarImage src={official.avatar_url ?? ""} alt={official.username ?? ""} sizes="40px" />
                                         </div>
                                         <div className="min-w-0">
                                             <div className="font-medium truncate">

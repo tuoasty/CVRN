@@ -13,9 +13,6 @@ export type Player =
 export type Region =
     Database["public"]["Tables"]["regions"]["Row"];
 
-export type Official =
-    Database["public"]["Tables"]["officials"]["Row"];
-
 export type MatchOfficial =
     Database["public"]["Tables"]["match_officials"]["Row"];
 
