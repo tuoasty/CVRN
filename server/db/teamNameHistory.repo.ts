@@ -54,6 +54,18 @@ export async function findTeamNameHistoryByTeamId(
     return Ok((data ?? []).map(row => toEntry(row as unknown as TeamNameHistoryRow)));
 }
 
+export async function deleteTeamNameHistoryById(
+    supabase: DBClient,
+    id: string
+): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("team_name_history")
+        .delete()
+        .eq("id", id);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
 export async function findTeamNameHistoryByTeamIds(
     supabase: DBClient,
     teamIds: string[]

@@ -26,6 +26,7 @@ import {hardDeleteTeamsBySeasonId} from "@/server/db/teams.repo";
 import {deleteSeasonMatchesBySeasonId} from "@/server/db/matches.repo";
 import {deletePlayoffMatchesBySeasonId} from "@/server/db/playoff.repo";
 import {syncSheet} from "@/server/domains/sheets/commands/syncSheet";
+import {revertSyncs} from "@/server/domains/sheets/commands/revertSyncs";
 
 const SaveSheetConfigSchema = z.object({
     seasonId: z.string().uuid(),
@@ -200,5 +201,24 @@ export async function toggleCronEnabledAction(configId: string, enabled: boolean
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
     const result = await updateCronEnabled(supabase, configId, enabled);
     if (result.ok) revalidatePath('/admin/sync');
+    return result;
+}
+
+const RevertSyncsSchema = z.object({
+    configId: z.string().uuid(),
+    targetSyncId: z.string().uuid(),
+});
+
+export async function revertSyncsAction(configId: string, targetSyncId: string) {
+    const parsed = RevertSyncsSchema.safeParse({configId, targetSyncId});
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR" as const});
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const result = await revertSyncs(supabase, parsed.data);
+    if (result.ok) {
+        revalidatePath('/admin/sync/history');
+        revalidatePath('/admin/sync');
+    }
     return result;
 }

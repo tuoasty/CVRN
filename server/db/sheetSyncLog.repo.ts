@@ -82,3 +82,19 @@ export async function findAllSyncLogs(supabase: DBClient, limit = 100): Promise<
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
 }
+
+export async function findSyncLogsForRevert(
+    supabase: DBClient,
+    configId: string,
+    fromSyncedAt: string
+): Promise<Result<SheetSyncLog[]>> {
+    const {data, error} = await supabase
+        .from("sheet_sync_logs")
+        .select("*")
+        .eq("sheet_config_id", configId)
+        .neq("triggered_by", "rollback")
+        .gte("synced_at", fromSyncedAt)
+        .order("synced_at", {ascending: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
