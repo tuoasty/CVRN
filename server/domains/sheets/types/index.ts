@@ -1,7 +1,14 @@
 export type SheetType = 'qualifier' | 'playoff' | 'teams'
 export type SyncStatus = 'success' | 'warning' | 'partial' | 'failed'
 export type SyncTrigger = 'cron' | 'manual' | 'rollback'
-export type SyncChangeType = 'team_rename' | 'team_disband' | 'player_add' | 'player_remove' | 'role_change' | 'match_result'
+export type SyncChangeType =
+    | 'team_creation'
+    | 'team_rename'
+    | 'team_disband'
+    | 'player_add'
+    | 'player_remove'
+    | 'role_change'
+    | 'match_result'
 
 export interface SyncChange {
     type: SyncChangeType

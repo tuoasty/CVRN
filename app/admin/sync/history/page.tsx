@@ -2,14 +2,16 @@
 
 import {useState, useEffect, useCallback, Suspense} from 'react';
 import {useSearchParams} from 'next/navigation';
-import {RefreshCw} from 'lucide-react';
+import {RefreshCw, RotateCcw} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
 import {Badge} from '@/app/components/ui/badge';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/app/components/ui/dialog';
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from '@/app/components/ui/alert-dialog';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/app/components/ui/select';
 import {SheetConfig, SheetSyncLog} from '@/shared/types/db';
 import {SyncChange, SyncError} from '@/server/domains/sheets/types';
-import {getSheetConfigsAction, getSyncLogsAction} from '@/app/actions/sheets.actions';
+import {getSheetConfigsAction, getSyncLogsAction, revertSyncsAction} from '@/app/actions/sheets.actions';
+import {toast} from '@/app/utils/toast';
 
 const STATUS_VARIANT: Record<string, 'default' | 'warning' | 'secondary' | 'destructive'> = {
     success: 'default',
@@ -19,7 +21,9 @@ const STATUS_VARIANT: Record<string, 'default' | 'warning' | 'secondary' | 'dest
 };
 
 const CHANGE_LABELS: Record<string, string> = {
-    team_rename: 'Team',
+    team_creation: 'Created',
+    team_rename: 'Renamed',
+    team_disband: 'Disbanded',
     player_add: 'Added',
     player_remove: 'Removed',
     role_change: 'Role',
@@ -28,10 +32,13 @@ const CHANGE_LABELS: Record<string, string> = {
 
 function describeChange(c: SyncChange): string {
     switch (c.type) {
+        case 'team_creation':
+            return `Created: ${c.after.name}`;
         case 'team_rename':
             if (!c.before.name) return `Created: ${c.after.name}`;
-            if (c.after.disbanded) return `Disbanded: ${c.before.name}`;
             return `${c.before.name} → ${c.after.name}`;
+        case 'team_disband':
+            return `Disbanded: ${c.before.name}`;
         case 'player_add':
             return String(c.after.username ?? c.entityId);
         case 'player_remove':
@@ -66,6 +73,8 @@ function AdminSyncHistoryContent() {
         searchParams.get('config') ?? 'all'
     );
     const [selectedLog, setSelectedLog] = useState<SheetSyncLog | null>(null);
+    const [revertTarget, setRevertTarget] = useState<SheetSyncLog | null>(null);
+    const [reverting, setReverting] = useState(false);
 
     const configMap = Object.fromEntries(configs.map(c => [c.id, c]));
 
@@ -81,6 +90,25 @@ function AdminSyncHistoryContent() {
     }, []);
 
     useEffect(() => { load(filterConfigId); }, [load, filterConfigId]);
+
+    const handleRevert = async () => {
+        if (!revertTarget) return;
+        setReverting(true);
+        try {
+            const result = await revertSyncsAction(revertTarget.sheet_config_id, revertTarget.id);
+            if (!result.ok) {
+                toast.error('Revert failed', result.error.message);
+                return;
+            }
+            toast.success(`Reverted ${result.value.syncsReverted} sync${result.value.syncsReverted !== 1 ? 's' : ''} — ${result.value.changesReverted} changes undone`);
+            setRevertTarget(null);
+            await load(filterConfigId);
+        } catch {
+            toast.error('Something went wrong');
+        } finally {
+            setReverting(false);
+        }
+    };
 
     const logChanges = selectedLog ? (selectedLog.changes as unknown as SyncChange[]) : [];
     const logErrors = selectedLog ? (selectedLog.errors as unknown as SyncError[]) : [];
@@ -121,12 +149,13 @@ function AdminSyncHistoryContent() {
                                 <th className="text-right px-4 py-2 font-medium">Processed</th>
                                 <th className="text-right px-4 py-2 font-medium">Errors</th>
                                 <th className="text-right px-4 py-2 font-medium">Changes</th>
+                                <th className="text-right px-4 py-2 font-medium">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {[...Array(5)].map((_, i) => (
                                 <tr key={i} className="border-b last:border-0">
-                                    {[...Array(7)].map((_, j) => (
+                                    {[...Array(8)].map((_, j) => (
                                         <td key={j} className="px-4 py-2">
                                             <div className="h-4 bg-muted/40 rounded animate-pulse" />
                                         </td>
@@ -150,6 +179,7 @@ function AdminSyncHistoryContent() {
                                 <th className="text-right px-4 py-2 font-medium">Processed</th>
                                 <th className="text-right px-4 py-2 font-medium">Errors</th>
                                 <th className="text-right px-4 py-2 font-medium">Changes</th>
+                                <th className="text-right px-4 py-2 font-medium">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -159,7 +189,7 @@ function AdminSyncHistoryContent() {
                                 return (
                                     <tr
                                         key={log.id}
-                                        className="border-b last:border-0 hover:bg-muted/30 cursor-pointer"
+                                        className={`border-b last:border-0 hover:bg-muted/30 cursor-pointer ${log.triggered_by === 'rollback' ? 'opacity-60' : ''}`}
                                         onClick={() => setSelectedLog(log)}
                                     >
                                         <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">
@@ -180,7 +210,11 @@ function AdminSyncHistoryContent() {
                                                 {log.status}
                                             </Badge>
                                         </td>
-                                        <td className="px-4 py-2 text-muted-foreground">{log.triggered_by}</td>
+                                        <td className="px-4 py-2 text-muted-foreground">
+                                            {log.triggered_by === 'rollback' ? (
+                                                <Badge variant="secondary" className="text-xs">Rollback</Badge>
+                                            ) : log.triggered_by}
+                                        </td>
                                         <td className="px-4 py-2 text-right">{log.rows_processed}</td>
                                         <td className="px-4 py-2 text-right">
                                             {log.rows_errored > 0
@@ -188,6 +222,19 @@ function AdminSyncHistoryContent() {
                                                 : <span className="text-muted-foreground">0</span>}
                                         </td>
                                         <td className="px-4 py-2 text-right text-muted-foreground">{changeCount}</td>
+                                        <td className="px-4 py-2 text-right" onClick={e => e.stopPropagation()}>
+                                            {log.triggered_by !== 'rollback' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                                                    onClick={() => setRevertTarget(log)}
+                                                >
+                                                    <RotateCcw className="w-3 h-3 mr-1" />
+                                                    Revert to here
+                                                </Button>
+                                            )}
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -284,6 +331,36 @@ function AdminSyncHistoryContent() {
                     )}
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={!!revertTarget} onOpenChange={open => { if (!open) setRevertTarget(null); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Revert to this sync?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {revertTarget && (() => {
+                                const affected = logs.filter(
+                                    l => l.triggered_by !== 'rollback' && l.synced_at >= revertTarget.synced_at
+                                );
+                                const totalChanges = affected.reduce(
+                                    (sum, l) => sum + (Array.isArray(l.changes) ? (l.changes as unknown[]).length : 0),
+                                    0
+                                );
+                                return `This will revert ${affected.length} sync${affected.length !== 1 ? 's' : ''} and undo ${totalChanges} change${totalChanges !== 1 ? 's' : ''}. This cannot be undone — re-sync from the sheet to restore data.`;
+                            })()}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={reverting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleRevert}
+                            disabled={reverting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {reverting ? 'Reverting...' : 'Revert'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

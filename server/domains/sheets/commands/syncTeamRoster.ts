@@ -116,7 +116,7 @@ export async function syncTeamRoster(
 
             if (!wasExisting) {
                 changes.push({
-                    type: 'team_rename',
+                    type: 'team_creation',
                     entityId: team.id,
                     before: {},
                     after: {name: parsedTeam.teamName, teamNumber: parsedTeam.teamNumber},
@@ -124,12 +124,6 @@ export async function syncTeamRoster(
             } else {
                 const prev = existingByNumber.get(parsedTeam.teamNumber)!;
                 if (prev.name !== parsedTeam.teamName) {
-                    changes.push({
-                        type: 'team_rename',
-                        entityId: team.id,
-                        before: {name: prev.name},
-                        after: {name: parsedTeam.teamName},
-                    });
                     const historyResult = await insertTeamNameHistory(supabase, {
                         teamId: team.id,
                         oldName: prev.name,
@@ -138,6 +132,15 @@ export async function syncTeamRoster(
                     if (!historyResult.ok) {
                         logger.error({teamId: team.id, error: historyResult.error}, "Failed to record team rename");
                     }
+                    changes.push({
+                        type: 'team_rename',
+                        entityId: team.id,
+                        before: {name: prev.name},
+                        after: {
+                            name: parsedTeam.teamName,
+                            teamNameHistoryId: historyResult.ok ? historyResult.value.id : undefined,
+                        },
+                    });
                 }
             }
 
@@ -217,7 +220,7 @@ export async function syncTeamRoster(
                     changes.push({
                         type: 'player_remove',
                         entityId: pts.player_id,
-                        before: {username: uname, teamId: team.id},
+                        before: {username: uname, teamId: team.id, playerTeamSeasonId: removeResult.value.id},
                         after: {},
                     });
                 }
@@ -263,7 +266,12 @@ export async function syncTeamRoster(
                         type: 'player_add',
                         entityId: upsertResult.value.id,
                         before: {},
-                        after: {username: parsedPlayer.username, role: parsedPlayer.role, teamId: team.id},
+                        after: {
+                            username: parsedPlayer.username,
+                            role: parsedPlayer.role,
+                            teamId: team.id,
+                            playerTeamSeasonId: addResult.value.id,
+                        },
                     });
                 } else if (existing.role !== parsedPlayer.role) {
                     // Role changed

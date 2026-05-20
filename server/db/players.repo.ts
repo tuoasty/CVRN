@@ -207,6 +207,40 @@ export type BulkPlayerUpdate = {
     lastSyncedAt?: string;
 };
 
+export async function hardDeletePlayerTeamSeason(supabase: DBClient, ptsId: string): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("player_team_seasons")
+        .delete()
+        .eq("id", ptsId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
+export async function restorePlayerTeamSeason(supabase: DBClient, ptsId: string): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("player_team_seasons")
+        .update({left_at: null})
+        .eq("id", ptsId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
+export async function restorePlayerRole(
+    supabase: DBClient,
+    playerId: string,
+    teamId: string,
+    role: string
+): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("player_team_seasons")
+        .update({role})
+        .eq("player_id", playerId)
+        .eq("team_id", teamId)
+        .is("left_at", null);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
 export async function updatePlayersBulk(
     supabase: DBClient,
     updates: BulkPlayerUpdate[]

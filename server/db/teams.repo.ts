@@ -321,6 +321,15 @@ export async function softDeleteTeamById(supabase: DBClient, id: string): Promis
     return Ok(true);
 }
 
+export async function unDisbandTeamById(supabase: DBClient, id: string): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("teams")
+        .update({deleted_at: null})
+        .eq("id", id);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
 export async function findTeamsByIds(supabase: DBClient, teamIds: string[]): Promise<Result<TeamWithRegionRow[]>> {
     const {data, error} = await supabase
         .from("teams")
