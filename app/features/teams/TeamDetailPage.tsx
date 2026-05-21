@@ -158,7 +158,7 @@ export default function TeamDetailPage({
     return (
         <div className="admin-container">
         <div className="admin-section">
-            <div className="admin-header">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-border">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <Button

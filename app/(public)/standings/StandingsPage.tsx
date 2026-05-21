@@ -10,6 +10,7 @@ import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddlew
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
 import {clientLogger} from "@/app/utils/clientLogger";
+import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 
 export default function StandingsPage() {
     const { selectedSeasonId, selectedRegionId } = usePublicContextStore();
@@ -29,48 +30,39 @@ export default function StandingsPage() {
         return { totalTeams, avgLvr, topLvr };
     }, [standings]);
 
+    const subtitle =
+        seasons.length === 0
+            ? undefined
+            : selectedSeason
+            ? `${selectedSeason.name}${selectedRegion ? ` · ${selectedRegion.name}` : ""}`
+            : "";
+
     return (
         <>
             <SeasonSelectionMiddleware />
 
-            <div className="page-narrow space-y-6 py-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
-                            <Trophy className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                                Standings
-                            </h1>
-                            {selectedSeason && (
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                    {selectedSeason.name}
-                                    {selectedRegion && ` · ${selectedRegion.name}`}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                        {stats && (
-                            <div className="hidden sm:flex items-center gap-6">
-                                <div className="text-right">
-                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Teams</div>
-                                    <div className="text-lg font-bold text-primary tabular-nums">{stats.totalTeams}</div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg LVR</div>
-                                    <div className="text-lg font-bold tabular-nums">{(stats.avgLvr).toFixed(1)}</div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Top LVR</div>
-                                    <div className="text-lg font-bold text-primary tabular-nums">{(stats.topLvr).toFixed(1)}</div>
-                                </div>
+            <div className="page-wide space-y-6 py-6">
+                <PublicPageHeader
+                    icon={Trophy}
+                    title="Standings"
+                    subtitle={subtitle}
+                    actions={stats ? (
+                        <div className="hidden sm:flex items-center gap-6">
+                            <div className="text-right">
+                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Teams</div>
+                                <div className="text-lg font-bold text-primary tabular-nums">{stats.totalTeams}</div>
                             </div>
-                        )}
-                    </div>
-                </div>
+                            <div className="text-right">
+                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg LVR</div>
+                                <div className="text-lg font-bold tabular-nums">{(stats.avgLvr).toFixed(1)}</div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Top LVR</div>
+                                <div className="text-lg font-bold text-primary tabular-nums">{(stats.topLvr).toFixed(1)}</div>
+                            </div>
+                        </div>
+                    ) : null}
+                />
 
                 {selectedSeasonId && selectedRegionId ? (
                     standingsLoading && standings.length === 0 ? (

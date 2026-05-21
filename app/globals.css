@@ -157,10 +157,6 @@
     @apply space-y-6;
   }
 
-  .admin-header {
-    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-border;
-  }
-
   /* Form Components */
   .form-group {
     @apply space-y-2;

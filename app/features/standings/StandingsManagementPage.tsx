@@ -6,6 +6,7 @@ import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { StandingsTable } from "@/app/features/standings/StandingsTable";
 import { Trophy } from "lucide-react";
+import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
 
 export default function StandingsManagementPage() {
@@ -31,23 +32,11 @@ export default function StandingsManagementPage() {
     return (
         <div className="admin-container">
             <div className="admin-section">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 pb-6 border-b-2 border-primary/20">
-                    <div className="flex items-center gap-4 flex-1">
-                        <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20 shrink-0">
-                            <Trophy className="h-7 w-7 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                                Standings
-                            </h1>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                {selectedRegion && selectedSeason
-                                    ? `${selectedRegion.name} • ${selectedSeason.name}`
-                                    : "Select a season in the navbar"}
-                            </p>
-                        </div>
-                    </div>
-                    {standings.length > 0 && (
+                <AdminPageHeader
+                    icon={Trophy}
+                    title="Standings"
+                    description={selectedRegion && selectedSeason ? `${selectedRegion.name} • ${selectedSeason.name}` : "Select a season in the navbar"}
+                    stats={standings.length > 0 ? (
                         <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6">
                             <div className="text-right">
                                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Teams</div>
@@ -62,8 +51,8 @@ export default function StandingsManagementPage() {
                                 <div className="text-lg font-bold text-primary tabular-nums">{stats.topLvr.toFixed(1)}</div>
                             </div>
                         </div>
-                    )}
-                </div>
+                    ) : null}
+                />
 
                 {selectedRegionId && selectedSeasonId ? (
                     <StandingsTable
