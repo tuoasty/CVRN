@@ -50,5 +50,5 @@ docs
 CLAUDE.md
 .claude
 
-/supabase/migrations
+/supabase
 /.superpowers/
