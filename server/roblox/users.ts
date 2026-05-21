@@ -59,7 +59,7 @@ export async function getRobloxAvatarsById(userIds: string[]): Promise<Result<Ro
                 "/v1/users/avatar-headshot", {
                     params: {
                         userIds: userIds.join(","),
-                        size: "150x150",
+                        size: "180x180",
                         format: "Png",
                         isCircular: false,
                     },

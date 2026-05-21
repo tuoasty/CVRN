@@ -143,17 +143,17 @@ describe('parseTeamsSheet', () => {
     expect(players.map(p => p.username)).toEqual(['Player1', 'Player3'])
   })
 
-  it('caps players at 16 rows regardless of row count', () => {
-    // 18 rows after header — only rows 1–16 scanned (PLAYER_ROWS=16)
-    const rows = makeRows(19)
+  it('caps players at 18 rows regardless of row count', () => {
+    // 19 rows after header — only rows 1–18 scanned (PLAYER_ROWS=18)
+    const rows = makeRows(21)
     setCell(rows, 0, 2, 'BigTeam')
-    for (let r = 1; r <= 17; r++) {
+    for (let r = 1; r <= 19; r++) {
       setCell(rows, r, 2, `P${r}`)
     }
 
-    const players = parseTeamsSheet(rows, 1, 18, 4)[0].players
+    const players = parseTeamsSheet(rows, 1, 20, 4)[0].players
 
-    expect(players).toHaveLength(16)
+    expect(players).toHaveLength(18)
   })
 
   it('uses custom blockStride correctly', () => {
