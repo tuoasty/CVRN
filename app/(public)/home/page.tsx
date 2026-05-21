@@ -163,7 +163,7 @@ export default function HomePage() {
                     <section className="space-y-6">
                         {/* Featured area */}
                         {featuredLoading ? (
-                            <Skeleton className="h-64 rounded-sm" />
+                            <Skeleton className="h-[260px] rounded-sm" />
                         ) : isSeasonCompleted ? (
                             <SeasonChampionCard podium={podium} seasonName={selectedSeason?.name} />
                         ) : featuredMatch ? (
