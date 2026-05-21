@@ -5,7 +5,7 @@ import {serializeError} from "@/server/utils/serializeableError";
 
 type MatchOfficialJoin = {
     official_type: string;
-    officials: Pick<Player, "id" | "username" | "display_name" | "avatar_url"> | null;
+    players: Pick<Player, "id" | "username" | "display_name" | "avatar_url"> | null;
 };
 
 type MatchSetJoin = Pick<MatchSet, "set_number" | "home_score" | "away_score">;
@@ -221,7 +221,7 @@ export async function findMatchesWithDetailsBySeasonAndWeek(
             ),
             match_officials (
                 official_type,
-                officials:players (
+                players (
                     id,
                     username,
                     display_name,
@@ -280,7 +280,7 @@ export async function findUpcomingMatches(
             ),
             match_officials (
                 official_type,
-                officials:players (
+                players (
                     id,
                     username,
                     display_name,
@@ -314,7 +314,7 @@ export async function findRecentMatches(
             ),
             match_officials (
                 official_type,
-                officials:players (
+                players (
                     id,
                     username,
                     display_name,

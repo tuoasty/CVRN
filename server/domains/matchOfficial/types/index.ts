@@ -1,7 +1,7 @@
 import {MatchOfficial, Player} from "@/shared/types/db";
 
 export interface MatchOfficialWithDetails extends MatchOfficial {
-    official: Player;
+    player: Player;
 }
 
 export interface MatchIdInput {

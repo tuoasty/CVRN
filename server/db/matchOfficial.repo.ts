@@ -3,7 +3,7 @@ import {AssignOfficialInput, OfficialType} from "@/server/domains/matchOfficial"
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 
-type MatchOfficialWithPlayer = MatchOfficial & {official: Player | null};
+type MatchOfficialWithPlayer = MatchOfficial & {player: Player | null};
 
 export async function assignOfficial(supabase: DBClient, p: AssignOfficialInput): Promise<Result<MatchOfficial>> {
     const {data, error} = await supabase.from("match_officials")
@@ -37,12 +37,11 @@ export async function assignMultipleOfficials(
     return Ok(data ?? []);
 }
 
-export async function findMatchOfficials(supabase: DBClient, matchId: string):
-Promise<Result<MatchOfficialWithPlayer[]>> {
+export async function findMatchOfficials(supabase: DBClient, matchId: string): Promise<Result<MatchOfficialWithPlayer[]>> {
     const {data, error} = await supabase.from("match_officials")
         .select(`
             *,
-            official:players(*)
+            player:players(*)
         `)
         .eq("match_id", matchId);
     if (error) return Err(serializeError(error, "DB_ERROR"));
@@ -57,7 +56,7 @@ export async function findMatchOfficialsByType(
     const {data, error} = await supabase.from("match_officials")
         .select(`
             *,
-            official:players(*)
+            player:players(*)
         `)
         .eq("match_id", matchId)
         .eq("official_type", officialType);

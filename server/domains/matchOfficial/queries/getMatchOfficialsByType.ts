@@ -20,8 +20,8 @@ export async function getMatchOfficialsByType(
         }
 
         const players = result.value
-            .map(mo => mo.official)
-            .filter((o): o is Player => o !== null);
+            .map(mo => mo.player)
+            .filter((p): p is Player => p !== null);
 
         runInBackground(() => batchSyncPlayers(supabase, players), "batchSyncPlayers");
 
