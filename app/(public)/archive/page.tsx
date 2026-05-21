@@ -30,6 +30,7 @@ function TeamLogo({
                 alt={name}
                 width={size}
                 height={size}
+                style={{ width: size, height: size }}
                 className="rounded-sm object-contain mix-blend-multiply dark:mix-blend-screen"
             />
         );
