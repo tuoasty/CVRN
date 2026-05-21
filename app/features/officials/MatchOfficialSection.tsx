@@ -81,15 +81,15 @@ export default function MatchOfficialSection({
                         >
                             <div className="flex items-center gap-3">
                                 <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border">
-                                    <AvatarImage src={mo.official.avatar_url} alt={mo.official.username || "Official"} sizes="40px" />
+                                    <AvatarImage src={mo.player.avatar_url} alt={mo.player.username || "Official"} sizes="40px" />
                                 </div>
                                 <div>
                                     <div className="text-sm font-medium">
-                                        {mo.official.display_name || mo.official.username}
+                                        {mo.player.display_name || mo.player.username}
                                     </div>
-                                    {mo.official.display_name && mo.official.username && (
+                                    {mo.player.display_name && mo.player.username && (
                                         <div className="text-xs text-muted-foreground">
-                                            @{mo.official.username}
+                                            @{mo.player.username}
                                         </div>
                                     )}
                                 </div>
@@ -97,8 +97,8 @@ export default function MatchOfficialSection({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleRemove(mo.official.id)}
-                                disabled={removing === mo.official.id}
+                                onClick={() => handleRemove(mo.player.id)}
+                                disabled={removing === mo.player.id}
                                 className="rounded-sm"
                             >
                                 <X className="h-4 w-4" />
