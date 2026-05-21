@@ -61,10 +61,10 @@ export async function addExistingPlayerToTeam(
             return countResult;
         }
 
-        if (countResult.value >= 16) {
+        if (countResult.value >= 18) {
             logger.warn({ teamId: p.teamId, seasonId, currentCount: countResult.value }, "Team is at maximum capacity");
             return Err({
-                message: "Team already has 16 players (maximum capacity)",
+                message: "Team already has 18 players (maximum capacity)",
                 code: "CONFLICT"
             });
         }

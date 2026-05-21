@@ -50,10 +50,10 @@ describe('addExistingPlayerToTeam', () => {
         if (!result.ok) expect(result.error.code).toBe('NOT_FOUND')
     })
 
-    it('returns CONFLICT when team is at max capacity (16)', async () => {
+    it('returns CONFLICT when team is at max capacity (18)', async () => {
         vi.mocked(findTeamById).mockResolvedValue(Ok(fakeTeam))
         vi.mocked(findPlayerById).mockResolvedValue(Ok(fakePlayer))
-        vi.mocked(countActivePlayersInTeam).mockResolvedValue(Ok(16))
+        vi.mocked(countActivePlayersInTeam).mockResolvedValue(Ok(18))
         vi.mocked(findPlayerCurrentTeam).mockResolvedValue(Ok(null))
 
         const result = await addExistingPlayerToTeam(mockSupabase, input)
