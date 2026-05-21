@@ -1,6 +1,6 @@
 import {DBClient} from "@/shared/types/db";
 import {SyncError} from "@/server/domains/sheets/types";
-import {findOfficialByExactUsername, upsertOfficial} from "@/server/db/official.repo";
+import {findPlayerByExactUsername, upsertPlayer} from "@/server/db/players.repo";
 import {assignMultipleOfficials, removeAllOfficialsByType} from "@/server/db/matchOfficial.repo";
 import {getRobloxUserByName, getRobloxAvatarsById} from "@/server/roblox/users";
 
@@ -11,7 +11,7 @@ async function resolveOfficialId(
     matchCode: string,
     errors: SyncError[]
 ): Promise<string | null> {
-    const existing = await findOfficialByExactUsername(supabase, username);
+    const existing = await findPlayerByExactUsername(supabase, username);
     if (!existing.ok) {
         errors.push({row: rowNumber, message: `[${matchCode}] Official "${username}": DB error — ${existing.error.message}`});
         return null;
@@ -29,7 +29,7 @@ async function resolveOfficialId(
     const avatarResult = await getRobloxAvatarsById([String(robloxUser.id)]);
     const avatarUrl = avatarResult.ok ? (avatarResult.value[0]?.imageUrl ?? null) : null;
 
-    const upsertResult = await upsertOfficial(supabase, {
+    const upsertResult = await upsertPlayer(supabase, {
         robloxUserId: String(robloxUser.id),
         username: robloxUser.name,
         displayName: robloxUser.displayName ?? null,

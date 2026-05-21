@@ -23,7 +23,6 @@ export {
 export { useStandings } from './useStandings';
 export { usePlayoffBrackets, generateBracket, resetBrackets } from './usePlayoffs';
 export {
-    useOfficials,
     useMatchOfficials,
     searchOfficials,
     saveOfficial,
