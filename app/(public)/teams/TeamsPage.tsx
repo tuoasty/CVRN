@@ -9,6 +9,7 @@ import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddlew
 import PublicTeamCard from "@/app/(public)/teams/PublicTeamCard";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Users } from "lucide-react";
+import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 
 export default function TeamsPage() {
     const { selectedSeasonId } = usePublicContextStore();
@@ -20,30 +21,19 @@ export default function TeamsPage() {
     const selectedRegion = regions.find(r => r.id === selectedSeason?.region_id);
     const teams = allTeams.filter(t => t.season_id === selectedSeasonId && !t.deleted_at);
 
+    const subtitle =
+        seasons.length === 0
+            ? undefined
+            : selectedSeason
+            ? `${selectedSeason.name}${selectedRegion ? ` · ${selectedRegion.name}` : ""}${teams.length > 0 ? ` · ${teams.length} teams` : ""}`
+            : "";
+
     return (
         <>
             <SeasonSelectionMiddleware />
 
             <div className="page-wide space-y-6 py-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
-                            <Users className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                                Teams
-                            </h1>
-                            {selectedSeason && (
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                    {selectedSeason.name}
-                                    {selectedRegion && ` · ${selectedRegion.name}`}
-                                    {teams.length > 0 && ` · ${teams.length} teams`}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <PublicPageHeader icon={Users} title="Teams" subtitle={subtitle} />
 
                 {!selectedSeasonId ? (
                     <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">

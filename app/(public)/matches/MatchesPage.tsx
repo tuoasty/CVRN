@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/ta
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { CalendarDays, Trophy } from "lucide-react";
+import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
 import { MatchWithDetails } from "@/server/domains/match";
@@ -105,29 +106,19 @@ export default function MatchesPage() {
 
     const completedCount = schedule.filter(m => m.match.status === "completed").length;
 
+    const subtitle =
+        seasons.length === 0
+            ? undefined
+            : selectedSeason
+            ? `${selectedSeason.name}${selectedRegion ? ` · ${selectedRegion.name}` : ""}`
+            : "";
+
     return (
         <>
             <SeasonSelectionMiddleware />
 
-            <div className="page-narrow space-y-6 py-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
-                            <CalendarDays className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                                Matches
-                            </h1>
-                            {selectedSeason && (
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                    {selectedSeason.name}
-                                    {selectedRegion && ` · ${selectedRegion.name}`}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                </div>
+            <div className="page-wide space-y-6 py-6">
+                <PublicPageHeader icon={CalendarDays} title="Matches" subtitle={subtitle} />
 
                 {selectedSeasonId ? (
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "season" | "playoffs")}>
