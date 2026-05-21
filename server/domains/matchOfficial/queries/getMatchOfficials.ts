@@ -1,9 +1,9 @@
-import {DBClient, Official} from "@/shared/types/db";
+import {DBClient, Player} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findMatchOfficials} from "@/server/db/matchOfficial.repo";
-import {batchSyncOfficials} from "@/server/domains/official/helpers/batchSyncOfficials";
+import {batchSyncPlayers} from "@/server/domains/player/helpers/batchSyncPlayers";
 import {runInBackground} from "@/server/utils/runInBackground";
 import {MatchOfficialWithDetails, MatchIdInput} from "../types";
 
@@ -18,11 +18,11 @@ export async function getMatchOfficials(
             return result;
         }
 
-        const officials = result.value
+        const players = result.value
             .map(mo => mo.official)
-            .filter((o): o is Official => o !== null);
+            .filter((o): o is Player => o !== null);
 
-        runInBackground(() => batchSyncOfficials(supabase, officials), "batchSyncOfficials");
+        runInBackground(() => batchSyncPlayers(supabase, players), "batchSyncPlayers");
 
         return Ok(result.value as unknown as MatchOfficialWithDetails[]);
     } catch (error) {
