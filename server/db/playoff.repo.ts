@@ -1,4 +1,4 @@
-import {DBClient, Match, MatchSet, Official, PlayoffBracket, PlayoffConfig, Season, Standing} from "@/shared/types/db";
+import {DBClient, Match, MatchSet, Player, PlayoffBracket, PlayoffConfig, Season, Standing} from "@/shared/types/db";
 import {InsertPlayoffBracketDto, InsertPlayoffMatchDto} from "@/server/domains/playoff";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
@@ -7,7 +7,7 @@ type PlayoffBracketRoundRow = Pick<PlayoffBracket, "round">;
 
 type PlayoffMatchOfficialJoin = {
     official_type: string;
-    officials: Pick<Official, "id" | "username" | "display_name" | "avatar_url"> | null;
+    officials: Pick<Player, "id" | "username" | "display_name" | "avatar_url"> | null;
 };
 
 type PlayoffMatchSetJoin = Pick<MatchSet, "set_number" | "home_score" | "away_score">;
@@ -250,7 +250,7 @@ export async function findMatchesWithDetailsBySeasonAndRound(
                 ),
                 match_officials (
                     official_type,
-                    officials (
+                    officials:players (
                         id,
                         username,
                         display_name,
