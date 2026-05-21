@@ -27,7 +27,7 @@ export default function CVRNInfo() {
                         View League
                     </Link>
                     <a
-                        href="https://www.roblox.com/games/114786545831333/CVR"
+                        href="https://www.roblox.com/games/79010415692181/CVR-Retro"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 h-9 px-5 rounded-sm border border-border text-xs font-semibold uppercase tracking-wider hover:bg-muted/50 transition-colors"
