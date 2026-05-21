@@ -1,7 +1,7 @@
 import {ParsedRosterEntry, ParsedTeamResult, PlayerRole} from "@/server/domains/sheets/types";
 
 const TEAMS_PER_ROW = 5;
-const PLAYER_ROWS = 16;
+const PLAYER_ROWS = 18;
 
 const ROLE_MAP: Record<string, PlayerRole> = {
     C: 'captain',
