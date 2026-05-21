@@ -1,15 +1,15 @@
-import {DBClient, MatchOfficial, Official} from "@/shared/types/db";
+import {DBClient, MatchOfficial, Player} from "@/shared/types/db";
 import {AssignOfficialInput, OfficialType} from "@/server/domains/matchOfficial";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 
-type MatchOfficialWithOfficial = MatchOfficial & {official: Official | null};
+type MatchOfficialWithPlayer = MatchOfficial & {player: Player | null};
 
 export async function assignOfficial(supabase: DBClient, p: AssignOfficialInput): Promise<Result<MatchOfficial>> {
     const {data, error} = await supabase.from("match_officials")
         .insert({
             match_id: p.matchId,
-            official_id: p.officialId,
+            player_id: p.officialId,
             official_type: p.officialType,
         })
         .select()
@@ -24,9 +24,9 @@ export async function assignMultipleOfficials(
     officialIds: string[],
     officialType: OfficialType
 ): Promise<Result<MatchOfficial[]>> {
-    const inserts = officialIds.map(official_id => ({
+    const inserts = officialIds.map(player_id => ({
         match_id: matchId,
-        official_id,
+        player_id,
         official_type: officialType,
     }));
 
@@ -37,37 +37,37 @@ export async function assignMultipleOfficials(
     return Ok(data ?? []);
 }
 
-export async function findMatchOfficials(supabase: DBClient, matchId: string): Promise<Result<MatchOfficialWithOfficial[]>> {
+export async function findMatchOfficials(supabase: DBClient, matchId: string): Promise<Result<MatchOfficialWithPlayer[]>> {
     const {data, error} = await supabase.from("match_officials")
         .select(`
             *,
-            official:officials(*)
+            player:players(*)
         `)
         .eq("match_id", matchId);
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok((data ?? []) as unknown as MatchOfficialWithOfficial[]);
+    return Ok((data ?? []) as unknown as MatchOfficialWithPlayer[]);
 }
 
 export async function findMatchOfficialsByType(
     supabase: DBClient,
     matchId: string,
     officialType: OfficialType
-): Promise<Result<MatchOfficialWithOfficial[]>> {
+): Promise<Result<MatchOfficialWithPlayer[]>> {
     const {data, error} = await supabase.from("match_officials")
         .select(`
             *,
-            official:officials(*)
+            player:players(*)
         `)
         .eq("match_id", matchId)
         .eq("official_type", officialType);
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok((data ?? []) as unknown as MatchOfficialWithOfficial[]);
+    return Ok((data ?? []) as unknown as MatchOfficialWithPlayer[]);
 }
 
-export async function findOfficialMatches(supabase: DBClient, officialId: string): Promise<Result<MatchOfficial[]>> {
+export async function findOfficialMatches(supabase: DBClient, playerId: string): Promise<Result<MatchOfficial[]>> {
     const {data, error} = await supabase.from("match_officials")
         .select("*")
-        .eq("official_id", officialId)
+        .eq("player_id", playerId)
         .order("created_at", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
@@ -82,7 +82,7 @@ export async function removeOfficial(
     const {error} = await supabase.from("match_officials")
         .delete()
         .eq("match_id", matchId)
-        .eq("official_id", officialId)
+        .eq("player_id", officialId)
         .eq("official_type", officialType);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);

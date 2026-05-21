@@ -76,7 +76,7 @@ export type MatchResultOutput = {
 
 export type RawMatchOfficial = {
     official_type: string;
-    officials: {
+    players: {
         id: string;
         username: string | null;
         display_name: string | null;
