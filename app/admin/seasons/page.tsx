@@ -3,6 +3,8 @@
 import React, {useState} from "react";
 import Link from "next/link";
 import {CalendarDays, Plus} from "lucide-react";
+import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
+import { Skeleton } from "@/app/components/ui/skeleton";
 import {Button} from "@/app/components/ui/button";
 import {Badge} from "@/app/components/ui/badge";
 import {
@@ -75,29 +77,19 @@ export default function AdminSeasonsPage() {
     return (
         <div className="admin-container">
             <div className="admin-section">
-                <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
-                    <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
-                        <CalendarDays className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                        <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                            Season Management
-                        </h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Create and manage league seasons by region
-                        </p>
-                    </div>
-                    <Button onClick={handleCreate} className="rounded-sm gap-2">
-                        <Plus className="h-4 w-4" />
-                        New Season
-                    </Button>
-                </div>
+                <AdminPageHeader
+                    icon={CalendarDays}
+                    title="Season Management"
+                    description="Create and manage league seasons by region"
+                    actions={
+                        <Button onClick={handleCreate} className="rounded-sm gap-2">
+                            <Plus className="h-4 w-4" />
+                            New Season
+                        </Button>
+                    }
+                />
 
-                {isLoading && (
-                    <div className="panel p-6">
-                        <p className="text-muted-foreground">Loading seasons...</p>
-                    </div>
-                )}
+                {isLoading && <Skeleton className="h-64 w-full rounded-sm" />}
 
                 {error && (
                     <div className="panel p-6">

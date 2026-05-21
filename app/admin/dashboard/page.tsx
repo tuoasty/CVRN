@@ -7,6 +7,7 @@ import { useSeasons } from "@/app/hooks/useSeasons";
 import { useTeams } from "@/app/hooks/useTeams";
 import { ArrowRight, Users, Calendar, LayoutDashboard } from "lucide-react";
 import { useRegions } from "@/app/hooks/useRegions";
+import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
 
 export default function AdminDashboard() {
     const { seasons } = useSeasons();
@@ -16,19 +17,11 @@ export default function AdminDashboard() {
     return (
         <div className="admin-container">
             <div className="admin-section">
-                <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
-                    <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
-                        <LayoutDashboard className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                        <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                            Admin Dashboard
-                        </h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Manage teams, matches, and league operations
-                        </p>
-                    </div>
-                </div>
+                <AdminPageHeader
+                    icon={LayoutDashboard}
+                    title="Admin Dashboard"
+                    description="Manage teams, matches, and league operations"
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <Card className="rounded-sm border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">

@@ -9,6 +9,7 @@ import { useRegions } from "@/app/hooks/useRegions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { PlayoffRound } from "@/server/domains/playoff";
 import { Calendar } from "lucide-react";
+import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
 
 export default function MatchManagementPage() {
@@ -34,19 +35,11 @@ export default function MatchManagementPage() {
     return (
         <div className="admin-container">
             <div className="admin-section">
-                <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
-                    <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
-                        <Calendar className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                        <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                            Match Management
-                        </h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Schedule and manage matches by season and week
-                        </p>
-                    </div>
-                </div>
+                <AdminPageHeader
+                    icon={Calendar}
+                    title="Match Management"
+                    description="Schedule and manage matches by season and week"
+                />
 
                 <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
                     <SeasonWeekPicker

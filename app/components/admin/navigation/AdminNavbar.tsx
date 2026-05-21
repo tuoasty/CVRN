@@ -30,7 +30,7 @@ export default function AdminNavbar() {
 
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-card">
-            <div className="page-narrow">
+            <div className="page-wide">
                 {/* Desktop: Single Row */}
                 <div className="hidden lg:flex items-center justify-between py-3">
                     <div className="flex items-center gap-8">
@@ -43,14 +43,12 @@ export default function AdminNavbar() {
                         <AdminNavItems />
                     </div>
 
-                    <div className="flex-1 flex justify-center px-8">
-                        <AdminRegionSeasonSelector />
-                    </div>
-
                     <div className="flex items-center gap-3">
-                        <LogoutButton />
+                        <AdminRegionSeasonSelector />
                         <div className="h-6 w-px bg-border" />
                         <ModeToggle />
+                        <div className="h-6 w-px bg-border" />
+                        <LogoutButton />
                         <div className="h-6 w-px bg-border" />
                         <Button
                             variant="ghost"
@@ -99,13 +97,18 @@ export default function AdminNavbar() {
                                     <div className="h-px bg-border" />
                                     <AdminRegionSeasonSelector />
                                     <div className="h-px bg-border" />
-                                    <button
-                                        onClick={() => { setOpen(false); startTransition(() => router.push("/home")); }}
-                                        className="flex items-center gap-2 px-3 py-2 rounded-sm text-sm hover:bg-accent w-full text-left"
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full justify-start rounded-sm"
+                                        onClick={() => {
+                                            setOpen(false);
+                                            startTransition(() => router.push("/home"));
+                                        }}
                                     >
-                                        <Users className="h-4 w-4" />
-                                        <span>Public Site</span>
-                                    </button>
+                                        <Users className="h-4 w-4 mr-2" />
+                                        Public Site
+                                    </Button>
                                     <div className="h-px bg-border" />
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-muted-foreground">

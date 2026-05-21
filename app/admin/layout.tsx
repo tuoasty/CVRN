@@ -7,7 +7,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="min-h-screen flex flex-col bg-background">
             <Suspense fallback={
                 <header className="border-b border-border bg-card">
-                    <div className="page-narrow h-14" />
+                    <div className="page-wide h-14" />
                 </header>
             }>
                 <AdminNavbar />

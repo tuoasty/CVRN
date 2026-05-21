@@ -16,7 +16,7 @@ export function ModeToggle() {
     const { setTheme } = useTheme()
 
     return (
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="rounded-sm">
                     <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
