@@ -1,10 +1,9 @@
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
-import { Official } from '@/shared/types/db';
+import { Player } from '@/shared/types/db';
 import { RobloxUserWithAvatar } from '@/shared/types/roblox';
 import {
     searchOfficialsByNameAction,
     saveOfficialAction,
-    getAllOfficialsAction,
     getMatchOfficialsAction,
     assignOfficialToMatchAction,
     removeOfficialFromMatchAction,
@@ -17,12 +16,6 @@ import { OfficialType } from '@/server/domains/matchOfficial';
 
 const OFFICIALS_TTL = 30 * 60 * 1000;
 
-async function fetchAllOfficials(): Promise<Official[]> {
-    const result = await getAllOfficialsAction();
-    if (!result.ok) throw new Error(result.error.message);
-    return result.value;
-}
-
 async function fetchMatchOfficials([, matchId]: [string, string]): Promise<MatchOfficialWithDetails[]> {
     const result = await getMatchOfficialsAction(matchId);
     if (!result.ok) throw new Error(result.error.message);
@@ -30,16 +23,6 @@ async function fetchMatchOfficials([, matchId]: [string, string]): Promise<Match
 }
 
 // --- Hooks ---
-
-export function useOfficials() {
-    const { data, error, isLoading, mutate } = useSWR('officials', fetchAllOfficials, {
-        dedupingInterval: OFFICIALS_TTL,
-        revalidateOnFocus: false,
-    });
-    const officials = data ?? [];
-
-    return { officials, isLoading, error: error?.message ?? null, mutate };
-}
 
 export function useMatchOfficials(matchId: string | null) {
     const key = matchId ? ['matchOfficials', matchId] as const : null;
@@ -70,7 +53,7 @@ export async function saveOfficial(
     username: string,
     avatarUrl: string,
     displayName: string,
-): Promise<Official | null> {
+): Promise<Player | null> {
     const result = await saveOfficialAction({
         robloxUserId,
         username,
@@ -78,7 +61,6 @@ export async function saveOfficial(
         displayName: displayName ?? null,
     });
     if (!result.ok) throw new Error(result.error.message);
-    await globalMutate('officials');
     return result.value;
 }
 

@@ -4,6 +4,7 @@ export {getPlayersByIds} from "./queries/getPlayersByIds";
 export {searchPlayersInDatabase} from "./queries/searchPlayersInDatabase";
 export {getPlayerByExactUsername} from "./queries/getPlayerByExactUsername";
 export {savePlayerToTeam} from "./commands/savePlayerToTeam";
+export {savePlayer} from "./commands/savePlayer";
 export {removePlayerFromTeamService} from "./commands/removePlayerFromTeam";
 export {addExistingPlayerToTeam} from "./commands/addExistingPlayerToTeam";
 export {setPlayerRoleService} from "./commands/setPlayerRole";
