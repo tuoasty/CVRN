@@ -12,9 +12,9 @@ import { getLogoClassName } from "@/app/lib/logoClass";
 import { PlayerWithRole } from "@/server/domains/player";
 
 const LEADERSHIP_CONFIG = {
-    captain:       { label: "Captain",       from: "#9e6bff", to: "#9fc1ff" },
-    vice_captain:  { label: "Vice Captain",  from: "#aea287", to: "#f1f7ff" },
-    court_captain: { label: "Court Captain", from: "#907575", to: "#ffcec6" },
+    captain:       { label: "Captain",       from: "#9e6bff", to: "#9fc1ff", textColor: "#ffffff" },
+    vice_captain:  { label: "Vice Captain",  from: "#aea287", to: "#f1f7ff", textColor: "#2d2416" },
+    court_captain: { label: "Court Captain", from: "#907575", to: "#ffcec6", textColor: "#ffffff" },
 };
 
 const TEXT_SHADOW = "0 1px 4px rgba(0,0,0,0.95)";
@@ -41,8 +41,15 @@ function PublicLeadershipCard({
                             sizes="(max-width: 640px) 34vw, 160px"
                         />
                         <div
-                            className="absolute top-1 left-1 bg-black/70 text-[7px] uppercase tracking-widest font-bold px-1 py-0.5 rounded-sm leading-none"
-                            style={{ color: config.from }}
+                            className="absolute top-1 left-1 text-[7px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded-sm leading-none"
+                            style={{
+                                background: `linear-gradient(to right, ${config.from}, ${config.to})`,
+                                color: config.textColor,
+                                boxShadow: "0 0 0 1px rgba(0,0,0,0.25), 0 1px 3px rgba(0,0,0,0.35)",
+                                textShadow: config.textColor === "#ffffff"
+                                    ? "-1px -1px 0 rgba(0,0,0,0.5), 1px -1px 0 rgba(0,0,0,0.5), -1px 1px 0 rgba(0,0,0,0.5), 1px 1px 0 rgba(0,0,0,0.5)"
+                                    : "0 1px 0 rgba(255,255,255,0.4)",
+                            }}
                         >
                             {config.label}
                         </div>
@@ -61,8 +68,15 @@ function PublicLeadershipCard({
                             <span className="text-2xl text-muted-foreground/20">?</span>
                         </div>
                         <div
-                            className="absolute top-1 left-1 bg-black/70 text-[7px] uppercase tracking-widest font-bold px-1 py-0.5 rounded-sm leading-none"
-                            style={{ color: config.from }}
+                            className="absolute top-1 left-1 text-[7px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded-sm leading-none"
+                            style={{
+                                background: `linear-gradient(to right, ${config.from}, ${config.to})`,
+                                color: config.textColor,
+                                boxShadow: "0 0 0 1px rgba(0,0,0,0.25), 0 1px 3px rgba(0,0,0,0.35)",
+                                textShadow: config.textColor === "#ffffff"
+                                    ? "-1px -1px 0 rgba(0,0,0,0.5), 1px -1px 0 rgba(0,0,0,0.5), -1px 1px 0 rgba(0,0,0,0.5), 1px 1px 0 rgba(0,0,0,0.5)"
+                                    : "0 1px 0 rgba(255,255,255,0.4)",
+                            }}
                         >
                             {config.label}
                         </div>
