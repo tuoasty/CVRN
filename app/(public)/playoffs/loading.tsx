@@ -11,9 +11,9 @@ export default function PlayoffsLoading() {
                 </div>
             </div>
             <div className="flex gap-6 justify-center overflow-x-auto py-4">
-                {[1, 2, 3].map((col) => (
+                {[4, 2, 1].map((count, col) => (
                     <div key={col} className="flex flex-col gap-8 shrink-0">
-                        {[...Array(4 / col)].map((_, i) => (
+                        {[...Array(count)].map((_, i) => (
                             <Skeleton key={i} className="h-24 w-48 rounded-sm" />
                         ))}
                     </div>
