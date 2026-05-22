@@ -243,7 +243,7 @@ export default function PublicTeamDetailPage({
         (p) => p.role !== "captain" && p.role !== "vice_captain" && p.role !== "court_captain"
     );
 
-    const formerNames = [...history].reverse().map(h => h.oldName);
+    const mostRecentFormerName = history.find(h => h.oldName !== teamData.name)?.oldName ?? null;
     const openSlots = Math.max(0, 15 - otherPlayers.length);
 
     return (
@@ -277,8 +277,8 @@ export default function PublicTeamDetailPage({
                     )}
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight">{teamData.name}</h1>
-                        <p className={cn("text-xs text-muted-foreground mt-1 truncate", formerNames.length === 0 && "invisible")}>
-                            Formerly: {formerNames.join(", ")}
+                        <p className={cn("text-xs text-muted-foreground mt-1 truncate", !mostRecentFormerName && "invisible")}>
+                            Formerly: {mostRecentFormerName}
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
                             <span className="font-mono font-semibold">{regionCodeDisplay}</span>
