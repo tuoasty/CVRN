@@ -27,6 +27,7 @@ const saveToLocalStorage = (seasonId: string) => {
     if (typeof window === "undefined") return;
     try {
         localStorage.setItem(STORAGE_KEY, seasonId);
+        document.cookie = `${STORAGE_KEY}=${seasonId}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
     } catch {
 
     }

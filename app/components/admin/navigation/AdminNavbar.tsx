@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Users } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
@@ -22,7 +22,6 @@ export default function AdminNavbar() {
     const pathname = usePathname();
     const router = useRouter();
     const [open, setOpen] = useState(false);
-    const [, startTransition] = useTransition();
 
     useEffect(() => {
         setOpen(false);
@@ -54,7 +53,7 @@ export default function AdminNavbar() {
                             variant="ghost"
                             size="sm"
                             className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm"
-                            onClick={() => startTransition(() => router.push("/home"))}
+                            onClick={() => router.push("/home")}
                         >
                             <Users className="h-4 w-4" />
                         </Button>
@@ -103,7 +102,7 @@ export default function AdminNavbar() {
                                         className="w-full justify-start rounded-sm"
                                         onClick={() => {
                                             setOpen(false);
-                                            startTransition(() => router.push("/home"));
+                                            router.push("/home");
                                         }}
                                     >
                                         <Users className="h-4 w-4 mr-2" />

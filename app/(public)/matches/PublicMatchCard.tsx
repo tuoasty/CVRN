@@ -199,7 +199,7 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                             <div className="flex items-center gap-2 flex-1">
                                 {matchMvp.avatar_url && (
                                     <div className="relative w-7 h-7 rounded-full overflow-hidden border border-primary/30 shrink-0">
-                                        <Image src={matchMvp.avatar_url} alt={matchMvp.username || "Player"} fill sizes="28px" className="object-cover" />
+                                        <Image src={matchMvp.avatar_url} alt={matchMvp.username || "Player"} fill sizes="28px" className="object-cover" unoptimized />
                                     </div>
                                 )}
                                 <div className="flex flex-col min-w-0">
@@ -216,7 +216,7 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                                 </div>
                                 {loserMvp.avatar_url && (
                                     <div className="relative w-7 h-7 rounded-full overflow-hidden border border-border shrink-0">
-                                        <Image src={loserMvp.avatar_url} alt={loserMvp.username || "Player"} fill sizes="28px" className="object-cover" />
+                                        <Image src={loserMvp.avatar_url} alt={loserMvp.username || "Player"} fill sizes="28px" className="object-cover" unoptimized />
                                     </div>
                                 )}
                             </div>

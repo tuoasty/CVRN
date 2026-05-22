@@ -61,7 +61,8 @@ export default function RobloxPlayerSearch(){
                                 <Image src={user.avatarUrl}
                                        alt={"Roblox Avatar"}
                                        width={150}
-                                       height={150}/>
+                                       height={150}
+                                       unoptimized />
                             )}
                             <hr />
                         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
@@ -13,9 +14,12 @@ import {
 import { Calendar } from "lucide-react";
 
 export default function SeasonSelectionMiddleware() {
+    const [mounted, setMounted] = useState(false);
     const { selectedSeasonId, setSelectedSeasonId, setSelectedRegionId } = usePublicContextStore();
     const { seasons } = useSeasons();
     const { regions } = useRegions();
+
+    useEffect(() => { setMounted(true); }, []);
 
     const handleSeasonChange = (seasonId: string) => {
         const season = seasons.find((s) => s.id === seasonId);
@@ -32,7 +36,7 @@ export default function SeasonSelectionMiddleware() {
         }))
         .filter((g) => g.seasons.length > 0);
 
-    if (selectedSeasonId) {
+    if (!mounted || selectedSeasonId) {
         return null;
     }
 

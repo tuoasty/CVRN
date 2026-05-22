@@ -109,6 +109,7 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                                         height={16}
                                         sizes="16px"
                                         className="rounded-full object-cover shrink-0"
+                                        unoptimized
                                     />
                                 ) : (
                                     <div

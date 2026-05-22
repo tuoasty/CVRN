@@ -48,6 +48,7 @@ function PostRow({ post, onVideoClick, onGfxClick }: { post: MediaPost; onVideoC
                         fill
                         sizes="(max-width: 640px) 192px, 256px"
                         className="object-cover"
+                        unoptimized
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -122,7 +123,7 @@ export default function MediaFeedPage() {
     const filtered = filter === 'all' ? posts : posts.filter(p => p.type === 'video')
 
     return (
-        <main className="page-narrow py-8 space-y-6">
+        <main className="page-wide py-8 space-y-6">
             <div className="flex items-center gap-4 pb-4 border-b border-border">
                 <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
                     <ImageIcon className="h-5 w-5 text-primary" />

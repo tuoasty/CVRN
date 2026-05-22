@@ -49,9 +49,15 @@ export default function TeamsPage() {
                         {[...Array(6)].map((_, i) => (
                             <div key={i} className="rounded-sm border border-border bg-card overflow-hidden">
                                 <Skeleton className="h-36 w-full rounded-none" />
-                                <div className="flex items-center gap-2 px-3 py-2.5 border-t border-border">
-                                    <Skeleton className="h-4 flex-1 rounded-sm" />
-                                    <Skeleton className="h-4 w-8 rounded-sm shrink-0" />
+                                <div className="border-t border-border">
+                                    <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
+                                        <Skeleton className="h-4 flex-1 rounded-sm" />
+                                        <Skeleton className="h-4 w-8 rounded-sm shrink-0" />
+                                    </div>
+                                    <div className="flex items-center gap-1.5 px-3 pb-2.5">
+                                        <Skeleton className="h-4 w-4 rounded-full shrink-0" />
+                                        <Skeleton className="h-3 w-20 rounded-sm" />
+                                    </div>
                                 </div>
                             </div>
                         ))}

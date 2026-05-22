@@ -134,25 +134,25 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                         <TableBody>
                             {[...Array(8)].map((_, i) => (
                                 <TableRow key={i}>
-                                    <TableCell className="text-center">
-                                        <Skeleton className="h-10 w-10 rounded-sm mx-auto" />
+                                    <TableCell className="text-center py-4">
+                                        <Skeleton className="h-6 w-8 rounded-sm mx-auto" />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="py-4">
                                         <div className="flex items-center gap-3">
-                                            <Skeleton className="h-10 w-10 rounded" />
+                                            <Skeleton className="h-10 w-10 rounded shrink-0" />
                                             <Skeleton className="h-5 w-32 rounded-sm" />
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className="text-center py-4">
                                         <Skeleton className="h-5 w-12 rounded-sm mx-auto" />
                                     </TableCell>
-                                    <TableCell className="hidden sm:table-cell text-center">
+                                    <TableCell className="hidden sm:table-cell text-center py-4">
                                         <Skeleton className="h-5 w-14 rounded-sm mx-auto" />
                                     </TableCell>
-                                    <TableCell className="hidden sm:table-cell text-center">
+                                    <TableCell className="hidden sm:table-cell text-center py-4">
                                         <Skeleton className="h-5 w-12 rounded-sm mx-auto" />
                                     </TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className="text-center py-4">
                                         <Skeleton className="h-5 w-16 rounded-sm mx-auto" />
                                     </TableCell>
                                 </TableRow>

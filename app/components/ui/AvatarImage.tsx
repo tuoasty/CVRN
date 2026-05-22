@@ -30,6 +30,7 @@ export default function AvatarImage({ src, alt, sizes, priority }: Props) {
             sizes={sizes}
             className="object-cover"
             priority={priority}
+            unoptimized
             onError={() => setErrored(true)}
         />
     );

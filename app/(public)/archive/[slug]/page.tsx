@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import {notFound} from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -5,10 +6,11 @@ import {Trophy, Medal, Award, ChevronLeft, Users} from "lucide-react";
 import {getSeasonDetailAction} from "@/app/actions/season.actions";
 import {getAllRegionsAction} from "@/app/actions/region.actions";
 import {SeasonDetail} from "@/server/domains/season";
+import {Skeleton} from "@/app/components/ui/skeleton";
 
 // ─── Podium ──────────────────────────────────────────────────────────────────
 
-function TeamLogoSmall({name, logoUrl, size = 28}: {name: string; logoUrl: string | null; size?: number}) {
+function TeamLogoSmall({name, logoUrl, size = 28, priority = false}: {name: string; logoUrl: string | null; size?: number; priority?: boolean}) {
     if (logoUrl) {
         return (
             <Image
@@ -18,6 +20,7 @@ function TeamLogoSmall({name, logoUrl, size = 28}: {name: string; logoUrl: strin
                 height={size}
                 style={{ width: size, height: size }}
                 className="rounded-sm object-contain mix-blend-multiply dark:mix-blend-screen"
+                priority={priority}
             />
         );
     }
@@ -31,14 +34,14 @@ function TeamLogoSmall({name, logoUrl, size = 28}: {name: string; logoUrl: strin
     );
 }
 
-function ChampionCard({entry}: {entry: SeasonDetail["season_podium"][number]}) {
+function ChampionCard({entry, priority = false}: {entry: SeasonDetail["season_podium"][number]; priority?: boolean}) {
     return (
         <div className="panel p-6 flex flex-col items-center gap-3 bg-yellow-500/5 border border-yellow-500/20">
             <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                 <Trophy className="h-4 w-4" />
                 <span className="text-[20px] uppercase tracking-[0.2em] font-semibold">Champion</span>
             </div>
-            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={144} />
+            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={144} priority={priority} />
             <p className="text-xl font-bold text-center">{entry.teams.name}</p>
         </div>
     );
@@ -79,7 +82,7 @@ function PodiumSection({entries}: {entries: SeasonDetail["season_podium"]}) {
                 <Trophy className="h-3 w-3" /> Podium
             </p>
             <div className="space-y-2">
-                {champion && <ChampionCard entry={champion} />}
+                {champion && <ChampionCard entry={champion} priority />}
                 {rest.length > 0 && (
                     <div className="grid grid-cols-2 gap-2">
                         {rest.map(e => <PlacementCard key={e.place} entry={e} />)}
@@ -598,9 +601,28 @@ function ChampionRosterSection({awards}: {awards: SeasonDetail["season_awards"]}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function SeasonDetailPage({params}: {params: Promise<{slug: string}>}) {
-    const {slug} = await params;
+function SeasonDetailSkeleton() {
+    return (
+        <div className="space-y-6">
+            <div className="space-y-1.5">
+                <Skeleton className="h-8 w-56" />
+                <Skeleton className="h-3.5 w-36" />
+            </div>
+            <div className="space-y-2">
+                <Skeleton className="h-3 w-14" />
+                <Skeleton className="h-52 w-full rounded-sm" />
+                <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-36 rounded-sm" />
+                    <Skeleton className="h-36 rounded-sm" />
+                </div>
+            </div>
+            <Skeleton className="h-64 w-full rounded-sm" />
+            <Skeleton className="h-48 w-full rounded-sm" />
+        </div>
+    );
+}
 
+async function SeasonDetailContent({slug}: {slug: string}) {
     const [seasonResult, regionsResult] = await Promise.all([
         getSeasonDetailAction(slug),
         getAllRegionsAction(),
@@ -615,9 +637,7 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
     const regions = regionsResult.ok ? regionsResult.value : [];
 
     const championRoster = season.season_awards.filter(a => a.category === "champion_roster");
-
     const regionName = regions.find(r => r.id === season.region_id)?.name ?? "Unknown";
-
     const fmt = (d: string | null) =>
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 
@@ -628,15 +648,7 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
     const hasContent = hasPodium || championRoster.length > 0 || individualAwards.length > 0 || firstTeamAwards.length > 0;
 
     return (
-        <div className="page-narrow space-y-6 py-6">
-            <Link
-                href="/archive"
-                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                League History
-            </Link>
-
+        <>
             <div>
                 <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                     {season.name}
@@ -676,6 +688,26 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
                     <p className="text-muted-foreground text-sm">Results not yet recorded.</p>
                 </div>
             )}
+        </>
+    );
+}
+
+export default async function SeasonDetailPage({params}: {params: Promise<{slug: string}>}) {
+    const {slug} = await params;
+
+    return (
+        <div className="page-narrow space-y-6 py-6">
+            <Link
+                href="/archive"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                League History
+            </Link>
+
+            <Suspense fallback={<SeasonDetailSkeleton />}>
+                <SeasonDetailContent slug={slug} />
+            </Suspense>
         </div>
     );
 }

@@ -4,7 +4,7 @@ import { User } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { usePathname, useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
-import {useEffect, useState, useTransition} from "react";
+import {useEffect, useState} from "react";
 
 export default function UserButton() {
     const router = useRouter();
@@ -12,7 +12,6 @@ export default function UserButton() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [, startTransition] = useTransition();
 
     useEffect(() => {
         const supabase = createBrowserClient(
@@ -64,22 +63,16 @@ export default function UserButton() {
 
     const handleClick = () => {
         if (!isAuthenticated) {
-            startTransition(() => {
-                router.push("/auth/login");
-            });
+            router.push("/auth/login");
             return;
         }
 
         const isOnAdminRoute = pathname.startsWith("/admin");
 
         if (isAdmin) {
-            startTransition(() => {
-                router.push(isOnAdminRoute ? "/home" : "/admin/dashboard");
-            });
+            router.push(isOnAdminRoute ? "/home" : "/admin/dashboard");
         } else {
-            startTransition(() => {
-                router.push("/home");
-            });
+            router.push("/home");
         }
     };
 
