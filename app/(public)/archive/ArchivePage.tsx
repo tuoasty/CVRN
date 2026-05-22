@@ -110,7 +110,7 @@ export default function ArchivePage() {
     const regionName = (id: string) => regions.find(r => r.id === id)?.name ?? "Unknown";
 
     return (
-        <div className="page-narrow space-y-6 py-6">
+        <div className="page-wide space-y-6 py-6">
             <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
                     <BookOpen className="h-5 w-5 text-primary" />
