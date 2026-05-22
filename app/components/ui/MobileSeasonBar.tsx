@@ -7,6 +7,7 @@ import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 export default function MobileSeasonBar() {
     const pathname = usePathname();
     if (pathname === "/home") return null;
+    if (pathname.startsWith("/teams/")) return null;
     return (
         <div className="lg:hidden border-b border-border bg-card">
             <div className="page-wide py-2">
