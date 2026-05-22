@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useTransition } from "react";
 import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
 const NAV_ITEMS = [
@@ -25,7 +24,6 @@ export default function PublicNavItems({
 }: PublicNavItemsProps) {
     const pathname = usePathname();
     const router = useRouter();
-    const [, startTransition] = useTransition();
 
     const navClasses =
         layout === "vertical"
@@ -48,9 +46,7 @@ export default function PublicNavItems({
                             size="sm"
                             className={buttonClasses}
                             onClick={() => {
-                                startTransition(() => {
-                                    router.push(item.href);
-                                });
+                                router.push(item.href);
                                 onNavigate?.();
                             }}
                         >
