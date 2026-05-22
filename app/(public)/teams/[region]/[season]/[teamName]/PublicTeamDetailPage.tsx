@@ -7,7 +7,9 @@ import { useTeamWithPlayers } from "@/app/hooks/useTeams";
 import { useTeamNameHistory } from "@/app/hooks/useTeamNameHistory";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { Button } from "@/app/components/ui/button";
+import { Skeleton } from "@/app/components/ui/skeleton";
 import { ChevronLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { getLogoClassName } from "@/app/lib/logoClass";
 import { PlayerWithRole } from "@/server/domains/player";
 
@@ -175,11 +177,54 @@ export default function PublicTeamDetailPage({
 
     if (loading && !teamData) {
         return (
-            <div className="page-wide py-6">
-                <div className="panel p-6">
-                    <div className="flex flex-col items-center justify-center gap-3 py-12">
-                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                        <p className="text-muted-foreground">Loading team...</p>
+            <div className="page-wide space-y-6 py-6">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-border">
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-28 rounded-sm" />
+                        <Skeleton className="h-8 w-52 rounded-sm" />
+                        <Skeleton className="h-4 w-40 rounded-sm mt-1" />
+                        <Skeleton className="h-3 w-32 rounded-sm mt-0.5" />
+                    </div>
+                </div>
+                {/* Team info */}
+                <div className="panel p-4 sm:p-6">
+                    <div className="flex items-start gap-4">
+                        <Skeleton className="w-16 h-16 sm:w-32 sm:h-32 shrink-0 rounded-sm" />
+                        <div className="flex-1 space-y-3">
+                            <div className="space-y-1.5">
+                                <Skeleton className="h-3 w-20 rounded-sm" />
+                                <Skeleton className="h-6 w-44 rounded-sm" />
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
+                                <div className="space-y-1.5">
+                                    <Skeleton className="h-3 w-12 rounded-sm" />
+                                    <Skeleton className="h-5 w-16 rounded-sm" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Skeleton className="h-3 w-12 rounded-sm" />
+                                    <Skeleton className="h-5 w-16 rounded-sm" />
+                                </div>
+                                <div className="col-span-2 sm:col-span-1 space-y-1.5">
+                                    <Skeleton className="h-3 w-12 rounded-sm" />
+                                    <Skeleton className="h-5 w-12 rounded-sm" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* Roster */}
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <Skeleton className="h-3 w-16 rounded-sm" />
+                        <Skeleton className="h-3 w-10 rounded-sm" />
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-9 gap-2 sm:gap-3">
+                        {[...Array(12)].map((_, i) => (
+                            <div key={i} className="col-span-3 sm:col-span-1 rounded-md overflow-hidden">
+                                <Skeleton className="aspect-square w-full" />
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -238,14 +283,12 @@ export default function PublicTeamDetailPage({
                         </Button>
                     </div>
                     <h1>{teamData.name}</h1>
-                    {formerNames.length > 0 && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Formerly: {formerNames.join(", ")}
-                        </p>
-                    )}
                     <p className="text-sm text-muted-foreground mt-1">
                         <span className="font-mono font-semibold">{regionCodeDisplay}</span>
                         {" - "}{regionName}{" / "}{seasonName}
+                    </p>
+                    <p className={cn("text-xs text-muted-foreground mt-0.5 truncate", formerNames.length === 0 && "invisible")}>
+                        Formerly: {formerNames.join(", ")}
                     </p>
                 </div>
             </div>

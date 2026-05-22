@@ -77,37 +77,12 @@ export default function StandingsPage() {
                 />
 
                 {selectedSeasonId && selectedRegionId ? (
-                    standingsLoading && standings.length === 0 ? (
-                        <div className="space-y-4">
-                            <div className="panel p-4 border-l-4 border-l-primary/30">
-                                <Skeleton className="h-8 w-64 rounded-sm" />
-                            </div>
-                            <div className="rounded-sm border border-border overflow-hidden">
-                                <div className="space-y-0">
-                                    {[...Array(8)].map((_, i) => (
-                                        <div key={i} className="flex items-center gap-4 px-4 py-4 border-b border-border">
-                                            <Skeleton className="h-10 w-10 rounded-sm shrink-0" />
-                                            <div className="flex items-center gap-3 flex-1">
-                                                <Skeleton className="h-10 w-10 rounded shrink-0" />
-                                                <Skeleton className="h-5 w-32 rounded-sm" />
-                                            </div>
-                                            <Skeleton className="h-5 w-12 rounded-sm" />
-                                            <Skeleton className="h-5 w-14 rounded-sm" />
-                                            <Skeleton className="h-5 w-12 rounded-sm" />
-                                            <Skeleton className="h-5 w-16 rounded-sm" />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <StandingsTable
-                            standings={standings}
-                            isLoading={standingsLoading}
-                            qualifiedTeams={selectedSeason?.playoff_configs?.qualified_teams}
-                            playinTeams={selectedSeason?.playoff_configs?.playin_teams}
-                        />
-                    )
+                    <StandingsTable
+                        standings={standings}
+                        isLoading={standingsLoading}
+                        qualifiedTeams={selectedSeason?.playoff_configs?.qualified_teams}
+                        playinTeams={selectedSeason?.playoff_configs?.playin_teams}
+                    />
                 ) : (
                     <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
                         <div className="text-center space-y-3">

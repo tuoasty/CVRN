@@ -4,7 +4,7 @@ export default function HeroSlideshow() {
     return (
         <div className="absolute inset-0 z-0">
             <Image
-                src="/hero-banner.png"
+                src="/hero-banner.avif"
                 alt="CVRN Hero Banner"
                 fill
                 priority

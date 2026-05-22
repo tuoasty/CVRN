@@ -48,6 +48,7 @@ function PostRow({ post, onVideoClick, onGfxClick }: { post: MediaPost; onVideoC
                         fill
                         sizes="(max-width: 640px) 192px, 256px"
                         className="object-cover"
+                        unoptimized
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
