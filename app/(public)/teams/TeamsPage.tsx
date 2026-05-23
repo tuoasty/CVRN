@@ -5,21 +5,26 @@ import { usePublicContextStore } from "@/app/stores/publicContextStore";
 import { useTeams } from "@/app/hooks/useTeams";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
-import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import PublicTeamCard from "@/app/(public)/teams/PublicTeamCard";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Users } from "lucide-react";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 
-export default function TeamsPage() {
+type Props = { initialSeasonId?: string | null };
+
+export default function TeamsPage({ initialSeasonId }: Props) {
     const { selectedSeasonId } = usePublicContextStore();
     const { teams: allTeams, isLoading: loading } = useTeams();
     const { seasons } = useSeasons();
     const { regions } = useRegions();
 
-    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
+    // Use Zustand-seeded value on client; fall back to server-computed initial on first render
+    // so the server renders the real grid immediately (no skeleton → grid CLS).
+    const effectiveSeasonId = selectedSeasonId ?? initialSeasonId ?? null;
+
+    const selectedSeason = seasons.find(s => s.id === effectiveSeasonId);
     const selectedRegion = regions.find(r => r.id === selectedSeason?.region_id);
-    const teams = allTeams.filter(t => t.season_id === selectedSeasonId && !t.deleted_at);
+    const teams = allTeams.filter(t => t.season_id === effectiveSeasonId && !t.deleted_at);
 
     const subtitle =
         seasons.length === 0
@@ -30,21 +35,10 @@ export default function TeamsPage() {
 
     return (
         <>
-            <SeasonSelectionMiddleware />
-
             <div className="page-wide space-y-6 py-6">
                 <PublicPageHeader icon={Users} title="Teams" subtitle={subtitle} />
 
-                {!selectedSeasonId ? (
-                    <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
-                        <div className="text-center space-y-3">
-                            <Users className="h-12 w-12 text-muted-foreground/40 mx-auto" />
-                            <p className="text-sm text-muted-foreground font-medium">
-                                Select a season to view teams
-                            </p>
-                        </div>
-                    </div>
-                ) : loading && teams.length === 0 ? (
+                {loading && teams.length === 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[...Array(6)].map((_, i) => (
                             <div key={i} className="rounded-sm border border-border bg-card overflow-hidden">

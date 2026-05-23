@@ -41,16 +41,18 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
             <div
                 className="relative flex items-center justify-center h-36"
                 style={{ backgroundColor: brickColor ? `${brickColor}18` : undefined }}
+                suppressHydrationWarning
             >
                 {brickColor && (
                     <div
                         className="absolute left-0 top-0 bottom-0 w-1"
                         style={{ backgroundColor: brickColor }}
+                        suppressHydrationWarning
                     />
                 )}
 
                 {team.logo_url ? (
-                    <div className="relative w-28 h-24">
+                    <div className="relative w-28 h-24" suppressHydrationWarning>
                         <Image
                             src={team.logo_url}
                             alt={team.name || "Team"}
@@ -64,10 +66,12 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                     <div
                         className="w-20 h-20 rounded-sm border border-border flex items-center justify-center"
                         style={{ backgroundColor: brickColor ? `${brickColor}30` : undefined }}
+                        suppressHydrationWarning
                     >
                         <span
                             className="text-2xl font-bold uppercase"
                             style={{ color: brickColor ?? undefined }}
+                            suppressHydrationWarning
                         >
                             {team.name?.slice(0, 2) || "??"}
                         </span>
@@ -90,6 +94,7 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                                 color: brickColor,
                                 border: `1px solid ${brickColor}40`,
                             }}
+                            suppressHydrationWarning
                         >
                             #{team.brick_number}
                         </span>
@@ -115,10 +120,12 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                                     <div
                                         className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center"
                                         style={{ backgroundColor: brickColor ? `${brickColor}30` : "hsl(var(--muted))" }}
+                                        suppressHydrationWarning
                                     >
                                         <span
                                             className="text-[8px] font-bold uppercase leading-none"
                                             style={{ color: brickColor ?? "hsl(var(--muted-foreground))" }}
+                                            suppressHydrationWarning
                                         >
                                             {team.captain.displayName?.slice(0, 1) ?? "?"}
                                         </span>

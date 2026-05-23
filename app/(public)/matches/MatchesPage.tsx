@@ -10,9 +10,8 @@ import { useRegions } from "@/app/hooks/useRegions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { CalendarDays, Trophy } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
-import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
 import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
@@ -115,8 +114,6 @@ export default function MatchesPage() {
 
     return (
         <>
-            <SeasonSelectionMiddleware />
-
             <div className="page-wide space-y-6 py-6">
                 <PublicPageHeader icon={CalendarDays} title="Matches" subtitle={subtitle} />
 
@@ -222,10 +219,15 @@ export default function MatchesPage() {
                         )}
                     </Tabs>
                 ) : (
-                    <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
-                        <div className="text-center space-y-3">
-                            <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
-                            <p className="text-sm text-muted-foreground">Select a season to view matches</p>
+                    <div className="space-y-4">
+                        <Skeleton className="h-9 w-48 rounded-sm" />
+                        <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 items-start">
+                            <Skeleton className="h-28 w-full rounded-sm" />
+                            <div className="space-y-3">
+                                {[...Array(5)].map((_, i) => (
+                                    <Skeleton key={i} className="h-24 w-full rounded-sm" />
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}
