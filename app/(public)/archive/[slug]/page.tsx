@@ -122,6 +122,7 @@ function IndividualAwardCard({
                     fill
                     className="object-cover object-top"
                     sizes="20vw"
+                    unoptimized
                 />
             ) : (
                 <div className="w-full h-full bg-primary/10 flex items-center justify-center">
@@ -171,6 +172,7 @@ function IndividualAwardCard({
                                 fill
                                 className="object-cover object-top"
                                 sizes="50vw"
+                                unoptimized
                             />
                         ) : (
                             <div className="w-full h-full bg-primary/10 flex items-center justify-center">
@@ -262,6 +264,7 @@ function FirstTeamCard({
                         fill
                         className="object-cover object-top"
                         sizes="14vw"
+                        unoptimized
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -352,6 +355,7 @@ function FirstTeamMobileCard({
                         fill
                         className="object-cover object-top"
                         sizes="80px"
+                        unoptimized
                     />
                 ) : (
                     <div className="w-full h-full bg-primary/10 flex items-center justify-center">
@@ -415,6 +419,7 @@ function StaffTeamCard({
                         fill
                         className="object-cover object-top"
                         sizes="15vw"
+                        unoptimized
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -487,6 +492,7 @@ function ChampionRosterCard({award}: {award: RosterEntry}) {
                         fill
                         className="object-cover object-top"
                         sizes="10vw"
+                        unoptimized
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -528,6 +534,7 @@ function ChampionRosterMobileCard({award, index}: {award: RosterEntry; index: nu
                     fill
                     className="object-cover object-top"
                     sizes="29vw"
+                    unoptimized
                 />
             ) : (
                 <div className="w-full h-full flex items-center justify-center">

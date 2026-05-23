@@ -72,7 +72,7 @@ export default function MediaSidebar() {
                             >
                                 {thumbnail && (
                                     <div className="relative aspect-video w-full overflow-hidden rounded-sm border border-border">
-                                        <Image src={thumbnail} alt={post.title} fill sizes="200px" className="object-cover" />
+                                        <Image src={thumbnail} alt={post.title} fill sizes="200px" className="object-cover" unoptimized />
                                         {isVideo && (
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">

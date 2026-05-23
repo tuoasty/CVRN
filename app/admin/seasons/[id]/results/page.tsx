@@ -217,7 +217,7 @@ function AwardAvatarCell({url}: {url: string | null}) {
     }
     return (
         <div className="relative w-8 h-10 rounded-sm overflow-hidden bg-primary/10">
-            <Image src={url} alt="avatar" fill className="object-cover object-top" sizes="32px" />
+            <Image src={url} alt="avatar" fill className="object-cover object-top" sizes="32px" unoptimized />
         </div>
     );
 }
@@ -487,6 +487,7 @@ export default function SeasonResultsPage() {
                                                                     fill
                                                                     className="object-cover object-top"
                                                                     sizes="14vw"
+                                                                    unoptimized
                                                                 />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center">
