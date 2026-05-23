@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "tklvaiurgmvqnsspocsm.supabase.co",
+      },
+      {
+        protocol: "https",
         hostname: "img.youtube.com",
       },
     ]

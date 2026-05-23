@@ -13,13 +13,20 @@ export default function TeamsLoading() {
                     <Skeleton className="h-3 w-56 rounded-sm" />
                 </div>
             </div>
-            <div className="rounded-sm border border-border divide-y divide-border overflow-hidden">
-                {[...Array(8)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-3">
-                        <Skeleton className="w-1 h-8 rounded-full shrink-0" />
-                        <Skeleton className="w-9 h-9 rounded-sm shrink-0" />
-                        <Skeleton className="h-4 flex-1 rounded-sm" />
-                        <Skeleton className="h-4 w-10 rounded-sm shrink-0" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(6)].map((_, i) => (
+                    <div key={i} className="rounded-sm border border-border bg-card overflow-hidden">
+                        <Skeleton className="h-36 w-full rounded-none" />
+                        <div className="border-t border-border">
+                            <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
+                                <Skeleton className="h-4 flex-1 rounded-sm" />
+                                <Skeleton className="h-4 w-8 rounded-sm shrink-0" />
+                            </div>
+                            <div className="flex items-center gap-1.5 px-3 pb-2.5">
+                                <Skeleton className="h-4 w-4 rounded-full shrink-0" />
+                                <Skeleton className="h-3 w-20 rounded-sm" />
+                            </div>
+                        </div>
                     </div>
                 ))}
             </div>

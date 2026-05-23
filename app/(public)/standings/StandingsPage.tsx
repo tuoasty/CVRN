@@ -6,7 +6,6 @@ import { useStandings } from "@/app/hooks/useStandings";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
 import { StandingsTable } from "@/app/features/standings/StandingsTable";
-import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
 import {clientLogger} from "@/app/utils/clientLogger";
@@ -39,8 +38,6 @@ export default function StandingsPage() {
 
     return (
         <>
-            <SeasonSelectionMiddleware />
-
             <div className="page-wide space-y-6 py-6">
                 <PublicPageHeader
                     icon={Trophy}
@@ -76,23 +73,12 @@ export default function StandingsPage() {
                     }
                 />
 
-                {selectedSeasonId && selectedRegionId ? (
-                    <StandingsTable
-                        standings={standings}
-                        isLoading={standingsLoading}
-                        qualifiedTeams={selectedSeason?.playoff_configs?.qualified_teams}
-                        playinTeams={selectedSeason?.playoff_configs?.playin_teams}
-                    />
-                ) : (
-                    <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
-                        <div className="text-center space-y-3">
-                            <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
-                            <p className="text-sm text-muted-foreground font-medium">
-                                Select a season to view standings
-                            </p>
-                        </div>
-                    </div>
-                )}
+                <StandingsTable
+                    standings={standings}
+                    isLoading={standingsLoading || !selectedSeasonId}
+                    qualifiedTeams={selectedSeason?.playoff_configs?.qualified_teams}
+                    playinTeams={selectedSeason?.playoff_configs?.playin_teams}
+                />
             </div>
         </>
     );

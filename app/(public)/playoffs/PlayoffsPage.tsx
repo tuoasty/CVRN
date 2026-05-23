@@ -6,7 +6,6 @@ import { usePlayoffBrackets } from "@/app/hooks/usePlayoffs";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
-import SeasonSelectionMiddleware from "@/app/components/ui/SeasonSelectorMiddleware";
 import { Trophy, Loader2 } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 
@@ -26,8 +25,6 @@ export default function PlayoffsPage() {
 
     return (
         <>
-            <SeasonSelectionMiddleware />
-
             <div className="page-wide space-y-6 py-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -63,13 +60,8 @@ export default function PlayoffsPage() {
                 </div>
 
                 {!selectedSeasonId ? (
-                    <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">
-                        <div className="text-center space-y-3">
-                            <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
-                            <p className="text-sm text-muted-foreground font-medium">
-                                Select a season to view playoffs
-                            </p>
-                        </div>
+                    <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/40" />
                     </div>
                 ) : !hasPlayoffs ? (
                     <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">

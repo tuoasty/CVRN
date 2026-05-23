@@ -39,7 +39,9 @@ export default async function PublicLayout({ children }: { children: React.React
             const asiaRegion = regions.find(r => r.code.toUpperCase() === "AS");
             const defaultRegion = asiaRegion ?? regions[0];
             const activeSeason = seasons.find(s => s.region_id === defaultRegion.id && s.is_active);
-            const fallbackSeason = seasons.find(s => s.region_id === defaultRegion.id);
+            const fallbackSeason = seasons
+                .filter(s => s.region_id === defaultRegion.id)
+                .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0];
             const selected = activeSeason ?? fallbackSeason;
             if (selected) {
                 initialSeasonId = selected.id;
