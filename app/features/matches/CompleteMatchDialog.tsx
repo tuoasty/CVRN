@@ -595,6 +595,7 @@ export default function CompleteMatchDialog({
                                                                             fill
                                                                             sizes="20px"
                                                                             className="object-cover"
+                                                                            unoptimized
                                                                         />
                                                                     </div>
                                                                 )}
@@ -626,6 +627,7 @@ export default function CompleteMatchDialog({
                                                                             fill
                                                                             sizes="20px"
                                                                             className="object-cover"
+                                                                            unoptimized
                                                                         />
                                                                     </div>
                                                                 )}
