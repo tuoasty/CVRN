@@ -345,3 +345,21 @@ export async function findMatchByCode(
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data);
 }
+
+type PlayoffMatchRow = Pick<Match, "id" | "home_team_id" | "away_team_id" | "match_code" | "scheduled_at" | "status"> & {
+    playoff_brackets: { round: string }[];
+};
+
+export async function findPlayoffMatchesBySeason(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<PlayoffMatchRow[]>> {
+    const {data, error} = await supabase
+        .from("matches")
+        .select(`id, home_team_id, away_team_id, match_code, scheduled_at, status, playoff_brackets (round)`)
+        .eq("season_id", seasonId)
+        .eq("match_type", "playoffs")
+        .order("scheduled_at", {ascending: true, nullsFirst: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as PlayoffMatchRow[]);
+}

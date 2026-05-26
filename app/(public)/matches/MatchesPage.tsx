@@ -13,6 +13,7 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import { CalendarDays } from "lucide-react";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
+import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
 import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
 import { Player } from "@/shared/types/db";
@@ -167,6 +168,7 @@ export default function MatchesPage() {
                                     teams={teams}
                                     players={players}
                                     regionCode={regionCode}
+                                    seasonSlug={selectedSeason?.slug}
                                     loading={loading}
                                     emptyMessage="No matches scheduled for this week"
                                 />
@@ -211,6 +213,7 @@ export default function MatchesPage() {
                                         teams={teams}
                                         players={players}
                                         regionCode={regionCode}
+                                        seasonSlug={selectedSeason?.slug}
                                         loading={loading}
                                         emptyMessage="No matches in this playoff round"
                                     />
@@ -241,11 +244,12 @@ interface MatchListProps {
     teams: Map<string, TeamWithRegion>;
     players: Map<string, Player>;
     regionCode?: string;
+    seasonSlug?: string;
     loading: boolean;
     emptyMessage: string;
 }
 
-function MatchList({ schedule, teams, players, regionCode, loading, emptyMessage }: MatchListProps) {
+function MatchList({ schedule, teams, players, regionCode, seasonSlug, loading, emptyMessage }: MatchListProps) {
     if (loading) {
         return (
             <div className="space-y-3">
@@ -285,6 +289,13 @@ function MatchList({ schedule, teams, players, regionCode, loading, emptyMessage
                         loserMvp={loserMvp}
                         regionCode={regionCode}
                         index={index}
+                        href={buildPublicMatchHref({
+                            matchCode: match.match_code,
+                            homeTeamName: homeTeam?.name,
+                            awayTeamName: awayTeam?.name,
+                            regionCode,
+                            seasonSlug,
+                        })}
                     />
                 );
             })}

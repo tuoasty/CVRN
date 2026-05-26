@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useWeekSchedule, usePlayoffSchedule } from "@/app/hooks/useMatches";
 import { useTeamsByIds } from "@/app/hooks/useTeams";
 import { usePlayersByIds } from "@/app/hooks/usePlayers";
@@ -50,6 +51,7 @@ const getStatusConfig = (status: string) => {
 };
 
 export default function AdminSchedulePanel({ seasonId, week, round, matchType, regionCode }: SchedulePanelProps) {
+    const router = useRouter();
     const { schedule: weekSchedule, isLoading: weekLoading, mutate: mutateWeek } = useWeekSchedule(
         matchType === "season" ? seasonId : null,
         matchType === "season" ? (week ?? null) : null
@@ -133,7 +135,11 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                 const media = officials.filter(o => o.official_type === "media");
 
                 return (
-                    <div key={match.id} className="panel p-4">
+                    <div
+                        key={match.id}
+                        onClick={() => router.push(`/admin/matches/${match.id}`)}
+                        className="panel p-4 cursor-pointer hover:border-primary/30 transition-colors"
+                    >
                         <div className="space-y-3">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-border">
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -173,7 +179,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                                 : "Time TBD"
                                         }
                                     </span>
-                                    <div className="flex gap-1">
+                                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                                         <ManageMatchDialog
                                             matchId={match.id}
                                             scheduledAt={match.scheduled_at}

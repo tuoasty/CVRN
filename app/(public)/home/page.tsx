@@ -18,6 +18,7 @@ import StandingsPreview from "@/app/(public)/home/StandingsPreview";
 import { useStandings } from "@/app/hooks/useStandings";
 import { MatchWithDetails } from "@/server/domains/match";
 import { computeMatchLabels } from "@/app/utils/matchLabel";
+import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
 
 export default function HomePage() {
     const { selectedSeasonId, selectedRegionId } = usePublicContextStore();
@@ -32,6 +33,7 @@ export default function HomePage() {
 
     const selectedSeason = seasons.find((s) => s.id === selectedSeasonId);
     const regionCode = regions.find((r) => r.id === selectedRegionId)?.code;
+    const seasonSlug = selectedSeason?.slug;
 
     const isSeasonCompleted = selectedSeason?.end_date
         ? new Date(selectedSeason.end_date) < new Date()
@@ -108,6 +110,13 @@ export default function HomePage() {
                                                     awayTeam={awayTeam}
                                                     regionCode={regionCode}
                                                     matchLabel={upcomingLabels[i]}
+                                                    href={buildPublicMatchHref({
+                                                        matchCode: matchDetails.match.match_code,
+                                                        homeTeamName: homeTeam?.name,
+                                                        awayTeamName: awayTeam?.name,
+                                                        regionCode,
+                                                        seasonSlug,
+                                                    })}
                                                 />
                                             );
                                         })}
@@ -151,6 +160,13 @@ export default function HomePage() {
                                                 awayTeam={awayTeam}
                                                 regionCode={regionCode}
                                                 matchLabel={recentLabels[i]}
+                                                href={buildPublicMatchHref({
+                                                    matchCode: matchDetails.match.match_code,
+                                                    homeTeamName: homeTeam?.name,
+                                                    awayTeamName: awayTeam?.name,
+                                                    regionCode,
+                                                    seasonSlug,
+                                                })}
                                             />
                                         );
                                     })}
@@ -174,6 +190,13 @@ export default function HomePage() {
                                 regionCode={regionCode}
                                 matchLabel={featuredLabel}
                                 isRecent={hasFeaturedRecent}
+                                href={buildPublicMatchHref({
+                                    matchCode: featuredMatch.match.match_code,
+                                    homeTeamName: featuredHomeTeam?.name,
+                                    awayTeamName: featuredAwayTeam?.name,
+                                    regionCode,
+                                    seasonSlug,
+                                })}
                             />
                         ) : (
                             <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">

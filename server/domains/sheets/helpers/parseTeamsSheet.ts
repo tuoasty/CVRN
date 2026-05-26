@@ -30,7 +30,7 @@ export function parseTeamsSheet(
         if (!hasAnyTeam) break;
 
         for (let slot = 0; slot < TEAMS_PER_ROW; slot++) {
-            const col = slot * blockStride;
+            const col = slot * blockStride + 1;
             const teamName = headerData[col + 2]?.trim();
             if (!teamName) continue;
 

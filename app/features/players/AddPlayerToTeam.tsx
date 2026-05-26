@@ -126,7 +126,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
 
         try {
             const result = await savePlayerToTeamAction({
-                robloxUserId: user.id,
+                robloxUserId: String(user.id),
                 username: user.name,
                 displayName: user.displayName,
                 avatarUrl: user.avatarUrl,

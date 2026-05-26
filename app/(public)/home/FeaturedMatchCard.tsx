@@ -3,6 +3,7 @@
 import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
 import Image from "next/image";
+import Link from "next/link";
 import { Badge } from "@/app/components/ui/badge";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { Calendar } from "lucide-react";
@@ -14,6 +15,7 @@ interface FeaturedMatchCardProps {
     regionCode?: string;
     matchLabel: string;
     isRecent?: boolean;
+    href?: string | null;
 }
 
 export default function FeaturedMatchCard({
@@ -23,6 +25,7 @@ export default function FeaturedMatchCard({
     regionCode,
     matchLabel,
     isRecent = false,
+    href,
 }: FeaturedMatchCardProps) {
     const { match } = matchDetails;
     const regionTimezone = regionCode ? getRegionTimezone(regionCode) : undefined;
@@ -33,9 +36,8 @@ export default function FeaturedMatchCard({
 
     const isPlayoff = match.match_type === "playoffs";
 
-    return (
-        <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-            <div className="flex flex-col justify-between min-h-[260px]">
+    const inner = (
+        <div className="flex flex-col justify-between min-h-[260px]">
                 {/* Header */}
                 <div className="flex items-center justify-between pb-3 border-b-2 border-primary/20">
                     <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
@@ -119,6 +121,17 @@ export default function FeaturedMatchCard({
                     </div>
                 </div>
             </div>
+    );
+
+    const wrapperClass = "panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent";
+
+    return href ? (
+        <Link href={href} className={`block ${wrapperClass} cursor-pointer hover:border-l-primary/60 transition-colors`}>
+            {inner}
+        </Link>
+    ) : (
+        <div className={wrapperClass}>
+            {inner}
         </div>
     );
 }

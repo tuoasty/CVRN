@@ -367,6 +367,29 @@ export async function findPlayerByExactUsername(supabase: DBClient, username: st
     return Ok(data);
 }
 
+// Case-insensitive batch lookup. One round-trip instead of N. Roblox usernames
+// are alphanumeric + underscore, so the .or()-clause syntax is safe to inline.
+// Caller is responsible for matching results back to inputs (different casings).
+export async function findPlayersByUsernames(
+    supabase: DBClient,
+    usernames: string[]
+): Promise<Result<PlayerSummary[]>> {
+    if (usernames.length === 0) return Ok([]);
+    const orClause = usernames.map(u => `username.ilike.${u}`).join(",");
+    const {data, error} = await supabase
+        .from("players")
+        .select(`
+            id,
+            roblox_user_id,
+            username,
+            display_name,
+            avatar_url
+        `)
+        .or(orClause);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
 export async function setPlayerRole(supabase: DBClient, p: SetPlayerRoleInput): Promise<Result<PlayerTeamSeason>> {
     const {data, error} = await supabase
         .from("player_team_seasons")

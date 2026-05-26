@@ -162,7 +162,7 @@ export default function PlayoffManagementPage() {
                         </div>
                     </div>
                 ) : seasonIdValue && brackets.length > 0 ? (
-                    <PlayoffBracketDisplay brackets={brackets} seasonId={seasonIdValue} regionId={regionIdValue} />
+                    <PlayoffBracketDisplay brackets={brackets} seasonId={seasonIdValue} regionId={regionIdValue} linkContext="admin" />
                 ) : seasonIdValue && !isProcessing ? (
                     <div className="panel p-12 border-l-4 border-l-muted">
                         <p className="text-sm text-muted-foreground text-center">

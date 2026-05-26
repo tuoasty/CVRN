@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import AvatarImage from "@/app/components/ui/AvatarImage";
 import { Badge } from "@/app/components/ui/badge";
 import { MatchWithDetails } from "@/server/domains/match";
@@ -17,6 +18,7 @@ interface PublicMatchCardProps {
     loserMvp?: Player | null;
     regionCode?: string;
     index: number;
+    href?: string | null;
 }
 
 const getStatusConfig = (status: string) => {
@@ -32,7 +34,7 @@ const getStatusConfig = (status: string) => {
     }
 };
 
-export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matchMvp, loserMvp, regionCode, index }: PublicMatchCardProps) {
+export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matchMvp, loserMvp, regionCode, index, href }: PublicMatchCardProps) {
     const { match, sets, officials } = matchDetails;
     const statusConfig = getStatusConfig(match.status);
     const referees = officials.filter(o => o.official_type === "referee");
@@ -42,9 +44,8 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
     const homeWon = (match.home_sets_won ?? 0) > (match.away_sets_won ?? 0);
     const awayWon = (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0);
 
-    return (
-        <div className="panel p-3 sm:p-4 transition-colors">
-            <div className="space-y-3">
+    const inner = (
+        <div className="space-y-3">
                 {/* Header with status */}
                 <div className="flex items-start justify-between gap-2 pb-2 border-b border-border">
                     <div className="flex flex-col gap-1">
@@ -259,6 +260,15 @@ export default function PublicMatchCard({ matchDetails, homeTeam, awayTeam, matc
                     </div>
                 )}
             </div>
+    );
+
+    return href ? (
+        <Link href={href} className="block panel p-3 sm:p-4 transition-colors hover:border-primary/30 cursor-pointer">
+            {inner}
+        </Link>
+    ) : (
+        <div className="panel p-3 sm:p-4 transition-colors">
+            {inner}
         </div>
     );
 }

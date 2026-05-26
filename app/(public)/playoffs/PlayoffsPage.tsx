@@ -97,6 +97,7 @@ export default function PlayoffsPage() {
                         brackets={brackets}
                         seasonId={selectedSeasonId}
                         regionId={selectedSeason.region_id}
+                        linkContext="public"
                     />
                 </div>
             )}

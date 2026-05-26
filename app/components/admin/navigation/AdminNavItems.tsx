@@ -30,6 +30,7 @@ const DROPDOWN_GROUPS = [
     {
         label: "System",
         items: [
+            { href: "/admin/stats",        label: "Match Stats" },
             { href: "/admin/sync",         label: "Sync" },
             { href: "/admin/sync/history", label: "Sync History" },
         ],
