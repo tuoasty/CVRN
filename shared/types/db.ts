@@ -46,4 +46,10 @@ export type SeasonPodium =
 export type SeasonAward =
     Database["public"]["Tables"]["season_awards"]["Row"];
 
+export type PlayerMatchStats =
+    Database["public"]["Tables"]["player_match_stats"]["Row"];
+
+export type MatchSheetConfig =
+    Database["public"]["Tables"]["match_sheet_config"]["Row"];
+
 export type DBClient = SupabaseClient<Database>;

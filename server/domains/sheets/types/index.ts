@@ -1,3 +1,5 @@
+import { PlayerMatchStats } from "@/shared/types/db"
+
 export type SheetType = 'qualifier' | 'playoff' | 'teams'
 export type SyncStatus = 'success' | 'warning' | 'partial' | 'failed'
 export type SyncTrigger = 'cron' | 'manual' | 'rollback'
@@ -59,3 +61,15 @@ export interface ParsedTeamResult {
     headerCol: number
     disbanded: boolean
 }
+
+export interface ParsedStatLine {
+    username: string;
+    teamName: string;
+    setNumber: number;
+    counts: StatCounts;
+    rowNumber: number
+}
+
+
+export type StatCounts = Omit<PlayerMatchStats,
+      "id" | "match_id" | "player_id" | "team_id" | "set_number" | "created_at">;
