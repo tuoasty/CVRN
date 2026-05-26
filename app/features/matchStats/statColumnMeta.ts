@@ -158,8 +158,11 @@ export const DETAILED_COLUMNS: StatColumn[] = [
 ];
 
 export const formatStatValue = (value: number | null, format: "count" | "pct"): string => {
+    if (format === "pct") {
+        const v = value ?? 0;
+        return `${(v * 100).toFixed(1)}%`;
+    }
     if (value === null || value === undefined) return "—";
-    if (format === "pct") return `${(value * 100).toFixed(1)}%`;
     return String(value);
 };
 

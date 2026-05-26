@@ -2,9 +2,11 @@
 
 import {useState} from "react";
 import {MatchDetail} from "@/server/domains/match";
+import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/app/components/ui/tabs";
 import BoxScore from "@/app/features/matchStats/BoxScore";
 import MatchHeader from "@/app/features/matchStats/MatchHeader";
-import TeamViewToggle, {MatchView} from "@/app/features/matchStats/TeamViewToggle";
+import StatViewToggle from "@/app/features/matchStats/StatViewToggle";
+import TeamSelectorBar, {TeamView} from "@/app/features/matchStats/TeamSelectorBar";
 
 type Props = {
     detail: MatchDetail;
@@ -12,12 +14,11 @@ type Props = {
 
 export default function MatchDetailContent({detail}: Props) {
     const {match, sets, homeTeam, awayTeam, statSets, statTotals} = detail;
-    const [view, setView] = useState<MatchView>("home-only");
+    const [view, setView] = useState<TeamView>("home-only");
     const [detailed, setDetailed] = useState(false);
 
     const setCount = sets.length;
-    const showHome = view !== "away-only";
-    const showAway = view !== "home-only";
+    const selectedTeam = view === "home-only" ? homeTeam : awayTeam;
 
     const isPlayable = match.status === "completed" && !match.is_forfeit;
 
@@ -28,27 +29,47 @@ export default function MatchDetailContent({detail}: Props) {
             {!isPlayable ? (
                 <NonPlayableNotice match={match} />
             ) : (
-                <>
-                    <TeamViewToggle
+                <Tabs defaultValue="total" className="space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                        <TabsList>
+                            <TabsTrigger value="total">Total</TabsTrigger>
+                            {Array.from({length: setCount}, (_, i) => i + 1).map(n => (
+                                <TabsTrigger key={n} value={`set-${n}`}>
+                                    Set {n}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                        <StatViewToggle detailed={detailed} onDetailedChange={setDetailed} />
+                    </div>
+
+                    <TeamSelectorBar
                         homeTeam={homeTeam}
                         awayTeam={awayTeam}
                         view={view}
                         onViewChange={setView}
-                        detailed={detailed}
-                        onDetailedChange={setDetailed}
                     />
 
-                    <BoxScore
-                        homeTeam={homeTeam}
-                        awayTeam={awayTeam}
-                        statSets={statSets}
-                        statTotals={statTotals}
-                        setCount={setCount}
-                        detailed={detailed}
-                        showHome={showHome}
-                        showAway={showAway}
-                    />
-                </>
+                    <TabsContent value="total" className="mt-0">
+                        <BoxScore
+                            homeTeam={homeTeam}
+                            awayTeam={awayTeam}
+                            rows={statTotals}
+                            selectedTeam={selectedTeam}
+                            detailed={detailed}
+                        />
+                    </TabsContent>
+                    {Array.from({length: setCount}, (_, i) => i + 1).map(n => (
+                        <TabsContent key={n} value={`set-${n}`} className="mt-0">
+                            <BoxScore
+                                homeTeam={homeTeam}
+                                awayTeam={awayTeam}
+                                rows={statSets.filter(r => r.set_number === n)}
+                                selectedTeam={selectedTeam}
+                                detailed={detailed}
+                            />
+                        </TabsContent>
+                    ))}
+                </Tabs>
             )}
         </div>
     );

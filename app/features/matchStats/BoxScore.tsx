@@ -1,8 +1,8 @@
 "use client";
 
+import {useCallback, useRef} from "react";
 import Image from "next/image";
-import {PlayerMatchStatSet, PlayerMatchStatTotal, Team} from "@/shared/types/db";
-import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/app/components/ui/tabs";
+import {Team} from "@/shared/types/db";
 import {Table, TableHeader, TableBody, TableRow, TableHead, TableCell} from "@/app/components/ui/table";
 import {Tooltip, TooltipContent, TooltipTrigger, TooltipProvider} from "@/app/components/ui/tooltip";
 import {getLogoClassName} from "@/app/lib/logoClass";
@@ -16,39 +16,87 @@ import {
     groupColumns,
     findLeaderKeys,
 } from "./statColumnMeta";
-import TeamTotalsComparison from "./TeamTotalsComparison";
-
-const teamColorBg = (color: string | null | undefined, alphaHex: string): string | undefined => {
-    if (!color) return undefined;
-    if (/^#[0-9A-Fa-f]{6}$/.test(color)) return `${color}${alphaHex}`;
-    if (/^#[0-9A-Fa-f]{3}$/.test(color)) return `${color}${alphaHex}`;
-    return undefined;
-};
 
 type Props = {
     homeTeam: Team | null;
     awayTeam: Team | null;
-    statSets: PlayerMatchStatSet[];
-    statTotals: PlayerMatchStatTotal[];
-    setCount: number;
+    rows: StatRow[];
+    selectedTeam: Team | null;
     detailed: boolean;
-    showHome: boolean;
-    showAway: boolean;
 };
 
-export default function BoxScore({
-    homeTeam,
-    awayTeam,
-    statSets,
-    statTotals,
-    setCount,
-    detailed,
-    showHome,
-    showAway,
-}: Props) {
-    const columns = detailed ? DETAILED_COLUMNS : DEFAULT_COLUMNS;
+const isHex = (color: string | null | undefined): color is string => {
+    if (!color) return false;
+    return /^#[0-9A-Fa-f]{6}$/.test(color) || /^#[0-9A-Fa-f]{3}$/.test(color);
+};
 
-    if (statTotals.length === 0) {
+const DRAG_THRESHOLD = 4;
+
+// Attaches drag-to-scroll on the shadcn Table's container div by walking up from the <table> ref.
+function useDragScroll() {
+    const cleanupRef = useRef<(() => void) | null>(null);
+
+    return useCallback((node: HTMLTableElement | null) => {
+        cleanupRef.current?.();
+        cleanupRef.current = null;
+
+        const el = node?.parentElement;
+        if (!el) return;
+
+        let isDown = false;
+        let dragging = false;
+        let startX = 0;
+        let startScroll = 0;
+
+        const onDown = (e: PointerEvent) => {
+            if (e.pointerType !== "mouse" || e.button !== 0) return;
+            isDown = true;
+            dragging = false;
+            startX = e.clientX;
+            startScroll = el.scrollLeft;
+        };
+        const onMove = (e: PointerEvent) => {
+            if (!isDown) return;
+            const dx = e.clientX - startX;
+            if (!dragging && Math.abs(dx) < DRAG_THRESHOLD) return;
+            if (!dragging) {
+                dragging = true;
+                el.setPointerCapture(e.pointerId);
+                el.style.cursor = "grabbing";
+                el.style.userSelect = "none";
+            }
+            e.preventDefault();
+            el.scrollLeft = startScroll - dx;
+        };
+        const stop = () => {
+            isDown = false;
+            dragging = false;
+            el.style.cursor = "grab";
+            el.style.userSelect = "";
+        };
+
+        el.style.cursor = "grab";
+        el.addEventListener("pointerdown", onDown);
+        el.addEventListener("pointermove", onMove);
+        el.addEventListener("pointerup", stop);
+        el.addEventListener("pointercancel", stop);
+
+        cleanupRef.current = () => {
+            el.style.cursor = "";
+            el.style.userSelect = "";
+            el.removeEventListener("pointerdown", onDown);
+            el.removeEventListener("pointermove", onMove);
+            el.removeEventListener("pointerup", stop);
+            el.removeEventListener("pointercancel", stop);
+        };
+    }, []);
+}
+
+export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detailed}: Props) {
+    const columns = detailed ? DETAILED_COLUMNS : DEFAULT_COLUMNS;
+    const tableRef = useDragScroll();
+
+    if (rows.length === 0) {
         return (
             <div className="panel p-6">
                 <p className="text-sm text-muted-foreground">
@@ -58,205 +106,189 @@ export default function BoxScore({
         );
     }
 
-    const setTabs = Array.from({length: setCount}, (_, i) => i + 1);
+    const selectedRows = selectedTeam ? rows.filter(r => r.team_id === selectedTeam.id) : [];
+    const homeRows = homeTeam ? rows.filter(r => r.team_id === homeTeam.id) : [];
+    const awayRows = awayTeam ? rows.filter(r => r.team_id === awayTeam.id) : [];
+
+    const homeTotals = columns.map(c => c.aggregator(homeRows));
+    const awayTotals = columns.map(c => c.aggregator(awayRows));
+
+    const groups = groupColumns(columns);
+    const leaders = findLeaderKeys(selectedRows, columns);
 
     return (
         <TooltipProvider delayDuration={200}>
-            <Tabs defaultValue="total" className="space-y-4">
-                <TabsList>
-                    <TabsTrigger value="total">Total</TabsTrigger>
-                    {setTabs.map(n => (
-                        <TabsTrigger key={n} value={`set-${n}`}>
-                            Set {n}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
+            <div className="border border-border rounded-sm overflow-hidden [&>[data-slot=table-container]]:overflow-x-scroll">
+                <Table ref={tableRef} className="border-collapse">
+                    <TableHeader>
+                        <TableRow className="border-b-0 hover:bg-transparent">
+                            <TableHead
+                                rowSpan={2}
+                                className="sticky left-0 z-10 bg-background text-left align-bottom min-w-[160px] px-2 border-r border-border/30 text-[11px] font-semibold uppercase tracking-wider"
+                            >
+                                Player
+                            </TableHead>
+                            {groups.map((g, idx) => (
+                                <TableHead
+                                    key={`group-${idx}-${g.group}`}
+                                    colSpan={g.columns.length}
+                                    className="h-6 px-1 text-center text-[10px] uppercase tracking-wider font-semibold text-muted-foreground border-r border-border/30 last:border-r-0"
+                                >
+                                    {g.group}
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                        <TableRow className="hover:bg-transparent">
+                            {columns.map((col, i) => {
+                                const isLastInGroup =
+                                    i === columns.length - 1 || columns[i + 1].group !== col.group;
+                                return (
+                                    <TableHead
+                                        key={col.key}
+                                        className={cn(
+                                            "h-8 px-1 text-right text-[11px] font-semibold whitespace-nowrap",
+                                            isLastInGroup && "border-r border-border/30 last:border-r-0",
+                                        )}
+                                    >
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span className="cursor-help">{col.label}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">{col.description}</TooltipContent>
+                                        </Tooltip>
+                                    </TableHead>
+                                );
+                            })}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {selectedRows.length === 0 ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={columns.length + 1}
+                                    className="text-center text-sm text-muted-foreground py-6"
+                                >
+                                    No stats recorded for this team.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            selectedRows.map(row => (
+                                <PlayerStatRow
+                                    key={row.player_id}
+                                    row={row}
+                                    columns={columns}
+                                    leaders={leaders}
+                                />
+                            ))
+                        )}
 
-                <TabsContent value="total" className="space-y-6">
-                    {showHome && <TeamSection team={homeTeam} rows={statTotals} columns={columns} />}
-                    {showAway && <TeamSection team={awayTeam} rows={statTotals} columns={columns} />}
-                    <TeamTotalsComparison
-                        homeTeam={homeTeam}
-                        awayTeam={awayTeam}
-                        rows={statTotals}
-                        columns={columns}
-                    />
-                </TabsContent>
-
-                {setTabs.map(n => {
-                    const setRows = statSets.filter(r => r.set_number === n);
-                    return (
-                        <TabsContent key={n} value={`set-${n}`} className="space-y-6">
-                            {showHome && <TeamSection team={homeTeam} rows={setRows} columns={columns} />}
-                            {showAway && <TeamSection team={awayTeam} rows={setRows} columns={columns} />}
-                            <TeamTotalsComparison
-                                homeTeam={homeTeam}
-                                awayTeam={awayTeam}
-                                rows={setRows}
-                                columns={columns}
-                            />
-                        </TabsContent>
-                    );
-                })}
-            </Tabs>
+                        {homeTeam && awayTeam && (
+                            <>
+                                <TeamTotalRow
+                                    team={homeTeam}
+                                    totals={homeTotals}
+                                    otherTotals={awayTotals}
+                                    columns={columns}
+                                    isFirst
+                                />
+                                <TeamTotalRow
+                                    team={awayTeam}
+                                    totals={awayTotals}
+                                    otherTotals={homeTotals}
+                                    columns={columns}
+                                />
+                            </>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
         </TooltipProvider>
     );
 }
 
-function TeamSection({
-    team,
-    rows,
+function PlayerStatRow({
+    row,
     columns,
+    leaders,
 }: {
-    team: Team | null;
-    rows: StatRow[];
+    row: StatRow;
     columns: StatColumn[];
+    leaders: Set<string>;
 }) {
-    const teamId = team?.id ?? null;
-    const teamRows = teamId ? rows.filter(r => r.team_id === teamId) : [];
-
     return (
-        <section>
-            <StickyTeamHeader team={team} />
-            {teamRows.length === 0 ? (
-                <div className="panel p-4 mt-2">
-                    <p className="text-sm text-muted-foreground">No stats recorded for this team.</p>
-                </div>
-            ) : (
-                <BoxScoreTable rows={teamRows} columns={columns} />
-            )}
-        </section>
+        <TableRow className="group/row hover:bg-muted/30">
+            <TableCell className="sticky left-0 z-[1] bg-background group-hover/row:bg-muted transition-colors border-r border-border/30">
+                <PlayerCell row={row} />
+            </TableCell>
+            {columns.map((col, i) => {
+                const isLeader = leaders.has(`${row.player_id}:${col.key}`);
+                const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;
+                return (
+                    <TableCell
+                        key={col.key}
+                        className={cn(
+                            "py-1 px-1 text-right text-xs font-mono tabular-nums whitespace-nowrap",
+                            isLeader ? "font-bold text-foreground" : "text-foreground/70",
+                            isLastInGroup && "border-r border-border/30 last:border-r-0",
+                        )}
+                    >
+                        {formatStatValue(col.accessor(row), col.format)}
+                    </TableCell>
+                );
+            })}
+        </TableRow>
     );
 }
 
-function StickyTeamHeader({team}: {team: Team | null}) {
-    const borderColor = team?.brick_color || "hsl(var(--border))";
-    const bgTint = teamColorBg(team?.brick_color, "0D");
+function TeamTotalRow({
+    team,
+    totals,
+    otherTotals,
+    columns,
+    isFirst = false,
+}: {
+    team: Team;
+    totals: Array<number | null>;
+    otherTotals: Array<number | null>;
+    columns: StatColumn[];
+    isFirst?: boolean;
+}) {
+    const useColor = isHex(team.brick_color);
 
     return (
-        <div
-            className="border-l-4 px-3 py-2 flex items-center gap-3 mb-2"
-            style={{
-                borderLeftColor: borderColor,
-                backgroundColor: bgTint,
-            }}
+        <TableRow
+            className={cn(
+                "group/row bg-muted/40 hover:bg-muted/60",
+                isFirst && "border-t-2 border-border",
+            )}
         >
-            {team?.logo_url && (
-                <div className="relative w-8 h-8 rounded-sm overflow-hidden shrink-0">
-                    <Image
-                        src={team.logo_url}
-                        alt={team.name}
-                        fill
-                        sizes="32px"
-                        className={getLogoClassName(team.logo_bg_removed)}
-                    />
-                </div>
-            )}
-            <h3 className="text-sm font-semibold uppercase tracking-wide">
-                {team?.name ?? "Team"}
-            </h3>
-        </div>
-    );
-}
+            <TableCell className="sticky left-0 z-[1] bg-muted/40 group-hover/row:bg-muted transition-colors border-r border-border/30 py-1.5">
+                <TeamLabel team={team} />
+            </TableCell>
+            {columns.map((col, i) => {
+                const myVal = totals[i];
+                const otherVal = otherTotals[i];
+                const isLeader = myVal !== null && otherVal !== null && myVal > otherVal;
+                const isTie = myVal !== null && otherVal !== null && myVal === otherVal;
+                const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;
 
-function BoxScoreTable({rows, columns}: {rows: StatRow[]; columns: StatColumn[]}) {
-    const groups = groupColumns(columns);
-    const leaders = findLeaderKeys(rows, columns);
-
-    return (
-        <div className="overflow-x-scroll border border-border rounded-sm [scrollbar-gutter:stable]">
-            <Table>
-                <TableHeader>
-                    {/* Group row */}
-                    <TableRow className="border-b-0 hover:bg-transparent">
-                        <TableHead
-                            rowSpan={2}
-                            className="sticky left-0 z-10 bg-background text-left align-bottom min-w-[180px] border-r border-border/30 text-xs font-semibold uppercase tracking-wider"
-                        >
-                            Player
-                        </TableHead>
-                        {groups.map((g, idx) => (
-                            <TableHead
-                                key={`group-${idx}-${g.group}`}
-                                colSpan={g.columns.length}
-                                className="text-center text-[10px] uppercase tracking-wider font-semibold text-muted-foreground border-r border-border/30 last:border-r-0 h-7"
-                            >
-                                {g.group}
-                            </TableHead>
-                        ))}
-                    </TableRow>
-                    {/* Stat label row */}
-                    <TableRow className="hover:bg-transparent">
-                        {columns.map((col, i) => {
-                            const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;
-                            return (
-                                <TableHead
-                                    key={col.key}
-                                    className={cn(
-                                        "text-right text-xs font-semibold whitespace-nowrap",
-                                        isLastInGroup && "border-r border-border/30 last:border-r-0",
-                                    )}
-                                >
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className="cursor-help">{col.label}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top">{col.description}</TooltipContent>
-                                    </Tooltip>
-                                </TableHead>
-                            );
-                        })}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {rows.map(row => (
-                        <TableRow key={row.player_id} className="group/row">
-                            <TableCell className="sticky left-0 z-[1] bg-background group-hover/row:bg-muted/50 transition-colors border-r border-border/30">
-                                <PlayerCell row={row} />
-                            </TableCell>
-                            {columns.map((col, i) => {
-                                const isLeader = leaders.has(`${row.player_id}:${col.key}`);
-                                const isLastInGroup =
-                                    i === columns.length - 1 || columns[i + 1].group !== col.group;
-                                return (
-                                    <TableCell
-                                        key={col.key}
-                                        className={cn(
-                                            "text-right font-mono tabular-nums whitespace-nowrap",
-                                            isLeader ? "font-bold text-foreground" : "text-foreground/70",
-                                            isLastInGroup && "border-r border-border/30 last:border-r-0",
-                                        )}
-                                    >
-                                        {formatStatValue(col.accessor(row), col.format)}
-                                    </TableCell>
-                                );
-                            })}
-                        </TableRow>
-                    ))}
-                    {/* Team total row */}
-                    <TableRow className="border-t-2 border-border bg-muted/30 hover:bg-muted/30">
-                        <TableCell className="sticky left-0 z-[1] bg-muted/30 font-semibold text-xs uppercase tracking-wider border-r border-border/30">
-                            Team Total
-                        </TableCell>
-                        {columns.map((col, i) => {
-                            const isLastInGroup =
-                                i === columns.length - 1 || columns[i + 1].group !== col.group;
-                            return (
-                                <TableCell
-                                    key={col.key}
-                                    className={cn(
-                                        "text-right font-mono tabular-nums font-semibold whitespace-nowrap",
-                                        isLastInGroup && "border-r border-border/30 last:border-r-0",
-                                    )}
-                                >
-                                    {formatStatValue(col.aggregator(rows), col.format)}
-                                </TableCell>
-                            );
-                        })}
-                    </TableRow>
-                </TableBody>
-            </Table>
-        </div>
+                return (
+                    <TableCell
+                        key={col.key}
+                        className={cn(
+                            "py-1.5 px-1 text-right text-xs font-mono tabular-nums font-semibold whitespace-nowrap",
+                            isLeader && !useColor && "text-foreground",
+                            !isLeader && !isTie && "text-foreground/40",
+                            isTie && "text-foreground/70",
+                            isLastInGroup && "border-r border-border/30 last:border-r-0",
+                        )}
+                        style={isLeader && useColor ? {color: team.brick_color || undefined} : undefined}
+                    >
+                        {formatStatValue(myVal, col.format)}
+                    </TableCell>
+                );
+            })}
+        </TableRow>
     );
 }
 
@@ -285,6 +317,27 @@ function PlayerCell({row}: {row: StatRow}) {
                     <span className="text-[11px] text-muted-foreground truncate">@{row.username}</span>
                 )}
             </div>
+        </div>
+    );
+}
+
+function TeamLabel({team}: {team: Team}) {
+    return (
+        <div className="flex items-center gap-1.5 min-w-0">
+            <div className="relative w-6 h-6 rounded-sm overflow-hidden shrink-0">
+                {team.logo_url ? (
+                    <Image
+                        src={team.logo_url}
+                        alt={team.name}
+                        fill
+                        sizes="24px"
+                        className={getLogoClassName(team.logo_bg_removed)}
+                    />
+                ) : (
+                    <div className="w-full h-full bg-muted" />
+                )}
+            </div>
+            <span className="text-xs font-semibold uppercase tracking-wide truncate">{team.name}</span>
         </div>
     );
 }
