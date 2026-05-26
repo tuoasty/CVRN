@@ -6,14 +6,17 @@ import {MatchBracketCard} from "./MatchBracketCard";
 import {useTeams} from "@/app/hooks/useTeams";
 import {useAllMatches} from "@/app/hooks/useMatches";
 import {useRegions} from "@/app/hooks/useRegions";
+import {useSeasons} from "@/app/hooks/useSeasons";
 import {Loader2, ZoomIn, ZoomOut, Maximize} from "lucide-react";
 import {Button} from "@/app/components/ui/button";
 import {TransformWrapper, TransformComponent, useControls} from "react-zoom-pan-pinch";
+import {buildPublicMatchHref, buildAdminMatchHref} from "@/app/utils/matchDetailHref";
 
 type PlayoffBracketDisplayProps = {
     brackets: PlayoffBracket[];
     seasonId: string;
     regionId: string;
+    linkContext?: "public" | "admin";
 };
 
 type RoundType = "play_in" | "round_of_16" | "quarterfinal" | "semifinal" | "final" | "third_place";
@@ -120,10 +123,11 @@ function ZoomControls() {
     );
 }
 
-export function PlayoffBracketDisplay({brackets, regionId}: PlayoffBracketDisplayProps) {
+export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext = "public"}: PlayoffBracketDisplayProps) {
     const {teams, isLoading: loadingTeams} = useTeams();
     const {matches, isLoading: loadingMatches} = useAllMatches();
     const {regions} = useRegions();
+    const {seasons} = useSeasons();
 
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -340,6 +344,21 @@ export function PlayoffBracketDisplay({brackets, regionId}: PlayoffBracketDispla
         return region?.code;
     }, [regions, regionId]);
 
+    const seasonSlug = useMemo(() => {
+        return seasons.find(s => s.id === seasonId)?.slug;
+    }, [seasons, seasonId]);
+
+    const buildHref = useCallback((match: Match, homeName?: string | null, awayName?: string | null): string | null => {
+        if (linkContext === "admin") return buildAdminMatchHref(match.id);
+        return buildPublicMatchHref({
+            matchCode: match.match_code,
+            homeTeamName: homeName,
+            awayTeamName: awayName,
+            regionCode,
+            seasonSlug,
+        });
+    }, [linkContext, regionCode, seasonSlug]);
+
     // Prevent browser zoom (Ctrl+scroll) inside the bracket container
     const handlePageWheel = useCallback((e: WheelEvent) => {
         if (e.ctrlKey && containerRef.current?.contains(e.target as Node)) {
@@ -493,6 +512,7 @@ export function PlayoffBracketDisplay({brackets, regionId}: PlayoffBracketDispla
                                                 homeTeam={homeTeam}
                                                 awayTeam={awayTeam}
                                                 regionCode={regionCode}
+                                                href={buildHref(bracket.match, homeTeam?.name, awayTeam?.name)}
                                             />
                                         </div>
                                     );
@@ -514,21 +534,24 @@ export function PlayoffBracketDisplay({brackets, regionId}: PlayoffBracketDispla
                                         {ROUND_LABELS.third_place}
                                     </h3>
                                 </div>
-                                <MatchBracketCard
-                                    bracket={thirdPlaceMatch}
-                                    match={thirdPlaceMatch.match}
-                                    homeTeam={
-                                        thirdPlaceMatch.match.home_team_id
-                                            ? teamsMap.get(thirdPlaceMatch.match.home_team_id)
-                                            : undefined
-                                    }
-                                    awayTeam={
-                                        thirdPlaceMatch.match.away_team_id
-                                            ? teamsMap.get(thirdPlaceMatch.match.away_team_id)
-                                            : undefined
-                                    }
-                                    regionCode={regionCode}
-                                />
+                                {(() => {
+                                    const tpHome = thirdPlaceMatch.match.home_team_id
+                                        ? teamsMap.get(thirdPlaceMatch.match.home_team_id)
+                                        : undefined;
+                                    const tpAway = thirdPlaceMatch.match.away_team_id
+                                        ? teamsMap.get(thirdPlaceMatch.match.away_team_id)
+                                        : undefined;
+                                    return (
+                                        <MatchBracketCard
+                                            bracket={thirdPlaceMatch}
+                                            match={thirdPlaceMatch.match}
+                                            homeTeam={tpHome}
+                                            awayTeam={tpAway}
+                                            regionCode={regionCode}
+                                            href={buildHref(thirdPlaceMatch.match, tpHome?.name, tpAway?.name)}
+                                        />
+                                    );
+                                })()}
                             </div>
                         )}
                     </div>

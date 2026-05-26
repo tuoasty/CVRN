@@ -3,6 +3,7 @@
 import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
 import Image from "next/image";
+import Link from "next/link";
 import { Badge } from "@/app/components/ui/badge";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { Calendar } from "lucide-react";
@@ -13,6 +14,7 @@ interface CompactMatchCardProps {
     awayTeam?: TeamWithRegion;
     regionCode?: string;
     matchLabel: string;
+    href?: string | null;
 }
 
 const getStatusConfig = (status: string) => {
@@ -43,6 +45,7 @@ export default function CompactMatchCard({
                                              awayTeam,
                                              regionCode,
                                              matchLabel,
+                                             href,
                                          }: CompactMatchCardProps) {
     const { match } = matchDetails;
     const statusConfig = getStatusConfig(match.status);
@@ -52,9 +55,8 @@ export default function CompactMatchCard({
     const homeWon = isCompleted && (match.home_sets_won ?? 0) > (match.away_sets_won ?? 0);
     const awayWon = isCompleted && (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0);
 
-    return (
-        <div className="panel p-3 hover:border-primary/30 transition-colors">
-            <div className="space-y-2">
+    const inner = (
+        <div className="space-y-2">
                 <div className="flex items-center justify-between pb-2 border-b border-border/50">
                     <Badge className={`rounded-sm text-[9px] h-4 px-1.5 font-semibold uppercase tracking-wider ${statusConfig.className}`}>
                         {statusConfig.label}
@@ -114,6 +116,15 @@ export default function CompactMatchCard({
                     </span>
                 </div>
             </div>
+    );
+
+    return href ? (
+        <Link href={href} className="block panel p-3 hover:border-primary/30 transition-colors cursor-pointer">
+            {inner}
+        </Link>
+    ) : (
+        <div className="panel p-3 hover:border-primary/30 transition-colors">
+            {inner}
         </div>
     );
 }

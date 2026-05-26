@@ -75,11 +75,11 @@ export async function getMatchDetail(
         const seasonRes = await findSeasonBySlugAndRegion(supabase, p.seasonSlug, regionRes.value.id);
         if (!seasonRes.ok) return seasonRes;
         if (!seasonRes.value) return Err({message: "Season not found", code: "NOT_FOUND"});
-
-        const matchRes = await findMatchByCode(supabase, p.matchCode.toUpperCase(), seasonRes.value.id);
+        const matchRes = await findMatchByCode(supabase, p.matchCode, seasonRes.value.id);
         if (!matchRes.ok) return matchRes;
         if (!matchRes.value) return Err({message: "Match not found", code: "NOT_FOUND"});
-
+        
+        
         return loadDetailForMatch(supabase, matchRes.value);
     } catch (error) {
         logger.error({...p, error}, "Unexpected error fetching match detail");
