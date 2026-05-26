@@ -18,6 +18,8 @@ import {
     getAllMatches,
     getAvailablePlayoffRounds,
     getAvailableTeamsForWeek,
+    getMatchDetail,
+    getMatchDetailById,
     getMatchesForWeek,
     getPlayoffSchedule,
     getRecentMatches,
@@ -117,6 +119,22 @@ export async function getUpcomingMatchesAction(seasonId: string, limit: number =
     if (!limitParsed.success) return Err({message: "Invalid limit", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return getUpcomingMatches(supabase, seasonParsed.data, limitParsed.data);
+}
+
+export async function getMatchDetailAction(
+    regionCode: string,
+    seasonSlug: string,
+    matchCode: string
+) {
+    const supabase = await createServerSupabase();
+    return getMatchDetail(supabase, {regionCode, seasonSlug, matchCode});
+}
+
+export async function getMatchDetailByIdAction(matchId: string) {
+    const parsed = z.uuid().safeParse(matchId);
+    if (!parsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getMatchDetailById(supabase, parsed.data);
 }
 
 export async function getRecentMatchesAction(seasonId: string, limit: number = 5) {

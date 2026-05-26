@@ -1,7 +1,8 @@
 'use client';
 
 import {useMemo, useState} from 'react';
-import {BarChart3, Plus, RefreshCw, Trash2} from 'lucide-react';
+import Link from 'next/link';
+import {BarChart3, ExternalLink, Plus, RefreshCw, Trash2} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
 import {Badge} from '@/app/components/ui/badge';
 import {
@@ -136,7 +137,20 @@ export default function AdminStatsPage() {
                                     const isCompleted = m.status === 'completed';
                                     return (
                                         <tr key={m.matchId} className={configured ? 'bg-primary/5' : undefined}>
-                                            <td className="text-sm font-mono">{m.matchCode ?? m.round ?? '—'}</td>
+                                            <td className="text-sm font-mono">
+                                                {m.synced ? (
+                                                    <Link
+                                                        href={`/admin/matches/${m.matchId}`}
+                                                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                                                        title="View box score"
+                                                    >
+                                                        {m.matchCode ?? m.round ?? '—'}
+                                                        <ExternalLink className="h-3 w-3" />
+                                                    </Link>
+                                                ) : (
+                                                    <span>{m.matchCode ?? m.round ?? '—'}</span>
+                                                )}
+                                            </td>
                                             <td className="text-sm font-medium">
                                                 {teamName(m.homeTeamId)} <span className="text-muted-foreground font-normal">vs</span> {teamName(m.awayTeamId)}
                                             </td>

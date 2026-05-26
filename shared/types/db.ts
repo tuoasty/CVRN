@@ -52,4 +52,10 @@ export type PlayerMatchStats =
 export type MatchSheetConfig =
     Database["public"]["Tables"]["match_sheet_config"]["Row"];
 
+export type PlayerMatchStatSet =
+    Database["public"]["Views"]["v_player_match_stat_sets"]["Row"];
+
+export type PlayerMatchStatTotal =
+    Database["public"]["Views"]["v_player_match_stat_totals"]["Row"];
+
 export type DBClient = SupabaseClient<Database>;

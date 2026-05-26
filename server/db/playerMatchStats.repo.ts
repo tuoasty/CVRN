@@ -1,4 +1,4 @@
-import {DBClient} from "@/shared/types/db";
+import {DBClient, PlayerMatchStatSet, PlayerMatchStatTotal} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {PlayerMatchStatsInsert} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
@@ -13,6 +13,37 @@ export async function findMatchIdsWithStats(supabase: DBClient, matchIds: string
     if (error) return Err(serializeError(error, "DB_ERROR"));
     const unique = Array.from(new Set((data ?? []).map(r => r.match_id)));
     return Ok(unique);
+}
+
+// Per-set rows for a single match, ordered by (set, team, contributions desc).
+export async function findMatchStatSets(
+    supabase: DBClient,
+    matchId: string
+): Promise<Result<PlayerMatchStatSet[]>> {
+    const {data, error} = await supabase
+        .from("v_player_match_stat_sets")
+        .select("*")
+        .eq("match_id", matchId)
+        .order("set_number", {ascending: true})
+        .order("team_id", {ascending: true})
+        .order("contributions", {ascending: false, nullsFirst: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+// Per-match per-player totals (summed across sets).
+export async function findMatchStatTotals(
+    supabase: DBClient,
+    matchId: string
+): Promise<Result<PlayerMatchStatTotal[]>> {
+    const {data, error} = await supabase
+        .from("v_player_match_stat_totals")
+        .select("*")
+        .eq("match_id", matchId)
+        .order("team_id", {ascending: true})
+        .order("contributions", {ascending: false, nullsFirst: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
 }
 
 // Atomic delete-then-insert via the replace_match_player_stats RPC.
