@@ -2,6 +2,7 @@ import {clientLogger} from "@/app/utils/clientLogger";
 
 export const timezoneOptions = [
     { value: "America/New_York", label: "EST (GMT-5)" },
+    { value: "America/Sao_Paulo", label: "BRT (GMT-3)" },
     { value: "Asia/Singapore", label: "SGT (GMT+8)" },
     { value: "Australia/Brisbane", label: "AEST (GMT+10)" },
     { value: "Australia/Sydney", label: "AEDT (GMT+11)" },
@@ -10,6 +11,7 @@ export const timezoneOptions = [
 export function getRegionTimezone(regionCode: string): string {
     const regionTimezoneMap: Record<string, string> = {
         'na': 'America/New_York',
+        'sa': 'America/Sao_Paulo',
         'as': 'Asia/Singapore',
         'oce': 'Australia/Brisbane',
         'eu': 'Europe/London',
@@ -21,6 +23,7 @@ export function getRegionTimezone(regionCode: string): string {
 export function getTimezoneOffset(timezone: string): string {
     const offsetMap: Record<string, string> = {
         'America/New_York': 'GMT-5',
+        'America/Sao_Paulo': 'GMT-3',
         'Asia/Singapore': 'GMT+8',
         'Australia/Brisbane': 'GMT+10',
         'Europe/London': 'GMT+0',
