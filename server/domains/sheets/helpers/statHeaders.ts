@@ -18,7 +18,7 @@ export const STAT_HEADERS: Record<string, keyof StatCounts> = {
   "delay kills": "delay_kills",
   "quick kills": "quick_kills",
   "wipes tools": "wipes_tools",
-  "attempts": "kill_attempts",
+  "total attempts": "kill_attempts",
   "spiking errors": "spiking_errors",
   "assist": "assists",
   "setting errors": "setting_errors",
