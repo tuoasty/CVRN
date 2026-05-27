@@ -12,9 +12,14 @@ import {
     getPlayerByExactUsername,
     setPlayerRoleService,
     transferCaptainService,
+    getPlayerByUsername,
+    getPlayerSeasonStats,
+    getPlayerAwards,
+    getPlayerTeamHistory,
 } from "@/server/domains/player";
+import type {PlayerDetail} from "@/server/domains/player";
 import {createServerSupabase} from "@/server/supabase/server";
-import {Err} from "@/shared/types/result";
+import {Err, Ok, Result} from "@/shared/types/result";
 import {
     SavePlayerToTeamSchema,
     RemovePlayerFromTeamSchema,
@@ -94,5 +99,32 @@ export async function transferCaptainAction(input: unknown) {
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return transferCaptainService(supabase, parsed.data);
+}
+
+export async function getPlayerDetailAction(username: string): Promise<Result<PlayerDetail>> {
+    const supabase = await createServerSupabase();
+
+    const playerResult = await getPlayerByUsername(supabase, {username});
+    if (!playerResult.ok) return playerResult;
+    if (!playerResult.value) return Err({message: "Player not found", code: "NOT_FOUND"});
+
+    const player = playerResult.value;
+
+    const [statsResult, awardsResult, historyResult] = await Promise.all([
+        getPlayerSeasonStats(supabase, {playerId: player.id}),
+        getPlayerAwards(supabase, {playerId: player.id}),
+        getPlayerTeamHistory(supabase, {playerId: player.id}),
+    ]);
+
+    if (!statsResult.ok) return statsResult;
+    if (!awardsResult.ok) return awardsResult;
+    if (!historyResult.ok) return historyResult;
+
+    return Ok({
+        player,
+        seasonStats: statsResult.value,
+        awards: awardsResult.value,
+        teamHistory: historyResult.value,
+    });
 }
 

@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import AvatarImage from "@/app/components/ui/AvatarImage";
 import { useRouter } from "next/navigation";
+import { buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
 import { useTeamWithPlayers } from "@/app/hooks/useTeams";
 import { useTeamNameHistory } from "@/app/hooks/useTeamNameHistory";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
@@ -317,16 +319,44 @@ export default function PublicTeamDetailPage({
                     <span className="text-sm text-muted-foreground">{players.length} / 18</span>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-9 gap-2 sm:gap-3">
-                    <PublicLeadershipCard role="captain" player={captain} />
-                    <PublicLeadershipCard role="vice_captain" player={viceCaptain} />
-                    <PublicLeadershipCard role="court_captain" player={courtCaptain} />
+                    {captain?.username ? (
+                        <Link href={buildPublicPlayerHref(captain.username) ?? "#"}>
+                            <PublicLeadershipCard role="captain" player={captain} />
+                        </Link>
+                    ) : (
+                        <PublicLeadershipCard role="captain" player={captain} />
+                    )}
+                    {viceCaptain?.username ? (
+                        <Link href={buildPublicPlayerHref(viceCaptain.username) ?? "#"}>
+                            <PublicLeadershipCard role="vice_captain" player={viceCaptain} />
+                        </Link>
+                    ) : (
+                        <PublicLeadershipCard role="vice_captain" player={viceCaptain} />
+                    )}
+                    {courtCaptain?.username ? (
+                        <Link href={buildPublicPlayerHref(courtCaptain.username) ?? "#"}>
+                            <PublicLeadershipCard role="court_captain" player={courtCaptain} />
+                        </Link>
+                    ) : (
+                        <PublicLeadershipCard role="court_captain" player={courtCaptain} />
+                    )}
                     {otherPlayers.map((player, i) => (
-                        <PublicPlayerCard
-                            key={player.id}
-                            player={player}
-                            index={i + 4}
-                            teamColor={teamColor}
-                        />
+                        player.username ? (
+                            <Link key={player.id} href={buildPublicPlayerHref(player.username) ?? "#"}>
+                                <PublicPlayerCard
+                                    player={player}
+                                    index={i + 4}
+                                    teamColor={teamColor}
+                                />
+                            </Link>
+                        ) : (
+                            <PublicPlayerCard
+                                key={player.id}
+                                player={player}
+                                index={i + 4}
+                                teamColor={teamColor}
+                            />
+                        )
                     ))}
                     {Array.from({ length: openSlots }).map((_, i) => (
                         <PublicOpenSlotCard

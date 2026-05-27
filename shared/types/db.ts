@@ -59,3 +59,6 @@ export type PlayerMatchStatTotal =
     Database["public"]["Views"]["v_player_match_stat_totals"]["Row"];
 
 export type DBClient = SupabaseClient<Database>;
+
+export type PlayerSeasonStatRow =
+    Database["public"]["Views"]["v_player_season_stats"]["Row"];

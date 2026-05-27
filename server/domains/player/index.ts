@@ -10,6 +10,10 @@ export {addExistingPlayerToTeam} from "./commands/addExistingPlayerToTeam";
 export {setPlayerRoleService} from "./commands/setPlayerRole";
 export {transferCaptainService} from "./commands/transferCaptain";
 export {lazySyncPlayer} from "./helpers/lazySyncPlayer";
+export {getPlayerByUsername} from "./queries/getPlayerByUsername";
+export {getPlayerSeasonStats} from "./queries/getPlayerSeasonStats";
+export {getPlayerAwards} from "./queries/getPlayerAwards";
+export {getPlayerTeamHistory} from "./queries/getPlayerTeamHistory";
 export type {
     RobloxUserIdInput,
     SavePlayerInput,
@@ -27,6 +31,11 @@ export type {
     PlayerWithRole,
     SetPlayerRoleInput,
     TransferCaptainInput,
+    PlayerWithCurrentTeam,
+    PlayerSeasonStat,
+    PlayerAward,
+    PlayerTeamHistoryEntry,
+    PlayerDetail,
 } from "./types";
 export {
     PlayerRoleSchema,

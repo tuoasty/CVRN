@@ -31,3 +31,8 @@ export function buildPublicTeamHref(args: BuildPublicTeamHrefArgs): string | nul
     if (!args.regionCode || !args.seasonSlug || !args.teamName) return null;
     return `/teams/${encodeURIComponent(args.regionCode.toLowerCase())}/${encodeURIComponent(args.seasonSlug.toLowerCase())}/${encodeURIComponent(toSlug(args.teamName))}`;
 }
+
+export function buildPublicPlayerHref(username: string | null | undefined): string | null {
+    if (!username) return null;
+    return `/players/${encodeURIComponent(username.toLowerCase())}`;
+}

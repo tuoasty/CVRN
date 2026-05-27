@@ -2,6 +2,8 @@
 
 import {useCallback, useRef} from "react";
 import Image from "next/image";
+import Link from "next/link";
+import {buildPublicPlayerHref} from "@/app/utils/matchDetailHref";
 import {Team} from "@/shared/types/db";
 import {Table, TableHeader, TableBody, TableRow, TableHead, TableCell} from "@/app/components/ui/table";
 import {Tooltip, TooltipContent, TooltipTrigger, TooltipProvider} from "@/app/components/ui/tooltip";
@@ -305,8 +307,9 @@ function TeamTotalRow({
 
 function PlayerCell({row}: {row: StatRow}) {
     const hasBothNames = !!row.display_name && !!row.username && row.display_name !== row.username;
+    const href = buildPublicPlayerHref(row.username);
 
-    return (
+    const content = (
         <div className="flex items-center gap-2 min-w-0">
             <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border shrink-0 bg-muted">
                 {row.avatar_url && (
@@ -330,6 +333,15 @@ function PlayerCell({row}: {row: StatRow}) {
             </div>
         </div>
     );
+
+    if (href) {
+        return (
+            <Link href={href} className="block hover:opacity-80 transition-opacity">
+                {content}
+            </Link>
+        );
+    }
+    return content;
 }
 
 function TeamLabel({team}: {team: Team}) {
