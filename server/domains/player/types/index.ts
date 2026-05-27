@@ -15,6 +15,8 @@ export interface UpdatePlayerInput {
     displayName?: string | null;
     avatarUrl?: string | null;
     lastSyncedAt?: string;
+    fullAvatarUrl?: string | null;
+    fullAvatarLastSyncedAt?: string | null;
 }
 
 export interface AddPlayerToTeamInput {
@@ -48,6 +50,58 @@ export interface PlayerWithRole {
     last_synced_at: string | null;
     created_at: string;
     role: "captain" | "vice_captain" | "court_captain" | "player";
+}
+
+import {Player, PlayerSeasonStatRow} from "@/shared/types/db";
+
+export interface PlayerWithCurrentTeam extends Player {
+    current_team: {
+        team_id: string;
+        team_name: string;
+        team_logo_url: string | null;
+        team_logo_bg_removed: boolean;
+        team_brick_color: string | null;
+        season_name: string;
+        region_code: string;
+        region_name: string;
+    } | null;
+}
+
+export interface PlayerSeasonStat extends PlayerSeasonStatRow {
+    season_name: string;
+    season_slug: string;
+    region_code: string;
+}
+
+export interface PlayerAward {
+    id: string;
+    award_name: string;
+    category: string;
+    season_id: string;
+    season_name: string;
+    region_code: string;
+    team_name: string | null;
+}
+
+export interface PlayerTeamHistoryEntry {
+    team_id: string;
+    team_name: string;
+    team_logo_url: string | null;
+    team_logo_bg_removed: boolean;
+    team_brick_color: string | null;
+    season_id: string;
+    season_name: string;
+    region_code: string;
+    role: "captain" | "vice_captain" | "court_captain" | "player";
+    joined_at: string;
+    left_at: string | null;
+}
+
+export interface PlayerDetail {
+    player: PlayerWithCurrentTeam;
+    seasonStats: PlayerSeasonStat[];
+    awards: PlayerAward[];
+    teamHistory: PlayerTeamHistoryEntry[];
 }
 
 export type {
