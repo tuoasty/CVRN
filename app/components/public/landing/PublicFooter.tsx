@@ -95,7 +95,7 @@ export default function PublicFooter() {
                         <p className="text-xs font-semibold">toast</p>
                         <p className="text-[10px] text-muted-foreground tracking-wide">@tuoasty</p>
                         <p className="text-[10px] text-muted-foreground mt-1.5 leading-relaxed">
-                            Designed & developed the CVRN league management platform.
+                            Designer & developer of CVRN.net.
                         </p>
                     </div>
                 </div>

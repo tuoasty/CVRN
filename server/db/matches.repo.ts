@@ -363,3 +363,52 @@ export async function findPlayoffMatchesBySeason(
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as PlayoffMatchRow[]);
 }
+
+export async function findWeekMatchCountsBySeason(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<{ week: number; count: number }[]>> {
+    const { data, error } = await supabase
+        .from("matches")
+        .select("week")
+        .eq("season_id", seasonId)
+        .eq("match_type", "season")
+        .not("week", "is", null)
+        .order("week", { ascending: true });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    const counts: Record<number, number> = {};
+    for (const { week } of data ?? []) {
+        if (week != null) counts[week] = (counts[week] ?? 0) + 1;
+    }
+    return Ok(Object.entries(counts).map(([week, count]) => ({ week: parseInt(week, 10), count })));
+}
+
+export async function findDefaultWeekForSeason(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<number>> {
+    // First: find the week of the nearest upcoming match
+    const { data: upcoming, error: upcomingErr } = await supabase
+        .from("matches")
+        .select("week")
+        .eq("season_id", seasonId)
+        .not("week", "is", null)
+        .gte("scheduled_at", new Date().toISOString())
+        .order("scheduled_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+    if (upcomingErr) return Err(serializeError(upcomingErr, "DB_ERROR"));
+    if (upcoming?.week != null) return Ok(upcoming.week);
+
+    // Fallback: last week in the season (all matches are in the past)
+    const { data: latest, error: latestErr } = await supabase
+        .from("matches")
+        .select("week")
+        .eq("season_id", seasonId)
+        .not("week", "is", null)
+        .order("week", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+    if (latestErr) return Err(serializeError(latestErr, "DB_ERROR"));
+    return Ok(latest?.week ?? 1);
+}
