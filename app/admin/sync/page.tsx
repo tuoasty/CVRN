@@ -30,6 +30,7 @@ import {
     toggleCronEnabledAction,
     getLastSyncTimesAction,
 } from '@/app/actions/sheets.actions';
+import { useRegions } from '@/app/hooks';
 
 const SHEET_TYPES = ['teams', 'qualifier', 'playoff'] as const;
 
@@ -57,6 +58,7 @@ const DEFAULT_FORM: FormState = {
 
 export default function AdminSyncPage() {
     const {seasons} = useSeasons();
+    const {regions} = useRegions();
     const router = useRouter();
 
     const [configs, setConfigs] = useState<SheetConfig[]>([]);
@@ -85,6 +87,10 @@ export default function AdminSyncPage() {
     const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
     const [previewError, setPreviewError] = useState<string | null>(null);
 
+    const regionMap = Object.fromEntries(
+        regions.map(r => [r.id, r])
+    )
+
     const loadConfigs = useCallback(async () => {
         setConfigsLoading(true);
         const result = await getSheetConfigsAction();
@@ -99,8 +105,13 @@ export default function AdminSyncPage() {
     useEffect(() => { loadConfigs(); }, [loadConfigs]);
 
     const seasonName = (seasonId: string) => {
-        const s = seasons.find(s => s.id === seasonId);
-        return s?.name ?? seasonId.slice(0, 8);
+        const season = seasons.find(s => s.id === seasonId);
+        console.log(season)
+
+        if(!season) return seasonId.slice(0,8);
+        const region = regionMap[season.region_id];
+
+        return region ? `${season.name} (${region.code.toUpperCase()})` : season.name; 
     };
 
     const handleOpenAdd = () => {
@@ -468,7 +479,7 @@ export default function AdminSyncPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {seasons.map(s => (
-                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                        <SelectItem key={s.id} value={s.id}>{seasonName(s.id)}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
