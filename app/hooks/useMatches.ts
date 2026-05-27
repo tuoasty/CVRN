@@ -6,6 +6,9 @@ import {
     getAllMatchesAction,
     getAvailablePlayoffRoundsAction,
     getAvailableTeamsForWeekAction,
+    getDefaultWeekForSeasonAction,
+    getPlayoffRoundCountsAction,
+    getWeekMatchCountsAction,
     getMatchesForWeekAction,
 
     getPlayoffScheduleAction,
@@ -70,6 +73,24 @@ async function fetchUpcomingMatches([, seasonId, limit]: [string, string, number
 
 async function fetchRecentMatches([, seasonId, limit]: [string, string, number]): Promise<MatchWithDetails[]> {
     const result = await getRecentMatchesAction(seasonId, limit);
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+async function fetchDefaultWeekForSeason([, seasonId]: [string, string]): Promise<number> {
+    const result = await getDefaultWeekForSeasonAction(seasonId);
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+async function fetchPlayoffRoundCounts([, seasonId]: [string, string]): Promise<{ round: string; count: number }[]> {
+    const result = await getPlayoffRoundCountsAction(seasonId);
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+async function fetchWeekMatchCounts([, seasonId]: [string, string]): Promise<{ week: number; count: number }[]> {
+    const result = await getWeekMatchCountsAction(seasonId);
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
 }
@@ -147,6 +168,44 @@ export function useRecentMatches(seasonId: string | null, limit: number = 5) {
     return { matches: (data as MatchWithDetails[] | undefined) ?? [], isLoading, error: error?.message ?? null, mutate };
 }
 
+export function useDefaultWeekForSeason(seasonId: string | null) {
+    const key = seasonId ? ['defaultWeek', seasonId] as const : null;
+    const { data, error, isLoading } = useSWR(
+        key,
+        fetchDefaultWeekForSeason as BareFetcher<number>,
+        { dedupingInterval: MATCHES_TTL, revalidateOnFocus: false }
+    );
+    return { defaultWeek: (data as number | undefined) ?? null, isLoading, error: error?.message ?? null };
+}
+
+export function usePlayoffRoundCounts(seasonId: string | null) {
+    const key = seasonId ? ['playoffRoundCounts', seasonId] as const : null;
+    const { data, error, isLoading } = useSWR(
+        key,
+        fetchPlayoffRoundCounts as BareFetcher<{ round: string; count: number }[]>,
+        { dedupingInterval: MATCHES_TTL, revalidateOnFocus: false }
+    );
+    return {
+        roundCounts: data ?? [],
+        isLoading,
+        error: error?.message ?? null,
+    };
+}
+
+export function useWeekMatchCounts(seasonId: string | null) {
+    const key = seasonId ? ['weekMatchCounts', seasonId] as const : null;
+    const { data, error, isLoading } = useSWR(
+        key,
+        fetchWeekMatchCounts as BareFetcher<{ week: number; count: number }[]>,
+        { dedupingInterval: MATCHES_TTL, revalidateOnFocus: false }
+    );
+    return {
+        weekCounts: data ?? [],
+        isLoading,
+        error: error?.message ?? null,
+    };
+}
+
 // --- Mutation actions ---
 
 export async function updateMatchSchedule(input: UpdateMatchScheduleInput): Promise<Result<true, SerializableError>> {
@@ -202,5 +261,5 @@ export async function deleteMatch(matchId: string): Promise<Result<true, Seriali
 // Utility for invalidating match related caches from outside
 export function invalidateMatchCaches() {
     globalMutate('matches');
-    globalMutate((key: unknown) => Array.isArray(key) && ['matchesForWeek', 'weekSchedule', 'playoffSchedule', 'availableTeams', 'upcoming', 'recent', 'matchSets', 'playoffRounds'].includes(key[0]), undefined, { revalidate: true });
+    globalMutate((key: unknown) => Array.isArray(key) && ['matchesForWeek', 'weekSchedule', 'playoffSchedule', 'availableTeams', 'upcoming', 'recent', 'matchSets', 'playoffRounds', 'playoffRoundCounts'].includes(key[0]), undefined, { revalidate: true });
 }

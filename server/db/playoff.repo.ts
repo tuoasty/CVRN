@@ -278,3 +278,20 @@ export async function deletePlayoffMatchesBySeasonId(
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);
 }
+
+export async function findPlayoffRoundCountsBySeason(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<{ round: string; count: number }[]>> {
+    const { data, error } = await supabase
+        .from("playoff_brackets")
+        .select("round")
+        .eq("season_id", seasonId)
+        .order("round", { ascending: true });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    const counts: Record<string, number> = {};
+    for (const { round } of data ?? []) {
+        counts[round] = (counts[round] ?? 0) + 1;
+    }
+    return Ok(Object.entries(counts).map(([round, count]) => ({ round, count })));
+}

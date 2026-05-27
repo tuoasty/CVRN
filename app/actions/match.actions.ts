@@ -18,6 +18,9 @@ import {
     getAllMatches,
     getAvailablePlayoffRounds,
     getAvailableTeamsForWeek,
+    getDefaultWeekForSeason,
+    getPlayoffRoundCounts,
+    getWeekMatchCounts,
     getMatchDetail,
     getMatchDetailById,
     getMatchesForWeek,
@@ -135,6 +138,27 @@ export async function getMatchDetailByIdAction(matchId: string) {
     if (!parsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return getMatchDetailById(supabase, parsed.data);
+}
+
+export async function getDefaultWeekForSeasonAction(seasonId: string) {
+    const parsed = z.uuid().safeParse(seasonId);
+    if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getDefaultWeekForSeason(supabase, parsed.data);
+}
+
+export async function getPlayoffRoundCountsAction(seasonId: string) {
+    const parsed = z.uuid().safeParse(seasonId);
+    if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getPlayoffRoundCounts(supabase, parsed.data);
+}
+
+export async function getWeekMatchCountsAction(seasonId: string) {
+    const parsed = z.uuid().safeParse(seasonId);
+    if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getWeekMatchCounts(supabase, parsed.data);
 }
 
 export async function getRecentMatchesAction(seasonId: string, limit: number = 5) {
