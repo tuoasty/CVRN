@@ -11,7 +11,6 @@ export async function getPlayerAwards(
     p: {playerId: string}
 ): Promise<Result<PlayerAward[]>> {
     try {
-        // Fetch season_awards and player_team_seasons in parallel
         const [awardsRes, teamSeasonsRes] = await Promise.all([
             supabase
                 .from("season_awards")
@@ -21,14 +20,14 @@ export async function getPlayerAwards(
                     category,
                     season_id,
                     awarded_at,
-                    season:seasons!season_id(name, region:regions!region_id(code))
+                    season:seasons!season_id(name, end_date, region:regions!region_id(code))
                 `)
                 .eq("player_id", p.playerId)
                 .in("category", AWARD_CATEGORIES)
                 .order("awarded_at", {ascending: false}),
             supabase
                 .from("player_team_seasons")
-                .select("team_id, season_id, team:teams!team_id(name)")
+                .select("team_id, season_id, team:teams!team_id(name, logo_url, logo_bg_removed)")
                 .eq("player_id", p.playerId)
                 .order("joined_at", {ascending: false}),
         ]);
@@ -38,23 +37,24 @@ export async function getPlayerAwards(
             return Err(serializeError(awardsRes.error, "DB_ERROR"));
         }
 
-        // Build (season_id → team_name) map from most recent join per season
         const teamNameBySeason = new Map<string, string>();
-        // Also build a set of unique (season_id::team_id) for podium lookup
+        const teamLogoUrlBySeason = new Map<string, string | null>();
+        const teamLogoBgRemovedBySeason = new Map<string, boolean>();
         const playerTeamPairs = new Set<string>();
-        const teamIdsBySeason = new Map<string, string>(); // season_id → team_id
+        const teamIdsBySeason = new Map<string, string>();
 
         for (const row of teamSeasonsRes.data ?? []) {
-            const team = row.team as {name: string} | null;
+            const team = row.team as {name: string; logo_url: string | null; logo_bg_removed: boolean} | null;
             const key = `${row.season_id}::${row.team_id}`;
             playerTeamPairs.add(key);
             if (!teamNameBySeason.has(row.season_id) && team?.name) {
                 teamNameBySeason.set(row.season_id, team.name);
+                teamLogoUrlBySeason.set(row.season_id, team.logo_url ?? null);
+                teamLogoBgRemovedBySeason.set(row.season_id, team.logo_bg_removed ?? false);
                 teamIdsBySeason.set(row.season_id, row.team_id);
             }
         }
 
-        // Fetch podium finishes (places 2–3) for the player's teams
         const allTeamIds = Array.from(new Set(
             (teamSeasonsRes.data ?? []).map(r => r.team_id)
         ));
@@ -68,8 +68,8 @@ export async function getPlayerAwards(
                     place,
                     season_id,
                     team_id,
-                    season:seasons!season_id(name, region:regions!region_id(code)),
-                    team:teams!team_id(name)
+                    season:seasons!season_id(name, end_date, region:regions!region_id(code)),
+                    team:teams!team_id(name, logo_url, logo_bg_removed)
                 `)
                 .in("team_id", allTeamIds)
                 .in("place", [2, 3]);
@@ -77,8 +77,8 @@ export async function getPlayerAwards(
             podiumAwards = (podiumData ?? [])
                 .filter(r => playerTeamPairs.has(`${r.season_id}::${r.team_id}`))
                 .map(r => {
-                    const season = r.season as {name: string; region: {code: string}} | null;
-                    const team = r.team as {name: string} | null;
+                    const season = r.season as {name: string; end_date: string | null; region: {code: string}} | null;
+                    const team = r.team as {name: string; logo_url: string | null; logo_bg_removed: boolean} | null;
                     return {
                         id: r.id,
                         award_name: r.place === 2 ? "Runner Up" : "Third Place",
@@ -87,13 +87,15 @@ export async function getPlayerAwards(
                         season_name: season?.name ?? "",
                         region_code: season?.region?.code ?? "",
                         team_name: team?.name ?? null,
+                        awarded_at: season?.end_date ?? null,
+                        team_logo_url: team?.logo_url ?? null,
+                        team_logo_bg_removed: team?.logo_bg_removed ?? false,
                     };
                 });
         }
 
-        // Map season_awards rows
         const rows: PlayerAward[] = (awardsRes.data ?? []).map(r => {
-            const season = r.season as {name: string; region: {code: string}} | null;
+            const season = r.season as {name: string; end_date: string | null; region: {code: string}} | null;
             return {
                 id: r.id,
                 award_name: r.award_name,
@@ -101,11 +103,13 @@ export async function getPlayerAwards(
                 season_id: r.season_id,
                 season_name: season?.name ?? "",
                 region_code: season?.region?.code ?? "",
-                team_name: r.category === "champion_roster" ? (teamNameBySeason.get(r.season_id) ?? null) : null,
+                team_name: teamNameBySeason.get(r.season_id) ?? null,
+                awarded_at: season?.end_date ?? null,
+                team_logo_url: teamLogoUrlBySeason.get(r.season_id) ?? null,
+                team_logo_bg_removed: teamLogoBgRemovedBySeason.get(r.season_id) ?? false,
             };
         });
 
-        // Combine: season_awards first (already ordered by awarded_at), then podium finishes
         return Ok([...rows, ...podiumAwards]);
     } catch (error) {
         logger.error({error, playerId: p.playerId}, "Unexpected error in getPlayerAwards");

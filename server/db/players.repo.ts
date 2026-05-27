@@ -188,8 +188,6 @@ export async function updatePlayer(supabase: DBClient, p: UpdatePlayerInput): Pr
     if (p.displayName !== undefined) updates.display_name = p.displayName;
     if (p.avatarUrl !== undefined) updates.avatar_url = p.avatarUrl;
     if (p.lastSyncedAt !== undefined) updates.last_synced_at = p.lastSyncedAt;
-    if (p.fullAvatarUrl !== undefined) updates.full_avatar_url = p.fullAvatarUrl;
-    if (p.fullAvatarLastSyncedAt !== undefined) updates.full_avatar_last_synced_at = p.fullAvatarLastSyncedAt;
 
     const {data, error} = await supabase
         .from("players")

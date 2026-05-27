@@ -14,7 +14,6 @@ export {getPlayerByUsername} from "./queries/getPlayerByUsername";
 export {getPlayerSeasonStats} from "./queries/getPlayerSeasonStats";
 export {getPlayerAwards} from "./queries/getPlayerAwards";
 export {getPlayerTeamHistory} from "./queries/getPlayerTeamHistory";
-export {lazySyncPlayerFullAvatar} from "./helpers/lazySyncPlayerFullAvatar";
 export type {
     RobloxUserIdInput,
     SavePlayerInput,

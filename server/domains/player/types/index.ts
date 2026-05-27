@@ -15,8 +15,6 @@ export interface UpdatePlayerInput {
     displayName?: string | null;
     avatarUrl?: string | null;
     lastSyncedAt?: string;
-    fullAvatarUrl?: string | null;
-    fullAvatarLastSyncedAt?: string | null;
 }
 
 export interface AddPlayerToTeamInput {
@@ -81,6 +79,9 @@ export interface PlayerAward {
     season_name: string;
     region_code: string;
     team_name: string | null;
+    awarded_at: string | null;
+    team_logo_url: string | null;
+    team_logo_bg_removed: boolean;
 }
 
 export interface PlayerTeamHistoryEntry {

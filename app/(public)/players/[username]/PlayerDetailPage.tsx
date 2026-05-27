@@ -13,21 +13,33 @@ const ROLE_LABELS: Record<string, string> = {
     court_captain: "Court Captain",
 };
 
-const CATEGORY_DOT: Record<string, string> = {
-    individual_winners: "bg-yellow-400",
-    first_team: "bg-blue-400",
-    champion_roster: "bg-green-400",
-    runner_up: "bg-slate-400",
-    third_place: "bg-amber-600",
-};
-
 const PODIUM_CATEGORIES = new Set(["champion_roster", "runner_up", "third_place"]);
 
+const ACHIEVEMENT_ROW: Record<string, {row: string; hover: string}> = {
+    champion_roster: {row: "bg-yellow-500/5", hover: "hover:bg-yellow-500/10"},
+    runner_up:       {row: "bg-slate-500/5",  hover: "hover:bg-slate-400/10"},
+    third_place:     {row: "bg-amber-600/5",  hover: "hover:bg-amber-600/10"},
+};
+
+const AWARD_CATEGORY_STYLE: Record<string, {dot: string; text: string}> = {
+    individual_winners: {dot: "bg-yellow-400", text: "text-yellow-500 dark:text-yellow-400"},
+    first_team:         {dot: "bg-blue-400",   text: "text-blue-500 dark:text-blue-400"},
+};
+
+function formatDate(isoString: string | null): string {
+    if (!isoString) return "—";
+    const d = new Date(isoString);
+    return d.toLocaleDateString("en-US", {year: "numeric", month: "short", day: "numeric"});
+}
+
+function placeLabel(category: string): {text: string; className: string} {
+    if (category === "champion_roster") return {text: "1st", className: "font-bold text-yellow-500"};
+    if (category === "runner_up") return {text: "2nd", className: "font-bold text-slate-400"};
+    if (category === "third_place") return {text: "3rd", className: "font-bold text-amber-600"};
+    return {text: "—", className: "text-muted-foreground"};
+}
+
 function awardLabel(award: PlayerAward): string {
-    const team = award.team_name ? `${award.team_name} · ` : "";
-    if (award.category === "champion_roster") return `CHAMPION · ${team}${award.season_name}`;
-    if (award.category === "runner_up") return `RUNNER UP · ${team}${award.season_name}`;
-    if (award.category === "third_place") return `THIRD PLACE · ${team}${award.season_name}`;
     if (award.category === "first_team") return `First Team ${award.award_name}`;
     return award.award_name;
 }
@@ -40,85 +52,124 @@ export default function PlayerDetailPage({detail}: Props) {
     const {player, seasonStats, awards, teamHistory} = detail;
     const team = player.current_team;
 
+    const achievements = awards.filter(a => PODIUM_CATEGORIES.has(a.category));
+    const individualAwards = awards.filter(a => !PODIUM_CATEGORIES.has(a.category) && a.category !== "staff_team");
+
     return (
         <div className="max-w-[1440px] mx-auto px-4 py-6 space-y-8">
             <BackButton />
 
             {/* Header */}
-            <div className="flex gap-6 items-start">
-                {/* Full-body avatar */}
-                <div className="relative shrink-0 w-[180px] h-[240px] rounded-md overflow-hidden bg-muted border border-border">
-                    {player.full_avatar_url ? (
-                        <Image
-                            src={player.full_avatar_url}
-                            alt={player.username ?? ""}
-                            fill
-                            sizes="180px"
-                            className="object-cover"
-                            unoptimized
-                        />
-                    ) : (
-                        <div className="absolute inset-0 bg-muted/50" />
-                    )}
-                </div>
-
-                {/* Info */}
-                <div className="flex flex-col gap-1 pt-1 min-w-0">
-                    {/* Region tag */}
-                    {team && (
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-primary">
-                            {team.region_code} · {team.season_name}
-                        </p>
-                    )}
-
-                    {/* Display name */}
-                    <h1 className="text-2xl font-bold leading-tight truncate">
-                        {player.display_name || player.username}
-                    </h1>
-
-                    {/* Username */}
-                    {player.username && (
-                        <p className="text-sm text-muted-foreground">@{player.username}</p>
-                    )}
-
-                    {/* Current team — with brick color accent */}
-                    {team && (
-                        <div
-                            className="flex items-center gap-3 mt-3 px-3 py-2 rounded-md border border-border w-fit"
-                            style={team.team_brick_color ? {borderLeftColor: team.team_brick_color, borderLeftWidth: 3} : {}}
-                        >
-                            {team.team_logo_url && (
-                                <div className="relative w-9 h-9 rounded-sm overflow-hidden shrink-0">
-                                    <Image
-                                        src={team.team_logo_url}
-                                        alt={team.team_name}
-                                        fill
-                                        sizes="36px"
-                                        className={cn("object-contain", getLogoClassName(team.team_logo_bg_removed))}
-                                        unoptimized
-                                    />
-                                </div>
-                            )}
-                            <div className="min-w-0">
-                                <p className="text-sm font-semibold leading-tight">{team.team_name}</p>
-                                <p className="text-xs text-muted-foreground">{team.region_code} · {team.season_name}</p>
-                            </div>
+            <div
+                className="relative rounded-lg overflow-hidden"
+                style={team?.team_brick_color ? {
+                    background: `linear-gradient(115deg, ${team.team_brick_color}35 0%, ${team.team_brick_color}18 50%, transparent 100%)`,
+                } : undefined}
+            >
+                <div className="flex gap-1 p-4 pb-0">
+                    {/* Team logo */}
+                    {team?.team_logo_url && (
+                        <div className="self-start relative shrink-0 w-14 h-14 sm:w-20 sm:h-20">
+                            <Image
+                                src={team.team_logo_url}
+                                alt={team.team_name}
+                                fill
+                                sizes="(max-width: 640px) 56px, 80px"
+                                className={getLogoClassName(team.team_logo_bg_removed)}
+                                unoptimized
+                            />
                         </div>
                     )}
+
+                    {/* Avatar */}
+                    <div className="self-end relative shrink-0 w-[140px] h-[140px] sm:w-[200px] sm:h-[200px]">
+                        {player.avatar_url && (
+                            <Image
+                                src={player.avatar_url}
+                                alt={player.username ?? ""}
+                                fill
+                                sizes="(max-width: 640px) 140px, 200px"
+                                className="object-contain object-bottom"
+                                unoptimized
+                            />
+                        )}
+                    </div>
+
+                    {/* Player info */}
+                    <div className="self-center flex flex-col gap-0.5 pl-3 sm:pl-8 min-w-0 flex-1">
+                        {team && (
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">
+                                {team.team_name}
+                            </p>
+                        )}
+                        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black leading-none tracking-tight truncate">
+                            {player.display_name || player.username}
+                        </h1>
+                        {player.username && (
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">@{player.username}</p>
+                        )}
+                    </div>
                 </div>
+
+                {team?.team_brick_color && (
+                    <div
+                        className="mt-2 h-px w-full"
+                        style={{background: `linear-gradient(to right, ${team.team_brick_color}80, transparent)`}}
+                    />
+                )}
             </div>
 
             {/* Season Stats */}
             <PlayerSeasonStatsTable rows={seasonStats} />
 
+            {/* Achievements */}
+            {achievements.length > 0 && (
+                <div className="space-y-3 max-w-2xl">
+                    <h2 className="text-lg font-semibold">Achievements</h2>
+                    <div className="panel overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full table-fixed text-sm">
+                                <thead>
+                                    <tr className="border-b border-border bg-muted/40">
+                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
+                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
+                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Place</th>
+                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {achievements.map(a => (
+                                        <AchievementRow key={a.id} award={a} />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Awards */}
-            {awards.filter(a => a.category !== "staff_team").length > 0 && (
-                <div className="space-y-3">
-                    <h2 className="text-lg font-semibold">Awards &amp; Championships</h2>
-                    <div className="panel divide-y divide-border">
-                        {awards.filter(a => a.category !== "staff_team").map(award => (
-                            <AwardRow key={award.id} award={award} />
-                        ))}
+            {individualAwards.length > 0 && (
+                <div className="space-y-3 max-w-2xl">
+                    <h2 className="text-lg font-semibold">Awards</h2>
+                    <div className="panel overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full table-fixed text-sm">
+                                <thead>
+                                    <tr className="border-b border-border bg-muted/40">
+                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
+                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
+                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Award</th>
+                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {individualAwards.map(a => (
+                                        <AwardRow key={a.id} award={a} />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}
@@ -138,21 +189,60 @@ export default function PlayerDetailPage({detail}: Props) {
     );
 }
 
-function AwardRow({award}: {award: PlayerAward}) {
-    const dotClass = CATEGORY_DOT[award.category] ?? "bg-muted-foreground";
-    const isPodium = PODIUM_CATEGORIES.has(award.category);
+function TeamCell({logoUrl, logoBgRemoved, name}: {logoUrl: string | null; logoBgRemoved: boolean; name: string | null}) {
+    if (!name) return <span className="text-muted-foreground">—</span>;
     return (
-        <div className="flex items-center gap-3 px-4 py-3">
-            <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", dotClass)} />
-            <span className={cn("flex-1 font-medium", isPodium ? "text-base" : "text-sm")}>
-                {awardLabel(award)}
-            </span>
-            {!isPodium && (
-                <span className="text-xs text-muted-foreground shrink-0 px-2 py-0.5 bg-muted rounded-sm">
-                    {award.region_code} · {award.season_name}
-                </span>
+        <div className="flex items-center gap-2">
+            {logoUrl && (
+                <div className="relative w-5 h-5 shrink-0">
+                    <Image
+                        src={logoUrl}
+                        alt={name}
+                        fill
+                        sizes="20px"
+                        className={cn("object-contain", getLogoClassName(logoBgRemoved))}
+                        unoptimized
+                    />
+                </div>
             )}
+            <span>{name}</span>
         </div>
+    );
+}
+
+function AchievementRow({award}: {award: PlayerAward}) {
+    const place = placeLabel(award.category);
+    const rowStyle = ACHIEVEMENT_ROW[award.category] ?? {row: "", hover: "hover:bg-muted/20"};
+    return (
+        <tr className={cn("transition-colors", rowStyle.row, rowStyle.hover)}>
+            <td className="px-4 py-3 text-muted-foreground tabular-nums">{formatDate(award.awarded_at)}</td>
+            <td className="px-4 py-3 text-muted-foreground">{award.region_code} · {award.season_name}</td>
+            <td className="px-4 py-3">
+                <span className={place.className}>{place.text}</span>
+            </td>
+            <td className="px-4 py-3">
+                <TeamCell logoUrl={award.team_logo_url} logoBgRemoved={award.team_logo_bg_removed} name={award.team_name} />
+            </td>
+        </tr>
+    );
+}
+
+function AwardRow({award}: {award: PlayerAward}) {
+    const style = AWARD_CATEGORY_STYLE[award.category] ?? {dot: "bg-muted-foreground", text: ""};
+    return (
+        <tr className="hover:bg-muted/20 transition-colors">
+            <td className="px-4 py-3 text-muted-foreground tabular-nums">{formatDate(award.awarded_at)}</td>
+            <td className="px-4 py-3 text-muted-foreground">{award.region_code} · {award.season_name}</td>
+            <td className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                    <span className={cn("w-2 h-2 rounded-full shrink-0", style.dot)} />
+                    <span className={cn("font-medium", style.text)}>{awardLabel(award)}</span>
+                </div>
+            </td>
+            <td className="px-4 py-3">
+                <TeamCell logoUrl={award.team_logo_url} logoBgRemoved={award.team_logo_bg_removed} name={award.team_name} />
+            </td>
+        </tr>
     );
 }
 
@@ -161,12 +251,10 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
     const isActive = !entry.left_at;
     return (
         <div className="flex items-center gap-3 px-4 py-3">
-            {/* Color bar */}
             <div
                 className="w-1 self-stretch rounded-full shrink-0"
                 style={{backgroundColor: entry.team_brick_color ?? "hsl(var(--border))"}}
             />
-            {/* Logo */}
             {entry.team_logo_url && (
                 <div className="relative w-7 h-7 rounded-sm overflow-hidden shrink-0">
                     <Image
@@ -179,7 +267,6 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
                     />
                 </div>
             )}
-            {/* Info */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium">{entry.team_name}</span>
@@ -196,7 +283,6 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
                 </div>
                 <p className="text-xs text-muted-foreground">{entry.region_code} · {entry.season_name}</p>
             </div>
-            {/* Season badge */}
             <span className="text-xs text-muted-foreground shrink-0 px-2 py-0.5 bg-muted rounded-sm">
                 {entry.season_name}
             </span>
