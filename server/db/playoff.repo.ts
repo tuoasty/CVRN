@@ -250,7 +250,7 @@ export async function findMatchesWithDetailsBySeasonAndRound(
                 ),
                 match_officials (
                     official_type,
-                    officials:players (
+                    players (
                         id,
                         username,
                         display_name,
