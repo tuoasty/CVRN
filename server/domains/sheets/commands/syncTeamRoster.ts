@@ -49,7 +49,8 @@ export async function syncTeamRoster(
         );
 
         const disbandedNumbers = new Set(parsed.filter(p => p.disbanded).map(p => p.teamNumber));
-        const activeTeams = parsed.filter(p => !p.disbanded);
+        const nameClearedSlots = parsed.filter(p => p.nameCleared);
+        const activeTeams = parsed.filter(p => !p.disbanded && !p.nameCleared);
         const changes: SyncChange[] = [];
         let rowsProcessed = 0;
         let rowsErrored = 0;
@@ -90,6 +91,16 @@ export async function syncTeamRoster(
                     after: {},
                 });
             }
+        }
+
+        for (const slot of nameClearedSlots) {
+            const team = existingByNumber.get(slot.teamNumber);
+            if (!team) continue;
+            errors.push({
+                row: 0,
+                message: `Team "${team.name}" (slot ${slot.teamNumber}) has an empty name but still has players listed — restore the name or clear the roster first.`,
+            });
+            rowsErrored++;
         }
 
         for (const parsedTeam of activeTeams) {
@@ -294,6 +305,48 @@ export async function syncTeamRoster(
                         });
                     }
                 }
+            }
+        }
+
+        const accountedNumbers = new Set([
+            ...disbandedNumbers,
+            ...nameClearedSlots.map(s => s.teamNumber),
+            ...activeTeams.map(t => t.teamNumber),
+        ]);
+
+        for (const [teamNumber, team] of existingByNumber) {
+            if (accountedNumbers.has(teamNumber)) continue;
+
+            const playersResult = await findAllTeamPlayers(supabase, team.id, config.season_id);
+            if (!playersResult.ok) {
+                logger.error({teamId: team.id, error: playersResult.error}, "Failed to load players for implicitly disbanded team");
+                errors.push({row: 0, message: `Failed to load players for team ${team.name}: ${playersResult.error.message}`});
+                rowsErrored++;
+                continue;
+            }
+            const playerIds = playersResult.value.filter(r => r.player).map(r => r.player!.id);
+            if (playerIds.length > 0) {
+                const removeResult = await bulkRemovePlayersFromTeam(supabase, config.season_id, playerIds);
+                if (!removeResult.ok) {
+                    logger.error({teamId: team.id, error: removeResult.error}, "Failed to remove players from implicitly disbanded team");
+                    errors.push({row: 0, message: `Failed to remove players from team ${team.name}: ${removeResult.error.message}`});
+                    rowsErrored++;
+                    continue;
+                }
+            }
+
+            const disbandResult = await softDeleteTeamById(supabase, team.id);
+            if (!disbandResult.ok) {
+                logger.error({teamId: team.id, error: disbandResult.error}, "Failed to implicitly disband team");
+                errors.push({row: 0, message: `Failed to disband team ${team.name}: ${disbandResult.error.message}`});
+                rowsErrored++;
+            } else {
+                changes.push({
+                    type: 'team_disband',
+                    entityId: team.id,
+                    before: {name: team.name},
+                    after: {},
+                });
             }
         }
 

@@ -249,7 +249,21 @@ interface MatchListProps {
     emptyMessage: string;
 }
 
+function matchCodeSortKey(code: string | null | undefined): number {
+    if (!code) return Infinity;
+    const week = code.match(/^W(\d+)-M(\d+)$/i);
+    if (week) return parseInt(week[1]) * 1000 + parseInt(week[2]);
+    const suffix = code.match(/-(\d+)$/);
+    if (suffix) return parseInt(suffix[1]);
+    return Infinity;
+}
+
 function MatchList({ schedule, teams, players, regionCode, seasonSlug, loading, emptyMessage }: MatchListProps) {
+    const sorted = useMemo(
+        () => [...schedule].sort((a, b) => matchCodeSortKey(a.match.match_code) - matchCodeSortKey(b.match.match_code)),
+        [schedule],
+    );
+
     if (loading) {
         return (
             <div className="space-y-3">
@@ -273,7 +287,7 @@ function MatchList({ schedule, teams, players, regionCode, seasonSlug, loading, 
 
     return (
         <div className="space-y-3">
-            {schedule.map(({ match, sets, officials }, index) => {
+            {sorted.map(({ match, sets, officials }, index) => {
                 const homeTeam = match.home_team_id ? teams.get(match.home_team_id) : undefined;
                 const awayTeam = match.away_team_id ? teams.get(match.away_team_id) : undefined;
                 const matchMvp = match.match_mvp_player_id ? players.get(match.match_mvp_player_id) : null;

@@ -100,7 +100,7 @@ export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detail
         return (
             <div className="panel p-6">
                 <p className="text-sm text-muted-foreground">
-                    Box score not yet available — stats haven&apos;t been synced for this match yet.
+                    No statistics available for this match.
                 </p>
             </div>
         );
@@ -118,7 +118,7 @@ export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detail
 
     return (
         <TooltipProvider delayDuration={200}>
-            <div className="border border-border rounded-sm overflow-hidden [&>[data-slot=table-container]]:overflow-x-scroll">
+            <div className="border border-border rounded-sm overflow-hidden [&>[data-slot=table-container]]:overflow-x-auto">
                 <Table ref={tableRef} className="border-collapse">
                     <TableHeader>
                         <TableRow className="border-b-0 hover:bg-transparent">
@@ -184,12 +184,30 @@ export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detail
 
                         {homeTeam && awayTeam && (
                             <>
+                                <TableRow className="bg-muted hover:bg-muted border-t-2 border-border">
+                                    <TableCell className="sticky left-0 z-[1] bg-muted h-8 py-0 px-2 text-[11px] font-semibold uppercase tracking-wider text-foreground/70 border-r border-border/30 align-middle">
+                                        Team Totals
+                                    </TableCell>
+                                    {columns.map((col, i) => {
+                                        const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;
+                                        return (
+                                            <TableCell
+                                                key={col.key}
+                                                className={cn(
+                                                    "h-8 py-0 px-1 text-right text-[11px] font-semibold text-muted-foreground whitespace-nowrap align-middle",
+                                                    isLastInGroup && "border-r border-border/30 last:border-r-0",
+                                                )}
+                                            >
+                                                {col.label}
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
                                 <TeamTotalRow
                                     team={homeTeam}
                                     totals={homeTotals}
                                     otherTotals={awayTotals}
                                     columns={columns}
-                                    isFirst
                                 />
                                 <TeamTotalRow
                                     team={awayTeam}
@@ -245,24 +263,17 @@ function TeamTotalRow({
     totals,
     otherTotals,
     columns,
-    isFirst = false,
 }: {
     team: Team;
     totals: Array<number | null>;
     otherTotals: Array<number | null>;
     columns: StatColumn[];
-    isFirst?: boolean;
 }) {
     const useColor = isHex(team.brick_color);
 
     return (
-        <TableRow
-            className={cn(
-                "group/row bg-muted/40 hover:bg-muted/60",
-                isFirst && "border-t-2 border-border",
-            )}
-        >
-            <TableCell className="sticky left-0 z-[1] bg-muted/40 group-hover/row:bg-muted transition-colors border-r border-border/30 py-1.5">
+        <TableRow className="group/row bg-muted/40 hover:bg-muted/60">
+            <TableCell className="sticky left-0 z-[1] bg-background group-hover/row:bg-muted/60 transition-colors border-r border-border/30 py-1.5">
                 <TeamLabel team={team} />
             </TableCell>
             {columns.map((col, i) => {

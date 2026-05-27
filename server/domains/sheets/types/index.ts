@@ -60,6 +60,7 @@ export interface ParsedTeamResult {
     players: ParsedRosterEntry[]
     headerCol: number
     disbanded: boolean
+    nameCleared: boolean
 }
 
 export interface ParsedStatLine {

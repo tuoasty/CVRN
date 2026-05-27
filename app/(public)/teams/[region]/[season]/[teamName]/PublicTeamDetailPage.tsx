@@ -256,11 +256,11 @@ export default function PublicTeamDetailPage({
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => router.push("/teams")}
+                        onClick={() => router.back()}
                         className="rounded-sm -ml-2"
                     >
                         <ChevronLeft className="h-4 w-4 mr-1" />
-                        Back to Teams
+                        Back
                     </Button>
                 </div>
                 <div className="flex items-center gap-5">
