@@ -1,6 +1,6 @@
 "use client";
 
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import {MatchDetail} from "@/server/domains/match";
 import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/app/components/ui/tabs";
 import BoxScore from "@/app/features/matchStats/BoxScore";
@@ -10,12 +10,17 @@ import TeamSelectorBar, {TeamView} from "@/app/features/matchStats/TeamSelectorB
 
 type Props = {
     detail: MatchDetail;
+    regionCode?: string;
+    seasonSlug?: string;
 };
 
-export default function MatchDetailContent({detail}: Props) {
+export default function MatchDetailContent({detail, regionCode, seasonSlug}: Props) {
     const {match, sets, homeTeam, awayTeam, statSets, statTotals} = detail;
     const [view, setView] = useState<TeamView>("home-only");
     const [detailed, setDetailed] = useState(false);
+    useEffect(() => {
+        if (window.matchMedia("(min-width: 640px)").matches) setDetailed(true);
+    }, []);
 
     const setCount = sets.length;
     const selectedTeam = view === "home-only" ? homeTeam : awayTeam;
@@ -24,7 +29,7 @@ export default function MatchDetailContent({detail}: Props) {
 
     return (
         <div className="space-y-6">
-            <MatchHeader detail={detail} />
+            <MatchHeader detail={detail} regionCode={regionCode} seasonSlug={seasonSlug} />
 
             {!isPlayable ? (
                 <NonPlayableNotice match={match} />

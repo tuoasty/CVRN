@@ -339,7 +339,7 @@ export async function findMatchByCode(
     const {data, error} = await supabase
         .from("matches")
         .select("*")
-        .eq("match_code", code)
+        .ilike("match_code", code)
         .eq("season_id", seasonId)
         .maybeSingle();
     if (error) return Err(serializeError(error, "DB_ERROR"));

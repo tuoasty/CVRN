@@ -2,6 +2,7 @@ import {notFound} from "next/navigation";
 import {getMatchDetailAction} from "@/app/actions/match.actions";
 import {safeDecodeURIComponent} from "@/app/utils/decodeURI";
 import MatchDetailContent from "@/app/features/matchStats/MatchDetailContent";
+import BackButton from "@/app/components/public/BackButton";
 
 type PageProps = {
     params: Promise<{
@@ -33,8 +34,13 @@ export default async function MatchDetailPage({params}: PageProps) {
     }
 
     return (
-        <div className="page-wide py-6">
-            <MatchDetailContent detail={result.value} />
+        <div className="page-wide py-6 space-y-4">
+            <BackButton />
+            <MatchDetailContent
+                detail={result.value}
+                regionCode={regionCode}
+                seasonSlug={seasonSlug}
+            />
         </div>
     );
 }

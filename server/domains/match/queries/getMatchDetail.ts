@@ -18,6 +18,7 @@ export type MatchDetail = {
     officials: MatchOfficialEntry[];
     statSets: PlayerMatchStatSet[];
     statTotals: PlayerMatchStatTotal[];
+    playoffRound: string | null;
 };
 
 async function loadDetailForMatch(
@@ -52,6 +53,18 @@ async function loadDetailForMatch(
             official_type: mo.official_type as "referee" | "media",
         }));
 
+    let playoffRound: string | null = null;
+    if (match.match_type === "playoffs") {
+        const bracketRes = await supabase
+            .from("playoff_brackets")
+            .select("round")
+            .eq("match_id", match.id)
+            .maybeSingle();
+        if (!bracketRes.error && bracketRes.data) {
+            playoffRound = bracketRes.data.round as string;
+        }
+    }
+
     return Ok({
         match,
         sets: setsRes.value,
@@ -60,6 +73,7 @@ async function loadDetailForMatch(
         officials,
         statSets: statSetsRes.value,
         statTotals: statTotalsRes.value,
+        playoffRound,
     });
 }
 

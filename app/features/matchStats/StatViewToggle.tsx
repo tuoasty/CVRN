@@ -25,7 +25,7 @@ export default function StatViewToggle({detailed, onDetailedChange}: Props) {
                         : "text-muted-foreground hover:text-foreground",
                 )}
             >
-                Default
+                Compact
             </button>
             <button
                 type="button"

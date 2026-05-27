@@ -1,9 +1,20 @@
+import Link from "next/link";
 import Image from "next/image";
 import AvatarImage from "@/app/components/ui/AvatarImage";
 import {Badge} from "@/app/components/ui/badge";
 import {getLogoClassName} from "@/app/lib/logoClass";
 import type {MatchDetail} from "@/server/domains/match";
-import { formatMatchDate } from "@/app/lib/formatDate";
+import {formatMatchDate} from "@/app/lib/formatDate";
+import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
+
+const ROUND_LABELS: Record<string, string> = {
+    play_in: "Play-In",
+    round_of_16: "Round of 16",
+    quarterfinal: "Quarterfinals",
+    semifinal: "Semifinals",
+    final: "Grand Finals",
+    third_place: "3rd Place",
+};
 
 const getStatusConfig = (status: string): {label: string; className: string} => {
     switch (status) {
@@ -20,10 +31,12 @@ const getStatusConfig = (status: string): {label: string; className: string} => 
 
 type Props = {
     detail: MatchDetail;
+    regionCode?: string;
+    seasonSlug?: string;
 };
 
-export default function MatchHeader({detail}: Props) {
-    const {match, sets, homeTeam, awayTeam, officials} = detail;
+export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
+    const {match, sets, homeTeam, awayTeam, officials, playoffRound} = detail;
 
     const homeSets = match.home_sets_won ?? 0;
     const awaySets = match.away_sets_won ?? 0;
@@ -35,14 +48,22 @@ export default function MatchHeader({detail}: Props) {
     const referees = officials.filter(o => o.official_type === "referee");
     const media = officials.filter(o => o.official_type === "media");
 
+    const roundLabel = playoffRound ? (ROUND_LABELS[playoffRound] ?? playoffRound) : null;
+    const homeTeamHref = homeTeam && !homeTeam.is_bye
+        ? buildPublicTeamHref({regionCode, seasonSlug, teamName: homeTeam.name})
+        : null;
+    const awayTeamHref = awayTeam && !awayTeam.is_bye
+        ? buildPublicTeamHref({regionCode, seasonSlug, teamName: awayTeam.name})
+        : null;
+
     return (
         <div className="panel p-4 sm:p-6 space-y-4">
             {/* Metadata row */}
             <div className="flex items-start justify-between gap-2 pb-3 border-b border-border">
                 <div className="flex flex-col gap-1.5">
-                    {match.match_code && (
+                    {(roundLabel ?? match.match_code) && (
                         <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                            {match.match_code}
+                            {roundLabel ?? match.match_code}
                         </span>
                     )}
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -107,13 +128,24 @@ export default function MatchHeader({detail}: Props) {
                             </div>
                         )}
                     </div>
-                    <span
-                        className={`w-full text-sm sm:text-lg text-center truncate ${
-                            homeWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"
-                        }`}
-                    >
-                        {homeTeam?.name || "TBD"}
-                    </span>
+                    {homeTeamHref ? (
+                        <Link
+                            href={homeTeamHref}
+                            className={`w-full text-sm sm:text-lg text-center truncate hover:underline ${
+                                homeWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"
+                            }`}
+                        >
+                            {homeTeam!.name}
+                        </Link>
+                    ) : (
+                        <span
+                            className={`w-full text-sm sm:text-lg text-center truncate ${
+                                homeWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"
+                            }`}
+                        >
+                            {homeTeam?.name || "TBD"}
+                        </span>
+                    )}
                 </div>
 
                 {/* Score / VS */}
@@ -160,13 +192,24 @@ export default function MatchHeader({detail}: Props) {
                             </div>
                         )}
                     </div>
-                    <span
-                        className={`w-full text-sm sm:text-lg text-center truncate ${
-                            awayWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"
-                        }`}
-                    >
-                        {awayTeam?.name || "TBD"}
-                    </span>
+                    {awayTeamHref ? (
+                        <Link
+                            href={awayTeamHref}
+                            className={`w-full text-sm sm:text-lg text-center truncate hover:underline ${
+                                awayWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"
+                            }`}
+                        >
+                            {awayTeam!.name}
+                        </Link>
+                    ) : (
+                        <span
+                            className={`w-full text-sm sm:text-lg text-center truncate ${
+                                awayWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"
+                            }`}
+                        >
+                            {awayTeam?.name || "TBD"}
+                        </span>
+                    )}
                 </div>
             </div>
 
