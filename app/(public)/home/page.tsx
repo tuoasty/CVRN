@@ -32,7 +32,7 @@ export default function HomePage() {
     const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId || undefined, selectedRegionId || undefined);
 
     const selectedSeason = seasons.find((s) => s.id === selectedSeasonId);
-    const regionCode = regions.find((r) => r.id === selectedRegionId)?.code;
+    const regionCode = regions.find((r) => r.id === selectedRegionId)?.code?.toLowerCase();
     const seasonSlug = selectedSeason?.slug;
 
     const isSeasonCompleted = selectedSeason?.end_date
