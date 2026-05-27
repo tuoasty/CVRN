@@ -25,22 +25,41 @@ export function parseTeamsSheet(
         const headerData = rows[headerRowIdx] ?? [];
 
         const hasAnyTeam = Array.from({length: TEAMS_PER_ROW}, (_, s) =>
-            headerData[s * blockStride + 2]?.trim()
+            headerData[s * blockStride + 3]?.trim()
         ).some(Boolean);
         if (!hasAnyTeam) break;
 
         for (let slot = 0; slot < TEAMS_PER_ROW; slot++) {
             const col = slot * blockStride + 1;
-            const teamName = headerData[col + 2]?.trim();
-            if (!teamName) continue;
-
+            const teamName = headerData[col + 2]?.trim() ?? '';
             const teamNumberRaw = parseInt(headerData[col + 1]?.trim() ?? '', 10);
             const teamNumber = isNaN(teamNumberRaw)
                 ? k * TEAMS_PER_ROW + slot + 1
                 : teamNumberRaw;
 
+            if (!teamName) {
+                const emptyPlayers: ParsedRosterEntry[] = [];
+                for (let pr = 1; pr <= PLAYER_ROWS; pr++) {
+                    const playerRowIdx = headerRowIdx + pr;
+                    if (playerRowIdx >= rows.length) break;
+                    const playerRow = rows[playerRowIdx] ?? [];
+                    const username = playerRow[col + 2]?.trim();
+                    if (!username) continue;
+                    const roleRaw = playerRow[col + 1]?.trim() ?? '';
+                    emptyPlayers.push({
+                        role: ROLE_MAP[roleRaw] ?? 'player',
+                        username,
+                        rowNumber: playerRowIdx + 1,
+                    });
+                }
+                if (emptyPlayers.length > 0) {
+                    results.push({teamNumber, teamName: '', teamColor: null, brickNumber: null, players: emptyPlayers, headerCol: col, disbanded: false, nameCleared: true});
+                }
+                continue;
+            }
+
             if (teamName.toUpperCase() === 'DISBANDED') {
-                results.push({teamNumber, teamName: '', teamColor: null, brickNumber: null, players: [], headerCol: col, disbanded: true});
+                results.push({teamNumber, teamName: '', teamColor: null, brickNumber: null, players: [], headerCol: col, disbanded: true, nameCleared: false});
                 continue;
             }
 
@@ -66,7 +85,7 @@ export function parseTeamsSheet(
                 });
             }
 
-            results.push({teamNumber, teamName, teamColor, brickNumber, players, headerCol: col, disbanded: false});
+            results.push({teamNumber, teamName, teamColor, brickNumber, players, headerCol: col, disbanded: false, nameCleared: false});
         }
     }
 
