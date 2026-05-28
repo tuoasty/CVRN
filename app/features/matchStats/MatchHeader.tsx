@@ -119,6 +119,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
                                 src={homeTeam.logo_url}
                                 alt={homeTeam.name}
                                 fill
+                                priority
                                 sizes="96px"
                                 className={getLogoClassName(homeTeam.logo_bg_removed)}
                             />
@@ -183,6 +184,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
                                 src={awayTeam.logo_url}
                                 alt={awayTeam.name}
                                 fill
+                                priority
                                 sizes="96px"
                                 className={getLogoClassName(awayTeam.logo_bg_removed)}
                             />

@@ -437,6 +437,7 @@ function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonS
                         })}
                         homeRecord={homeRecord}
                         awayRecord={awayRecord}
+                        isPriority={index < 2}
                     />
                 );
             })}

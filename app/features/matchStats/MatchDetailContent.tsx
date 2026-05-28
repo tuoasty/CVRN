@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useEffect} from "react";
+import {useState, useLayoutEffect} from "react";
 import {MatchDetail} from "@/server/domains/match";
 import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/app/components/ui/tabs";
 import BoxScore from "@/app/features/matchStats/BoxScore";
@@ -18,8 +18,8 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
     const {match, sets, homeTeam, awayTeam, statSets, statTotals} = detail;
     const [view, setView] = useState<TeamView>("home-only");
     const [detailed, setDetailed] = useState(false);
-    useEffect(() => {
-        if (window.matchMedia("(min-width: 640px)").matches) setDetailed(true);
+    useLayoutEffect(() => {
+        setDetailed(window.matchMedia("(min-width: 640px)").matches);
     }, []);
 
     const setCount = sets.length;

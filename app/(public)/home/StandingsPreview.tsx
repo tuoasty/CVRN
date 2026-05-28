@@ -3,7 +3,6 @@
 import { StandingWithInfo } from "@/server/domains/standing";
 import { ArrowRight, Trophy } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useMemo } from "react";
@@ -25,8 +24,6 @@ export default function StandingsPreview({
                                                     regionCode,
                                                     seasonSlug,
                                                 }: StandingsPreviewProps) {
-    const router = useRouter();
-
     const topStandings = useMemo(() => {
         return [...standings]
             .sort((a, b) => (b.total_lvr || 0) - (a.total_lvr || 0))
@@ -120,13 +117,11 @@ export default function StandingsPreview({
                 })}
             </div>
 
-            <Button
-                onClick={() => router.push('/standings')}
-                variant="outline"
-                className="w-full rounded-sm group"
-            >
-                View Full Standings
-                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            <Button variant="outline" className="w-full rounded-sm group" asChild>
+                <Link href="/standings">
+                    View Full Standings
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
             </Button>
         </div>
     );

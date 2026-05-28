@@ -132,7 +132,7 @@ export default function ArchivePage() {
 
             {isLoading && (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {[1, 2, 3].map(i => (
+                    {[1, 2, 3, 4, 5, 6].map(i => (
                         <div key={i} className="panel p-5 space-y-4">
                             <Skeleton className="h-5 w-40" />
                             <Skeleton className="h-3 w-24" />

@@ -272,6 +272,7 @@ export default function PublicTeamDetailPage({
                                 src={teamData.logo_url}
                                 alt={teamData.name || ""}
                                 fill
+                                priority
                                 sizes="(max-width: 640px) 144px, 176px"
                                 className={getLogoClassName(teamData.logo_bg_removed)}
                             />

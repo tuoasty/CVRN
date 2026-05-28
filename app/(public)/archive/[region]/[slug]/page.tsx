@@ -643,16 +643,11 @@ function SeasonDetailSkeleton() {
                 <Skeleton className="h-8 w-56" />
                 <Skeleton className="h-3.5 w-36" />
             </div>
-            <div className="space-y-2">
-                <Skeleton className="h-3 w-14" />
-                <Skeleton className="h-52 w-full rounded-sm" />
-                <div className="grid grid-cols-2 gap-2">
-                    <Skeleton className="h-36 rounded-sm" />
-                    <Skeleton className="h-36 rounded-sm" />
-                </div>
+            <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-sm" />
+                ))}
             </div>
-            <Skeleton className="h-64 w-full rounded-sm" />
-            <Skeleton className="h-48 w-full rounded-sm" />
         </div>
     );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useTheme } from "next-themes";
 import { TeamWithRegion } from "@/server/domains/team";
 import { getBrickDisplayColor } from "@/app/lib/brickColor";
@@ -13,7 +13,6 @@ interface PublicTeamCardProps {
 }
 
 export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps) {
-    const router = useRouter();
     const { resolvedTheme } = useTheme();
 
     const regionCode = team.seasons?.regions?.code?.toLowerCase();
@@ -25,18 +24,16 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
 
     const hasMeta = team.captain != null || (team.playerCount ?? 0) > 0;
 
-    const handleClick = () => {
-        if (!canNavigate) return;
-        router.push(`/teams/${encodeURIComponent(regionCode!)}/${encodeURIComponent(seasonSlug!)}/${encodeURIComponent(teamSlug!)}`);
-    };
+    const href = canNavigate
+        ? `/teams/${encodeURIComponent(regionCode!)}/${encodeURIComponent(seasonSlug!)}/${encodeURIComponent(teamSlug!)}`
+        : null;
 
-    return (
-        <div
-            onClick={handleClick}
-            className={`group flex flex-col overflow-hidden rounded-sm border border-border bg-card transition-all duration-150 ${
-                canNavigate ? "cursor-pointer hover:border-primary/40 hover:shadow-md" : "opacity-60"
-            }`}
-        >
+    const cardClasses = `group flex flex-col overflow-hidden rounded-sm border border-border bg-card transition-all duration-150 ${
+        canNavigate ? "cursor-pointer hover:border-primary/40 hover:shadow-md" : "opacity-60"
+    }`;
+
+    const inner = (
+        <>
             {/* Hero area */}
             <div
                 className="relative flex items-center justify-center h-36"
@@ -149,6 +146,20 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                     </div>
                 )}
             </div>
+        </>
+    );
+
+    if (href) {
+        return (
+            <Link href={href} className={cardClasses}>
+                {inner}
+            </Link>
+        );
+    }
+
+    return (
+        <div className={cardClasses}>
+            {inner}
         </div>
     );
 }
