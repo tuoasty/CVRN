@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { usePublicContextStore } from "@/app/stores/publicContextStore";
@@ -16,18 +16,17 @@ export function PublicStoreInitializer({ children, initialSeasonId, initialRegio
     const { seasons, isLoading: loadingSeasons } = useSeasons();
     const { initializeDefaults } = usePublicContextStore();
 
-    // Synchronously seed the store from server-computed values on first render,
-    // before any useEffect waterfall can fire. Guard against SSR to prevent
-    // Zustand singleton mutation across server requests.
-    useState(() => {
-        if (typeof window === "undefined") return;
+    // Seed the store from server-computed values before first paint.
+    // useLayoutEffect fires synchronously after DOM mutations, before the browser paints,
+    // keeping the "no-flash" guarantee while staying outside the render phase.
+    useLayoutEffect(() => {
         if (initialSeasonId && !usePublicContextStore.getState().selectedSeasonId) {
             usePublicContextStore.setState({
                 selectedSeasonId: initialSeasonId,
                 selectedRegionId: initialRegionId,
             });
         }
-    });
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally empty: seed once on mount from server props
 
     useEffect(() => {
         if (!loadingRegions && !loadingSeasons && regions.length > 0 && seasons.length > 0) {

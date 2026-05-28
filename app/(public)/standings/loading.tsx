@@ -1,9 +1,18 @@
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/app/components/ui/table";
 
 export default function StandingsLoading() {
     return (
         <div className="page-wide space-y-6 py-6">
+            {/* Page header — matches StandingsPage header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
@@ -23,24 +32,58 @@ export default function StandingsLoading() {
                     ))}
                 </div>
             </div>
-            <div className="rounded-sm border border-border divide-y divide-border overflow-hidden">
-                <div className="flex gap-3 px-4 py-2">
-                    <Skeleton className="h-3 w-6 rounded-sm" />
-                    <Skeleton className="h-3 flex-1 rounded-sm" />
-                    <Skeleton className="h-3 w-8 rounded-sm" />
-                    <Skeleton className="h-3 w-8 rounded-sm" />
-                    <Skeleton className="h-3 w-8 rounded-sm" />
-                </div>
-                {[...Array(8)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-3">
-                        <Skeleton className="h-4 w-6 rounded-sm shrink-0" />
-                        <Skeleton className="w-8 h-8 rounded-sm shrink-0" />
-                        <Skeleton className="h-4 flex-1 rounded-sm" />
-                        <Skeleton className="h-4 w-8 rounded-sm shrink-0" />
-                        <Skeleton className="h-4 w-8 rounded-sm shrink-0" />
-                        <Skeleton className="h-4 w-8 rounded-sm shrink-0" />
+
+            <div className="space-y-4">
+                {/* Legend panel — REQUIRED; matches StandingsTable isLoading state */}
+                <div className="panel p-4 border-l-4 border-l-primary/30">
+                    <div className="flex items-center justify-between">
+                        <Skeleton className="h-8 w-64 rounded-sm" />
+                        <Skeleton className="h-9 w-40 rounded-sm" />
                     </div>
-                ))}
+                </div>
+
+                {/* Table — same component structure as StandingsTable to match row heights */}
+                <div className="rounded-sm border border-border overflow-hidden">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="hover:bg-transparent border-b-2 border-border">
+                                <TableHead className="w-20 text-center">RANK</TableHead>
+                                <TableHead>TEAM</TableHead>
+                                <TableHead className="text-center">RECORD</TableHead>
+                                <TableHead className="hidden sm:table-cell text-center">WIN %</TableHead>
+                                <TableHead className="hidden sm:table-cell text-center">SETS</TableHead>
+                                <TableHead className="text-center">LVR</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {[...Array(8)].map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell className="text-center py-4">
+                                        <Skeleton className="h-6 w-8 rounded-sm mx-auto" />
+                                    </TableCell>
+                                    <TableCell className="py-4">
+                                        <div className="flex items-center gap-3">
+                                            <Skeleton className="h-10 w-10 rounded shrink-0" />
+                                            <Skeleton className="h-5 w-32 rounded-sm" />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-center py-4">
+                                        <Skeleton className="h-5 w-12 rounded-sm mx-auto" />
+                                    </TableCell>
+                                    <TableCell className="hidden sm:table-cell text-center py-4">
+                                        <Skeleton className="h-5 w-14 rounded-sm mx-auto" />
+                                    </TableCell>
+                                    <TableCell className="hidden sm:table-cell text-center py-4">
+                                        <Skeleton className="h-5 w-12 rounded-sm mx-auto" />
+                                    </TableCell>
+                                    <TableCell className="text-center py-4">
+                                        <Skeleton className="h-5 w-16 rounded-sm mx-auto" />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
         </div>
     );

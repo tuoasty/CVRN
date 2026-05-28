@@ -10,10 +10,13 @@ import { getAllSeasonsAction } from "@/app/actions/season.actions";
 
 const SEASON_COOKIE = "cvrn_selected_season";
 
-export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-    const cookieStore = await cookies();
-    const savedSeasonId = cookieStore.get(SEASON_COOKIE)?.value ?? null;
-
+async function PublicLayoutDataProvider({
+    savedSeasonId,
+    children,
+}: {
+    savedSeasonId: string | null;
+    children: React.ReactNode;
+}) {
     const [regionsResult, seasonsResult] = await Promise.all([
         getAllRegionsAction(),
         getAllSeasonsAction(),
@@ -51,6 +54,19 @@ export default async function PublicLayout({ children }: { children: React.React
     }
 
     return (
+        <SWRFallback fallback={{ regions, seasons }}>
+            <PublicStoreInitializer initialSeasonId={initialSeasonId} initialRegionId={initialRegionId}>
+                <main className="flex-1">{children}</main>
+            </PublicStoreInitializer>
+        </SWRFallback>
+    );
+}
+
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+    const cookieStore = await cookies();
+    const savedSeasonId = cookieStore.get(SEASON_COOKIE)?.value ?? null;
+
+    return (
         <div className="min-h-screen flex flex-col bg-background">
             <Suspense
                 fallback={
@@ -64,11 +80,11 @@ export default async function PublicLayout({ children }: { children: React.React
             <Suspense fallback={<div className="lg:hidden border-b border-border bg-card"><div className="page-wide h-[52px]" /></div>}>
                 <MobileSeasonBar />
             </Suspense>
-            <SWRFallback fallback={{ regions, seasons }}>
-                <PublicStoreInitializer initialSeasonId={initialSeasonId} initialRegionId={initialRegionId}>
-                    <main className="flex-1">{children}</main>
-                </PublicStoreInitializer>
-            </SWRFallback>
+            <Suspense fallback={<main className="flex-1" />}>
+                <PublicLayoutDataProvider savedSeasonId={savedSeasonId}>
+                    {children}
+                </PublicLayoutDataProvider>
+            </Suspense>
             <Suspense fallback={null}>
                 <PublicFooter />
             </Suspense>

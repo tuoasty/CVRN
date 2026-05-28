@@ -52,20 +52,20 @@ export default function PlayerPageLoading() {
             {/* Achievements */}
             <div className="space-y-3 max-w-2xl">
                 <Skeleton className="h-5 w-28" />
-                <TableSkeleton rows={2} />
+                <TableSkeleton rows={1} />
             </div>
 
             {/* Awards */}
             <div className="space-y-3 max-w-2xl">
                 <Skeleton className="h-5 w-16" />
-                <TableSkeleton rows={2} />
+                <TableSkeleton rows={1} />
             </div>
 
             {/* Team history */}
             <div className="space-y-3">
                 <Skeleton className="h-5 w-28" />
                 <div className="panel divide-y divide-border">
-                    {Array.from({length: 3}).map((_, i) => (
+                    {Array.from({length: 2}).map((_, i) => (
                         <div key={i} className="flex items-center gap-3 px-4 py-3">
                             <Skeleton className="w-1 self-stretch rounded-full shrink-0" />
                             <Skeleton className="w-7 h-7 rounded-sm shrink-0" />

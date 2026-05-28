@@ -3,8 +3,9 @@ import { Image as ImageIcon } from "lucide-react";
 
 export default function MediaLoading() {
     return (
-        <main className="page-narrow py-8 space-y-6">
-            <div className="flex items-center gap-4 pb-4 border-b border-border">
+        <div className="page-wide py-6 space-y-6">
+            {/* PublicPageHeader skeleton */}
+            <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
                     <ImageIcon className="h-5 w-5 text-primary" />
                 </div>
@@ -29,6 +30,6 @@ export default function MediaLoading() {
                     </div>
                 ))}
             </div>
-        </main>
+        </div>
     );
 }

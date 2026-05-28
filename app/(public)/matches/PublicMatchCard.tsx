@@ -26,6 +26,7 @@ interface PublicMatchCardProps {
     href?: string | null;
     homeRecord?: TeamRecord;
     awayRecord?: TeamRecord;
+    isPriority?: boolean;
 }
 
 const getStatusConfig = (status: string) => {
@@ -41,7 +42,7 @@ const getStatusConfig = (status: string) => {
     }
 };
 
-function TeamLogo({ team }: { team?: TeamWithRegion }) {
+function TeamLogo({ team, isPriority }: { team?: TeamWithRegion; isPriority?: boolean }) {
     if (!team) return (
         <div className="w-[72px] h-[72px] rounded-sm bg-muted/50 border border-border flex items-center justify-center">
             <span className="text-sm text-muted-foreground font-bold">?</span>
@@ -54,7 +55,7 @@ function TeamLogo({ team }: { team?: TeamWithRegion }) {
     );
     if (team.logo_url) return (
         <div className="relative w-[72px] h-[72px] rounded-sm overflow-hidden">
-            <Image src={team.logo_url} alt={team.name} fill sizes="72px" className={getLogoClassName(team.logo_bg_removed)} />
+            <Image src={team.logo_url} alt={team.name} fill priority={isPriority} sizes="72px" className={getLogoClassName(team.logo_bg_removed)} />
         </div>
     );
     return (
@@ -86,6 +87,7 @@ export default function PublicMatchCard({
     href,
     homeRecord,
     awayRecord,
+    isPriority,
 }: PublicMatchCardProps) {
     const { match, sets, officials } = matchDetails;
     const statusConfig = getStatusConfig(match.status);
@@ -139,7 +141,7 @@ export default function PublicMatchCard({
                     "flex flex-col items-center gap-1.5 min-w-0 transition-opacity",
                     isCompleted && !homeWon && "opacity-40"
                 )}>
-                    <TeamLogo team={homeTeam} />
+                    <TeamLogo team={homeTeam} isPriority={isPriority} />
                     <span className={cn(
                         "text-sm text-center truncate w-full",
                         homeWon ? "font-bold text-foreground" : "font-medium"
@@ -202,7 +204,7 @@ export default function PublicMatchCard({
                     "flex flex-col items-center gap-1.5 min-w-0 transition-opacity",
                     isCompleted && !awayWon && "opacity-40"
                 )}>
-                    <TeamLogo team={awayTeam} />
+                    <TeamLogo team={awayTeam} isPriority={isPriority} />
                     <span className={cn(
                         "text-sm text-center truncate w-full",
                         awayWon ? "font-bold text-foreground" : "font-medium"

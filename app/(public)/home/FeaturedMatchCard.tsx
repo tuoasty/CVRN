@@ -69,6 +69,7 @@ export default function FeaturedMatchCard({
                                     src={homeTeam.logo_url}
                                     alt={homeTeam.name}
                                     fill
+                                    priority
                                     sizes="80px"
                                     className="object-contain"
                                 />
@@ -96,6 +97,7 @@ export default function FeaturedMatchCard({
                                     src={awayTeam.logo_url}
                                     alt={awayTeam.name}
                                     fill
+                                    priority
                                     sizes="80px"
                                     className="object-contain"
                                 />

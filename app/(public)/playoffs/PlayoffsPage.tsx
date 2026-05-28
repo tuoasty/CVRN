@@ -8,6 +8,7 @@ import { useRegions } from "@/app/hooks/useRegions";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
 import { Trophy, Loader2 } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
+import { Skeleton } from "@/app/components/ui/skeleton";
 
 export default function PlayoffsPage() {
     const { selectedSeasonId } = usePublicContextStore();
@@ -17,7 +18,9 @@ export default function PlayoffsPage() {
     const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
     const selectedRegion = regions.find(r => r.id === selectedSeason?.region_id);
     const hasPlayoffs = selectedSeason?.playoff_started;
-    const isCompleted = selectedSeason?.playoff_completed;
+    const isCompleted = selectedSeason?.end_date
+        ? new Date(selectedSeason.end_date) < new Date()
+        : false;
 
     const { brackets, isLoading: loadingBrackets } = usePlayoffBrackets(
         hasPlayoffs ? (selectedSeasonId || null) : null
@@ -72,14 +75,7 @@ export default function PlayoffsPage() {
                             </p>
                         </div>
                     </div>
-                ) : loadingBrackets ? (
-                    <div className="panel p-12 border-l-4 border-l-primary/30">
-                        <div className="flex flex-col items-center justify-center gap-3">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="text-sm text-muted-foreground">Loading bracket...</p>
-                        </div>
-                    </div>
-                ) : brackets.length === 0 ? (
+                ) : loadingBrackets ? null : brackets.length === 0 ? (
                     <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">
                         <div className="text-center space-y-3">
                             <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
@@ -91,14 +87,26 @@ export default function PlayoffsPage() {
                 ) : null}
             </div>
 
-            {selectedSeasonId && hasPlayoffs && !loadingBrackets && brackets.length > 0 && (
+            {selectedSeasonId && hasPlayoffs && (
                 <div className="page-bleed pb-6">
-                    <PlayoffBracketDisplay
-                        brackets={brackets}
-                        seasonId={selectedSeasonId}
-                        regionId={selectedSeason.region_id}
-                        linkContext="public"
-                    />
+                    {loadingBrackets ? (
+                        <div className="flex gap-6 justify-center overflow-x-auto py-4 px-4">
+                            {[4, 2, 1].map((count, col) => (
+                                <div key={col} className="flex flex-col gap-8 shrink-0">
+                                    {[...Array(count)].map((_, i) => (
+                                        <Skeleton key={i} className="h-24 w-48 rounded-sm" />
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    ) : brackets.length > 0 ? (
+                        <PlayoffBracketDisplay
+                            brackets={brackets}
+                            seasonId={selectedSeasonId}
+                            regionId={selectedSeason.region_id}
+                            linkContext="public"
+                        />
+                    ) : null}
                 </div>
             )}
         </>
