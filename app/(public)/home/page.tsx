@@ -181,7 +181,7 @@ export default function HomePage() {
                         {featuredLoading ? (
                             <Skeleton className="h-[260px] rounded-sm" />
                         ) : isSeasonCompleted ? (
-                            <SeasonChampionCard podium={podium} seasonName={selectedSeason?.name} />
+                            <SeasonChampionCard podium={podium} seasonName={selectedSeason?.name} regionCode={regionCode} seasonSlug={seasonSlug} />
                         ) : featuredMatch ? (
                             <FeaturedMatchCard
                                 matchDetails={featuredMatch}
@@ -219,6 +219,8 @@ export default function HomePage() {
                                     standings={standings}
                                     isLoading={standingsLoading}
                                     qualifiedTeams={selectedSeason?.playoff_configs?.qualified_teams}
+                                    regionCode={regionCode}
+                                    seasonSlug={seasonSlug}
                                 />
                             </div>
                         </div>

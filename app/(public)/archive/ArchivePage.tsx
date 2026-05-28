@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {useArchive} from "@/app/hooks/useArchive";
 import {useRegions} from "@/app/hooks/useRegions";
+import {usePublicContextStore} from "@/app/stores/publicContextStore";
 import {ArchiveSeason} from "@/server/domains/season";
 import {Skeleton} from "@/app/components/ui/skeleton";
 
@@ -73,13 +74,13 @@ function PodiumEntry({entry}: {entry: ArchiveSeason["season_podium"][number]}) {
     );
 }
 
-function SeasonCard({season, regionName}: {season: ArchiveSeason; regionName: string}) {
+function SeasonCard({season, regionName, regionCode}: {season: ArchiveSeason; regionName: string; regionCode: string}) {
     const sorted = [...season.season_podium].sort((a, b) => a.place - b.place);
     const fmt = (d: string | null) =>
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 
     return (
-        <Link href={`/archive/${season.slug}`} className="block group">
+        <Link href={`/archive/${regionCode.toLowerCase()}/${season.slug}`} className="block group">
         <div className="panel p-5 space-y-4 group-hover:border-primary/40 transition-colors cursor-pointer">
             <div>
                 <h2 className="text-lg font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
@@ -106,8 +107,14 @@ function SeasonCard({season, regionName}: {season: ArchiveSeason; regionName: st
 export default function ArchivePage() {
     const {archive, isLoading, error} = useArchive();
     const {regions} = useRegions();
+    const {selectedRegionId} = usePublicContextStore();
 
-    const regionName = (id: string) => regions.find(r => r.id === id)?.name ?? "Unknown";
+    const regionMeta = (id: string) => {
+        const r = regions.find(r => r.id === id);
+        return {name: r?.name ?? "Unknown", code: r?.code ?? ""};
+    };
+
+    const filtered = archive.filter(s => !selectedRegionId || s.region_id === selectedRegionId);
 
     return (
         <div className="page-wide space-y-6 py-6">
@@ -145,17 +152,22 @@ export default function ArchivePage() {
                 </div>
             )}
 
-            {!isLoading && !error && archive.length === 0 && (
+            {!isLoading && !error && filtered.length === 0 && (
                 <div className="panel p-6 text-center">
-                    <p className="text-muted-foreground">No seasons recorded yet.</p>
+                    <p className="text-muted-foreground">
+                        {selectedRegionId ? "No seasons recorded for this region." : "No seasons recorded yet."}
+                    </p>
                 </div>
             )}
 
-            {!isLoading && !error && archive.length > 0 && (
+            {!isLoading && !error && filtered.length > 0 && (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {archive.map(s => (
-                        <SeasonCard key={s.id} season={s} regionName={regionName(s.region_id)} />
-                    ))}
+                    {filtered.map(s => {
+                        const {name, code} = regionMeta(s.region_id);
+                        return (
+                            <SeasonCard key={s.id} season={s} regionName={name} regionCode={code} />
+                        );
+                    })}
                 </div>
             )}
         </div>

@@ -4,20 +4,26 @@ import { StandingWithInfo } from "@/server/domains/standing";
 import { ArrowRight, Trophy } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { useMemo } from "react";
 import { getLogoClassName } from "@/app/lib/logoClass";
+import { buildPublicTeamHref } from "@/app/utils/matchDetailHref";
 
 interface StandingsPreviewProps {
     standings: StandingWithInfo[];
     isLoading: boolean;
     qualifiedTeams?: number;
+    regionCode?: string;
+    seasonSlug?: string;
 }
 
 export default function StandingsPreview({
                                                     standings,
                                                     isLoading,
                                                     qualifiedTeams = 12,
+                                                    regionCode,
+                                                    seasonSlug,
                                                 }: StandingsPreviewProps) {
     const router = useRouter();
 
@@ -55,19 +61,18 @@ export default function StandingsPreview({
                     const losses = standing.losses || 0;
                     const displayLvr = standing.total_lvr || 0;
                     const isQualified = rank <= qualifiedTeams;
+                    const teamHref = buildPublicTeamHref({regionCode, seasonSlug, teamName: standing.team_name});
+                    const rowClass = `
+                        flex items-center gap-3 p-2.5 rounded-sm border transition-all
+                        ${rank === 1 ? 'bg-gradient-to-r from-primary/15 to-transparent border-l-4 border-l-primary' : ''}
+                        ${rank === 2 || rank === 3 ? 'bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-l-primary/70' : ''}
+                        ${rank > 3 && isQualified ? 'border-l-2 border-l-primary/40' : ''}
+                        ${!isQualified ? 'opacity-60' : ''}
+                        hover:bg-muted/30
+                    `;
 
-                    return (
-                        <div
-                            key={standing.team_id}
-                            className={`
-                                flex items-center gap-3 p-2.5 rounded-sm border transition-all
-                                ${rank === 1 ? 'bg-gradient-to-r from-primary/15 to-transparent border-l-4 border-l-primary' : ''}
-                                ${rank === 2 || rank === 3 ? 'bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-l-primary/70' : ''}
-                                ${rank > 3 && isQualified ? 'border-l-2 border-l-primary/40' : ''}
-                                ${!isQualified ? 'opacity-60' : ''}
-                                hover:bg-muted/30
-                            `}
-                        >
+                    const rowContent = (
+                        <>
                             {/* Rank Badge */}
                             <div className="flex items-center justify-center w-6 h-6 rounded-sm bg-muted border border-border shrink-0">
                                 <span className="text-xs font-bold tabular-nums">{rank}</span>
@@ -100,6 +105,16 @@ export default function StandingsPreview({
                             <div className={`text-sm font-bold tabular-nums ${displayLvr >= 100 ? 'text-primary' : 'text-destructive'}`}>
                                 {displayLvr.toFixed(1)}
                             </div>
+                        </>
+                    );
+
+                    return teamHref ? (
+                        <Link key={standing.team_id} href={teamHref} className={rowClass}>
+                            {rowContent}
+                        </Link>
+                    ) : (
+                        <div key={standing.team_id} className={rowClass}>
+                            {rowContent}
                         </div>
                     );
                 })}
