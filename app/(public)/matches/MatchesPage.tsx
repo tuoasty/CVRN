@@ -309,14 +309,12 @@ function WeekSelector({ effectiveWeek, maxWeeks, weekCountMap, onWeekChange }: W
                             <Check className="w-3 h-3 shrink-0" />
                             <span className="text-xs font-semibold uppercase tracking-wider">WEEK {w}</span>
                         </span>
-                        {count !== undefined && (
-                            <span className={cn(
-                                "text-[10px] font-normal mt-0.5",
-                                isActive ? "text-primary/60" : "text-muted-foreground/50"
-                            )}>
-                                {count} match{count !== 1 ? "es" : ""}
-                            </span>
-                        )}
+                        <span className={cn(
+                            "text-[10px] font-normal mt-0.5",
+                            count === undefined ? "invisible" : isActive ? "text-primary/60" : "text-muted-foreground/50"
+                        )}>
+                            {count !== undefined ? `${count} match${count !== 1 ? "es" : ""}` : "0 matches"}
+                        </span>
                     </button>
                 );
             })}
@@ -358,14 +356,12 @@ function PlayoffStepper({ rounds, effectiveRound, roundCountMap, onRoundChange }
                             <Check className="w-3 h-3 shrink-0" />
                             {ROUND_LABELS[round] || round}
                         </span>
-                        {count !== undefined && (
-                            <span className={cn(
-                                "text-[10px] font-normal mt-0.5",
-                                isActive ? "text-primary/60" : "text-muted-foreground/50"
-                            )}>
-                                {count} match{count !== 1 ? "es" : ""}
-                            </span>
-                        )}
+                        <span className={cn(
+                            "text-[10px] font-normal mt-0.5",
+                            count === undefined ? "invisible" : isActive ? "text-primary/60" : "text-muted-foreground/50"
+                        )}>
+                            {count !== undefined ? `${count} match${count !== 1 ? "es" : ""}` : "0 matches"}
+                        </span>
                     </button>
                 );
             })}

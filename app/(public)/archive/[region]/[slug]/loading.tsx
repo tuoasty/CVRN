@@ -1,5 +1,5 @@
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Trophy, Users, Award } from "lucide-react";
 
 export default function ArchiveDetailLoading() {
     return (
@@ -16,11 +16,49 @@ export default function ArchiveDetailLoading() {
                 <Skeleton className="h-3.5 w-36 rounded-sm" />
             </div>
 
-            {/* Generic content area — conservative height avoids CLS on transition */}
+            {/* Podium section */}
+            <div className="space-y-2">
+                <div className="flex items-center gap-1">
+                    <Trophy className="h-3 w-3 text-muted-foreground/40" />
+                    <Skeleton className="h-2.5 w-12 rounded-sm" />
+                </div>
+                {/* Champion card */}
+                <Skeleton className="h-64 w-full rounded-sm" />
+                {/* Runner-up + 3rd place */}
+                <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-44 rounded-sm" />
+                    <Skeleton className="h-44 rounded-sm" />
+                </div>
+            </div>
+
+            {/* Champion roster section */}
             <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full rounded-sm" />
-                ))}
+                <div className="flex items-center gap-1">
+                    <Users className="h-3 w-3 text-muted-foreground/40" />
+                    <Skeleton className="h-2.5 w-28 rounded-sm" />
+                </div>
+                <Skeleton className="h-52 w-full rounded-sm" />
+            </div>
+
+            {/* Individual awards section */}
+            <div className="space-y-3">
+                <div className="flex items-center gap-1">
+                    <Award className="h-3 w-3 text-muted-foreground/40" />
+                    <Skeleton className="h-2.5 w-28 rounded-sm" />
+                </div>
+                <div className="flex flex-col gap-2">
+                    <Skeleton className="h-44 sm:h-64 w-full rounded-sm" />
+                    <Skeleton className="h-44 sm:h-64 w-full rounded-sm" />
+                </div>
+            </div>
+
+            {/* First team section */}
+            <div className="space-y-3">
+                <div className="flex items-center gap-1">
+                    <Award className="h-3 w-3 text-muted-foreground/40" />
+                    <Skeleton className="h-2.5 w-20 rounded-sm" />
+                </div>
+                <Skeleton className="h-48 w-full rounded-sm" />
             </div>
         </div>
     );

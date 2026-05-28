@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Image as ImageIcon, Play, Pin } from 'lucide-react'
+import { PublicPageHeader } from "@/app/components/public/PublicPageHeader"
 import { Badge } from '@/app/components/ui/badge'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { useAllMediaPosts } from '@/app/hooks/useMediaPosts'
@@ -123,18 +124,12 @@ export default function MediaFeedPage() {
     const filtered = filter === 'all' ? posts : posts.filter(p => p.type === 'video')
 
     return (
-        <main className="page-wide py-8 space-y-6">
-            <div className="flex items-center gap-4 pb-4 border-b border-border">
-                <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
-                    <ImageIcon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                    <h1 className="text-xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                        Media
-                    </h1>
-                    <p className="text-xs text-muted-foreground">GFX, highlights, and league content</p>
-                </div>
-            </div>
+        <div className="page-wide py-6 space-y-6">
+            <PublicPageHeader
+                icon={ImageIcon}
+                title="Media"
+                subtitle="GFX, highlights, and league content"
+            />
 
             <div className="flex gap-1.5">
                 {(['all', 'videos'] as FilterType[]).map(f => (
@@ -188,6 +183,6 @@ export default function MediaFeedPage() {
                     onOpenChange={open => !open && setGfxPost(null)}
                 />
             )}
-        </main>
+        </div>
     )
 }

@@ -643,10 +643,36 @@ function SeasonDetailSkeleton() {
                 <Skeleton className="h-8 w-56" />
                 <Skeleton className="h-3.5 w-36" />
             </div>
+
+            {/* Podium */}
+            <div className="space-y-2">
+                <Skeleton className="h-2.5 w-12 rounded-sm" />
+                <Skeleton className="h-64 w-full rounded-sm" />
+                <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-44 rounded-sm" />
+                    <Skeleton className="h-44 rounded-sm" />
+                </div>
+            </div>
+
+            {/* Roster */}
             <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full rounded-sm" />
-                ))}
+                <Skeleton className="h-2.5 w-28 rounded-sm" />
+                <Skeleton className="h-52 w-full rounded-sm" />
+            </div>
+
+            {/* Awards */}
+            <div className="space-y-3">
+                <Skeleton className="h-2.5 w-28 rounded-sm" />
+                <div className="flex flex-col gap-2">
+                    <Skeleton className="h-44 sm:h-64 w-full rounded-sm" />
+                    <Skeleton className="h-44 sm:h-64 w-full rounded-sm" />
+                </div>
+            </div>
+
+            {/* First team */}
+            <div className="space-y-3">
+                <Skeleton className="h-2.5 w-20 rounded-sm" />
+                <Skeleton className="h-48 w-full rounded-sm" />
             </div>
         </div>
     );
