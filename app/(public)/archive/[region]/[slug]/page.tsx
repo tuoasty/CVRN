@@ -7,6 +7,7 @@ import {getSeasonDetailAction} from "@/app/actions/season.actions";
 import {getAllRegionsAction} from "@/app/actions/region.actions";
 import {SeasonDetail} from "@/server/domains/season";
 import {Skeleton} from "@/app/components/ui/skeleton";
+import {buildPublicTeamHref, buildPublicPlayerHref} from "@/app/utils/matchDetailHref";
 
 // ─── Podium ──────────────────────────────────────────────────────────────────
 
@@ -34,9 +35,10 @@ function TeamLogoSmall({name, logoUrl, size = 28, priority = false}: {name: stri
     );
 }
 
-function ChampionCard({entry, priority = false}: {entry: SeasonDetail["season_podium"][number]; priority?: boolean}) {
-    return (
-        <div className="panel p-6 flex flex-col items-center gap-3 bg-yellow-500/5 border border-yellow-500/20">
+function ChampionCard({entry, priority = false, regionCode, seasonSlug}: {entry: SeasonDetail["season_podium"][number]; priority?: boolean; regionCode: string; seasonSlug: string}) {
+    const href = buildPublicTeamHref({regionCode, seasonSlug, teamName: entry.teams.name});
+    const inner = (
+        <div className="panel p-6 flex flex-col items-center gap-3 bg-yellow-500/5 border border-yellow-500/20 group-hover:border-primary/40 transition-colors">
             <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                 <Trophy className="h-4 w-4" />
                 <span className="text-[20px] uppercase tracking-[0.2em] font-semibold">Champion</span>
@@ -45,9 +47,11 @@ function ChampionCard({entry, priority = false}: {entry: SeasonDetail["season_po
             <p className="text-xl font-bold text-center">{entry.teams.name}</p>
         </div>
     );
+    if (!href) return inner;
+    return <Link href={href} className="block group">{inner}</Link>;
 }
 
-function PlacementCard({entry}: {entry: SeasonDetail["season_podium"][number]}) {
+function PlacementCard({entry, regionCode, seasonSlug}: {entry: SeasonDetail["season_podium"][number]; regionCode: string; seasonSlug: string}) {
     const place = entry.place as 2 | 3;
     const isSecond = place === 2;
     const label = isSecond ? "Runner-Up" : "3rd Place";
@@ -59,8 +63,9 @@ function PlacementCard({entry}: {entry: SeasonDetail["season_podium"][number]}) 
     ? "text-slate-500 dark:text-slate-300"
     : "text-amber-600 dark:text-amber-400";
 
-    return (
-        <div className={`panel p-4 flex flex-col items-center gap-2 border ${borderClass}`}>
+    const href = buildPublicTeamHref({regionCode, seasonSlug, teamName: entry.teams.name});
+    const inner = (
+        <div className={`panel p-4 flex flex-col items-center gap-2 border ${borderClass} group-hover:border-primary/40 transition-colors`}>
             <div className={`flex items-center gap-1.5 ${accentClass}`}>
                 <Medal className="h-3.5 w-3.5" />
                 <span className="text-[15px] uppercase tracking-[0.15em] font-semibold">{label}</span>
@@ -69,9 +74,11 @@ function PlacementCard({entry}: {entry: SeasonDetail["season_podium"][number]}) 
             <p className="text-sm font-semibold text-center leading-tight">{entry.teams.name}</p>
         </div>
     );
+    if (!href) return inner;
+    return <Link href={href} className="block group">{inner}</Link>;
 }
 
-function PodiumSection({entries}: {entries: SeasonDetail["season_podium"]}) {
+function PodiumSection({entries, regionCode, seasonSlug}: {entries: SeasonDetail["season_podium"]; regionCode: string; seasonSlug: string}) {
     const sorted = [...entries].sort((a, b) => a.place - b.place);
     const champion = sorted.find(e => e.place === 1);
     const rest = sorted.filter(e => e.place !== 1);
@@ -82,10 +89,10 @@ function PodiumSection({entries}: {entries: SeasonDetail["season_podium"]}) {
                 <Trophy className="h-3 w-3" /> Podium
             </p>
             <div className="space-y-2">
-                {champion && <ChampionCard entry={champion} priority />}
+                {champion && <ChampionCard entry={champion} priority regionCode={regionCode} seasonSlug={seasonSlug} />}
                 {rest.length > 0 && (
                     <div className="grid grid-cols-2 gap-2">
-                        {rest.map(e => <PlacementCard key={e.place} entry={e} />)}
+                        {rest.map(e => <PlacementCard key={e.place} entry={e} regionCode={regionCode} seasonSlug={seasonSlug} />)}
                     </div>
                 )}
             </div>
@@ -112,6 +119,7 @@ function IndividualAwardCard({
     const {award_name, full_avatar_url, players} = award;
     const team = getAwardTeam(award, seasonId);
     const reversed = index % 2 === 1;
+    const playerHref = buildPublicPlayerHref(players.username);
 
     const avatarBlock = (
         <div className="w-[20%] shrink-0 relative overflow-hidden">
@@ -154,8 +162,8 @@ function IndividualAwardCard({
         </div>
     );
 
-    return (
-        <div className="panel overflow-hidden bg-yellow-500/[0.04] dark:bg-yellow-500/[0.06] border-yellow-500/25">
+    const inner = (
+        <div className="panel overflow-hidden bg-yellow-500/[0.04] dark:bg-yellow-500/[0.06] border-yellow-500/25 hover:border-primary/40 transition-colors">
             {/* Mobile: award name bar + 50/50 split */}
             <div className="sm:hidden">
                 <div className="px-5 py-2.5 border-b border-yellow-500/20 bg-yellow-500/[0.04]">
@@ -238,6 +246,9 @@ function IndividualAwardCard({
             </div>
         </div>
     );
+
+    if (!playerHref) return inner;
+    return <Link href={playerHref} className="block">{inner}</Link>;
 }
 
 function FirstTeamCard({
@@ -249,9 +260,10 @@ function FirstTeamCard({
 }) {
     const {award_name, full_avatar_url, players} = award;
     const team = getAwardTeam(award, seasonId);
+    const playerHref = buildPublicPlayerHref(players.username);
 
-    return (
-        <div className="flex flex-col items-center gap-2">
+    const inner = (
+        <div className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity">
             <p className="text-[10px] uppercase tracking-wide text-amber-500 dark:text-yellow-400 font-semibold text-center line-clamp-2 min-h-[24px]">
                 {award_name}
             </p>
@@ -297,6 +309,9 @@ function FirstTeamCard({
             </div>
         </div>
     );
+
+    if (!playerHref) return inner;
+    return <Link href={playerHref}>{inner}</Link>;
 }
 
 function FirstTeamMobileCard({
@@ -308,9 +323,10 @@ function FirstTeamMobileCard({
 }) {
     const {award_name, full_avatar_url, players} = award;
     const team = getAwardTeam(award, seasonId);
+    const playerHref = buildPublicPlayerHref(players.username);
 
-    return (
-        <div className="flex overflow-hidden rounded-sm border border-yellow-500/20 bg-yellow-500/5 h-28">
+    const inner = (
+        <div className="flex overflow-hidden rounded-sm border border-yellow-500/20 bg-yellow-500/5 h-28 hover:border-primary/40 transition-colors">
             {/* Content + logo — left */}
             <div className="flex-1 min-w-0 flex flex-col justify-between p-4">
                 <div className="flex flex-col gap-0.5 min-w-0">
@@ -367,6 +383,9 @@ function FirstTeamMobileCard({
             </div>
         </div>
     );
+
+    if (!playerHref) return inner;
+    return <Link href={playerHref} className="block">{inner}</Link>;
 }
 
 function FirstTeamSection({awards, seasonId}: {awards: SeasonDetail["season_awards"]; seasonId: string}) {
@@ -482,8 +501,10 @@ function ChampionRosterCard({award}: {award: RosterEntry}) {
     const username = players.username;
     const display_name = players.display_name;
     const roleLabel = ROSTER_ROLE_LABEL[award_name];
-    return (
-        <div className="flex flex-col items-center gap-1.5">
+    const playerHref = buildPublicPlayerHref(username);
+
+    const inner = (
+        <div className="flex flex-col items-center gap-1.5 hover:opacity-80 transition-opacity">
             <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-muted/30">
                 {full_avatar_url ? (
                     <Image
@@ -517,6 +538,9 @@ function ChampionRosterCard({award}: {award: RosterEntry}) {
             </div>
         </div>
     );
+
+    if (!playerHref) return inner;
+    return <Link href={playerHref}>{inner}</Link>;
 }
 
 function ChampionRosterMobileCard({award, index}: {award: RosterEntry; index: number}) {
@@ -524,6 +548,7 @@ function ChampionRosterMobileCard({award, index}: {award: RosterEntry; index: nu
     const username = players.username;
     const display_name = players.display_name;
     const isRight = index % 2 === 1;
+    const playerHref = buildPublicPlayerHref(username);
 
     const avatarEl = (
         <div className="relative w-[52%] shrink-0 self-stretch rounded-sm overflow-hidden bg-muted/30 min-h-[112px]">
@@ -563,12 +588,15 @@ function ChampionRosterMobileCard({award, index}: {award: RosterEntry; index: nu
         </div>
     );
 
-    return (
-        <div className="flex items-stretch min-h-[112px]">
+    const inner = (
+        <div className="flex items-stretch min-h-[112px] hover:opacity-80 transition-opacity">
             {isRight ? avatarEl : textEl}
             {isRight ? textEl : avatarEl}
         </div>
     );
+
+    if (!playerHref) return inner;
+    return <Link href={playerHref} className="block">{inner}</Link>;
 }
 
 const ROSTER_ROLE_RANK: Record<string, number> = {captain: 0, vice_captain: 1, court_captain: 2};
@@ -629,7 +657,7 @@ function SeasonDetailSkeleton() {
     );
 }
 
-async function SeasonDetailContent({slug}: {slug: string}) {
+async function SeasonDetailContent({slug, regionCode}: {slug: string; regionCode: string}) {
     const [seasonResult, regionsResult] = await Promise.all([
         getSeasonDetailAction(slug),
         getAllRegionsAction(),
@@ -643,8 +671,11 @@ async function SeasonDetailContent({slug}: {slug: string}) {
     const season = seasonResult.value;
     const regions = regionsResult.ok ? regionsResult.value : [];
 
+    const matchedRegion = regions.find(r => r.code.toLowerCase() === regionCode.toLowerCase());
+    if (!matchedRegion || matchedRegion.id !== season.region_id) notFound();
+
     const championRoster = season.season_awards.filter(a => a.category === "champion_roster");
-    const regionName = regions.find(r => r.id === season.region_id)?.name ?? "Unknown";
+    const regionName = matchedRegion.name;
     const fmt = (d: string | null) =>
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 
@@ -665,7 +696,7 @@ async function SeasonDetailContent({slug}: {slug: string}) {
                 </p>
             </div>
 
-            {hasPodium && <PodiumSection entries={season.season_podium} />}
+            {hasPodium && <PodiumSection entries={season.season_podium} regionCode={regionCode} seasonSlug={season.slug} />}
 
             {championRoster.length > 0 && <ChampionRosterSection awards={championRoster} />}
 
@@ -699,8 +730,8 @@ async function SeasonDetailContent({slug}: {slug: string}) {
     );
 }
 
-export default async function SeasonDetailPage({params}: {params: Promise<{slug: string}>}) {
-    const {slug} = await params;
+export default async function SeasonDetailPage({params}: {params: Promise<{region: string; slug: string}>}) {
+    const {region, slug} = await params;
 
     return (
         <div className="page-narrow space-y-6 py-6">
@@ -713,7 +744,7 @@ export default async function SeasonDetailPage({params}: {params: Promise<{slug:
             </Link>
 
             <Suspense fallback={<SeasonDetailSkeleton />}>
-                <SeasonDetailContent slug={slug} />
+                <SeasonDetailContent slug={slug} regionCode={region} />
             </Suspense>
         </div>
     );

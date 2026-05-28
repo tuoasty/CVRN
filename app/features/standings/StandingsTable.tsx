@@ -3,21 +3,25 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
 import { StandingWithInfo } from "@/server/domains/standing";
 import Image from "next/image";
+import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
 import { getLogoClassName } from "@/app/lib/logoClass";
+import { buildPublicTeamHref } from "@/app/utils/matchDetailHref";
 
 type StandingsTableProps = {
     standings: StandingWithInfo[];
     isLoading?: boolean;
     qualifiedTeams?: number;
     playinTeams?: number;
+    regionCode?: string;
+    seasonSlug?: string;
 };
 
 type SortMode = "wins" | "lvr";
 
-export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, playinTeams = 8 }: StandingsTableProps) {
+export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, playinTeams = 8, regionCode, seasonSlug }: StandingsTableProps) {
     const [sortMode, setSortMode] = useState<SortMode>("lvr");
 
     const sortedStandings = useMemo(() => {
@@ -242,6 +246,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             const winPct = totalGames > 0 ? (wins / totalGames) * 100 : 0;
                             const displayLvr = standing.total_lvr || 0;
                             const lvrDiff = (standing.total_lvr || 0) - (standing.starting_lvr ?? 100);
+                            const teamHref = buildPublicTeamHref({regionCode, seasonSlug, teamName: standing.team_name});
 
                             return (
                                 <TableRow
@@ -252,20 +257,37 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                         {getRankBadge(rank)}
                                     </TableCell>
                                     <TableCell className="py-4">
-                                        <div className="flex items-center gap-3">
-                                            {standing.team_logo_url && (
-                                                <div className="w-10 h-10 flex-shrink-0 rounded border border-border bg-muted/30 p-1">
-                                                    <Image
-                                                        src={standing.team_logo_url}
-                                                        alt={standing.team_name || "Team"}
-                                                        width={40}
-                                                        height={40}
-                                                        className={`rounded w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
-                                                    />
-                                                </div>
-                                            )}
-                                            <span className="font-semibold text-sm">{standing.team_name}</span>
-                                        </div>
+                                        {teamHref ? (
+                                            <Link href={teamHref} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                                                {standing.team_logo_url && (
+                                                    <div className="w-10 h-10 flex-shrink-0 rounded border border-border bg-muted/30 p-1">
+                                                        <Image
+                                                            src={standing.team_logo_url}
+                                                            alt={standing.team_name || "Team"}
+                                                            width={40}
+                                                            height={40}
+                                                            className={`rounded w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
+                                                        />
+                                                    </div>
+                                                )}
+                                                <span className="font-semibold text-sm">{standing.team_name}</span>
+                                            </Link>
+                                        ) : (
+                                            <div className="flex items-center gap-3">
+                                                {standing.team_logo_url && (
+                                                    <div className="w-10 h-10 flex-shrink-0 rounded border border-border bg-muted/30 p-1">
+                                                        <Image
+                                                            src={standing.team_logo_url}
+                                                            alt={standing.team_name || "Team"}
+                                                            width={40}
+                                                            height={40}
+                                                            className={`rounded w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
+                                                        />
+                                                    </div>
+                                                )}
+                                                <span className="font-semibold text-sm">{standing.team_name}</span>
+                                            </div>
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-center font-bold text-sm tabular-nums py-4">
                                         {wins}-{losses}

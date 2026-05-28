@@ -19,6 +19,8 @@ export default function StandingsPage() {
 
     const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
     const selectedRegion = regions.find(r => r.id === selectedRegionId);
+    const regionCode = selectedRegion?.code;
+    const seasonSlug = selectedSeason?.slug;
 
     const stats = useMemo(() => {
         if (standings.length === 0) return null;
@@ -78,6 +80,8 @@ export default function StandingsPage() {
                     isLoading={standingsLoading || !selectedSeasonId}
                     qualifiedTeams={selectedSeason?.playoff_configs?.qualified_teams}
                     playinTeams={selectedSeason?.playoff_configs?.playin_teams}
+                    regionCode={regionCode}
+                    seasonSlug={seasonSlug}
                 />
             </div>
         </>
