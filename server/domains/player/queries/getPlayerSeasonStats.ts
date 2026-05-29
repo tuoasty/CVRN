@@ -1,5 +1,5 @@
 import {Err, Ok, Result} from "@/shared/types/result";
-import {DBClient} from "@/shared/types/db";
+import {DBClient, PlayerSeasonStatRow} from "@/shared/types/db";
 import {PlayerSeasonStat} from "../types";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
@@ -23,7 +23,7 @@ export async function getPlayerSeasonStats(
             return Err(serializeError(error, "DB_ERROR"));
         }
 
-        const rows: PlayerSeasonStat[] = (data ?? []).map(r => {
+        const rows: PlayerSeasonStat[] = (data ?? []).filter((r): r is typeof r & {season_id: string} => r.season_id !== null).map(r => {
             const season = r.season as {name: string; slug: string; region: {code: string}} | null;
             return {
                 ...r,

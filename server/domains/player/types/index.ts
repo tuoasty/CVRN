@@ -66,6 +66,7 @@ export interface PlayerWithCurrentTeam extends Player {
 }
 
 export interface PlayerSeasonStat extends PlayerSeasonStatRow {
+    season_id: string;
     season_name: string;
     season_slug: string;
     region_code: string;
