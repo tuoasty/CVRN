@@ -15,7 +15,7 @@ export async function getPlayerTeamHistory(
                 role,
                 joined_at,
                 left_at,
-                team:teams!team_id(id, name, logo_url, logo_bg_removed, brick_color, deleted_at),
+                team:teams!team_id(id, name, slug, logo_url, logo_bg_removed, brick_color, deleted_at),
                 season:seasons!season_id(id, name, slug, end_date, region:regions!region_id(code))
             `)
             .eq("player_id", p.playerId)
