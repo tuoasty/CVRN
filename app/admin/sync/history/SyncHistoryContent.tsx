@@ -2,7 +2,7 @@
 
 import {useState, useEffect, useCallback} from 'react';
 import {useSearchParams} from 'next/navigation';
-import {RefreshCw, RotateCcw} from 'lucide-react';
+import {RefreshCw, RotateCcw, Copy, Check} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
 import {Badge} from '@/app/components/ui/badge';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/app/components/ui/dialog';
@@ -79,6 +79,7 @@ export default function SyncHistoryContent({ canRevert }: SyncHistoryContentProp
     const [selectedLog, setSelectedLog] = useState<SheetSyncLog | null>(null);
     const [revertTarget, setRevertTarget] = useState<SheetSyncLog | null>(null);
     const [reverting, setReverting] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const configMap = Object.fromEntries(configs.map(c => [c.id, c]));
 
@@ -116,6 +117,28 @@ export default function SyncHistoryContent({ canRevert }: SyncHistoryContentProp
 
     const logChanges = selectedLog ? (selectedLog.changes as unknown as SyncChange[]) : [];
     const logErrors = selectedLog ? (selectedLog.errors as unknown as SyncError[]) : [];
+
+    const handleCopySummary = () => {
+        if (!selectedLog) return;
+        const cfg = configMap[selectedLog.sheet_config_id];
+        const lines: string[] = [];
+        lines.push(`Sync Summary — ${new Date(selectedLog.synced_at).toLocaleString()}`);
+        if (cfg) lines.push(`Config: ${cfg.tab_name} (${cfg.sheet_type})`);
+        lines.push(`Status: ${selectedLog.status} | ${selectedLog.rows_processed} rows processed${selectedLog.rows_errored > 0 ? `, ${selectedLog.rows_errored} errors` : ''}`);
+        if (logChanges.length > 0) {
+            lines.push('');
+            lines.push(`Changes (${logChanges.length}):`);
+            for (const c of logChanges) lines.push(`• ${CHANGE_LABELS[c.type] ?? c.type}: ${describeChange(c)}`);
+        }
+        if (logErrors.length > 0) {
+            lines.push('');
+            lines.push(`Errors (${logErrors.length}):`);
+            for (const e of logErrors) lines.push(`• ${e.row ? `Row ${e.row}: ` : ''}${e.message}`);
+        }
+        navigator.clipboard.writeText(lines.join('\n'));
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     return (
         <div className="admin-container space-y-6">
@@ -252,9 +275,15 @@ export default function SyncHistoryContent({ canRevert }: SyncHistoryContentProp
             <Dialog open={!!selectedLog} onOpenChange={open => { if (!open) setSelectedLog(null); }}>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby={undefined}>
                     <DialogHeader>
-                        <DialogTitle>
-                            Sync Log — {selectedLog && new Date(selectedLog.synced_at).toLocaleString()}
-                        </DialogTitle>
+                        <div className="flex items-center justify-between gap-2">
+                            <DialogTitle>
+                                Sync Log — {selectedLog && new Date(selectedLog.synced_at).toLocaleString()}
+                            </DialogTitle>
+                            <Button variant="outline" size="sm" onClick={handleCopySummary} className="shrink-0">
+                                {copied ? <Check className="w-3.5 h-3.5 mr-1.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+                                {copied ? 'Copied' : 'Copy summary'}
+                            </Button>
+                        </div>
                     </DialogHeader>
 
                     {selectedLog && (

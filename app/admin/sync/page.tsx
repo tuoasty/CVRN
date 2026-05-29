@@ -1,7 +1,7 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import {RefreshCw, Plus, Trash2, Eye, Sheet, Pencil, Play, History, RotateCcw, Clock} from 'lucide-react';
+import {RefreshCw, Plus, Trash2, Eye, Sheet, Pencil, Play, History, RotateCcw, Clock, Copy, Check} from 'lucide-react';
 import {useRouter} from 'next/navigation';
 import {Button} from '@/app/components/ui/button';
 import {Badge} from '@/app/components/ui/badge';
@@ -14,7 +14,7 @@ import {useSeasons} from '@/app/hooks/useSeasons';
 import {toast} from '@/app/utils/toast';
 import {clientLogger} from '@/app/utils/clientLogger';
 import {SheetConfig} from '@/shared/types/db';
-import {ParsedTeamResult, ParsedMatchResult} from '@/server/domains/sheets/types';
+import {ParsedTeamResult, ParsedMatchResult, SyncResult, SyncChange, SyncError} from '@/server/domains/sheets/types';
 
 type PreviewResult =
     | { type: 'teams'; data: ParsedTeamResult[] }
@@ -33,6 +33,28 @@ import {
 import { useRegions } from '@/app/hooks';
 
 const SHEET_TYPES = ['teams', 'qualifier', 'playoff'] as const;
+
+const CHANGE_LABELS: Record<string, string> = {
+    team_creation: 'Created',
+    team_rename: 'Renamed',
+    team_disband: 'Disbanded',
+    player_add: 'Added',
+    player_remove: 'Removed',
+    role_change: 'Role',
+    match_result: 'Match',
+};
+
+function describeChange(c: SyncChange): string {
+    switch (c.type) {
+        case 'team_creation': return `Created: ${c.after.name}`;
+        case 'team_rename': return `${c.before.name} → ${c.after.name}`;
+        case 'team_disband': return `Disbanded: ${c.before.name}`;
+        case 'player_add': return String(c.after.username ?? c.entityId);
+        case 'player_remove': return String(c.before.username ?? c.entityId);
+        case 'role_change': return `${c.before.role} → ${c.after.role}`;
+        default: return JSON.stringify(c.after);
+    }
+}
 
 type FormState = {
     seasonId: string;
@@ -81,6 +103,9 @@ export default function AdminSyncPage() {
     const [resetting, setResetting] = useState(false);
 
     const [togglingCronId, setTogglingCronId] = useState<string | null>(null);
+
+    const [syncResultDialog, setSyncResultDialog] = useState<{config: SheetConfig; result: SyncResult} | null>(null);
+    const [syncResultCopied, setSyncResultCopied] = useState(false);
 
     const [previewConfig, setPreviewConfig] = useState<SheetConfig | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
@@ -200,13 +225,7 @@ export default function AdminSyncPage() {
                 toast.error('Sync failed', result.error.message);
                 return;
             }
-            const {rowsProcessed, rowsErrored, changes} = result.value;
-            const msg = `${rowsProcessed} teams processed, ${changes.length} changes, ${rowsErrored} errors`;
-            if (rowsErrored > 0) {
-                toast.warning('Sync completed with errors', msg);
-            } else {
-                toast.success('Sync complete', msg);
-            }
+            setSyncResultDialog({config, result: result.value});
             await loadConfigs();
         } catch (err) {
             clientLogger.error('AdminSyncPage', 'Exception running sync', {err});
@@ -214,6 +233,28 @@ export default function AdminSyncPage() {
         } finally {
             setSyncingId(null);
         }
+    };
+
+    const handleCopySyncResult = () => {
+        if (!syncResultDialog) return;
+        const {config, result} = syncResultDialog;
+        const lines: string[] = [];
+        lines.push(`Sync Summary — ${new Date().toLocaleString()}`);
+        lines.push(`Config: ${config.tab_name} (${config.sheet_type})`);
+        lines.push(`Status: ${result.rowsErrored > 0 ? 'errors' : 'success'} | ${result.rowsProcessed} rows processed${result.rowsErrored > 0 ? `, ${result.rowsErrored} errors` : ''}`);
+        if (result.changes.length > 0) {
+            lines.push('');
+            lines.push(`Changes (${result.changes.length}):`);
+            for (const c of result.changes) lines.push(`• ${CHANGE_LABELS[c.type] ?? c.type}: ${describeChange(c)}`);
+        }
+        if (result.errors.length > 0) {
+            lines.push('');
+            lines.push(`Errors (${result.errors.length}):`);
+            for (const e of result.errors) lines.push(`• ${e.row ? `Row ${e.row}: ` : ''}${e.message}`);
+        }
+        navigator.clipboard.writeText(lines.join('\n'));
+        setSyncResultCopied(true);
+        setTimeout(() => setSyncResultCopied(false), 2000);
     };
 
     const handleToggleCron = async (cfg: SheetConfig) => {
@@ -789,6 +830,87 @@ export default function AdminSyncPage() {
                             </Button>
                         </div>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Sync Result Dialog */}
+            <Dialog open={!!syncResultDialog} onOpenChange={open => { if (!open) setSyncResultDialog(null); }}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby={undefined}>
+                    <DialogHeader>
+                        <div className="flex items-center justify-between gap-2">
+                            <DialogTitle>
+                                {syncResultDialog?.result.rowsErrored ? 'Sync completed with errors' : 'Sync complete'} — {syncResultDialog?.config.tab_name}
+                            </DialogTitle>
+                            <Button variant="outline" size="sm" onClick={handleCopySyncResult} className="shrink-0">
+                                {syncResultCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+                                {syncResultCopied ? 'Copied' : 'Copy summary'}
+                            </Button>
+                        </div>
+                    </DialogHeader>
+                    {syncResultDialog && (() => {
+                        const {result} = syncResultDialog;
+                        const logChanges = result.changes as SyncChange[];
+                        const logErrors = result.errors as SyncError[];
+                        return (
+                            <div className="space-y-5">
+                                <div className="flex flex-wrap items-center gap-2 text-sm">
+                                    <span className="text-muted-foreground">{result.rowsProcessed} rows processed</span>
+                                    {result.rowsErrored > 0 && <span className="text-destructive">{result.rowsErrored} errors</span>}
+                                    {logChanges.length > 0 && <span className="text-muted-foreground">{logChanges.length} changes</span>}
+                                </div>
+                                {logErrors.length > 0 && (
+                                    <div>
+                                        <p className="text-sm font-semibold text-destructive mb-2">Errors ({logErrors.length})</p>
+                                        <div className="rounded-md border">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="border-b bg-muted/40">
+                                                        <th className="text-left px-3 py-1.5 font-medium w-16">Row</th>
+                                                        <th className="text-left px-3 py-1.5 font-medium">Message</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {logErrors.map((e, i) => (
+                                                        <tr key={i} className="border-b last:border-0">
+                                                            <td className="px-3 py-1.5 text-muted-foreground">{e.row || '—'}</td>
+                                                            <td className="px-3 py-1.5 text-destructive">{e.message}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+                                {logChanges.length > 0 ? (
+                                    <div>
+                                        <p className="text-sm font-semibold mb-2">Changes ({logChanges.length})</p>
+                                        <div className="rounded-md border">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="border-b bg-muted/40">
+                                                        <th className="text-left px-3 py-1.5 font-medium w-28">Type</th>
+                                                        <th className="text-left px-3 py-1.5 font-medium">Detail</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {logChanges.map((c, i) => (
+                                                        <tr key={i} className="border-b last:border-0">
+                                                            <td className="px-3 py-1.5">
+                                                                <Badge variant="outline" className="text-xs">{CHANGE_LABELS[c.type] ?? c.type}</Badge>
+                                                            </td>
+                                                            <td className="px-3 py-1.5 text-muted-foreground">{describeChange(c)}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No changes recorded.</p>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </DialogContent>
             </Dialog>
 
