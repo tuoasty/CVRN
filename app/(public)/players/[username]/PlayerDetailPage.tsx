@@ -252,7 +252,7 @@ function TeamLogoLink({award}: {award: PlayerAward}) {
     const href = !award.team_disbanded ? buildPublicTeamHref({
         regionCode: award.region_code,
         seasonSlug: award.season_slug,
-        teamName: award.team_name,
+        teamSlug: award.team_slug,
     }) : null;
     if (!award.team_logo_url) return <span className="text-muted-foreground">—</span>;
     const logo = (
@@ -361,7 +361,7 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
     const teamHref = !entry.team_disbanded ? buildPublicTeamHref({
         regionCode: entry.region_code,
         seasonSlug: entry.season_slug,
-        teamName: entry.team_name,
+        teamSlug: entry.team_slug,
     }) : null;
     const inner = (
         <div className="flex items-center gap-3 px-4 py-3">

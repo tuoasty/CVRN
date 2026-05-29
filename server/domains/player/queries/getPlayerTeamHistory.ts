@@ -27,11 +27,12 @@ export async function getPlayerTeamHistory(
         }
 
         const rows: PlayerTeamHistoryEntry[] = (data ?? []).map(r => {
-            const team = r.team as {id: string; name: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null; deleted_at: string | null} | null;
+            const team = r.team as {id: string; name: string; slug: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null; deleted_at: string | null} | null;
             const season = r.season as {id: string; name: string; slug: string; end_date: string | null; region: {code: string}} | null;
             return {
                 team_id: team?.id ?? "",
                 team_name: team?.name ?? "",
+                team_slug: team?.slug ?? "",
                 team_logo_url: team?.logo_url ?? null,
                 team_logo_bg_removed: team?.logo_bg_removed ?? false,
                 team_brick_color: team?.brick_color ?? null,

@@ -51,9 +51,9 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
     const runnerUp = sorted.find((e) => e.place === 2);
     const third = sorted.find((e) => e.place === 3);
 
-    const championHref = champion ? buildPublicTeamHref({regionCode, seasonSlug, teamName: champion.teams.name}) : null;
-    const runnerUpHref = runnerUp ? buildPublicTeamHref({regionCode, seasonSlug, teamName: runnerUp.teams.name}) : null;
-    const thirdHref = third ? buildPublicTeamHref({regionCode, seasonSlug, teamName: third.teams.name}) : null;
+    const championHref = champion ? buildPublicTeamHref({regionCode, seasonSlug, teamSlug: champion.teams.slug}) : null;
+    const runnerUpHref = runnerUp ? buildPublicTeamHref({regionCode, seasonSlug, teamSlug: runnerUp.teams.slug}) : null;
+    const thirdHref = third ? buildPublicTeamHref({regionCode, seasonSlug, teamSlug: third.teams.slug}) : null;
 
     const championContent = champion ? (
         <div className="flex flex-col items-center gap-3 py-8 px-6">

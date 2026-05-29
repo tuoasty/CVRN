@@ -81,6 +81,7 @@ export interface PlayerAward {
     season_slug: string;
     region_code: string;
     team_name: string | null;
+    team_slug: string | null;
     team_disbanded: boolean;
     awarded_at: string | null;
     team_logo_url: string | null;
@@ -90,6 +91,7 @@ export interface PlayerAward {
 export interface PlayerTeamHistoryEntry {
     team_id: string;
     team_name: string;
+    team_slug: string;
     team_logo_url: string | null;
     team_logo_bg_removed: boolean;
     team_brick_color: string | null;
