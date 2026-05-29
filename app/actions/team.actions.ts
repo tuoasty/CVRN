@@ -1,8 +1,15 @@
 "use server"
 
 import {createServerSupabase} from "@/server/supabase/server";
+import {supabaseAdmin} from "@/server/supabase/admin";
 import {z} from "zod"
-import {Result, Err} from "@/shared/types/result";
+import {Result, Err, Ok} from "@/shared/types/result";
+import {getUserRole} from "@/server/db/roles.repo";
+import {revalidatePath} from "next/cache";
+import {BUCKETS, STORAGE_PATHS, extractStoragePath} from "@/server/storage/storage.paths";
+import {uploadFile, deleteFile} from "@/server/storage/storage.service";
+import {findTeamById, updateTeamById, findTeamsBySeasonId} from "@/server/db/teams.repo";
+import {logger} from "@/server/utils/logger";
 import {
     TeamWithRegion,
     TeamWithRegionAndPlayers,
@@ -25,7 +32,6 @@ import {
     updateTeam
 } from "@/server/domains/team";
 import {Team} from "@/shared/types/db";
-import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
     const {data: {user}} = await supabase.auth.getUser();
@@ -136,4 +142,61 @@ export async function updateTeamAction(formData: FormData) {
         brickColor: parsed.data.brickColor,
         startingLvr: parsed.data.startingLvr,
     });
+}
+
+export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
+    const supabase = await createServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return Err({ message: "Not authenticated", code: "UNAUTHORIZED" as const });
+
+    const roleResult = await getUserRole(supabase, user.id);
+    if (!roleResult.ok) return Err(roleResult.error);
+    const role = roleResult.value;
+    if (role !== 'staff' && role !== 'admin' && role !== 'super_admin') {
+        return Err({ message: "Insufficient permissions", code: "FORBIDDEN" as const });
+    }
+
+    const file = formData.get('logo') as File | null;
+    if (!file || file.size === 0) return Err({ message: "No file provided", code: "VALIDATION_ERROR" as const });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = supabaseAdmin as any;
+
+    const teamResult = await findTeamById(admin, teamId);
+    if (!teamResult.ok) return Err(teamResult.error);
+    if (!teamResult.value || teamResult.value.deleted_at) {
+        return Err({ message: "Team not found", code: "NOT_FOUND" as const });
+    }
+
+    const existing = teamResult.value;
+    if (existing.logo_url) {
+        const oldPath = extractStoragePath(existing.logo_url, BUCKETS.PUBLIC);
+        await deleteFile(admin, { bucket: BUCKETS.PUBLIC, path: oldPath });
+    }
+
+    const path = STORAGE_PATHS.teamLogoVersioned(teamId, 'webp');
+    const uploadResult = await uploadFile(admin, {
+        bucket: BUCKETS.PUBLIC,
+        path,
+        file,
+        contentType: 'image/webp',
+        compress: true,
+        userId: user.id,
+    });
+    if (!uploadResult.ok) {
+        logger.error({ teamId, error: uploadResult.error }, "Logo upload failed");
+        return Err(uploadResult.error);
+    }
+
+    const updateResult = await updateTeamById(admin, teamId, {
+        logoUrl: uploadResult.value.url,
+        logoBgRemoved: uploadResult.value.bgRemoved,
+    });
+    if (!updateResult.ok) {
+        logger.error({ teamId, error: updateResult.error }, "Failed to update team logo_url");
+        return Err(updateResult.error);
+    }
+
+    revalidatePath('/admin/teams');
+    return Ok({ logoUrl: uploadResult.value.url });
 }
