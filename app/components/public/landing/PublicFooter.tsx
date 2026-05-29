@@ -6,7 +6,7 @@ import Link from "next/link";
 
 const STAFF = [
     { name: "Eddy", role: "Owner"},
-    { name: "Edge", role: "Owner"},
+    { name: "Edge", role: "Co-Owner"},
     { name: "Michiru", role: "Co-Owner" },
     // { name: "Sonny", role: "Commissioner" },
     // { name: "Ard", role: "Acting Commissioner" },
@@ -98,6 +98,15 @@ export default function PublicFooter() {
                         <p className="text-[10px] text-muted-foreground tracking-wide">@tuoasty</p>
                         <p className="text-[10px] text-muted-foreground mt-1.5 leading-relaxed">
                             Designer & developer of CVRN.net.
+                        </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-border/50">
+                        <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                            Hero Banner Design
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                            by <span className="font-medium text-foreground/80">ZHAN (@rryy927)</span>
                         </p>
                     </div>
                 </div>
