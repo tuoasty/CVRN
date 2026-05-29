@@ -3,6 +3,8 @@ import {DBClient} from "@/shared/types/db";
 import {PlayerWithCurrentTeam} from "../types";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
+import {lazySyncPlayer} from "../helpers/lazySyncPlayer";
+import {runInBackground} from "@/server/utils/runInBackground";
 
 export async function getPlayerByUsername(
     supabase: DBClient,
@@ -21,6 +23,10 @@ export async function getPlayerByUsername(
             return Err(serializeError(playerError, "DB_ERROR"));
         }
         if (!player) return Ok(null);
+
+        // Refresh username/avatar from Roblox if stale (reachable directly,
+        // not just via team details). Non-blocking; serves cached data now.
+        runInBackground(() => lazySyncPlayer(supabase, player), "lazySyncPlayer");
 
         // 2. Try to find active team first (left_at IS NULL)
         const {data: activeTeam} = await supabase
