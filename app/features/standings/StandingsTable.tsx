@@ -246,7 +246,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             const winPct = totalGames > 0 ? (wins / totalGames) * 100 : 0;
                             const displayLvr = standing.total_lvr || 0;
                             const lvrDiff = (standing.total_lvr || 0) - (standing.starting_lvr ?? 100);
-                            const teamHref = buildPublicTeamHref({regionCode, seasonSlug, teamName: standing.team_name});
+                            const teamHref = buildPublicTeamHref({regionCode, seasonSlug, teamSlug: standing.team_slug});
 
                             return (
                                 <TableRow

@@ -58,7 +58,7 @@ export default function StandingsPreview({
                     const losses = standing.losses || 0;
                     const displayLvr = standing.total_lvr || 0;
                     const isQualified = rank <= qualifiedTeams;
-                    const teamHref = buildPublicTeamHref({regionCode, seasonSlug, teamName: standing.team_name});
+                    const teamHref = buildPublicTeamHref({regionCode, seasonSlug, teamSlug: standing.team_slug});
                     const rowClass = `
                         flex items-center gap-3 p-2.5 rounded-sm border transition-all
                         ${rank === 1 ? 'bg-gradient-to-r from-primary/15 to-transparent border-l-4 border-l-primary' : ''}

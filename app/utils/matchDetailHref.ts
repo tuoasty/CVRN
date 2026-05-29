@@ -24,12 +24,12 @@ export function buildAdminMatchHref(matchId: string): string {
 type BuildPublicTeamHrefArgs = {
     regionCode?: string;
     seasonSlug?: string;
-    teamName?: string | null;
+    teamSlug?: string | null;
 };
 
 export function buildPublicTeamHref(args: BuildPublicTeamHrefArgs): string | null {
-    if (!args.regionCode || !args.seasonSlug || !args.teamName) return null;
-    return `/teams/${encodeURIComponent(args.regionCode.toLowerCase())}/${encodeURIComponent(args.seasonSlug.toLowerCase())}/${encodeURIComponent(toSlug(args.teamName))}`;
+    if (!args.regionCode || !args.seasonSlug || !args.teamSlug) return null;
+    return `/teams/${encodeURIComponent(args.regionCode.toLowerCase())}/${encodeURIComponent(args.seasonSlug.toLowerCase())}/${encodeURIComponent(toSlug(args.teamSlug))}`;
 }
 
 export function buildPublicPlayerHref(username: string | null | undefined): string | null {

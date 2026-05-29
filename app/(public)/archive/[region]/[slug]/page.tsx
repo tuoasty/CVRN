@@ -36,7 +36,7 @@ function TeamLogoSmall({name, logoUrl, size = 28, priority = false}: {name: stri
 }
 
 function ChampionCard({entry, priority = false, regionCode, seasonSlug}: {entry: SeasonDetail["season_podium"][number]; priority?: boolean; regionCode: string; seasonSlug: string}) {
-    const href = buildPublicTeamHref({regionCode, seasonSlug, teamName: entry.teams.name});
+    const href = buildPublicTeamHref({regionCode, seasonSlug, teamSlug: entry.teams.slug});
     const inner = (
         <div className="panel p-6 flex flex-col items-center gap-3 bg-yellow-500/5 border border-yellow-500/20 group-hover:border-primary/40 transition-colors">
             <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
@@ -63,7 +63,7 @@ function PlacementCard({entry, regionCode, seasonSlug}: {entry: SeasonDetail["se
     ? "text-slate-500 dark:text-slate-300"
     : "text-amber-600 dark:text-amber-400";
 
-    const href = buildPublicTeamHref({regionCode, seasonSlug, teamName: entry.teams.name});
+    const href = buildPublicTeamHref({regionCode, seasonSlug, teamSlug: entry.teams.slug});
     const inner = (
         <div className={`panel p-4 flex flex-col items-center gap-2 border ${borderClass} group-hover:border-primary/40 transition-colors`}>
             <div className={`flex items-center gap-1.5 ${accentClass}`}>

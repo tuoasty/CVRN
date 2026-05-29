@@ -50,10 +50,10 @@ export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
 
     const roundLabel = playoffRound ? (ROUND_LABELS[playoffRound] ?? playoffRound) : null;
     const homeTeamHref = homeTeam && !homeTeam.is_bye && !homeTeam.deleted_at
-        ? buildPublicTeamHref({regionCode, seasonSlug, teamName: homeTeam.name})
+        ? buildPublicTeamHref({regionCode, seasonSlug, teamSlug: homeTeam.slug})
         : null;
     const awayTeamHref = awayTeam && !awayTeam.is_bye && !awayTeam.deleted_at
-        ? buildPublicTeamHref({regionCode, seasonSlug, teamName: awayTeam.name})
+        ? buildPublicTeamHref({regionCode, seasonSlug, teamSlug: awayTeam.slug})
         : null;
 
     return (
