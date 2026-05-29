@@ -172,7 +172,14 @@ export default function PlayerDetailPage({detail}: Props) {
                 <div className="space-y-3 max-w-2xl">
                     <h2 className="text-lg font-semibold">Achievements</h2>
                     <div className="panel overflow-hidden">
-                        <div className="overflow-x-auto">
+                        {/* Mobile cards */}
+                        <div className="sm:hidden divide-y divide-border">
+                            {achievements.map(a => (
+                                <AchievementCard key={a.id} award={a} />
+                            ))}
+                        </div>
+                        {/* Desktop table */}
+                        <div className="hidden sm:block overflow-x-auto">
                             <table className="w-full table-fixed text-sm">
                                 <thead>
                                     <tr className="border-b border-border bg-muted/40">
@@ -198,7 +205,14 @@ export default function PlayerDetailPage({detail}: Props) {
                 <div className="space-y-3 max-w-2xl">
                     <h2 className="text-lg font-semibold">Awards</h2>
                     <div className="panel overflow-hidden">
-                        <div className="overflow-x-auto">
+                        {/* Mobile cards */}
+                        <div className="sm:hidden divide-y divide-border">
+                            {individualAwards.map(a => (
+                                <AwardCard key={a.id} award={a} />
+                            ))}
+                        </div>
+                        {/* Desktop table */}
+                        <div className="hidden sm:block overflow-x-auto">
                             <table className="w-full table-fixed text-sm">
                                 <thead>
                                     <tr className="border-b border-border bg-muted/40">
@@ -303,6 +317,40 @@ function AwardRow({award}: {award: PlayerAward}) {
                 <TeamLogoLink award={award} />
             </td>
         </tr>
+    );
+}
+
+function AchievementCard({award}: {award: PlayerAward}) {
+    const place = placeLabel(award.category);
+    const rowStyle = ACHIEVEMENT_ROW[award.category] ?? {row: "", hover: "hover:bg-muted/20"};
+    return (
+        <div className={cn("flex items-center gap-3 px-4 py-3 transition-colors", rowStyle.row, rowStyle.hover)}>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                    <span className={cn("text-sm font-semibold", place.className)}>{place.text}</span>
+                    <span className="text-sm text-muted-foreground truncate">{award.region_code} · {award.season_name}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">{formatDate(award.awarded_at)}</p>
+            </div>
+            <TeamLogoLink award={award} />
+        </div>
+    );
+}
+
+function AwardCard({award}: {award: PlayerAward}) {
+    const style = AWARD_CATEGORY_STYLE[award.category] ?? {dot: "bg-muted-foreground", text: ""};
+    return (
+        <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                    <span className={cn("w-2 h-2 rounded-full shrink-0", style.dot)} />
+                    <span className={cn("text-sm font-medium truncate", style.text)}>{awardLabel(award)}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{award.region_code} · {award.season_name}</p>
+                <p className="text-xs text-muted-foreground tabular-nums">{formatDate(award.awarded_at)}</p>
+            </div>
+            <TeamLogoLink award={award} />
+        </div>
     );
 }
 

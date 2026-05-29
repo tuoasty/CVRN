@@ -18,7 +18,7 @@ import { LogoutButton } from "@/app/components/ui/LogoutButton";
 import AdminNavItems from "@/app/components/admin/navigation/AdminNavItems";
 import AdminRegionSeasonSelector from "@/app/components/admin/navigation/AdminRegionSeasonSelector";
 
-export default function AdminNavbar() {
+export default function AdminNavbar({ userRole }: { userRole: string | null }) {
     const pathname = usePathname();
     const router = useRouter();
     const [open, setOpen] = useState(false);
@@ -39,7 +39,7 @@ export default function AdminNavbar() {
                             </h1>
                         </Link>
 
-                        <AdminNavItems />
+                        <AdminNavItems userRole={userRole} />
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -99,6 +99,7 @@ export default function AdminNavbar() {
                                 <div className="flex flex-col gap-4 px-4 pb-4">
                                     <AdminNavItems
                                         layout="vertical"
+                                        userRole={userRole}
                                         onNavigate={() => setOpen(false)}
                                     />
                                     <div className="h-px bg-border" />

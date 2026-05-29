@@ -1,8 +1,20 @@
 import { Suspense } from "react";
 import AdminNavbar from "@/app/components/admin/navigation/AdminNavbar";
 import { AdminStoreInitializer } from "@/app/admin/AdminStoreInitializier";
+import { createServerSupabase } from "@/server/supabase/server";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+// TODO: thread userRole through all admin pages for role-aware UI
+async function getCurrentUserRole(): Promise<string | null> {
+    const supabase = await createServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).single();
+    return data?.role ?? null;
+}
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+    const userRole = await getCurrentUserRole();
+
     return (
         <div className="min-h-screen flex flex-col bg-background">
             <Suspense fallback={
@@ -10,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <div className="page-wide h-14" />
                 </header>
             }>
-                <AdminNavbar />
+                <AdminNavbar userRole={userRole} />
             </Suspense>
             <AdminStoreInitializer>
                 <main className="flex-1">{children}</main>
