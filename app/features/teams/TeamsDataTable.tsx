@@ -11,6 +11,7 @@ import { useTeams } from "@/app/hooks/useTeams";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { useRegions } from "@/app/hooks/useRegions";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
+import UploadTeamLogoDialog from "@/app/features/teams/UploadTeamLogoDialog";
 
 export default function TeamsDataTable() {
     const { teams, isLoading, error } = useTeams();
@@ -142,22 +143,31 @@ export default function TeamsDataTable() {
                                         className={`cursor-pointer hover:bg-muted/50 transition-colors${!hasRequiredData ? " opacity-50" : ""}`}
                                         onClick={() => hasRequiredData && handleTeamClick(team)}
                                     >
-                                        <td>
-                                            {team.logo_url ? (
-                                                <div className="relative w-8 h-8">
-                                                    <Image
-                                                        src={team.logo_url}
-                                                        alt={team.name || ""}
-                                                        fill
-                                                        sizes="32px"
-                                                        className="object-contain"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="w-8 h-8 flex items-center justify-center rounded-sm border border-dashed border-amber-500/60 bg-amber-500/10" title="No logo">
-                                                    <ImageOff className="h-3.5 w-3.5 text-amber-500/70" />
-                                                </div>
-                                            )}
+                                        <td onClick={(e) => e.stopPropagation()}>
+                                            <UploadTeamLogoDialog
+                                                teamId={team.id}
+                                                teamName={team.name || ""}
+                                                currentLogoUrl={team.logo_url}
+                                                trigger={
+                                                    <button className="group relative block w-8 h-8 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                        {team.logo_url ? (
+                                                            <div className="relative w-8 h-8">
+                                                                <Image
+                                                                    src={team.logo_url}
+                                                                    alt={team.name || ""}
+                                                                    fill
+                                                                    sizes="32px"
+                                                                    className="object-contain transition-opacity group-hover:opacity-60"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-8 h-8 flex items-center justify-center rounded-sm border border-dashed border-amber-500/60 bg-amber-500/10 group-hover:border-primary/50 transition-colors" title="Upload logo">
+                                                                <ImageOff className="h-3.5 w-3.5 text-amber-500/70" />
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                }
+                                            />
                                         </td>
                                         <td>
                                             <span className="font-medium">{team.name}</span>

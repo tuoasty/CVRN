@@ -125,6 +125,14 @@ export async function updateSession(request: NextRequest) {
       );
     }
 
+    const staffAllowed = pathname === "/admin/teams" || pathname === "/admin/sync/history";
+    if (roleData.role === "staff" && !staffAllowed) {
+      logger.debug({ user_id: user.id, pathname }, "staff redirected to teams");
+      return NextResponse.redirect(
+          new URL("/admin/teams", request.url)
+      );
+    }
+
     return supabaseResponse;
   }
 

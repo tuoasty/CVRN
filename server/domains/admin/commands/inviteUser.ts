@@ -5,7 +5,7 @@ import {logger} from "@/server/utils/logger";
 
 export async function inviteUser(
     email:string,
-    role:"admin" | "super_admin" | "stat_tracker",
+    role:"admin" | "super_admin" | "stat_tracker" | "staff",
     invitedBy: string
 ): Promise<Result<null>> {
     try {

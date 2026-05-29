@@ -6,7 +6,7 @@ import {inviteUser} from "@/server/domains/admin";
 import {createServerSupabase} from "@/server/supabase/server";
 import {InviteUserSchema} from "@/server/domains/admin";
 
-export async function inviteUserAction(email: string, role: "super_admin" | "admin" | "stat_tracker") {
+export async function inviteUserAction(email: string, role: "super_admin" | "admin" | "stat_tracker" | "staff") {
     const parsed = InviteUserSchema.safeParse({email, role});
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 

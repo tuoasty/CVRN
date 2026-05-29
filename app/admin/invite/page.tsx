@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/ca
 
 export default function InvitePage() {
     const [email, setEmail] = useState("");
-    const [role, setRole] = useState<"super_admin" | "admin" | "stat_tracker">("stat_tracker");
+    const [role, setRole] = useState<"super_admin" | "admin" | "stat_tracker" | "staff">("stat_tracker");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState("");
     const [isSuccess, setIsSuccess] = useState(false);
@@ -89,12 +89,13 @@ export default function InvitePage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="stat_tracker">Stat Tracker</SelectItem>
+                                    <SelectItem value="staff">Staff</SelectItem>
                                     <SelectItem value="admin">Admin</SelectItem>
                                     <SelectItem value="super_admin">Super Admin</SelectItem>
                                 </SelectContent>
                             </Select>
                             <p className="text-xs text-muted-foreground">
-                                Super Admin: Full access | Admin: Manage teams/matches | Stat Tracker: View only
+                                Super Admin: Full access | Admin: Manage teams/matches | Staff: Sync + logos | Stat Tracker: View only
                             </p>
                         </div>
 
