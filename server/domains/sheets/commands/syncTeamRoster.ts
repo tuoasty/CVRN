@@ -1,7 +1,7 @@
 import {Err, Ok, Result} from "@/shared/types/result";
-import {DBClient} from "@/shared/types/db";
+import {DBClient, Team} from "@/shared/types/db";
 import {SheetConfig} from "@/shared/types/db";
-import {SyncChange, SyncResult} from "@/server/domains/sheets/types";
+import {SyncChange, SyncResult, ParsedRosterEntry, ParsedTeamResult} from "@/server/domains/sheets/types";
 import {parseTeamsSheet} from "@/server/domains/sheets/helpers/parseTeamsSheet";
 import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
 import {
@@ -17,12 +17,42 @@ import {
     bulkRemovePlayersFromTeam,
     setPlayerRole,
     upsertPlayer,
+    findPlayerByRole,
 } from "@/server/db/players.repo";
 import {getRobloxUserByName, getRobloxAvatarsById} from "@/server/roblox/users";
 import {RobloxUser} from "@/shared/types/roblox";
 import {generateSlug} from "@/server/domains/team/helpers/generateSlug";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
+
+function friendlyPlayerError(errMsg: string, username: string, teamName: string, action: 'add' | 'role', otherTeam?: string): string {
+    if (errMsg.includes('idx_one_captain_per_team_season'))
+        return `[${teamName}] ${username} cannot be captain — ${teamName} already has a captain`;
+    if (errMsg.includes('idx_one_vice_captain_per_team_season'))
+        return `[${teamName}] ${username} cannot be vice captain — ${teamName} already has a vice captain`;
+    if (errMsg.includes('idx_one_court_captain_per_team_season'))
+        return `[${teamName}] ${username} cannot be court captain — ${teamName} already has a court captain`;
+    if (errMsg.includes('idx_unique_active_player_season') || errMsg.includes('duplicate key'))
+        return otherTeam
+            ? `[${teamName}] Cannot add ${username} — already listed on ${otherTeam}`
+            : `[${teamName}] Cannot add ${username} — already on another team this season`;
+    return action === 'add'
+        ? `[${teamName}] Failed to add ${username}`
+        : `[${teamName}] Failed to update role for ${username}`;
+}
+
+type Resolution = {parsedPlayer: ParsedRosterEntry; robloxUser: RobloxUser; avatarUrl: string | null};
+
+type TeamPhaseState = {
+    parsedTeam: ParsedTeamResult;
+    team: Team;
+    parsedByUsername: Map<string, ParsedRosterEntry>;
+    existingUsernameKeys: Set<string>;
+    resolvedByRobloxId: Map<string, Resolution>;
+    resolvedUsernameToRobloxId: Map<string, string>;
+    failedResolutions: Set<string>;
+    renamedUsernames: Set<string>;
+};
 
 export async function syncTeamRoster(
     supabase: DBClient,
@@ -56,7 +86,19 @@ export async function syncTeamRoster(
         let rowsErrored = 0;
         const errors: {row: number; message: string}[] = [];
 
-        for (const num of disbandedNumbers) {
+        const accountedNumbers = new Set([
+            ...disbandedNumbers,
+            ...nameClearedSlots.map(s => s.teamNumber),
+            ...activeTeams.map(t => t.teamNumber),
+        ]);
+
+        // ── Phase 0: all disbands (explicit + implicit) ──────────────────────
+        const allDisbandNumbers = [
+            ...disbandedNumbers,
+            ...[...existingByNumber.keys()].filter(n => !accountedNumbers.has(n)),
+        ];
+
+        for (const num of allDisbandNumbers) {
             const team = existingByNumber.get(num);
             if (!team) continue;
 
@@ -102,6 +144,10 @@ export async function syncTeamRoster(
             });
             rowsErrored++;
         }
+
+        // ── Phase 1: team upserts, Roblox resolution, removals, role syncs ───
+        const UNIQUE_ROLES = new Set(['captain', 'vice_captain', 'court_captain']);
+        const phaseStates: TeamPhaseState[] = [];
 
         for (const parsedTeam of activeTeams) {
             rowsProcessed++;
@@ -155,7 +201,6 @@ export async function syncTeamRoster(
                 }
             }
 
-            // Sync players
             const currentPlayersResult = await findAllTeamPlayers(supabase, team.id, config.season_id);
             if (!currentPlayersResult.ok) {
                 logger.error({teamId: team.id, error: currentPlayersResult.error}, "Failed to load current players");
@@ -175,13 +220,12 @@ export async function syncTeamRoster(
                 parsedTeam.players.map(p => [p.username.toLowerCase(), p])
             );
 
-            // Resolve Roblox IDs for all unmatched parsed players upfront
-            type Resolution = {parsedPlayer: typeof parsedTeam.players[number]; robloxUser: RobloxUser; avatarUrl: string | null};
+            // Resolve Roblox IDs for all players not already on this team
             const resolvedByRobloxId = new Map<string, Resolution>();
             const resolvedUsernameToRobloxId = new Map<string, string>();
             const failedResolutions = new Set<string>();
-            const renamedUsernames = new Set<string>(); // sheet usernames (lowercase) that are outdated
-            const canonicalNamesToSkip = new Set<string>(); // DB usernames (lowercase) to protect from remove
+            const renamedUsernames = new Set<string>();
+            const canonicalNamesToSkip = new Set<string>();
 
             for (const [uname, parsedPlayer] of parsedByUsername) {
                 if (currentByUsername.has(uname)) continue;
@@ -203,18 +247,17 @@ export async function syncTeamRoster(
                 resolvedByRobloxId.set(robloxId, {parsedPlayer, robloxUser, avatarUrl});
                 resolvedUsernameToRobloxId.set(uname, robloxId);
 
-                // requestedUsername !== name means player renamed on Roblox since sheet was last updated
                 if (canonicalName !== uname && currentByUsername.has(canonicalName)) {
                     errors.push({
                         row: parsedPlayer.rowNumber,
-                        message: `[${parsedTeam.teamName}] Username "${parsedPlayer.username}" is outdated — Roblox username is now "${robloxUser.name}". Update the sheet.`,
+                        message: `[${parsedTeam.teamName}] "${parsedPlayer.username}" now resolves to "${robloxUser.name}" on Roblox — the username may be outdated or claimed by a different player. Verify and update the sheet.`,
                     });
                     renamedUsernames.add(uname);
                     canonicalNamesToSkip.add(canonicalName);
                 }
             }
 
-            // Remove players not on sheet (skip players whose sheet entry uses their old username)
+            // Remove players not on sheet
             for (const [uname, pts] of currentByUsername) {
                 if (parsedByUsername.has(uname)) continue;
                 if (canonicalNamesToSkip.has(uname)) continue;
@@ -237,115 +280,157 @@ export async function syncTeamRoster(
                 }
             }
 
-            // Add new players and sync roles
-            for (const [uname, parsedPlayer] of parsedByUsername) {
-                const existing = currentByUsername.get(uname);
+            // Sync roles for players already on this team
+            // Process demotions first so unique-role slots (C/VC/CC) are vacated before promotions fill them
+            const roleChanges = [...parsedByUsername.entries()]
+                .filter(([uname, parsedPlayer]) => {
+                    const existing = currentByUsername.get(uname);
+                    return existing && existing.role !== parsedPlayer.role;
+                })
+                .sort(([unameA], [unameB]) => {
+                    const roleA = currentByUsername.get(unameA)!.role ?? '';
+                    const roleB = currentByUsername.get(unameB)!.role ?? '';
+                    // Demotions (currently holding a unique role) come first
+                    if (UNIQUE_ROLES.has(roleA) && !UNIQUE_ROLES.has(roleB)) return -1;
+                    if (!UNIQUE_ROLES.has(roleA) && UNIQUE_ROLES.has(roleB)) return 1;
+                    return 0;
+                });
 
-                if (!existing) {
-                    if (failedResolutions.has(uname) || renamedUsernames.has(uname)) continue;
+            // Reverse map for pre-clear: player_id → lowercase username (pre-Phase-1 state)
+            const playerIdToUsername = new Map(
+                Array.from(currentByUsername.entries()).map(([uname, pts]) => [pts.player_id, uname])
+            );
 
-                    const robloxId = resolvedUsernameToRobloxId.get(uname)!;
-                    const {robloxUser, avatarUrl} = resolvedByRobloxId.get(robloxId)!;
+            for (const [uname, parsedPlayer] of roleChanges) {
+                const existing = currentByUsername.get(uname)!;
 
-                    const upsertResult = await upsertPlayer(supabase, {
-                        robloxUserId: robloxId,
-                        username: robloxUser.name,
-                        displayName: robloxUser.displayName ?? null,
-                        avatarUrl,
-                    });
-                    if (!upsertResult.ok) {
-                        logger.error({username: parsedPlayer.username, error: upsertResult.error}, "Failed to upsert player");
-                        errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Upsert ${parsedPlayer.username}: ${upsertResult.error.message}`});
-                        rowsErrored++;
-                        continue;
-                    }
-
-                    const addResult = await addPlayerToTeam(supabase, {
-                        playerId: upsertResult.value.id,
-                        teamId: team.id,
-                        seasonId: config.season_id,
-                        role: parsedPlayer.role,
-                    });
-                    if (!addResult.ok) {
-                        logger.error({playerId: upsertResult.value.id, teamId: team.id, error: addResult.error}, "Failed to add player to team");
-                        errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Add ${parsedPlayer.username}: ${addResult.error.message}`});
-                        rowsErrored++;
-                        continue;
-                    }
-
-                    changes.push({
-                        type: 'player_add',
-                        entityId: upsertResult.value.id,
-                        before: {},
-                        after: {
-                            username: parsedPlayer.username,
-                            role: parsedPlayer.role,
-                            teamId: team.id,
-                            playerTeamSeasonId: addResult.value.id,
-                        },
-                    });
-                } else if (existing.role !== parsedPlayer.role) {
-                    // Role changed
-                    const roleResult = await setPlayerRole(supabase, {
-                        playerId: existing.player_id,
-                        teamId: team.id,
-                        seasonId: config.season_id,
-                        role: parsedPlayer.role,
-                    });
-                    if (!roleResult.ok) {
-                        logger.error({playerId: existing.player_id, error: roleResult.error}, "Failed to update role");
-                        errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Role ${parsedPlayer.username}: ${roleResult.error.message}`});
-                        rowsErrored++;
-                    } else {
-                        changes.push({
-                            type: 'role_change',
-                            entityId: existing.player_id,
-                            before: {role: existing.role, teamId: team.id},
-                            after: {role: parsedPlayer.role, teamId: team.id},
-                        });
+                // Before assigning a unique role, clear any current holder who is vacating
+                // the slot. Uses current DB state so it's safe across multiple iterations
+                // (e.g. A: captain→vc, B: vc→captain won't double-demote either player).
+                if (UNIQUE_ROLES.has(parsedPlayer.role)) {
+                    const holderResult = await findPlayerByRole(supabase, team.id, config.season_id, parsedPlayer.role);
+                    if (holderResult.ok && holderResult.value && holderResult.value.player_id !== existing.player_id) {
+                        const holderUname = playerIdToUsername.get(holderResult.value.player_id);
+                        const holderSheetRole = holderUname ? parsedByUsername.get(holderUname)?.role : undefined;
+                        // Only clear if the holder is vacating the slot (off sheet or moving to a different role)
+                        if (!holderSheetRole || holderSheetRole !== parsedPlayer.role) {
+                            await setPlayerRole(supabase, {
+                                playerId: holderResult.value.player_id,
+                                teamId: team.id,
+                                seasonId: config.season_id,
+                                role: 'player',
+                            });
+                        }
                     }
                 }
+
+                const roleResult = await setPlayerRole(supabase, {
+                    playerId: existing.player_id,
+                    teamId: team.id,
+                    seasonId: config.season_id,
+                    role: parsedPlayer.role,
+                });
+                if (!roleResult.ok) {
+                    logger.error({playerId: existing.player_id, error: roleResult.error}, "Failed to update role");
+                    errors.push({row: parsedPlayer.rowNumber, message: friendlyPlayerError(roleResult.error.message, parsedPlayer.username, parsedTeam.teamName, 'role')});
+                    rowsErrored++;
+                } else {
+                    changes.push({
+                        type: 'role_change',
+                        entityId: existing.player_id,
+                        before: {role: existing.role, teamId: team.id},
+                        after: {role: parsedPlayer.role, teamId: team.id},
+                    });
+                }
+            }
+
+            phaseStates.push({
+                parsedTeam,
+                team,
+                parsedByUsername,
+                existingUsernameKeys: new Set(currentByUsername.keys()),
+                resolvedByRobloxId,
+                resolvedUsernameToRobloxId,
+                failedResolutions,
+                renamedUsernames,
+            });
+        }
+
+        // ── Phase 2: additions (all removals have committed, no duplicate conflicts) ──
+        // Maps every sheet username → all teams it appears on (in-memory, no extra queries)
+        const sheetUsernameToTeams = new Map<string, string[]>();
+        for (const {parsedTeam} of phaseStates) {
+            for (const p of parsedTeam.players) {
+                const key = p.username.toLowerCase();
+                const existing = sheetUsernameToTeams.get(key);
+                if (existing) existing.push(parsedTeam.teamName);
+                else sheetUsernameToTeams.set(key, [parsedTeam.teamName]);
             }
         }
 
-        const accountedNumbers = new Set([
-            ...disbandedNumbers,
-            ...nameClearedSlots.map(s => s.teamNumber),
-            ...activeTeams.map(t => t.teamNumber),
-        ]);
+        for (const state of phaseStates) {
+            const {parsedTeam, team, parsedByUsername, existingUsernameKeys, resolvedByRobloxId, resolvedUsernameToRobloxId, failedResolutions, renamedUsernames} = state;
 
-        for (const [teamNumber, team] of existingByNumber) {
-            if (accountedNumbers.has(teamNumber)) continue;
+            for (const [uname, parsedPlayer] of parsedByUsername) {
+                if (existingUsernameKeys.has(uname)) continue;
+                if (failedResolutions.has(uname) || renamedUsernames.has(uname)) continue;
 
-            const playersResult = await findAllTeamPlayers(supabase, team.id, config.season_id);
-            if (!playersResult.ok) {
-                logger.error({teamId: team.id, error: playersResult.error}, "Failed to load players for implicitly disbanded team");
-                errors.push({row: 0, message: `Failed to load players for team ${team.name}: ${playersResult.error.message}`});
-                rowsErrored++;
-                continue;
-            }
-            const playerIds = playersResult.value.filter(r => r.player).map(r => r.player!.id);
-            if (playerIds.length > 0) {
-                const removeResult = await bulkRemovePlayersFromTeam(supabase, config.season_id, playerIds);
-                if (!removeResult.ok) {
-                    logger.error({teamId: team.id, error: removeResult.error}, "Failed to remove players from implicitly disbanded team");
-                    errors.push({row: 0, message: `Failed to remove players from team ${team.name}: ${removeResult.error.message}`});
+                const robloxId = resolvedUsernameToRobloxId.get(uname);
+                if (!robloxId) continue;
+                const {robloxUser, avatarUrl} = resolvedByRobloxId.get(robloxId)!;
+
+                const upsertResult = await upsertPlayer(supabase, {
+                    robloxUserId: robloxId,
+                    username: robloxUser.name,
+                    displayName: robloxUser.displayName ?? null,
+                    avatarUrl,
+                });
+                if (!upsertResult.ok) {
+                    logger.error({username: parsedPlayer.username, error: upsertResult.error}, "Failed to upsert player");
+                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Failed to save player ${parsedPlayer.username}`});
                     rowsErrored++;
                     continue;
                 }
-            }
 
-            const disbandResult = await softDeleteTeamById(supabase, team.id);
-            if (!disbandResult.ok) {
-                logger.error({teamId: team.id, error: disbandResult.error}, "Failed to implicitly disband team");
-                errors.push({row: 0, message: `Failed to disband team ${team.name}: ${disbandResult.error.message}`});
-                rowsErrored++;
-            } else {
+                // If inserting into a unique role slot, demote any current holder who should
+                // be vacating it. Phase 1 handles this in the happy path; this is a fallback
+                // for when Phase 1's role sync or removal didn't fully clear the slot.
+                if (UNIQUE_ROLES.has(parsedPlayer.role)) {
+                    const holderResult = await findPlayerByRole(supabase, team.id, config.season_id, parsedPlayer.role);
+                    if (holderResult.ok && holderResult.value && holderResult.value.player_id !== upsertResult.value.id) {
+                        await setPlayerRole(supabase, {
+                            playerId: holderResult.value.player_id,
+                            teamId: team.id,
+                            seasonId: config.season_id,
+                            role: 'player',
+                        });
+                    }
+                }
+
+                const addResult = await addPlayerToTeam(supabase, {
+                    playerId: upsertResult.value.id,
+                    teamId: team.id,
+                    seasonId: config.season_id,
+                    role: parsedPlayer.role,
+                });
+                if (!addResult.ok) {
+                    logger.error({playerId: upsertResult.value.id, teamId: team.id, error: addResult.error}, "Failed to add player to team");
+                    const otherTeam = sheetUsernameToTeams.get(uname)?.find(t => t !== parsedTeam.teamName);
+                    errors.push({row: parsedPlayer.rowNumber, message: friendlyPlayerError(addResult.error.message, parsedPlayer.username, parsedTeam.teamName, 'add', otherTeam)});
+                    rowsErrored++;
+                    continue;
+                }
+
                 changes.push({
-                    type: 'team_disband',
-                    entityId: team.id,
-                    before: {name: team.name},
-                    after: {},
+                    type: 'player_add',
+                    entityId: upsertResult.value.id,
+                    before: {},
+                    after: {
+                        username: parsedPlayer.username,
+                        role: parsedPlayer.role,
+                        teamId: team.id,
+                        playerTeamSeasonId: addResult.value.id,
+                    },
                 });
             }
         }
