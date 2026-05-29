@@ -37,32 +37,47 @@ const DROPDOWN_GROUPS = [
     },
 ];
 
-const ALL_ITEMS = [
-    ...FLAT_ITEMS,
-    ...DROPDOWN_GROUPS.flatMap(g => g.items),
-];
+const STAT_TRACKER_ALLOWED_HREFS = new Set(["/admin/sync/history"]);
 
 interface AdminNavItemsProps {
     layout?: "horizontal" | "vertical";
+    userRole?: string | null;
     onNavigate?: () => void;
 }
 
 export default function AdminNavItems({
     layout = "horizontal",
+    userRole,
     onNavigate,
 }: AdminNavItemsProps) {
     const pathname = usePathname();
     const router = useRouter();
+
+    const isStatTracker = userRole === "stat_tracker";
+
+    const visibleFlatItems = isStatTracker ? [] : FLAT_ITEMS;
+
+    const visibleDropdownGroups = DROPDOWN_GROUPS.map(group => ({
+        ...group,
+        items: isStatTracker
+            ? group.items.filter(item => STAT_TRACKER_ALLOWED_HREFS.has(item.href))
+            : group.items,
+    })).filter(group => group.items.length > 0);
 
     function navigate(href: string) {
         router.push(href);
         onNavigate?.();
     }
 
+    const allVisibleItems = [
+        ...visibleFlatItems,
+        ...visibleDropdownGroups.flatMap(g => g.items),
+    ];
+
     if (layout === "vertical") {
         return (
             <nav className="flex flex-col gap-1 w-full">
-                {ALL_ITEMS.map((item) => (
+                {allVisibleItems.map((item) => (
                     <Button
                         key={item.href}
                         variant={pathname === item.href ? "secondary" : "ghost"}
@@ -79,7 +94,7 @@ export default function AdminNavItems({
 
     return (
         <nav className="hidden lg:flex gap-1">
-            {FLAT_ITEMS.map((item) => (
+            {visibleFlatItems.map((item) => (
                 <Button
                     key={item.href}
                     variant={pathname === item.href ? "secondary" : "ghost"}
@@ -91,7 +106,7 @@ export default function AdminNavItems({
                 </Button>
             ))}
 
-            {DROPDOWN_GROUPS.map((group) => {
+            {visibleDropdownGroups.map((group) => {
                 const isActive = group.items.some(i => pathname === i.href);
                 return (
                     <DropdownMenu key={group.label}>

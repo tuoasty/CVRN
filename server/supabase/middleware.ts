@@ -118,6 +118,13 @@ export async function updateSession(request: NextRequest) {
       );
     }
 
+    if (roleData.role === "stat_tracker" && pathname !== "/admin/sync/history") {
+      logger.debug({ user_id: user.id, pathname }, "stat_tracker redirected to sync history");
+      return NextResponse.redirect(
+          new URL("/admin/sync/history", request.url)
+      );
+    }
+
     return supabaseResponse;
   }
 
