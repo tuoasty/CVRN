@@ -37,7 +37,10 @@ const DROPDOWN_GROUPS = [
     },
 ];
 
-const STAT_TRACKER_ALLOWED_HREFS = new Set(["/admin/sync/history"]);
+const ALLOWED_HREFS: Record<string, Set<string>> = {
+    stat_tracker: new Set(["/admin/sync/history"]),
+    staff:        new Set(["/admin/teams", "/admin/sync/history"]),
+};
 
 interface AdminNavItemsProps {
     layout?: "horizontal" | "vertical";
@@ -53,14 +56,16 @@ export default function AdminNavItems({
     const pathname = usePathname();
     const router = useRouter();
 
-    const isStatTracker = userRole === "stat_tracker";
+    const allowed = userRole ? ALLOWED_HREFS[userRole] : undefined;
 
-    const visibleFlatItems = isStatTracker ? [] : FLAT_ITEMS;
+    const visibleFlatItems = allowed
+        ? FLAT_ITEMS.filter(item => allowed.has(item.href))
+        : FLAT_ITEMS;
 
     const visibleDropdownGroups = DROPDOWN_GROUPS.map(group => ({
         ...group,
-        items: isStatTracker
-            ? group.items.filter(item => STAT_TRACKER_ALLOWED_HREFS.has(item.href))
+        items: allowed
+            ? group.items.filter(item => allowed.has(item.href))
             : group.items,
     })).filter(group => group.items.length > 0);
 
@@ -108,6 +113,22 @@ export default function AdminNavItems({
 
             {visibleDropdownGroups.map((group) => {
                 const isActive = group.items.some(i => pathname === i.href);
+
+                if (group.items.length === 1) {
+                    const item = group.items[0];
+                    return (
+                        <Button
+                            key={item.href}
+                            variant={pathname === item.href ? "secondary" : "ghost"}
+                            size="sm"
+                            className="rounded-sm text-sm"
+                            onClick={() => navigate(item.href)}
+                        >
+                            {item.label}
+                        </Button>
+                    );
+                }
+
                 return (
                     <DropdownMenu key={group.label}>
                         <DropdownMenuTrigger asChild>
