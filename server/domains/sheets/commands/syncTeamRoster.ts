@@ -33,8 +33,8 @@ function friendlyPlayerError(errMsg: string, username: string, teamName: string,
         return `[${teamName}] ${username} cannot be court captain — ${teamName} already has a court captain`;
     if (errMsg.includes('idx_unique_active_player_season') || errMsg.includes('duplicate key'))
         return otherTeam
-            ? `[${teamName}] ${username} is already listed on ${otherTeam}`
-            : `[${teamName}] ${username} is already on an active team this season`;
+            ? `[${teamName}] Cannot add ${username} — already listed on ${otherTeam}`
+            : `[${teamName}] Cannot add ${username} — already on another team this season`;
     return action === 'add'
         ? `[${teamName}] Failed to add ${username}`
         : `[${teamName}] Failed to update role for ${username}`;
@@ -317,11 +317,14 @@ export async function syncTeamRoster(
         }
 
         // ── Phase 2: additions (all removals have committed, no duplicate conflicts) ──
-        // Maps every sheet username → team name for conflict lookup (in-memory, no extra queries)
-        const sheetUsernameToTeam = new Map<string, string>();
+        // Maps every sheet username → all teams it appears on (in-memory, no extra queries)
+        const sheetUsernameToTeams = new Map<string, string[]>();
         for (const {parsedTeam} of phaseStates) {
             for (const p of parsedTeam.players) {
-                sheetUsernameToTeam.set(p.username.toLowerCase(), parsedTeam.teamName);
+                const key = p.username.toLowerCase();
+                const existing = sheetUsernameToTeams.get(key);
+                if (existing) existing.push(parsedTeam.teamName);
+                else sheetUsernameToTeams.set(key, [parsedTeam.teamName]);
             }
         }
 
@@ -357,8 +360,7 @@ export async function syncTeamRoster(
                 });
                 if (!addResult.ok) {
                     logger.error({playerId: upsertResult.value.id, teamId: team.id, error: addResult.error}, "Failed to add player to team");
-                    const conflictTeam = sheetUsernameToTeam.get(uname);
-                    const otherTeam = conflictTeam !== parsedTeam.teamName ? conflictTeam : undefined;
+                    const otherTeam = sheetUsernameToTeams.get(uname)?.find(t => t !== parsedTeam.teamName);
                     errors.push({row: parsedPlayer.rowNumber, message: friendlyPlayerError(addResult.error.message, parsedPlayer.username, parsedTeam.teamName, 'add', otherTeam)});
                     rowsErrored++;
                     continue;
