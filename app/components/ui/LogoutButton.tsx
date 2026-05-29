@@ -5,8 +5,14 @@ import { useRouter } from "next/navigation";
 import { logoutAction } from "@/app/actions/auth.actions";
 import { Button } from "@/app/components/ui/button";
 import { LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function LogoutButton() {
+interface LogoutButtonProps {
+    className?: string;
+    showLabel?: boolean;
+}
+
+export function LogoutButton({ className, showLabel }: LogoutButtonProps) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -26,9 +32,10 @@ export function LogoutButton() {
             disabled={loading}
             variant="ghost"
             size="sm"
-            className="rounded-sm"
+            className={cn("rounded-sm", className)}
         >
-            <LogOut className="w-4 h-4" />
+            <LogOut className={cn("w-4 h-4", showLabel && "mr-2")} />
+            {showLabel && "Logout"}
         </Button>
     );
 }

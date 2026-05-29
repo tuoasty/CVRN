@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {getLogoClassName} from "@/app/lib/logoClass";
 import {cn} from "@/lib/utils";
 import {PlayerDetail, PlayerAward, PlayerTeamHistoryEntry} from "@/server/domains/player";
 import PlayerSeasonStatsTable from "@/app/features/player/PlayerSeasonStatsTable";
 import BackButton from "@/app/components/public/BackButton";
+import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
 
 const ROLE_LABELS: Record<string, string> = {
     captain: "Captain",
@@ -55,6 +57,10 @@ export default function PlayerDetailPage({detail}: Props) {
     const achievements = awards.filter(a => PODIUM_CATEGORIES.has(a.category));
     const individualAwards = awards.filter(a => !PODIUM_CATEGORIES.has(a.category) && a.category !== "staff_team");
 
+    const teamLogoBySeasonId = new Map(
+        teamHistory.map(e => [e.season_id, {logo_url: e.team_logo_url, logo_bg_removed: e.team_logo_bg_removed}])
+    );
+
     return (
         <div className="max-w-[1440px] mx-auto px-4 py-6 space-y-8">
             <BackButton />
@@ -66,47 +72,86 @@ export default function PlayerDetailPage({detail}: Props) {
                     background: `linear-gradient(115deg, ${team.team_brick_color}35 0%, ${team.team_brick_color}18 50%, transparent 100%)`,
                 } : undefined}
             >
-                <div className="flex gap-1 p-4 pb-0">
-                    {/* Team logo */}
+                {/* Mobile: text + logo left, avatar fills right */}
+                <div className="sm:hidden flex items-stretch min-h-[148px]">
+                    <div className="flex-1 p-4 flex flex-col min-w-0">
+                        {team?.team_logo_url && (
+                            <div className="relative w-9 h-9 shrink-0">
+                                <Image
+                                    src={team.team_logo_url}
+                                    alt={team.team_name}
+                                    fill
+                                    sizes="36px"
+                                    className={getLogoClassName(team.team_logo_bg_removed)}
+                                    unoptimized
+                                />
+                            </div>
+                        )}
+                        <div className="mt-auto pt-2">
+                            {team && (
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-0.5">
+                                    {team.team_name}
+                                </p>
+                            )}
+                            <h1 className="text-2xl font-black leading-none tracking-tight">
+                                {player.display_name || player.username}
+                            </h1>
+                            {player.username && (
+                                <p className="text-xs text-muted-foreground mt-1">@{player.username}</p>
+                            )}
+                        </div>
+                    </div>
+                    {player.avatar_url && (
+                        <div className="relative w-[130px] shrink-0">
+                            <Image
+                                src={player.avatar_url}
+                                alt={player.username ?? ""}
+                                fill
+                                sizes="130px"
+                                className="object-contain object-bottom"
+                                unoptimized
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Desktop: logo + avatar side by side, info to the right */}
+                <div className="hidden sm:flex gap-1 p-4 pb-0">
                     {team?.team_logo_url && (
-                        <div className="self-start relative shrink-0 w-14 h-14 sm:w-20 sm:h-20">
+                        <div className="self-start relative shrink-0 w-20 h-20">
                             <Image
                                 src={team.team_logo_url}
                                 alt={team.team_name}
                                 fill
-                                sizes="(max-width: 640px) 56px, 80px"
+                                sizes="80px"
                                 className={getLogoClassName(team.team_logo_bg_removed)}
                                 unoptimized
                             />
                         </div>
                     )}
-
-                    {/* Avatar */}
-                    <div className="self-end relative shrink-0 w-[140px] h-[140px] sm:w-[200px] sm:h-[200px]">
+                    <div className="self-end relative shrink-0 w-[200px] h-[200px]">
                         {player.avatar_url && (
                             <Image
                                 src={player.avatar_url}
                                 alt={player.username ?? ""}
                                 fill
-                                sizes="(max-width: 640px) 140px, 200px"
+                                sizes="200px"
                                 className="object-contain object-bottom"
                                 unoptimized
                             />
                         )}
                     </div>
-
-                    {/* Player info */}
-                    <div className="self-center flex flex-col gap-0.5 pl-3 sm:pl-8 min-w-0 flex-1">
+                    <div className="self-center flex flex-col gap-0.5 pl-8 min-w-0 flex-1">
                         {team && (
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">
                                 {team.team_name}
                             </p>
                         )}
-                        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black leading-none tracking-tight truncate">
+                        <h1 className="text-4xl lg:text-5xl font-black leading-none tracking-tight truncate">
                             {player.display_name || player.username}
                         </h1>
                         {player.username && (
-                            <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">@{player.username}</p>
+                            <p className="text-sm text-muted-foreground mt-2">@{player.username}</p>
                         )}
                     </div>
                 </div>
@@ -120,7 +165,7 @@ export default function PlayerDetailPage({detail}: Props) {
             </div>
 
             {/* Season Stats */}
-            <PlayerSeasonStatsTable rows={seasonStats} />
+            <PlayerSeasonStatsTable rows={seasonStats} teamLogoBySeasonId={teamLogoBySeasonId} />
 
             {/* Achievements */}
             {achievements.length > 0 && (
@@ -131,10 +176,10 @@ export default function PlayerDetailPage({detail}: Props) {
                             <table className="w-full table-fixed text-sm">
                                 <thead>
                                     <tr className="border-b border-border bg-muted/40">
-                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
-                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
-                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Place</th>
-                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
+                                        <th className="w-[22%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
+                                        <th className="w-[36%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
+                                        <th className="w-[32%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Place</th>
+                                        <th className="w-[10%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
@@ -157,10 +202,10 @@ export default function PlayerDetailPage({detail}: Props) {
                             <table className="w-full table-fixed text-sm">
                                 <thead>
                                     <tr className="border-b border-border bg-muted/40">
-                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
-                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
-                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Award</th>
-                                        <th className="w-1/4 px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
+                                        <th className="w-[22%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
+                                        <th className="w-[36%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
+                                        <th className="w-[32%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Award</th>
+                                        <th className="w-[10%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
@@ -176,7 +221,7 @@ export default function PlayerDetailPage({detail}: Props) {
 
             {/* Team History */}
             {teamHistory.length > 0 && (
-                <div className="space-y-3">
+                <div className="space-y-3 max-w-2xl">
                     <h2 className="text-lg font-semibold">Team History</h2>
                     <div className="panel divide-y divide-border">
                         {teamHistory.map((entry, i) => (
@@ -189,24 +234,39 @@ export default function PlayerDetailPage({detail}: Props) {
     );
 }
 
-function TeamCell({logoUrl, logoBgRemoved, name}: {logoUrl: string | null; logoBgRemoved: boolean; name: string | null}) {
-    if (!name) return <span className="text-muted-foreground">—</span>;
-    return (
-        <div className="flex items-center gap-2">
-            {logoUrl && (
-                <div className="relative w-5 h-5 shrink-0">
-                    <Image
-                        src={logoUrl}
-                        alt={name}
-                        fill
-                        sizes="20px"
-                        className={cn("object-contain", getLogoClassName(logoBgRemoved))}
-                        unoptimized
-                    />
-                </div>
-            )}
-            <span>{name}</span>
+function TeamLogoLink({award}: {award: PlayerAward}) {
+    const href = !award.team_disbanded ? buildPublicTeamHref({
+        regionCode: award.region_code,
+        seasonSlug: award.season_slug,
+        teamName: award.team_name,
+    }) : null;
+    if (!award.team_logo_url) return <span className="text-muted-foreground">—</span>;
+    const logo = (
+        <div className="relative w-6 h-6 shrink-0 rounded-sm overflow-hidden">
+            <Image
+                src={award.team_logo_url}
+                alt={award.team_name ?? ""}
+                fill
+                sizes="24px"
+                className={cn("object-contain", getLogoClassName(award.team_logo_bg_removed))}
+                unoptimized
+            />
         </div>
+    );
+    if (!href) return logo;
+    return (
+        <Link href={href} className="block w-6 h-6 rounded-sm overflow-hidden hover:opacity-70 transition-opacity">
+            <div className="relative w-full h-full">
+                <Image
+                    src={award.team_logo_url}
+                    alt={award.team_name ?? ""}
+                    fill
+                    sizes="24px"
+                    className={cn("object-contain", getLogoClassName(award.team_logo_bg_removed))}
+                    unoptimized
+                />
+            </div>
+        </Link>
     );
 }
 
@@ -221,7 +281,7 @@ function AchievementRow({award}: {award: PlayerAward}) {
                 <span className={place.className}>{place.text}</span>
             </td>
             <td className="px-4 py-3">
-                <TeamCell logoUrl={award.team_logo_url} logoBgRemoved={award.team_logo_bg_removed} name={award.team_name} />
+                <TeamLogoLink award={award} />
             </td>
         </tr>
     );
@@ -240,7 +300,7 @@ function AwardRow({award}: {award: PlayerAward}) {
                 </div>
             </td>
             <td className="px-4 py-3">
-                <TeamCell logoUrl={award.team_logo_url} logoBgRemoved={award.team_logo_bg_removed} name={award.team_name} />
+                <TeamLogoLink award={award} />
             </td>
         </tr>
     );
@@ -248,8 +308,14 @@ function AwardRow({award}: {award: PlayerAward}) {
 
 function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
     const roleLabel = entry.role !== "player" ? ROLE_LABELS[entry.role] : null;
-    const isActive = !entry.left_at;
-    return (
+    const seasonEnded = entry.season_end_date ? new Date(entry.season_end_date) < new Date() : false;
+    const isActive = !entry.left_at && !seasonEnded;
+    const teamHref = !entry.team_disbanded ? buildPublicTeamHref({
+        regionCode: entry.region_code,
+        seasonSlug: entry.season_slug,
+        teamName: entry.team_name,
+    }) : null;
+    const inner = (
         <div className="flex items-center gap-3 px-4 py-3">
             <div
                 className="w-1 self-stretch rounded-full shrink-0"
@@ -283,9 +349,14 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
                 </div>
                 <p className="text-xs text-muted-foreground">{entry.region_code} · {entry.season_name}</p>
             </div>
-            <span className="text-xs text-muted-foreground shrink-0 px-2 py-0.5 bg-muted rounded-sm">
-                {entry.season_name}
-            </span>
         </div>
     );
+    if (teamHref) {
+        return (
+            <Link href={teamHref} className="block hover:bg-muted/30 transition-colors">
+                {inner}
+            </Link>
+        );
+    }
+    return inner;
 }

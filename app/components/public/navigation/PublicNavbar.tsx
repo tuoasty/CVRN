@@ -49,7 +49,7 @@ export default function PublicNavbar() {
                     </div>
                 </div>
 
-                {/* Mobile/Tablet: Single Row with Burger */}
+                {/* Mobile/Tablet: Row 1 — logo + actions */}
                 <div className="lg:hidden flex items-center justify-between py-2.5">
                     <Link href="/">
                         <h1 className="text-lg font-semibold tracking-tight">
@@ -83,8 +83,6 @@ export default function PublicNavbar() {
                                         onNavigate={() => setOpen(false)}
                                     />
                                     <div className="h-px bg-border" />
-                                    <RegionSeasonSelector />
-                                    <div className="h-px bg-border" />
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-muted-foreground">
                                             Theme
@@ -95,6 +93,12 @@ export default function PublicNavbar() {
                             </SheetContent>
                         </Sheet>
                     </div>
+                </div>
+            </div>
+            {/* Mobile/Tablet: Row 2 — full-width region/season selector */}
+            <div className="lg:hidden border-t border-border">
+                <div className="page-wide py-2">
+                    <RegionSeasonSelector fullWidth />
                 </div>
             </div>
         </header>

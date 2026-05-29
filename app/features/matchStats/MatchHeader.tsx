@@ -49,10 +49,10 @@ export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
     const media = officials.filter(o => o.official_type === "media");
 
     const roundLabel = playoffRound ? (ROUND_LABELS[playoffRound] ?? playoffRound) : null;
-    const homeTeamHref = homeTeam && !homeTeam.is_bye
+    const homeTeamHref = homeTeam && !homeTeam.is_bye && !homeTeam.deleted_at
         ? buildPublicTeamHref({regionCode, seasonSlug, teamName: homeTeam.name})
         : null;
-    const awayTeamHref = awayTeam && !awayTeam.is_bye
+    const awayTeamHref = awayTeam && !awayTeam.is_bye && !awayTeam.deleted_at
         ? buildPublicTeamHref({regionCode, seasonSlug, teamName: awayTeam.name})
         : null;
 
@@ -145,6 +145,9 @@ export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
                             }`}
                         >
                             {homeTeam?.name || "TBD"}
+                            {homeTeam?.deleted_at && (
+                                <span className="block text-[10px] text-muted-foreground/50 font-normal normal-case tracking-normal">disbanded</span>
+                            )}
                         </span>
                     )}
                 </div>
@@ -210,6 +213,9 @@ export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
                             }`}
                         >
                             {awayTeam?.name || "TBD"}
+                            {awayTeam?.deleted_at && (
+                                <span className="block text-[10px] text-muted-foreground/50 font-normal normal-case tracking-normal">disbanded</span>
+                            )}
                         </span>
                     )}
                 </div>

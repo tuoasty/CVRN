@@ -330,6 +330,27 @@ export async function unDisbandTeamById(supabase: DBClient, id: string): Promise
     return Ok(true);
 }
 
+export async function findTeamsByIdsForMatch(supabase: DBClient, teamIds: string[]): Promise<Result<TeamWithRegionRow[]>> {
+    const {data, error} = await supabase
+        .from("teams")
+        .select(`
+            *,
+            seasons!inner(
+                id,
+                name,
+                slug,
+                regions!inner(
+                    id,
+                    code,
+                    name
+                )
+            )
+        `)
+        .in("id", teamIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as TeamWithRegionRow[]);
+}
+
 export async function findTeamsByIds(supabase: DBClient, teamIds: string[]): Promise<Result<TeamWithRegionRow[]>> {
     const {data, error} = await supabase
         .from("teams")

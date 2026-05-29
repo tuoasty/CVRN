@@ -343,7 +343,7 @@ export default function PublicTeamDetailPage({
                     )}
                     {otherPlayers.map((player, i) => (
                         player.username ? (
-                            <Link key={player.id} href={buildPublicPlayerHref(player.username) ?? "#"}>
+                            <Link key={player.id} href={buildPublicPlayerHref(player.username) ?? "#"} className="col-span-3 sm:col-span-1 block">
                                 <PublicPlayerCard
                                     player={player}
                                     index={i + 4}

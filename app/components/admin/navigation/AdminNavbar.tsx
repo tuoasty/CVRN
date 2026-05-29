@@ -69,7 +69,15 @@ export default function AdminNavbar() {
                     </Link>
 
                     <div className="flex items-center gap-2">
-                        <LogoutButton />
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-10 w-10 p-0 rounded-sm"
+                            aria-label="Go to public site"
+                            onClick={() => router.push("/home")}
+                        >
+                            <Users className="h-4 w-4" />
+                        </Button>
                         <Sheet open={open} onOpenChange={setOpen}>
                             <SheetTrigger asChild>
                                 <Button
@@ -96,18 +104,10 @@ export default function AdminNavbar() {
                                     <div className="h-px bg-border" />
                                     <AdminRegionSeasonSelector />
                                     <div className="h-px bg-border" />
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="w-full justify-start rounded-sm"
-                                        onClick={() => {
-                                            setOpen(false);
-                                            router.push("/home");
-                                        }}
-                                    >
-                                        <Users className="h-4 w-4 mr-2" />
-                                        Public Site
-                                    </Button>
+                                    <LogoutButton
+                                        showLabel
+                                        className="w-full justify-start"
+                                    />
                                     <div className="h-px bg-border" />
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-muted-foreground">

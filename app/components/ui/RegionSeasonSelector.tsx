@@ -8,7 +8,11 @@ import { usePublicContextStore } from "@/app/stores/publicContextStore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-export default function RegionSeasonSelector() {
+interface RegionSeasonSelectorProps {
+    fullWidth?: boolean;
+}
+
+export default function RegionSeasonSelector({ fullWidth }: RegionSeasonSelectorProps) {
     const { regions } = useRegions();
     const { seasons } = useSeasons();
     const { selectedSeasonId, setSelectedSeasonId, setSelectedRegionId } = usePublicContextStore();
@@ -41,12 +45,15 @@ export default function RegionSeasonSelector() {
     return (
         <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
-                <button className="flex items-center h-9 border border-border rounded-sm overflow-hidden bg-background text-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2.5 self-stretch flex items-center tracking-wide uppercase">
+                <button className={cn(
+                    "flex items-center h-9 border border-border rounded-sm overflow-hidden bg-background text-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    fullWidth && "w-full"
+                )}>
+                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2.5 self-stretch flex items-center tracking-wide uppercase shrink-0">
                         {selectedRegion?.code ?? "—"}
                     </span>
-                    <span className="w-px self-stretch bg-border" />
-                    <span className="text-foreground px-2.5 whitespace-nowrap">
+                    <span className="w-px self-stretch bg-border shrink-0" />
+                    <span className={cn("text-foreground px-2.5 whitespace-nowrap", fullWidth && "flex-1")}>
                         {selectedSeason?.name ?? "Select Season"}
                     </span>
                     <ChevronDown className={cn(
@@ -55,7 +62,7 @@ export default function RegionSeasonSelector() {
                     )} />
                 </button>
             </PopoverTrigger>
-            <PopoverContent align="end" sideOffset={6} className="w-44 p-3">
+            <PopoverContent align={fullWidth ? "start" : "end"} sideOffset={6} className={fullWidth ? "w-[var(--radix-popover-trigger-width)] p-3" : "w-44 p-3"}>
                 <p className="text-[9px] text-muted-foreground uppercase tracking-widest mb-1.5 font-semibold">Region</p>
                 <div className="grid grid-cols-4 gap-1 mb-3">
                     {regions.map(region => (

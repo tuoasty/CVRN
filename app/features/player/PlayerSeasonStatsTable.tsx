@@ -1,9 +1,11 @@
 "use client";
 
 import {useState, useCallback, useRef} from "react";
+import Image from "next/image";
 import {Table, TableHeader, TableBody, TableRow, TableHead, TableCell} from "@/app/components/ui/table";
 import {Tooltip, TooltipContent, TooltipTrigger, TooltipProvider} from "@/app/components/ui/tooltip";
 import {cn} from "@/lib/utils";
+import {getLogoClassName} from "@/app/lib/logoClass";
 import StatViewToggle from "@/app/features/matchStats/StatViewToggle";
 import {
     PlayerSeasonStat,
@@ -15,6 +17,8 @@ import {
     formatPlayerStat,
     groupPlayerColumns,
 } from "./playerStatColumnMeta";
+
+type TeamLogoInfo = {logo_url: string | null; logo_bg_removed: boolean};
 
 const DRAG_THRESHOLD = 4;
 
@@ -57,9 +61,10 @@ function useDragScroll() {
 
 type Props = {
     rows: PlayerSeasonStat[];
+    teamLogoBySeasonId?: Map<string, TeamLogoInfo>;
 };
 
-export default function PlayerSeasonStatsTable({rows}: Props) {
+export default function PlayerSeasonStatsTable({rows, teamLogoBySeasonId}: Props) {
     const [detailed, setDetailed] = useState(false);
     const columns = detailed ? PLAYER_DETAILED_COLUMNS : PLAYER_COMPACT_COLUMNS;
     const groups = groupPlayerColumns(columns);
@@ -124,7 +129,7 @@ export default function PlayerSeasonStatsTable({rows}: Props) {
                         </TableHeader>
                         <TableBody>
                             {rows.map(row => (
-                                <SeasonStatRow key={row.season_id} row={row} columns={columns} />
+                                <SeasonStatRow key={row.season_id} row={row} columns={columns} teamLogo={teamLogoBySeasonId?.get(row.season_id)} />
                             ))}
                         </TableBody>
                     </Table>
@@ -134,12 +139,26 @@ export default function PlayerSeasonStatsTable({rows}: Props) {
     );
 }
 
-function SeasonStatRow({row, columns}: {row: PlayerSeasonStat; columns: PlayerStatColumn[]}) {
+function SeasonStatRow({row, columns, teamLogo}: {row: PlayerSeasonStat; columns: PlayerStatColumn[]; teamLogo?: TeamLogoInfo}) {
     return (
         <TableRow className="hover:bg-muted/30">
             <TableCell className="sticky left-0 z-[1] bg-background hover:bg-muted/30 transition-colors border-r border-border/30 py-1.5 px-2 text-sm font-medium whitespace-nowrap">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-1">{row.region_code}</span>
-                {row.season_name}
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{row.region_code}</span>
+                    <span>{row.season_name}</span>
+                    {teamLogo?.logo_url && (
+                        <div className="relative w-4 h-4 shrink-0">
+                            <Image
+                                src={teamLogo.logo_url}
+                                alt=""
+                                fill
+                                sizes="16px"
+                                className={cn("object-contain", getLogoClassName(teamLogo.logo_bg_removed))}
+                                unoptimized
+                            />
+                        </div>
+                    )}
+                </div>
             </TableCell>
             {columns.map((col, i) => {
                 const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;

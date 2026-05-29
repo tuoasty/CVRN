@@ -15,8 +15,8 @@ export async function getPlayerTeamHistory(
                 role,
                 joined_at,
                 left_at,
-                team:teams!team_id(id, name, logo_url, logo_bg_removed, brick_color),
-                season:seasons!season_id(id, name, region:regions!region_id(code))
+                team:teams!team_id(id, name, logo_url, logo_bg_removed, brick_color, deleted_at),
+                season:seasons!season_id(id, name, slug, end_date, region:regions!region_id(code))
             `)
             .eq("player_id", p.playerId)
             .order("joined_at", {ascending: false});
@@ -27,20 +27,23 @@ export async function getPlayerTeamHistory(
         }
 
         const rows: PlayerTeamHistoryEntry[] = (data ?? []).map(r => {
-            const team = r.team as {id: string; name: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null} | null;
-            const season = r.season as {id: string; name: string; region: {code: string}} | null;
+            const team = r.team as {id: string; name: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null; deleted_at: string | null} | null;
+            const season = r.season as {id: string; name: string; slug: string; end_date: string | null; region: {code: string}} | null;
             return {
                 team_id: team?.id ?? "",
                 team_name: team?.name ?? "",
                 team_logo_url: team?.logo_url ?? null,
                 team_logo_bg_removed: team?.logo_bg_removed ?? false,
                 team_brick_color: team?.brick_color ?? null,
+                team_disbanded: team?.deleted_at != null,
                 season_id: season?.id ?? "",
                 season_name: season?.name ?? "",
+                season_slug: season?.slug ?? "",
                 region_code: season?.region?.code ?? "",
                 role: r.role as PlayerTeamHistoryEntry["role"],
                 joined_at: r.joined_at,
                 left_at: r.left_at ?? null,
+                season_end_date: season?.end_date ?? null,
             };
         });
 

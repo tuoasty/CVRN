@@ -5,7 +5,7 @@ import {logger} from "@/server/utils/logger";
 import {findRegionByCode} from "@/server/db/regions.repo";
 import {findSeasonBySlugAndRegion} from "@/server/db/seasons.repo";
 import {findMatchByCode, findMatchById, findMatchSets} from "@/server/db/matches.repo";
-import {findTeamsByIds} from "@/server/db/teams.repo";
+import {findTeamsByIdsForMatch} from "@/server/db/teams.repo";
 import {findMatchStatSets, findMatchStatTotals} from "@/server/db/playerMatchStats.repo";
 import {findMatchOfficials} from "@/server/db/matchOfficial.repo";
 import {MatchOfficialEntry} from "../types";
@@ -29,7 +29,7 @@ async function loadDetailForMatch(
 
     const [setsRes, teamsRes, officialsRes, statSetsRes, statTotalsRes] = await Promise.all([
         findMatchSets(supabase, match.id),
-        findTeamsByIds(supabase, teamIds),
+        findTeamsByIdsForMatch(supabase, teamIds),
         findMatchOfficials(supabase, match.id),
         findMatchStatSets(supabase, match.id),
         findMatchStatTotals(supabase, match.id),

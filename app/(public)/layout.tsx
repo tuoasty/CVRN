@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import PublicNavbar from "@/app/components/public/navigation/PublicNavbar";
 import PublicFooter from "@/app/components/public/landing/PublicFooter";
 import { PublicStoreInitializer } from "@/app/(public)/PublicStoreInitializer";
-import MobileSeasonBar from "@/app/components/ui/MobileSeasonBar";
 import { SWRFallback } from "@/app/providers/SWRFallback";
 import { getAllRegionsAction } from "@/app/actions/region.actions";
 import { getAllSeasonsAction } from "@/app/actions/season.actions";
@@ -71,14 +70,14 @@ export default async function PublicLayout({ children }: { children: React.React
             <Suspense
                 fallback={
                     <header className="border-b border-border bg-card">
-                        <div className="page-wide h-14" />
+                        <div className="page-wide h-[52px] lg:h-[56px]" />
+                        <div className="lg:hidden border-t border-border">
+                            <div className="page-wide h-[52px]" />
+                        </div>
                     </header>
                 }
             >
                 <PublicNavbar />
-            </Suspense>
-            <Suspense fallback={<div className="lg:hidden border-b border-border bg-card"><div className="page-wide h-[52px]" /></div>}>
-                <MobileSeasonBar />
             </Suspense>
             <Suspense fallback={<main className="flex-1" />}>
                 <PublicLayoutDataProvider savedSeasonId={savedSeasonId}>

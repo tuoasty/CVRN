@@ -20,14 +20,14 @@ export async function getPlayerAwards(
                     category,
                     season_id,
                     awarded_at,
-                    season:seasons!season_id(name, end_date, region:regions!region_id(code))
+                    season:seasons!season_id(name, slug, end_date, region:regions!region_id(code))
                 `)
                 .eq("player_id", p.playerId)
                 .in("category", AWARD_CATEGORIES)
                 .order("awarded_at", {ascending: false}),
             supabase
                 .from("player_team_seasons")
-                .select("team_id, season_id, team:teams!team_id(name, logo_url, logo_bg_removed)")
+                .select("team_id, season_id, team:teams!team_id(name, logo_url, logo_bg_removed, deleted_at)")
                 .eq("player_id", p.playerId)
                 .order("joined_at", {ascending: false}),
         ]);
@@ -40,17 +40,19 @@ export async function getPlayerAwards(
         const teamNameBySeason = new Map<string, string>();
         const teamLogoUrlBySeason = new Map<string, string | null>();
         const teamLogoBgRemovedBySeason = new Map<string, boolean>();
+        const teamDisbandedBySeason = new Map<string, boolean>();
         const playerTeamPairs = new Set<string>();
         const teamIdsBySeason = new Map<string, string>();
 
         for (const row of teamSeasonsRes.data ?? []) {
-            const team = row.team as {name: string; logo_url: string | null; logo_bg_removed: boolean} | null;
+            const team = row.team as {name: string; logo_url: string | null; logo_bg_removed: boolean; deleted_at: string | null} | null;
             const key = `${row.season_id}::${row.team_id}`;
             playerTeamPairs.add(key);
             if (!teamNameBySeason.has(row.season_id) && team?.name) {
                 teamNameBySeason.set(row.season_id, team.name);
                 teamLogoUrlBySeason.set(row.season_id, team.logo_url ?? null);
                 teamLogoBgRemovedBySeason.set(row.season_id, team.logo_bg_removed ?? false);
+                teamDisbandedBySeason.set(row.season_id, team.deleted_at != null);
                 teamIdsBySeason.set(row.season_id, row.team_id);
             }
         }
@@ -68,8 +70,8 @@ export async function getPlayerAwards(
                     place,
                     season_id,
                     team_id,
-                    season:seasons!season_id(name, end_date, region:regions!region_id(code)),
-                    team:teams!team_id(name, logo_url, logo_bg_removed)
+                    season:seasons!season_id(name, slug, end_date, region:regions!region_id(code)),
+                    team:teams!team_id(name, logo_url, logo_bg_removed, deleted_at)
                 `)
                 .in("team_id", allTeamIds)
                 .in("place", [2, 3]);
@@ -77,16 +79,18 @@ export async function getPlayerAwards(
             podiumAwards = (podiumData ?? [])
                 .filter(r => playerTeamPairs.has(`${r.season_id}::${r.team_id}`))
                 .map(r => {
-                    const season = r.season as {name: string; end_date: string | null; region: {code: string}} | null;
-                    const team = r.team as {name: string; logo_url: string | null; logo_bg_removed: boolean} | null;
+                    const season = r.season as {name: string; slug: string; end_date: string | null; region: {code: string}} | null;
+                    const team = r.team as {name: string; logo_url: string | null; logo_bg_removed: boolean; deleted_at: string | null} | null;
                     return {
                         id: r.id,
                         award_name: r.place === 2 ? "Runner Up" : "Third Place",
                         category: r.place === 2 ? "runner_up" : "third_place",
                         season_id: r.season_id,
                         season_name: season?.name ?? "",
+                        season_slug: season?.slug ?? "",
                         region_code: season?.region?.code ?? "",
                         team_name: team?.name ?? null,
+                        team_disbanded: team?.deleted_at != null,
                         awarded_at: season?.end_date ?? null,
                         team_logo_url: team?.logo_url ?? null,
                         team_logo_bg_removed: team?.logo_bg_removed ?? false,
@@ -95,15 +99,17 @@ export async function getPlayerAwards(
         }
 
         const rows: PlayerAward[] = (awardsRes.data ?? []).map(r => {
-            const season = r.season as {name: string; end_date: string | null; region: {code: string}} | null;
+            const season = r.season as {name: string; slug: string; end_date: string | null; region: {code: string}} | null;
             return {
                 id: r.id,
                 award_name: r.award_name,
                 category: r.category,
                 season_id: r.season_id,
                 season_name: season?.name ?? "",
+                season_slug: season?.slug ?? "",
                 region_code: season?.region?.code ?? "",
                 team_name: teamNameBySeason.get(r.season_id) ?? null,
+                team_disbanded: teamDisbandedBySeason.get(r.season_id) ?? false,
                 awarded_at: season?.end_date ?? null,
                 team_logo_url: teamLogoUrlBySeason.get(r.season_id) ?? null,
                 team_logo_bg_removed: teamLogoBgRemovedBySeason.get(r.season_id) ?? false,
