@@ -5,11 +5,13 @@ import {Code2, ExternalLink, MessageSquare, Users} from "lucide-react";
 import Link from "next/link";
 
 const STAFF = [
+    { name: "Eddy", role: "Owner"},
+    { name: "Edge", role: "Owner"},
     { name: "Michiru", role: "Co-Owner" },
-    { name: "Sonny", role: "Commissioner" },
-    { name: "Ard", role: "Acting Commissioner" },
-    { name: "Roppy", role: "Staff" },
-    { name: "Toast", role: "Staff" },
+    // { name: "Sonny", role: "Commissioner" },
+    // { name: "Ard", role: "Acting Commissioner" },
+    // { name: "Roppy", role: "Staff" },
+    // { name: "Toast", role: "Staff" },
 ];
 
 
