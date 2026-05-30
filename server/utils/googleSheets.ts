@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { logger } from './logger';
 
 export function getGoogleSheetsClient() {
     const credentials = process.env.GOOGLE_SHEETS_CREDENTIALS;
@@ -46,15 +47,6 @@ function colorToHex(color: SheetColor): string {
     const b = Math.round((color.blue ?? 0) * 255).toString(16).padStart(2, '0');
     return `#${r}${g}${b}`;
 }
-
-function isWhiteOrDefault(color: SheetColor | null | undefined): boolean {
-    if (!color) return true;
-    const r = color.red ?? 1;
-    const g = color.green ?? 1;
-    const b = color.blue ?? 1;
-    return r > 0.97 && g > 0.97 && b > 0.97;
-}
-
 export type SheetRangeWithColors = {
     values: string[][];
     bgColors: (string | null)[][];
@@ -84,7 +76,7 @@ export async function readSheetRangeWithColors(
         for (const cell of rowData.values ?? []) {
             cellValues.push(cell.formattedValue ?? '');
             const bg = cell.effectiveFormat?.backgroundColor as SheetColor | null | undefined;
-            cellColors.push(isWhiteOrDefault(bg) ? null : colorToHex(bg!));
+            cellColors.push(bg ? colorToHex(bg) : null);
         }
         values.push(cellValues);
         bgColors.push(cellColors);

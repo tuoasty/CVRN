@@ -1,4 +1,5 @@
 import {ParsedRosterEntry, ParsedTeamResult, PlayerRole} from "@/server/domains/sheets/types";
+import { logger } from "@/server/utils/logger";
 
 const TEAMS_PER_ROW = 5;
 const PLAYER_ROWS = 18;
@@ -62,6 +63,8 @@ export function parseTeamsSheet(
                 results.push({teamNumber, teamName: '', teamColor: null, brickNumber: null, players: [], headerCol: col, disbanded: true, nameCleared: false});
                 continue;
             }
+
+            logger.debug({teamName:teamName, bgColor:bgColors?.[headerRowIdx]?.[col + 2]})
 
             const teamColor = bgColors?.[headerRowIdx]?.[col + 2] ?? null;
 
