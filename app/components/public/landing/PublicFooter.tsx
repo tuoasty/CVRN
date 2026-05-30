@@ -68,7 +68,7 @@ export default function PublicFooter() {
                     <div className="flex items-center gap-2 pb-2 border-b border-border">
                         <Users className="h-3.5 w-3.5 text-primary" />
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                            Staff Team
+                            Ownership
                         </p>
                     </div>
 
