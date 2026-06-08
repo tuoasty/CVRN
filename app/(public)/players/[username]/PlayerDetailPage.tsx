@@ -383,20 +383,28 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
                 </div>
             )}
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium">{entry.team_name}</span>
-                    {roleLabel && (
-                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 bg-muted rounded-sm text-muted-foreground">
-                            {roleLabel}
-                        </span>
-                    )}
-                    {isActive && (
-                        <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 bg-primary/10 text-primary rounded-sm">
-                            Active
-                        </span>
-                    )}
+                <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium truncate">
+                        {entry.team_name}
+                    </span>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                        {isActive && (
+                            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 bg-primary/10 text-primary rounded-sm">
+                                Active
+                            </span>
+                        )}
+                        {roleLabel && (
+                            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 bg-muted rounded-sm text-muted-foreground">
+                                {roleLabel}
+                            </span>
+                        )}
+                    </div>
                 </div>
-                <p className="text-xs text-muted-foreground">{entry.region_code} · {entry.season_name}</p>
+
+                <p className="text-xs text-muted-foreground">
+                    {entry.region_code} · {entry.season_name}
+                </p>
             </div>
         </div>
     );

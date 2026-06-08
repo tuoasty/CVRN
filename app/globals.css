@@ -74,6 +74,16 @@
     scrollbar-gutter: stable;
   }
 
+  /* react-remove-scroll injects margin-right/padding-right on body[data-scroll-locked]
+     via a dynamic <style> tag to compensate for the removed scrollbar.
+     scrollbar-gutter: stable already reserves that space, so the compensation
+     causes a double-offset and shifts content left.
+     Use html body[...] for higher specificity so this wins over the dynamic tag. */
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;

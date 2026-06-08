@@ -71,11 +71,7 @@ export default function PlayerSeasonStatsTable({rows, teamLogoBySeasonId}: Props
     const tableRef = useDragScroll();
 
     if (rows.length === 0) {
-        return (
-            <div className="panel p-6">
-                <p className="text-sm text-muted-foreground">No stats recorded yet.</p>
-            </div>
-        );
+        return
     }
 
     return (
