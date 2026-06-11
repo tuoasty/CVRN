@@ -14,7 +14,7 @@ export default function TeamsLoading() {
                 </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => (
+                {[...Array(9)].map((_, i) => (
                     <div key={i} className="rounded-sm border border-border bg-card overflow-hidden">
                         <Skeleton className="h-36 w-full rounded-none" />
                         <div className="border-t border-border">

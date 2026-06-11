@@ -288,7 +288,7 @@ interface WeekSelectorProps {
 function WeekSelector({ effectiveWeek, maxWeeks, weekCountMap, onWeekChange }: WeekSelectorProps) {
     const weeks = Array.from({ length: maxWeeks }, (_, i) => i + 1);
     return (
-        <div className="flex border border-border rounded-sm overflow-hidden">
+        <div className="flex overflow-x-auto border border-border rounded-sm overflow-hidden">
             {weeks.map(w => {
                 const isActive = w === effectiveWeek;
                 const count = weekCountMap.get(w);
@@ -297,7 +297,7 @@ function WeekSelector({ effectiveWeek, maxWeeks, weekCountMap, onWeekChange }: W
                         key={w}
                         onClick={() => onWeekChange(w)}
                         className={cn(
-                            "flex flex-col items-center justify-center flex-1 px-2 py-2.5 border-r border-border last:border-r-0 transition-colors",
+                            "flex flex-col items-center justify-center shrink-0 min-w-[72px] flex-1 px-2 py-2.5 border-r border-border last:border-r-0 transition-colors",
                             isActive
                                 ? "bg-primary/20 text-primary"
                                 : w < effectiveWeek
@@ -344,7 +344,7 @@ function PlayoffStepper({ rounds, effectiveRound, roundCountMap, onRoundChange }
                         key={round}
                         onClick={() => onRoundChange(round)}
                         className={cn(
-                            "flex flex-col items-center justify-center flex-1 px-2 py-2.5 text-xs font-semibold border-r border-border last:border-r-0 transition-colors",
+                            "flex flex-col items-center justify-center shrink-0 min-w-[80px] flex-1 px-2 py-2.5 text-xs font-semibold border-r border-border last:border-r-0 transition-colors",
                             isActive
                                 ? "bg-primary/20 text-primary"
                                 : isCompleted

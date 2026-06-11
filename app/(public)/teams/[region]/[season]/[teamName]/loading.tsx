@@ -25,8 +25,15 @@ export default function TeamDetailLoading() {
                     <Skeleton className="h-4 w-12 rounded-sm" />
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-9 gap-2 sm:gap-3">
-                    {[...Array(9)].map((_, i) => (
+                    {/* Leadership cards: 1/3-width square on mobile, 1/9 on desktop */}
+                    {[...Array(3)].map((_, i) => (
                         <Skeleton key={i} className="aspect-square rounded-md" />
+                    ))}
+                    {/* Player cards: full-width row on mobile (~60px), square on desktop */}
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i + 3} className="col-span-3 sm:col-span-1 rounded-md overflow-hidden border border-border">
+                            <Skeleton className="h-[60px] sm:h-auto sm:aspect-square rounded-none" />
+                        </div>
                     ))}
                 </div>
             </div>

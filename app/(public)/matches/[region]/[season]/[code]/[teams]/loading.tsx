@@ -63,8 +63,43 @@ export default function MatchDetailLoading() {
                 {/* TeamSelectorBar */}
                 <Skeleton className="h-9 w-full rounded-sm" />
 
-                {/* BoxScore */}
-                <Skeleton className="h-72 w-full rounded-sm" />
+                {/* BoxScore — structured skeleton matching table layout */}
+                <div className="rounded-sm border border-border overflow-x-auto">
+                    {/* Header row */}
+                    <div className="flex items-center gap-3 px-4 py-3 border-b-2 border-border bg-muted/30">
+                        <Skeleton className="h-3 w-32 rounded-sm shrink-0" />
+                        <div className="flex gap-5 ml-auto">
+                            {[...Array(5)].map((_, i) => (
+                                <Skeleton key={i} className="h-3 w-8 rounded-sm" />
+                            ))}
+                        </div>
+                    </div>
+                    {/* Player rows */}
+                    {[...Array(8)].map((_, i) => (
+                        <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
+                            <div className="flex items-center gap-2 shrink-0 w-40">
+                                <Skeleton className="h-7 w-7 rounded-sm shrink-0" />
+                                <Skeleton className="h-3.5 w-24 rounded-sm" />
+                            </div>
+                            <div className="flex gap-5 ml-auto">
+                                {[...Array(5)].map((_, j) => (
+                                    <Skeleton key={j} className="h-3.5 w-8 rounded-sm" />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                    {/* Totals row */}
+                    <div className="flex items-center gap-3 px-4 py-3 bg-muted/30">
+                        <div className="shrink-0 w-40">
+                            <Skeleton className="h-3.5 w-24 rounded-sm" />
+                        </div>
+                        <div className="flex gap-5 ml-auto">
+                            {[...Array(5)].map((_, j) => (
+                                <Skeleton key={j} className="h-3.5 w-8 rounded-sm" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
