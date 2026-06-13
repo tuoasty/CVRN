@@ -44,22 +44,22 @@ const getStatusConfig = (status: string) => {
 
 function TeamLogo({ team, isPriority }: { team?: TeamWithRegion; isPriority?: boolean }) {
     if (!team) return (
-        <div className="w-[72px] h-[72px] rounded-sm bg-muted/50 border border-border flex items-center justify-center">
+        <div className="w-12 h-12 sm:w-[72px] sm:h-[72px] rounded-sm bg-muted/50 border border-border flex items-center justify-center">
             <span className="text-sm text-muted-foreground font-bold">?</span>
         </div>
     );
     if (team.is_bye) return (
-        <div className="w-[72px] h-[72px] rounded-sm bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
+        <div className="w-12 h-12 sm:w-[72px] sm:h-[72px] rounded-sm bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
             <span className="text-sm text-orange-600 font-bold">BYE</span>
         </div>
     );
     if (team.logo_url) return (
-        <div className="relative w-[72px] h-[72px] rounded-sm overflow-hidden">
-            <Image src={team.logo_url} alt={team.name} fill priority={isPriority} sizes="72px" className={getLogoClassName(team.logo_bg_removed)} />
+        <div className="relative w-12 h-12 sm:w-[72px] sm:h-[72px] rounded-sm overflow-hidden">
+            <Image src={team.logo_url} alt={team.name} fill priority={isPriority} sizes="(max-width: 640px) 48px, 72px" className={getLogoClassName(team.logo_bg_removed)} />
         </div>
     );
     return (
-        <div className="w-[72px] h-[72px] rounded-sm bg-muted/50 border border-border flex items-center justify-center">
+        <div className="w-12 h-12 sm:w-[72px] sm:h-[72px] rounded-sm bg-muted/50 border border-border flex items-center justify-center">
             <span className="text-sm text-muted-foreground font-bold">
                 {team.name.slice(0, 3).toUpperCase()}
             </span>
@@ -135,7 +135,7 @@ export default function PublicMatchCard({
             </div>
 
             {/* Hero: 3-column centered layout */}
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 py-2">
                 {/* Home column */}
                 <div className={cn(
                     "flex flex-col items-center gap-1.5 min-w-0 transition-opacity",
@@ -156,25 +156,25 @@ export default function PublicMatchCard({
                 </div>
 
                 {/* Center: score + set pills */}
-                <div className="flex flex-col items-center gap-2 px-2">
+                <div className="flex flex-col items-center gap-2 px-1 sm:px-2 max-w-[88px] sm:max-w-none">
                     {isCompleted && match.home_sets_won !== null && match.away_sets_won !== null ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                             <span className={cn(
-                                "text-[40px] font-bold tabular-nums leading-none",
+                                "text-[28px] sm:text-[40px] font-bold tabular-nums leading-none",
                                 homeWon ? "text-foreground" : "text-muted-foreground"
                             )}>
                                 {match.home_sets_won}
                             </span>
-                            <span className="text-lg text-muted-foreground/50 font-medium">–</span>
+                            <span className="text-base sm:text-lg text-muted-foreground/50 font-medium">–</span>
                             <span className={cn(
-                                "text-[40px] font-bold tabular-nums leading-none",
+                                "text-[28px] sm:text-[40px] font-bold tabular-nums leading-none",
                                 awayWon ? "text-foreground" : "text-muted-foreground"
                             )}>
                                 {match.away_sets_won}
                             </span>
                         </div>
                     ) : (
-                        <span className="text-2xl font-bold text-muted-foreground/40">VS</span>
+                        <span className="text-xl sm:text-2xl font-bold text-muted-foreground/40">VS</span>
                     )}
                     {isCompleted && !match.is_forfeit && sets.length > 0 && (
                         <div className="flex items-center gap-1 flex-wrap justify-center">
