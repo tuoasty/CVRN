@@ -27,7 +27,7 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
                     imageUrl    = data.thumbnail_url ?? null
                     title       = data.title         ?? title
                     description = data.author_name   ?? description
-                    if (data.html) videoUrl = data.html
+                    if (data.html) videoUrl = data.html 
                 }
             } catch (err) {
                 logger.warn({ postId, err }, 'TikTok oEmbed fetch failed — proceeding without embed')
