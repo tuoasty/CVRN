@@ -1,4 +1,4 @@
-export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap'
+export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap' | 'clip'
 
 export interface MediaPost {
     id: string
@@ -34,7 +34,7 @@ export interface InsertMediaPostDto {
 }
 
 export interface CreateMediaInput {
-    type: 'gfx' | 'video' // news/recap deferred — no admin UI for those types in this milestone
+    type: 'gfx' | 'video' | 'clip'
     title: string
     description?: string | null
     imageFile?: File | null

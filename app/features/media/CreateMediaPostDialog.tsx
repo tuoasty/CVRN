@@ -18,7 +18,7 @@ interface CreateMediaPostDialogProps {
 }
 
 export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMediaPostDialogProps) {
-    const [type, setType] = useState<'gfx' | 'video'>('gfx')
+    const [type, setType] = useState<'gfx' | 'video' | 'clip'>('gfx')
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [videoUrl, setVideoUrl] = useState('')
@@ -83,17 +83,17 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        if (!title.trim()) { toast.error('Title is required'); return }
-        if (type === 'video' && !videoUrl.trim()) { toast.error('Video URL is required'); return }
+        if (type !== 'clip' && !title.trim()) { toast.error('Title is required'); return }
+        if ((type === 'video' || type === 'clip') && !videoUrl.trim()) { toast.error('URL is required'); return }
         if (type === 'gfx' && !imageFile) { toast.error('Image is required for GFX posts'); return }
 
         setLoading(true)
         try {
             const formData = new FormData()
             formData.set('type', type)
-            formData.set('title', title.trim())
-            if (description.trim()) formData.set('description', description.trim())
-            if (type === 'video') formData.set('videoUrl', videoUrl.trim())
+            formData.set('title', type === 'clip' ? '' : title.trim())
+            if (type !== 'clip' && description.trim()) formData.set('description', description.trim())
+            if (type === 'video' || type === 'clip') formData.set('videoUrl', videoUrl.trim())
             if (type === 'gfx' && imageFile) formData.set('imageFile', imageFile)
 
             const result = await createMediaPostAction(formData)
@@ -121,26 +121,31 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-1">
                         <Label>Type</Label>
-                        <Select value={type} onValueChange={(v) => setType(v as 'gfx' | 'video')}>
+                        <Select value={type} onValueChange={(v) => setType(v as 'gfx' | 'video' | 'clip')}>
                             <SelectTrigger className="rounded-sm">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="gfx">GFX</SelectItem>
                                 <SelectItem value="video">Video</SelectItem>
+                                <SelectItem value="clip">Clip (TikTok / Short-form)</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
-                    <div className="space-y-1">
-                        <Label htmlFor="title">Title</Label>
-                        <Input id="title" value={title} onChange={e => setTitle(e.target.value)} className="rounded-sm" />
-                    </div>
+                    {type !== 'clip' && (
+                        <>
+                            <div className="space-y-1">
+                                <Label htmlFor="title">Title</Label>
+                                <Input id="title" value={title} onChange={e => setTitle(e.target.value)} className="rounded-sm" />
+                            </div>
 
-                    <div className="space-y-1">
-                        <Label htmlFor="description">Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                        <Input id="description" value={description} onChange={e => setDescription(e.target.value)} className="rounded-sm" />
-                    </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="description">Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                                <Input id="description" value={description} onChange={e => setDescription(e.target.value)} className="rounded-sm" />
+                            </div>
+                        </>
+                    )}
 
                     {type === 'gfx' && (
                         <div className="space-y-1">
@@ -178,10 +183,22 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                         </div>
                     )}
 
-                    {type === 'video' && (
+                    {(type === 'video' || type === 'clip') && (
                         <div className="space-y-1">
-                            <Label htmlFor="videoUrl">YouTube / Twitch URL</Label>
-                            <Input id="videoUrl" type="url" placeholder="https://youtube.com/watch?v=..." value={videoUrl} onChange={e => setVideoUrl(e.target.value)} className="rounded-sm" />
+                            <Label htmlFor="videoUrl">
+                                {type === 'clip' ? 'TikTok URL' : 'YouTube / Twitch URL'}
+                            </Label>
+                            <Input
+                                id="videoUrl"
+                                type="url"
+                                placeholder={type === 'clip' ? 'https://www.tiktok.com/@user/video/...' : 'https://youtube.com/watch?v=...'}
+                                value={videoUrl}
+                                onChange={e => setVideoUrl(e.target.value)}
+                                className="rounded-sm"
+                            />
+                            {type === 'clip' && (
+                                <p className="text-[11px] text-muted-foreground">Thumbnail will be fetched automatically from TikTok.</p>
+                            )}
                         </div>
                     )}
 
