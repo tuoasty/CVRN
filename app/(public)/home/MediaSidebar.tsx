@@ -8,6 +8,7 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { useRecentMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
+import TikTokEmbedDialog from '@/app/features/media/TikTokEmbedDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import type { MediaPost } from '@/server/domains/media'
 
@@ -17,6 +18,7 @@ function TypeDot({ type }: { type: string }) {
         video: 'bg-blue-400',
         news:  'bg-green-400',
         recap: 'bg-orange-400',
+        clip:  'bg-pink-400',
     }
     return <span className={`inline-block w-1.5 h-1.5 rounded-full flex-shrink-0 ${colors[type] ?? 'bg-muted-foreground'}`} />
 }
@@ -25,6 +27,7 @@ export default function MediaSidebar() {
     const { posts, isLoading } = useRecentMediaPosts(4)
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
+    const [clipHtml, setClipHtml] = useState<string | null>(null)
 
     if (isLoading) {
         return (
@@ -59,6 +62,7 @@ export default function MediaSidebar() {
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">Media</h4>
                     {posts.map(post => {
                         const isVideo = post.type === 'video' && !!post.video_url
+                        const isClip = post.type === 'clip' && !!post.video_url
                         const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
 
                         return (
@@ -67,13 +71,14 @@ export default function MediaSidebar() {
                                 className="space-y-1 rounded-sm p-1 -mx-1 hover:bg-muted/40 cursor-pointer transition-colors"
                                 onClick={() => {
                                     if (isVideo) setVideoUrl(post.video_url!)
+                                    else if (isClip) setClipHtml(post.video_url!)
                                     else if (post.type === 'gfx' && post.image_url) setGfxPost(post)
                                 }}
                             >
                                 {thumbnail && (
                                     <div className="relative aspect-video w-full overflow-hidden rounded-sm border border-border">
                                         <Image src={thumbnail} alt={post.title} fill sizes="200px" className="object-cover" unoptimized />
-                                        {isVideo && (
+                                        {(isVideo || isClip) && (
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
                                                     <Play className="h-3.5 w-3.5 text-white fill-white ml-0.5" />
@@ -117,6 +122,14 @@ export default function MediaSidebar() {
                     title={gfxPost.title}
                     open={!!gfxPost}
                     onOpenChange={open => !open && setGfxPost(null)}
+                />
+            )}
+
+            {clipHtml && (
+                <TikTokEmbedDialog
+                    embedHtml={clipHtml}
+                    open={!!clipHtml}
+                    onOpenChange={open => !open && setClipHtml(null)}
                 />
             )}
         </>

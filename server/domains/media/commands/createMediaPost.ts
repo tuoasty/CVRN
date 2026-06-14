@@ -15,6 +15,27 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
 
     try {
         let imageUrl: string | null = null
+        let title = p.title
+        let description = p.description ?? null
+        let videoUrl = p.videoUrl ?? null
+
+        if (p.type === 'clip' && p.videoUrl) {
+            try {
+                const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(p.videoUrl)}`)
+                if (res.ok) {
+                    const data = await res.json()
+                    imageUrl    = data.thumbnail_url ?? null
+                    title       = data.title         ?? title
+                    description = data.author_name   ?? description
+                    if (data.html) videoUrl = data.html
+                }
+            } catch (err) {
+                logger.warn({ postId, err }, 'TikTok oEmbed fetch failed — proceeding without embed')
+            }
+            if (!title) title = 'TikTok Clip'
+        } else if (!title) {
+            return Err({ message: 'Title is required', code: 'VALIDATION_ERROR' })
+        }
 
         if (p.imageFile && p.imageFile.size > 0) {
             const ext = p.imageFile.name.split('.').pop() ?? 'jpg'
@@ -42,10 +63,10 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
         const insertResult = await insertMediaPost(supabase, {
             id:          postId,
             type:        p.type,
-            title:       p.title,
-            description: p.description ?? null,
+            title,
+            description,
             image_url:   imageUrl,
-            video_url:   p.videoUrl ?? null,
+            video_url:   videoUrl,
             match_id:    p.matchId ?? null,
             team_id:     p.teamId ?? null,
             season_id:   p.seasonId ?? null,

@@ -9,6 +9,7 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { useAllMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
+import TikTokEmbedDialog from '@/app/features/media/TikTokEmbedDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import { cn } from '@/lib/utils'
 import type { MediaPost } from '@/server/domains/media'
@@ -18,25 +19,30 @@ const TYPE_COLORS: Record<string, string> = {
     video: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     news:  'bg-green-500/20 text-green-400 border-green-500/30',
     recap: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    clip:  'bg-pink-500/20 text-pink-400 border-pink-500/30',
 }
 
-type FilterType = 'all' | 'videos'
+type FilterType = 'all' | 'videos' | 'clips'
 
-function PostRow({ post, onVideoClick, onGfxClick }: { post: MediaPost; onVideoClick: (url: string) => void; onGfxClick: (post: MediaPost) => void }) {
+function PostRow({ post, onVideoClick, onGfxClick, onClipClick }: { post: MediaPost; onVideoClick: (url: string) => void; onGfxClick: (post: MediaPost) => void; onClipClick: (url: string) => void }) {
     const isVideo = post.type === 'video'
     const isGfx = post.type === 'gfx'
+    const isClip = post.type === 'clip'
     const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
 
     function handleClick() {
         if (isVideo && post.video_url) onVideoClick(post.video_url)
         else if (isGfx && post.image_url) onGfxClick(post)
+        else if (isClip && post.video_url) onClipClick(post.video_url)
     }
+
+    const isClickable = (isVideo && !!post.video_url) || (isGfx && !!post.image_url) || (isClip && !!post.video_url)
 
     return (
         <div
             className={cn(
                 'panel flex gap-0 overflow-hidden transition-colors hover:border-primary/30',
-                (isVideo && post.video_url) || (isGfx && post.image_url) ? 'cursor-pointer' : ''
+                isClickable ? 'cursor-pointer' : ''
             )}
             onClick={handleClick}
         >
@@ -56,7 +62,7 @@ function PostRow({ post, onVideoClick, onGfxClick }: { post: MediaPost; onVideoC
                         <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
                     </div>
                 )}
-                {isVideo && (
+                {(isVideo || isClip) && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
                             <Play className="h-4 w-4 text-white fill-white ml-0.5" />
@@ -120,8 +126,13 @@ export default function MediaFeedPage() {
     const [filter, setFilter] = useState<FilterType>('all')
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
+    const [clipHtml, setClipHtml] = useState<string | null>(null)
 
-    const filtered = filter === 'all' ? posts : posts.filter(p => p.type === 'video')
+    const filtered = filter === 'all'
+        ? posts
+        : filter === 'videos'
+            ? posts.filter(p => p.type === 'video')
+            : posts.filter(p => p.type === 'clip')
 
     return (
         <div className="page-wide py-6 space-y-6">
@@ -132,7 +143,7 @@ export default function MediaFeedPage() {
             />
 
             <div className="flex gap-1.5">
-                {(['all', 'videos'] as FilterType[]).map(f => (
+                {(['all', 'videos', 'clips'] as FilterType[]).map(f => (
                     <button
                         key={f}
                         onClick={() => setFilter(f)}
@@ -143,7 +154,7 @@ export default function MediaFeedPage() {
                                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
                         )}
                     >
-                        {f === 'all' ? 'All' : 'Match Videos'}
+                        {f === 'all' ? 'All' : f === 'videos' ? 'Match Videos' : 'Clips'}
                     </button>
                 ))}
             </div>
@@ -162,7 +173,7 @@ export default function MediaFeedPage() {
             ) : (
                 <div className="space-y-3">
                     {filtered.map(post => (
-                        <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
+                        <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} onClipClick={setClipHtml} />
                     ))}
                 </div>
             )}
@@ -181,6 +192,14 @@ export default function MediaFeedPage() {
                     title={gfxPost.title}
                     open={!!gfxPost}
                     onOpenChange={open => !open && setGfxPost(null)}
+                />
+            )}
+
+            {clipHtml && (
+                <TikTokEmbedDialog
+                    embedHtml={clipHtml}
+                    open={!!clipHtml}
+                    onOpenChange={open => !open && setClipHtml(null)}
                 />
             )}
         </div>

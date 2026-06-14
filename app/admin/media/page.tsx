@@ -13,6 +13,7 @@ import { useAllMediaPosts, mutateAllMedia } from '@/app/hooks/useMediaPosts'
 import { deleteMediaPostAction, togglePinMediaPostAction } from '@/app/actions/media.actions'
 import { errorCodeToUserMessage } from '@/app/lib/errorMessages'
 import CreateMediaPostDialog from '@/app/features/media/CreateMediaPostDialog'
+import TikTokEmbedDialog from '@/app/features/media/TikTokEmbedDialog'
 import { toast } from '@/app/utils/toast'
 import { cn } from '@/lib/utils'
 
@@ -21,10 +22,11 @@ const TYPE_COLORS: Record<string, string> = {
     video: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     news:  'bg-green-500/20 text-green-400 border-green-500/30',
     recap: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    clip:  'bg-pink-500/20 text-pink-400 border-pink-500/30',
 }
 
-type FilterType = 'all' | 'gfx' | 'video' | 'news' | 'recap'
-const FILTER_OPTIONS: FilterType[] = ['all', 'gfx', 'video', 'news', 'recap']
+type FilterType = 'all' | 'gfx' | 'video' | 'news' | 'recap' | 'clip'
+const FILTER_OPTIONS: FilterType[] = ['all', 'gfx', 'video', 'clip', 'news', 'recap']
 
 export default function AdminMediaPage() {
     const { posts, isLoading } = useAllMediaPosts()
@@ -33,6 +35,7 @@ export default function AdminMediaPage() {
     const [pinning, setPinning] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
     const [filterType, setFilterType] = useState<FilterType>('all')
+    const [clipHtml, setClipHtml] = useState<string | null>(null)
 
     const filtered = filterType === 'all' ? posts : posts.filter(p => p.type === filterType)
 
@@ -109,8 +112,11 @@ export default function AdminMediaPage() {
                                 'flex items-center gap-3 p-3 rounded-sm border transition-colors',
                                 post.is_pinned
                                     ? 'border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/15'
-                                    : 'border-border bg-card hover:bg-muted/30'
-                            )}>
+                                    : 'border-border bg-card hover:bg-muted/30',
+                                post.type === 'clip' && post.video_url ? 'cursor-pointer' : ''
+                            )}
+                            onClick={() => post.type === 'clip' && post.video_url && setClipHtml(post.video_url)}
+                            >
                                 {post.image_url && (
                                     <div className="relative w-12 h-12 flex-shrink-0 rounded-sm border border-border overflow-hidden">
                                         <Image src={post.image_url} alt={post.title} fill sizes="48px" className="object-cover" />
@@ -118,12 +124,16 @@ export default function AdminMediaPage() {
                                 )}
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate">{post.title}</p>
-                                    <p className="text-xs text-muted-foreground">{new Date(post.published_at).toLocaleDateString()}</p>
+                                    {post.type === 'clip' && post.description ? (
+                                        <p className="text-xs text-pink-400 truncate">@{post.description}</p>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">{new Date(post.published_at).toLocaleDateString()}</p>
+                                    )}
                                 </div>
                                 <Badge variant="outline" className={`rounded-sm text-xs uppercase ${TYPE_COLORS[post.type] ?? ''}`}>
                                     {post.type}
                                 </Badge>
-                                {post.video_url && (
+                                {post.video_url && post.type !== 'clip' && (
                                     <a href={post.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline">
                                         Link
                                     </a>
@@ -175,6 +185,14 @@ export default function AdminMediaPage() {
             </AlertDialog>
 
             <CreateMediaPostDialog open={createOpen} onOpenChange={setCreateOpen} />
+
+            {clipHtml && (
+                <TikTokEmbedDialog
+                    embedHtml={clipHtml}
+                    open={!!clipHtml}
+                    onOpenChange={open => !open && setClipHtml(null)}
+                />
+            )}
         </div>
     )
 }
