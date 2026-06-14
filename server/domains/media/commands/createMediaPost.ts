@@ -21,16 +21,22 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
 
         if (p.type === 'clip' && p.videoUrl) {
             try {
-                const res = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(p.videoUrl)}`)
+                const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(p.videoUrl)}`
+                logger.info({ postId, oembedUrl }, 'Fetching TikTok oEmbed via noembed')
+                const res = await fetch(oembedUrl)
+                logger.info({ postId, status: res.status, ok: res.ok }, 'noembed response received')
                 if (res.ok) {
                     const data = await res.json()
+                    logger.info({ postId, hasHtml: !!data.html, hasThumb: !!data.thumbnail_url, title: data.title }, 'noembed data parsed')
                     imageUrl    = data.thumbnail_url ?? null
                     title       = data.title         ?? title
                     description = data.author_name   ?? description
-                    if (data.html) videoUrl = data.html 
+                    if (data.html) videoUrl = data.html
+                } else {
+                    logger.warn({ postId, status: res.status }, 'noembed returned non-OK status — proceeding without embed')
                 }
             } catch (err) {
-                logger.warn({ postId, err }, 'TikTok oEmbed fetch failed — proceeding without embed')
+                logger.warn({ postId, err }, 'noembed fetch failed — proceeding without embed')
             }
             if (!title) title = 'TikTok Clip'
         } else if (!title) {
