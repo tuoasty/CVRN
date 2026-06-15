@@ -61,7 +61,7 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
                         'Accept': 'application/json, text/javascript, */*',
                     },
                 })
-                logger.debug({res}, "oEmbed Result")
+                logger.info({res}, "oEmbed Result")
                 if (res.ok) {
                     const ct = res.headers.get('content-type') ?? ''
                     if (ct.includes('application/json') || ct.includes('text/javascript')) {
