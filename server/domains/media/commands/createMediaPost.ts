@@ -19,17 +19,19 @@ function isTikTokUrl(raw: string): boolean {
     }
 }
 
-async function resolveTikTokVideoId(url: string): Promise<string | null> {
+async function resolveTikTok(url: string): Promise<{ videoId: string; canonicalUrl: string } | null> {
     if (!isTikTokUrl(url)) return null
 
     const direct = url.match(/\/video\/(\d+)/)
-    if (direct) return direct[1]
+    if (direct) return { videoId: direct[1], canonicalUrl: url }
 
     try {
         const res = await fetch(url, { redirect: 'manual' })
         const location = res.headers.get('location')
         if (!location || !isTikTokUrl(location)) return null
-        return location.match(/\/video\/(\d+)/)?.[1] ?? null
+        const id = location.match(/\/video\/(\d+)/)?.[1]
+        if (!id) return null
+        return { videoId: id, canonicalUrl: location }
     } catch {
         return null
     }
@@ -47,14 +49,14 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
         let videoUrl = p.videoUrl ?? null
 
         if (p.type === 'clip' && p.videoUrl) {
-            const videoId = await resolveTikTokVideoId(p.videoUrl)
-            if (!videoId) {
+            const resolved = await resolveTikTok(p.videoUrl)
+            if (!resolved) {
                 return Err({ message: 'Could not extract TikTok video ID from URL. Paste a full or short TikTok link.', code: 'VALIDATION_ERROR' })
             }
-            videoUrl = videoId
+            videoUrl = resolved.videoId
 
             try {
-                const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(p.videoUrl)}`
+                const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(resolved.canonicalUrl)}`
                 const res = await fetch(oembedUrl, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
