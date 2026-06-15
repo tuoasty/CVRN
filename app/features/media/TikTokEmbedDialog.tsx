@@ -3,8 +3,9 @@
 import { X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
 
-function parseVideoId(html: string): string | null {
-    return html.match(/data-video-id="(\d+)"/)?.[1] ?? null
+function parseVideoId(value: string): string | null {
+    if (/^\d+$/.test(value)) return value
+    return value.match(/\/video\/(\d+)/)?.[1] ?? null
 }
 
 interface TikTokEmbedDialogProps {
@@ -40,7 +41,7 @@ export default function TikTokEmbedDialog({ embedHtml, open, onOpenChange }: Tik
 
                     {videoId ? (
                         <iframe
-                            src={`https://www.tiktok.com/embed/v2/${videoId}`}
+                            src={`https://www.tiktok.com/embed/v3/${videoId}`}
                             allowFullScreen
                             allow="encrypted-media"
                             className="block border-0"
