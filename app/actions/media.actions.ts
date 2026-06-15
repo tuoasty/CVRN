@@ -86,5 +86,5 @@ export async function togglePinMediaPostAction(input: unknown): Promise<Result<M
     if (!postResult.ok) return postResult
     if (!postResult.value) return Err({ message: 'Post not found', code: 'NOT_FOUND' })
 
-    return togglePinMediaPost(supabase, parsed.data.postId, !postResult.value.is_pinned)
+    return togglePinMediaPost(supabase, parsed.data.postId, !postResult.value.is_pinned, postResult.value.type)
 }

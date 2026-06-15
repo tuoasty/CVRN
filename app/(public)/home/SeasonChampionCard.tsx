@@ -56,21 +56,21 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
     const thirdHref = third ? buildPublicTeamHref({regionCode, seasonSlug, teamSlug: third.teams.slug}) : null;
 
     const championContent = champion ? (
-        <div className="flex flex-col items-center gap-3 py-8 px-6">
+        <div className="flex flex-col items-center gap-3 py-6 px-6">
             <TeamLogo name={champion.teams.name} logoUrl={champion.teams.logo_url} size={112} />
             <span className="text-xl font-bold text-center">{champion.teams.name}</span>
         </div>
     ) : (
-        <div className="flex flex-col items-center justify-center py-8 px-6">
+        <div className="flex flex-col items-center justify-center py-6 px-6">
             <Trophy className="h-10 w-10 text-yellow-500/30 mb-2" />
             <p className="text-sm text-muted-foreground">Champion not yet set</p>
         </div>
     );
 
     return (
-        <div className="panel border-l-4 border-l-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent">
+        <div className="panel border-l-4 border-l-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent h-[376px]">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b-2 border-yellow-500/20">
+            <div className="flex items-center justify-between px-6 pt-3 pb-3 border-b-2 border-yellow-500/20">
                 <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                     <Trophy className="h-4 w-4" />
                     <h3 className="text-sm font-bold uppercase tracking-wider">Season Champion</h3>

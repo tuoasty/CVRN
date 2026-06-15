@@ -9,7 +9,6 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { useAllMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
-import TikTokEmbedDialog from '@/app/features/media/TikTokEmbedDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import { cn } from '@/lib/utils'
 import type { MediaPost } from '@/server/domains/media'
@@ -22,21 +21,59 @@ const TYPE_COLORS: Record<string, string> = {
     clip:  'bg-pink-500/20 text-pink-400 border-pink-500/30',
 }
 
-type FilterType = 'all' | 'videos' | 'clips'
+type FilterType = 'all' | 'gfx-videos' | 'clips'
 
-function PostRow({ post, onVideoClick, onGfxClick, onClipClick }: { post: MediaPost; onVideoClick: (url: string) => void; onGfxClick: (post: MediaPost) => void; onClipClick: (url: string) => void }) {
+// Portrait iframe card for clips.
+// compact=true: pure 9:16 cell for the 3-col grid (no padding, no footer).
+// padX: horizontal inset for the All tab (default px-6 desktop, px-4 mobile).
+function ClipCard({ post, padX = 'px-6', compact = false }: { post: MediaPost; padX?: string; compact?: boolean }) {
+    if (compact) {
+        return (
+            <div className="rounded-sm overflow-hidden border border-border" style={{ aspectRatio: '9/16' }}>
+                <iframe
+                    src={`https://www.tiktok.com/embed/v3/${post.video_url}`}
+                    allowFullScreen
+                    allow="encrypted-media"
+                    className="block border-0 w-full h-full"
+                />
+            </div>
+        )
+    }
+    return (
+        <div className="panel overflow-hidden">
+            <div className={padX}>
+                <iframe
+                    src={`https://www.tiktok.com/embed/v3/${post.video_url}`}
+                    allowFullScreen
+                    allow="encrypted-media"
+                    className="block border-0 w-full"
+                    style={{ aspectRatio: '9/16' }}
+                />
+            </div>
+            <div className="px-3 py-2 flex items-center justify-between gap-2">
+                {post.is_pinned && <Pin className="h-3 w-3 text-muted-foreground/60 fill-muted-foreground/60 flex-shrink-0" />}
+                <p className="text-[10px] text-muted-foreground ml-auto">
+                    {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </p>
+            </div>
+        </div>
+    )
+}
+
+function PostRow({ post, onVideoClick, onGfxClick }: {
+    post: MediaPost
+    onVideoClick: (url: string) => void
+    onGfxClick: (post: MediaPost) => void
+}) {
     const isVideo = post.type === 'video'
-    const isGfx = post.type === 'gfx'
-    const isClip = post.type === 'clip'
     const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
 
     function handleClick() {
         if (isVideo && post.video_url) onVideoClick(post.video_url)
-        else if (isGfx && post.image_url) onGfxClick(post)
-        else if (isClip && post.video_url) onClipClick(post.video_url)
+        else if (post.type === 'gfx' && post.image_url) onGfxClick(post)
     }
 
-    const isClickable = (isVideo && !!post.video_url) || (isGfx && !!post.image_url) || (isClip && !!post.video_url)
+    const isClickable = (isVideo && !!post.video_url) || (post.type === 'gfx' && !!post.image_url)
 
     return (
         <div
@@ -46,7 +83,6 @@ function PostRow({ post, onVideoClick, onGfxClick, onClipClick }: { post: MediaP
             )}
             onClick={handleClick}
         >
-            {/* Thumbnail */}
             <div className="relative w-48 sm:w-64 flex-shrink-0 aspect-video bg-muted self-stretch">
                 {thumbnail ? (
                     <Image
@@ -62,7 +98,7 @@ function PostRow({ post, onVideoClick, onGfxClick, onClipClick }: { post: MediaP
                         <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
                     </div>
                 )}
-                {(isVideo || isClip) && (
+                {isVideo && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
                             <Play className="h-4 w-4 text-white fill-white ml-0.5" />
@@ -75,17 +111,12 @@ function PostRow({ post, onVideoClick, onGfxClick, onClipClick }: { post: MediaP
                     </div>
                 )}
             </div>
-
-            {/* Content */}
             <div className="flex-1 min-w-0 p-4 flex flex-col justify-between gap-2">
                 <div className="space-y-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
                         <Badge
                             variant="outline"
-                            className={cn(
-                                'rounded-sm text-[10px] uppercase tracking-wide font-semibold',
-                                TYPE_COLORS[post.type] ?? ''
-                            )}
+                            className={cn('rounded-sm text-[10px] uppercase tracking-wide font-semibold', TYPE_COLORS[post.type] ?? '')}
                         >
                             {post.type}
                         </Badge>
@@ -121,18 +152,20 @@ function PostRowSkeleton() {
     )
 }
 
+const TAB_LABELS: Record<FilterType, string> = {
+    'all':        'All',
+    'gfx-videos': 'GFX & Videos',
+    'clips':      'Clips',
+}
+
 export default function MediaFeedPage() {
     const { posts, isLoading } = useAllMediaPosts()
     const [filter, setFilter] = useState<FilterType>('all')
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
-    const [clipHtml, setClipHtml] = useState<string | null>(null)
 
-    const filtered = filter === 'all'
-        ? posts
-        : filter === 'videos'
-            ? posts.filter(p => p.type === 'video')
-            : posts.filter(p => p.type === 'clip')
+    const gfxVideoPosts = posts.filter(p => p.type !== 'clip')
+    const clipPosts     = posts.filter(p => p.type === 'clip')
 
     return (
         <div className="page-wide py-6 space-y-6">
@@ -142,8 +175,9 @@ export default function MediaFeedPage() {
                 subtitle="GFX, highlights, and league content"
             />
 
+            {/* Tab bar */}
             <div className="flex gap-1.5">
-                {(['all', 'videos', 'clips'] as FilterType[]).map(f => (
+                {(Object.keys(TAB_LABELS) as FilterType[]).map(f => (
                     <button
                         key={f}
                         onClick={() => setFilter(f)}
@@ -154,7 +188,7 @@ export default function MediaFeedPage() {
                                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
                         )}
                     >
-                        {f === 'all' ? 'All' : f === 'videos' ? 'Match Videos' : 'Clips'}
+                        {TAB_LABELS[f]}
                     </button>
                 ))}
             </div>
@@ -163,19 +197,54 @@ export default function MediaFeedPage() {
                 <div className="space-y-3">
                     {[...Array(4)].map((_, i) => <PostRowSkeleton key={i} />)}
                 </div>
-            ) : filtered.length === 0 ? (
+            ) : posts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 space-y-3">
                     <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
-                    <p className="text-sm text-muted-foreground">
-                        {posts.length === 0 ? 'No media posts yet.' : 'No match videos yet.'}
-                    </p>
+                    <p className="text-sm text-muted-foreground">No media posts yet.</p>
                 </div>
+            ) : filter === 'all' ? (
+                // Desktop: flex-[2] GFX·Video column + flex-[1] Clips column
+                // Mobile: stacked, GFX·Video rows first then clips section below
+                <div className="flex flex-col lg:flex-row gap-6 items-start">
+                    {gfxVideoPosts.length > 0 && (
+                        <div className="flex-[2] space-y-3">
+                            {gfxVideoPosts.map(post => (
+                                <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
+                            ))}
+                        </div>
+                    )}
+                    {clipPosts.length > 0 && (
+                        <div className="flex-[1] bg-muted/30 border border-border rounded-md p-3 space-y-3">
+                            {clipPosts.map(post => (
+                                <ClipCard key={post.id} post={post} padX="px-4 lg:px-6" />
+                            ))}
+                        </div>
+                    )}
+                    {gfxVideoPosts.length === 0 && clipPosts.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No posts yet.</p>
+                    )}
+                </div>
+            ) : filter === 'gfx-videos' ? (
+                gfxVideoPosts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">No GFX or video posts yet.</p>
+                ) : (
+                    <div className="space-y-3">
+                        {gfxVideoPosts.map(post => (
+                            <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
+                        ))}
+                    </div>
+                )
             ) : (
-                <div className="space-y-3">
-                    {filtered.map(post => (
-                        <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} onClipClick={setClipHtml} />
-                    ))}
-                </div>
+                // Clips tab — 3-column portrait grid, pure 9:16 cells
+                clipPosts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">No clips yet.</p>
+                ) : (
+                    <div className="grid grid-cols-3 gap-3">
+                        {clipPosts.map(post => (
+                            <ClipCard key={post.id} post={post} compact />
+                        ))}
+                    </div>
+                )
             )}
 
             {videoUrl && (
@@ -192,14 +261,6 @@ export default function MediaFeedPage() {
                     title={gfxPost.title}
                     open={!!gfxPost}
                     onOpenChange={open => !open && setGfxPost(null)}
-                />
-            )}
-
-            {clipHtml && (
-                <TikTokEmbedDialog
-                    embedHtml={clipHtml}
-                    open={!!clipHtml}
-                    onOpenChange={open => !open && setClipHtml(null)}
                 />
             )}
         </div>

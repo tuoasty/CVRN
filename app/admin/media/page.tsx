@@ -13,7 +13,6 @@ import { useAllMediaPosts, mutateAllMedia } from '@/app/hooks/useMediaPosts'
 import { deleteMediaPostAction, togglePinMediaPostAction } from '@/app/actions/media.actions'
 import { errorCodeToUserMessage } from '@/app/lib/errorMessages'
 import CreateMediaPostDialog from '@/app/features/media/CreateMediaPostDialog'
-import TikTokEmbedDialog from '@/app/features/media/TikTokEmbedDialog'
 import { toast } from '@/app/utils/toast'
 import { cn } from '@/lib/utils'
 
@@ -35,7 +34,6 @@ export default function AdminMediaPage() {
     const [pinning, setPinning] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
     const [filterType, setFilterType] = useState<FilterType>('all')
-    const [clipHtml, setClipHtml] = useState<string | null>(null)
 
     const filtered = filterType === 'all' ? posts : posts.filter(p => p.type === filterType)
 
@@ -113,22 +111,20 @@ export default function AdminMediaPage() {
                                 post.is_pinned
                                     ? 'border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/15'
                                     : 'border-border bg-card hover:bg-muted/30',
-                                post.type === 'clip' && post.video_url ? 'cursor-pointer' : ''
-                            )}
-                            onClick={() => post.type === 'clip' && post.video_url && setClipHtml(post.video_url)}
-                            >
-                                {post.image_url && (
+                            )}>
+                                {post.image_url && post.type !== 'clip' && (
                                     <div className="relative w-12 h-12 flex-shrink-0 rounded-sm border border-border overflow-hidden">
                                         <Image src={post.image_url} alt={post.title} fill sizes="48px" className="object-cover" />
                                     </div>
                                 )}
+                                {post.type === 'clip' && (
+                                    <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm flex-shrink-0">
+                                        ID: {post.video_url ?? '—'}
+                                    </span>
+                                )}
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate">{post.title}</p>
-                                    {post.type === 'clip' && post.description ? (
-                                        <p className="text-xs text-pink-400 truncate">@{post.description}</p>
-                                    ) : (
-                                        <p className="text-xs text-muted-foreground">{new Date(post.published_at).toLocaleDateString()}</p>
-                                    )}
+                                    <p className="text-xs text-muted-foreground">{new Date(post.published_at).toLocaleDateString()}</p>
                                 </div>
                                 <Badge variant="outline" className={`rounded-sm text-xs uppercase ${TYPE_COLORS[post.type] ?? ''}`}>
                                     {post.type}
@@ -185,14 +181,6 @@ export default function AdminMediaPage() {
             </AlertDialog>
 
             <CreateMediaPostDialog open={createOpen} onOpenChange={setCreateOpen} />
-
-            {clipHtml && (
-                <TikTokEmbedDialog
-                    embedHtml={clipHtml}
-                    open={!!clipHtml}
-                    onOpenChange={open => !open && setClipHtml(null)}
-                />
-            )}
         </div>
     )
 }

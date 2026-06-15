@@ -28,7 +28,7 @@ export default function HomePage() {
     const { teams, isLoading: loadingTeams } = useTeams();
 
     const { matches: upcomingMatches, isLoading: loadingUpcoming } = useUpcomingMatches(selectedSeasonId || null, 5);
-    const { matches: recentMatches, isLoading: loadingRecent } = useRecentMatches(selectedSeasonId || null, 5);
+    const { matches: recentMatches, isLoading: loadingRecent } = useRecentMatches(selectedSeasonId || null, 6);
     const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId || undefined, selectedRegionId || undefined);
 
     const selectedSeason = seasons.find((s) => s.id === selectedSeasonId);
@@ -38,6 +38,11 @@ export default function HomePage() {
     const isSeasonCompleted = selectedSeason?.end_date
         ? new Date(selectedSeason.end_date) < new Date()
         : false;
+
+    // Both sidebar sections visible when season is active (upcoming section always renders)
+    const bothSections = !isSeasonCompleted;
+    const upcomingDisplay = bothSections ? upcomingMatches.slice(0, 4) : upcomingMatches;
+    const recentDisplay   = bothSections ? recentMatches.slice(0, 4) : recentMatches.slice(0, 6);
 
     const { podium, isLoading: podiumLoading } = useSeasonPodium(
         isSeasonCompleted ? (selectedSeasonId || null) : null
@@ -86,22 +91,19 @@ export default function HomePage() {
 
                                 {(loadingUpcoming || loadingTeams) ? (
                                     <div className="space-y-2">
-                                        {[1, 2, 3].map((i) => (
-                                            <Skeleton key={i} className="h-32 rounded-sm" />
+                                        {[1, 2, 3, 4].map((i) => (
+                                            <Skeleton key={i} className={bothSections ? 'h-[100px] rounded-sm' : 'h-[120px] rounded-sm'} />
                                         ))}
                                     </div>
-                                ) : upcomingMatches.length === 0 ? (
+                                ) : upcomingDisplay.length === 0 ? (
                                     <div className="panel p-4 text-center">
-                                        <p className="text-xs text-muted-foreground">
-                                            No upcoming matches
-                                        </p>
+                                        <p className="text-xs text-muted-foreground">No upcoming matches</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-2">
-                                        {upcomingMatches.map((matchDetails: MatchWithDetails, i) => {
+                                        {upcomingDisplay.map((matchDetails: MatchWithDetails, i) => {
                                             const homeTeam = teams.find((t) => t.id === matchDetails.match.home_team_id);
                                             const awayTeam = teams.find((t) => t.id === matchDetails.match.away_team_id);
-
                                             return (
                                                 <CompactMatchCard
                                                     key={matchDetails.match.id}
@@ -110,6 +112,7 @@ export default function HomePage() {
                                                     awayTeam={awayTeam}
                                                     regionCode={regionCode}
                                                     matchLabel={upcomingLabels[i]}
+                                                    compact={bothSections}
                                                     href={buildPublicMatchHref({
                                                         matchCode: matchDetails.match.match_code,
                                                         homeTeamName: homeTeam?.name,
@@ -136,22 +139,19 @@ export default function HomePage() {
 
                             {(loadingRecent || loadingTeams) ? (
                                 <div className="space-y-2">
-                                    {[1, 2].map((i) => (
-                                        <Skeleton key={i} className="h-32 rounded-sm" />
+                                    {(bothSections ? [1,2,3,4] : [1,2,3,4,5,6]).map((i) => (
+                                        <Skeleton key={i} className={bothSections ? 'h-[100px] rounded-sm' : 'h-[120px] rounded-sm'} />
                                     ))}
                                 </div>
-                            ) : recentMatches.length === 0 ? (
+                            ) : recentDisplay.length === 0 ? (
                                 <div className="panel p-4 text-center">
-                                    <p className="text-xs text-muted-foreground">
-                                        No recent matches
-                                    </p>
+                                    <p className="text-xs text-muted-foreground">No recent matches</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {recentMatches.map((matchDetails: MatchWithDetails, i) => {
+                                    {recentDisplay.map((matchDetails: MatchWithDetails, i) => {
                                         const homeTeam = teams.find((t) => t.id === matchDetails.match.home_team_id);
                                         const awayTeam = teams.find((t) => t.id === matchDetails.match.away_team_id);
-
                                         return (
                                             <CompactMatchCard
                                                 key={matchDetails.match.id}
@@ -160,6 +160,7 @@ export default function HomePage() {
                                                 awayTeam={awayTeam}
                                                 regionCode={regionCode}
                                                 matchLabel={recentLabels[i]}
+                                                compact={bothSections}
                                                 href={buildPublicMatchHref({
                                                     matchCode: matchDetails.match.match_code,
                                                     homeTeamName: homeTeam?.name,
@@ -179,7 +180,7 @@ export default function HomePage() {
                     <section className="space-y-6">
                         {/* Featured area */}
                         {featuredLoading ? (
-                            <Skeleton className="h-[260px] rounded-sm" />
+                            <Skeleton className="h-[376px] rounded-sm" />
                         ) : isSeasonCompleted ? (
                             <SeasonChampionCard podium={podium} seasonName={selectedSeason?.name} regionCode={regionCode} seasonSlug={seasonSlug} />
                         ) : featuredMatch ? (
@@ -199,12 +200,10 @@ export default function HomePage() {
                                 })}
                             />
                         ) : (
-                            <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-                                <div className="flex flex-col items-center justify-center py-12">
-                                    <Trophy className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                                    <p className="text-sm text-muted-foreground">
-                                        No upcoming matches scheduled
-                                    </p>
+                            <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent h-[376px] flex items-center justify-center">
+                                <div className="flex flex-col items-center gap-3">
+                                    <Trophy className="h-12 w-12 text-muted-foreground/40" />
+                                    <p className="text-sm text-muted-foreground">No upcoming matches scheduled</p>
                                 </div>
                             </div>
                         )}
