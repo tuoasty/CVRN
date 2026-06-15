@@ -3,53 +3,52 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Image as ImageIcon, Play, ArrowRight, Pin } from 'lucide-react'
+import { Image as ImageIcon, Play, ArrowRight } from 'lucide-react'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { useRecentMediaPosts } from '@/app/hooks/useMediaPosts'
+import { useAllMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
-import TikTokEmbedDialog from '@/app/features/media/TikTokEmbedDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import type { MediaPost } from '@/server/domains/media'
 
-function TypeDot({ type }: { type: string }) {
-    const colors: Record<string, string> = {
-        gfx:   'bg-violet-400',
-        video: 'bg-blue-400',
-        news:  'bg-green-400',
-        recap: 'bg-orange-400',
-        clip:  'bg-pink-400',
-    }
-    return <span className={`inline-block w-1.5 h-1.5 rounded-full flex-shrink-0 ${colors[type] ?? 'bg-muted-foreground'}`} />
-}
+// Proportional slot system derived from clip = 9:16 at 4 units.
+// 1 unit = clip_height/4 = (16w/9)/4 = 4w/9
+// clip  (4u):    aspect-ratio 9/16  (portrait TikTok)
+// gfx   (~1.3u): aspect-ratio 16/9  (standard widescreen)
+// video (0.75u): aspect-ratio 3/1   (compact row, thumbnail left + text right)
+// All three scale together with sidebar width.
 
 export default function MediaSidebar() {
-    const { posts, isLoading } = useRecentMediaPosts(4)
+    const { posts, isLoading } = useAllMediaPosts()
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
-    const [clipHtml, setClipHtml] = useState<string | null>(null)
+
+    const pinned = posts.filter(p => p.is_pinned)
+    const gfx    = pinned.find(p => p.type === 'gfx') ?? null
+    const videos = pinned.filter(p => p.type === 'video').slice(0, 2)
+    const clip   = pinned.find(p => p.type === 'clip') ?? null
+    const hasAny = !!gfx || videos.length > 0 || !!clip
 
     if (isLoading) {
         return (
             <div className="panel p-3 space-y-3">
-                <Skeleton className="h-3 w-16 rounded-sm" />
-                {[...Array(3)].map((_, i) => (
-                    <div key={i} className="space-y-1.5">
-                        <Skeleton className="aspect-video w-full rounded-sm" />
-                        <Skeleton className="h-2.5 w-3/4 rounded-sm" />
-                    </div>
-                ))}
+                <div className="rounded-sm overflow-hidden border border-border/30">
+                    <Skeleton className="w-full" style={{ aspectRatio: '16/9' }} />
+                    <Skeleton className="h-7 w-full rounded-none" />
+                </div>
+                <Skeleton className="w-full rounded-sm" style={{ aspectRatio: '3/1' }} />
+                <Skeleton className="w-full rounded-sm" style={{ aspectRatio: '9/16' }} />
             </div>
         )
     }
 
-    if (posts.length === 0) {
+    if (!hasAny) {
         return (
             <div className="panel p-4 bg-gradient-to-br from-muted/30 to-transparent min-h-[200px]">
                 <div className="flex flex-col items-center justify-center h-full space-y-2">
                     <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
                     <h4 className="text-xs font-bold text-muted-foreground">Media</h4>
-                    <p className="text-[10px] text-muted-foreground/70 text-center">No posts yet</p>
+                    <p className="text-[10px] text-muted-foreground/70 text-center">No pinned posts yet</p>
                 </div>
             </div>
         )
@@ -57,55 +56,69 @@ export default function MediaSidebar() {
 
     return (
         <>
-            <div className="space-y-3">
-                <div className="panel p-3 space-y-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">Media</h4>
-                    {posts.map(post => {
-                        const isVideo = post.type === 'video' && !!post.video_url
-                        const isClip = post.type === 'clip' && !!post.video_url
-                        const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
+            <div className="panel p-3 space-y-3">
+                {/* GFX — image is 16:9, title band is extra height below */}
+                {gfx && (
+                    <div
+                        className="flex flex-col border border-border rounded-sm overflow-hidden cursor-pointer"
+                        onClick={() => gfx.image_url && setGfxPost(gfx)}
+                    >
+                        <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+                            {gfx.image_url && (
+                                <Image src={gfx.image_url} alt={gfx.title} fill className="object-cover" sizes="240px" />
+                            )}
+                        </div>
+                        <div className="px-2 py-1.5 flex-shrink-0">
+                            <p className="text-xs font-semibold truncate">{gfx.title}</p>
+                            {gfx.description && (
+                                <p className="text-[10px] text-muted-foreground truncate">{gfx.description}</p>
+                            )}
+                        </div>
+                    </div>
+                )}
 
-                        return (
-                            <div
-                                key={post.id}
-                                className="space-y-1 rounded-sm p-1 -mx-1 hover:bg-muted/40 cursor-pointer transition-colors"
-                                onClick={() => {
-                                    if (isVideo) setVideoUrl(post.video_url!)
-                                    else if (isClip) setClipHtml(post.video_url!)
-                                    else if (post.type === 'gfx' && post.image_url) setGfxPost(post)
-                                }}
-                            >
+                {/* Videos — 3:1 compact row (0.75u), thumbnail left + text right */}
+                {videos.map(post => {
+                    const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
+                    return (
+                        <div
+                            key={post.id}
+                            style={{ aspectRatio: '3/1' }}
+                            className="flex items-center border border-border rounded-sm overflow-hidden cursor-pointer"
+                            onClick={() => post.video_url && setVideoUrl(post.video_url)}
+                        >
+                            <div className="h-full aspect-video relative flex-shrink-0 bg-muted">
                                 {thumbnail && (
-                                    <div className="relative aspect-video w-full overflow-hidden rounded-sm border border-border">
-                                        <Image src={thumbnail} alt={post.title} fill sizes="200px" className="object-cover" unoptimized />
-                                        {(isVideo || isClip) && (
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
-                                                    <Play className="h-3.5 w-3.5 text-white fill-white ml-0.5" />
-                                                </div>
-                                            </div>
-                                        )}
-                                        {post.is_pinned && (
-                                            <div className="absolute top-1 right-1 z-10">
-                                                <Pin className="h-2.5 w-2.5 text-white/70 fill-white/70" />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <Image src={thumbnail} alt={post.title} fill className="object-cover" sizes="120px" unoptimized />
                                 )}
-                                <div className="flex items-center gap-1.5 px-0.5">
-                                    <TypeDot type={post.type} />
-                                    <p className="text-xs font-semibold truncate flex-1">{post.title}</p>
-                                    <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                                        {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                    </span>
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                    <Play className="h-3 w-3 text-white fill-white ml-0.5" />
                                 </div>
                             </div>
-                        )
-                    })}
-                    <Link href="/media" className="flex items-center justify-center gap-1 text-xs text-primary font-medium hover:underline pt-1">
-                        View all <ArrowRight className="h-3 w-3" />
-                    </Link>
-                </div>
+                            <div className="flex-1 min-w-0 px-2">
+                                <p className="text-xs font-semibold line-clamp-2 leading-tight">{post.title}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">
+                                    {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </p>
+                            </div>
+                        </div>
+                    )
+                })}
+
+                {/* Clip — 9:16 TikTok portrait ratio */}
+                {clip && (
+                    <iframe
+                        src={`https://www.tiktok.com/embed/v3/${clip.video_url}`}
+                        className="block border-0 rounded-sm w-full"
+                        style={{ aspectRatio: '9/16' }}
+                        allowFullScreen
+                        allow="encrypted-media"
+                    />
+                )}
+
+                <Link href="/media" className="flex items-center justify-center gap-1 text-xs text-primary font-medium hover:underline pt-1">
+                    View all <ArrowRight className="h-3 w-3" />
+                </Link>
             </div>
 
             {videoUrl && (
@@ -122,14 +135,6 @@ export default function MediaSidebar() {
                     title={gfxPost.title}
                     open={!!gfxPost}
                     onOpenChange={open => !open && setGfxPost(null)}
-                />
-            )}
-
-            {clipHtml && (
-                <TikTokEmbedDialog
-                    embedHtml={clipHtml}
-                    open={!!clipHtml}
-                    onOpenChange={open => !open && setClipHtml(null)}
                 />
             )}
         </>

@@ -1,16 +1,41 @@
-import { Err, Ok, Result } from '@/shared/types/result'
+import { Err, Result } from '@/shared/types/result'
 import { DBClient } from '@/shared/types/db'
-import { countPinnedMediaPosts, updateMediaPostPin } from '@/server/db/mediaPost.repo'
+import { countPinnedByBucket, updateMediaPostPin } from '@/server/db/mediaPost.repo'
 import { MediaPost } from '../types'
 
-const MAX_PINNED = 3
+type PinBucket = 'gfx' | 'video' | 'clip'
 
-export async function togglePinMediaPost(supabase: DBClient, id: string, pin: boolean): Promise<Result<MediaPost>> {
+const BUCKET_LIMITS: Record<PinBucket, number> = {
+    gfx:   1,
+    video: 2,
+    clip:  1,
+}
+
+const BUCKET_MESSAGES: Record<PinBucket, string> = {
+    gfx:   'Only 1 GFX post can be pinned at a time.',
+    video: 'Only 2 video posts can be pinned at a time.',
+    clip:  'Only 1 clip can be pinned at a time.',
+}
+
+function toBucket(postType: string): PinBucket | null {
+    if (postType === 'gfx' || postType === 'video' || postType === 'clip') return postType
+    return null
+}
+
+export async function togglePinMediaPost(
+    supabase: DBClient,
+    id: string,
+    pin: boolean,
+    postType: string,
+): Promise<Result<MediaPost>> {
     if (pin) {
-        const countResult = await countPinnedMediaPosts(supabase)
-        if (!countResult.ok) return countResult
-        if (countResult.value >= MAX_PINNED) {
-            return Err({ message: `Only ${MAX_PINNED} posts can be pinned at a time.`, code: 'MEDIA_PIN_LIMIT_EXCEEDED' })
+        const bucket = toBucket(postType)
+        if (bucket) {
+            const countResult = await countPinnedByBucket(supabase, bucket)
+            if (!countResult.ok) return countResult
+            if (countResult.value >= BUCKET_LIMITS[bucket]) {
+                return Err({ message: BUCKET_MESSAGES[bucket], code: 'MEDIA_PIN_LIMIT_EXCEEDED' })
+            }
         }
     }
     return updateMediaPostPin(supabase, id, pin)

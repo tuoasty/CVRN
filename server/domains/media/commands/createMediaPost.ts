@@ -8,6 +8,35 @@ import { uploadFile, deleteFile } from '@/server/storage/storage.service'
 import { insertMediaPost } from '@/server/db/mediaPost.repo'
 import { CreateMediaInput, MediaPost } from '../types'
 
+const TIKTOK_HOSTNAMES = new Set(['www.tiktok.com', 'tiktok.com', 'vt.tiktok.com', 'm.tiktok.com'])
+
+function isTikTokUrl(raw: string): boolean {
+    try {
+        const u = new URL(raw)
+        return u.protocol === 'https:' && TIKTOK_HOSTNAMES.has(u.hostname)
+    } catch {
+        return false
+    }
+}
+
+async function resolveTikTok(url: string): Promise<{ videoId: string; canonicalUrl: string } | null> {
+    if (!isTikTokUrl(url)) return null
+
+    const direct = url.match(/\/video\/(\d+)/)
+    if (direct) return { videoId: direct[1], canonicalUrl: url }
+
+    try {
+        const res = await fetch(url, { redirect: 'manual' })
+        const location = res.headers.get('location')
+        if (!location || !isTikTokUrl(location)) return null
+        const id = location.match(/\/video\/(\d+)/)?.[1]
+        if (!id) return null
+        return { videoId: id, canonicalUrl: location }
+    } catch {
+        return null
+    }
+}
+
 export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): Promise<Result<MediaPost>> {
     const postId = randomUUID()
     let uploadedPath: string | null = null
@@ -20,24 +49,44 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
         let videoUrl = p.videoUrl ?? null
 
         if (p.type === 'clip' && p.videoUrl) {
+            const resolved = await resolveTikTok(p.videoUrl)
+            if (!resolved) {
+                return Err({ message: 'Could not extract TikTok video ID from URL. Paste a full or short TikTok link.', code: 'VALIDATION_ERROR' })
+            }
+            videoUrl = resolved.videoId
+
             try {
-                const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(p.videoUrl)}`
-                logger.info({ postId, oembedUrl }, 'Fetching TikTok oEmbed via noembed')
-                const res = await fetch(oembedUrl)
-                logger.info({ postId, status: res.status, ok: res.ok }, 'noembed response received')
+                const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(resolved.canonicalUrl)}`
+                const res = await fetch(oembedUrl, {
+                headers: {
+                    "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0.0.0 Safari/537.36",
+                    "Accept": "application/json",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Referer": "https://www.tiktok.com/",
+                },
+                redirect: "manual",
+                });
+                logger.info({res}, "oEmbed Result")
+                logger.info({status:res.status, location:res.headers.get("location"), server:res.headers.get("server")}, "oEmbed fetch info")
                 if (res.ok) {
-                    const data = await res.json()
-                    logger.info({ postId, hasHtml: !!data.html, hasThumb: !!data.thumbnail_url, title: data.title }, 'noembed data parsed')
-                    imageUrl    = data.thumbnail_url ?? null
-                    title       = data.title         ?? title
-                    description = data.author_name   ?? description
-                    if (data.html) videoUrl = data.html
+                    const ct = res.headers.get('content-type') ?? ''
+                    if (ct.includes('application/json') || ct.includes('text/javascript')) {
+                        const data = await res.json()
+                        logger.info({ postId, data }, 'oEmbed data') 
+                        if (data.thumbnail_url) imageUrl    = data.thumbnail_url
+                        if (data.title)         title       = data.title
+                        if (data.author_name)   description = data.author_name
+                    } else {
+                        logger.warn({ postId }, 'TikTok oEmbed returned non-JSON — metadata skipped')
+                    }
                 } else {
-                    logger.warn({ postId, status: res.status }, 'noembed returned non-OK status — proceeding without embed')
+                    logger.warn({ postId, status: res.status }, 'TikTok oEmbed non-OK — metadata skipped')
                 }
             } catch (err) {
-                logger.warn({ postId, err }, 'noembed fetch failed — proceeding without embed')
+                logger.warn({ postId, err }, 'TikTok oEmbed fetch failed — metadata skipped')
             }
+
             if (!title) title = 'TikTok Clip'
         } else if (!title) {
             return Err({ message: 'Title is required', code: 'VALIDATION_ERROR' })

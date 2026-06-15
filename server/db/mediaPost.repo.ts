@@ -53,6 +53,18 @@ export async function countPinnedMediaPosts(supabase: DBClient): Promise<Result<
     return Ok(count ?? 0)
 }
 
+type PinBucket = 'gfx' | 'video' | 'clip'
+
+export async function countPinnedByBucket(supabase: DBClient, bucket: PinBucket): Promise<Result<number>> {
+    const { count, error } = await supabase
+        .from('media_posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_pinned', true)
+        .eq('type', bucket)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(count ?? 0)
+}
+
 export async function updateMediaPostPin(supabase: DBClient, id: string, is_pinned: boolean): Promise<Result<MediaPost>> {
     const now = new Date().toISOString()
     const { data, error } = await supabase

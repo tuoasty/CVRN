@@ -37,7 +37,7 @@ export default function FeaturedMatchCard({
     const isPlayoff = match.match_type === "playoffs";
 
     const inner = (
-        <div className="flex flex-col justify-between min-h-[260px]">
+        <div className="flex flex-col justify-between h-full">
                 {/* Header */}
                 <div className="flex items-center justify-between pb-3 border-b-2 border-primary/20">
                     <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
@@ -125,7 +125,7 @@ export default function FeaturedMatchCard({
             </div>
     );
 
-    const wrapperClass = "panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent";
+    const wrapperClass = "panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent h-[376px]";
 
     return href ? (
         <Link href={href} className={`block ${wrapperClass} cursor-pointer hover:border-l-primary/60 transition-colors`}>

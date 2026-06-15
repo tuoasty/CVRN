@@ -197,7 +197,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                                 className="rounded-sm"
                             />
                             {type === 'clip' && (
-                                <p className="text-[11px] text-muted-foreground">Thumbnail will be fetched automatically from TikTok.</p>
+                                <p className="text-[11px] text-muted-foreground">Short links (vt.tiktok.com) and full URLs both work.</p>
                             )}
                         </div>
                     )}
