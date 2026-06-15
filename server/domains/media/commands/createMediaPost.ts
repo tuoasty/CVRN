@@ -62,8 +62,10 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
                         'Accept': 'application/json, text/javascript, */*',
                     },
+                    redirect: "manual",
                 })
                 logger.info({res}, "oEmbed Result")
+                logger.info({status:res.status, location:res.headers.get("location"), server:res.headers.get("server")}, "oEmbed fetch info")
                 if (res.ok) {
                     const ct = res.headers.get('content-type') ?? ''
                     if (ct.includes('application/json') || ct.includes('text/javascript')) {
