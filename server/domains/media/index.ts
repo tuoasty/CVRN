@@ -4,6 +4,7 @@ export { togglePinMediaPost } from './commands/togglePinMediaPost'
 export { getAllMediaPosts } from './queries/getAllMediaPosts'
 export { getRecentMediaPosts } from './queries/getRecentMediaPosts'
 export { getMediaPostById } from './queries/getMediaPostById'
+export { getPagedMediaPosts } from './queries/getPagedMediaPosts'
 
 export type {
     MediaPost,
@@ -14,10 +15,15 @@ export type {
     CreateMediaFormInput,
     MediaPostIdInput,
     GetAllMediaInput,
+    GetPagedMediaInput,
+    MediaFilterType,
+    PagedMediaResult,
 } from './types'
 
 export {
     CreateMediaFormSchema,
     MediaPostIdSchema,
     GetAllMediaSchema,
+    GetPagedMediaSchema,
+    MEDIA_FILTER_TYPES,
 } from './types'

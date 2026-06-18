@@ -44,6 +44,44 @@ export async function findRecentMediaPosts(supabase: DBClient, limit: number): P
     return Ok((data ?? []) as unknown as MediaPost[])
 }
 
+export interface PagedMediaPostsResult {
+    posts: MediaPost[]
+    total: number
+}
+
+export async function findMediaPostsPaged(
+    supabase: DBClient,
+    types: string[],
+    page: number,
+    pageSize: number,
+    search?: string,
+): Promise<Result<PagedMediaPostsResult>> {
+    const from = (page - 1) * pageSize
+    const to   = from + pageSize - 1
+
+    let query = supabase
+        .from('media_posts')
+        .select('*', { count: 'exact' })
+        .in('type', types)
+        .order('pinned_at', { ascending: false, nullsFirst: false })
+        .order('published_at', { ascending: false })
+        .range(from, to)
+
+    if (search?.trim()) {
+        // Escape backslashes first, then LIKE wildcards, then strip PostgREST
+        // structural metacharacters (comma/parens) that would break .or() parsing.
+        const q = search.trim()
+            .replace(/\\/g, '\\\\')
+            .replace(/[%_]/g, m => `\\${m}`)
+            .replace(/[,()]/g, '')
+        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`)
+    }
+
+    const { data, count, error } = await query
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok({ posts: (data ?? []) as unknown as MediaPost[], total: count ?? 0 })
+}
+
 export async function countPinnedMediaPosts(supabase: DBClient): Promise<Result<number>> {
     const { count, error } = await supabase
         .from('media_posts')

@@ -156,7 +156,7 @@ export default function PublicMatchCard({
                 </div>
 
                 {/* Center: score + set pills */}
-                <div className="flex flex-col items-center gap-2 px-1 sm:px-2 max-w-[88px] sm:max-w-none">
+                <div className="flex flex-col items-center gap-2 px-1 sm:px-2 w-[120px] sm:w-[160px]">
                     {isCompleted && match.home_sets_won !== null && match.away_sets_won !== null ? (
                         <div className="flex items-center gap-1 sm:gap-2">
                             <span className={cn(
