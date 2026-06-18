@@ -50,14 +50,26 @@ export interface DeleteMediaInput {
     userId: string
 }
 
+export interface PagedMediaResult {
+    posts: MediaPost[]
+    total: number
+    page: number
+    pageSize: number
+    totalPages: number
+}
+
 export type {
     CreateMediaFormInput,
     MediaPostIdInput,
     GetAllMediaInput,
+    GetPagedMediaInput,
+    MediaFilterType,
 } from './schemas'
 
 export {
     CreateMediaFormSchema,
     MediaPostIdSchema,
     GetAllMediaSchema,
+    GetPagedMediaSchema,
+    MEDIA_FILTER_TYPES,
 } from './schemas'

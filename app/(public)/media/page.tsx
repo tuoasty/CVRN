@@ -1,17 +1,18 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { Image as ImageIcon, Play, Pin } from 'lucide-react'
+import { Image as ImageIcon, Play, Pin, Search, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader"
 import { Badge } from '@/app/components/ui/badge'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { useAllMediaPosts } from '@/app/hooks/useMediaPosts'
+import { Button } from '@/app/components/ui/button'
+import { usePagedMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import { cn } from '@/lib/utils'
-import type { MediaPost } from '@/server/domains/media'
+import type { MediaFilterType, MediaPost } from '@/server/domains/media'
 
 const TYPE_COLORS: Record<string, string> = {
     gfx:   'bg-violet-500/20 text-violet-400 border-violet-500/30',
@@ -21,12 +22,14 @@ const TYPE_COLORS: Record<string, string> = {
     clip:  'bg-pink-500/20 text-pink-400 border-pink-500/30',
 }
 
-type FilterType = 'all' | 'gfx-videos' | 'clips'
+const TAB_LABELS: Record<MediaFilterType, string> = {
+    all:    'All',
+    videos: 'Videos',
+    gfx:    'GFX',
+    clips:  'Clips',
+}
 
-// Portrait iframe card for clips.
-// compact=true: pure 9:16 cell for the 3-col grid (no padding, no footer).
-// padX: horizontal inset for the All tab (default px-6 desktop, px-4 mobile).
-function ClipCard({ post, padX = 'px-6', compact = false }: { post: MediaPost; padX?: string; compact?: boolean }) {
+function ClipCard({ post, compact = false }: { post: MediaPost; compact?: boolean }) {
     if (compact) {
         return (
             <div className="rounded-sm overflow-hidden border border-border" style={{ aspectRatio: '9/16' }}>
@@ -41,7 +44,7 @@ function ClipCard({ post, padX = 'px-6', compact = false }: { post: MediaPost; p
     }
     return (
         <div className="panel overflow-hidden">
-            <div className={padX}>
+            <div className="px-4 lg:px-6">
                 <iframe
                     src={`https://www.tiktok.com/embed/v3/${post.video_url}`}
                     allowFullScreen
@@ -60,12 +63,12 @@ function ClipCard({ post, padX = 'px-6', compact = false }: { post: MediaPost; p
     )
 }
 
-function PostRow({ post, onVideoClick, onGfxClick }: {
+function MediaCard({ post, onVideoClick, onGfxClick }: {
     post: MediaPost
     onVideoClick: (url: string) => void
     onGfxClick: (post: MediaPost) => void
 }) {
-    const isVideo = post.type === 'video'
+    const isVideo = post.type === 'video' || post.type === 'recap'
     const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
 
     function handleClick() {
@@ -78,18 +81,18 @@ function PostRow({ post, onVideoClick, onGfxClick }: {
     return (
         <div
             className={cn(
-                'panel flex gap-0 overflow-hidden transition-colors hover:border-primary/30',
+                'panel overflow-hidden transition-colors hover:border-primary/30',
                 isClickable ? 'cursor-pointer' : ''
             )}
             onClick={handleClick}
         >
-            <div className="relative w-48 sm:w-64 flex-shrink-0 aspect-video bg-muted self-stretch">
+            <div className="relative aspect-video bg-muted">
                 {thumbnail ? (
                     <Image
                         src={thumbnail}
                         alt={post.title}
                         fill
-                        sizes="(max-width: 640px) 192px, 256px"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         className="object-cover"
                         unoptimized
                     />
@@ -106,66 +109,122 @@ function PostRow({ post, onVideoClick, onGfxClick }: {
                     </div>
                 )}
                 {post.is_pinned && (
-                    <div className="absolute top-1.5 right-1.5 z-10">
+                    <div className="absolute top-1.5 right-1.5">
                         <Pin className="h-3 w-3 text-white/70 fill-white/70" />
                     </div>
                 )}
             </div>
-            <div className="flex-1 min-w-0 p-4 flex flex-col justify-between gap-2">
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <Badge
-                            variant="outline"
-                            className={cn('rounded-sm text-[10px] uppercase tracking-wide font-semibold', TYPE_COLORS[post.type] ?? '')}
-                        >
-                            {post.type}
-                        </Badge>
-                        {post.match_id && (
-                            <Badge variant="outline" className="rounded-sm text-[9px] uppercase tracking-wide">
-                                Match
-                            </Badge>
-                        )}
-                    </div>
-                    <p className="text-sm font-semibold leading-snug line-clamp-2">{post.title}</p>
-                    {post.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">{post.description}</p>
-                    )}
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                    {new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            <div className="p-3 space-y-1">
+                <Badge
+                    variant="outline"
+                    className={cn('rounded-sm text-[9px] uppercase tracking-wide font-semibold', TYPE_COLORS[post.type] ?? '')}
+                >
+                    {post.type}
+                </Badge>
+                <p className="text-sm font-semibold leading-snug line-clamp-2">{post.title}</p>
+                {post.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-1">{post.description}</p>
+                )}
+                <p className="text-[10px] text-muted-foreground/60">
+                    {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </p>
             </div>
         </div>
     )
 }
 
-function PostRowSkeleton() {
+function CardSkeleton() {
     return (
-        <div className="panel flex overflow-hidden gap-0">
-            <Skeleton className="w-48 sm:w-64 flex-shrink-0 aspect-video rounded-none" />
-            <div className="flex-1 p-4 space-y-2">
-                <Skeleton className="h-4 w-16 rounded-sm" />
-                <Skeleton className="h-5 w-3/4 rounded-sm" />
-                <Skeleton className="h-3 w-1/2 rounded-sm" />
+        <div className="panel overflow-hidden">
+            <Skeleton className="aspect-video w-full rounded-none" />
+            <div className="p-3 space-y-2">
+                <Skeleton className="h-3 w-12 rounded-sm" />
+                <Skeleton className="h-4 w-3/4 rounded-sm" />
+                <Skeleton className="h-3 w-full rounded-sm" />
             </div>
         </div>
     )
 }
 
-const TAB_LABELS: Record<FilterType, string> = {
-    'all':        'All',
-    'gfx-videos': 'GFX & Videos',
-    'clips':      'Clips',
+function ClipSkeleton() {
+    return <Skeleton className="w-full rounded-sm" style={{ aspectRatio: '9/16' }} />
+}
+
+function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (p: number) => void }) {
+    if (totalPages <= 1) return null
+    return (
+        <div className="flex items-center justify-center gap-3 pt-4">
+            <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2"
+                disabled={page <= 1}
+                onClick={() => onPage(page - 1)}
+            >
+                <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <span className="text-xs text-muted-foreground tabular-nums">
+                Page {page} of {totalPages}
+            </span>
+            <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2"
+                disabled={page >= totalPages}
+                onClick={() => onPage(page + 1)}
+            >
+                <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+        </div>
+    )
 }
 
 export default function MediaFeedPage() {
-    const { posts, isLoading } = useAllMediaPosts()
-    const [filter, setFilter] = useState<FilterType>('all')
-    const [videoUrl, setVideoUrl] = useState<string | null>(null)
-    const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
+    const [filter, setFilter] = useState<MediaFilterType>('all')
+    const [page, setPage]         = useState(1)
+    const [clipsPage, setClipsPage] = useState(1)
+    const [search, setSearch]     = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState('')
+    // Track first clips visit so we mount the iframes once and never unmount them
+    const [clipsEverVisited, setClipsEverVisited] = useState(false)
 
-    const gfxVideoPosts = posts.filter(p => p.type !== 'clip')
-    const clipPosts     = posts.filter(p => p.type === 'clip')
+    const [videoUrl, setVideoUrl] = useState<string | null>(null)
+    const [gfxPost, setGfxPost]   = useState<MediaPost | null>(null)
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(search), 300)
+        return () => clearTimeout(timer)
+    }, [search])
+
+    useEffect(() => { setPage(1) }, [filter, debouncedSearch])
+
+    useEffect(() => {
+        if (filter === 'clips' && !clipsEverVisited) setClipsEverVisited(true)
+    }, [filter, clipsEverVisited])
+
+    const isOnClips = filter === 'clips'
+
+    // Main feed — disabled while on clips tab to avoid a wasted fetch
+    const { posts, totalPages, isLoading } = usePagedMediaPosts(
+        isOnClips ? 'all' : filter,
+        page,
+        debouncedSearch,
+        isOnClips,
+    )
+
+    // Clips feed — fetched lazily on first visit, never disabled after that
+    const { posts: clipsPosts, totalPages: clipsTotalPages, isLoading: clipsLoading } = usePagedMediaPosts(
+        'clips',
+        clipsPage,
+        '',
+        !clipsEverVisited,
+        9,
+    )
+
+    const handleFilter = useCallback((f: MediaFilterType) => {
+        setFilter(f)
+        setPage(1)
+    }, [])
 
     return (
         <div className="page-wide py-6 space-y-6">
@@ -175,75 +234,89 @@ export default function MediaFeedPage() {
                 subtitle="GFX, highlights, and league content"
             />
 
-            {/* Tab bar */}
-            <div className="flex gap-1.5">
-                {(Object.keys(TAB_LABELS) as FilterType[]).map(f => (
-                    <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={cn(
-                            'rounded-sm px-3 py-1 text-xs font-medium transition-colors',
-                            filter === f
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        )}
-                    >
-                        {TAB_LABELS[f]}
-                    </button>
-                ))}
+            {/* Controls row */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex gap-1.5">
+                    {(Object.keys(TAB_LABELS) as MediaFilterType[]).map(f => (
+                        <button
+                            key={f}
+                            onClick={() => handleFilter(f)}
+                            className={cn(
+                                'rounded-sm px-3 py-1 text-xs font-medium transition-colors',
+                                filter === f
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            )}
+                        >
+                            {TAB_LABELS[f]}
+                        </button>
+                    ))}
+                </div>
+                <div className={cn("relative sm:ml-auto w-full sm:w-56", filter === 'clips' && "hidden")}>
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        className="w-full h-7 pl-8 pr-7 text-xs rounded-sm border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    {search && (
+                        <button
+                            onClick={() => setSearch('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {isLoading ? (
-                <div className="space-y-3">
-                    {[...Array(4)].map((_, i) => <PostRowSkeleton key={i} />)}
+            {/* Clips — always mounted after first visit, hidden via CSS when not active */}
+            {clipsEverVisited && (
+                <div className={isOnClips ? undefined : 'hidden'}>
+                    {clipsLoading && clipsPosts.length === 0 ? (
+                        <div className="grid grid-cols-3 gap-3">
+                            {[...Array(6)].map((_, i) => <ClipSkeleton key={i} />)}
+                        </div>
+                    ) : clipsPosts.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                            <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
+                            <p className="text-sm text-muted-foreground">No clips yet.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-3 gap-3">
+                                {clipsPosts.map(post => <ClipCard key={post.id} post={post} compact />)}
+                            </div>
+                            <Pagination page={clipsPage} totalPages={clipsTotalPages} onPage={setClipsPage} />
+                        </>
+                    )}
                 </div>
-            ) : posts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 space-y-3">
-                    <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
-                    <p className="text-sm text-muted-foreground">No media posts yet.</p>
-                </div>
-            ) : filter === 'all' ? (
-                // Desktop: flex-[2] GFX·Video column + flex-[1] Clips column
-                // Mobile: stacked, GFX·Video rows first then clips section below
-                <div className="flex flex-col lg:flex-row gap-6 items-start">
-                    {gfxVideoPosts.length > 0 && (
-                        <div className="flex-[2] space-y-3">
-                            {gfxVideoPosts.map(post => (
-                                <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
+            )}
+
+            {/* Main feed — card grid for all non-clip tabs */}
+            {!isOnClips && (
+                isLoading && posts.length === 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                        {[...Array(8)].map((_, i) => <CardSkeleton key={i} />)}
+                    </div>
+                ) : posts.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                        <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
+                        <p className="text-sm text-muted-foreground">
+                            {debouncedSearch ? 'No results found.' : 'No posts yet.'}
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                            {posts.map(post => (
+                                <MediaCard key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
                             ))}
                         </div>
-                    )}
-                    {clipPosts.length > 0 && (
-                        <div className="flex-[1] bg-muted/30 border border-border rounded-md p-3 space-y-3">
-                            {clipPosts.map(post => (
-                                <ClipCard key={post.id} post={post} padX="px-4 lg:px-6" />
-                            ))}
-                        </div>
-                    )}
-                    {gfxVideoPosts.length === 0 && clipPosts.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No posts yet.</p>
-                    )}
-                </div>
-            ) : filter === 'gfx-videos' ? (
-                gfxVideoPosts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-8 text-center">No GFX or video posts yet.</p>
-                ) : (
-                    <div className="space-y-3">
-                        {gfxVideoPosts.map(post => (
-                            <PostRow key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
-                        ))}
-                    </div>
-                )
-            ) : (
-                // Clips tab — 3-column portrait grid, pure 9:16 cells
-                clipPosts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-8 text-center">No clips yet.</p>
-                ) : (
-                    <div className="grid grid-cols-3 gap-3">
-                        {clipPosts.map(post => (
-                            <ClipCard key={post.id} post={post} compact />
-                        ))}
-                    </div>
+                        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+                    </>
                 )
             )}
 

@@ -1,6 +1,6 @@
 import useSWR, { mutate as globalMutate } from 'swr'
-import { getAllMediaPostsAction, getRecentMediaPostsAction } from '@/app/actions/media.actions'
-import { MediaPost } from '@/server/domains/media'
+import { getAllMediaPostsAction, getPagedMediaPostsAction, getRecentMediaPostsAction } from '@/app/actions/media.actions'
+import { MediaFilterType, MediaPost, PagedMediaResult } from '@/server/domains/media'
 
 const ALL_MEDIA_KEY = 'media/all'
 const RECENT_MEDIA_KEY = (limit: number) => `media/recent/${limit}`
@@ -29,4 +29,29 @@ export function useRecentMediaPosts(limit = 4) {
 
 export function mutateAllMedia() {
     return globalMutate(ALL_MEDIA_KEY)
+}
+
+const pagedMediaKey = (filter: MediaFilterType, page: number, search: string, pageSize: number) =>
+    `media/paged/${filter}/${page}/${search}/${pageSize}`
+
+async function fetchPagedMedia(
+    [, filter, page, search, pageSize]: [string, MediaFilterType, number, string, number]
+): Promise<PagedMediaResult> {
+    const result = await getPagedMediaPostsAction({ filter, page, pageSize, search: search || undefined })
+    if (!result.ok) throw new Error(result.error.message)
+    return result.value
+}
+
+export function usePagedMediaPosts(filter: MediaFilterType, page: number, search: string, disabled = false, pageSize = 12) {
+    const key: [string, MediaFilterType, number, string, number] | null = disabled
+        ? null
+        : [pagedMediaKey(filter, page, search, pageSize), filter, page, search, pageSize]
+    const { data, error, isLoading } = useSWR(key, fetchPagedMedia, { keepPreviousData: true })
+    return {
+        posts:      data?.posts ?? [],
+        total:      data?.total ?? 0,
+        totalPages: data?.totalPages ?? 0,
+        isLoading,
+        error,
+    }
 }

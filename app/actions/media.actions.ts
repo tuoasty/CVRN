@@ -7,12 +7,15 @@ import {
     deleteMediaPost,
     getAllMediaPosts,
     getRecentMediaPosts,
+    getPagedMediaPosts,
     togglePinMediaPost,
     getMediaPostById,
     MediaPost,
+    PagedMediaResult,
     CreateMediaFormSchema,
     MediaPostIdSchema,
     GetAllMediaSchema,
+    GetPagedMediaSchema,
 } from '@/server/domains/media'
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
@@ -67,6 +70,13 @@ export async function getAllMediaPostsAction(filters?: unknown): Promise<Result<
     if (!parsed.success) return Err({ message: 'Invalid filters', code: 'VALIDATION_ERROR' })
     const supabase = await createServerSupabase()
     return getAllMediaPosts(supabase, parsed.data)
+}
+
+export async function getPagedMediaPostsAction(input: unknown): Promise<Result<PagedMediaResult>> {
+    const parsed = GetPagedMediaSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: 'Invalid pagination input', code: 'VALIDATION_ERROR' })
+    const supabase = await createServerSupabase()
+    return getPagedMediaPosts(supabase, parsed.data)
 }
 
 export async function getRecentMediaPostsAction(limit = 4): Promise<Result<MediaPost[]>> {
