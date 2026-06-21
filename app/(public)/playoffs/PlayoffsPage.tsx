@@ -1,29 +1,22 @@
 "use client";
 
 
-import { usePublicContextStore } from "@/app/stores/publicContextStore";
+import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { usePlayoffBrackets } from "@/app/hooks/usePlayoffs";
-import { useSeasons } from "@/app/hooks/useSeasons";
-import { useRegions } from "@/app/hooks/useRegions";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
-import { Trophy, Loader2 } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 import { Skeleton } from "@/app/components/ui/skeleton";
 
 export default function PlayoffsPage() {
-    const { selectedSeasonId } = usePublicContextStore();
-    const { seasons } = useSeasons();
-    const { regions } = useRegions();
-
-    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
-    const selectedRegion = regions.find(r => r.id === selectedSeason?.region_id);
-    const hasPlayoffs = selectedSeason?.playoff_started;
-    const isCompleted = selectedSeason?.end_date
-        ? new Date(selectedSeason.end_date) < new Date()
+    const { season, region } = useSeasonContext();
+    const hasPlayoffs = season.playoff_started;
+    const isCompleted = season.end_date
+        ? new Date(season.end_date) < new Date()
         : false;
 
     const { brackets, isLoading: loadingBrackets } = usePlayoffBrackets(
-        hasPlayoffs ? (selectedSeasonId || null) : null
+        hasPlayoffs ? season.id : null
     );
 
     return (
@@ -52,21 +45,15 @@ export default function PlayoffsPage() {
                                     </Badge>
                                 )}
                             </div>
-                            {selectedSeason && (
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                    {selectedSeason.name}
-                                    {selectedRegion && ` · ${selectedRegion.name}`}
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                    {season.name} · {region.name}
                                 </p>
-                            )}
                         </div>
                     </div>
                 </div>
 
-                {!selectedSeasonId ? (
-                    <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/40" />
-                    </div>
-                ) : !hasPlayoffs ? (
+                {!hasPlayoffs ? (
+
                     <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">
                         <div className="text-center space-y-3">
                             <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
@@ -87,7 +74,7 @@ export default function PlayoffsPage() {
                 ) : null}
             </div>
 
-            {selectedSeasonId && hasPlayoffs && (
+            {hasPlayoffs && (
                 <div className="page-bleed pb-6">
                     {loadingBrackets ? (
                         <div className="flex gap-6 justify-center overflow-x-auto py-4 px-4">
@@ -102,8 +89,8 @@ export default function PlayoffsPage() {
                     ) : brackets.length > 0 ? (
                         <PlayoffBracketDisplay
                             brackets={brackets}
-                            seasonId={selectedSeasonId}
-                            regionId={selectedSeason.region_id}
+                            seasonId={season.id}
+                            regionId={season.region_id}
                             linkContext="public"
                         />
                     ) : null}

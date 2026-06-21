@@ -1,37 +1,20 @@
 "use client";
 
 
-import { usePublicContextStore } from "@/app/stores/publicContextStore";
+import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { useTeams } from "@/app/hooks/useTeams";
-import { useSeasons } from "@/app/hooks/useSeasons";
-import { useRegions } from "@/app/hooks/useRegions";
 import PublicTeamCard from "@/app/(public)/teams/PublicTeamCard";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Users } from "lucide-react";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 
-type Props = { initialSeasonId?: string | null };
-
-export default function TeamsPage({ initialSeasonId }: Props) {
-    const { selectedSeasonId } = usePublicContextStore();
+export default function TeamsPage() {
+    const { season, region } = useSeasonContext();
     const { teams: allTeams, isLoading: loading } = useTeams();
-    const { seasons } = useSeasons();
-    const { regions } = useRegions();
 
-    // Use Zustand-seeded value on client; fall back to server-computed initial on first render
-    // so the server renders the real grid immediately (no skeleton → grid CLS).
-    const effectiveSeasonId = selectedSeasonId ?? initialSeasonId ?? null;
+    const teams = allTeams.filter(t => t.season_id === season.id && !t.deleted_at);
 
-    const selectedSeason = seasons.find(s => s.id === effectiveSeasonId);
-    const selectedRegion = regions.find(r => r.id === selectedSeason?.region_id);
-    const teams = allTeams.filter(t => t.season_id === effectiveSeasonId && !t.deleted_at);
-
-    const subtitle =
-        seasons.length === 0
-            ? undefined
-            : selectedSeason
-            ? `${selectedSeason.name}${selectedRegion ? ` · ${selectedRegion.name}` : ""}${teams.length > 0 ? ` · ${teams.length} teams` : ""}`
-            : "";
+    const subtitle = `${season.name} · ${region.name}${teams.length > 0 ? ` · ${teams.length} teams` : ""}`;
 
     return (
         <>

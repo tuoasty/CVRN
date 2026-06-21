@@ -2,12 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { usePublicContextStore } from "@/app/stores/publicContextStore";
+import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { useWeekSchedule, usePlayoffSchedule, useAvailablePlayoffRounds, useDefaultWeekForSeason, usePlayoffRoundCounts, useWeekMatchCounts } from "@/app/hooks/useMatches";
 import { useTeamsByIds } from "@/app/hooks/useTeams";
 import { usePlayersByIds } from "@/app/hooks/usePlayers";
-import { useSeasons } from "@/app/hooks/useSeasons";
-import { useRegions } from "@/app/hooks/useRegions";
 import { useStandings } from "@/app/hooks/useStandings";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { CalendarDays, Check, ChevronLeft, ChevronRight } from "lucide-react";
@@ -60,9 +58,7 @@ function matchCodeSortKey(code: string | null | undefined): number {
 export default function MatchesPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { selectedSeasonId } = usePublicContextStore();
-    const { seasons } = useSeasons();
-    const { regions } = useRegions();
+    const { season, region } = useSeasonContext();
 
     // URL state
     const tabParam = searchParams.get("tab");
@@ -73,24 +69,22 @@ export default function MatchesPage() {
         ? rawRound as PlayoffRound
         : null;
 
-    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
-    const selectedRegion = regions.find(r => r.id === selectedSeason?.region_id);
-    const regionCode = selectedRegion?.code;
-    const maxWeeks = selectedSeason?.weeks || 10;
-    const hasPlayoffs = selectedSeason?.playoff_started;
+    const regionCode = region.code;
+    const maxWeeks = season.weeks || 10;
+    const hasPlayoffs = season.playoff_started;
 
     // Default week query (used when no ?week in URL)
     const { defaultWeek, isLoading: defaultWeekLoading } = useDefaultWeekForSeason(
-        activeTab === "season" && !weekParam ? (selectedSeasonId || null) : null
+        activeTab === "season" && !weekParam ? season.id : null
     );
     const parsedWeek = weekParam ? parseInt(weekParam, 10) : NaN;
     const effectiveWeek = Number.isFinite(parsedWeek) ? parsedWeek : (defaultWeek ?? 1);
 
     const { rounds: availableRounds } = useAvailablePlayoffRounds(
-        hasPlayoffs ? (selectedSeasonId || null) : null
+        hasPlayoffs ? season.id : null
     );
     const { roundCounts } = usePlayoffRoundCounts(
-        hasPlayoffs ? (selectedSeasonId || null) : null
+        hasPlayoffs ? season.id : null
     );
 
     const sortedRounds = useMemo(
@@ -108,11 +102,11 @@ export default function MatchesPage() {
         ? (weekParam ? effectiveWeek : (defaultWeekLoading ? null : effectiveWeek))
         : null;
     const { schedule: weekSchedule, isLoading: loadingWeek } = useWeekSchedule(
-        activeTab === "season" ? (selectedSeasonId || null) : null,
+        activeTab === "season" ? season.id : null,
         weekArg
     );
     const { schedule: playoffSchedule, isLoading: loadingPlayoff } = usePlayoffSchedule(
-        activeTab === "playoffs" ? (selectedSeasonId || null) : null,
+        activeTab === "playoffs" ? season.id : null,
         activeTab === "playoffs" ? effectiveRound : null
     );
 
@@ -120,7 +114,7 @@ export default function MatchesPage() {
     const loading = activeTab === "season" ? loadingWeek : loadingPlayoff;
 
     // Standings for W-L records
-    const { standings } = useStandings(selectedSeasonId || undefined, selectedRegion?.id || undefined);
+    const { standings } = useStandings(season.id, region.id);
     const recordByTeamId = useMemo(() => {
         const map = new Map<string, { wins: number; losses: number }>();
         for (const s of standings) {
@@ -159,12 +153,14 @@ export default function MatchesPage() {
         return m;
     }, [roundCounts]);
 
-    const { weekCounts } = useWeekMatchCounts(selectedSeasonId || null);
+    const { weekCounts } = useWeekMatchCounts(season.id);
     const weekCountMap = useMemo(() => {
         const m = new Map<number, number>();
         for (const { week, count } of weekCounts) m.set(week, count);
         return m;
     }, [weekCounts]);
+
+    const matchesBase = `/${region.code.toLowerCase()}/${season.slug}/matches`;
 
     // URL writers
     function setTab(tab: "season" | "playoffs") {
@@ -176,28 +172,24 @@ export default function MatchesPage() {
             params.set("tab", "playoffs");
             params.delete("week");
         }
-        router.replace(`/matches?${params.toString()}`);
+        router.replace(`${matchesBase}?${params.toString()}`);
     }
 
     function setWeek(week: number) {
         const params = new URLSearchParams(searchParams.toString());
         params.set("week", week.toString());
         params.delete("tab");
-        router.replace(`/matches?${params.toString()}`);
+        router.replace(`${matchesBase}?${params.toString()}`);
     }
 
     function setRound(round: string) {
         const params = new URLSearchParams(searchParams.toString());
         params.set("round", round);
         params.set("tab", "playoffs");
-        router.replace(`/matches?${params.toString()}`);
+        router.replace(`${matchesBase}?${params.toString()}`);
     }
 
-    const subtitle = seasons.length === 0
-        ? undefined
-        : selectedSeason
-            ? `${selectedSeason.name}${selectedRegion ? ` · ${selectedRegion.name}` : ""}`
-            : "";
+    const subtitle = `${season.name} · ${region.name}`;
 
     const sorted = useMemo(
         () => [...schedule].sort((a, b) => matchCodeSortKey(a.match.match_code) - matchCodeSortKey(b.match.match_code)),
@@ -208,8 +200,7 @@ export default function MatchesPage() {
         <div className="page-wide space-y-6 py-6">
             <PublicPageHeader icon={CalendarDays} title="Matches" subtitle={subtitle} />
 
-            {selectedSeasonId ? (
-                <div className="space-y-4">
+            <div className="space-y-4">
                     {/* Full-width 50/50 tab */}
                     <div className="grid grid-cols-2 border border-border rounded-sm overflow-hidden">
                         <button
@@ -262,7 +253,7 @@ export default function MatchesPage() {
                         players={players}
                         recordByTeamId={recordByTeamId}
                         regionCode={regionCode}
-                        seasonSlug={selectedSeason?.slug}
+                        seasonSlug={season.slug}
                         loading={loading}
                         emptyMessage={
                             activeTab === "season"
@@ -271,17 +262,6 @@ export default function MatchesPage() {
                         }
                     />
                 </div>
-            ) : (
-                <div className="space-y-4">
-                    <Skeleton className="h-10 w-full rounded-sm" />
-                    <Skeleton className="h-[52px] w-full rounded-sm" />
-                    <div className="space-y-3">
-                        {[...Array(3)].map((_, i) => (
-                            <Skeleton key={i} className="h-48 w-full rounded-sm" />
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

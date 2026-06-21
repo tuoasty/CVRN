@@ -1,17 +1,18 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname, useParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
-    { href: "/home", label: "Home" },
-    { href: "/matches", label: "Matches" },
-    { href: "/standings", label: "Standings" },
-    { href: "/playoffs", label: "Playoffs" },
-    { href: "/teams", label: "Teams" },
-    { href: "/media", label: "Media" },
-    { href: "/archive", label: "Archive" },
+const NAV_PAGES = [
+    { page: "home", label: "Home" },
+    { page: "matches", label: "Matches" },
+    { page: "standings", label: "Standings" },
+    { page: "playoffs", label: "Playoffs" },
+    { page: "teams", label: "Teams" },
+    { page: "media", label: "Media" },
+    { page: "archive", label: "Archive" },
 ];
 
 interface PublicNavItemsProps {
@@ -24,6 +25,23 @@ export default function PublicNavItems({
     onNavigate,
 }: PublicNavItemsProps) {
     const pathname = usePathname();
+    const params = useParams<{ region?: string; season?: string }>();
+    const [fallbackCtx, setFallbackCtx] = useState<{ region: string; season: string } | null>(null);
+
+    useEffect(() => {
+        const entry = document.cookie.split(";").map(c => c.trim()).find(c => c.startsWith("cvrn_last_ctx="));
+        if (entry) {
+            const val = entry.slice("cvrn_last_ctx=".length);
+            const [r, s] = val.split(":");
+            if (r && s) setFallbackCtx({ region: r, season: s });
+        }
+    }, []);
+
+    const effectiveRegion = params.region ?? fallbackCtx?.region;
+    const effectiveSeason = params.season ?? fallbackCtx?.season;
+    const hasContext = !!(params.region && params.season);
+    const hasEffectiveContext = !!(effectiveRegion && effectiveSeason);
+    const prefix = hasEffectiveContext ? `/${effectiveRegion}/${effectiveSeason}` : "";
 
     const navClasses =
         layout === "vertical"
@@ -32,12 +50,19 @@ export default function PublicNavItems({
 
     return (
         <nav className={navClasses}>
-            {NAV_ITEMS.map((item) => {
-                const isActive = pathname === item.href;
+            {NAV_PAGES.map((item) => {
+                const href = item.page === "archive"
+                    ? "/archive"
+                    : hasEffectiveContext
+                        ? `${prefix}/${item.page}`
+                        : "/#view-league";
+                const isActive = hasContext
+                    ? pathname.startsWith(`/${params.region}/${params.season}/${item.page}`)
+                    : pathname === `/${item.page}`;
                 return (
                     <Link
-                        key={item.href}
-                        href={item.href}
+                        key={item.page}
+                        href={href}
                         onClick={onNavigate}
                         className={cn(
                             "inline-flex items-center justify-center rounded-sm text-sm font-medium transition-colors",

@@ -1,11 +1,11 @@
 "use client";
 
-import {BookOpen, Trophy, Medal} from "lucide-react";
+import {BookOpen, Trophy, Medal, Globe} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import {useArchive} from "@/app/hooks/useArchive";
 import {useRegions} from "@/app/hooks/useRegions";
-import {usePublicContextStore} from "@/app/stores/publicContextStore";
+import {useSeasonContext} from "@/app/(public)/[region]/[season]/context";
 import {ArchiveSeason} from "@/server/domains/season";
 import {Skeleton} from "@/app/components/ui/skeleton";
 
@@ -74,13 +74,13 @@ function PodiumEntry({entry}: {entry: ArchiveSeason["season_podium"][number]}) {
     );
 }
 
-function SeasonCard({season, regionName, regionCode}: {season: ArchiveSeason; regionName: string; regionCode: string}) {
+function SeasonCard({season, regionName, regionCode, contextSeasonSlug}: {season: ArchiveSeason; regionName: string; regionCode: string; contextSeasonSlug: string}) {
     const sorted = [...season.season_podium].sort((a, b) => a.place - b.place);
     const fmt = (d: string | null) =>
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 
     return (
-        <Link href={`/archive/${regionCode.toLowerCase()}/${season.slug}`} className="block group">
+        <Link href={`/${regionCode.toLowerCase()}/${contextSeasonSlug}/archive/${season.slug}`} className="block group">
         <div className="panel p-5 space-y-4 group-hover:border-primary/40 transition-colors cursor-pointer">
             <div>
                 <h2 className="text-lg font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
@@ -107,27 +107,36 @@ function SeasonCard({season, regionName, regionCode}: {season: ArchiveSeason; re
 export default function ArchivePage() {
     const {archive, isLoading, error} = useArchive();
     const {regions} = useRegions();
-    const {selectedRegionId} = usePublicContextStore();
+    const {region, season: contextSeason} = useSeasonContext();
 
     const regionMeta = (id: string) => {
         const r = regions.find(r => r.id === id);
         return {name: r?.name ?? "Unknown", code: r?.code ?? ""};
     };
 
-    const filtered = archive.filter(s => !selectedRegionId || s.region_id === selectedRegionId);
+    const filtered = archive.filter(s => s.region_id === region.id);
 
     return (
         <div className="page-wide space-y-6 py-6">
-            <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
-                    <BookOpen className="h-5 w-5 text-primary" />
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
+                        <BookOpen className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                            League History
+                        </h1>
+                        <p className="text-xs text-muted-foreground mt-0.5">Season champions and awards</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                        League History
-                    </h1>
-                    <p className="text-xs text-muted-foreground mt-0.5">Season champions and awards</p>
-                </div>
+                <Link
+                    href="/archive"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                >
+                    <Globe className="h-3.5 w-3.5" />
+                    View all regions
+                </Link>
             </div>
 
             {isLoading && (
@@ -154,9 +163,7 @@ export default function ArchivePage() {
 
             {!isLoading && !error && filtered.length === 0 && (
                 <div className="panel p-6 text-center">
-                    <p className="text-muted-foreground">
-                        {selectedRegionId ? "No seasons recorded for this region." : "No seasons recorded yet."}
-                    </p>
+                    <p className="text-muted-foreground">No seasons recorded for this region.</p>
                 </div>
             )}
 
@@ -165,7 +172,7 @@ export default function ArchivePage() {
                     {filtered.map(s => {
                         const {name, code} = regionMeta(s.region_id);
                         return (
-                            <SeasonCard key={s.id} season={s} regionName={name} regionCode={code} />
+                            <SeasonCard key={s.id} season={s} regionName={name} regionCode={code} contextSeasonSlug={contextSeason.slug} />
                         );
                     })}
                 </div>
