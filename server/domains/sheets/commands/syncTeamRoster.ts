@@ -228,6 +228,7 @@ export async function syncTeamRoster(
             const canonicalNamesToSkip = new Set<string>();
 
             for (const [uname, parsedPlayer] of parsedByUsername) {
+                logger.debug({uname:uname, team:team.name, }, "Player and team result")
                 if (currentByUsername.has(uname)) continue;
 
                 const robloxResult = await getRobloxUserByName(parsedPlayer.username);

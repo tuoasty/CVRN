@@ -2,7 +2,6 @@ import {ParsedRosterEntry, ParsedTeamResult, PlayerRole} from "@/server/domains/
 import { logger } from "@/server/utils/logger";
 
 const TEAMS_PER_ROW = 5;
-const PLAYER_ROWS = 18;
 
 const ROLE_MAP: Record<string, PlayerRole> = {
     C: 'captain',
@@ -18,6 +17,7 @@ export function parseTeamsSheet(
     bgColors?: (string | null)[][]
 ): ParsedTeamResult[] {
     const results: ParsedTeamResult[] = [];
+    const player_rows = blockHeight - 2
 
     for (let k = 0; ; k++) {
         const headerRowIdx = (headerRow - 1) + k * blockHeight;
@@ -40,7 +40,7 @@ export function parseTeamsSheet(
 
             if (!teamName) {
                 const emptyPlayers: ParsedRosterEntry[] = [];
-                for (let pr = 1; pr <= PLAYER_ROWS; pr++) {
+                for (let pr = 1; pr <= player_rows; pr++) {
                     const playerRowIdx = headerRowIdx + pr;
                     if (playerRowIdx >= rows.length) break;
                     const playerRow = rows[playerRowIdx] ?? [];
@@ -72,7 +72,7 @@ export function parseTeamsSheet(
             const brickNumber = isNaN(brickRaw) ? null : brickRaw;
 
             const players: ParsedRosterEntry[] = [];
-            for (let pr = 1; pr <= PLAYER_ROWS; pr++) {
+            for (let pr = 1; pr <= player_rows; pr++) {
                 const playerRowIdx = headerRowIdx + pr;
                 if (playerRowIdx >= rows.length) break;
 
