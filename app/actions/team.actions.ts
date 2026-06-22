@@ -53,6 +53,7 @@ export async function createTeamAction(formData: FormData) {
     if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
 
     const file = formData.get('logo') as File;
+    const removeBackground = formData.get('removeBackground') !== 'false';
 
     return createTeam(supabase, {
         name: parsed.data.name,
@@ -62,6 +63,7 @@ export async function createTeamAction(formData: FormData) {
         brickNumber: parsed.data.brickNumber,
         brickColor: parsed.data.brickColor,
         startingLvr: parsed.data.startingLvr,
+        removeBackground,
     });
 }
 
@@ -132,6 +134,7 @@ export async function updateTeamAction(formData: FormData) {
     if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
 
     const file = formData.get('logo') as File | null;
+    const removeBackground = formData.get('removeBackground') !== 'false';
 
     return updateTeam(supabase, {
         teamId: parsed.data.teamId,
@@ -141,6 +144,7 @@ export async function updateTeamAction(formData: FormData) {
         brickNumber: parsed.data.brickNumber,
         brickColor: parsed.data.brickColor,
         startingLvr: parsed.data.startingLvr,
+        removeBackground,
     });
 }
 

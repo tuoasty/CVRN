@@ -14,7 +14,7 @@ const IMAGE_VALIDATION = {
     COMPRESSION_QUALITY: 85,
 } as const;
 
-async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buffer: Buffer; contentType: string; bgRemoved: boolean }>> {
+async function validateAndCompressImage(file: File | Blob, removeBackground: boolean): Promise<Result<{ buffer: Buffer; contentType: string; bgRemoved: boolean }>> {
     try {
         if (file.size > IMAGE_VALIDATION.MAX_FILE_SIZE) {
             return Err({
@@ -50,6 +50,10 @@ async function validateAndCompressImage(file: File | Blob): Promise<Result<{ buf
             withoutEnlargement: true
         }).webp({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
 
+        if (!removeBackground) {
+            return Ok({ buffer: resizedBuffer, contentType: 'image/webp', bgRemoved: false });
+        }
+
         const processed = await processLogoBackground(resizedBuffer);
 
         return Ok({ buffer: processed.buffer, contentType: 'image/webp', bgRemoved: processed.bgRemoved });
@@ -70,6 +74,7 @@ export async function uploadFile(supabase: DBClient, p: {
     contentType?:string;
     upsert?:boolean;
     compress?: boolean;
+    removeBackground?: boolean;
     userId: string;
 }): Promise<Result<{ url:string;path:string;bgRemoved:boolean }>> {
     try {
@@ -96,7 +101,7 @@ export async function uploadFile(supabase: DBClient, p: {
         let bgRemoved = false;
 
         if (p.compress) {
-            const compressionResult = await validateAndCompressImage(p.file);
+            const compressionResult = await validateAndCompressImage(p.file, p.removeBackground ?? true);
             if (!compressionResult.ok) {
                 return Err(compressionResult.error);
             }

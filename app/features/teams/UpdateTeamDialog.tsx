@@ -89,9 +89,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleSubmit = async (removeBackground: boolean) => {
         if (!name.trim()) {
             toast.error("Team name is required");
             return;
@@ -124,6 +122,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
             if (brickColor.trim()) formData.append("brickColor", brickColor.toUpperCase());
             if (file) formData.append("logo", file);
             formData.append("startingLvr", lvrVal.toString());
+            formData.append("removeBackground", String(removeBackground));
 
             const result = await updateTeamAction(formData);
 
@@ -160,7 +159,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
                     </p>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-5 mt-2">
+                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(true); }} className="space-y-5 mt-2">
                     <div className="space-y-2">
                         <Label htmlFor="update-name">Team Name</Label>
                         <Input
@@ -260,10 +259,37 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
                         </div>
                     </div>
 
-                    <div className="flex gap-3 pt-1">
-                        <Button type="submit" disabled={loading || compressing} className="rounded-sm">
-                            {loading ? "Saving..." : "Save Changes"}
-                        </Button>
+                    <div className="flex flex-wrap gap-3 pt-1">
+                        {file ? (
+                            <>
+                                <Button
+                                    type="button"
+                                    onClick={() => handleSubmit(true)}
+                                    disabled={loading || compressing}
+                                    className="rounded-sm"
+                                >
+                                    {loading ? "Saving..." : "Save & remove background"}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={() => handleSubmit(false)}
+                                    disabled={loading || compressing}
+                                    className="rounded-sm"
+                                >
+                                    Save, keep background
+                                </Button>
+                            </>
+                        ) : (
+                            <Button
+                                type="button"
+                                onClick={() => handleSubmit(true)}
+                                disabled={loading || compressing}
+                                className="rounded-sm"
+                            >
+                                {loading ? "Saving..." : "Save Changes"}
+                            </Button>
+                        )}
                         <Button
                             type="button"
                             variant="outline"

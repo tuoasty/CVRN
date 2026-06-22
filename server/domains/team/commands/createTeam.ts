@@ -24,6 +24,7 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
             file: p.logoFile,
             contentType: p.logoFile.type,
             compress: true,
+            removeBackground: p.removeBackground,
             userId: p.userId
         });
 

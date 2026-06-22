@@ -55,6 +55,7 @@ export interface CreateTeamInput {
     brickNumber: number;
     brickColor: string;
     startingLvr: number;
+    removeBackground: boolean;
 }
 
 export interface UpdateTeamInput {
@@ -65,6 +66,7 @@ export interface UpdateTeamInput {
     brickColor: string;
     userId: string;
     startingLvr: number;
+    removeBackground: boolean;
 }
 
 export type {
