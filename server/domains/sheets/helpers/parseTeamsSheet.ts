@@ -14,10 +14,13 @@ export function parseTeamsSheet(
     headerRow: number,
     blockHeight: number,
     blockStride: number = 4,
-    bgColors?: (string | null)[][]
+    bgColors?: (string | null)[][],
+    maxPlayers?: number
 ): ParsedTeamResult[] {
     const results: ParsedTeamResult[] = [];
-    const player_rows = blockHeight - 2
+    // Roster rows to scan per team: the season cap (total, incl. leadership),
+    // clamped by the block so the scan can never read the next team's header row.
+    const player_rows = Math.min(maxPlayers ?? Infinity, blockHeight - 2)
 
     for (let k = 0; ; k++) {
         const headerRowIdx = (headerRow - 1) + k * blockHeight;

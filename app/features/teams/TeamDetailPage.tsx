@@ -175,6 +175,7 @@ export default function TeamDetailPage({
     const regionName = teamData.seasons?.regions?.name || "Unknown Region";
     const regionCodeDisplay = teamData.seasons?.regions?.code?.toUpperCase() || "??";
     const seasonName = teamData.seasons?.name || "Unknown Season";
+    const maxPlayers = teamData.seasons?.max_players ?? 18;
 
     const availableRoles = {
         captain: !captain,
@@ -207,7 +208,7 @@ export default function TeamDetailPage({
                         variant={showAddForm ? "secondary" : "default"}
                         onClick={handleOpenAddForm}
                         className="rounded-sm"
-                        disabled={players.length >= 18}
+                        disabled={players.length >= maxPlayers}
                     >
                         {showAddForm ? "Adding Player" : "Add Player"}
                     </Button>
@@ -283,7 +284,7 @@ export default function TeamDetailPage({
                                 <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
                                     Total Players
                                 </div>
-                                <div className="font-semibold">{players.length} / 18</div>
+                                <div className="font-semibold">{players.length} / {maxPlayers}</div>
                             </div>
                         </div>
                     </div>
@@ -316,7 +317,7 @@ export default function TeamDetailPage({
                 <div className="flex items-center justify-between">
                     <h2>Team Roster</h2>
                     <span className="text-sm text-muted-foreground">
-                        {players.length} / 18 {players.length === 1 ? 'player' : 'players'}
+                        {players.length} / {maxPlayers} {players.length === 1 ? 'player' : 'players'}
                     </span>
                 </div>
 
@@ -382,7 +383,7 @@ export default function TeamDetailPage({
                                     />
                                 ))}
 
-                                {players.length < 18 && (
+                                {players.length < maxPlayers && (
                                     <Card
                                         className="rounded-sm border-dashed border-2 h-[280px] hover:border-primary/50 hover:bg-accent/50 transition-all cursor-pointer"
                                         onClick={handleOpenAddForm}

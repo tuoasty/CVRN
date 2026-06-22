@@ -22,6 +22,7 @@ export interface TeamWithRegion {
         id: string;
         name: string;
         slug: string;
+        max_players: number;
         regions: {
             id: string;
             code: string;

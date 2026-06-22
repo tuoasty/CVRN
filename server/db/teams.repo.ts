@@ -22,6 +22,7 @@ type TeamWithRegionRow = Team & {
         id: string;
         name: string;
         slug: string;
+        max_players: number;
         regions: { id: string; code: string; name: string };
     };
     player_team_seasons?: ActiveMember[] | null;
@@ -44,6 +45,7 @@ export async function findAllTeamsWithRegions(supabase: DBClient): Promise<Resul
                 id,
                 name,
                 slug,
+                max_players,
                 regions!inner (
                     id,
                     code,
@@ -255,6 +257,7 @@ export async function findTeamBySlugAndSeasonWithRegion(supabase: DBClient, p: {
                 id,
                 name,
                 slug,
+                max_players,
                 regions!inner (
                     id,
                     code,
@@ -283,6 +286,7 @@ export async function findTeamByIdWithRegion(supabase: DBClient, teamId: string)
                 id,
                 name,
                 slug,
+                max_players,
                 regions!inner (
                     id,
                     code,
@@ -339,6 +343,7 @@ export async function findTeamsByIdsForMatch(supabase: DBClient, teamIds: string
                 id,
                 name,
                 slug,
+                max_players,
                 regions!inner(
                     id,
                     code,
@@ -360,6 +365,7 @@ export async function findTeamsByIds(supabase: DBClient, teamIds: string[]): Pro
                 id,
                 name,
                 slug,
+                max_players,
                 regions!inner(
                     id,
                     code,

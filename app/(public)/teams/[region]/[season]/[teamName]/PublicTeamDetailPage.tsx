@@ -251,7 +251,8 @@ export default function PublicTeamDetailPage({
     );
 
     const mostRecentFormerName = history.find(h => h.oldName !== teamData.name)?.oldName ?? null;
-    const openSlots = Math.max(0, 15 - otherPlayers.length);
+    const maxPlayers = teamData.seasons?.max_players ?? 18;
+    const openSlots = Math.max(0, (maxPlayers - 3) - otherPlayers.length);
 
     return (
         <div className="page-wide space-y-6 py-6">
@@ -322,7 +323,7 @@ export default function PublicTeamDetailPage({
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm uppercase tracking-wide text-muted-foreground">Roster</h3>
-                    <span className="text-sm text-muted-foreground">{players.length} / 18</span>
+                    <span className="text-sm text-muted-foreground">{players.length} / {maxPlayers}</span>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-9 gap-2 sm:gap-3">
                     {captain?.username ? (

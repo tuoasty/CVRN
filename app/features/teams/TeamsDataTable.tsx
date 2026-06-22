@@ -323,7 +323,7 @@ export default function TeamsDataTable() {
                                         </td>
                                         <td className="text-right">
                                             <span className="text-sm font-mono tabular-nums">
-                                                {team.playerCount ?? "—"}<span className="text-muted-foreground">/18</span>
+                                                {team.playerCount ?? "—"}<span className="text-muted-foreground">/{team.seasons?.max_players ?? 18}</span>
                                             </span>
                                         </td>
                                     </tr>
