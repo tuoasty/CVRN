@@ -25,7 +25,7 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
     const hasMeta = team.captain != null || (team.playerCount ?? 0) > 0;
 
     const href = canNavigate
-        ? `/teams/${encodeURIComponent(regionCode!)}/${encodeURIComponent(seasonSlug!)}/${encodeURIComponent(teamSlug!)}`
+        ? `/${encodeURIComponent(regionCode!)}/${encodeURIComponent(seasonSlug!)}/teams/${encodeURIComponent(teamSlug!)}`
         : null;
 
     const cardClasses = `group flex flex-col overflow-hidden rounded-sm border border-border bg-card transition-all duration-150 ${

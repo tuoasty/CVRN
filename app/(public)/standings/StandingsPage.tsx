@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { usePublicContextStore } from "@/app/stores/publicContextStore";
+import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { useStandings } from "@/app/hooks/useStandings";
-import { useSeasons } from "@/app/hooks/useSeasons";
-import { useRegions } from "@/app/hooks/useRegions";
 import { StandingsTable } from "@/app/features/standings/StandingsTable";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
@@ -12,15 +10,11 @@ import {clientLogger} from "@/app/utils/clientLogger";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 
 export default function StandingsPage() {
-    const { selectedSeasonId, selectedRegionId } = usePublicContextStore();
-    const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId || undefined, selectedRegionId || undefined);
-    const { seasons } = useSeasons();
-    const { regions } = useRegions();
+    const { season, region } = useSeasonContext();
+    const { standings, isLoading: standingsLoading } = useStandings(season.id, region.id);
 
-    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
-    const selectedRegion = regions.find(r => r.id === selectedRegionId);
-    const regionCode = selectedRegion?.code;
-    const seasonSlug = selectedSeason?.slug;
+    const regionCode = region.code;
+    const seasonSlug = season.slug;
 
     const stats = useMemo(() => {
         if (standings.length === 0) return null;
@@ -31,12 +25,7 @@ export default function StandingsPage() {
         return { totalTeams, avgLvr, topLvr };
     }, [standings]);
 
-    const subtitle =
-        seasons.length === 0
-            ? undefined
-            : selectedSeason
-            ? `${selectedSeason.name}${selectedRegion ? ` · ${selectedRegion.name}` : ""}`
-            : "";
+    const subtitle = `${season.name} · ${region.name}`;
 
     return (
         <>
@@ -77,9 +66,9 @@ export default function StandingsPage() {
 
                 <StandingsTable
                     standings={standings}
-                    isLoading={standingsLoading || !selectedSeasonId}
-                    qualifiedTeams={selectedSeason?.playoff_configs?.qualified_teams}
-                    playinTeams={selectedSeason?.playoff_configs?.playin_teams}
+                    isLoading={standingsLoading}
+                    qualifiedTeams={season.playoff_configs?.qualified_teams}
+                    playinTeams={season.playoff_configs?.playin_teams}
                     regionCode={regionCode}
                     seasonSlug={seasonSlug}
                 />

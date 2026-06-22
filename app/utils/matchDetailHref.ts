@@ -14,7 +14,7 @@ export function buildPublicMatchHref(args: BuildPublicMatchHrefArgs): string | n
     if (!args.regionCode || !args.seasonSlug || !args.matchCode) return null;
     if (!args.homeTeamName || !args.awayTeamName) return null;
     const teams = `${toSlug(args.homeTeamName)}-vs-${toSlug(args.awayTeamName)}`;
-    return `/matches/${encodeURIComponent(args.regionCode.toLowerCase())}/${encodeURIComponent(args.seasonSlug.toLowerCase())}/${encodeURIComponent(args.matchCode.toLowerCase())}/${encodeURIComponent(teams)}`;
+    return `/${encodeURIComponent(args.regionCode.toLowerCase())}/${encodeURIComponent(args.seasonSlug.toLowerCase())}/matches/${encodeURIComponent(args.matchCode.toLowerCase())}/${encodeURIComponent(teams)}`;
 }
 
 export function buildAdminMatchHref(matchId: string): string {
@@ -29,7 +29,7 @@ type BuildPublicTeamHrefArgs = {
 
 export function buildPublicTeamHref(args: BuildPublicTeamHrefArgs): string | null {
     if (!args.regionCode || !args.seasonSlug || !args.teamSlug) return null;
-    return `/teams/${encodeURIComponent(args.regionCode.toLowerCase())}/${encodeURIComponent(args.seasonSlug.toLowerCase())}/${encodeURIComponent(toSlug(args.teamSlug))}`;
+    return `/${encodeURIComponent(args.regionCode.toLowerCase())}/${encodeURIComponent(args.seasonSlug.toLowerCase())}/teams/${encodeURIComponent(toSlug(args.teamSlug))}`;
 }
 
 export function buildPublicPlayerHref(username: string | null | undefined): string | null {

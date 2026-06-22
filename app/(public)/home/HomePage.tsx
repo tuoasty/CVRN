@@ -1,12 +1,8 @@
-// /app/(public)/main/page.tsx
-
 "use client";
 
-import { usePublicContextStore } from "@/app/stores/publicContextStore";
+import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { useUpcomingMatches, useRecentMatches } from "@/app/hooks/useMatches";
-import { useSeasons } from "@/app/hooks/useSeasons";
 import { useTeams } from "@/app/hooks/useTeams";
-import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasonPodium } from "@/app/hooks/useSeasonPodium";
 import { Calendar, Clock, Trophy } from "lucide-react";
 import { Skeleton } from "@/app/components/ui/skeleton";
@@ -21,34 +17,31 @@ import { computeMatchLabels } from "@/app/utils/matchLabel";
 import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
 
 export default function HomePage() {
-    const { selectedSeasonId, selectedRegionId } = usePublicContextStore();
+    const { season, region } = useSeasonContext();
 
-    const { seasons } = useSeasons();
-    const { regions } = useRegions();
+    const selectedSeasonId = season.id;
+    const selectedRegionId = region.id;
+    const regionCode = region.code.toLowerCase();
+    const seasonSlug = season.slug;
+
     const { teams, isLoading: loadingTeams } = useTeams();
 
-    const { matches: upcomingMatches, isLoading: loadingUpcoming } = useUpcomingMatches(selectedSeasonId || null, 5);
-    const { matches: recentMatches, isLoading: loadingRecent } = useRecentMatches(selectedSeasonId || null, 6);
-    const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId || undefined, selectedRegionId || undefined);
+    const { matches: upcomingMatches, isLoading: loadingUpcoming } = useUpcomingMatches(selectedSeasonId, 5);
+    const { matches: recentMatches, isLoading: loadingRecent } = useRecentMatches(selectedSeasonId, 6);
+    const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId, selectedRegionId);
 
-    const selectedSeason = seasons.find((s) => s.id === selectedSeasonId);
-    const regionCode = regions.find((r) => r.id === selectedRegionId)?.code?.toLowerCase();
-    const seasonSlug = selectedSeason?.slug;
-
-    const isSeasonCompleted = selectedSeason?.end_date
-        ? new Date(selectedSeason.end_date) < new Date()
+    const isSeasonCompleted = season.end_date
+        ? new Date(season.end_date) < new Date()
         : false;
 
-    // Both sidebar sections visible when season is active (upcoming section always renders)
     const bothSections = !isSeasonCompleted;
     const upcomingDisplay = bothSections ? upcomingMatches.slice(0, 4) : upcomingMatches;
     const recentDisplay   = bothSections ? recentMatches.slice(0, 4) : recentMatches.slice(0, 6);
 
     const { podium, isLoading: podiumLoading } = useSeasonPodium(
-        isSeasonCompleted ? (selectedSeasonId || null) : null
+        isSeasonCompleted ? selectedSeasonId : null
     );
 
-    // Determine featured match: completed season skips this entirely
     const hasFeaturedUpcoming = !isSeasonCompleted && upcomingMatches.length > 0;
     const hasFeaturedRecent = !isSeasonCompleted && upcomingMatches.length === 0 && recentMatches.length > 0;
     const featuredMatch = hasFeaturedUpcoming
@@ -60,11 +53,9 @@ export default function HomePage() {
     const featuredHomeTeam = teams.find((t) => t.id === featuredMatch?.match.home_team_id);
     const featuredAwayTeam = teams.find((t) => t.id === featuredMatch?.match.away_team_id);
 
-    // Compute match type labels for sidebar cards
     const upcomingLabels = computeMatchLabels(upcomingMatches);
     const recentLabels = computeMatchLabels(recentMatches);
 
-    // Label for featured match
     const featuredLabel = hasFeaturedUpcoming
         ? upcomingLabels[0]
         : hasFeaturedRecent
@@ -77,9 +68,8 @@ export default function HomePage() {
         <>
             <div className="page-wide py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-6">
-                    {/* Left Sidebar - Upcoming (hidden for completed seasons) + Recent Matches */}
+                    {/* Left Sidebar */}
                     <aside className="hidden lg:block space-y-6">
-                        {/* Upcoming Matches — only shown when season is not completed */}
                         {!isSeasonCompleted && (
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 pb-2 border-b border-border">
@@ -88,7 +78,6 @@ export default function HomePage() {
                                         Upcoming
                                     </h3>
                                 </div>
-
                                 {(loadingUpcoming || loadingTeams) ? (
                                     <div className="space-y-2">
                                         {[1, 2, 3, 4].map((i) => (
@@ -128,7 +117,6 @@ export default function HomePage() {
                             </div>
                         )}
 
-                        {/* Recent Matches */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
                                 <Calendar className="h-4 w-4 text-primary" />
@@ -136,7 +124,6 @@ export default function HomePage() {
                                     Recent
                                 </h3>
                             </div>
-
                             {(loadingRecent || loadingTeams) ? (
                                 <div className="space-y-2">
                                     {(bothSections ? [1,2,3,4] : [1,2,3,4,5,6]).map((i) => (
@@ -176,13 +163,12 @@ export default function HomePage() {
                         </div>
                     </aside>
 
-                    {/* Center Column - Featured Match + Standings */}
+                    {/* Center Column */}
                     <section className="space-y-6">
-                        {/* Featured area */}
                         {featuredLoading ? (
                             <Skeleton className="h-[376px] rounded-sm" />
                         ) : isSeasonCompleted ? (
-                            <SeasonChampionCard podium={podium} seasonName={selectedSeason?.name} regionCode={regionCode} seasonSlug={seasonSlug} />
+                            <SeasonChampionCard podium={podium} seasonName={season.name} regionCode={regionCode} seasonSlug={seasonSlug} />
                         ) : featuredMatch ? (
                             <FeaturedMatchCard
                                 matchDetails={featuredMatch}
@@ -208,7 +194,6 @@ export default function HomePage() {
                             </div>
                         )}
 
-                        {/* Standings */}
                         <div className="space-y-3">
                             <div className="border-t-2 border-primary/20 pt-4">
                                 <h3 className="text-base font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-4">
@@ -217,7 +202,7 @@ export default function HomePage() {
                                 <StandingsPreview
                                     standings={standings}
                                     isLoading={standingsLoading}
-                                    qualifiedTeams={selectedSeason?.playoff_configs?.qualified_teams}
+                                    qualifiedTeams={season.playoff_configs?.qualified_teams}
                                     regionCode={regionCode}
                                     seasonSlug={seasonSlug}
                                 />
@@ -225,7 +210,7 @@ export default function HomePage() {
                         </div>
                     </section>
 
-                    {/* Right Sidebar - Media */}
+                    {/* Right Sidebar */}
                     <aside>
                         <MediaSidebar />
                     </aside>

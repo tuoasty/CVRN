@@ -53,7 +53,7 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
                             variant="ghost"
                             size="sm"
                             className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm"
-                            onClick={() => router.push("/home")}
+                            onClick={() => router.push("/")}
                         >
                             <Users className="h-4 w-4" />
                         </Button>
@@ -74,7 +74,7 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
                             size="sm"
                             className="h-10 w-10 p-0 rounded-sm"
                             aria-label="Go to public site"
-                            onClick={() => router.push("/home")}
+                            onClick={() => router.push("/")}
                         >
                             <Users className="h-4 w-4" />
                         </Button>

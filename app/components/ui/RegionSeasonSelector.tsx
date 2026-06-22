@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
+import { useRouter, useParams, usePathname } from "next/navigation";
 import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasons } from "@/app/hooks/useSeasons";
-import { usePublicContextStore } from "@/app/stores/publicContextStore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -13,17 +13,17 @@ interface RegionSeasonSelectorProps {
 }
 
 export default function RegionSeasonSelector({ fullWidth }: RegionSeasonSelectorProps) {
+    const router = useRouter();
+    const params = useParams<{ region?: string; season?: string }>();
+    const pathname = usePathname();
     const { regions } = useRegions();
     const { seasons } = useSeasons();
-    const { selectedSeasonId, setSelectedSeasonId, setSelectedRegionId } = usePublicContextStore();
 
     const [open, setOpen] = useState(false);
     const [tabRegionId, setTabRegionId] = useState<string | null>(null);
 
-    const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
-    const selectedRegion = selectedSeason
-        ? regions.find(r => r.id === selectedSeason.region_id)
-        : null;
+    const selectedRegion = regions.find(r => r.code.toLowerCase() === params.region?.toLowerCase());
+    const selectedSeason = seasons.find(s => s.slug === params.season && s.region_id === selectedRegion?.id);
 
     const activeTabId = tabRegionId ?? selectedRegion?.id ?? regions[0]?.id;
     const tabSeasons = seasons.filter(s => s.region_id === activeTabId);
@@ -36,11 +36,25 @@ export default function RegionSeasonSelector({ fullWidth }: RegionSeasonSelector
     const handleSeasonSelect = (seasonId: string) => {
         const season = seasons.find(s => s.id === seasonId);
         if (season) {
-            setSelectedSeasonId(seasonId);
-            setSelectedRegionId(season.region_id);
+            const region = regions.find(r => r.id === season.region_id);
+            if (region) {
+                const base = `/${params.region}/${params.season}`;
+                const rest = pathname.startsWith(base + "/")
+                    ? pathname.slice(base.length + 1).split("/")[0]
+                    : "";
+                router.push(`/${region.code.toLowerCase()}/${season.slug}${rest ? `/${rest}` : ""}`);
+            }
         }
         setOpen(false);
     };
+
+    useEffect(() => {
+        if (params.region && params.season) {
+            document.cookie = `cvrn_last_ctx=${params.region}:${params.season};path=/;max-age=31536000;samesite=lax`;
+        }
+    }, [params.region, params.season]);
+
+    if (!params.region || !params.season) return null;
 
     return (
         <Popover open={open} onOpenChange={handleOpenChange}>
@@ -90,7 +104,7 @@ export default function RegionSeasonSelector({ fullWidth }: RegionSeasonSelector
                             onClick={() => handleSeasonSelect(season.id)}
                             className={cn(
                                 "text-left text-xs px-2 py-1.5 rounded-sm transition-colors flex items-center justify-between",
-                                season.id === selectedSeasonId
+                                season.slug === params.season && season.region_id === selectedRegion?.id
                                     ? "bg-primary/10 text-foreground border border-primary/20"
                                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                             )}

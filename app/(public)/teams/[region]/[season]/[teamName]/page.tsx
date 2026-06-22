@@ -1,4 +1,4 @@
-import PublicTeamDetailPage from "@/app/(public)/teams/[region]/[season]/[teamName]/PublicTeamDetailPage";
+import { redirect } from "next/navigation";
 
 type PageProps = {
     params: Promise<{
@@ -8,17 +8,7 @@ type PageProps = {
     }>;
 };
 
-async function TeamDetailWrapper({ params }: { params: Promise<{ region: string; season: string; teamName: string }> }) {
-    const resolvedParams = await params;
-    return (
-        <PublicTeamDetailPage
-            regionCode={resolvedParams.region}
-            seasonSlug={resolvedParams.season}
-            teamSlug={resolvedParams.teamName}
-        />
-    );
-}
-
-export default function TeamPage(props: PageProps) {
-    return <TeamDetailWrapper params={props.params} />;
+export default async function OldTeamDetailPage({ params }: PageProps) {
+    const { region, season, teamName } = await params;
+    redirect(`/${region}/${season}/teams/${teamName}`);
 }

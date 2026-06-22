@@ -70,9 +70,9 @@ export default function UserButton() {
         const isOnAdminRoute = pathname.startsWith("/admin");
 
         if (isAdmin) {
-            router.push(isOnAdminRoute ? "/home" : "/admin/dashboard");
+            router.push(isOnAdminRoute ? "/" : "/admin/dashboard");
         } else {
-            router.push("/home");
+            router.push("/");
         }
     };
 
