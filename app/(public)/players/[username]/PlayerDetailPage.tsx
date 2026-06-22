@@ -165,86 +165,111 @@ export default function PlayerDetailPage({detail}: Props) {
                 )}
             </div>
 
-            {/* Season Stats */}
             <PlayerSeasonStatsTable rows={seasonStats} teamLogoBySeasonId={teamLogoBySeasonId} />
 
-            {/* Achievements */}
-            {achievements.length > 0 && (
-                <div className="space-y-3 max-w-2xl">
-                    <h2 className="text-lg font-semibold">Achievements</h2>
-                    <div className="panel overflow-hidden">
-                        {/* Mobile cards */}
-                        <div className="sm:hidden divide-y divide-border">
-                            {achievements.map(a => (
-                                <AchievementCard key={a.id} award={a} />
-                            ))}
-                        </div>
-                        {/* Desktop table */}
-                        <div className="hidden sm:block overflow-x-auto">
-                            <table className="w-full table-fixed text-sm">
-                                <thead>
-                                    <tr className="border-b border-border bg-muted/40">
-                                        <th className="w-[22%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
-                                        <th className="w-[36%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
-                                        <th className="w-[32%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Place</th>
-                                        <th className="w-[10%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {achievements.map(a => (
-                                        <AchievementRow key={a.id} award={a} />
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {(() => {
+                const hasSideContent = achievements.length > 0 || individualAwards.length > 0;
 
-            {/* Awards */}
-            {individualAwards.length > 0 && (
-                <div className="space-y-3 max-w-2xl">
-                    <h2 className="text-lg font-semibold">Awards</h2>
-                    <div className="panel overflow-hidden">
-                        {/* Mobile cards */}
-                        <div className="sm:hidden divide-y divide-border">
-                            {individualAwards.map(a => (
-                                <AwardCard key={a.id} award={a} />
-                            ))}
-                        </div>
-                        {/* Desktop table */}
-                        <div className="hidden sm:block overflow-x-auto">
-                            <table className="w-full table-fixed text-sm">
-                                <thead>
-                                    <tr className="border-b border-border bg-muted/40">
-                                        <th className="w-[22%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
-                                        <th className="w-[36%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
-                                        <th className="w-[32%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Award</th>
-                                        <th className="w-[10%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {individualAwards.map(a => (
-                                        <AwardRow key={a.id} award={a} />
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            )}
+                // No achievements/awards: render Team History on its own at full width,
+                // with the two leagues side by side (avoids a dead left column).
+                if (!hasSideContent) {
+                    return teamHistory.length > 0 ? (
+                        <TeamHistorySection teamHistory={teamHistory} layout="grid" />
+                    ) : null;
+                }
 
-            {/* Team History */}
-            {teamHistory.length > 0 && (
-                <div className="space-y-3 max-w-2xl">
-                    <h2 className="text-lg font-semibold">Team History</h2>
-                    <div className="panel divide-y divide-border">
-                        {teamHistory.map((entry, i) => (
-                            <TeamHistoryRow key={`${entry.team_id}-${entry.season_id}-${i}`} entry={entry} />
-                        ))}
+                return (
+                    <div className="grid gap-x-6 gap-y-8 lg:grid-cols-2 items-start">
+                        {/* Left: achievements + awards */}
+                        <div className="space-y-8">
+                            {achievements.length > 0 && (
+                                <AwardSection title="Achievements">
+                                    <div className="sm:hidden divide-y divide-border">
+                                        {achievements.map(a => (
+                                            <AchievementCard key={a.id} award={a} />
+                                        ))}
+                                    </div>
+                                    <DesktopAwardTable valueHeader="Place">
+                                        {achievements.map(a => (
+                                            <AchievementRow key={a.id} award={a} />
+                                        ))}
+                                    </DesktopAwardTable>
+                                </AwardSection>
+                            )}
+
+                            {individualAwards.length > 0 && (
+                                <AwardSection title="Awards">
+                                    <div className="sm:hidden divide-y divide-border">
+                                        {individualAwards.map(a => (
+                                            <AwardCard key={a.id} award={a} />
+                                        ))}
+                                    </div>
+                                    <DesktopAwardTable valueHeader="Award">
+                                        {individualAwards.map(a => (
+                                            <AwardRow key={a.id} award={a} />
+                                        ))}
+                                    </DesktopAwardTable>
+                                </AwardSection>
+                            )}
+                        </div>
+
+                        {/* Right: team history (main over side) */}
+                        {teamHistory.length > 0 && (
+                            <TeamHistorySection teamHistory={teamHistory} layout="stacked" />
+                        )}
                     </div>
-                </div>
-            )}
+                );
+            })()}
+        </div>
+    );
+}
+
+function AwardSection({title, children}: {title: string; children: React.ReactNode}) {
+    return (
+        <div className="space-y-3">
+            <h2 className="text-lg font-semibold">{title}</h2>
+            <div className="panel overflow-hidden">{children}</div>
+        </div>
+    );
+}
+
+function DesktopAwardTable({valueHeader, children}: {valueHeader: string; children: React.ReactNode}) {
+    return (
+        <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full table-fixed text-sm">
+                <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                        <th className="w-[22%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
+                        <th className="w-[36%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
+                        <th className="w-[32%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">{valueHeader}</th>
+                        <th className="w-[10%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-border">{children}</tbody>
+            </table>
+        </div>
+    );
+}
+
+function TeamHistorySection({teamHistory, layout}: {teamHistory: PlayerTeamHistoryEntry[]; layout: "stacked" | "grid"}) {
+    const leagueColumns = [
+        {label: "Main League", entries: teamHistory.filter(t => t.league_type === "main")},
+        {label: "Side Leagues", entries: teamHistory.filter(t => t.league_type === "side")},
+    ].filter(col => col.entries.length > 0);
+
+    return (
+        <div className="space-y-3">
+            <h2 className="text-lg font-semibold">Team History</h2>
+            <div
+                className={cn(
+                    "grid grid-cols-1",
+                    layout === "grid" ? "gap-4 lg:grid-cols-2 items-start" : "gap-8"
+                )}
+            >
+                {leagueColumns.map(col => (
+                    <LeagueColumn key={col.label} label={col.label} entries={col.entries} />
+                ))}
+            </div>
         </div>
     );
 }
@@ -351,6 +376,23 @@ function AwardCard({award}: {award: PlayerAward}) {
                 <p className="text-xs text-muted-foreground tabular-nums">{formatDate(award.awarded_at)}</p>
             </div>
             <TeamLogoLink award={award} />
+        </div>
+    );
+}
+
+function LeagueColumn({label, entries}: {label: string; entries: PlayerTeamHistoryEntry[]}) {
+    return (
+        <div className="panel overflow-hidden self-start">
+            <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border bg-muted/40">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {label}
+                </h3>
+            </div>
+            <div className="divide-y divide-border">
+                {entries.map((entry, i) => (
+                    <TeamHistoryRow key={`${entry.team_id}-${entry.season_id}-${i}`} entry={entry} />
+                ))}
+            </div>
         </div>
     );
 }
