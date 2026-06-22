@@ -3,6 +3,7 @@ import {InsertSeasonDto, UpdateSeasonInput} from "@/server/domains/season";
 import {Database} from "@/database.types";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
+import { compareSeasons } from "../domains/season/helpers/compareSeasons";
 
 type SeasonWithPlayoffConfig = Database["public"]["Tables"]["seasons"]["Row"] & {
     playoff_configs: Database["public"]["Tables"]["playoff_configs"]["Row"] | null;
@@ -31,9 +32,9 @@ export async function findAllSeasons(supabase: DBClient): Promise<Result<SeasonW
     const {data, error} = await supabase
         .from("seasons")
         .select("*, playoff_configs(*)")
-        .order("start_date", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok((data ?? []) as SeasonWithPlayoffConfig[]);
+    const sorted = (data ?? []).sort(compareSeasons)
+    return Ok(sorted as SeasonWithPlayoffConfig[]);
 }
 
 export async function findSeasonById(supabase: DBClient, seasonId: string): Promise<Result<Season | null>> {
@@ -54,9 +55,9 @@ export async function findSeasonsByRegion(supabase: DBClient, regionId: string):
         .from("seasons")
         .select("*")
         .eq("region_id", regionId)
-        .order("start_date", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok(data ?? []);
+    const sorted = (data ?? []).sort(compareSeasons)
+    return Ok(sorted);
 }
 
 export async function updateSeasonById(
