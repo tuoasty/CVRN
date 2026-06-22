@@ -38,6 +38,7 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
                 file: p.logoFile,
                 contentType: p.logoFile.type,
                 compress: true,
+                removeBackground: p.removeBackground,
                 userId: p.userId,
             });
 

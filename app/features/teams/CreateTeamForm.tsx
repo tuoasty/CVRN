@@ -107,9 +107,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleSubmit = async (removeBackground: boolean) => {
         if (!name.trim() || !file || !seasonId || !brickNumber.trim() || !brickColor.trim()) {
             setError("All fields are required");
             return;
@@ -144,6 +142,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             formData.append("brickNumber", brickNum.toString());
             formData.append("brickColor", brickColor.toUpperCase());
             formData.append("startingLvr", lvrVal.toString());
+            formData.append("removeBackground", String(removeBackground));
 
             const result = await createTeamAction(formData);
 
@@ -198,7 +197,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(true); }} className="space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="space-y-2">
                         <Label htmlFor="name">Team Name</Label>
@@ -359,13 +358,23 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                     </div>
                 )}
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex flex-wrap gap-3 pt-2">
                     <Button
-                        type="submit"
+                        type="button"
+                        onClick={() => handleSubmit(true)}
                         disabled={loading || seasonsLoading || compressing}
                         className="rounded-sm"
                     >
-                        {loading ? "Creating..." : "Create Team"}
+                        {loading ? "Creating..." : "Create & remove background"}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => handleSubmit(false)}
+                        disabled={loading || seasonsLoading || compressing}
+                        className="rounded-sm"
+                    >
+                        Create, keep background
                     </Button>
                     <Button
                         type="button"
