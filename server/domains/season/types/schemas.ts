@@ -10,6 +10,7 @@ export const SeasonSlugRegionSchema = z.object({
     regionId: z.uuid(),
 })
 export type SeasonSlugRegionInput = z.infer<typeof SeasonSlugRegionSchema>
+export const LeagueTypeEnum = z.enum(['main', 'side']);
 
 export const CreateSeasonSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -17,6 +18,7 @@ export const CreateSeasonSchema = z.object({
     startDate: z.string().min(1, "Start date is required"),
     endDate: z.string().nullable().optional(),
     slug: z.string().min(1, "Slug is required"),
+    leagueType: LeagueTypeEnum.default('main'),
     theme: z.string().nullable().optional(),
 })
 export type CreateSeasonSchemaInput = z.infer<typeof CreateSeasonSchema>
@@ -26,8 +28,8 @@ export const UpdateSeasonSchema = z.object({
     name: z.string().min(1).optional(),
     startDate: z.string().optional(),
     endDate: z.string().nullable().optional(),
-    isActive: z.boolean().optional(),
     slug: z.string().min(1).optional(),
+    leagueType: LeagueTypeEnum.optional(),
     theme: z.string().nullable().optional(),
 })
 export type UpdateSeasonSchemaInput = z.infer<typeof UpdateSeasonSchema>

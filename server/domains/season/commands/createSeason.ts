@@ -19,7 +19,7 @@ export async function createSeason(
             regionId: p.regionId,
             startDate: p.startDate,
             endDate: p.endDate ?? null,
-            isActive: false,
+            leagueType: p.leagueType ?? "main",
             slug: p.slug,
             theme: p.theme ?? null
         });

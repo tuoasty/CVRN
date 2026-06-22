@@ -14,7 +14,7 @@ export async function updateSeason(
             name: p.name,
             startDate: p.startDate,
             endDate: p.endDate,
-            isActive: p.isActive,
+            leagueType: p.leagueType,
             slug: p.slug,
             theme: p.theme
         });

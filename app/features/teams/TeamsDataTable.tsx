@@ -13,6 +13,7 @@ import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { cn } from "@/lib/utils";
 import UploadTeamLogoDialog from "@/app/features/teams/UploadTeamLogoDialog";
+import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
 
 // Preferred button order; any other region codes are appended after these.
 const REGION_ORDER = ["AS", "EU", "NA", "SA"];
@@ -52,12 +53,10 @@ export default function TeamsDataTable() {
         for (const region of regions) {
             const regionSeasons = seasons.filter((s) => s.region_id === region.id);
             if (regionSeasons.length === 0) continue;
-            const active = regionSeasons.find((s) => s.is_active);
+            const active = regionSeasons.find((s) => isSeasonActive(s));
             const chosen =
                 active ??
-                [...regionSeasons].sort((a, b) =>
-                    (b.start_date ?? "").localeCompare(a.start_date ?? "")
-                )[0];
+                [...regionSeasons][0];
             if (chosen) map.set(region.id, chosen.id);
         }
         return map;
@@ -68,7 +67,6 @@ export default function TeamsDataTable() {
         if (scope === "all") return [];
         return seasons
             .filter((s) => s.region_id === scope)
-            .sort((a, b) => (b.start_date ?? "").localeCompare(a.start_date ?? ""));
     }, [scope, seasons]);
 
     // The season actually shown when a region is selected.

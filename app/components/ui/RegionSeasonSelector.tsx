@@ -7,6 +7,7 @@ import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
 
 interface RegionSeasonSelectorProps {
     fullWidth?: boolean;
@@ -110,7 +111,7 @@ export default function RegionSeasonSelector({ fullWidth }: RegionSeasonSelector
                             )}
                         >
                             {season.name}
-                            {season.is_active && (
+                            {isSeasonActive(season) && (
                                 <span className="text-[9px] text-primary font-semibold ml-2">Active</span>
                             )}
                         </button>

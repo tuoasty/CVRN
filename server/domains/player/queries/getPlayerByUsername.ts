@@ -5,13 +5,13 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {lazySyncPlayer} from "../helpers/lazySyncPlayer";
 import {runInBackground} from "@/server/utils/runInBackground";
+import { isSeasonActive } from "../../season/helpers/isSeasonActive";
 
 export async function getPlayerByUsername(
     supabase: DBClient,
     p: {username: string}
 ): Promise<Result<PlayerWithCurrentTeam | null>> {
     try {
-        // 1. Fetch full player row (ilike = case-insensitive match)
         const {data: player, error: playerError} = await supabase
             .from("players")
             .select("*")
@@ -24,50 +24,51 @@ export async function getPlayerByUsername(
         }
         if (!player) return Ok(null);
 
-        // Refresh username/avatar from Roblox if stale (reachable directly,
-        // not just via team details). Non-blocking; serves cached data now.
         runInBackground(() => lazySyncPlayer(supabase, player), "lazySyncPlayer");
 
-        // 2. Try to find active team first (left_at IS NULL)
-        const {data: activeTeam} = await supabase
+        const {data: rows} = await supabase
             .from("player_team_seasons")
             .select(`
                 team_id,
                 team:teams!team_id(name, logo_url, logo_bg_removed, brick_color),
-                season:seasons!season_id(name, slug, region:regions!region_id(code, name))
+                season:seasons!season_id(name, slug, league_type, end_date, region:regions!region_id(code, name)),
+                left_at
             `)
             .eq("player_id", player.id)
-            .is("left_at", null)
-            .order("joined_at", {ascending: false})
-            .limit(1)
-            .maybeSingle();
+            .order("joined_at", {ascending: false});
 
-        // 3. Fallback: most recent team if no active team
-        const teamRow = activeTeam ?? await (async () => {
-            const {data} = await supabase
-                .from("player_team_seasons")
-                .select(`
-                    team_id,
-                    team:teams!team_id(name, logo_url, logo_bg_removed, brick_color),
-                    season:seasons!season_id(name, slug, region:regions!region_id(code, name))
-                `)
-                .eq("player_id", player.id)
-                .order("joined_at", {ascending: false})
-                .limit(1)
-                .maybeSingle();
-            return data;
-        })();
+        const teamCandidates = (rows ?? []).map(r => {
+            const team = r.team as {name: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null} | null;
+            const season = r.season as { name: string; slug:string; league_type:string; end_date: string | null;
+                region: {code: string; name:string} 
+            } | null;
+            const left_at = r.left_at as string | null;
+            return {
+                team_id: r.team_id,
+                team,
+                season,
+                left_at,
+                active: season ? isSeasonActive(season) : false,
+                isMain: season?.league_type === "main",
+            };
+        });
 
-        // 4. Map to PlayerWithCurrentTeam
+        const teamRow = 
+            teamCandidates.find(t => t.isMain && t.active && !t.left_at) ??
+            teamCandidates.find(t => t.active && !t.left_at) ??
+            teamCandidates.find(t => t.active) ??
+            teamCandidates[0] ??
+            null;
+
         const current_team = teamRow ? {
             team_id: teamRow.team_id,
-            team_name: (teamRow.team as {name: string} | null)?.name ?? "",
-            team_logo_url: (teamRow.team as {logo_url: string | null} | null)?.logo_url ?? null,
-            team_logo_bg_removed: (teamRow.team as {logo_bg_removed: boolean} | null)?.logo_bg_removed ?? false,
-            team_brick_color: (teamRow.team as {brick_color: string | null} | null)?.brick_color ?? null,
-            season_name: (teamRow.season as {name: string} | null)?.name ?? "",
-            region_code: ((teamRow.season as {region: {code: string}} | null)?.region?.code) ?? "",
-            region_name: ((teamRow.season as {region: {name: string}} | null)?.region?.name) ?? "",
+            team_name: teamRow.team?.name ?? "",
+            team_logo_url: teamRow.team?.logo_url ?? null,
+            team_logo_bg_removed: teamRow.team?.logo_bg_removed ?? false,
+            team_brick_color: teamRow.team?.brick_color ?? null,
+            season_name: teamRow.season?.name ?? "",
+            region_code: teamRow.season?.region?.code ?? "",
+            region_name: teamRow.season?.region?.name ?? "",
         } : null;
 
         return Ok({...player, current_team});

@@ -13,6 +13,7 @@ import {
     SelectValue,
 } from "@/app/components/ui/select";
 import { PlayoffRound } from "@/server/domains/playoff";
+import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
 
 interface SeasonWeekPickerProps {
     selectedSeasonId: string;
@@ -110,7 +111,7 @@ export default function SeasonWeekPicker({
                                     {seasons.map(season => (
                                         <SelectItem key={season.id} value={season.id} className="rounded-sm">
                                             {season.name}
-                                            {season.is_active && (
+                                            {isSeasonActive(season) && (
                                                 <span className="ml-2 text-xs text-primary">(Active)</span>
                                             )}
                                         </SelectItem>

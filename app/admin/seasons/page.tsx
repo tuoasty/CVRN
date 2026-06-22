@@ -24,6 +24,7 @@ import {SeasonWithPlayoffConfig} from "@/server/domains/season";
 import {deleteSeasonAction} from "@/app/actions/season.actions";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
+import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
 
 export default function AdminSeasonsPage() {
     const {seasons, isLoading, error} = useSeasons();
@@ -129,7 +130,7 @@ export default function AdminSeasonsPage() {
                                         <td>
                                             {season.end_date ? (
                                                 <Badge variant="secondary" className="rounded-sm text-xs">Completed</Badge>
-                                            ) : season.is_active ? (
+                                            ) : isSeasonActive(season) ? (
                                                 <Badge variant="default" className="rounded-sm text-xs">Active</Badge>
                                             ) : (
                                                 <Badge variant="outline" className="rounded-sm text-xs">Inactive</Badge>

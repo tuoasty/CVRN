@@ -7,6 +7,7 @@ import { useSeasons } from "@/app/hooks/useSeasons";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
 
 export default function AdminRegionSeasonSelector() {
     const { regions } = useRegions();
@@ -89,7 +90,7 @@ export default function AdminRegionSeasonSelector() {
                             )}
                         >
                             {season.name}
-                            {season.is_active && (
+                            {isSeasonActive(season) && (
                                 <span className="text-[9px] text-primary font-semibold ml-2">Active</span>
                             )}
                         </button>

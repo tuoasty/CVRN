@@ -24,7 +24,6 @@ export default async function SelectLeaguePage({
             region: r,
             seasons: seasons
                 .filter(s => s.region_id === r.id)
-                .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()),
         }))
         .filter(g => g.seasons.length > 0);
 
