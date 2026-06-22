@@ -38,11 +38,11 @@ export default function RegionSeasonSelector({ fullWidth }: RegionSeasonSelector
         if (season) {
             const region = regions.find(r => r.id === season.region_id);
             if (region) {
-                const routePrefix = `/${params.region}/${params.season}/`;
-                const currentPage = pathname.startsWith(routePrefix)
-                    ? pathname.slice(routePrefix.length).split("/")[0] || "home"
-                    : "home";
-                router.push(`/${region.code.toLowerCase()}/${season.slug}/${currentPage}`);
+                const base = `/${params.region}/${params.season}`;
+                const rest = pathname.startsWith(base + "/")
+                    ? pathname.slice(base.length + 1).split("/")[0]
+                    : "";
+                router.push(`/${region.code.toLowerCase()}/${season.slug}${rest ? `/${rest}` : ""}`);
             }
         }
         setOpen(false);

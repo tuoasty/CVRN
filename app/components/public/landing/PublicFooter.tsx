@@ -119,7 +119,7 @@ export default function PublicFooter() {
                 </p>
 
                 <Link
-                    href="/home"
+                    href="/select"
                     className="text-[10px] text-muted-foreground hover:text-primary transition-colors uppercase tracking-wider"
                 >
                     League Hub →

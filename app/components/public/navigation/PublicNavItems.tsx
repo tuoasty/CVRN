@@ -28,6 +28,12 @@ export default function PublicNavItems({
     const params = useParams<{ region?: string; season?: string }>();
     const [fallbackCtx, setFallbackCtx] = useState<{ region: string; season: string } | null>(null);
 
+    // The navbar lives in the persistent layout and never remounts, so a `[]` effect
+    // would only ever see the cookie as it was on first load (null in a fresh incognito
+    // session, even after picking a season). Re-read when the season context changes —
+    // i.e. when leaving a season page (params -> undefined) we pick up the cookie that
+    // RegionSeasonSelector just wrote. Intra-season navigation (matches -> standings)
+    // leaves params unchanged and does not re-read.
     useEffect(() => {
         const entry = document.cookie.split(";").map(c => c.trim()).find(c => c.startsWith("cvrn_last_ctx="));
         if (entry) {
@@ -35,7 +41,7 @@ export default function PublicNavItems({
             const [r, s] = val.split(":");
             if (r && s) setFallbackCtx({ region: r, season: s });
         }
-    }, []);
+    }, [params.region, params.season]);
 
     const effectiveRegion = params.region ?? fallbackCtx?.region;
     const effectiveSeason = params.season ?? fallbackCtx?.season;
@@ -54,10 +60,17 @@ export default function PublicNavItems({
                 const href = item.page === "archive"
                     ? "/archive"
                     : hasEffectiveContext
-                        ? `${prefix}/${item.page}`
-                        : "/#view-league";
+                        ? item.page === "home"
+                            ? prefix
+                            : `${prefix}/${item.page}`
+                        : item.page === "home"
+                            ? "/select"
+                            : `/select?next=${item.page}`;
+                const base = `/${params.region}/${params.season}`;
                 const isActive = hasContext
-                    ? pathname.startsWith(`/${params.region}/${params.season}/${item.page}`)
+                    ? item.page === "home"
+                        ? pathname === base
+                        : pathname.startsWith(`${base}/${item.page}`)
                     : pathname === `/${item.page}`;
                 return (
                     <Link

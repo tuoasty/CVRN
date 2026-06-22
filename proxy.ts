@@ -4,6 +4,10 @@ import type { NextRequest } from "next/server";
 
 const FLAT_LIST_ROUTES = new Set(["/home", "/matches", "/standings", "/teams", "/playoffs", "/media"]);
 
+// First segments that are real static routes, not a region code — keep the generic
+// /[region]/[season]/home redirect from matching them (e.g. /matches/as/home).
+const RESERVED_FIRST_SEGMENTS = new Set(["matches", "teams", "archive", "players", "auth", "admin", "select"]);
+
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
@@ -30,6 +34,13 @@ export async function proxy(request: NextRequest) {
     const archiveDetail = pathname.match(/^\/archive\/([^/]+)\/([^/]+)$/);
     if (archiveDetail) {
         return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // Old season home /[region]/[season]/home → /[region]/[season] (home is now the bare path)
+    const seasonHome = pathname.match(/^\/([^/]+)\/([^/]+)\/home$/);
+    if (seasonHome && !RESERVED_FIRST_SEGMENTS.has(seasonHome[1])) {
+        const [, region, season] = seasonHome;
+        return NextResponse.redirect(new URL(`/${region}/${season}`, request.url));
     }
 
     request.headers.set("x-pathname", pathname);
