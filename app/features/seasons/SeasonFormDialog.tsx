@@ -33,7 +33,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
     const [regionId, setRegionId] = useState(season?.region_id ?? "");
     const [startDate, setStartDate] = useState(season?.start_date ?? "");
     const [endDate, setEndDate] = useState(season?.end_date ?? "");
-    const [isActive, setIsActive] = useState(season?.is_active ?? false);
+    const [leagueType, setLeagueType] = useState(season?.league_type ?? "main");
     const [loading, setLoading] = useState(false);
     const [slugManual, setSlugManual] = useState(isEdit);
 
@@ -44,7 +44,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
         setRegionId(season?.region_id ?? "");
         setStartDate(season?.start_date ?? "");
         setEndDate(season?.end_date ?? "");
-        setIsActive(season?.is_active ?? false);
+        setLeagueType(season?.league_type ?? "main")
         setSlugManual(isEdit);
         setLoading(false);
     }, [open]);
@@ -73,14 +73,15 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                     name: name.trim(),
                     slug: slug.trim(),
                     startDate,
+                    leagueType: leagueType,
                     endDate: endDate || null,
-                    isActive,
                 })
                 : await createSeasonAction({
                     name: name.trim(),
                     slug: slug.trim(),
                     regionId,
                     startDate,
+                    leagueType: leagueType,
                     endDate: endDate || null,
                 });
 
@@ -150,6 +151,22 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                             <p className="text-xs text-muted-foreground">Region cannot be changed after creation.</p>
                         )}
                     </div>
+                    <div className="space-y-2">
+                        <Label>League Type</Label>
+                        <Select value={leagueType} onValueChange={setLeagueType} disabled={loading}>
+                            <SelectTrigger className="rounded-sm">
+                                <SelectValue/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={"main"}>
+                                    Main League
+                                </SelectItem>
+                                <SelectItem value={"side"}>
+                                    Side League
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="season-start">Start Date</Label>
@@ -176,24 +193,6 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                             />
                         </div>
                     </div>
-                    {isEdit && (
-                        <div className="space-y-2">
-                            <Label>Status</Label>
-                            <Select
-                                value={isActive ? "active" : "inactive"}
-                                onValueChange={(v) => setIsActive(v === "active")}
-                                disabled={loading}
-                            >
-                                <SelectTrigger className="rounded-sm">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="inactive">Inactive</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
                     <div className="flex gap-3 pt-1">
                         <Button type="submit" disabled={loading} className="rounded-sm">
                             {loading ? "Saving..." : isEdit ? "Save Changes" : "Create Season"}

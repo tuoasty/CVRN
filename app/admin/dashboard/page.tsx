@@ -8,6 +8,8 @@ import { useTeams } from "@/app/hooks/useTeams";
 import { ArrowRight, Users, Calendar, LayoutDashboard } from "lucide-react";
 import { useRegions } from "@/app/hooks/useRegions";
 import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
+import { date } from "zod";
+import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
 
 export default function AdminDashboard() {
     const { seasons } = useSeasons();
@@ -35,7 +37,7 @@ export default function AdminDashboard() {
                                 {seasons.length > 0 ? (
                                     (() => {
                                         const activeSeasonsByRegion = seasons
-                                            .filter(s => s.is_active)
+                                            .filter(s => isSeasonActive(s))
                                             .reduce<Record<string, typeof seasons>>((acc, season) => {
                                                 const regionId = season.region_id;
                                                 if (!acc[regionId]) {

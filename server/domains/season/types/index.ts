@@ -6,6 +6,7 @@ export interface CreateSeasonInput {
     startDate: string;
     endDate?: string | null;
     slug: string;
+    leagueType?: 'main' | 'side';
     theme?: string | null;
 }
 
@@ -14,8 +15,8 @@ export interface UpdateSeasonInput {
     name?: string;
     startDate?: string;
     endDate?: string | null;
-    isActive?: boolean;
     slug?: string;
+    leagueType?: 'main' | 'side';
     theme?: string | null;
 }
 
@@ -25,9 +26,9 @@ export interface InsertSeasonDto {
     regionId: string;
     startDate: string;
     slug: string;
+    leagueType?: 'main' | 'side';
     theme?: string | null;
     endDate?: string | null;
-    isActive: boolean;
 }
 
 export interface SeasonWithPlayoffConfig extends Season {
