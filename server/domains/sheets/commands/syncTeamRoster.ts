@@ -9,6 +9,7 @@ import {
     upsertTeamByNumber,
     softDeleteTeamById,
 } from "@/server/db/teams.repo";
+import {findSeasonById} from "@/server/db/seasons.repo";
 import {insertTeamNameHistory} from "@/server/db/teamNameHistory.repo";
 import {
     findAllTeamPlayers,
@@ -61,12 +62,16 @@ export async function syncTeamRoster(
     try {
         const {values, bgColors} = await readSheetRangeWithColors(config.sheet_id, config.tab_name);
 
+        const seasonResult = await findSeasonById(supabase, config.season_id);
+        const maxPlayers = (seasonResult.ok ? seasonResult.value?.max_players : null) ?? 18;
+
         const parsed = parseTeamsSheet(
             values,
             config.header_row ?? 9,
             config.block_height ?? 18,
             config.block_stride ?? 4,
-            bgColors
+            bgColors,
+            maxPlayers
         );
 
         const existingTeamsResult = await findTeamsBySeasonId(supabase, config.season_id);

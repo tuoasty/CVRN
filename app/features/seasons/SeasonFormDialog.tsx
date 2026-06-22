@@ -30,6 +30,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
 
     const [name, setName] = useState(season?.name ?? "");
     const [slug, setSlug] = useState(season?.slug ?? "");
+    const [maxPlayers, setMaxPlayers] = useState(String(season?.max_players ?? 18));
     const [regionId, setRegionId] = useState(season?.region_id ?? "");
     const [startDate, setStartDate] = useState(season?.start_date ?? "");
     const [endDate, setEndDate] = useState(season?.end_date ?? "");
@@ -42,6 +43,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
         setName(season?.name ?? "");
         setSlug(season?.slug ?? "");
         setRegionId(season?.region_id ?? "");
+        setMaxPlayers(String(season?.max_players ?? 18));
         setStartDate(season?.start_date ?? "");
         setEndDate(season?.end_date ?? "");
         setLeagueType(season?.league_type ?? "main")
@@ -73,6 +75,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                     name: name.trim(),
                     slug: slug.trim(),
                     startDate,
+                    maxPlayers: maxPlayers,
                     leagueType: leagueType,
                     endDate: endDate || null,
                 })
@@ -80,6 +83,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                     name: name.trim(),
                     slug: slug.trim(),
                     regionId,
+                    maxPlayers: maxPlayers,
                     startDate,
                     leagueType: leagueType,
                     endDate: endDate || null,
@@ -166,6 +170,20 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                                 </SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="season-max-players">Max Players</Label>
+                        <Input
+                            id="season-max-players"
+                            type="text"
+                            inputMode="numeric"
+                            value={maxPlayers}
+                            onChange={(e) => setMaxPlayers(e.target.value)}
+                            disabled={loading}
+                            className="rounded-sm"
+                            placeholder="18"
+                        />
+                        <p className="text-xs text-muted-foreground">Total roster cap incl. leadership (min 3).</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">

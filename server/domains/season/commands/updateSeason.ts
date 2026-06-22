@@ -14,6 +14,7 @@ export async function updateSeason(
             name: p.name,
             startDate: p.startDate,
             endDate: p.endDate,
+            maxPlayers: p.maxPlayers ?? undefined,
             leagueType: p.leagueType,
             slug: p.slug,
             theme: p.theme

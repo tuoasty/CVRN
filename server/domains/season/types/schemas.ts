@@ -20,6 +20,7 @@ export const CreateSeasonSchema = z.object({
     slug: z.string().min(1, "Slug is required"),
     leagueType: LeagueTypeEnum.default('main'),
     theme: z.string().nullable().optional(),
+    maxPlayers: z.coerce.number().int().min(3).default(18)
 })
 export type CreateSeasonSchemaInput = z.infer<typeof CreateSeasonSchema>
 
@@ -31,6 +32,7 @@ export const UpdateSeasonSchema = z.object({
     slug: z.string().min(1).optional(),
     leagueType: LeagueTypeEnum.optional(),
     theme: z.string().nullable().optional(),
+    maxPlayers: z.coerce.number().int().min(3).optional()
 })
 export type UpdateSeasonSchemaInput = z.infer<typeof UpdateSeasonSchema>
 

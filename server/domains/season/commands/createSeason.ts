@@ -18,6 +18,7 @@ export async function createSeason(
             name: p.name,
             regionId: p.regionId,
             startDate: p.startDate,
+            maxPlayers: p.maxPlayers ?? 18,
             endDate: p.endDate ?? null,
             leagueType: p.leagueType ?? "main",
             slug: p.slug,
