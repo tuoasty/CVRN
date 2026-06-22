@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { Region } from "@/shared/types/db";
 import { SeasonWithPlayoffConfig } from "@/server/domains/season";
+import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
 
 interface AdminContextState {
     selectedRegionId: string | null;
@@ -68,7 +69,7 @@ export const useAdminContextStore = create<AdminContextState>((set, get) => ({
         const defaultRegion = asiaRegion || regions[0];
 
         const activeSeason = seasons.find(
-            (s) => s.region_id === defaultRegion.id && s.is_active
+            (s) => s.region_id === defaultRegion.id && isSeasonActive(s)
         );
         const fallbackSeason = seasons.find((s) => s.region_id === defaultRegion.id);
 

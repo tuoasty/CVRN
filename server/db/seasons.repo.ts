@@ -59,20 +59,6 @@ export async function findSeasonsByRegion(supabase: DBClient, regionId: string):
     return Ok(data ?? []);
 }
 
-export async function findActiveSeasonByRegion(supabase: DBClient, regionId: string): Promise<Result<Season | null>> {
-    const {data, error} = await supabase
-        .from("seasons")
-        .select("*")
-        .eq("region_id", regionId)
-        .eq("is_active", true)
-        .single();
-    if (error) {
-        if (error.code === "PGRST116") return Ok(null);
-        return Err(serializeError(error, "DB_ERROR"));
-    }
-    return Ok(data);
-}
-
 export async function updateSeasonById(
     supabase: DBClient,
     seasonId: string,
