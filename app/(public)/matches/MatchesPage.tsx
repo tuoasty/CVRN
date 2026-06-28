@@ -8,7 +8,7 @@ import { useTeamsByIds } from "@/app/hooks/useTeams";
 import { usePlayersByIds } from "@/app/hooks/usePlayers";
 import { useStandings } from "@/app/hooks/useStandings";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { CalendarDays, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
 import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
@@ -70,7 +70,6 @@ export default function MatchesPage() {
         : null;
 
     const regionCode = region.code;
-    const maxWeeks = season.weeks || 10;
     const hasPlayoffs = season.playoff_started;
 
     // Default week query (used when no ?week in URL)
@@ -154,11 +153,10 @@ export default function MatchesPage() {
     }, [roundCounts]);
 
     const { weekCounts } = useWeekMatchCounts(season.id);
-    const weekCountMap = useMemo(() => {
-        const m = new Map<number, number>();
-        for (const { week, count } of weekCounts) m.set(week, count);
-        return m;
-    }, [weekCounts]);
+    const availableWeeks = useMemo(
+        () => weekCounts.map(w => w.week).sort((a, b) => a - b),
+        [weekCounts]
+    );
 
     const matchesBase = `/${region.code.toLowerCase()}/${season.slug}/matches`;
 
@@ -233,8 +231,7 @@ export default function MatchesPage() {
                     {activeTab === "season" ? (
                         <WeekSelector
                             effectiveWeek={effectiveWeek}
-                            maxWeeks={maxWeeks}
-                            weekCountMap={weekCountMap}
+                            weeks={availableWeeks}
                             onWeekChange={setWeek}
                         />
                     ) : (
@@ -270,16 +267,15 @@ export default function MatchesPage() {
 
 interface WeekSelectorProps {
     effectiveWeek: number;
-    maxWeeks: number;
-    weekCountMap: Map<number, number>;
+    weeks: number[];
     onWeekChange: (week: number) => void;
 }
 
-function WeekSelector({ effectiveWeek, maxWeeks, weekCountMap, onWeekChange }: WeekSelectorProps) {
+function WeekSelector({ effectiveWeek, weeks, onWeekChange }: WeekSelectorProps) {
     const [open, setOpen] = useState(false);
-    const weeks = Array.from({ length: maxWeeks }, (_, i) => i + 1);
-    const canGoPrev = effectiveWeek > 1;
-    const canGoNext = effectiveWeek < maxWeeks;
+    const activeIdx = weeks.indexOf(effectiveWeek);
+    const canGoPrev = activeIdx > 0;
+    const canGoNext = activeIdx < weeks.length - 1;
 
     return (
         <>
@@ -288,7 +284,7 @@ function WeekSelector({ effectiveWeek, maxWeeks, weekCountMap, onWeekChange }: W
                 <PopoverTrigger asChild>
                     <div className="sm:hidden flex items-center border border-border rounded-md h-11 overflow-hidden cursor-pointer">
                         <button
-                            onClick={(e) => { e.stopPropagation(); if (canGoPrev) { onWeekChange(effectiveWeek - 1); setOpen(false); } }}
+                            onClick={(e) => { e.stopPropagation(); if (canGoPrev) { onWeekChange(weeks[activeIdx - 1]); setOpen(false); } }}
                             disabled={!canGoPrev}
                             className={cn("w-11 h-full flex items-center justify-center shrink-0 transition-colors", canGoPrev ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/20 cursor-not-allowed")}
                         >
@@ -298,7 +294,7 @@ function WeekSelector({ effectiveWeek, maxWeeks, weekCountMap, onWeekChange }: W
                             Week {effectiveWeek}
                         </div>
                         <button
-                            onClick={(e) => { e.stopPropagation(); if (canGoNext) { onWeekChange(effectiveWeek + 1); setOpen(false); } }}
+                            onClick={(e) => { e.stopPropagation(); if (canGoNext) { onWeekChange(weeks[activeIdx + 1]); setOpen(false); } }}
                             disabled={!canGoNext}
                             className={cn("w-11 h-full flex items-center justify-center shrink-0 transition-colors", canGoNext ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/20 cursor-not-allowed")}
                         >
@@ -328,7 +324,6 @@ function WeekSelector({ effectiveWeek, maxWeeks, weekCountMap, onWeekChange }: W
             <div className="hidden sm:flex overflow-x-auto border border-border rounded-sm overflow-hidden">
                 {weeks.map(w => {
                     const isActive = w === effectiveWeek;
-                    const count = weekCountMap.get(w);
                     return (
                         <button
                             key={w}
@@ -342,16 +337,7 @@ function WeekSelector({ effectiveWeek, maxWeeks, weekCountMap, onWeekChange }: W
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                             )}
                         >
-                            <span className="flex items-center gap-1">
-                                <Check className="w-3 h-3 shrink-0" />
-                                <span className="text-xs font-semibold uppercase tracking-wider">WEEK {w}</span>
-                            </span>
-                            <span className={cn(
-                                "text-[10px] font-normal mt-0.5",
-                                count === undefined ? "invisible" : isActive ? "text-primary/60" : "text-muted-foreground/50"
-                            )}>
-                                {count !== undefined ? `${count} match${count !== 1 ? "es" : ""}` : "0 matches"}
-                            </span>
+                            <span className="text-xs font-semibold uppercase tracking-wider">WEEK {w}</span>
                         </button>
                     );
                 })}
@@ -437,10 +423,7 @@ function PlayoffStepper({ rounds, effectiveRound, roundCountMap, onRoundChange }
                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                             )}
                         >
-                            <span className="flex items-center gap-1">
-                                <Check className="w-3 h-3 shrink-0" />
-                                {ROUND_LABELS[round] || round}
-                            </span>
+                            <span>{ROUND_LABELS[round] || round}</span>
                             <span className={cn(
                                 "text-[10px] font-normal mt-0.5",
                                 count === undefined ? "invisible" : isActive ? "text-primary/60" : "text-muted-foreground/50"

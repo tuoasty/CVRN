@@ -1,27 +1,40 @@
-// Parses "May 2nd, 5:00PM [GMT+8]" → ISO UTC string
-export function parseScheduleCell(value: string, year: number): string | null {
+export type ParsedSchedule = { iso: string; isPlaceholder: boolean };
+
+// Parses "May 2nd, 5:00PM [GMT+8]" → full datetime (isPlaceholder: false)
+// Parses "May 2nd" → date-only placeholder, stored as midnight UTC (isPlaceholder: true)
+export function parseScheduleCell(value: string, year: number): ParsedSchedule | null {
     if (!value?.trim()) return null;
 
-    const match = value.trim().match(
+    const fullMatch = value.trim().match(
         /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*\[GMT([+-]\d+(?:\.\d+)?)\]/i
     );
-    if (!match) return null;
+    if (fullMatch) {
+        const [, month, day, time, offsetStr] = fullMatch;
+        const offsetNum = parseFloat(offsetStr);
+        if (isNaN(offsetNum)) return null;
 
-    const [, month, day, time, offsetStr] = match;
-    const offsetNum = parseFloat(offsetStr);
-    if (isNaN(offsetNum)) return null;
+        const absHours = Math.floor(Math.abs(offsetNum));
+        const absMinutes = Math.round((Math.abs(offsetNum) - absHours) * 60);
+        const sign = offsetNum >= 0 ? '+' : '-';
+        const paddedHours = String(absHours).padStart(2, '0');
+        const paddedMinutes = String(absMinutes).padStart(2, '0');
+        const isoOffset = `${sign}${paddedHours}:${paddedMinutes}`;
 
-    // Build offset as ±HH:MM for Date constructor
-    const absHours = Math.floor(Math.abs(offsetNum));
-    const absMinutes = Math.round((Math.abs(offsetNum) - absHours) * 60);
-    const sign = offsetNum >= 0 ? '+' : '-';
-    const paddedHours = String(absHours).padStart(2, '0');
-    const paddedMinutes = String(absMinutes).padStart(2, '0');
-    const isoOffset = `${sign}${paddedHours}:${paddedMinutes}`;
+        const normalizedTime = time.replace(/\s*(AM|PM)$/i, ' $1');
+        const dateStr = `${month} ${day} ${year} ${normalizedTime} GMT${isoOffset}`;
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return null;
+        return { iso: date.toISOString(), isPlaceholder: false };
+    }
 
-    const normalizedTime = time.replace(/\s*(AM|PM)$/i, ' $1');
-    const dateStr = `${month} ${day} ${year} ${normalizedTime} GMT${isoOffset}`;
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return null;
-    return date.toISOString();
+    // Date-only: "July 5th" or "July 5th - July 7th" — placeholder, start date at midnight UTC
+    const dateOnlyMatch = value.trim().match(/^(\w+)\s+(\d+)(?:st|nd|rd|th)?(?:\s*-\s*\w+\s+\d+(?:st|nd|rd|th)?)?$/i);
+    if (dateOnlyMatch) {
+        const [, month, day] = dateOnlyMatch;
+        const date = new Date(`${month} ${day} ${year} 00:00:00 UTC`);
+        if (isNaN(date.getTime())) return null;
+        return { iso: date.toISOString(), isPlaceholder: true };
+    }
+
+    return null;
 }
