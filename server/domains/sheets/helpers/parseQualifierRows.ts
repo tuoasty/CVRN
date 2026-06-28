@@ -47,20 +47,13 @@ export function parseQualifierRows(
         logger.debug({row:row, message: "Row debug"});
         const rowNumber = i + 1; // 1-indexed for error messages
 
-        const rawCode = row[COL_CODE]?.trim() ?? '';
-        if (!rawCode) continue; // empty code = skip row
-
-        // Sheet format is `{week}-{n}` (e.g. `1-1`); canonical DB format is
-        // `W{week}-M{n}`. Promote on write so the column stays consistent
-        // with the backfill output. Anything that doesn't match the bare
-        // numeric form passes through unchanged.
-        const numericMatch = rawCode.match(/^(\d+)-(\d+)$/);
-        const code = numericMatch ? `W${numericMatch[1]}-M${numericMatch[2]}` : rawCode;
+        const code = row[COL_CODE]?.trim() ?? '';
+        if (!code) continue; // empty code = skip row
 
         const homeTeamName = row[COL_HOME]?.trim() ?? '';
         const awayTeamName = row[COL_AWAY]?.trim() ?? '';
 
-        if (!homeTeamName) continue; // row not filled yet
+        if (!homeTeamName) continue; 
         if (!awayTeamName) {
             errors.push({row: rowNumber, message: `Row ${rowNumber}: missing away team name`});
             continue;

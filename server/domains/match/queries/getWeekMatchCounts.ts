@@ -6,7 +6,7 @@ import { findWeekMatchCountsBySeason } from "@/server/db/matches.repo";
 export async function getWeekMatchCounts(
     supabase: DBClient,
     seasonId: string
-): Promise<Result<{ week: number; count: number }[]>> {
+): Promise<Result<{ week: number; total: number; completed: number }[]>> {
     const result = await findWeekMatchCountsBySeason(supabase, seasonId);
     if (!result.ok) {
         logger.error({ seasonId, error: result.error }, "Failed to get week match counts");

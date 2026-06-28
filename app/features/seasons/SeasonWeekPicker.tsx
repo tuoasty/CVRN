@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
-import { useAvailablePlayoffRounds } from "@/app/hooks/useMatches";
+import { useAvailablePlayoffRounds, useWeekMatchCounts } from "@/app/hooks/useMatches";
 import { Label } from "@/app/components/ui/label";
 import {
     Select,
@@ -59,8 +59,12 @@ export default function SeasonWeekPicker({
     const { seasons } = useSeasons();
     const { regions } = useRegions();
     const { rounds: fetchedRounds } = useAvailablePlayoffRounds(selectedSeasonId || null);
+    const { weekCounts } = useWeekMatchCounts(selectedSeasonId || null);
 
-    const [maxWeeks, setMaxWeeks] = useState(10);
+    const availableWeeks = useMemo(
+        () => weekCounts.map(w => w.week).sort((a, b) => a - b),
+        [weekCounts]
+    );
 
     const availableRounds = [...fetchedRounds].sort((a, b) => {
         return (ROUND_ORDER[a] || 999) - (ROUND_ORDER[b] || 999);
@@ -69,12 +73,8 @@ export default function SeasonWeekPicker({
     useEffect(() => {
         if (selectedSeasonId && seasons.length > 0) {
             const season = seasons.find(s => s.id === selectedSeasonId);
-            if (season) {
-                setMaxWeeks(season.weeks || 10);
-
-                if (onMatchTypeChange && !selectedMatchType) {
-                    onMatchTypeChange(season.playoff_started ? "playoff" : "season");
-                }
+            if (season && onMatchTypeChange && !selectedMatchType) {
+                onMatchTypeChange(season.playoff_started ? "playoff" : "season");
             }
         }
     }, [selectedSeasonId, seasons]);
@@ -146,7 +146,7 @@ export default function SeasonWeekPicker({
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-sm">
-                            {Array.from({ length: maxWeeks }, (_, i) => i + 1).map(week => (
+                            {availableWeeks.map(week => (
                                 <SelectItem key={week} value={week.toString()} className="rounded-sm">
                                     Week {week}
                                 </SelectItem>

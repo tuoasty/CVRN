@@ -79,17 +79,20 @@ export async function syncMatchResults(
             }
 
             const week = parseInt(mc.split('-')[0], 10);
+            logger.debug({mc:mc, week:week})
             if (isNaN(week)) {
                 errors.push({row: result.rowNumber, message: `[${mc}] Cannot parse week number from match code`});
                 rowsErrored++;
                 continue;
             }
 
-            const scheduledAt = result.scheduleRaw ? parseScheduleCell(result.scheduleRaw, year) : null;
-            if (result.scheduleRaw && !scheduledAt) {
-                errors.push({row: result.rowNumber, message: `[${mc}] Schedule "${result.scheduleRaw}": unrecognized format — expected "Month Dth, H:MM AM/PM [GMT±N]" (e.g. "May 2nd, 5:00 PM [GMT+8]")`});
+            const parsed = result.scheduleRaw ? parseScheduleCell(result.scheduleRaw, year) : null;
+            if (result.scheduleRaw && !parsed) {
+                errors.push({row: result.rowNumber, message: `[${mc}] Schedule "${result.scheduleRaw}": unrecognized format — expected "Month Dth, H:MM AM/PM [GMT±N]" or "Month Dth" (e.g. "May 2nd, 5:00 PM [GMT+8]" or "May 2nd")`});
                 rowsErrored++;
             }
+            const scheduledAt = parsed?.iso ?? null;
+            const isPlaceholderDate = parsed?.isPlaceholder ?? false;
 
             const existingResult = await findMatchByCode(supabase, mc, config.season_id);
             if (!existingResult.ok) {
@@ -100,7 +103,8 @@ export async function syncMatchResults(
             let match = existingResult.value;
 
             const hasScores = result.isForfeit || result.sets.length > 0;
-            const hasSchedule = scheduledAt !== null;
+            // Placeholder dates (date-only, no time) do not count as a confirmed schedule
+            const hasSchedule = scheduledAt !== null && !isPlaceholderDate;
 
             // Create match if it doesn't exist
             const wasCreated = !match;
@@ -166,8 +170,8 @@ export async function syncMatchResults(
                         before: {status: 'completed'},
                         after: {matchCode: mc, status: hasSchedule ? 'scheduled' : 'pending', reverted: true},
                     });
-                    if (hasSchedule) {
-                        const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt);
+                    if (scheduledAt) {
+                        const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, isPlaceholderDate);
                         if (!scheduleResult.ok) {
                             errors.push({row: result.rowNumber, message: `[${mc}] Failed to update schedule after revert: ${scheduleResult.error.message}`});
                             rowsErrored++;
@@ -191,6 +195,21 @@ export async function syncMatchResults(
                         entityId: match.id,
                         before: wasCreated ? {} : {status: match.status},
                         after: {matchCode: mc, status: 'scheduled', scheduledAt, created: wasCreated},
+                    });
+                } else if (isPlaceholderDate && scheduledAt) {
+                    if (!wasCreated) {
+                        const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, true);
+                        if (!scheduleResult.ok) {
+                            errors.push({row: result.rowNumber, message: `[${mc}] Failed to update placeholder date: ${scheduleResult.error.message}`});
+                            rowsErrored++;
+                            continue;
+                        }
+                    }
+                    changes.push({
+                        type: 'match_result',
+                        entityId: match.id,
+                        before: wasCreated ? {} : {scheduledAt: match.scheduled_at},
+                        after: {matchCode: mc, status: 'pending', scheduledAt, placeholder: true, created: wasCreated},
                     });
                 } else if (wasCreated) {
                     changes.push({
