@@ -50,6 +50,7 @@ function colorToHex(color: SheetColor): string {
 export type SheetRangeWithColors = {
     values: string[][];
     bgColors: (string | null)[][];
+    fgColors: (string | null)[][];
 };
 
 export async function readSheetRangeWithColors(
@@ -63,24 +64,29 @@ export async function readSheetRangeWithColors(
         spreadsheetId: sheetId,
         ranges: [`${sheetName}!${range}`],
         includeGridData: true,
-        fields: 'sheets.data.rowData.values(formattedValue,effectiveFormat.backgroundColor)',
+        fields: 'sheets.data.rowData.values(formattedValue,effectiveFormat.backgroundColor,effectiveFormat.textFormat.foregroundColor)',
     });
 
     const rowDataArr = response.data.sheets?.[0]?.data?.[0]?.rowData ?? [];
     const values: string[][] = [];
     const bgColors: (string | null)[][] = [];
+    const fgColors: (string | null)[][] = [];
 
     for (const rowData of rowDataArr) {
         const cellValues: string[] = [];
-        const cellColors: (string | null)[] = [];
+        const cellBgColors: (string | null)[] = [];
+        const cellFgColors: (string | null)[] = [];
         for (const cell of rowData.values ?? []) {
             cellValues.push(cell.formattedValue ?? '');
             const bg = cell.effectiveFormat?.backgroundColor as SheetColor | null | undefined;
-            cellColors.push(bg ? colorToHex(bg) : null);
+            cellBgColors.push(bg ? colorToHex(bg) : null);
+            const fg = (cell.effectiveFormat?.textFormat as { foregroundColor?: SheetColor } | null | undefined)?.foregroundColor;
+            cellFgColors.push(fg ? colorToHex(fg) : null);
         }
         values.push(cellValues);
-        bgColors.push(cellColors);
+        bgColors.push(cellBgColors);
+        fgColors.push(cellFgColors);
     }
 
-    return { values, bgColors };
+    return { values, bgColors, fgColors };
 }

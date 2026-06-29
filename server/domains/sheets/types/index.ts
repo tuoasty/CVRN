@@ -47,6 +47,7 @@ export interface ParsedMatchResult {
     winner: string | null
     isForfeit: boolean
     scheduleRaw: string | null
+    scheduleCellColor: string | null
     referees: string[]
     media: string[]
     rowNumber: number
