@@ -8,6 +8,7 @@ import { TeamWithRegion } from "@/server/domains/team";
 import { Player } from "@/shared/types/db";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { getLogoClassName } from "@/app/lib/logoClass";
+import { parseMatchNumber } from "@/app/utils/matchLabel";
 import { cn } from "@/lib/utils";
 
 interface TeamRecord {
@@ -22,7 +23,6 @@ interface PublicMatchCardProps {
     matchMvp?: Player | null;
     loserMvp?: Player | null;
     regionCode?: string;
-    index: number;
     href?: string | null;
     homeRecord?: TeamRecord;
     awayRecord?: TeamRecord;
@@ -91,13 +91,14 @@ export default function PublicMatchCard({
     matchMvp,
     loserMvp,
     regionCode,
-    index,
     href,
     homeRecord,
     awayRecord,
     isPriority,
 }: PublicMatchCardProps) {
     const { match, sets, officials } = matchDetails;
+    const matchNumber = parseMatchNumber(match.match_code);
+    const matchLabel = matchNumber != null ? `Match ${matchNumber}` : "Match";
     const statusConfig = getStatusConfig(match.status);
     const referees = officials.filter(o => o.official_type === "referee");
     const media = officials.filter(o => o.official_type === "media");
@@ -129,7 +130,7 @@ export default function PublicMatchCard({
                         </span>
                         <span className="mx-1.5 inline-block w-[3px] h-[3px] rounded-full bg-border align-middle" />
                         <span className="text-[10px] font-semibold text-muted-foreground">
-                            Match {index + 1}
+                            {matchLabel}
                         </span>
                     </div>
                     <span className="text-[10px] text-muted-foreground/60 shrink-0">{timeDisplay}</span>
@@ -268,7 +269,7 @@ export default function PublicMatchCard({
                 <div className="flex items-start justify-between gap-2 pb-2 border-b border-border">
                     <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Match {index + 1}
+                            {matchLabel}
                         </span>
                         {match.is_forfeit ? (
                             <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider bg-red-600/10 text-red-600 border-red-600/20">

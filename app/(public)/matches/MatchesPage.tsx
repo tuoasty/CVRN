@@ -492,7 +492,6 @@ function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonS
                         matchMvp={matchMvp}
                         loserMvp={loserMvp}
                         regionCode={regionCode}
-                        index={index}
                         href={buildPublicMatchHref({
                             matchCode: match.match_code,
                             homeTeamName: homeTeam?.name,
