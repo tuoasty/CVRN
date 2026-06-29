@@ -31,7 +31,7 @@ export async function updateMatchScheduleService(
             }
         }
 
-        const result = await updateMatchSchedule(supabase, p.matchId, scheduledAt);
+        const result = await updateMatchSchedule(supabase, p.matchId, scheduledAt, scheduledAt ? 'scheduled' : 'pending');
         if (!result.ok) {
             logger.error({ matchId: p.matchId, error: result.error }, "Failed to update match schedule");
             return result;

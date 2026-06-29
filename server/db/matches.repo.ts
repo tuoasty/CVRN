@@ -92,7 +92,7 @@ export async function updateMatchSchedule(
     supabase: DBClient,
     matchId: string,
     scheduledAt: string | null,
-    isPlaceholder = false,
+    targetStatus: "pending" | "scheduled" = "scheduled",
 ): Promise<Result<Match>> {
     const {data: currentMatch, error: readError} = await supabase
         .from("matches")
@@ -108,8 +108,8 @@ export async function updateMatchSchedule(
         scheduled_at: scheduledAt,
     };
 
-    if (scheduledAt && !isPlaceholder && currentMatch?.status !== "completed") {
-        updateData.status = "scheduled";
+    if (currentMatch?.status !== "completed") {
+        updateData.status = targetStatus;
     }
 
     const {data, error} = await supabase
