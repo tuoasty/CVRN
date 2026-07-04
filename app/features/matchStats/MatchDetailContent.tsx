@@ -7,6 +7,7 @@ import BoxScore from "@/app/features/matchStats/BoxScore";
 import MatchHeader from "@/app/features/matchStats/MatchHeader";
 import StatViewToggle from "@/app/features/matchStats/StatViewToggle";
 import TeamSelectorBar, {TeamView} from "@/app/features/matchStats/TeamSelectorBar";
+import PreMatchRosters from "@/app/features/matchStats/PreMatchRosters";
 
 type Props = {
     detail: MatchDetail;
@@ -32,7 +33,15 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
             <MatchHeader detail={detail} regionCode={regionCode} seasonSlug={seasonSlug} />
 
             {!isPlayable ? (
-                <NonPlayableNotice match={match} />
+                match.is_forfeit || !detail.rosters ? (
+                    <NonPlayableNotice match={match} />
+                ) : (
+                    <PreMatchRosters
+                        homeTeam={homeTeam}
+                        awayTeam={awayTeam}
+                        rosters={detail.rosters}
+                    />
+                )
             ) : (
                 <Tabs defaultValue="total" className="space-y-3">
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
@@ -83,11 +92,9 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
 function NonPlayableNotice({match}: {match: MatchDetail["match"]}) {
     if (match.is_forfeit) {
         return (
-            <div className="panel p-6">
-                <p className="text-sm text-muted-foreground">
-                    This match was forfeited — no box score is available.
-                </p>
-            </div>
+            <p className="text-sm text-muted-foreground py-4">
+                This match was forfeited — no box score is available.
+            </p>
         );
     }
 
@@ -96,7 +103,7 @@ function NonPlayableNotice({match}: {match: MatchDetail["match"]}) {
             ? new Date(match.scheduled_at).toLocaleString()
             : "Time TBD";
         return (
-            <div className="panel p-6 space-y-1">
+            <div className="space-y-1 py-4">
                 <p className="text-sm">This match hasn&apos;t been played yet.</p>
                 <p className="text-xs text-muted-foreground">Scheduled: {when}</p>
             </div>

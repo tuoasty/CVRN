@@ -91,7 +91,8 @@ export async function findMatchesByRegionAndSeason(
 export async function updateMatchSchedule(
     supabase: DBClient,
     matchId: string,
-    scheduledAt: string | null
+    scheduledAt: string | null,
+    targetStatus: "pending" | "scheduled" = "scheduled",
 ): Promise<Result<Match>> {
     const {data: currentMatch, error: readError} = await supabase
         .from("matches")
@@ -107,8 +108,8 @@ export async function updateMatchSchedule(
         scheduled_at: scheduledAt,
     };
 
-    if (scheduledAt && currentMatch?.status !== "completed") {
-        updateData.status = "scheduled";
+    if (currentMatch?.status !== "completed") {
+        updateData.status = targetStatus;
     }
 
     const {data, error} = await supabase
@@ -367,20 +368,26 @@ export async function findPlayoffMatchesBySeason(
 export async function findWeekMatchCountsBySeason(
     supabase: DBClient,
     seasonId: string
-): Promise<Result<{ week: number; count: number }[]>> {
+): Promise<Result<{ week: number; total: number; completed: number }[]>> {
     const { data, error } = await supabase
         .from("matches")
-        .select("week")
+        .select("week, status")
         .eq("season_id", seasonId)
         .eq("match_type", "season")
         .not("week", "is", null)
         .order("week", { ascending: true });
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    const counts: Record<number, number> = {};
-    for (const { week } of data ?? []) {
-        if (week != null) counts[week] = (counts[week] ?? 0) + 1;
+    const totals: Record<number, number> = {};
+    const completed: Record<number, number> = {};
+    for (const { week, status } of data ?? []) {
+        if (week == null) continue;
+        totals[week] = (totals[week] ?? 0) + 1;
+        if (status === "completed") completed[week] = (completed[week] ?? 0) + 1;
     }
-    return Ok(Object.entries(counts).map(([week, count]) => ({ week: parseInt(week, 10), count })));
+    return Ok(Object.keys(totals).map(w => {
+        const week = parseInt(w, 10);
+        return { week, total: totals[week], completed: completed[week] ?? 0 };
+    }));
 }
 
 export async function findDefaultWeekForSeason(

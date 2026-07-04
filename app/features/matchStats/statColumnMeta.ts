@@ -105,6 +105,7 @@ const CONTRIBUTIONS: StatColumn = {
         sumKey(rows, "total_errors"),
 };
 
+
 export const DEFAULT_COLUMNS: StatColumn[] = [
     countCol("total_kills", "K", "Spiking", "Kills"),
     countCol("total_attempts", "HA", "Spiking", "Hitting attempts"),

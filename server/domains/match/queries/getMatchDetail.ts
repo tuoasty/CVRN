@@ -9,6 +9,7 @@ import {findTeamsByIdsForMatch} from "@/server/db/teams.repo";
 import {findMatchStatSets, findMatchStatTotals} from "@/server/db/playerMatchStats.repo";
 import {findMatchOfficials} from "@/server/db/matchOfficial.repo";
 import {MatchOfficialEntry} from "../types";
+import {getTeamRosters, TeamRosters} from "./getTeamRosters";
 
 export type MatchDetail = {
     match: Match;
@@ -19,6 +20,7 @@ export type MatchDetail = {
     statSets: PlayerMatchStatSet[];
     statTotals: PlayerMatchStatTotal[];
     playoffRound: string | null;
+    rosters: TeamRosters | null;
 };
 
 async function loadDetailForMatch(
@@ -65,6 +67,12 @@ async function loadDetailForMatch(
         }
     }
 
+    let rosters: TeamRosters | null = null;
+    if (match.status !== "completed" && match.home_team_id && match.away_team_id) {
+        const rostersRes = await getTeamRosters(supabase, match.home_team_id, match.away_team_id);
+        if (rostersRes.ok) rosters = rostersRes.value;
+    }
+
     return Ok({
         match,
         sets: setsRes.value,
@@ -74,6 +82,7 @@ async function loadDetailForMatch(
         statSets: statSetsRes.value,
         statTotals: statTotalsRes.value,
         playoffRound,
+        rosters,
     });
 }
 

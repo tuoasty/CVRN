@@ -89,7 +89,7 @@ async function fetchPlayoffRoundCounts([, seasonId]: [string, string]): Promise<
     return result.value;
 }
 
-async function fetchWeekMatchCounts([, seasonId]: [string, string]): Promise<{ week: number; count: number }[]> {
+async function fetchWeekMatchCounts([, seasonId]: [string, string]): Promise<{ week: number; total: number; completed: number }[]> {
     const result = await getWeekMatchCountsAction(seasonId);
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
@@ -196,7 +196,7 @@ export function useWeekMatchCounts(seasonId: string | null) {
     const key = seasonId ? ['weekMatchCounts', seasonId] as const : null;
     const { data, error, isLoading } = useSWR(
         key,
-        fetchWeekMatchCounts as BareFetcher<{ week: number; count: number }[]>,
+        fetchWeekMatchCounts as BareFetcher<{ week: number; total: number; completed: number }[]>,
         { dedupingInterval: MATCHES_TTL, revalidateOnFocus: false }
     );
     return {

@@ -57,7 +57,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
         : null;
 
     return (
-        <div className="panel p-4 sm:p-6 space-y-4">
+        <div className="space-y-4 pb-6 border-b border-border">
             {/* Metadata row */}
             <div className="flex items-start justify-between gap-2 pb-3 border-b border-border">
                 <div className="flex flex-col gap-1.5">

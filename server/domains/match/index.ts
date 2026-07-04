@@ -12,6 +12,7 @@ export {getUpcomingMatches} from "./queries/getUpcomingMatches";
 export {getRecentMatches} from "./queries/getRecentMatches";
 export {getMatchDetail, getMatchDetailById} from "./queries/getMatchDetail";
 export type {MatchDetail} from "./queries/getMatchDetail";
+export type {TeamRosters, RosterPlayer} from "./queries/getTeamRosters";
 export {createMatches} from "./commands/createMatches";
 export {completeMatchService} from "./commands/completeMatch";
 export {voidMatchService} from "./commands/voidMatch";
