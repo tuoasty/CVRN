@@ -1,0 +1,195 @@
+[
+  {
+    "code": "r16-1",
+    "best_of": 3,
+    "home": { "type": "seed", "value": 1 },
+    "away": { "type": "seed", "value": 16 }
+  },
+  {
+    "code": "r16-2",
+    "best_of": 3,
+    "home": { "type": "seed", "value": 8 },
+    "away": { "type": "seed", "value": 9 }
+  },
+  {
+    "code": "r16-3",
+    "best_of": 3,
+    "home": { "type": "seed", "value": 4 },
+    "away": { "type": "seed", "value": 13 }
+  },
+  {
+    "code": "r16-4",
+    "best_of": 3,
+    "home": { "type": "seed", "value": 5 },
+    "away": { "type": "seed", "value": 12 }
+  },
+  {
+    "code": "r16-5",
+    "best_of": 3,
+    "home": { "type": "seed", "value": 2 },
+    "away": { "type": "seed", "value": 15 }
+  },
+  {
+    "code": "r16-6",
+    "best_of": 3,
+    "home": { "type": "seed", "value": 7 },
+    "away": { "type": "seed", "value": 10 }
+  },
+  {
+    "code": "r16-7",
+    "best_of": 3,
+    "home": { "type": "seed", "value": 3 },
+    "away": { "type": "seed", "value": 14 }
+  },
+  {
+    "code": "r16-8",
+    "best_of": 3,
+    "home": { "type": "seed", "value": 6 },
+    "away": { "type": "seed", "value": 11 }
+  },
+
+  {
+    "code": "qf-1",
+    "best_of": 3,
+    "home": { "type": "match", "code": "r16-1", "result": "winner" },
+    "away": { "type": "match", "code": "r16-2", "result": "winner" }
+  },
+  {
+    "code": "qf-2",
+    "best_of": 3,
+    "home": { "type": "match", "code": "r16-3", "result": "winner" },
+    "away": { "type": "match", "code": "r16-4", "result": "winner" }
+  },
+  {
+    "code": "qf-3",
+    "best_of": 3,
+    "home": { "type": "match", "code": "r16-5", "result": "winner" },
+    "away": { "type": "match", "code": "r16-6", "result": "winner" }
+  },
+  {
+    "code": "qf-4",
+    "best_of": 3,
+    "home": { "type": "match", "code": "r16-7", "result": "winner" },
+    "away": { "type": "match", "code": "r16-8", "result": "winner" }
+  },
+
+  {
+    "code": "sf-1",
+    "best_of": 5,
+    "home": { "type": "match", "code": "qf-1", "result": "winner" },
+    "away": { "type": "match", "code": "qf-2", "result": "winner" }
+  },
+  {
+    "code": "sf-2",
+    "best_of": 5,
+    "home": { "type": "match", "code": "qf-3", "result": "winner" },
+    "away": { "type": "match", "code": "qf-4", "result": "winner" }
+  },
+  {
+    "code": "wf-1",
+    "best_of": 5,
+    "home": { "type": "match", "code": "sf-1", "result": "winner" },
+    "away": { "type": "match", "code": "sf-2", "result": "winner" }
+  },
+  {
+    "code": "gf-1",
+    "best_of": 5,
+    "home": { "type": "match", "code": "wf-1", "result": "winner" },
+    "away": { "type": "match", "code": "lf-1", "result": "winner" }
+  },
+  {
+    "code": "gf-2",
+    "best_of": 5,
+    "home": { "type": "match", "code": "gf-1", "result": "loser" },
+    "away": { "type": "match", "code": "gf-1", "result": "winner" }
+  },
+
+  {
+    "code": "lb1-1",
+    "best_of": 3,
+    "home": { "type": "match", "code": "r16-1", "result": "loser" },
+    "away": { "type": "match", "code": "r16-2", "result": "loser" }
+  },
+  {
+    "code": "lb1-2",
+    "best_of": 3,
+    "home": { "type": "match", "code": "r16-3", "result": "loser" },
+    "away": { "type": "match", "code": "r16-4", "result": "loser" }
+  },
+  {
+    "code": "lb1-3",
+    "best_of": 3,
+    "home": { "type": "match", "code": "r16-5", "result": "loser" },
+    "away": { "type": "match", "code": "r16-6", "result": "loser" }
+  },
+  {
+    "code": "lb1-4",
+    "best_of": 3,
+    "home": { "type": "match", "code": "r16-7", "result": "loser" },
+    "away": { "type": "match", "code": "r16-8", "result": "loser" }
+  },
+
+  {
+    "code": "lb2-1",
+    "best_of": 3,
+    "home": { "type": "match", "code": "qf-4", "result": "loser" },
+    "away": { "type": "match", "code": "lb1-1", "result": "winner" }
+  },
+  {
+    "code": "lb2-2",
+    "best_of": 3,
+    "home": { "type": "match", "code": "qf-3", "result": "loser" },
+    "away": { "type": "match", "code": "lb1-2", "result": "winner" }
+  },
+  {
+    "code": "lb2-3",
+    "best_of": 3,
+    "home": { "type": "match", "code": "qf-2", "result": "loser" },
+    "away": { "type": "match", "code": "lb1-3", "result": "winner" }
+  },
+  {
+    "code": "lb2-4",
+    "best_of": 3,
+    "home": { "type": "match", "code": "qf-1", "result": "loser" },
+    "away": { "type": "match", "code": "lb1-4", "result": "winner" }
+  },
+
+  {
+    "code": "lb3-1",
+    "best_of": 3,
+    "home": { "type": "match", "code": "lb2-1", "result": "winner" },
+    "away": { "type": "match", "code": "lb2-2", "result": "winner" }
+  },
+  {
+    "code": "lb3-2",
+    "best_of": 3,
+    "home": { "type": "match", "code": "lb2-3", "result": "winner" },
+    "away": { "type": "match", "code": "lb2-4", "result": "winner" }
+  },
+
+  {
+    "code": "lqf-1",
+    "best_of": 5,
+    "home": { "type": "match", "code": "sf-1", "result": "loser" },
+    "away": { "type": "match", "code": "lb3-1", "result": "winner" }
+  },
+  {
+    "code": "lqf-2",
+    "best_of": 5,
+    "home": { "type": "match", "code": "sf-2", "result": "loser" },
+    "away": { "type": "match", "code": "lb3-2", "result": "winner" }
+  },
+
+  {
+    "code": "lsf-1",
+    "best_of": 5,
+    "home": { "type": "match", "code": "lqf-1", "result": "winner" },
+    "away": { "type": "match", "code": "lqf-2", "result": "winner" }
+  },
+  {
+    "code": "lf-1",
+    "best_of": 5,
+    "home": { "type": "match", "code": "wf-1", "result": "loser" },
+    "away": { "type": "match", "code": "lsf-1", "result": "winner" }
+  }
+]

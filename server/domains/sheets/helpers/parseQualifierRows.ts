@@ -51,10 +51,10 @@ export function parseQualifierRows(
     for (let i = dataStartIndex; i < rows.length; i++) {
         const row = rows[i];
         logger.debug({row:row, message: "Row debug"});
-        const rowNumber = i + 1; // 1-indexed for error messages
+        const rowNumber = i + 1;
 
         const code = row[COL_CODE]?.trim() ?? '';
-        if (!code) continue; // empty code = skip row
+        if (!code) continue;
 
         const homeTeamName = row[COL_HOME]?.trim() ?? '';
         const awayTeamName = row[COL_AWAY]?.trim() ?? '';
@@ -83,8 +83,8 @@ export function parseQualifierRows(
             for (let col = COL_SET_START; col <= COL_SET_END; col++) {
                 const cell = row[col]?.trim() ?? '';
                 if (!cell) continue;
-                if (cell.toLowerCase() === 'xx') continue; // default placeholder, skip
-                if (cell.toUpperCase() === 'FF') { // "FF" written in a score cell also marks a forfeit
+                if (cell.toLowerCase() === 'xx') continue;
+                if (cell.toUpperCase() === 'FF') {
                     isForfeit = true;
                     sets.length = 0;
                     break;
