@@ -123,6 +123,33 @@ export async function insertTeam(supabase: DBClient, p: InsertTeamDto): Promise<
     return Ok(data);
 }
 
+export async function getOrCreateByeTeam(supabase: DBClient, seasonId: string): Promise<Result<Team>> {
+    const {data: existing, error: findError} = await supabase
+        .from("teams")
+        .select("*")
+        .eq("season_id", seasonId)
+        .eq("is_bye", true)
+        .maybeSingle();
+    if (findError) return Err(serializeError(findError, "DB_ERROR"));
+    if (existing) return Ok(existing);
+
+    const {data, error} = await supabase
+        .from("teams")
+        .insert({
+            name: "BYE",
+            slug: "bye",
+            season_id: seasonId,
+            brick_number: 0,
+            brick_color: "White",
+            starting_lvr: 100,
+            is_bye: true,
+        })
+        .select()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
 export async function findTeamsBySeasonId(supabase: DBClient, seasonId: string): Promise<Result<Team[]>> {
     const {data, error} = await supabase
         .from("teams")

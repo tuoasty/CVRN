@@ -12,6 +12,11 @@ const COL_NOTE = 19;     // T
 const COL_REFEREE = 21;  // V
 const COL_MEDIA = 23;    // X
 
+// Away-team cell values that mean "this team has a bye this round", not a real
+// opponent. Explicit allowlist (normalized lowercase) so a typo'd real team name
+// still fails the name lookup rather than being silently swallowed as a bye.
+const BYE_AWAY_TOKENS = new Set(["n/a", "na", "by round", "(by round)", "bye"]);
+
 function parseSetScore(
     cell: string,
     setNumber: number,
@@ -54,7 +59,10 @@ export function parseQualifierRows(
         const homeTeamName = row[COL_HOME]?.trim() ?? '';
         const awayTeamName = row[COL_AWAY]?.trim() ?? '';
 
-        if (!homeTeamName) continue; 
+        if (!homeTeamName) continue;
+
+        const isByeAway = BYE_AWAY_TOKENS.has(awayTeamName.toLowerCase());
+
         if (!awayTeamName) {
             errors.push({row: rowNumber, message: `Row ${rowNumber}: missing away team name`});
             continue;
@@ -95,6 +103,7 @@ export function parseQualifierRows(
             sets,
             winner: winnerRaw,
             isForfeit,
+            isByeAway,
             scheduleRaw,
             scheduleCellColor,
             referees,
