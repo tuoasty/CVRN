@@ -66,6 +66,27 @@ export async function deleteTeamNameHistoryById(
     return Ok(true);
 }
 
+export async function deleteTeamNameHistoryBySeasonId(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<true>> {
+    const {data: teamRows, error: teamErr} = await supabase
+        .from("teams")
+        .select("id")
+        .eq("season_id", seasonId);
+    if (teamErr) return Err(serializeError(teamErr, "DB_ERROR"));
+
+    const teamIds = (teamRows ?? []).map(row => (row as {id: string}).id);
+    if (teamIds.length === 0) return Ok(true);
+
+    const {error} = await supabase
+        .from("team_name_history")
+        .delete()
+        .in("team_id", teamIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
 export async function findTeamNameHistoryByTeamIds(
     supabase: DBClient,
     teamIds: string[]
