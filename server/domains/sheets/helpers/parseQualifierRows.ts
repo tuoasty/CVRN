@@ -6,11 +6,11 @@ const COL_HOME = 6;      // G
 const COL_AWAY = 8;      // I
 const COL_SCHEDULE = 10; // K
 const COL_SET_START = 12; // M (Sets 1-5: M=12, N=13, O=14, P=15, Q=16)
-const COL_SET_END = 16;   // Q
-const COL_WINNER = 18;   // S
-const COL_NOTE = 19;     // T
-const COL_REFEREE = 21;  // V
-const COL_MEDIA = 23;    // X
+const COL_SET_END = 14;   // O
+const COL_WINNER = 16;   // Q
+const COL_NOTE = 17;     // R
+const COL_REFEREE = 19;  // T
+const COL_MEDIA = 21;    // V
 
 function parseSetScore(
     cell: string,
