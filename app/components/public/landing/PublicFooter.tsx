@@ -5,10 +5,13 @@ import {Code2, ExternalLink, MessageSquare, Users} from "lucide-react";
 import Link from "next/link";
 
 const STAFF = [
-    { name: "Eddy", role: "Owner"},
-    { name: "Edge", role: "Co-Owner"},
-    { name: "Michiru", role: "Co-Owner" },
-    // { name: "Sonny", role: "Commissioner" },
+    { name: "CertifiedEddy", role: "Owner"},
+    { name: "DivKenma", role: "Co-Owner"},
+    { name: "curse", role: "Co-Owner" },
+    { name: "sonny", role: "AS Commissioner" },
+    { name: "Hunter", role: "NA Commissioner" },
+    { name: "tee", role: "EU Commissioner" },
+    { name: "thor", role: "SA Commissioner" },
     // { name: "Ard", role: "Acting Commissioner" },
     // { name: "Roppy", role: "Staff" },
     // { name: "Toast", role: "Staff" },
@@ -106,7 +109,7 @@ export default function PublicFooter() {
                             Hero Banner Design
                         </p>
                         <p className="text-[11px] text-muted-foreground">
-                            by <span className="font-medium text-foreground/80">ZHAN (@rryy927)</span>
+                            by <span className="font-medium text-foreground/80">nightmoon (@nightmoon_vb)</span>
                         </p>
                     </div>
                 </div>
