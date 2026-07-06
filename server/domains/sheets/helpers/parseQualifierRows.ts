@@ -72,7 +72,7 @@ export function parseQualifierRows(
         const scheduleCellColor = fgColors?.[i]?.[COL_SCHEDULE] ?? null;
         const winnerRaw = row[COL_WINNER]?.trim() || null;
         const noteRaw = row[COL_NOTE]?.trim() ?? '';
-        const isForfeit = noteRaw.toUpperCase() === 'FF';
+        let isForfeit = noteRaw.toUpperCase() === 'FF';
         const referees = (row[COL_REFEREE]?.trim() || '').split('/').map(s => s.trim()).filter(Boolean);
         const media = (row[COL_MEDIA]?.trim() || '').split('/').map(s => s.trim()).filter(Boolean);
 
@@ -84,6 +84,11 @@ export function parseQualifierRows(
                 const cell = row[col]?.trim() ?? '';
                 if (!cell) continue;
                 if (cell.toLowerCase() === 'xx') continue; // default placeholder, skip
+                if (cell.toUpperCase() === 'FF') { // "FF" written in a score cell also marks a forfeit
+                    isForfeit = true;
+                    sets.length = 0;
+                    break;
+                }
                 const setNumber = col - COL_SET_START + 1;
                 const parsed = parseSetScore(cell, setNumber, rowNumber, errors);
                 if (!parsed) {
