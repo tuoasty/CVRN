@@ -12,6 +12,7 @@ export type {
     InsertPlayoffBracketDto,
     InsertPlayoffMatchDto,
     PlayoffMatchTemplate,
+    PlayoffRoundGroup,
     SeedSlot,
     MatchSlot,
     PlayoffTeamSlot,

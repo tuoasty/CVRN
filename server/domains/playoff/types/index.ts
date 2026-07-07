@@ -1,7 +1,8 @@
 export interface InsertPlayoffBracketDto {
     id?: string;
     seasonId: string;
-    round: "play_in" | "round_of_16" | "quarterfinal" | "semifinal" | "final" | "third_place";
+    round: string;
+    playoff_group: string;
     matchId: string;
     seedHome: number | null;
     seedAway: number | null;
@@ -18,6 +19,7 @@ export interface InsertPlayoffMatchDto {
     matchType: "playoffs";
     status: "pending";
     bestOf: 3 | 5;
+    match_code: string;
     homeTeamId?: string | null;
     awayTeamId?: string | null;
 }
@@ -37,15 +39,20 @@ export type PlayoffTeamSlot = SeedSlot | MatchSlot;
 
 export interface PlayoffMatchTemplate {
     code: string;
-    sheet_code: string;
-    best_of: number;
+    best_of: 3 | 5;
     home:PlayoffTeamSlot
     away:PlayoffTeamSlot;
 }
 
+export interface PlayoffRoundGroup {
+    round: string;
+    matches: PlayoffMatchTemplate[];
+}
+
 export interface PlayoffTemplate {
     teams: number;
-    matches: PlayoffMatchTemplate[]
+    upper: PlayoffRoundGroup[];
+    lower: PlayoffRoundGroup[];
 }
 
 export type {
