@@ -22,6 +22,32 @@ export interface InsertPlayoffMatchDto {
     awayTeamId?: string | null;
 }
 
+export interface SeedSlot {
+    type: "seed";
+    value: number;
+}
+
+export interface MatchSlot {
+    type: "match";
+    code: string;
+    result:"winner"|"loser"
+}
+
+export type PlayoffTeamSlot = SeedSlot | MatchSlot;
+
+export interface PlayoffMatchTemplate {
+    code: string;
+    sheet_code: string;
+    best_of: number;
+    home:PlayoffTeamSlot
+    away:PlayoffTeamSlot;
+}
+
+export interface PlayoffTemplate {
+    teams: number;
+    matches: PlayoffMatchTemplate[]
+}
+
 export type {
     PlayoffRound,
     GeneratePlayoffBracketInput,

@@ -4,6 +4,7 @@ import {z} from "zod"
 import {createServerSupabase} from "@/server/supabase/server";
 import {Err} from "@/shared/types/result";
 import {
+    buildPlayoffBracket,
     GeneratePlayoffBracketSchema,
 } from "@/server/domains/playoff";
 import {
@@ -16,7 +17,7 @@ export async function generatePlayoffBracketAction(input: unknown) {
     const parsed = GeneratePlayoffBracketSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return generatePlayoffBracket(supabase, parsed.data);
+    return buildPlayoffBracket(supabase, parsed.data);
 }
 
 export async function getPlayoffBracketBySeasonIdAction(seasonId: string) {

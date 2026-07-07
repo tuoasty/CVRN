@@ -1,0 +1,146 @@
+{
+  "teams": 20,
+  "matches": [
+    {
+      "code": "pi-1",
+      "sheet_code": "P1",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 16 },
+      "away": { "type": "seed", "value": 17 }
+    },
+    {
+      "code": "pi-2",
+      "sheet_code": "P2",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 13 },
+      "away": { "type": "seed", "value": 20 }
+    },
+    {
+      "code": "pi-3",
+      "sheet_code": "P3",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 15 },
+      "away": { "type": "seed", "value": 18 }
+    },
+    {
+      "code": "pi-4",
+      "sheet_code": "p4",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 14 },
+      "away": { "type": "seed", "value": 19 }
+    },
+    {
+      "code": "r16-1",
+      "sheet_code": "W1",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 1 },
+      "away": { "type": "match", "code": "pi-1", "result": "winner" }
+    },
+    {
+      "code": "r16-2",
+      "sheet_code": "W2",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 8 },
+      "away": { "type": "seed", "value": 9 }
+    },
+    {
+      "code": "r16-3",
+      "sheet_code": "W3",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 4 },
+      "away": { "type": "match", "code": "pi-2", "result": "winner" }
+    },
+    {
+      "code": "r16-4",
+      "sheet_code": "W4",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 5 },
+      "away": { "type": "seed", "value": 12 }
+    },
+    {
+      "code": "r16-5",
+      "sheet_code": "W5",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 2 },
+      "away": { "type": "match", "code": "pi-3", "result": "winner" }
+    },
+    {
+      "code": "r16-6",
+      "sheet_code": "W6",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 7 },
+      "away": { "type": "seed", "value": 10 }
+    },
+    {
+      "code": "r16-7",
+      "sheet_code": "W7",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 3 },
+      "away": { "type": "match", "code": "pi-4", "result": "winner" }
+    },
+    {
+      "code": "r16-8",
+      "sheet_code": "W8",
+      "best_of": 3,
+      "home": { "type": "seed", "value": 6 },
+      "away": { "type": "seed", "value": 11 }
+    },
+    {
+      "code": "qf-1",
+      "sheet_code": "QF1",
+      "best_of": 3,
+      "home": { "type": "match", "code": "r16-1", "result": "winner" },
+      "away": { "type": "match", "code": "r16-2", "result": "winner" }
+    },
+    {
+      "code": "qf-2",
+      "sheet_code": "QF2",
+      "best_of": 3,
+      "home": { "type": "match", "code": "r16-3", "result": "winner" },
+      "away": { "type": "match", "code": "r16-4", "result": "winner" }
+    },
+    {
+      "code": "qf-3",
+      "sheet_code": "QF3",
+      "best_of": 3,
+      "home": { "type": "match", "code": "r16-5", "result": "winner" },
+      "away": { "type": "match", "code": "r16-6", "result": "winner" }
+    },
+    {
+      "code": "qf-4",
+      "sheet_code": "QF4",
+      "best_of": 3,
+      "home": { "type": "match", "code": "r16-7", "result": "winner" },
+      "away": { "type": "match", "code": "r16-8", "result": "winner" }
+    },
+    {
+      "code": "sf-1",
+      "sheet_code": "SF1",
+      "best_of": 5,
+      "home": { "type": "match", "code": "qf-1", "result": "winner" },
+      "away": { "type": "match", "code": "qf-2", "result": "winner" }
+    },
+    {
+      "code": "sf-2",
+      "sheet_code": "SF2",
+      "best_of": 5,
+      "home": { "type": "match", "code": "qf-3", "result": "winner" },
+      "away": { "type": "match", "code": "qf-4", "result": "winner" }
+    },
+    {
+      "code": "gf-1",
+      "sheet_code": "GF",
+      "best_of": 5,
+      "home": { "type": "match", "code": "sf-1", "result": "winner" },
+      "away": { "type": "match", "code": "sf-2", "result": "winner" }
+    },
+    {
+      "code": "tp-1",
+      "sheet_code": "3RD",
+      "best_of": 5,
+      "home": { "type": "match", "code": "sf-1", "result": "loser" },
+      "away": { "type": "match", "code": "sf-2", "result": "loser" }
+    }
+    ]
+
+}
