@@ -22,6 +22,7 @@ export async function insertSeason(supabase: DBClient, p: InsertSeasonDto): Prom
             slug: p.slug,
             league_type: p.leagueType,
             theme: p.theme ?? null,
+            playoff_config_id: p.playoffConfigId ?? null,
         })
         .select()
         .single();
@@ -75,6 +76,7 @@ export async function updateSeasonById(
     if (updates.theme !== undefined) payload.theme = updates.theme;
     if (updates.maxPlayers !== undefined) payload.max_players = updates.maxPlayers;
     if (updates.leagueType !== undefined) payload.league_type = updates.leagueType;
+    if (updates.playoffConfigId !== undefined) payload.playoff_config_id = updates.playoffConfigId;
 
     const {data, error} = await supabase
         .from("seasons")

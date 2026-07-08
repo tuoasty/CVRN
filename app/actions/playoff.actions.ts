@@ -8,8 +8,8 @@ import {
     GeneratePlayoffBracketSchema,
 } from "@/server/domains/playoff";
 import {
-    generatePlayoffBracket,
     getPlayoffBracketBySeasonId,
+    getAllPlayoffConfigs,
     resetPlayoffBracketsService
 } from "@/server/domains/playoff";
 
@@ -25,6 +25,11 @@ export async function getPlayoffBracketBySeasonIdAction(seasonId: string) {
     if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return getPlayoffBracketBySeasonId(supabase, parsed.data);
+}
+
+export async function getAllPlayoffConfigsAction() {
+    const supabase = await createServerSupabase();
+    return getAllPlayoffConfigs(supabase);
 }
 
 export async function resetPlayoffBracketsAction(seasonId: string) {

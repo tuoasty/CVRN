@@ -9,6 +9,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/a
 import {createSeasonAction, updateSeasonAction} from "@/app/actions/season.actions";
 import {mutateAllSeasons} from "@/app/hooks/useSeasons";
 import {useRegions} from "@/app/hooks/useRegions";
+import {usePlayoffConfigs} from "@/app/hooks/usePlayoffs";
 import {SeasonWithPlayoffConfig} from "@/server/domains/season";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
@@ -27,8 +28,10 @@ function toSlug(name: string): string {
 export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}: SeasonFormDialogProps) {
     const isEdit = !!season;
     const {regions, isLoading: regionsLoading} = useRegions();
+    const {configs, isLoading: configsLoading} = usePlayoffConfigs();
 
     const [name, setName] = useState(season?.name ?? "");
+    const [playoffConfigId, setPlayoffConfigId] = useState(season?.playoff_config_id ?? "");
     const [slug, setSlug] = useState(season?.slug ?? "");
     const [maxPlayers, setMaxPlayers] = useState(String(season?.max_players ?? 18));
     const [regionId, setRegionId] = useState(season?.region_id ?? "");
@@ -47,6 +50,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
         setStartDate(season?.start_date ?? "");
         setEndDate(season?.end_date ?? "");
         setLeagueType(season?.league_type ?? "main")
+        setPlayoffConfigId(season?.playoff_config_id ?? "");
         setSlugManual(isEdit);
         setLoading(false);
     }, [open]);
@@ -78,6 +82,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                     maxPlayers: maxPlayers,
                     leagueType: leagueType,
                     endDate: endDate || null,
+                    playoffConfigId: playoffConfigId || null,
                 })
                 : await createSeasonAction({
                     name: name.trim(),
@@ -87,6 +92,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                     startDate,
                     leagueType: leagueType,
                     endDate: endDate || null,
+                    playoffConfigId: playoffConfigId || null,
                 });
 
             if (!result.ok) {
@@ -170,6 +176,27 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                                 </SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Playoff Config <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                        <Select
+                            value={playoffConfigId || "none"}
+                            onValueChange={(v) => setPlayoffConfigId(v === "none" ? "" : v)}
+                            disabled={loading || configsLoading}
+                        >
+                            <SelectTrigger className="rounded-sm">
+                                <SelectValue placeholder={configsLoading ? "Loading..." : "Select config"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                {configs.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                        {c.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">Determines the playoff bracket structure at generation.</p>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="season-max-players">Max Players</Label>

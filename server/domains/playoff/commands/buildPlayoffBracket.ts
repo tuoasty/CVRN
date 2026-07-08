@@ -4,6 +4,7 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {GeneratePlayoffBracketInput, InsertPlayoffBracketDto, InsertPlayoffMatchDto, PlayoffMatchTemplate} from "../types";
 import {
+    deletePlayoffMatchesBySeasonId,
     findPlayoffConfigBySeasonId,
     findStandingsBySeasonId,
     insertPlayoffBrackets,
@@ -51,20 +52,34 @@ export async function buildPlayoffBracket(
             });
         }
 
-        //TODO -> save config strings to database and derive. Remove hardcode
+        if (!configResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: configResult.error }, "Failed to look up playoff config");
+            return configResult;
+        }
+        const config = configResult.value;
+        if (!config) {
+            logger.error({ seasonId: p.seasonId }, "Playoff config not found");
+            return Err({
+                message: "No playoff configuration found for this season",
+                code: "NOT_FOUND"
+            });
+        }
 
-        // if (!configResult.ok) {
-        //     logger.error({ seasonId: p.seasonId, error: configResult.error }, "Failed to look up playoff config");
-        //     return configResult;
-        // }
-        // const config = configResult.value;
-        // if (!config) {
-        //     logger.error({ seasonId: p.seasonId }, "Playoff config not found");
-        //     return Err({
-        //         message: "No playoff configuration found for this season",
-        //         code: "NOT_FOUND"
-        //     });
-        // }
+        // `template` cast is a shim until `supabase gen types` regenerates the row type
+        // with the new playoff_configs.template column.
+        const template = (config as { template?: string | null }).template;
+        if (!template) {
+            return Err({
+                message: "This season's playoff configuration has no template set",
+                code: "VALIDATION_ERROR"
+            });
+        }
+        if (!(template in templates)) {
+            return Err({
+                message: `Unknown playoff template "${template}"`,
+                code: "VALIDATION_ERROR"
+            });
+        }
 
         if (!standingsResult.ok) {
             logger.error({ seasonId: p.seasonId, error: standingsResult.error }, "Failed to fetch standings");
@@ -72,9 +87,8 @@ export async function buildPlayoffBracket(
         }
         const standings = standingsResult.value;
 
-        const playoffString = "16q";
-        const playoffConfig = templates[playoffString]
-        const totalTeams = playoffConfig.teams
+        const playoffConfig = templates[template as keyof typeof templates];
+        const totalTeams = playoffConfig.teams;
 
         if (standings.length < totalTeams) {
             return Err({
@@ -84,6 +98,9 @@ export async function buildPlayoffBracket(
         }
 
         const byCode = new Map<string, BracketNode>();
+        // Global 1..N draw order: upper rounds first, then lower, in template order.
+        // The display filters by round and sorts by this within each round.
+        let displayOrder = 1;
         const tracks = [
             { group: "upper" as const, rounds: playoffConfig.upper},
             { group: "lower" as const, rounds: playoffConfig.lower}
@@ -101,19 +118,21 @@ export async function buildPlayoffBracket(
                         matchType: "playoffs",
                         status: "pending",
                         bestOf: match.best_of,
-                        match_code: match.code,
+                        matchCode: match.code,
                         homeTeamId: match.home.type === "seed" ? standings[match.home.value - 1].team_id : null,
                         awayTeamId: match.away.type === "seed" ? standings[match.away.value - 1].team_id : null
                     }
 
                     const playoffBracket:InsertPlayoffBracketDto = {
                         id: randomUUID(),
+                        
                         seasonId: season.id,
                         round: roundGroup.round,
-                        playoff_group: group,
+                        playoffGroup: group,
                         matchId: matchId,
                         seedHome: match.home.type === "seed" ? match.home.value : null,
                         seedAway: match.away.type === "seed" ? match.away.value : null,
+                        displayOrder: displayOrder++,
                         nextBracketId: null,
                         winnerPosition: null,
                         loserNextBracketId: null,
@@ -141,16 +160,62 @@ export async function buildPlayoffBracket(
                 if(slot.result === "winner"){
                     source.bracket.nextBracketId = node.bracket.id!
                     source.bracket.winnerPosition = side
-                } else {
+                } else if(slot.result === "loser") {
                     source.bracket.loserNextBracketId = node.bracket.id!
                     source.bracket.loserPosition = side
                 }
             }
         })
 
+        const matchesToInsert = Array.from(byCode.values(), (node) => node.match);
+        const bracketsToInsert = Array.from(byCode.values(), (node) => node.bracket);
+        // These three writes are not a single DB transaction (separate PostgREST calls).
+        // If a later step fails after matches land, delete the just-inserted playoff
+        // matches so the season can be re-generated. playoff_brackets FK is ON DELETE
+        // CASCADE, so removing the matches also clears their brackets.
+        const rollback = async (stage: string) => {
+            const cleanup = await deletePlayoffMatchesBySeasonId(supabase, p.seasonId);
+            if (!cleanup.ok) {
+                logger.error(
+                    { seasonId: p.seasonId, stage, error: cleanup.error },
+                    "Playoff generation rollback FAILED — orphan playoff matches remain, manual cleanup required"
+                );
+            }
+        };
+
+        const matchesResult = await insertPlayoffMatches(supabase, matchesToInsert);
+        if (!matchesResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: matchesResult.error }, "Failed to insert playoff matches");
+            return matchesResult;
+        }
+        const matches = matchesResult.value;
+
+        const bracketsResult = await insertPlayoffBrackets(supabase, bracketsToInsert);
+        if (!bracketsResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: bracketsResult.error }, "Failed to insert playoff brackets; rolling back matches");
+            await rollback("brackets");
+            return bracketsResult;
+        }
+        const brackets = bracketsResult.value;
+
+        const statusResult = await updateSeasonPlayoffStatus(supabase, p.seasonId, {
+            playoffStarted: true
+        });
+        if (!statusResult.ok) {
+            logger.error({ seasonId: p.seasonId, error: statusResult.error }, "Failed to update season playoff status; rolling back matches");
+            await rollback("status");
+            return statusResult;
+        }
+
+        logger.info({
+            seasonId: p.seasonId,
+            matchesCreated: matches.length,
+            bracketsCreated: brackets.length
+        }, "Playoff bracket generated successfully");
+
         return Ok({
-            matchesCreated: 0,
-            bracketsCreated: 0
+            matchesCreated: matches.length,
+            bracketsCreated: brackets.length
         });
 
     } catch (error) {

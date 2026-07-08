@@ -15,7 +15,7 @@ export default function PlayoffsPage() {
         ? new Date(season.end_date) < new Date()
         : false;
 
-    const { brackets, isLoading: loadingBrackets } = usePlayoffBrackets(
+    const { brackets, incomingMap, isLoading: loadingBrackets } = usePlayoffBrackets(
         hasPlayoffs ? season.id : null
     );
 
@@ -89,6 +89,7 @@ export default function PlayoffsPage() {
                     ) : brackets.length > 0 ? (
                         <PlayoffBracketDisplay
                             brackets={brackets}
+                            incomingMap={incomingMap}
                             seasonId={season.id}
                             regionId={season.region_id}
                             linkContext="public"

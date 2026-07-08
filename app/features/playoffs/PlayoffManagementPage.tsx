@@ -30,7 +30,7 @@ export default function PlayoffManagementPage() {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const { seasons: allSeasons } = useSeasons();
-    const { brackets, isLoading: loadingBrackets } = usePlayoffBrackets(selectedSeasonId ?? null);
+    const { brackets, incomingMap, isLoading: loadingBrackets } = usePlayoffBrackets(selectedSeasonId ?? null);
 
     const selectedSeason = allSeasons.find((s) => s.id === selectedSeasonId);
     const hasPlayoffStarted = selectedSeason?.playoff_started || false;
@@ -162,7 +162,7 @@ export default function PlayoffManagementPage() {
                         </div>
                     </div>
                 ) : seasonIdValue && brackets.length > 0 ? (
-                    <PlayoffBracketDisplay brackets={brackets} seasonId={seasonIdValue} regionId={regionIdValue} linkContext="admin" />
+                    <PlayoffBracketDisplay brackets={brackets} incomingMap={incomingMap} seasonId={seasonIdValue} regionId={regionIdValue} linkContext="admin" />
                 ) : seasonIdValue && !isProcessing ? (
                     <div className="panel p-12 border-l-4 border-l-muted">
                         <p className="text-sm text-muted-foreground text-center">

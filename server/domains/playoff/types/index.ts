@@ -2,14 +2,15 @@ export interface InsertPlayoffBracketDto {
     id?: string;
     seasonId: string;
     round: string;
-    playoff_group: string;
+    playoffGroup: string;
     matchId: string;
     seedHome: number | null;
     seedAway: number | null;
+    displayOrder: number;
     nextBracketId: string | null;
     winnerPosition: "home" | "away" | null;
-    loserNextBracketId?: string | null;
-    loserPosition?: "home" | "away" | null;
+    loserNextBracketId: string | null;
+    loserPosition: "home" | "away" | null;
 }
 
 export interface InsertPlayoffMatchDto {
@@ -19,7 +20,7 @@ export interface InsertPlayoffMatchDto {
     matchType: "playoffs";
     status: "pending";
     bestOf: 3 | 5;
-    match_code: string;
+    matchCode: string;
     homeTeamId?: string | null;
     awayTeamId?: string | null;
 }
@@ -66,3 +67,13 @@ export {
     GeneratePlayoffBracketSchema,
     GetPlayoffScheduleSchema,
 } from "./schemas";
+
+export type IncomingSource = {
+    type: "Winner" | "Loser";
+    source: string;
+}
+
+export type Incoming = {
+    home?: IncomingSource;
+    away?: IncomingSource;
+}

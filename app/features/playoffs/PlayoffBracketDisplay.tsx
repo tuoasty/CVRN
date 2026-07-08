@@ -1,19 +1,21 @@
 "use client";
 
-import React, {useMemo, useEffect, useRef, useCallback} from "react";
+import React, {useMemo, useEffect, useRef, useCallback, useState} from "react";
 import {PlayoffBracket, Match} from "@/shared/types/db";
 import {MatchBracketCard} from "./MatchBracketCard";
 import {useTeams} from "@/app/hooks/useTeams";
 import {useAllMatches} from "@/app/hooks/useMatches";
 import {useRegions} from "@/app/hooks/useRegions";
 import {useSeasons} from "@/app/hooks/useSeasons";
-import {Loader2, ZoomIn, ZoomOut, Maximize} from "lucide-react";
+import {Loader2, Maximize, Minimize} from "lucide-react";
 import {Button} from "@/app/components/ui/button";
-import {TransformWrapper, TransformComponent, useControls} from "react-zoom-pan-pinch";
+import {cn} from "@/lib/utils";
 import {buildPublicMatchHref, buildAdminMatchHref} from "@/app/utils/matchDetailHref";
+import { Incoming, IncomingSource } from "@/server/domains/playoff";
 
 type PlayoffBracketDisplayProps = {
     brackets: PlayoffBracket[];
+    incomingMap: Map<string, Incoming>;
     seasonId: string;
     regionId: string;
     linkContext?: "public" | "admin";
@@ -50,80 +52,13 @@ const ROUND_ORDER: RoundType[] = [
 
 const MATCH_HEIGHT = 140;
 const MATCH_WIDTH = 300;
-const ROUND_GAP = 120;
-const VERTICAL_SPACING_BASE = 16;
-const HEADER_OFFSET = 80;
+const ROUND_GAP = 72;
+const VERTICAL_SPACING_BASE = 20;
+const HEADER_OFFSET = 64;
 const BOTTOM_PADDING = 80;
+const CANVAS_MARGIN = 24;
 
-function assignDisplayOrder(brackets: BracketWithMatch[]): Map<string, number> {
-    const orderMap = new Map<string, number>();
-
-    const finalBracket = brackets.find(b => b.round === "final");
-    if (!finalBracket) return orderMap;
-
-    let currentOrder = 0;
-
-    function assignOrder(bracketId: string) {
-        const bracket = brackets.find(b => b.id === bracketId);
-        if (!bracket) return;
-
-        orderMap.set(bracketId, currentOrder++);
-
-        const feedingBrackets = brackets.filter(b => b.next_bracket_id === bracketId);
-
-        if (feedingBrackets.length === 0) {
-            return;
-        }
-
-        feedingBrackets.sort((a, b) => {
-            const seedA = Math.min(a.seed_home ?? 999, a.seed_away ?? 999);
-            const seedB = Math.min(b.seed_home ?? 999, b.seed_away ?? 999);
-            return seedA - seedB;
-        });
-
-        feedingBrackets.forEach((fb) => {
-            assignOrder(fb.id);
-        });
-    }
-
-    assignOrder(finalBracket.id);
-    return orderMap;
-}
-
-function ZoomControls() {
-    const {zoomIn, zoomOut, resetTransform} = useControls();
-
-    return (
-        <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-1.5">
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => zoomIn(0.4)}
-                className="rounded-sm h-9 w-9 p-0 bg-background/95 backdrop-blur-sm shadow-md"
-            >
-                <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => zoomOut(0.4)}
-                className="rounded-sm h-9 w-9 p-0 bg-background/95 backdrop-blur-sm shadow-md"
-            >
-                <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => resetTransform()}
-                className="rounded-sm h-9 w-9 p-0 bg-background/95 backdrop-blur-sm shadow-md"
-            >
-                <Maximize className="h-4 w-4" />
-            </Button>
-        </div>
-    );
-}
-
-export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext = "public"}: PlayoffBracketDisplayProps) {
+export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId, linkContext = "public"}: PlayoffBracketDisplayProps) {
     const {teams, isLoading: loadingTeams} = useTeams();
     const {matches, isLoading: loadingMatches} = useAllMatches();
     const {regions} = useRegions();
@@ -139,6 +74,15 @@ export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext
         return new Map(matches.map((match) => [match.id, match]));
     }, [matches]);
 
+    function slotLabel(
+        slot: IncomingSource | undefined
+    ): string | undefined {
+        if(!slot) return undefined
+        const code = matchesMap.get(slot.source)?.match_code;
+        if(!code) return undefined;
+        return `${slot.type} of ${code}`
+    }
+
     const {mainBracketRounds, thirdPlaceMatch} = useMemo(() => {
         const bracketsWithMatches = brackets
             .filter((b) => matchesMap.has(b.match_id))
@@ -149,8 +93,6 @@ export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext
 
         const thirdPlace = bracketsWithMatches.find((b) => b.round === "third_place");
         const mainBrackets = bracketsWithMatches.filter((b) => b.round !== "third_place");
-
-        const displayOrderMap = assignDisplayOrder(mainBrackets);
 
         const roundsMap = new Map<RoundType, BracketWithMatch[]>();
 
@@ -171,11 +113,9 @@ export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext
             return {
                 type: roundType,
                 label: ROUND_LABELS[roundType],
-                brackets: roundBrackets.sort((a, b) => {
-                    const orderA = displayOrderMap.get(a.id) || 999;
-                    const orderB = displayOrderMap.get(b.id) || 999;
-                    return orderA - orderB;
-                }),
+                brackets: roundBrackets.sort(
+                    (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)
+                ),
             };
         }).filter((r): r is RoundData => r !== null);
 
@@ -188,62 +128,49 @@ export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext
     const {matchPositions, connectorLines, thirdPlacePosition} = useMemo(() => {
         const positions = new Map<string, { x: number; y: number }>();
 
-        mainBracketRounds.forEach((round, roundIndex) => {
-            if (roundIndex === 0) {
-                if (round.type === "play_in" && mainBracketRounds.length > 1) {
-                    const nextRound = mainBracketRounds[1];
-                    round.brackets.forEach((bracket) => {
-                        const nextBracket = nextRound.brackets.find(
-                            nb => nb.id === bracket.next_bracket_id
-                        );
-                        if (nextBracket) {
-                            const nextBracketIndex = nextRound.brackets.indexOf(nextBracket);
-                            positions.set(bracket.id, {
-                                x: 0,
-                                y: HEADER_OFFSET + nextBracketIndex * (MATCH_HEIGHT + VERTICAL_SPACING_BASE) * 2,
-                            });
-                        } else {
-                            const bracketIndex = round.brackets.indexOf(bracket);
-                            positions.set(bracket.id, {
-                                x: 0,
-                                y: HEADER_OFFSET + bracketIndex * (MATCH_HEIGHT + VERTICAL_SPACING_BASE) * 2,
-                            });
-                        }
-                    });
-                } else {
-                    round.brackets.forEach((bracket, bracketIndex) => {
-                        positions.set(bracket.id, {
-                            x: 0,
-                            y: HEADER_OFFSET + bracketIndex * (MATCH_HEIGHT + VERTICAL_SPACING_BASE) * 2,
-                        });
-                    });
-                }
-            } else {
-                const previousRound = mainBracketRounds[roundIndex - 1];
+        const BASE_PITCH = MATCH_HEIGHT + VERTICAL_SPACING_BASE;
+        // The tight "base row" is the first full round. A leading play-in round is a
+        // partial pre-round, so the base row is round 1 in that case; otherwise round 0.
+        const baseRoundIndex =
+            mainBracketRounds[0]?.type === "play_in" && mainBracketRounds.length > 1 ? 1 : 0;
 
-                round.brackets.forEach((bracket) => {
+        mainBracketRounds.forEach((round, roundIndex) => {
+            const x = roundIndex * (MATCH_WIDTH + ROUND_GAP);
+
+            if (roundIndex === baseRoundIndex) {
+                // Base row: cards stacked adjacent at the tight pitch.
+                round.brackets.forEach((bracket, i) => {
+                    positions.set(bracket.id, {x, y: HEADER_OFFSET + i * BASE_PITCH});
+                });
+            } else if (roundIndex > baseRoundIndex) {
+                // Later rounds: center each card on the average Y of its feeders.
+                const previousRound = mainBracketRounds[roundIndex - 1];
+                round.brackets.forEach((bracket, i) => {
                     const feedingBrackets = previousRound.brackets.filter(
                         b => b.next_bracket_id === bracket.id
                     );
-
                     if (feedingBrackets.length > 0) {
-                        const avgY = feedingBrackets.reduce((sum, fb) => {
-                            const pos = positions.get(fb.id);
-                            return sum + (pos?.y || 0);
-                        }, 0) / feedingBrackets.length;
-
-                        positions.set(bracket.id, {
-                            x: roundIndex * (MATCH_WIDTH + ROUND_GAP),
-                            y: avgY,
-                        });
+                        const avgY = feedingBrackets.reduce(
+                            (sum, fb) => sum + (positions.get(fb.id)?.y ?? 0), 0
+                        ) / feedingBrackets.length;
+                        positions.set(bracket.id, {x, y: avgY});
                     } else {
-                        const bracketIndex = round.brackets.indexOf(bracket);
-                        const spacing = (MATCH_HEIGHT + VERTICAL_SPACING_BASE) * Math.pow(2, roundIndex);
-                        positions.set(bracket.id, {
-                            x: roundIndex * (MATCH_WIDTH + ROUND_GAP),
-                            y: HEADER_OFFSET + bracketIndex * spacing,
-                        });
+                        const spacing = BASE_PITCH * Math.pow(2, roundIndex - baseRoundIndex);
+                        positions.set(bracket.id, {x, y: HEADER_OFFSET + i * spacing});
                     }
+                });
+            } else {
+                // Pre-base round (play-in): align each card to the base-row card it feeds.
+                // The base row is adjacent, so target Y = targetIndex * BASE_PITCH.
+                const nextRound = mainBracketRounds[roundIndex + 1];
+                round.brackets.forEach((bracket, i) => {
+                    const targetIndex = nextRound
+                        ? nextRound.brackets.findIndex(nb => nb.id === bracket.next_bracket_id)
+                        : -1;
+                    const y = targetIndex >= 0
+                        ? HEADER_OFFSET + targetIndex * BASE_PITCH
+                        : HEADER_OFFSET + i * BASE_PITCH * 2;
+                    positions.set(bracket.id, {x, y});
                 });
             }
         });
@@ -359,17 +286,66 @@ export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext
         });
     }, [linkContext, regionCode, seasonSlug]);
 
-    // Prevent browser zoom (Ctrl+scroll) inside the bracket container
-    const handlePageWheel = useCallback((e: WheelEvent) => {
-        if (e.ctrlKey && containerRef.current?.contains(e.target as Node)) {
-            e.preventDefault();
+    // Fullscreen toggle via the Fullscreen API on the outer container.
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const toggleFullscreen = useCallback(() => {
+        if (typeof document === "undefined") return;
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            containerRef.current?.requestFullscreen();
         }
     }, []);
 
     useEffect(() => {
-        document.addEventListener('wheel', handlePageWheel, {passive: false});
-        return () => document.removeEventListener('wheel', handlePageWheel);
-    }, [handlePageWheel]);
+        const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener("fullscreenchange", onChange);
+        return () => document.removeEventListener("fullscreenchange", onChange);
+    }, []);
+
+    // Click-and-drag to scroll the bracket horizontally (vertical is page scroll,
+    // or internal scroll in fullscreen). Wheel is left untouched so the browser's
+    // native Ctrl+scroll zoom works.
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const dragOrigin = useRef({x: 0, scrollLeft: 0});
+    const didDrag = useRef(false);
+
+    const handleDragStart = useCallback((e: React.MouseEvent) => {
+        const el = scrollRef.current;
+        if (!el || e.button !== 0) return;
+        setIsDragging(true);
+        didDrag.current = false;
+        dragOrigin.current = {x: e.pageX, scrollLeft: el.scrollLeft};
+    }, []);
+
+    useEffect(() => {
+        if (!isDragging) return;
+        const onMove = (e: MouseEvent) => {
+            const el = scrollRef.current;
+            if (!el) return;
+            const dx = e.pageX - dragOrigin.current.x;
+            if (Math.abs(dx) > 4) didDrag.current = true;
+            el.scrollLeft = dragOrigin.current.scrollLeft - dx;
+        };
+        const onUp = () => setIsDragging(false);
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+        return () => {
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+        };
+    }, [isDragging]);
+
+    // Swallow the click that ends a drag so it doesn't navigate a card link.
+    const handleClickCapture = useCallback((e: React.MouseEvent) => {
+        if (didDrag.current) {
+            e.preventDefault();
+            e.stopPropagation();
+            didDrag.current = false;
+        }
+    }, []);
 
     if (loadingTeams || loadingMatches) {
         return (
@@ -395,28 +371,36 @@ export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext
     return (
         <div
             ref={containerRef}
-            className="relative panel overflow-hidden border-l-4 border-l-primary/30 rounded-sm"
-            style={{height: "calc(100vh - 12rem)", touchAction: "pan-x pan-y pinch-zoom"}}
+            className={cn(
+                "relative panel overflow-hidden border-l-4 border-l-primary/30 rounded-sm",
+                isFullscreen && "rounded-none border-l-0 bg-background"
+            )}
         >
-            <div className="absolute top-3 left-3 z-20 flex items-center gap-2 text-xs text-muted-foreground bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-sm border border-border shadow-sm">
-                <span>Scroll to zoom · Drag to pan</span>
-            </div>
-
-            <TransformWrapper
-                minScale={0.4}
-                maxScale={2}
-                initialScale={0.6}
-                centerOnInit
-                wheel={{step: 0.002}}
-                panning={{velocityDisabled: false}}
-                doubleClick={{disabled: true}}
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleFullscreen}
+                className="absolute top-3 right-3 z-20 rounded-sm h-9 w-9 p-0 bg-background/95 backdrop-blur-sm shadow-md"
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
             >
-                <ZoomControls />
-                <TransformComponent
-                    wrapperStyle={{width: "100%", height: "100%"}}
-                    contentStyle={{width: totalWidth, height: totalHeight}}
-                >
-                    <div className="relative" style={{width: totalWidth, height: totalHeight, padding: "16px"}}>
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </Button>
+
+            <div
+                ref={scrollRef}
+                onMouseDown={handleDragStart}
+                onClickCapture={handleClickCapture}
+                className={cn(
+                    "overflow-x-auto",
+                    isFullscreen ? "overflow-y-auto" : "overflow-y-hidden",
+                    isDragging ? "cursor-grabbing select-none" : "cursor-grab"
+                )}
+                style={isFullscreen
+                    ? {height: "100vh"}
+                    : {height: totalHeight + CANVAS_MARGIN * 2}}
+            >
+                    <div className="relative" style={{width: totalWidth + CANVAS_MARGIN * 2, height: totalHeight + CANVAS_MARGIN * 2}}>
+                      <div className="absolute" style={{left: CANVAS_MARGIN, top: CANVAS_MARGIN, width: totalWidth, height: totalHeight}}>
                         <svg
                             className="absolute top-0 left-0 pointer-events-none"
                             style={{width: totalWidth, height: totalHeight}}
@@ -511,6 +495,8 @@ export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext
                                                 match={bracket.match}
                                                 homeTeam={homeTeam}
                                                 awayTeam={awayTeam}
+                                                homeSource={slotLabel(incomingMap.get(bracket.id)?.home)}
+                                                awaySource={slotLabel(incomingMap.get(bracket.id)?.away)}
                                                 regionCode={regionCode}
                                                 href={buildHref(bracket.match, homeTeam?.name, awayTeam?.name)}
                                             />
@@ -547,6 +533,8 @@ export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext
                                             match={thirdPlaceMatch.match}
                                             homeTeam={tpHome}
                                             awayTeam={tpAway}
+                                            homeSource={slotLabel(incomingMap.get(thirdPlaceMatch.id)?.home)}
+                                            awaySource={slotLabel(incomingMap.get(thirdPlaceMatch.id)?.away)}
                                             regionCode={regionCode}
                                             href={buildHref(thirdPlaceMatch.match, tpHome?.name, tpAway?.name)}
                                         />
@@ -554,9 +542,9 @@ export function PlayoffBracketDisplay({brackets, seasonId, regionId, linkContext
                                 })()}
                             </div>
                         )}
+                      </div>
                     </div>
-                </TransformComponent>
-            </TransformWrapper>
+                </div>
         </div>
     );
 }

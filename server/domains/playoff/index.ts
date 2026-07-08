@@ -1,5 +1,5 @@
 export {getPlayoffBracketBySeasonId} from "./queries/getPlayoffBracketBySeasonId";
-export {generatePlayoffBracket} from "./commands/generatePlayoffBracket";
+export {getAllPlayoffConfigs} from "./queries/getAllPlayoffConfigs";
 export {buildPlayoffBracket} from "./commands/buildPlayoffBracket";
 export {resetPlayoffBracketsService} from "./commands/resetPlayoffBrackets";
 export {calculateRounds} from "./helpers/calculateRounds";
@@ -16,6 +16,8 @@ export type {
     SeedSlot,
     MatchSlot,
     PlayoffTeamSlot,
-    PlayoffTemplate
+    PlayoffTemplate,
+    IncomingSource,
+    Incoming
 } from "./types";
 export {PlayoffRoundSchema, GeneratePlayoffBracketSchema, GetPlayoffScheduleSchema} from "./types";

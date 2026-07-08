@@ -9,6 +9,7 @@ export interface CreateSeasonInput {
     slug: string;
     leagueType?: 'main' | 'side';
     theme?: string | null;
+    playoffConfigId?: string | null;
 }
 
 export interface UpdateSeasonInput {
@@ -20,6 +21,7 @@ export interface UpdateSeasonInput {
     slug?: string;
     leagueType?: 'main' | 'side';
     theme?: string | null;
+    playoffConfigId?: string | null;
 }
 
 export interface InsertSeasonDto {
@@ -32,6 +34,7 @@ export interface InsertSeasonDto {
     theme?: string | null;
     endDate?: string | null;
     maxPlayers: number;
+    playoffConfigId?: string | null;
 }
 
 export interface SeasonWithPlayoffConfig extends Season {

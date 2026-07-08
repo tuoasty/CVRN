@@ -22,7 +22,8 @@ export async function createSeason(
             endDate: p.endDate ?? null,
             leagueType: p.leagueType ?? "main",
             slug: p.slug,
-            theme: p.theme ?? null
+            theme: p.theme ?? null,
+            playoffConfigId: p.playoffConfigId ?? null
         });
         if (!result.ok) {
             logger.error({input: p, error: result.error}, "Failed to insert season");

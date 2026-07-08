@@ -15,6 +15,8 @@ type MatchBracketCardProps = {
     match: Match;
     homeTeam?: TeamWithRegion;
     awayTeam?: TeamWithRegion;
+    homeSource?: string | undefined;
+    awaySource?: string | undefined;
     regionCode?: string;
     href?: string | null;
 };
@@ -24,6 +26,8 @@ export function MatchBracketCard({
                                      match,
                                      homeTeam,
                                      awayTeam,
+                                     homeSource,
+                                     awaySource,
                                      href,
                                  }: MatchBracketCardProps) {
     const isCompleted = match.status === "completed";
@@ -56,6 +60,20 @@ export function MatchBracketCard({
 
     const inner = (
         <>
+            <div className="bg-muted/40 px-3 py-2 flex items-center justify-between gap-2 border-b border-border">
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center h-5 px-1.5 rounded-sm text-[10px] font-bold tabular-nums tracking-wide text-white bg-blue-600">
+                        {match.match_code}
+                    </span>
+                    <span className="text-xs font-medium text-muted-foreground">
+                        BO{match.best_of}
+                    </span>
+                </div>
+                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-semibold uppercase tracking-wider flex items-center gap-1", statusConfig.className)}>
+                    {statusConfig.icon}
+                    {statusConfig.label}
+                </Badge>
+            </div>
             <div className={cn(
                 "px-3 py-2.5 border-b transition-all",
                 homeWon && "bg-gradient-to-r from-primary/20 to-primary/5 border-l-4 border-l-primary",
@@ -86,7 +104,7 @@ export function MatchBracketCard({
                             homeWon && "text-primary",
                             !homeTeam && "text-muted-foreground italic"
                         )}>
-                            {homeTeam?.name || "TBD"}
+                            {homeTeam?.name || homeSource || "TBD"}
                         </span>
                     </div>
                     {isCompleted && (
@@ -101,7 +119,7 @@ export function MatchBracketCard({
             </div>
 
             <div className={cn(
-                "px-3 py-2.5 border-b transition-all",
+                "px-3 py-2.5 transition-all",
                 awayWon && "bg-gradient-to-r from-primary/20 to-primary/5 border-l-4 border-l-primary",
                 !homeWon && !awayWon && "border-border"
             )}>
@@ -130,7 +148,7 @@ export function MatchBracketCard({
                             awayWon && "text-primary",
                             !awayTeam && "text-muted-foreground italic"
                         )}>
-                            {awayTeam?.name || "TBD"}
+                            {awayTeam?.name || awaySource || "TBD"}
                         </span>
                     </div>
                     {isCompleted && (
@@ -144,15 +162,6 @@ export function MatchBracketCard({
                 </div>
             </div>
 
-            <div className="bg-muted/40 px-3 py-2 flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                    BO{match.best_of}
-                </span>
-                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-semibold uppercase tracking-wider flex items-center gap-1", statusConfig.className)}>
-                    {statusConfig.icon}
-                    {statusConfig.label}
-                </Badge>
-            </div>
         </>
     );
 
