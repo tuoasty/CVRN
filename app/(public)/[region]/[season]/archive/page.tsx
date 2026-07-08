@@ -3,11 +3,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Trophy, Medal, Award, ChevronLeft, Users } from "lucide-react";
-import { getSeasonDetailAction } from "@/app/actions/season.actions";
+import { getSeasonHistoryDetailAction } from "@/app/actions/season.actions";
 import { getAllRegionsAction } from "@/app/actions/region.actions";
 import { SeasonDetail } from "@/server/domains/season";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
+import { clientLogger } from "@/app/utils/clientLogger";
 
 // ─── Podium ──────────────────────────────────────────────────────────────────
 
@@ -407,9 +408,11 @@ function SeasonDetailSkeleton() {
 
 async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: string; regionCode: string; seasonSlug: string }) {
     const [seasonResult, regionsResult] = await Promise.all([
-        getSeasonDetailAction(slug),
+        getSeasonHistoryDetailAction(slug, regionCode),
         getAllRegionsAction(),
     ]);
+    
+    clientLogger.debug("ArchivePage", "SeasonResult", seasonResult)
 
     if (!seasonResult.ok) {
         if (seasonResult.error.code === "NOT_FOUND") notFound();

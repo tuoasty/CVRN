@@ -2,15 +2,21 @@ import {DBClient} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {findSeasonBySlug} from "@/server/db/seasonHistory.repo";
+import {findSeasonHistoryBySlugAndRegion} from "@/server/db/seasonHistory.repo";
 import {SeasonDetail} from "../types";
+import { findRegionByCode } from "@/server/db/regions.repo";
 
-export async function getSeasonDetail(
+export async function getSeasonHistoryDetail(
     supabase: DBClient,
-    slug: string
+    slug: string,
+    regionCode: string
 ): Promise<Result<SeasonDetail>> {
     try {
-        const result = await findSeasonBySlug(supabase, slug);
+        const regionRes = await findRegionByCode(supabase, regionCode);
+        if (!regionRes.ok) return regionRes;
+        if (!regionRes.value) return Err({message: "Region not found", code: "NOT_FOUND"});
+
+        const result = await findSeasonHistoryBySlugAndRegion(supabase, slug, regionRes.value.id);
         if (!result.ok) {
             logger.error({error: result.error, slug}, "Failed to fetch season detail");
             return result as Result<SeasonDetail>;

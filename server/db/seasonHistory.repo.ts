@@ -2,6 +2,7 @@ import {DBClient} from "@/shared/types/db";
 import {Database} from "@/database.types";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
+import { logger } from "../utils/logger";
 
 type SeasonPodiumRow = Database["public"]["Tables"]["season_podium"]["Row"];
 type SeasonAwardRow = Database["public"]["Tables"]["season_awards"]["Row"];
@@ -114,9 +115,10 @@ export async function deleteSeasonAwardsByCategory(
     return Ok(true);
 }
 
-export async function findSeasonBySlug(
+export async function findSeasonHistoryBySlugAndRegion(
     supabase: DBClient,
-    slug: string
+    slug: string,
+    regionId: string,
 ): Promise<Result<unknown>> {
     const {data, error} = await supabase
         .from("seasons")
@@ -143,12 +145,14 @@ export async function findSeasonBySlug(
             )
         `)
         .eq("slug", slug)
+        .eq("region_id", regionId)
         .order("created_at", {
             referencedTable: "season_awards",
             ascending: true,
         })
         .maybeSingle();
 
+    logger.debug({error:error, data:data})
     if (error) return Err(serializeError(error, "DB_ERROR"));
     if (!data) return Err({message: "Season not found", code: "NOT_FOUND"});
     return Ok(data);
