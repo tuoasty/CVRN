@@ -459,13 +459,7 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
                             width: MATCH_WIDTH,
                         }}
                     >
-                        {bracket.match.match_code === "BR" && (
-                            <div className="mb-3 pb-2 border-b-2 border-primary/30">
-                                <h3 className="text-sm font-bold uppercase tracking-wider text-primary">
-                                    {ROUND_LABELS.bracket_reset}
-                                </h3>
-                            </div>
-                        )}
+                        
                         <MatchBracketCard
                             bracket={bracket}
                             match={bracket.match}
@@ -476,6 +470,11 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
                             regionCode={regionCode}
                             href={buildHref(bracket.match, homeTeam?.name, awayTeam?.name)}
                         />
+                        {bracket.match.match_code === "BR" && (
+                            <div className="mt-1 text-center text-[10px] italic text-muted-foreground/70">
+                                if necessary
+                            </div>
+                        )}
                     </div>
                 );
             })}
