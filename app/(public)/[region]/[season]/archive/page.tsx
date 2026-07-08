@@ -8,6 +8,7 @@ import { getAllRegionsAction } from "@/app/actions/region.actions";
 import { SeasonDetail } from "@/server/domains/season";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
+import { clientLogger } from "@/app/utils/clientLogger";
 
 // ─── Podium ──────────────────────────────────────────────────────────────────
 

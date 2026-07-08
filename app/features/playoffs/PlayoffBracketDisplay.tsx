@@ -21,7 +21,22 @@ type PlayoffBracketDisplayProps = {
     linkContext?: "public" | "admin";
 };
 
-type RoundType = "play_in" | "round_of_16" | "quarterfinal" | "semifinal" | "final" | "third_place";
+type RoundType =
+    | "play_in"
+    | "round_of_16"
+    | "quarterfinal"
+    | "semifinal"
+    | "winners_final"
+    | "final"
+    | "grand_final"
+    | "bracket_reset"
+    | "third_place"
+    | "losers_round_1"
+    | "losers_round_2"
+    | "losers_round_3"
+    | "losers_quarterfinal"
+    | "losers_semifinal"
+    | "losers_final";
 
 type BracketWithMatch = PlayoffBracket & {
     match: Match;
@@ -38,16 +53,40 @@ const ROUND_LABELS: Record<RoundType, string> = {
     round_of_16: "Round of 16",
     quarterfinal: "Quarterfinals",
     semifinal: "Semifinals",
+    winners_final: "Winners Final",
     final: "Grand Finals",
+    grand_final: "Grand Final",
+    bracket_reset: "Bracket Reset",
     third_place: "3rd Place Match",
+    losers_round_1: "Losers Round 1",
+    losers_round_2: "Losers Round 2",
+    losers_round_3: "Losers Round 3",
+    losers_quarterfinal: "Losers Quarterfinal",
+    losers_semifinal: "Losers Semifinal",
+    losers_final: "Losers Final",
 };
 
-const ROUND_ORDER: RoundType[] = [
+// Upper band, left-to-right. Single-elim uses `final`; double-elim uses
+// `winners_final` → `grand_final` → `bracket_reset`. Empty rounds filter out.
+const UPPER_ROUND_ORDER: RoundType[] = [
     "play_in",
     "round_of_16",
     "quarterfinal",
     "semifinal",
+    "winners_final",
     "final",
+    "grand_final",
+    "bracket_reset",
+];
+
+// Lower band (double-elim only), left-to-right.
+const LOWER_ROUND_ORDER: RoundType[] = [
+    "losers_round_1",
+    "losers_round_2",
+    "losers_round_3",
+    "losers_quarterfinal",
+    "losers_semifinal",
+    "losers_final",
 ];
 
 const MATCH_HEIGHT = 140;
@@ -57,6 +96,115 @@ const VERTICAL_SPACING_BASE = 20;
 const HEADER_OFFSET = 64;
 const BOTTOM_PADDING = 80;
 const CANVAS_MARGIN = 24;
+const BAND_GAP = 120;
+// Extra breathing room below a card whose feeder is in the same round (bracket_reset),
+// leaving space for its inline title.
+const NO_FEEDER_EXTRA_GAP = 56;
+
+type ConnectorLine = {
+    x1: number; y1: number; x2: number; y2: number;
+    x3: number; y3: number; x4: number; y4: number;
+    isCompleted: boolean;
+};
+
+// Lay out one band (upper or lower) left-to-right, offset vertically by `yOffset`.
+// Base row stacks tight; later rounds center on the average Y of the feeders that
+// point to them via `next_bracket_id`. Cross-band loser drops use
+// `loser_next_bracket_id` and are intentionally not laid out or drawn here — they
+// surface as "Loser of X" labels on the cards instead.
+function computeBandLayout(rounds: RoundData[], yOffset: number) {
+    const positions = new Map<string, { x: number; y: number }>();
+    const lines: ConnectorLine[] = [];
+    if (rounds.length === 0) return { positions, lines, maxBottom: yOffset };
+
+    const BASE_PITCH = MATCH_HEIGHT + VERTICAL_SPACING_BASE;
+    // A leading play-in round is a partial pre-round, so the tight base row is
+    // round 1 in that case; otherwise round 0.
+    const baseRoundIndex =
+        rounds[0]?.type === "play_in" && rounds.length > 1 ? 1 : 0;
+
+    rounds.forEach((round, roundIndex) => {
+        const x = roundIndex * (MATCH_WIDTH + ROUND_GAP);
+
+        if (roundIndex === baseRoundIndex) {
+            round.brackets.forEach((bracket, i) => {
+                positions.set(bracket.id, { x, y: yOffset + HEADER_OFFSET + i * BASE_PITCH });
+            });
+        } else if (roundIndex > baseRoundIndex) {
+            const previousRound = rounds[roundIndex - 1];
+            round.brackets.forEach((bracket, i) => {
+                const feedingBrackets = previousRound.brackets.filter(
+                    b => b.next_bracket_id === bracket.id
+                );
+                if (feedingBrackets.length > 0) {
+                    const avgY = feedingBrackets.reduce(
+                        (sum, fb) => sum + (positions.get(fb.id)?.y ?? 0), 0
+                    ) / feedingBrackets.length;
+                    positions.set(bracket.id, { x, y: avgY });
+                } else {
+                    // No forward feeder (e.g. bracket_reset, fed by the grand final in
+                    // the same round): stack below the previous sibling with an extra
+                    // gap so its own title has room to sit above the card.
+                    const prevSibling = i > 0 ? positions.get(round.brackets[i - 1].id) : undefined;
+                    const y = prevSibling ? prevSibling.y + BASE_PITCH + NO_FEEDER_EXTRA_GAP : yOffset + HEADER_OFFSET;
+                    positions.set(bracket.id, { x, y });
+                }
+            });
+        } else {
+            // Pre-base round (play-in): align each card to the base-row card it feeds.
+            const nextRound = rounds[roundIndex + 1];
+            round.brackets.forEach((bracket, i) => {
+                const targetIndex = nextRound
+                    ? nextRound.brackets.findIndex(nb => nb.id === bracket.next_bracket_id)
+                    : -1;
+                const y = targetIndex >= 0
+                    ? yOffset + HEADER_OFFSET + targetIndex * BASE_PITCH
+                    : yOffset + HEADER_OFFSET + i * BASE_PITCH * 2;
+                positions.set(bracket.id, { x, y });
+            });
+        }
+    });
+
+    rounds.forEach((round, roundIndex) => {
+        if (roundIndex === rounds.length - 1) return;
+        const nextRound = rounds[roundIndex + 1];
+        if (!nextRound) return;
+
+        round.brackets.forEach((bracket) => {
+            if (!bracket.next_bracket_id) return;
+            const nextBracket = nextRound.brackets.find(
+                (nb) => nb.id === bracket.next_bracket_id
+            );
+            if (!nextBracket) return;
+
+            const startPos = positions.get(bracket.id);
+            const endPos = positions.get(nextBracket.id);
+            if (!startPos || !endPos) return;
+
+            const startX = startPos.x + MATCH_WIDTH;
+            const startY = startPos.y + MATCH_HEIGHT / 2;
+            const endX = endPos.x;
+            const endY = endPos.y + MATCH_HEIGHT / 2;
+            const midX = startX + ROUND_GAP / 2;
+
+            lines.push({
+                x1: startX, y1: startY,
+                x2: midX, y2: startY,
+                x3: midX, y3: endY,
+                x4: endX, y4: endY,
+                isCompleted: bracket.match.status === "completed",
+            });
+        });
+    });
+
+    let maxBottom = yOffset;
+    positions.forEach((pos) => {
+        const bottom = pos.y + MATCH_HEIGHT;
+        if (bottom > maxBottom) maxBottom = bottom;
+    });
+
+    return { positions, lines, maxBottom };
+}
 
 export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId, linkContext = "public"}: PlayoffBracketDisplayProps) {
     const {teams, isLoading: loadingTeams} = useTeams();
@@ -83,7 +231,7 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
         return `${slot.type} of ${code}`
     }
 
-    const {mainBracketRounds, thirdPlaceMatch} = useMemo(() => {
+    const {upperRounds, lowerRounds, thirdPlaceMatch} = useMemo(() => {
         const bracketsWithMatches = brackets
             .filter((b) => matchesMap.has(b.match_id))
             .map((b) => ({
@@ -92,11 +240,10 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
             }));
 
         const thirdPlace = bracketsWithMatches.find((b) => b.round === "third_place");
-        const mainBrackets = bracketsWithMatches.filter((b) => b.round !== "third_place");
 
         const roundsMap = new Map<RoundType, BracketWithMatch[]>();
-
-        mainBrackets.forEach((bracket) => {
+        bracketsWithMatches.forEach((bracket) => {
+            if (bracket.round === "third_place") return;
             const round = bracket.round as RoundType;
             if (!roundsMap.has(round)) {
                 roundsMap.set(round, []);
@@ -104,126 +251,41 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
             roundsMap.get(round)!.push(bracket);
         });
 
-        const orderedRounds: RoundData[] = ROUND_ORDER.map((roundType) => {
-            const roundBrackets = roundsMap.get(roundType);
-            if (!roundBrackets || roundBrackets.length === 0) {
-                return null;
-            }
-
-            return {
-                type: roundType,
-                label: ROUND_LABELS[roundType],
-                brackets: roundBrackets.sort(
-                    (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)
-                ),
-            };
-        }).filter((r): r is RoundData => r !== null);
+        const orderRounds = (order: RoundType[]): RoundData[] =>
+            order.map((roundType) => {
+                const roundBrackets = roundsMap.get(roundType);
+                if (!roundBrackets || roundBrackets.length === 0) return null;
+                return {
+                    type: roundType,
+                    label: ROUND_LABELS[roundType],
+                    brackets: roundBrackets.sort(
+                        (a, b) => (a.display_order ?? 999) - (b.display_order ?? 999)
+                    ),
+                };
+            }).filter((r): r is RoundData => r !== null);
 
         return {
-            mainBracketRounds: orderedRounds,
+            upperRounds: orderRounds(UPPER_ROUND_ORDER),
+            lowerRounds: orderRounds(LOWER_ROUND_ORDER),
             thirdPlaceMatch: thirdPlace || null,
         };
     }, [brackets, matchesMap]);
 
-    const {matchPositions, connectorLines, thirdPlacePosition} = useMemo(() => {
-        const positions = new Map<string, { x: number; y: number }>();
+    const {matchPositions, connectorLines, thirdPlacePosition, lowerBandTop} = useMemo(() => {
+        const upper = computeBandLayout(upperRounds, 0);
+        // Lower band sits beneath the upper band, sharing the same X columns.
+        const bandTop = lowerRounds.length > 0 ? upper.maxBottom + BAND_GAP : 0;
+        const lower = lowerRounds.length > 0
+            ? computeBandLayout(lowerRounds, bandTop)
+            : {positions: new Map<string, {x: number; y: number}>(), lines: [] as ConnectorLine[], maxBottom: bandTop};
 
-        const BASE_PITCH = MATCH_HEIGHT + VERTICAL_SPACING_BASE;
-        // The tight "base row" is the first full round. A leading play-in round is a
-        // partial pre-round, so the base row is round 1 in that case; otherwise round 0.
-        const baseRoundIndex =
-            mainBracketRounds[0]?.type === "play_in" && mainBracketRounds.length > 1 ? 1 : 0;
-
-        mainBracketRounds.forEach((round, roundIndex) => {
-            const x = roundIndex * (MATCH_WIDTH + ROUND_GAP);
-
-            if (roundIndex === baseRoundIndex) {
-                // Base row: cards stacked adjacent at the tight pitch.
-                round.brackets.forEach((bracket, i) => {
-                    positions.set(bracket.id, {x, y: HEADER_OFFSET + i * BASE_PITCH});
-                });
-            } else if (roundIndex > baseRoundIndex) {
-                // Later rounds: center each card on the average Y of its feeders.
-                const previousRound = mainBracketRounds[roundIndex - 1];
-                round.brackets.forEach((bracket, i) => {
-                    const feedingBrackets = previousRound.brackets.filter(
-                        b => b.next_bracket_id === bracket.id
-                    );
-                    if (feedingBrackets.length > 0) {
-                        const avgY = feedingBrackets.reduce(
-                            (sum, fb) => sum + (positions.get(fb.id)?.y ?? 0), 0
-                        ) / feedingBrackets.length;
-                        positions.set(bracket.id, {x, y: avgY});
-                    } else {
-                        const spacing = BASE_PITCH * Math.pow(2, roundIndex - baseRoundIndex);
-                        positions.set(bracket.id, {x, y: HEADER_OFFSET + i * spacing});
-                    }
-                });
-            } else {
-                // Pre-base round (play-in): align each card to the base-row card it feeds.
-                // The base row is adjacent, so target Y = targetIndex * BASE_PITCH.
-                const nextRound = mainBracketRounds[roundIndex + 1];
-                round.brackets.forEach((bracket, i) => {
-                    const targetIndex = nextRound
-                        ? nextRound.brackets.findIndex(nb => nb.id === bracket.next_bracket_id)
-                        : -1;
-                    const y = targetIndex >= 0
-                        ? HEADER_OFFSET + targetIndex * BASE_PITCH
-                        : HEADER_OFFSET + i * BASE_PITCH * 2;
-                    positions.set(bracket.id, {x, y});
-                });
-            }
-        });
-
-        const lines: Array<{
-            x1: number; y1: number; x2: number; y2: number;
-            x3: number; y3: number; x4: number; y4: number;
-            isCompleted: boolean;
-        }> = [];
-
-        mainBracketRounds.forEach((round, roundIndex) => {
-            if (roundIndex === mainBracketRounds.length - 1) return;
-
-            const nextRound = mainBracketRounds[roundIndex + 1];
-            if (!nextRound) return;
-
-            round.brackets.forEach((bracket) => {
-                if (!bracket.next_bracket_id) return;
-
-                const nextBracket = nextRound.brackets.find(
-                    (nb) => nb.id === bracket.next_bracket_id
-                );
-                if (!nextBracket) return;
-
-                const startPos = positions.get(bracket.id);
-                const endPos = positions.get(nextBracket.id);
-
-                if (!startPos || !endPos) return;
-
-                const startX = startPos.x + MATCH_WIDTH;
-                const startY = startPos.y + MATCH_HEIGHT / 2;
-                const endX = endPos.x;
-                const endY = endPos.y + MATCH_HEIGHT / 2;
-                const midX = startX + ROUND_GAP / 2;
-
-                lines.push({
-                    x1: startX,
-                    y1: startY,
-                    x2: midX,
-                    y2: startY,
-                    x3: midX,
-                    y3: endY,
-                    x4: endX,
-                    y4: endY,
-                    isCompleted: bracket.match.status === "completed",
-                });
-            });
-        });
+        const positions = new Map<string, {x: number; y: number}>([...upper.positions, ...lower.positions]);
+        const lines = [...upper.lines, ...lower.lines];
 
         let thirdPlacePos = null;
         if (thirdPlaceMatch) {
-            const semifinalRound = mainBracketRounds.find(r => r.type === "semifinal");
-            const finalRound = mainBracketRounds.find(r => r.type === "final");
+            const semifinalRound = upperRounds.find(r => r.type === "semifinal");
+            const finalRound = upperRounds.find(r => r.type === "final");
 
             if (semifinalRound && finalRound && finalRound.brackets.length > 0) {
                 const finalBracket = finalRound.brackets[0];
@@ -243,11 +305,16 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
             }
         }
 
-        return {matchPositions: positions, connectorLines: lines, thirdPlacePosition: thirdPlacePos};
-    }, [mainBracketRounds, thirdPlaceMatch]);
+        return {
+            matchPositions: positions,
+            connectorLines: lines,
+            thirdPlacePosition: thirdPlacePos,
+            lowerBandTop: lowerRounds.length > 0 ? bandTop : null,
+        };
+    }, [upperRounds, lowerRounds, thirdPlaceMatch]);
 
     const {totalHeight, totalWidth} = useMemo(() => {
-        if (mainBracketRounds.length === 0) return {totalHeight: 0, totalWidth: 0};
+        if (upperRounds.length === 0 && lowerRounds.length === 0) return {totalHeight: 0, totalWidth: 0};
 
         let maxY = 0;
         matchPositions.forEach((pos) => {
@@ -261,10 +328,11 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
         }
 
         const height = maxY + BOTTOM_PADDING;
-        const width = mainBracketRounds.length * (MATCH_WIDTH + ROUND_GAP);
+        const columns = Math.max(upperRounds.length, lowerRounds.length);
+        const width = columns * (MATCH_WIDTH + ROUND_GAP);
 
         return {totalHeight: height, totalWidth: width};
-    }, [mainBracketRounds, matchPositions, thirdPlacePosition]);
+    }, [upperRounds, lowerRounds, matchPositions, thirdPlacePosition]);
 
     const regionCode = useMemo(() => {
         const region = regions.find(r => r.id === regionId);
@@ -347,6 +415,73 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
         }
     }, []);
 
+    // Render one round's header + cards. `bandTop` places the header at the top of
+    // its band (0 for upper, the lower-band offset for lower); cards read their
+    // absolute Y from matchPositions (already band-offset).
+    const renderRoundColumn = (round: RoundData, roundIndex: number, bandTop: number) => (
+        <div key={round.type}>
+            <div
+                className="absolute"
+                style={{
+                    left: roundIndex * (MATCH_WIDTH + ROUND_GAP),
+                    top: bandTop,
+                    width: MATCH_WIDTH,
+                }}
+            >
+                <div className="mb-6 pb-3 border-b-2 border-primary/20">
+                    <h3 className="text-base font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                        {round.label}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {round.brackets.filter(b => b.match.status === "completed").length} / {round.brackets.length} complete
+                    </p>
+                </div>
+            </div>
+
+            {round.brackets.map((bracket) => {
+                const pos = matchPositions.get(bracket.id);
+                if (!pos) return null;
+
+                const homeTeam = bracket.match.home_team_id
+                    ? teamsMap.get(bracket.match.home_team_id)
+                    : undefined;
+                const awayTeam = bracket.match.away_team_id
+                    ? teamsMap.get(bracket.match.away_team_id)
+                    : undefined;
+
+                return (
+                    <div
+                        key={bracket.id}
+                        className="absolute z-10"
+                        style={{
+                            left: pos.x,
+                            top: pos.y,
+                            width: MATCH_WIDTH,
+                        }}
+                    >
+                        {bracket.match.match_code === "BR" && (
+                            <div className="mb-3 pb-2 border-b-2 border-primary/30">
+                                <h3 className="text-sm font-bold uppercase tracking-wider text-primary">
+                                    {ROUND_LABELS.bracket_reset}
+                                </h3>
+                            </div>
+                        )}
+                        <MatchBracketCard
+                            bracket={bracket}
+                            match={bracket.match}
+                            homeTeam={homeTeam}
+                            awayTeam={awayTeam}
+                            homeSource={slotLabel(incomingMap.get(bracket.id)?.home)}
+                            awaySource={slotLabel(incomingMap.get(bracket.id)?.away)}
+                            regionCode={regionCode}
+                            href={buildHref(bracket.match, homeTeam?.name, awayTeam?.name)}
+                        />
+                    </div>
+                );
+            })}
+        </div>
+    );
+
     if (loadingTeams || loadingMatches) {
         return (
             <div className="panel p-12 border-l-4 border-l-primary/30">
@@ -358,7 +493,7 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
         );
     }
 
-    if (mainBracketRounds.length === 0 && !thirdPlaceMatch) {
+    if (upperRounds.length === 0 && lowerRounds.length === 0 && !thirdPlaceMatch) {
         return (
             <div className="panel p-12 border-l-4 border-l-muted">
                 <p className="text-sm text-muted-foreground text-center">
@@ -449,62 +584,17 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
                             ))}
                         </svg>
 
-                        {mainBracketRounds.map((round, roundIndex) => (
-                            <div key={round.type}>
-                                <div
-                                    className="absolute"
-                                    style={{
-                                        left: roundIndex * (MATCH_WIDTH + ROUND_GAP),
-                                        top: 0,
-                                        width: MATCH_WIDTH,
-                                    }}
-                                >
-                                    <div className="mb-6 pb-3 border-b-2 border-primary/20">
-                                        <h3 className="text-base font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                                            {round.label}
-                                        </h3>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            {round.brackets.filter(b => b.match.status === "completed").length} / {round.brackets.length} complete
-                                        </p>
-                                    </div>
-                                </div>
+                        {upperRounds.map((round, roundIndex) => renderRoundColumn(round, roundIndex, 0))}
 
-                                {round.brackets.map((bracket) => {
-                                    const pos = matchPositions.get(bracket.id);
-                                    if (!pos) return null;
+                        {lowerBandTop != null && (
+                            <div
+                                className="absolute border-t border-dashed border-primary/20"
+                                style={{left: 0, top: lowerBandTop - BAND_GAP / 2, width: totalWidth}}
+                            />
+                        )}
 
-                                    const homeTeam = bracket.match.home_team_id
-                                        ? teamsMap.get(bracket.match.home_team_id)
-                                        : undefined;
-                                    const awayTeam = bracket.match.away_team_id
-                                        ? teamsMap.get(bracket.match.away_team_id)
-                                        : undefined;
-
-                                    return (
-                                        <div
-                                            key={bracket.id}
-                                            className="absolute z-10"
-                                            style={{
-                                                left: pos.x,
-                                                top: pos.y,
-                                                width: MATCH_WIDTH,
-                                            }}
-                                        >
-                                            <MatchBracketCard
-                                                bracket={bracket}
-                                                match={bracket.match}
-                                                homeTeam={homeTeam}
-                                                awayTeam={awayTeam}
-                                                homeSource={slotLabel(incomingMap.get(bracket.id)?.home)}
-                                                awaySource={slotLabel(incomingMap.get(bracket.id)?.away)}
-                                                regionCode={regionCode}
-                                                href={buildHref(bracket.match, homeTeam?.name, awayTeam?.name)}
-                                            />
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
+                        {lowerBandTop != null &&
+                            lowerRounds.map((round, roundIndex) => renderRoundColumn(round, roundIndex, lowerBandTop))}
 
                         {thirdPlaceMatch && thirdPlacePosition && (
                             <div
