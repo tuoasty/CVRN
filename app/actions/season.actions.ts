@@ -5,7 +5,7 @@ import {Err, Ok} from "@/shared/types/result";
 import {getAllSeasons, getSeasonBySlugAndRegion, createSeason, updateSeason, deleteSeason, getSeasonById} from "@/server/domains/season";
 import {SeasonSlugRegionSchema, SeasonIdSchema, CreateSeasonSchema, UpdateSeasonSchema} from "@/server/domains/season";
 import {
-    getSeasonPodium, getSeasonAwards, getArchive, getSeasonDetail,
+    getSeasonPodium, getSeasonAwards, getArchive, getSeasonHistoryDetail,
     upsertSeasonPodiumSlot, deleteSeasonPodiumSlot, deriveAndSaveSeasonPodium,
     upsertSeasonAward, deleteSeasonAward, storeAwardAvatar, fetchChampionRosterAwards,
     UpsertSeasonPodiumSlotSchema, DeleteSeasonPodiumSlotSchema,
@@ -93,9 +93,9 @@ export async function getArchiveAction() {
     return getArchive(supabase);
 }
 
-export async function getSeasonDetailAction(slug: string) {
+export async function getSeasonHistoryDetailAction(slug: string, regionCode:string) {
     const supabase = await createServerSupabase();
-    return getSeasonDetail(supabase, slug);
+    return getSeasonHistoryDetail(supabase, slug, regionCode);
 }
 
 export async function deriveAndSaveSeasonPodiumAction(input: unknown) {
