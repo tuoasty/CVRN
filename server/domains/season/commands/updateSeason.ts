@@ -17,7 +17,8 @@ export async function updateSeason(
             maxPlayers: p.maxPlayers ?? undefined,
             leagueType: p.leagueType,
             slug: p.slug,
-            theme: p.theme
+            theme: p.theme,
+            playoffConfigId: p.playoffConfigId
         });
         if (!result.ok) {
             logger.error({input: p, error: result.error}, "Failed to update season");

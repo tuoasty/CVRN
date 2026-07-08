@@ -1,0 +1,47 @@
+{
+  "teams": 16,
+  "upper": [
+    {
+      "round": "round_of_16",
+      "matches": [
+        { "code": "W1", "best_of": 3, "home": { "type": "seed", "value": 1 }, "away": { "type": "seed", "value": 16 } },
+        { "code": "W2", "best_of": 3, "home": { "type": "seed", "value": 8 }, "away": { "type": "seed", "value": 9 } },
+        { "code": "W3", "best_of": 3, "home": { "type": "seed", "value": 4 }, "away": { "type": "seed", "value": 13 } },
+        { "code": "W4", "best_of": 3, "home": { "type": "seed", "value": 5 }, "away": { "type": "seed", "value": 12 } },
+        { "code": "W5", "best_of": 3, "home": { "type": "seed", "value": 2 }, "away": { "type": "seed", "value": 15 } },
+        { "code": "W6", "best_of": 3, "home": { "type": "seed", "value": 7 }, "away": { "type": "seed", "value": 10 } },
+        { "code": "W7", "best_of": 3, "home": { "type": "seed", "value": 3 }, "away": { "type": "seed", "value": 14 } },
+        { "code": "W8", "best_of": 3, "home": { "type": "seed", "value": 6 }, "away": { "type": "seed", "value": 11 } }
+      ]
+    },
+    {
+      "round": "quarterfinal",
+      "matches": [
+        { "code": "QF1", "best_of": 3, "home": { "type": "match", "code": "W1", "result": "winner" }, "away": { "type": "match", "code": "W2", "result": "winner" } },
+        { "code": "QF2", "best_of": 3, "home": { "type": "match", "code": "W3", "result": "winner" }, "away": { "type": "match", "code": "W4", "result": "winner" } },
+        { "code": "QF3", "best_of": 3, "home": { "type": "match", "code": "W5", "result": "winner" }, "away": { "type": "match", "code": "W6", "result": "winner" } },
+        { "code": "QF4", "best_of": 3, "home": { "type": "match", "code": "W7", "result": "winner" }, "away": { "type": "match", "code": "W8", "result": "winner" } }
+      ]
+    },
+    {
+      "round": "semifinal",
+      "matches": [
+        { "code": "SF1", "best_of": 5, "home": { "type": "match", "code": "QF1", "result": "winner" }, "away": { "type": "match", "code": "QF2", "result": "winner" } },
+        { "code": "SF2", "best_of": 5, "home": { "type": "match", "code": "QF3", "result": "winner" }, "away": { "type": "match", "code": "QF4", "result": "winner" } }
+      ]
+    },
+    {
+      "round": "final",
+      "matches": [
+        { "code": "GF", "best_of": 5, "home": { "type": "match", "code": "SF1", "result": "winner" }, "away": { "type": "match", "code": "SF2", "result": "winner" } }
+      ]
+    },
+    {
+      "round": "third_place",
+      "matches": [
+        { "code": "3RD", "best_of": 5, "home": { "type": "match", "code": "SF1", "result": "loser" }, "away": { "type": "match", "code": "SF2", "result": "loser" } }
+      ]
+    }
+  ],
+  "lower": []
+}

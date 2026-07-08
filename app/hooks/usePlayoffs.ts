@@ -1,11 +1,13 @@
 import useSWR, { mutate as globalMutate, type BareFetcher } from 'swr';
-import { PlayoffBracket } from '@/shared/types/db';
+import { useMemo } from 'react';
+import { PlayoffBracket, PlayoffConfig } from '@/shared/types/db';
 import {
     generatePlayoffBracketAction,
     getPlayoffBracketBySeasonIdAction,
+    getAllPlayoffConfigsAction,
     resetPlayoffBracketsAction,
 } from '@/app/actions/playoff.actions';
-import { GeneratePlayoffBracketInput } from '@/server/domains/playoff';
+import { GeneratePlayoffBracketInput, Incoming } from '@/server/domains/playoff';
 import { Ok, Result } from '@/shared/types/result';
 import { SerializableError } from '@/server/utils/serializeableError';
 
@@ -15,6 +17,26 @@ async function fetchBrackets([, seasonId]: [string, string]): Promise<PlayoffBra
     const result = await getPlayoffBracketBySeasonIdAction(seasonId);
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
+}
+
+// Invert the brackets' forward pointers into a per-destination "who feeds this slot" map.
+// Each empty slot is fed by exactly one prior match's winner or loser, keyed by the
+// destination bracket id. Source is the feeding bracket's match_id (→ its match_code).
+function buildIncomingMap(brackets: PlayoffBracket[]): Map<string, Incoming> {
+    const map = new Map<string, Incoming>();
+    for (const bracket of brackets) {
+        if (bracket.next_bracket_id && (bracket.winner_position === "home" || bracket.winner_position === "away")) {
+            const target = map.get(bracket.next_bracket_id) ?? {};
+            target[bracket.winner_position] = { type: "Winner", source: bracket.match_id };
+            map.set(bracket.next_bracket_id, target);
+        }
+        if (bracket.loser_next_bracket_id && (bracket.loser_position === "home" || bracket.loser_position === "away")) {
+            const target = map.get(bracket.loser_next_bracket_id) ?? {};
+            target[bracket.loser_position] = { type: "Loser", source: bracket.match_id };
+            map.set(bracket.loser_next_bracket_id, target);
+        }
+    }
+    return map;
 }
 
 export function usePlayoffBrackets(seasonId: string | null) {
@@ -29,11 +51,34 @@ export function usePlayoffBrackets(seasonId: string | null) {
         }
     );
 
+    const brackets = (data as PlayoffBracket[] | undefined) ?? [];
+    const incomingMap = useMemo(() => buildIncomingMap(brackets), [data]);
+
     return {
-        brackets: (data as PlayoffBracket[] | undefined) ?? [],
+        brackets,
+        incomingMap,
         isLoading,
         error: error?.message ?? null,
         mutate,
+    };
+}
+
+async function fetchConfigs(): Promise<PlayoffConfig[]> {
+    const result = await getAllPlayoffConfigsAction();
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+export function usePlayoffConfigs() {
+    const { data, error, isLoading } = useSWR('playoff-configs', fetchConfigs, {
+        dedupingInterval: BRACKETS_TTL,
+        revalidateOnFocus: false,
+    });
+
+    return {
+        configs: (data as PlayoffConfig[] | undefined) ?? [],
+        isLoading,
+        error: error?.message ?? null,
     };
 }
 

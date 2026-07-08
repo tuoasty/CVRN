@@ -46,6 +46,7 @@ export interface ParsedMatchResult {
     sets: { setNumber: number; homeScore: number; awayScore: number }[]
     winner: string | null
     isForfeit: boolean
+    isByeAway: boolean
     scheduleRaw: string | null
     scheduleCellColor: string | null
     referees: string[]

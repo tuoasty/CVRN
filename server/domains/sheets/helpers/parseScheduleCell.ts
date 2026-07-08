@@ -1,16 +1,17 @@
 export type ParsedSchedule = { iso: string };
 
-// Parses "May 2nd, 5:00PM [GMT+8]" → full datetime
+// Parses "May 2nd, 5:00PM [GMT+8]" or "January 16th, 8:00 PM GMT (+0)" → full datetime
 // Parses "May 2nd" or "May 2nd - May 5th" → start date at midnight UTC
 // Status (pending vs scheduled) is determined by the cell's text color, not the format.
 export function parseScheduleCell(value: string, year: number): ParsedSchedule | null {
     if (!value?.trim()) return null;
 
     const fullMatch = value.trim().match(
-        /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*\[GMT([+-]\d+(?:\.\d+)?)\]/i
+        /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*(?:\[GMT([+-]\d+(?:\.\d+)?)\]|GMT\s*\(([+-]\d+(?:\.\d+)?)\))/i
     );
     if (fullMatch) {
-        const [, month, day, time, offsetStr] = fullMatch;
+        const [, month, day, time, bracketOffset, parenOffset] = fullMatch;
+        const offsetStr = bracketOffset ?? parenOffset;
         const offsetNum = parseFloat(offsetStr);
         if (isNaN(offsetNum)) return null;
 

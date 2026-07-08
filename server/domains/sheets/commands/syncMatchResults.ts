@@ -5,7 +5,7 @@ import {parseQualifierRows} from "@/server/domains/sheets/helpers/parseQualifier
 import {parseScheduleCell} from "@/server/domains/sheets/helpers/parseScheduleCell";
 import {resolveTeamNames} from "@/server/domains/sheets/helpers/resolveTeamNames";
 import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
-import {findTeamsBySeasonId} from "@/server/db/teams.repo";
+import {findTeamsBySeasonId, getOrCreateByeTeam} from "@/server/db/teams.repo";
 import {findTeamNameHistoryByTeamIds} from "@/server/db/teamNameHistory.repo";
 import {
     insertMatches,
@@ -22,7 +22,6 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {randomUUID} from "node:crypto";
 
-// Yellow foreground text (#rrggbb where r>200, g>180, b<100) = pending/placeholder
 function isPendingColor(color: string | null): boolean {
     if (!color) return false;
     const r = parseInt(color.slice(1, 3), 16);
@@ -59,32 +58,52 @@ export async function syncMatchResults(
         let rowsErrored = parseErrors.length;
         const errors = [...parseErrors];
 
+        // Resolved once on the first bye row, then reused for the rest of the sync.
+        let byeTeamId: string | null = null;
+
         for (const result of parsed) {
             rowsProcessed++;
 
-            const homeTeamId = nameMap.get(result.homeTeamName.toLowerCase().trim());
-            const awayTeamId = nameMap.get(result.awayTeamName.toLowerCase().trim());
-
             const mc = result.matchCode;
 
+            const homeTeamId = nameMap.get(result.homeTeamName.toLowerCase().trim());
             if (!homeTeamId) {
                 errors.push({row: result.rowNumber, message: `[${mc}] Home team "${result.homeTeamName}" not found in season`});
                 rowsErrored++;
                 continue;
             }
-            if (!awayTeamId) {
-                errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" not found in season`});
-                rowsErrored++;
-                continue;
+
+            let awayTeamId: string;
+            if (result.isByeAway) {
+                if (!byeTeamId) {
+                    const byeResult = await getOrCreateByeTeam(supabase, config.season_id);
+                    if (!byeResult.ok) {
+                        errors.push({row: result.rowNumber, message: `[${mc}] Failed to resolve BYE team: ${byeResult.error.message}`});
+                        rowsErrored++;
+                        continue;
+                    }
+                    byeTeamId = byeResult.value.id;
+                }
+                awayTeamId = byeTeamId;
+            } else {
+                const resolvedAwayId = nameMap.get(result.awayTeamName.toLowerCase().trim());
+                if (!resolvedAwayId) {
+                    errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" not found in season`});
+                    rowsErrored++;
+                    continue;
+                }
+                awayTeamId = resolvedAwayId;
             }
 
             const homeTeam = teamsResult.value.find(t => t.id === homeTeamId);
             if (homeTeam && homeTeam.name.toLowerCase().trim() !== result.homeTeamName.toLowerCase().trim()) {
                 errors.push({row: result.rowNumber, message: `[${mc}] Home team "${result.homeTeamName}" is an outdated name — current name is "${homeTeam.name}". Update the sheet.`});
             }
-            const awayTeam = teamsResult.value.find(t => t.id === awayTeamId);
-            if (awayTeam && awayTeam.name.toLowerCase().trim() !== result.awayTeamName.toLowerCase().trim()) {
-                errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" is an outdated name — current name is "${awayTeam.name}". Update the sheet.`});
+            if (!result.isByeAway) {
+                const awayTeam = teamsResult.value.find(t => t.id === awayTeamId);
+                if (awayTeam && awayTeam.name.toLowerCase().trim() !== result.awayTeamName.toLowerCase().trim()) {
+                    errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" is an outdated name — current name is "${awayTeam.name}". Update the sheet.`});
+                }
             }
 
             const week = parseInt(mc.split('-')[0], 10);
@@ -101,7 +120,6 @@ export async function syncMatchResults(
                 rowsErrored++;
             }
             const scheduledAt = parsed?.iso ?? null;
-            // Yellow foreground = pending/placeholder; any other color (including default black) = scheduled
             const isPlaceholderDate = isPendingColor(result.scheduleCellColor);
 
             const existingResult = await findMatchByCode(supabase, mc, config.season_id);
@@ -113,10 +131,8 @@ export async function syncMatchResults(
             let match = existingResult.value;
 
             const hasScores = result.isForfeit || result.sets.length > 0;
-            // Placeholder dates (date-only, no time) do not count as a confirmed schedule
             const hasSchedule = scheduledAt !== null && !isPlaceholderDate;
 
-            // Create match if it doesn't exist
             const wasCreated = !match;
             if (!match) {
                 const initialStatus = hasScores ? 'pending' : hasSchedule ? 'scheduled' : 'pending';
@@ -139,7 +155,6 @@ export async function syncMatchResults(
                 match = insertResult.value[0];
             }
 
-            // Resolve and assign referees/media from sheet
             if (result.referees.length > 0 || result.media.length > 0) {
                 const officialErrors = await resolveAndAssignMatchOfficials(
                     supabase,
@@ -157,14 +172,12 @@ export async function syncMatchResults(
 
             if (!hasScores) {
                 if (match.status === 'completed') {
-                    // Sheet has no scores — revert completed match
                     const voidResult = await rpcVoidMatch(supabase, match.id);
                     if (!voidResult.ok) {
                         errors.push({row: result.rowNumber, message: `[${mc}] Failed to revert completed match: ${voidResult.error.message}`});
                         rowsErrored++;
                         continue;
                     }
-                    // void_match deletes match_officials — re-assign from sheet
                     if (result.referees.length > 0 || result.media.length > 0) {
                         const officialErrors = await resolveAndAssignMatchOfficials(
                             supabase, match.id, result.referees, result.media, result.rowNumber, mc,
@@ -190,7 +203,6 @@ export async function syncMatchResults(
                     continue;
                 }
 
-                // Not completed — normal schedule/created logic
                 if (hasSchedule) {
                     if (!wasCreated) {
                         const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, 'scheduled');
@@ -232,7 +244,6 @@ export async function syncMatchResults(
                 continue;
             }
 
-            // Case A: has scores — complete or re-apply
             let forfeitingTeam: 'home' | 'away' | undefined;
             if (result.isForfeit) {
                 const winnerNorm = result.winner?.toLowerCase().trim() ?? '';

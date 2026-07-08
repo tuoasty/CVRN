@@ -23,6 +23,7 @@ import {
 } from "@/server/db/sheetSyncLog.repo";
 import {clearSeasonRosters} from "@/server/db/players.repo";
 import {hardDeleteTeamsBySeasonId} from "@/server/db/teams.repo";
+import {deleteTeamNameHistoryBySeasonId} from "@/server/db/teamNameHistory.repo";
 import {deleteSeasonMatchesBySeasonId} from "@/server/db/matches.repo";
 import {deletePlayoffMatchesBySeasonId} from "@/server/db/playoff.repo";
 import {syncSheet} from "@/server/domains/sheets/commands/syncSheet";
@@ -145,7 +146,7 @@ export async function resetConfigAction(configId: string, options: {
         const seasonId = configResult.value.season_id;
         const sheetType = configResult.value.sheet_type;
 
-        // FK-safe order: playoff → season matches → rosters → teams
+        // FK-safe order: playoff → season matches → rosters → name history → teams
         if (sheetType === 'playoff' || sheetType === 'qualifier' || sheetType === 'teams') {
             const r = await deletePlayoffMatchesBySeasonId(supabase, seasonId);
             if (!r.ok) errs.push(`Playoff matches: ${r.error.message}`);
@@ -157,8 +158,10 @@ export async function resetConfigAction(configId: string, options: {
         if (sheetType === 'teams') {
             const r1 = await clearSeasonRosters(supabase, seasonId);
             if (!r1.ok) errs.push(`Rosters: ${r1.error.message}`);
-            const r2 = await hardDeleteTeamsBySeasonId(supabase, seasonId);
-            if (!r2.ok) errs.push(`Teams: ${r2.error.message}`);
+            const r2 = await deleteTeamNameHistoryBySeasonId(supabase, seasonId);
+            if (!r2.ok) errs.push(`Name history: ${r2.error.message}`);
+            const r3 = await hardDeleteTeamsBySeasonId(supabase, seasonId);
+            if (!r3.ok) errs.push(`Teams: ${r3.error.message}`);
         }
     }
 

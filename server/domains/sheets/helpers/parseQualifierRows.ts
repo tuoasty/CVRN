@@ -6,11 +6,16 @@ const COL_HOME = 6;      // G
 const COL_AWAY = 8;      // I
 const COL_SCHEDULE = 10; // K
 const COL_SET_START = 12; // M (Sets 1-5: M=12, N=13, O=14, P=15, Q=16)
-const COL_SET_END = 16;   // Q
-const COL_WINNER = 18;   // S
-const COL_NOTE = 19;     // T
-const COL_REFEREE = 21;  // V
-const COL_MEDIA = 23;    // X
+const COL_SET_END = 14;   // O
+const COL_WINNER = 16;   // Q
+const COL_NOTE = 17;     // R
+const COL_REFEREE = 19;  // T
+const COL_MEDIA = 21;    // V
+
+// Away-team cell values that mean "this team has a bye this round", not a real
+// opponent. Explicit allowlist (normalized lowercase) so a typo'd real team name
+// still fails the name lookup rather than being silently swallowed as a bye.
+const BYE_AWAY_TOKENS = new Set(["n/a", "na", "by round", "(by round)", "bye"]);
 
 function parseSetScore(
     cell: string,
@@ -46,15 +51,18 @@ export function parseQualifierRows(
     for (let i = dataStartIndex; i < rows.length; i++) {
         const row = rows[i];
         logger.debug({row:row, message: "Row debug"});
-        const rowNumber = i + 1; // 1-indexed for error messages
+        const rowNumber = i + 1;
 
         const code = row[COL_CODE]?.trim() ?? '';
-        if (!code) continue; // empty code = skip row
+        if (!code) continue;
 
         const homeTeamName = row[COL_HOME]?.trim() ?? '';
         const awayTeamName = row[COL_AWAY]?.trim() ?? '';
 
-        if (!homeTeamName) continue; 
+        if (!homeTeamName) continue;
+
+        const isByeAway = BYE_AWAY_TOKENS.has(awayTeamName.toLowerCase());
+
         if (!awayTeamName) {
             errors.push({row: rowNumber, message: `Row ${rowNumber}: missing away team name`});
             continue;
@@ -64,7 +72,7 @@ export function parseQualifierRows(
         const scheduleCellColor = fgColors?.[i]?.[COL_SCHEDULE] ?? null;
         const winnerRaw = row[COL_WINNER]?.trim() || null;
         const noteRaw = row[COL_NOTE]?.trim() ?? '';
-        const isForfeit = noteRaw.toUpperCase() === 'FF';
+        let isForfeit = noteRaw.toUpperCase() === 'FF';
         const referees = (row[COL_REFEREE]?.trim() || '').split('/').map(s => s.trim()).filter(Boolean);
         const media = (row[COL_MEDIA]?.trim() || '').split('/').map(s => s.trim()).filter(Boolean);
 
@@ -75,7 +83,12 @@ export function parseQualifierRows(
             for (let col = COL_SET_START; col <= COL_SET_END; col++) {
                 const cell = row[col]?.trim() ?? '';
                 if (!cell) continue;
-                if (cell.toLowerCase() === 'xx') continue; // default placeholder, skip
+                if (cell.toLowerCase() === 'xx') continue;
+                if (cell.toUpperCase() === 'FF') {
+                    isForfeit = true;
+                    sets.length = 0;
+                    break;
+                }
                 const setNumber = col - COL_SET_START + 1;
                 const parsed = parseSetScore(cell, setNumber, rowNumber, errors);
                 if (!parsed) {
@@ -95,6 +108,7 @@ export function parseQualifierRows(
             sets,
             winner: winnerRaw,
             isForfeit,
+            isByeAway,
             scheduleRaw,
             scheduleCellColor,
             referees,

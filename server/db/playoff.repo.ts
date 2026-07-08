@@ -41,6 +41,17 @@ export async function findPlayoffConfigById(
     return Ok(data);
 }
 
+export async function findAllPlayoffConfigs(
+    supabase: DBClient
+): Promise<Result<PlayoffConfig[]>> {
+    const {data, error} = await supabase
+        .from("playoff_configs")
+        .select("*")
+        .order("name", {ascending: true});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as PlayoffConfig[]);
+}
+
 export async function findStandingsBySeasonId(
     supabase: DBClient,
     seasonId: string
@@ -65,10 +76,12 @@ export async function insertPlayoffBrackets(
         match_id: b.matchId,
         seed_home: b.seedHome,
         seed_away: b.seedAway,
+        display_order: b.displayOrder,
+        playoff_group: b.playoffGroup,
         next_bracket_id: b.nextBracketId,
         winner_position: b.winnerPosition,
-        loser_next_bracket_id: b.loserNextBracketId ?? null,
-        loser_position: b.loserPosition ?? null,
+        loser_next_bracket_id: b.loserNextBracketId,
+        loser_position: b.loserPosition,
     }));
 
     const {data, error} = await supabase
@@ -198,6 +211,7 @@ export async function insertPlayoffMatches(
         season_id: m.seasonId,
         week: m.week,
         match_type: m.matchType,
+        match_code: m.matchCode,
         status: m.status,
         best_of: m.bestOf,
         home_team_id: m.homeTeamId ?? null,
