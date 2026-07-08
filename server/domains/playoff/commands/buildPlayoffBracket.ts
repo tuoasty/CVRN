@@ -64,10 +64,7 @@ export async function buildPlayoffBracket(
                 code: "NOT_FOUND"
             });
         }
-
-        // `template` cast is a shim until `supabase gen types` regenerates the row type
-        // with the new playoff_configs.template column.
-        const template = (config as { template?: string | null }).template;
+        const template = config.template;
         if (!template) {
             return Err({
                 message: "This season's playoff configuration has no template set",
