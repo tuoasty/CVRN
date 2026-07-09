@@ -54,6 +54,19 @@ export interface ParsedMatchResult {
     rowNumber: number
 }
 
+export interface ParsedPlayoffResult {
+    matchCode: string
+    homeTeamName: string
+    awayTeamName: string
+    sets: { setNumber: number; homeScore: number; awayScore: number }[]
+    winner: string | null
+    isForfeit: boolean
+    scheduleRaw: string | null
+    referees: string[]
+    media: string[]
+    rowNumber: number
+}
+
 export interface ParsedTeamResult {
     teamNumber: number
     teamName: string
