@@ -25,10 +25,12 @@ import {deleteSeasonAction} from "@/app/actions/season.actions";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
 import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
+import { useIsSuperAdmin } from "@/app/admin/AdminRoleProvider";
 
 export default function AdminSeasonsPage() {
     const {seasons, isLoading, error} = useSeasons();
     const {regions} = useRegions();
+    const isSuperAdmin = useIsSuperAdmin();
 
     const [formOpen, setFormOpen] = useState(false);
     const [editSeason, setEditSeason] = useState<SeasonWithPlayoffConfig | undefined>(undefined);
@@ -154,14 +156,16 @@ export default function AdminSeasonsPage() {
                                                 >
                                                     <Link href={`/admin/seasons/${season.id}/results`}>Results</Link>
                                                 </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                    onClick={() => setDeleteTarget(season)}
-                                                >
-                                                    Delete
-                                                </Button>
+                                                {isSuperAdmin && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        onClick={() => setDeleteTarget(season)}
+                                                    >
+                                                        Delete
+                                                    </Button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

@@ -28,6 +28,7 @@ import {deleteSeasonMatchesBySeasonId} from "@/server/db/matches.repo";
 import {deletePlayoffMatchesBySeasonId} from "@/server/db/playoff.repo";
 import {syncSheet} from "@/server/domains/sheets/commands/syncSheet";
 import {revertSyncs} from "@/server/domains/sheets/commands/revertSyncs";
+import {requireSuperAdmin} from "@/server/domains/auth";
 
 const SaveSheetConfigSchema = z.object({
     seasonId: z.string().uuid(),
@@ -115,8 +116,8 @@ export async function updateSheetConfigAction(data: unknown) {
 
 export async function deleteSheetConfigAction(id: string) {
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireSuperAdmin(supabase);
+    if (!guard.ok) return guard;
     const result = await deleteSheetConfig(supabase, id);
     if (result.ok) revalidatePath('/admin/sync');
     return result;
@@ -133,8 +134,8 @@ export async function resetConfigAction(configId: string, options: {
     clearLogs: boolean;
 }) {
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireSuperAdmin(supabase);
+    if (!guard.ok) return guard;
 
     const configResult = await findSheetConfigById(supabase, configId);
     if (!configResult.ok) return configResult;

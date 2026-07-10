@@ -26,9 +26,11 @@ import { PlayoffBracketDisplay } from "./PlayoffBracketDisplay";
 import { AlertTriangle, Loader2, Trash2, Trophy, ListOrdered, X } from "lucide-react";
 import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
+import { useIsSuperAdmin } from "@/app/admin/AdminRoleProvider";
 
 export default function PlayoffManagementPage() {
     const { selectedSeasonId, selectedRegionId } = useAdminContextStore();
+    const isSuperAdmin = useIsSuperAdmin();
     const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSeedDialogOpen, setIsSeedDialogOpen] = useState(false);
@@ -166,7 +168,7 @@ export default function PlayoffManagementPage() {
                             </div>
                         )}
 
-                        {hasPlayoffStarted && (
+                        {hasPlayoffStarted && isSuperAdmin && (
                             <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
                                 <AlertDialogTrigger asChild>
                                     <Button

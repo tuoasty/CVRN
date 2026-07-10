@@ -31,6 +31,7 @@ import {
     getLastSyncTimesAction,
 } from '@/app/actions/sheets.actions';
 import { useRegions } from '@/app/hooks';
+import { useIsSuperAdmin } from '@/app/admin/AdminRoleProvider';
 
 const SHEET_TYPES = ['teams', 'qualifier', 'playoff'] as const;
 
@@ -82,6 +83,7 @@ export default function AdminSyncPage() {
     const {seasons} = useSeasons();
     const {regions} = useRegions();
     const router = useRouter();
+    const isSuperAdmin = useIsSuperAdmin();
 
     const [configs, setConfigs] = useState<SheetConfig[]>([]);
     const [configsLoading, setConfigsLoading] = useState(true);
@@ -477,23 +479,27 @@ export default function AdminSyncPage() {
                                                 >
                                                     <History className="h-3 w-3" />
                                                 </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="rounded-sm text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
-                                                    onClick={() => { setResetTarget(cfg); setResetWipeData(true); setResetClearLogs(false); }}
-                                                    title="Reset config data"
-                                                >
-                                                    <RotateCcw className="h-3 w-3" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                    onClick={() => setDeleteTarget(cfg)}
-                                                >
-                                                    <Trash2 className="h-3 w-3" />
-                                                </Button>
+                                                {isSuperAdmin && (
+                                                    <>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="rounded-sm text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                                                            onClick={() => { setResetTarget(cfg); setResetWipeData(true); setResetClearLogs(false); }}
+                                                            title="Reset config data"
+                                                        >
+                                                            <RotateCcw className="h-3 w-3" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                            onClick={() => setDeleteTarget(cfg)}
+                                                        >
+                                                            <Trash2 className="h-3 w-3" />
+                                                        </Button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

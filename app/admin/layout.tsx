@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import AdminNavbar from "@/app/components/admin/navigation/AdminNavbar";
 import { AdminStoreInitializer } from "@/app/admin/AdminStoreInitializier";
+import { AdminRoleProvider } from "@/app/admin/AdminRoleProvider";
 import { createServerSupabase } from "@/server/supabase/server";
 
 // TODO: thread userRole through all admin pages for role-aware UI
@@ -16,17 +17,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const userRole = await getCurrentUserRole();
 
     return (
-        <div className="min-h-screen flex flex-col bg-background">
-            <Suspense fallback={
-                <header className="border-b border-border bg-card">
-                    <div className="page-wide h-14" />
-                </header>
-            }>
-                <AdminNavbar userRole={userRole} />
-            </Suspense>
-            <AdminStoreInitializer>
-                <main className="flex-1">{children}</main>
-            </AdminStoreInitializer>
-        </div>
+        <AdminRoleProvider role={userRole}>
+            <div className="min-h-screen flex flex-col bg-background">
+                <Suspense fallback={
+                    <header className="border-b border-border bg-card">
+                        <div className="page-wide h-14" />
+                    </header>
+                }>
+                    <AdminNavbar userRole={userRole} />
+                </Suspense>
+                <AdminStoreInitializer>
+                    <main className="flex-1">{children}</main>
+                </AdminStoreInitializer>
+            </div>
+        </AdminRoleProvider>
     );
 }

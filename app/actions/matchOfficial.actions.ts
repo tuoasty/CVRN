@@ -3,6 +3,7 @@
 import {z} from "zod"
 import {createServerSupabase} from "@/server/supabase/server";
 import {Err} from "@/shared/types/result";
+import {requireSuperAdmin} from "@/server/domains/auth";
 import {
     assignOfficialToMatch,
     assignMultipleOfficialsToMatch,
@@ -90,6 +91,8 @@ export async function removeAllOfficialsOfTypeAction(matchId: string, officialTy
     const typeParsed = OfficialTypeSchema.safeParse(officialType);
     if (!typeParsed.success) return Err({message: "Invalid official type", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireSuperAdmin(supabase);
+    if (!guard.ok) return guard;
     return removeAllOfficialsOfType(supabase, matchParsed.data, typeParsed.data);
 }
 

@@ -3,6 +3,7 @@
 import {z} from "zod"
 import {createServerSupabase} from "@/server/supabase/server";
 import {Err} from "@/shared/types/result";
+import {requireSuperAdmin} from "@/server/domains/auth";
 import {
     CreateMatchesSchema,
     UpdateMatchScheduleSchema,
@@ -77,6 +78,8 @@ export async function voidMatchAction(input: unknown) {
     const parsed = VoidMatchSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireSuperAdmin(supabase);
+    if (!guard.ok) return guard;
     return voidMatchService(supabase, parsed.data);
 }
 

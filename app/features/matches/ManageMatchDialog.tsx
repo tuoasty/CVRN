@@ -31,6 +31,7 @@ import {
 import { timezoneOptions } from "@/app/utils/timezoneOptions";
 import MatchOfficialSection from "@/app/features/officials/MatchOfficialSection";
 import { updateMatchSchedule, voidMatch } from "@/app/hooks/useMatches";
+import { useIsSuperAdmin } from "@/app/admin/AdminRoleProvider";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { Match } from "@/shared/types/db";
 import {toast} from "@/app/utils/toast";
@@ -53,6 +54,7 @@ export default function ManageMatchDialog({
                                           }: ManageMatchDialogProps) {
 
 
+    const isSuperAdmin = useIsSuperAdmin();
     const [open, setOpen] = useState(false);
     const [updating, setUpdating] = useState(false);
     const [voidDialogOpen, setVoidDialogOpen] = useState(false);
@@ -242,7 +244,7 @@ export default function ManageMatchDialog({
                             </div>
                         </div>
 
-                        {isCompleted && (
+                        {isCompleted && isSuperAdmin && (
                             <div className="space-y-4 pt-4 border-t border-border border-destructive/20">
                                 <h3 className="font-semibold text-destructive">Danger Zone</h3>
                                 <p className="text-sm text-muted-foreground">

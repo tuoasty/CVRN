@@ -12,6 +12,7 @@ import {
     DeriveSeasonPodiumSchema, UpsertSeasonAwardSchema, DeleteSeasonAwardSchema,
 } from "@/server/domains/season";
 import {getRobloxFullAvatarsById} from "@/server/roblox/users";
+import {requireSuperAdmin} from "@/server/domains/auth";
 import {revalidatePath} from "next/cache";
 import {z} from "zod";
 
@@ -65,8 +66,8 @@ export async function deleteSeasonAction(data: unknown) {
     const parsed = SeasonIdSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    const guard = await requireSuperAdmin(supabase);
+    if (!guard.ok) return guard;
     const result = await deleteSeason(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
     return result;
