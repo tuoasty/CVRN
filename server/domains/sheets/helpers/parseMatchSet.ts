@@ -1,119 +1,103 @@
-import { ParsedStatLine, SyncError } from "../types";
+import { ParsedSection, StatCounts, SyncError } from "../types";
 import { buildHeaderMap, normalizeHeader } from "./statHeaders";
 import { parsePlayerMatchStat } from "./parsePlayerMatchStat";
 
 const TEAM_COL = 0; // column A
 
-// Normalized labels in col A that aren't team names and aren't players.
-const SKIP_LABELS = new Set(["team totals", "players", "score:"]);
+// "Team Totals" heads the aggregate block at the bottom of the tab. Everything
+// below it is per-team totals — rows that carry a team name in column A AND real
+// stat values, so they are indistinguishable from player rows. It ends the data,
+// not just the current section.
+// "score:" and "players" sit inside a section and must not close it.
+const DATA_END_LABEL = "team totals";
+const SKIP_LABELS = new Set(["players", "score:"]);
 
 // Unfilled roster slots from the sheet template. Bounded to 1-18 (PLAYER_ROWS
 // in parseTeamsSheet.ts) and requires whitespace, so it can't collide with a
 // real Roblox username (Roblox disallows spaces).
 const PLACEHOLDER_PLAYER_PATTERN = /^player\s+([1-9]|1[0-8])$/i;
 
-// Unrenamed team header from the sheet template. "Like" match — anchored to
-// the start as "TEAM <digit>", anything after. Covers all observed variants:
-//   "TEAM 1 NAME AND COLOR"     (top roster, untouched template)
-//   "TEAM 2 NAME AND COLOR:"    (trailing colon variant)
-//   "TEAM 1" / "TEAM 2"         (bottom combined-totals section)
-// teamNames (DB) is checked first below, so a real team literally named
-// "Team N ..." still resolves correctly.
-const PLACEHOLDER_TEAM_PATTERN = /^team\s+\d+\b/i;
-
-const SKIP_SECTION = "__skip_section__" as const;
-
-// teamNames keys come from resolveTeamNames (`.toLowerCase().trim()`),
-// so team-name comparisons must use the same fold — NOT normalizeHeader
-// (which also collapses internal whitespace).
-function foldTeamName(s: string): string {
-  return s.toLowerCase().trim();
+// A header row carries a label and no stat values; a player row carries at least
+// one. This is what separates the two — never the text of the label, which may be
+// mistyped in the sheet and cannot be corrected (the sheets are view-only).
+function hasAnyStatValue(
+  row: string[],
+  colMap: Map<keyof StatCounts, number>
+): boolean {
+  for (const colIdx of colMap.values()) {
+    if ((row[colIdx] ?? "").trim() !== "") return true;
+  }
+  return false;
 }
 
+// Structure only. Sections come out in sheet order with their raw header text;
+// deciding which team each one belongs to needs the DB and happens in
+// buildMatchStatsPlan.
 export function parseMatchSet(
   rows: string[][],
-  teamNames: Set<string>,
   setNumber: number
-): { lines: ParsedStatLine[]; errors: SyncError[] } {
-  const lines: ParsedStatLine[] = [];
+): { sections: ParsedSection[]; errors: SyncError[] } {
+  const sections: ParsedSection[] = [];
   const errors: SyncError[] = [];
 
   const header = buildHeaderMap(rows);
   if (!header) {
-    errors.push({ row: 0, message: "No stat header row found in tab" });
-    return { lines, errors };
+    errors.push({ row: 0, message: "No stat header row found in tab", kind: "fatal" });
+    return { sections, errors };
   }
   if (header.missing.length > 0) {
     errors.push({
       row: header.headerRowIdx + 1,
       message: `Missing stat columns: ${header.missing.join(", ")}`,
+      kind: "fatal",
     });
-    return { lines, errors };
+    return { sections, errors };
   }
 
-  let currentTeam: string | typeof SKIP_SECTION | null = null;
+  let current: ParsedSection | null = null;
 
   for (let r = header.headerRowIdx + 1; r < rows.length; r++) {
-    const label = (rows[r]?.[TEAM_COL] ?? "").trim();
+    const row = rows[r] ?? [];
+    const label = (row[TEAM_COL] ?? "").trim();
 
-    // Blank row in col A closes the current team section.
-    if (label === "") {
-      currentTeam = null;
-      continue;
-    }
+    // Blank rows carry no meaning. Spacers, unfilled slots — all ignored.
+    if (label === "") continue;
 
-    if (SKIP_LABELS.has(normalizeHeader(label))) continue;
+    const norm = normalizeHeader(label);
 
-    // Real DB team match takes precedence over the placeholder regex below,
-    // in case any team is literally named "Team N".
-    const folded = foldTeamName(label);
-    if (teamNames.has(folded)) {
-      currentTeam = folded;
-      continue;
-    }
-
-    // Placeholder team header — silently ignore the entire section.
-    if (PLACEHOLDER_TEAM_PATTERN.test(label)) {
-      currentTeam = SKIP_SECTION;
-      continue;
-    }
-
-    // Unfilled roster slot — never represents real data.
+    if (norm === DATA_END_LABEL) break;
+    if (SKIP_LABELS.has(norm)) continue;
     if (PLACEHOLDER_PLAYER_PATTERN.test(label)) continue;
 
-    // Real player under an unrenamed team header — typo guard against silent
-    // misattribution. Surface a clear message instead of the generic
-    // "appeared before any team section".
-    if (currentTeam === SKIP_SECTION) {
-      errors.push({
-        row: r + 1,
-        message: `Player "${label}" is under an unrenamed team header ("TEAM N NAME AND COLOR") — rename the team in the sheet.`,
-      });
+    // No stat values → a section header, whatever it says.
+    if (!hasAnyStatValue(row, header.colMap)) {
+      current = { sectionIndex: sections.length, headerLabel: label, lines: [] };
+      sections.push(current);
       continue;
     }
 
-    if (!currentTeam) {
+    if (!current) {
       errors.push({
         row: r + 1,
         message: `Player "${label}" appeared before any team section`,
+        kind: "fatal",
       });
       continue;
     }
 
-    const result = parsePlayerMatchStat(rows[r], header.colMap);
+    const result = parsePlayerMatchStat(row, header.colMap);
     if (!result.ok) {
-      errors.push({ row: r + 1, message: `[${label}] ${result.error}` });
+      errors.push({ row: r + 1, message: `[${label}] ${result.error}`, kind: "fatal" });
       continue;
     }
 
-    lines.push({
+    current.lines.push({
       username: label,
-      teamName: currentTeam,
       rowNumber: r + 1,
       setNumber,
       counts: result.counts,
     });
   }
 
-  return { lines, errors };
+  return { sections, errors };
 }

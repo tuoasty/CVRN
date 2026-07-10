@@ -10,13 +10,13 @@ import {Tooltip, TooltipContent, TooltipTrigger, TooltipProvider} from "@/app/co
 import {getLogoClassName} from "@/app/lib/logoClass";
 import {cn} from "@/lib/utils";
 import {
-    DEFAULT_COLUMNS,
-    DETAILED_COLUMNS,
+    buildColumns,
     StatColumn,
     StatRow,
     formatStatValue,
     groupColumns,
     findLeaderKeys,
+    statHeadWidthClass,
 } from "./statColumnMeta";
 
 type Props = {
@@ -25,6 +25,7 @@ type Props = {
     rows: StatRow[];
     selectedTeam: Team | null;
     detailed: boolean;
+    showSetsPlayed: boolean;
 };
 
 const isHex = (color: string | null | undefined): color is string => {
@@ -94,8 +95,8 @@ function useDragScroll() {
     }, []);
 }
 
-export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detailed}: Props) {
-    const columns = detailed ? DETAILED_COLUMNS : DEFAULT_COLUMNS;
+export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detailed, showSetsPlayed}: Props) {
+    const columns = buildColumns(detailed, showSetsPlayed);
     const tableRef = useDragScroll();
 
     if (rows.length === 0) {
@@ -149,6 +150,7 @@ export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detail
                                         key={col.key}
                                         className={cn(
                                             "h-8 px-1 text-right text-[11px] font-semibold whitespace-nowrap",
+                                            statHeadWidthClass(col.format),
                                             isLastInGroup && "border-r border-border/30 last:border-r-0",
                                         )}
                                     >

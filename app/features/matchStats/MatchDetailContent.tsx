@@ -70,6 +70,7 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
                             rows={statTotals}
                             selectedTeam={selectedTeam}
                             detailed={detailed}
+                            showSetsPlayed
                         />
                     </TabsContent>
                     {Array.from({length: setCount}, (_, i) => i + 1).map(n => (
@@ -80,6 +81,7 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
                                 rows={statSets.filter(r => r.set_number === n)}
                                 selectedTeam={selectedTeam}
                                 detailed={detailed}
+                                showSetsPlayed={false}
                             />
                         </TabsContent>
                     ))}

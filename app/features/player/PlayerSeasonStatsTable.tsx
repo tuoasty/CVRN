@@ -16,6 +16,7 @@ import {
     PlayerStatColumn,
     formatPlayerStat,
     groupPlayerColumns,
+    playerHeadWidthClass,
 } from "./playerStatColumnMeta";
 
 type TeamLogoInfo = {logo_url: string | null; logo_bg_removed: boolean};
@@ -77,7 +78,9 @@ export default function PlayerSeasonStatsTable({rows, teamLogoBySeasonId}: Props
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Season Stats</h2>
+                <div>
+                    <h2 className="text-lg font-semibold">Season Stats</h2>
+                </div>
                 <StatViewToggle detailed={detailed} onDetailedChange={setDetailed} />
             </div>
             <TooltipProvider delayDuration={200}>
@@ -109,6 +112,7 @@ export default function PlayerSeasonStatsTable({rows, teamLogoBySeasonId}: Props
                                             key={col.key as string}
                                             className={cn(
                                                 "h-8 px-1 text-right text-[11px] font-semibold whitespace-nowrap",
+                                                playerHeadWidthClass(col.format),
                                                 isLastInGroup && "border-r border-border/30 last:border-r-0",
                                             )}
                                         >
