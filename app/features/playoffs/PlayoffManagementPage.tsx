@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { usePlayoffBrackets, usePlayoffConfigs, generateBracket, resetBrackets } from "@/app/hooks/usePlayoffs";
+import { useAllMatches } from "@/app/hooks/useMatches";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { mutate } from "swr";
 import { templates } from "@/server/domains/playoff/helpers/playoffTemplates";
@@ -22,7 +23,7 @@ import { toast } from "@/app/utils/toast";
 import { errorCodeToUserMessage } from "@/app/lib/errorMessages";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { PlayoffBracketDisplay } from "./PlayoffBracketDisplay";
-import { Loader2, Trash2, Trophy, ListOrdered, X } from "lucide-react";
+import { AlertTriangle, Loader2, Trash2, Trophy, ListOrdered, X } from "lucide-react";
 import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
 
@@ -36,6 +37,14 @@ export default function PlayoffManagementPage() {
     const { seasons: allSeasons } = useSeasons();
     const { configs } = usePlayoffConfigs();
     const { brackets, incomingMap, isLoading: loadingBrackets } = usePlayoffBrackets(selectedSeasonId ?? null);
+    // Same SWR key PlayoffBracketDisplay already fetches on this page — no extra request.
+    const { matches } = useAllMatches();
+
+    const completedCount = useMemo(() => {
+        if (brackets.length === 0) return 0;
+        const bracketMatchIds = new Set(brackets.map((b) => b.match_id));
+        return matches.filter((m) => bracketMatchIds.has(m.id) && m.status === "completed").length;
+    }, [brackets, matches]);
 
     const selectedSeason = allSeasons.find((s) => s.id === selectedSeasonId);
     const hasPlayoffStarted = selectedSeason?.playoff_started || false;
@@ -93,7 +102,7 @@ export default function PlayoffManagementPage() {
 
         toast.success("Playoff brackets reset successfully");
         setIsResetDialogOpen(false);
-        await mutate("seasons");
+        await Promise.all([mutate("seasons"), mutate("matches")]);
         setIsProcessing(false);
     };
 
@@ -177,6 +186,21 @@ export default function PlayoffManagementPage() {
                                             This action cannot be undone. You will need to regenerate the bracket after reset.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
+                                    {completedCount > 0 && (
+                                        <div className="flex gap-3 rounded-sm border border-destructive/40 bg-destructive/10 p-3">
+                                            <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
+                                            <div className="space-y-1 text-xs">
+                                                <p className="font-medium text-destructive">
+                                                    {completedCount} playoff {completedCount === 1 ? "match has" : "matches have"} already been completed.
+                                                </p>
+                                                <p className="text-muted-foreground">
+                                                    Their scores, set results, box-score stats, and assigned officials will be
+                                                    deleted along with the bracket. There is no undo and no revert — the results
+                                                    must be re-entered or re-synced from the sheet after regenerating.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                     <AlertDialogFooter>
                                         <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
                                         <AlertDialogAction

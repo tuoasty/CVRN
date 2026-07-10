@@ -31,26 +31,9 @@ export async function resetPlayoffBracketsService(
             });
         }
 
-        const { data: playoffMatches, error: matchesError } = await supabase
-            .from("matches")
-            .select("id, status")
-            .eq("season_id", seasonId)
-            .eq("match_type", "playoffs");
-
-        if (matchesError) {
-            logger.error({ seasonId, error: matchesError }, "Failed to fetch playoff matches");
-            return Err(serializeError(matchesError, "DB_ERROR"));
-        }
-
-        const hasCompletedMatches = playoffMatches?.some(m => m.status === "completed");
-
-        if (hasCompletedMatches) {
-            return Err({
-                message: "Cannot reset brackets - some playoff matches have been completed",
-                code: "CONFLICT"
-            });
-        }
-
+        // Completed matches no longer block the reset — the admin UI confirms first.
+        // The delete cascades to match_sets, match_officials, player_match_stats and
+        // playoff_brackets, so completed results are destroyed along with the bracket.
         const deleteResult = await deletePlayoffMatchesBySeasonId(supabase, seasonId);
         if (!deleteResult.ok) {
             logger.error({ seasonId, error: deleteResult.error }, "Failed to delete playoff matches");

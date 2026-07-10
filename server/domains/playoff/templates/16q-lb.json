@@ -45,7 +45,7 @@
     {
       "round": "bracket_reset",
       "matches": [
-        { "code": "BR", "best_of": 5, "home": { "type": "match", "code": "GF", "result": "loser" }, "away": { "type": "match", "code": "GF", "result": "winner" } }
+        { "code": "BR", "best_of": 5, "home": { "type": "match", "code": "GF", "result": "winner" }, "away": { "type": "match", "code": "GF", "result": "loser" } }
       ]
     }
   ],

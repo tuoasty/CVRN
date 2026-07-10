@@ -5,14 +5,6 @@ import {templates} from "./playoffTemplates";
 
 type Mark = "visiting" | "done";
 
-// The order playoff matches must be resolved in: a topological sort of the
-// template's dependency DAG. Edges come only from `{ type: "match" }` slots;
-// `{ type: "seed" }` slots are leaves. A slot's `result` ("winner" | "loser")
-// is irrelevant here — BR depends on GF twice, and that doubled edge is free.
-//
-// Do not substitute `display_order` or round names: display_order flattens
-// upper then lower, which puts GF ahead of its own LF feeder.
-
 function dependenciesOf(match: PlayoffMatchTemplate): string[] {
     return [match.home, match.away].flatMap(slot =>
         slot.type === "match" ? [slot.code] : []
@@ -45,8 +37,6 @@ export function getTemplateMatchOrder(templateKey: string): Result<string[]> {
     const marks = new Map<string, Mark>();
     let failure: SerializableError | null = null;
 
-    // Post-order DFS. Returns false on a malformed template, leaving the reason
-    // in `failure` — threading a Result through the recursion buys nothing.
     function resolve(code: string): boolean {
         const mark = marks.get(code);
         if (mark === "done") return true;
@@ -76,8 +66,6 @@ export function getTemplateMatchOrder(templateKey: string): Result<string[]> {
         return true;
     }
 
-    // Every code is a potential root: 16q and 12q-8pi each have two sinks (GF, 3RD).
-    // Iterating in template file order keeps the output deterministic.
     for (const match of matches) {
         if (!resolve(match.code)) {
             return Err(
