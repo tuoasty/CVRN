@@ -1,6 +1,29 @@
 import {z} from "zod"
 
-export const PlayoffRoundSchema = z.enum(["play_in", "round_of_16", "quarterfinal", "semifinal", "final", "third_place"])
+// Canonical round vocabulary, in bracket progression order: winners bracket,
+// then losers bracket, then the deciding matches. Templates in
+// `server/domains/playoff/templates/` are the source of these values; the DB
+// dropped its CHECK constraint in 20260707000000_playoff_bracket_group.sql, so
+// this enum is the only gate. Array order doubles as sort order for UI steppers.
+export const PLAYOFF_ROUNDS = [
+    "play_in",
+    "round_of_16",
+    "quarterfinal",
+    "semifinal",
+    "winners_final",
+    "losers_round_1",
+    "losers_round_2",
+    "losers_round_3",
+    "losers_quarterfinal",
+    "losers_semifinal",
+    "losers_final",
+    "third_place",
+    "final",
+    "grand_final",
+    "bracket_reset",
+] as const
+
+export const PlayoffRoundSchema = z.enum(PLAYOFF_ROUNDS)
 export type PlayoffRound = z.infer<typeof PlayoffRoundSchema>
 
 export const GeneratePlayoffBracketSchema = z.object({

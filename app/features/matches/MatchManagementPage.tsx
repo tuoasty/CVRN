@@ -1,36 +1,84 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import SeasonWeekPicker from "@/app/features/seasons/SeasonWeekPicker";
+import React, { useEffect, useMemo, useState } from "react";
 import CreateMatchesPanel from "@/app/features/matches/CreateMatchesPanel";
 import AdminSchedulePanel from "@/app/features/matches/AdminSchedulePanel";
+import { MatchTypeTabs, WeekSelector, PlayoffStepper } from "@/app/features/matches/ScheduleSelectors";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
+import {
+    useAvailablePlayoffRounds,
+    useDefaultWeekForSeason,
+    usePlayoffRoundCounts,
+    useWeekMatchCounts,
+} from "@/app/hooks/useMatches";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { PlayoffRound } from "@/server/domains/playoff";
+import { isPlayoffRound, sortRounds } from "@/app/utils/playoffRounds";
 import { Calendar } from "lucide-react";
 import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
 
 export default function MatchManagementPage() {
-    const { selectedSeasonId, setSelectedSeasonId } = useAdminContextStore();
-    const [selectedWeek, setSelectedWeek] = useState<number>(1);
-    const [selectedRound, setSelectedRound] = useState<PlayoffRound>("play_in");
-    const [matchType, setMatchType] = useState<"season" | "playoff">("season");
+    const { selectedSeasonId } = useAdminContextStore();
+    const [matchType, setMatchType] = useState<"season" | "playoffs">("season");
     const [activeTab, setActiveTab] = useState("schedule");
+
+    // Null means "no explicit pick yet" — fall back to the season's default.
+    // Both reset when the navbar switches seasons.
+    const [weekOverride, setWeekOverride] = useState<number | null>(null);
+    const [roundOverride, setRoundOverride] = useState<PlayoffRound | null>(null);
+    useEffect(() => {
+        setWeekOverride(null);
+        setRoundOverride(null);
+        setMatchType("season");
+    }, [selectedSeasonId]);
 
     const { seasons } = useSeasons();
     const { regions } = useRegions();
 
-    const regionCode = useMemo(() => {
-        if (!selectedSeasonId || seasons.length === 0 || regions.length === 0) return "";
-        const season = seasons.find((s) => s.id === selectedSeasonId);
-        if (!season) return "";
-        const region = regions.find((r) => r.id === season.region_id);
-        return region?.code ?? "";
-    }, [selectedSeasonId, seasons, regions]);
-
     const seasonIdValue = selectedSeasonId ?? "";
+    const season = seasons.find(s => s.id === selectedSeasonId);
+    const hasPlayoffs = !!season?.playoff_started;
+
+    const regionCode = useMemo(() => {
+        if (!season || regions.length === 0) return "";
+        return regions.find(r => r.id === season.region_id)?.code ?? "";
+    }, [season, regions]);
+
+    const { defaultWeek } = useDefaultWeekForSeason(
+        selectedSeasonId && !weekOverride ? selectedSeasonId : null
+    );
+    const { weekCounts } = useWeekMatchCounts(selectedSeasonId);
+    const availableWeeks = useMemo(
+        () => weekCounts.map(w => w.week).sort((a, b) => a - b),
+        [weekCounts]
+    );
+    const effectiveWeek = weekOverride ?? defaultWeek ?? 1;
+
+    const { rounds: availableRounds } = useAvailablePlayoffRounds(hasPlayoffs ? selectedSeasonId : null);
+    const { roundCounts } = usePlayoffRoundCounts(hasPlayoffs ? selectedSeasonId : null);
+    const sortedRounds = useMemo(
+        () => sortRounds(availableRounds.filter(isPlayoffRound)),
+        [availableRounds]
+    );
+    const effectiveRound: PlayoffRound =
+        roundOverride && sortedRounds.includes(roundOverride)
+            ? roundOverride
+            : sortedRounds[0] ?? "play_in";
+
+    const roundCountMap = useMemo(() => {
+        const m = new Map<string, number>();
+        for (const { round, count } of roundCounts) m.set(round, count);
+        return m;
+    }, [roundCounts]);
+
+    // The create-matches flow is season-only; leaving it selected while
+    // switching to playoffs would strand the user on a hidden tab.
+    const handleMatchTypeChange = (tab: "season" | "playoffs") => {
+        setMatchType(tab);
+        if (tab === "playoffs") setActiveTab("schedule");
+    };
 
     return (
         <div className="admin-container">
@@ -41,53 +89,64 @@ export default function MatchManagementPage() {
                     description="Schedule and manage matches by season and week"
                 />
 
-                <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-                    <SeasonWeekPicker
-                        hideSeason={true}
-                        selectedSeasonId={seasonIdValue}
-                        selectedWeek={selectedWeek}
-                        selectedMatchType={matchType}
-                        selectedRound={selectedRound}
-                        onSeasonChange={setSelectedSeasonId}
-                        onWeekChange={setSelectedWeek}
-                        onMatchTypeChange={setMatchType}
-                        onRoundChange={setSelectedRound}
-                    />
-                </div>
-
                 {seasonIdValue ? (
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="rounded-sm bg-muted/50 p-1">
-                            <TabsTrigger value="schedule" className="rounded-sm">
-                                Current Schedule
-                            </TabsTrigger>
-                            {matchType === "season" && (
-                                <TabsTrigger value="create" className="rounded-sm">
-                                    Create Matches
-                                </TabsTrigger>
-                            )}
-                        </TabsList>
-
-                        <TabsContent value="schedule" className="mt-6">
-                            <AdminSchedulePanel
-                                seasonId={seasonIdValue}
-                                week={matchType === "season" ? selectedWeek : undefined}
-                                round={matchType === "playoff" ? selectedRound : undefined}
-                                matchType={matchType}
-                                regionCode={regionCode}
+                    <>
+                        <div className="space-y-4">
+                            <MatchTypeTabs
+                                activeTab={matchType}
+                                playoffsEnabled={hasPlayoffs}
+                                onTabChange={handleMatchTypeChange}
                             />
-                        </TabsContent>
 
-                        {matchType === "season" && (
-                            <TabsContent value="create" className="mt-6">
-                                <CreateMatchesPanel
+                            {matchType === "season" ? (
+                                <WeekSelector
+                                    effectiveWeek={effectiveWeek}
+                                    weeks={availableWeeks}
+                                    onWeekChange={setWeekOverride}
+                                />
+                            ) : (
+                                <PlayoffStepper
+                                    rounds={sortedRounds}
+                                    effectiveRound={effectiveRound}
+                                    roundCountMap={roundCountMap}
+                                    onRoundChange={r => setRoundOverride(r as PlayoffRound)}
+                                />
+                            )}
+                        </div>
+
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                            <TabsList className="rounded-sm bg-muted/50 p-1">
+                                <TabsTrigger value="schedule" className="rounded-sm">
+                                    Current Schedule
+                                </TabsTrigger>
+                                {matchType === "season" && (
+                                    <TabsTrigger value="create" className="rounded-sm">
+                                        Create Matches
+                                    </TabsTrigger>
+                                )}
+                            </TabsList>
+
+                            <TabsContent value="schedule" className="mt-6">
+                                <AdminSchedulePanel
                                     seasonId={seasonIdValue}
-                                    week={selectedWeek}
-                                    onSuccess={() => setActiveTab("schedule")}
+                                    week={matchType === "season" ? effectiveWeek : undefined}
+                                    round={matchType === "playoffs" ? effectiveRound : undefined}
+                                    matchType={matchType === "season" ? "season" : "playoff"}
+                                    regionCode={regionCode}
                                 />
                             </TabsContent>
-                        )}
-                    </Tabs>
+
+                            {matchType === "season" && (
+                                <TabsContent value="create" className="mt-6">
+                                    <CreateMatchesPanel
+                                        seasonId={seasonIdValue}
+                                        week={effectiveWeek}
+                                        onSuccess={() => setActiveTab("schedule")}
+                                    />
+                                </TabsContent>
+                            )}
+                        </Tabs>
+                    </>
                 ) : (
                     <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
                         <div className="text-center space-y-3">

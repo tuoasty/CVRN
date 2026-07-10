@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { useWeekSchedule, usePlayoffSchedule, useAvailablePlayoffRounds, useDefaultWeekForSeason, usePlayoffRoundCounts, useWeekMatchCounts } from "@/app/hooks/useMatches";
@@ -8,7 +8,7 @@ import { useTeamsByIds } from "@/app/hooks/useTeams";
 import { usePlayersByIds } from "@/app/hooks/usePlayers";
 import { useStandings } from "@/app/hooks/useStandings";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
 import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
@@ -16,35 +16,8 @@ import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
 import { Player } from "@/shared/types/db";
 import type { PlayoffRound } from "@/server/domains/playoff";
-import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
-
-const ROUND_LABELS: Record<string, string> = {
-    play_in: "Play-in",
-    round_of_16: "R16",
-    quarterfinal: "QF",
-    semifinal: "SF",
-    third_place: "3rd Place",
-    final: "Grand Final",
-};
-
-const ROUND_LABELS_FULL: Record<string, string> = {
-    play_in: "Play-in",
-    round_of_16: "Round of 16",
-    quarterfinal: "Quarterfinal",
-    semifinal: "Semifinal",
-    third_place: "3rd Place",
-    final: "Grand Final",
-};
-
-const ROUND_ORDER: Record<string, number> = {
-    play_in: 1,
-    round_of_16: 2,
-    quarterfinal: 3,
-    semifinal: 4,
-    third_place: 5,
-    final: 6,
-};
+import { isPlayoffRound, sortRounds } from "@/app/utils/playoffRounds";
+import { MatchTypeTabs, WeekSelector, PlayoffStepper } from "@/app/features/matches/ScheduleSelectors";
 
 function matchCodeSortKey(code: string | null | undefined): number {
     if (!code) return Infinity;
@@ -65,9 +38,7 @@ export default function MatchesPage() {
     const activeTab = tabParam === "playoffs" ? "playoffs" : "season";
     const weekParam = searchParams.get("week");
     const rawRound = searchParams.get("round");
-    const roundParam: PlayoffRound | null = rawRound && Object.keys(ROUND_LABELS).includes(rawRound)
-        ? rawRound as PlayoffRound
-        : null;
+    const roundParam: PlayoffRound | null = isPlayoffRound(rawRound) ? rawRound : null;
 
     const regionCode = region.code;
     const hasPlayoffs = season.playoff_started;
@@ -87,14 +58,14 @@ export default function MatchesPage() {
     );
 
     const sortedRounds = useMemo(
-        () => [...availableRounds].sort((a, b) => (ROUND_ORDER[a] ?? 999) - (ROUND_ORDER[b] ?? 999)),
+        () => sortRounds(availableRounds.filter(isPlayoffRound)),
         [availableRounds]
     );
 
     // Default round = first available
     const effectiveRound: PlayoffRound = (roundParam && sortedRounds.includes(roundParam))
         ? roundParam
-        : (sortedRounds[0] as PlayoffRound) ?? "play_in";
+        : sortedRounds[0] ?? "play_in";
 
     // Schedule fetches
     const weekArg = activeTab === "season"
@@ -199,33 +170,11 @@ export default function MatchesPage() {
             <PublicPageHeader icon={CalendarDays} title="Matches" subtitle={subtitle} />
 
             <div className="space-y-4">
-                    {/* Full-width 50/50 tab */}
-                    <div className="grid grid-cols-2 border border-border rounded-sm overflow-hidden">
-                        <button
-                            onClick={() => setTab("season")}
-                            className={cn(
-                                "py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors border-r border-border",
-                                activeTab === "season"
-                                    ? "bg-primary/20 text-primary"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                            )}
-                        >
-                            Regular Season
-                        </button>
-                        <button
-                            onClick={() => hasPlayoffs && setTab("playoffs")}
-                            disabled={!hasPlayoffs}
-                            className={cn(
-                                "py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors",
-                                activeTab === "playoffs"
-                                    ? "bg-primary/20 text-primary"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30",
-                                !hasPlayoffs && "opacity-40 cursor-not-allowed"
-                            )}
-                        >
-                            Playoffs
-                        </button>
-                    </div>
+                    <MatchTypeTabs
+                        activeTab={activeTab}
+                        playoffsEnabled={!!hasPlayoffs}
+                        onTabChange={setTab}
+                    />
 
                     {/* Selector */}
                     {activeTab === "season" ? (
@@ -260,181 +209,6 @@ export default function MatchesPage() {
                     />
                 </div>
         </div>
-    );
-}
-
-// ─── Week Selector ─────────────────────────────────────────────────────────────
-
-interface WeekSelectorProps {
-    effectiveWeek: number;
-    weeks: number[];
-    onWeekChange: (week: number) => void;
-}
-
-function WeekSelector({ effectiveWeek, weeks, onWeekChange }: WeekSelectorProps) {
-    const [open, setOpen] = useState(false);
-    const activeIdx = weeks.indexOf(effectiveWeek);
-    const canGoPrev = activeIdx > 0;
-    const canGoNext = activeIdx < weeks.length - 1;
-
-    return (
-        <>
-            {/* Mobile */}
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                    <div className="sm:hidden flex items-center border border-border rounded-md h-11 overflow-hidden cursor-pointer">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); if (canGoPrev) { onWeekChange(weeks[activeIdx - 1]); setOpen(false); } }}
-                            disabled={!canGoPrev}
-                            className={cn("w-11 h-full flex items-center justify-center shrink-0 transition-colors", canGoPrev ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/20 cursor-not-allowed")}
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <div className="flex-1 h-full flex items-center justify-center text-sm font-semibold">
-                            Week {effectiveWeek}
-                        </div>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); if (canGoNext) { onWeekChange(weeks[activeIdx + 1]); setOpen(false); } }}
-                            disabled={!canGoNext}
-                            className={cn("w-11 h-full flex items-center justify-center shrink-0 transition-colors", canGoNext ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/20 cursor-not-allowed")}
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                </PopoverTrigger>
-                <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="center">
-                    {weeks.map(w => (
-                        <button
-                            key={w}
-                            onClick={() => { onWeekChange(w); setOpen(false); }}
-                            className={cn(
-                                "w-full px-3 py-2.5 text-sm text-center transition-colors border-b border-border last:border-b-0",
-                                w === effectiveWeek
-                                    ? "font-semibold text-foreground bg-muted/40"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
-                            )}
-                        >
-                            Week {w}
-                        </button>
-                    ))}
-                </PopoverContent>
-            </Popover>
-
-            {/* Desktop */}
-            <div className="hidden sm:flex overflow-x-auto border border-border rounded-sm overflow-hidden">
-                {weeks.map(w => {
-                    const isActive = w === effectiveWeek;
-                    return (
-                        <button
-                            key={w}
-                            onClick={() => onWeekChange(w)}
-                            className={cn(
-                                "flex flex-col items-center justify-center shrink-0 min-w-[72px] flex-1 px-2 py-2.5 border-r border-border last:border-r-0 transition-colors",
-                                isActive
-                                    ? "bg-primary/20 text-primary"
-                                    : w < effectiveWeek
-                                        ? "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/20"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                            )}
-                        >
-                            <span className="text-xs font-semibold uppercase tracking-wider">WEEK {w}</span>
-                        </button>
-                    );
-                })}
-            </div>
-        </>
-    );
-}
-
-// ─── Playoff Stepper ───────────────────────────────────────────────────────────
-
-interface PlayoffStepperProps {
-    rounds: string[];
-    effectiveRound: string;
-    roundCountMap: Map<string, number>;
-    onRoundChange: (round: string) => void;
-}
-
-function PlayoffStepper({ rounds, effectiveRound, roundCountMap, onRoundChange }: PlayoffStepperProps) {
-    const [open, setOpen] = useState(false);
-    const activeIdx = rounds.indexOf(effectiveRound);
-    const canGoPrev = activeIdx > 0;
-    const canGoNext = activeIdx < rounds.length - 1;
-
-    return (
-        <>
-            {/* Mobile */}
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                    <div className="sm:hidden flex items-center border border-border rounded-md h-11 overflow-hidden cursor-pointer">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); if (canGoPrev) { onRoundChange(rounds[activeIdx - 1]); setOpen(false); } }}
-                            disabled={!canGoPrev}
-                            className={cn("w-11 h-full flex items-center justify-center shrink-0 transition-colors", canGoPrev ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/20 cursor-not-allowed")}
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <div className="flex-1 h-full flex items-center justify-center text-sm font-semibold">
-                            {ROUND_LABELS_FULL[effectiveRound] || effectiveRound}
-                        </div>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); if (canGoNext) { onRoundChange(rounds[activeIdx + 1]); setOpen(false); } }}
-                            disabled={!canGoNext}
-                            className={cn("w-11 h-full flex items-center justify-center shrink-0 transition-colors", canGoNext ? "text-muted-foreground hover:text-foreground" : "text-muted-foreground/20 cursor-not-allowed")}
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                </PopoverTrigger>
-                <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="center">
-                    {rounds.map(round => (
-                        <button
-                            key={round}
-                            onClick={() => { onRoundChange(round); setOpen(false); }}
-                            className={cn(
-                                "w-full px-3 py-2.5 text-sm text-center transition-colors border-b border-border last:border-b-0",
-                                round === effectiveRound
-                                    ? "font-semibold text-foreground bg-muted/40"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
-                            )}
-                        >
-                            {ROUND_LABELS_FULL[round] || round}
-                        </button>
-                    ))}
-                </PopoverContent>
-            </Popover>
-
-            {/* Desktop */}
-            <div className="hidden sm:flex overflow-x-auto gap-0 scrollbar-hide border border-border rounded-sm">
-                {rounds.map((round, idx) => {
-                    const isCompleted = idx < activeIdx;
-                    const isActive = round === effectiveRound;
-                    const count = roundCountMap.get(round);
-                    return (
-                        <button
-                            key={round}
-                            onClick={() => onRoundChange(round)}
-                            className={cn(
-                                "flex flex-col items-center justify-center shrink-0 min-w-[80px] flex-1 px-2 py-2.5 text-xs font-semibold border-r border-border last:border-r-0 transition-colors",
-                                isActive
-                                    ? "bg-primary/20 text-primary"
-                                    : isCompleted
-                                        ? "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/20"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                            )}
-                        >
-                            <span>{ROUND_LABELS[round] || round}</span>
-                            <span className={cn(
-                                "text-[10px] font-normal mt-0.5",
-                                count === undefined ? "invisible" : isActive ? "text-primary/60" : "text-muted-foreground/50"
-                            )}>
-                                {count !== undefined ? `${count} match${count !== 1 ? "es" : ""}` : "0 matches"}
-                            </span>
-                        </button>
-                    );
-                })}
-            </div>
-        </>
     );
 }
 

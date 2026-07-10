@@ -21,4 +21,4 @@ export type {
     IncomingSource,
     Incoming
 } from "./types";
-export {PlayoffRoundSchema, GeneratePlayoffBracketSchema, GetPlayoffScheduleSchema} from "./types";
+export {PLAYOFF_ROUNDS, PlayoffRoundSchema, GeneratePlayoffBracketSchema, GetPlayoffScheduleSchema} from "./types";

@@ -1,7 +1,7 @@
 import {DBClient} from "@/shared/types/db";
 import {Ok, Result} from "@/shared/types/result";
 import {findPlayoffMatchesBySeason} from "@/server/db/matches.repo";
-import {findAllMatchSheetConfigs} from "@/server/db/matchSheetConfig.repo";
+import {findMatchSheetConfigsByMatchIds} from "@/server/db/matchSheetConfig.repo";
 import {findMatchIdsWithStats} from "@/server/db/playerMatchStats.repo";
 import {PlayoffMatchStatRow} from "@/server/domains/matchStats/types";
 
@@ -11,7 +11,9 @@ export async function getSeasonPlayoffMatches(supabase: DBClient, seasonId: stri
     const matchesResult = await findPlayoffMatchesBySeason(supabase, seasonId);
     if (!matchesResult.ok) return matchesResult;
 
-    const configsResult = await findAllMatchSheetConfigs(supabase);
+    const matchIds = matchesResult.value.map(m => m.id);
+
+    const configsResult = await findMatchSheetConfigsByMatchIds(supabase, matchIds);
     if (!configsResult.ok) return configsResult;
     const configByMatch = new Map(configsResult.value.map(c => [c.match_id, c]));
 

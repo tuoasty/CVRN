@@ -63,6 +63,7 @@ export type {
 } from "./schemas";
 
 export {
+    PLAYOFF_ROUNDS,
     PlayoffRoundSchema,
     GeneratePlayoffBracketSchema,
     GetPlayoffScheduleSchema,

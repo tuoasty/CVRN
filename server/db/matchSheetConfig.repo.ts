@@ -2,10 +2,12 @@ import {DBClient, MatchSheetConfig} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 
-export async function findAllMatchSheetConfigs(supabase: DBClient): Promise<Result<MatchSheetConfig[]>> {
+export async function findMatchSheetConfigsByMatchIds(supabase: DBClient, matchIds: string[]): Promise<Result<MatchSheetConfig[]>> {
+    if (matchIds.length === 0) return Ok([]);
     const {data, error} = await supabase
         .from("match_sheet_config")
         .select("*")
+        .in("match_id", matchIds)
         .order("created_at", {ascending: true});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);

@@ -1,11 +1,4 @@
-const ROUND_LABELS: Record<string, string> = {
-    play_in: "Play-In",
-    round_of_16: "Round of 16",
-    quarterfinal: "Quarterfinals",
-    semifinal: "Semifinals",
-    final: "Grand Finals",
-    third_place: "3rd Place",
-};
+import { isPlayoffRound, roundLabelLong } from "@/app/utils/playoffRounds";
 
 // Parses match number from match_code: "W1-M3" → 3, "PF-2" → 2, unknown → null
 export function parseMatchNumber(code: string | null | undefined): number | null {
@@ -24,7 +17,7 @@ export function getMatchTypeLabel(
     matchNumber?: number
 ): string {
     if (matchType === "playoffs") {
-        return playoffRound ? (ROUND_LABELS[playoffRound] ?? "Playoffs") : "Playoffs";
+        return isPlayoffRound(playoffRound) ? roundLabelLong(playoffRound) : "Playoffs";
     }
     if (week != null) {
         return matchNumber != null ? `Week ${week} Match ${matchNumber}` : `Week ${week}`;
