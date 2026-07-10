@@ -20,17 +20,27 @@ export function getRegionTimezone(regionCode: string): string {
     return regionTimezoneMap[regionCode.toLowerCase()] || 'UTC';
 }
 
-export function getTimezoneOffset(timezone: string): string {
-    const offsetMap: Record<string, string> = {
-        'America/New_York': 'GMT-5',
-        'America/Sao_Paulo': 'GMT-3',
-        'Asia/Singapore': 'GMT+8',
-        'Australia/Brisbane': 'GMT+10',
-        'Europe/London': 'GMT+0',
-        'UTC': 'GMT+0',
-    };
+/**
+ * Offset label for a zone *at a given instant*. Must be computed rather than hardcoded: London is
+ * GMT+0 in winter but GMT+1 on BST, and New York is GMT-5 in winter but GMT-4 on EDT. Pass the
+ * match's own date so a January fixture stays labelled GMT+0 even when viewed in July.
+ */
+export function getTimezoneOffset(timezone: string, date: Date = new Date()): string {
+    try {
+        // 'longOffset' yields "GMT+01:00"; UTC yields a bare "GMT".
+        const raw = new Intl.DateTimeFormat('en-US', {timeZone: timezone, timeZoneName: 'longOffset'})
+            .formatToParts(date)
+            .find(p => p.type === 'timeZoneName')?.value ?? 'GMT';
 
-    return offsetMap[timezone] || 'GMT+0';
+        const m = raw.match(/^GMT([+-])(\d{2}):(\d{2})$/);
+        if (!m) return 'GMT+0';
+
+        const [, sign, hh, mm] = m;
+        const hours = parseInt(hh, 10);
+        return mm === '00' ? `GMT${sign}${hours}` : `GMT${sign}${hours}:${mm}`;
+    } catch {
+        return 'GMT+0';
+    }
 }
 
 export function formatDateInTimezone(
@@ -41,7 +51,7 @@ export function formatDateInTimezone(
 
     try {
         const d = new Date(date);
-        const offset = getTimezoneOffset(timezone);
+        const offset = getTimezoneOffset(timezone, d);
 
         const formattedDate = d.toLocaleString('en-US', {
             timeZone: timezone,
@@ -53,7 +63,7 @@ export function formatDateInTimezone(
             hour12: false,
         });
 
-        return `${formattedDate.replace(',', ',')} ${offset}`;
+        return `${formattedDate} ${offset}`;
     } catch (error) {
         clientLogger.error("Timezone Options", "Timezone formatting error", {error})
         return "Invalid date";

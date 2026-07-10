@@ -12,6 +12,7 @@ import {
 import {getRobloxUserByName} from "@/server/roblox/users";
 import {parseMatchSet} from "../helpers/parseMatchSet";
 import {resolveTeamNames} from "../helpers/resolveTeamNames";
+import {teamNameKey} from "@/server/domains/team/helpers/normalizeTeamName";
 import {StatCounts, SyncError} from "../types";
 
 // One row to insert into player_match_stats. Shape matches the DB column names
@@ -83,7 +84,7 @@ export async function buildMatchStatsPlan(
     const histRes = await findTeamNameHistoryByTeamIds(supabase, teamIds);
     if (!histRes.ok) return histRes;
 
-    const nameMap = resolveTeamNames(teams, histRes.value); // keys: lowercase+trim
+    const nameMap = resolveTeamNames(teams, histRes.value); // keys: teamNameKey()
     const teamNameOf = (id: string) => teams.find(t => t.id === id)?.name ?? id;
 
     // ---- 2b. Both rosters. These are the only legal override targets: a player
@@ -335,7 +336,7 @@ export async function buildMatchStatsPlan(
         }
 
         const ranked = Array.from(votes.entries()).sort((a, b) => b[1] - a[1]);
-        const expectedTeamId = nameMap.get(meta.headerLabel.toLowerCase().trim()) ?? null;
+        const expectedTeamId = nameMap.get(teamNameKey(meta.headerLabel)) ?? null;
 
         let winner: string;
         let winnerVotes = 0;

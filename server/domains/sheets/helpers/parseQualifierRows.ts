@@ -1,4 +1,5 @@
 import {ParsedMatchResult, SyncError} from "@/server/domains/sheets/types";
+import {normalizeTeamName, teamNameKey} from "@/server/domains/team/helpers/normalizeTeamName";
 import {logger} from "@/server/utils/logger";
 
 const COL_CODE = 4;      // E
@@ -56,12 +57,12 @@ export function parseQualifierRows(
         const code = row[COL_CODE]?.trim() ?? '';
         if (!code) continue;
 
-        const homeTeamName = row[COL_HOME]?.trim() ?? '';
-        const awayTeamName = row[COL_AWAY]?.trim() ?? '';
+        const homeTeamName = normalizeTeamName(row[COL_HOME] ?? '');
+        const awayTeamName = normalizeTeamName(row[COL_AWAY] ?? '');
 
         if (!homeTeamName) continue;
 
-        const isByeAway = BYE_AWAY_TOKENS.has(awayTeamName.toLowerCase());
+        const isByeAway = BYE_AWAY_TOKENS.has(teamNameKey(awayTeamName));
 
         if (!awayTeamName) {
             errors.push({row: rowNumber, message: `Row ${rowNumber}: missing away team name`});

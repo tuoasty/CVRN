@@ -4,6 +4,7 @@ import {SyncChange, SyncResult} from "@/server/domains/sheets/types";
 import {parseQualifierRows} from "@/server/domains/sheets/helpers/parseQualifierRows";
 import {parseScheduleCell} from "@/server/domains/sheets/helpers/parseScheduleCell";
 import {resolveTeamNames} from "@/server/domains/sheets/helpers/resolveTeamNames";
+import {teamNameKey} from "@/server/domains/team/helpers/normalizeTeamName";
 import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
 import {findTeamsBySeasonId, getOrCreateByeTeam} from "@/server/db/teams.repo";
 import {findTeamNameHistoryByTeamIds} from "@/server/db/teamNameHistory.repo";
@@ -66,7 +67,7 @@ export async function syncMatchResults(
 
             const mc = result.matchCode;
 
-            const homeTeamId = nameMap.get(result.homeTeamName.toLowerCase().trim());
+            const homeTeamId = nameMap.get(teamNameKey(result.homeTeamName));
             if (!homeTeamId) {
                 errors.push({row: result.rowNumber, message: `[${mc}] Home team "${result.homeTeamName}" not found in season`});
                 rowsErrored++;
@@ -86,7 +87,7 @@ export async function syncMatchResults(
                 }
                 awayTeamId = byeTeamId;
             } else {
-                const resolvedAwayId = nameMap.get(result.awayTeamName.toLowerCase().trim());
+                const resolvedAwayId = nameMap.get(teamNameKey(result.awayTeamName));
                 if (!resolvedAwayId) {
                     errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" not found in season`});
                     rowsErrored++;
@@ -96,12 +97,12 @@ export async function syncMatchResults(
             }
 
             const homeTeam = teamsResult.value.find(t => t.id === homeTeamId);
-            if (homeTeam && homeTeam.name.toLowerCase().trim() !== result.homeTeamName.toLowerCase().trim()) {
+            if (homeTeam && teamNameKey(homeTeam.name) !== teamNameKey(result.homeTeamName)) {
                 errors.push({row: result.rowNumber, message: `[${mc}] Home team "${result.homeTeamName}" is an outdated name — current name is "${homeTeam.name}". Update the sheet.`});
             }
             if (!result.isByeAway) {
                 const awayTeam = teamsResult.value.find(t => t.id === awayTeamId);
-                if (awayTeam && awayTeam.name.toLowerCase().trim() !== result.awayTeamName.toLowerCase().trim()) {
+                if (awayTeam && teamNameKey(awayTeam.name) !== teamNameKey(result.awayTeamName)) {
                     errors.push({row: result.rowNumber, message: `[${mc}] Away team "${result.awayTeamName}" is an outdated name — current name is "${awayTeam.name}". Update the sheet.`});
                 }
             }
@@ -246,8 +247,8 @@ export async function syncMatchResults(
 
             let forfeitingTeam: 'home' | 'away' | undefined;
             if (result.isForfeit) {
-                const winnerNorm = result.winner?.toLowerCase().trim() ?? '';
-                if (winnerNorm === result.homeTeamName.toLowerCase().trim()) {
+                const winnerNorm = result.winner ? teamNameKey(result.winner) : '';
+                if (winnerNorm === teamNameKey(result.homeTeamName)) {
                     forfeitingTeam = 'away';
                 } else {
                     forfeitingTeam = 'home';

@@ -10,6 +10,7 @@ export {createTeam} from "./commands/createTeam";
 export {updateTeam} from "./commands/updateTeam";
 export {deleteTeam} from "./commands/deleteTeam";
 export {generateSlug} from "./helpers/generateSlug";
+export {normalizeTeamName, teamNameKey} from "./helpers/normalizeTeamName";
 export type {
     GetTeamByNameSeason,
     TeamIdInput,

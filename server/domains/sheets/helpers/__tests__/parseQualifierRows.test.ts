@@ -42,6 +42,19 @@ describe('parseQualifierRows — bye handling', () => {
     expect(results[0].isByeAway).toBe(false)
   })
 
+  it('flags a decorated bye token as a bye', () => {
+    const { results, errors } = parseOne({ 4: '1-M1', 6: 'Alpha', 8: 'N/A \u{1F6AB}' })
+    expect(errors).toHaveLength(0)
+    expect(results[0].isByeAway).toBe(true)
+  })
+
+  it('strips emoji from home and away team names', () => {
+    const { results, errors } = parseOne({ 4: '1-M1', 6: '\u{1F525} Alpha ', 8: 'Beta \u{1F1EC}\u{1F1E7}' })
+    expect(errors).toHaveLength(0)
+    expect(results[0].homeTeamName).toBe('Alpha')
+    expect(results[0].awayTeamName).toBe('Beta')
+  })
+
   it('still errors on a genuinely empty away cell', () => {
     const { results, errors } = parseOne({ 4: '1-M1', 6: 'Alpha', 8: '' })
     expect(results).toHaveLength(0)

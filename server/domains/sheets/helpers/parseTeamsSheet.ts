@@ -1,4 +1,5 @@
 import {ParsedRosterEntry, ParsedTeamResult, PlayerRole} from "@/server/domains/sheets/types";
+import {normalizeTeamName} from "@/server/domains/team/helpers/normalizeTeamName";
 import { logger } from "@/server/utils/logger";
 
 const TEAMS_PER_ROW = 5;
@@ -35,7 +36,10 @@ export function parseTeamsSheet(
 
         for (let slot = 0; slot < TEAMS_PER_ROW; slot++) {
             const col = slot * blockStride + 1;
-            const teamName = headerData[col + 2]?.trim() ?? '';
+            // Emoji stripped here so the name that reaches the DB matches what the qualifier and
+            // playoff sheets are keyed against. An emoji-only cell collapses to '' and is treated
+            // as a cleared name below, same as a blank cell.
+            const teamName = normalizeTeamName(headerData[col + 2] ?? '');
             const teamNumberRaw = parseInt(headerData[col + 1]?.trim() ?? '', 10);
             const teamNumber = isNaN(teamNumberRaw)
                 ? k * TEAMS_PER_ROW + slot + 1

@@ -22,7 +22,7 @@ import { parsePlayoffScheduleCell } from "../helpers/parseScheduleCell";
 import { resolveAndAssignMatchOfficials } from "../helpers/resolveMatchOfficials";
 import { validateAndCalculateMatchResult } from "@/server/domains/match/helpers/validateAndCalculateMatchResult";
 
-const norm = (name: string) => name.toLowerCase().trim();
+import { teamNameKey as norm } from "@/server/domains/team/helpers/normalizeTeamName";
 
 export async function syncPlayoffResults(
   supabase: DBClient,

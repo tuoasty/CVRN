@@ -1,4 +1,13 @@
 import {z} from "zod"
+import {normalizeTeamName} from "../helpers/normalizeTeamName";
+
+// Strips emoji before the name is written, so admin-entered names key the same way as sheet cells.
+// The refine catches names that were *only* emoji and normalized down to nothing.
+const teamNameField = () =>
+    z.string()
+        .min(1)
+        .transform(normalizeTeamName)
+        .refine(v => v.length > 0, "Name must contain at least one non-emoji character");
 
 export const GetTeamByNameSeasonSchema = z.object({
     name: z.string().min(1),
@@ -18,7 +27,7 @@ export const TeamSlugSeasonSchema = z.object({
 export type TeamSlugSeasonInput = z.infer<typeof TeamSlugSeasonSchema>
 
 export const CreateTeamFormSchema = z.object({
-    name: z.string().min(1),
+    name: teamNameField(),
     seasonId: z.uuid(),
     brickNumber: z.coerce.number().int().positive(),
     brickColor: z.string().min(1).transform(s => s.toUpperCase()),
@@ -28,7 +37,7 @@ export type CreateTeamFormInput = z.infer<typeof CreateTeamFormSchema>
 
 export const UpdateTeamFormSchema = z.object({
     teamId: z.uuid(),
-    name: z.string().min(1),
+    name: teamNameField(),
     brickNumber: z.coerce.number().int().positive(),
     brickColor: z.string().min(1).transform(s => s.toUpperCase()),
     startingLvr: z.coerce.number(),

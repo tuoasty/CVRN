@@ -1,5 +1,6 @@
 import {Team} from "@/shared/types/db";
 import {TeamNameHistoryEntry} from "@/server/db/teamNameHistory.repo";
+import {teamNameKey} from "@/server/domains/team/helpers/normalizeTeamName";
 
 export function resolveTeamNames(
     teams: Team[],
@@ -9,12 +10,12 @@ export function resolveTeamNames(
     for (const entry of history) {
         const team = teams.find(t => t.id === entry.teamId);
         if (team && !team.deleted_at) {
-            map.set(entry.oldName.toLowerCase().trim(), entry.teamId);
+            map.set(teamNameKey(entry.oldName), entry.teamId);
         }
     }
     for (const team of teams) {
         if (!team.deleted_at) {
-            map.set(team.name.toLowerCase().trim(), team.id);
+            map.set(teamNameKey(team.name), team.id);
         }
     }
     return map;

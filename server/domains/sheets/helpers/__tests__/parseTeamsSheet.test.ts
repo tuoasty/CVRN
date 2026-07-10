@@ -38,6 +38,30 @@ describe('parseTeamsSheet', () => {
     expect(result[0].players).toHaveLength(2)
   })
 
+  it('strips emoji and collapses whitespace from the team name', () => {
+    const rows = makeRows(2)
+    setCell(rows, 0, 3, '\u{1F525}  Team   Alpha ')  // team name: col+2=3
+
+    const result = parseTeamsSheet(rows, 1, 18)
+
+    expect(result[0].teamName).toBe('Team Alpha')
+  })
+
+  // An emoji-only cell normalizes to '', which is indistinguishable from a blank name cell —
+  // so it takes the "name cleared" branch and the roster underneath is preserved.
+  it('treats an emoji-only team name as a cleared name', () => {
+    const rows = makeRows(2)
+    setCell(rows, 0, 3, '\u{1F525}')  // team name: col+2=3
+    setCell(rows, 1, 3, 'PlayerOne')
+
+    const result = parseTeamsSheet(rows, 1, 18)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].teamName).toBe('')
+    expect(result[0].nameCleared).toBe(true)
+    expect(result[0].players).toHaveLength(1)
+  })
+
   it('falls back to derived team number when col+1 is empty', () => {
     // k=0, slot=0 → derived = 0*5+0+1 = 1
     const rows = makeRows(2)
