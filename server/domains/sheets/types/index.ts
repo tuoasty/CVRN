@@ -22,6 +22,8 @@ export interface SyncChange {
 export interface SyncError {
     row: number
     message: string
+    /** Absent means fatal. Only the match-stats pipeline sets this. */
+    kind?: 'skippable' | 'fatal'
 }
 
 export interface SyncResult {
@@ -80,10 +82,15 @@ export interface ParsedTeamResult {
 
 export interface ParsedStatLine {
     username: string;
-    teamName: string;
     setNumber: number;
     counts: StatCounts;
     rowNumber: number
+}
+
+export interface ParsedSection {
+    sectionIndex: number;     // 0-based, order of appearance in the tab
+    headerLabel: string;      // raw column A text; may be typo'd
+    lines: ParsedStatLine[];
 }
 
 

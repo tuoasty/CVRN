@@ -7,6 +7,7 @@ import {
     syncMatchStatsAction,
 } from '@/app/actions/matchStats.actions';
 import {PlayoffMatchStatRow, SaveMatchSheetConfigInput} from '@/server/domains/matchStats';
+import type {PlayerOverrides} from '@/server/domains/sheets/commands/buildMatchStatsPlan';
 
 const TTL = 2 * 60 * 1000;
 
@@ -41,12 +42,12 @@ export async function deleteMatchSheetConfig(id: string) {
     return result;
 }
 
-export async function previewMatchStats(configId: string) {
-    return previewMatchStatsAction(configId);
+export async function previewMatchStats(configId: string, playerOverrides?: PlayerOverrides) {
+    return previewMatchStatsAction(configId, playerOverrides);
 }
 
-export async function syncMatchStats(configId: string) {
-    const result = await syncMatchStatsAction(configId);
+export async function syncMatchStats(configId: string, force = false, playerOverrides?: PlayerOverrides) {
+    const result = await syncMatchStatsAction(configId, force, playerOverrides);
     if (result.ok) await revalidateSeasonPlayoffMatches();
     return result;
 }

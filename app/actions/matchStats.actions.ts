@@ -10,7 +10,7 @@ import {
 } from "@/server/db/matchSheetConfig.repo";
 import {getSeasonPlayoffMatches} from "@/server/domains/matchStats/queries/getSeasonPlayoffMatches";
 import {SaveMatchSheetConfigSchema} from "@/server/domains/matchStats/types";
-import {buildMatchStatsPlan} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
+import {buildMatchStatsPlan, PlayerOverrides} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
 import {syncMatchStats} from "@/server/domains/sheets/commands/syncMatchStats";
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
@@ -45,7 +45,7 @@ export async function deleteMatchSheetConfigAction(id: string) {
 
 // Read-only: run the full parse + resolve pipeline and return the plan.
 // UI uses this to show the structural summary + errors before the user commits.
-export async function previewMatchStatsAction(configId: string) {
+export async function previewMatchStatsAction(configId: string, playerOverrides?: PlayerOverrides) {
     const supabase = await createServerSupabase();
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
@@ -54,16 +54,22 @@ export async function previewMatchStatsAction(configId: string) {
     if (!configRes.ok) return configRes;
     if (!configRes.value) return Err({message: "Stats sheet config not found", code: "NOT_FOUND" as const});
 
-    return buildMatchStatsPlan(supabase, configRes.value);
+    return buildMatchStatsPlan(supabase, configRes.value, {playerOverrides});
 }
 
 // Delegates to the syncMatchStats command (load config → build plan → refuse
 // if errors → atomic replace via RPC). Mirrors runSyncAction.
-export async function syncMatchStatsAction(configId: string) {
+// `force` commits despite skippable errors (unregistered players); it can never
+// bypass a fatal one.
+export async function syncMatchStatsAction(
+    configId: string,
+    force = false,
+    playerOverrides?: PlayerOverrides
+) {
     const supabase = await createServerSupabase();
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
-    const result = await syncMatchStats(supabase, configId);
+    const result = await syncMatchStats(supabase, configId, {force, playerOverrides});
     if (result.ok) revalidatePath('/admin/stats');
     return result;
 }

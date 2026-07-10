@@ -89,6 +89,33 @@ const SERVICE_SCORE: StatColumn = {
     aggregator: rows => sumKey(rows, "aces") - sumKey(rows, "service_errors"),
 };
 
+const POINTS: StatColumn = {
+    key: "points",
+    label: "PTS",
+    group: "Points",
+    description: "Points scored: kills + kill blocks + aces",
+    format: "count",
+    accessor: r => r.points ?? null,
+    aggregator: rows =>
+        sumKey(rows, "total_kills") + sumKey(rows, "kill_blocks") + sumKey(rows, "aces"),
+};
+
+// Only present on the totals view; per-set rows have set_number instead.
+const SETS_PLAYED: StatColumn = {
+    key: "sets_played",
+    label: "SP",
+    group: "Points",
+    description: "Sets played",
+    format: "count",
+    accessor: r => ("sets_played" in r ? r.sets_played : null),
+    // A team's sets played is the max across its players, never the sum.
+    aggregator: rows =>
+        rows.reduce((max, r) => {
+            const v = "sets_played" in r ? r.sets_played ?? 0 : 0;
+            return v > max ? v : max;
+        }, 0),
+};
+
 const CONTRIBUTIONS: StatColumn = {
     key: "contributions",
     label: "CTB",
@@ -158,6 +185,19 @@ export const DETAILED_COLUMNS: StatColumn[] = [
     CONTRIBUTIONS,
 ];
 
+export const buildColumns = (detailed: boolean, includeSetsPlayed: boolean): StatColumn[] => [
+    ...(includeSetsPlayed ? [SETS_PLAYED] : []),
+    POINTS,
+    ...(detailed ? DETAILED_COLUMNS : DEFAULT_COLUMNS),
+];
+
+// Reserves width for a 3-digit count / a signed percentage so column widths
+// don't shift between tabs when one tab's values are all single-digit.
+// Sized to the content, not rounded up: at text-xs mono, 3 digits ≈ 22px and
+// px-1 adds 8px. Every extra px here is multiplied by ~26 detailed columns.
+export const statHeadWidthClass = (format: "count" | "pct"): string =>
+    format === "pct" ? "min-w-[3.25rem]" : "min-w-[2rem]";
+
 export const formatStatValue = (value: number | null, format: "count" | "pct"): string => {
     if (format === "pct") {
         const v = value ?? 0;
@@ -183,6 +223,8 @@ export const groupColumns = (columns: StatColumn[]): Array<{group: string; colum
 export const findLeaderKeys = (rows: StatRow[], columns: StatColumn[]): Set<string> => {
     const leaders = new Set<string>();
     for (const col of columns) {
+        // Every player on a team shares the same SP — there is no leader.
+        if (col.key === "sets_played") continue;
         let maxValue: number | null = null;
         let leaderId: string | null = null;
         for (const row of rows) {

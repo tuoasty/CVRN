@@ -301,6 +301,26 @@ export async function findActivePlayerTeamSeasons(
     return Ok(data ?? []);
 }
 
+// Roster membership for a specific season, scoped to a set of teams. Deliberately
+// does NOT filter left_at: a player who has since transferred was still on that
+// team during the season, so re-syncing an old match must still attribute them.
+export async function findPlayerTeamSeasonsForTeams(
+    supabase: DBClient,
+    playerIds: string[],
+    teamIds: string[],
+    seasonId: string
+): Promise<Result<{player_id: string; team_id: string}[]>> {
+    if (playerIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("player_team_seasons")
+        .select("player_id, team_id")
+        .in("player_id", playerIds)
+        .in("team_id", teamIds)
+        .eq("season_id", seasonId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
 export async function findPlayersBySimilarity(supabase: DBClient, query: string, seasonId?: string): Promise<Result<PlayerSearchResult[]>> {
     const {data, error} = await supabase.rpc('search_players_with_similarity', {
         search_term: query.toLowerCase()
