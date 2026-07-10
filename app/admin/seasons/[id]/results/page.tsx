@@ -96,7 +96,7 @@ function PodiumSlot({place, slot, seasonTeams, saving, onSave, onDelete}: {
     );
 }
 
-function PlayerSearchInput({onSelect}: {onSelect: (player: PlayerWithTeamInfo) => void}) {
+function PlayerSearchInput({seasonId, onSelect}: {seasonId: string; onSelect: (player: PlayerWithTeamInfo) => void}) {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<PlayerWithTeamInfo[]>([]);
     const [searching, setSearching] = useState(false);
@@ -110,7 +110,7 @@ function PlayerSearchInput({onSelect}: {onSelect: (player: PlayerWithTeamInfo) =
         debounceRef.current = setTimeout(async () => {
             setSearching(true);
             try {
-                const res = await searchPlayersInDatabaseAction({query: q.trim()});
+                const res = await searchPlayersInDatabaseAction({query: q.trim(), seasonId});
                 if (res.ok) setResults(res.value.slice(0, 8));
             } finally {
                 setSearching(false);
@@ -125,13 +125,13 @@ function PlayerSearchInput({onSelect}: {onSelect: (player: PlayerWithTeamInfo) =
     };
 
     return (
-        <div className="relative flex-1 min-w-48">
+        <div className="relative flex-1 min-w-72">
             <Label className="text-xs">Player</Label>
             <div className="relative mt-1">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                     className="rounded-sm h-8 text-sm pl-7"
-                    placeholder="Search username..."
+                    placeholder="Search username or display name..."
                     value={query}
                     onChange={handleChange}
                 />
@@ -143,13 +143,16 @@ function PlayerSearchInput({onSelect}: {onSelect: (player: PlayerWithTeamInfo) =
                         <button
                             key={p.id}
                             type="button"
-                            className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent flex items-center justify-between gap-2"
+                            className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent flex items-center justify-between gap-3"
                             onClick={() => handleSelect(p)}
                         >
-                            <span className="font-medium">{p.username}</span>
-                            {p.current_team_name && (
-                                <span className="text-xs text-muted-foreground">{p.current_team_name}</span>
-                            )}
+                            <span className="flex flex-col min-w-0">
+                                <span className="font-medium truncate">{p.display_name ?? p.username}</span>
+                                <span className="text-[10px] text-muted-foreground truncate">@{p.username}</span>
+                            </span>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                                {p.season_team_name ?? "—"}
+                            </span>
                         </button>
                     ))}
                 </div>
@@ -461,6 +464,51 @@ export default function SeasonResultsPage() {
                         </Button>
                     </div>
 
+                    {/* Add award form */}
+                    <div className="panel p-3 space-y-2">
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Add Award</p>
+                        <div className="flex gap-2 flex-wrap items-end">
+                            <div className="w-40 shrink-0 space-y-1">
+                                <Label className="text-xs">Award Name</Label>
+                                <Input className="rounded-sm h-8 text-sm" placeholder="e.g. MVP"
+                                    value={newAwardName} onChange={e => setNewAwardName(e.target.value)} />
+                            </div>
+                            <div className="min-w-40 space-y-1">
+                                <Label className="text-xs">Category</Label>
+                                <Select value={newCategory} onValueChange={v => setNewCategory(v as AwardCategory)}>
+                                    <SelectTrigger className="rounded-sm h-8 text-sm">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {CATEGORY_ORDER.map(cat => (
+                                            <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <PlayerSearchInput seasonId={seasonId} onSelect={setSelectedPlayer} />
+                            <Button size="sm" className="rounded-sm h-8 gap-1.5"
+                                onClick={handlePreviewForCreate}
+                                disabled={previewLoading === "create" || !newAwardName.trim() || !selectedPlayer}
+                            >
+                                {previewLoading === "create"
+                                    ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                    : <Plus className="h-3.5 w-3.5" />
+                                }
+                                Add
+                            </Button>
+                        </div>
+                        {selectedPlayer && (
+                            <p className="text-xs text-muted-foreground">
+                                Selected: <span className="font-medium text-foreground">{selectedPlayer.display_name ?? selectedPlayer.username}</span>
+                                {` · @${selectedPlayer.username}`}
+                                {selectedPlayer.season_team_name
+                                    ? ` · ${selectedPlayer.season_team_name}`
+                                    : " · no team this season"}
+                            </p>
+                        )}
+                    </div>
+
                     {!loading && awards.length === 0 && (
                         <p className="text-sm text-muted-foreground">No awards yet.</p>
                     )}
@@ -571,47 +619,6 @@ export default function SeasonResultsPage() {
                         </div>
                     )}
 
-                    {/* Add award form */}
-                    <div className="panel p-3 space-y-2">
-                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Add Award</p>
-                        <div className="flex gap-2 flex-wrap items-end">
-                            <div className="flex-1 min-w-32 space-y-1">
-                                <Label className="text-xs">Award Name</Label>
-                                <Input className="rounded-sm h-8 text-sm" placeholder="e.g. MVP"
-                                    value={newAwardName} onChange={e => setNewAwardName(e.target.value)} />
-                            </div>
-                            <div className="min-w-40 space-y-1">
-                                <Label className="text-xs">Category</Label>
-                                <Select value={newCategory} onValueChange={v => setNewCategory(v as AwardCategory)}>
-                                    <SelectTrigger className="rounded-sm h-8 text-sm">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {CATEGORY_ORDER.map(cat => (
-                                            <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <PlayerSearchInput onSelect={setSelectedPlayer} />
-                            <Button size="sm" className="rounded-sm h-8 gap-1.5"
-                                onClick={handlePreviewForCreate}
-                                disabled={previewLoading === "create" || !newAwardName.trim() || !selectedPlayer}
-                            >
-                                {previewLoading === "create"
-                                    ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                                    : <Plus className="h-3.5 w-3.5" />
-                                }
-                                Add
-                            </Button>
-                        </div>
-                        {selectedPlayer && (
-                            <p className="text-xs text-muted-foreground">
-                                Selected: <span className="font-medium text-foreground">{selectedPlayer.username}</span>
-                                {selectedPlayer.current_team_name && ` · ${selectedPlayer.current_team_name}`}
-                            </p>
-                        )}
-                    </div>
                 </div>
             </div>
 

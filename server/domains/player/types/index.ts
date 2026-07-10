@@ -37,6 +37,9 @@ export interface PlayerWithTeamInfo {
     current_team_id: string | null;
     current_season_id: string | null;
     current_team_name: string | null;
+    /** Only populated by searchPlayersInDatabase when a seasonId is supplied. */
+    season_team_id?: string | null;
+    season_team_name?: string | null;
 }
 
 export interface PlayerWithRole {

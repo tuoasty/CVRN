@@ -10,7 +10,7 @@ export async function searchPlayersInDatabase(
     p: SearchPlayersInput
 ): Promise<Result<PlayerWithTeamInfo[]>> {
     try {
-        const result = await findPlayersBySimilarity(supabase, p.query);
+        const result = await findPlayersBySimilarity(supabase, p.query, p.seasonId);
         if (!result.ok) {
             logger.error({ query: p.query, error: result.error }, "Failed to search players in database");
             return result;
