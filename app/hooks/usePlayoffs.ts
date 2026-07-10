@@ -19,9 +19,6 @@ async function fetchBrackets([, seasonId]: [string, string]): Promise<PlayoffBra
     return result.value;
 }
 
-// Invert the brackets' forward pointers into a per-destination "who feeds this slot" map.
-// Each empty slot is fed by exactly one prior match's winner or loser, keyed by the
-// destination bracket id. Source is the feeding bracket's match_id (→ its match_code).
 function buildIncomingMap(brackets: PlayoffBracket[]): Map<string, Incoming> {
     const map = new Map<string, Incoming>();
     for (const bracket of brackets) {

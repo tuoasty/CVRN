@@ -12,6 +12,7 @@ import {
     updateSeasonPlayoffStatus
 } from "@/server/db/playoff.repo";
 import {findSeasonById} from "@/server/db/seasons.repo";
+import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 import {randomUUID} from "node:crypto";
 import { templates } from "../helpers/playoffTemplates";
 
@@ -64,10 +65,7 @@ export async function buildPlayoffBracket(
                 code: "NOT_FOUND"
             });
         }
-
-        // `template` cast is a shim until `supabase gen types` regenerates the row type
-        // with the new playoff_configs.template column.
-        const template = (config as { template?: string | null }).template;
+        const template = config.template;
         if (!template) {
             return Err({
                 message: "This season's playoff configuration has no template set",
@@ -90,11 +88,45 @@ export async function buildPlayoffBracket(
         const playoffConfig = templates[template as keyof typeof templates];
         const totalTeams = playoffConfig.teams;
 
-        if (standings.length < totalTeams) {
-            return Err({
-                message: `Not enough teams in standings. Need ${totalTeams}, found ${standings.length}`,
-                code: "VALIDATION_ERROR"
-            });
+        // Seeds come from an explicit custom order when provided, else standings order.
+        // seedTeamIds[value - 1] resolves each template SeedSlot's team_id below.
+        let seedTeamIds: (string | null)[];
+        if (p.seedOrder) {
+            const teamsResult = await findTeamsBySeasonId(supabase, p.seasonId);
+            if (!teamsResult.ok) {
+                logger.error({ seasonId: p.seasonId, error: teamsResult.error }, "Failed to fetch season teams for seed validation");
+                return teamsResult;
+            }
+            const seasonTeamIds = new Set(teamsResult.value.map((t) => t.id));
+
+            if (p.seedOrder.length !== totalTeams) {
+                return Err({
+                    message: `Custom seed order must have exactly ${totalTeams} teams, got ${p.seedOrder.length}`,
+                    code: "VALIDATION_ERROR"
+                });
+            }
+            if (new Set(p.seedOrder).size !== p.seedOrder.length) {
+                return Err({
+                    message: "Custom seed order contains duplicate teams",
+                    code: "VALIDATION_ERROR"
+                });
+            }
+            const unknown = p.seedOrder.find((id) => !seasonTeamIds.has(id));
+            if (unknown) {
+                return Err({
+                    message: `Custom seed order contains a team not in this season (${unknown})`,
+                    code: "VALIDATION_ERROR"
+                });
+            }
+            seedTeamIds = p.seedOrder;
+        } else {
+            if (standings.length < totalTeams) {
+                return Err({
+                    message: `Not enough teams in standings. Need ${totalTeams}, found ${standings.length}`,
+                    code: "VALIDATION_ERROR"
+                });
+            }
+            seedTeamIds = standings.map((s) => s.team_id);
         }
 
         const byCode = new Map<string, BracketNode>();
@@ -119,8 +151,8 @@ export async function buildPlayoffBracket(
                         status: "pending",
                         bestOf: match.best_of,
                         matchCode: match.code,
-                        homeTeamId: match.home.type === "seed" ? standings[match.home.value - 1].team_id : null,
-                        awayTeamId: match.away.type === "seed" ? standings[match.away.value - 1].team_id : null
+                        homeTeamId: match.home.type === "seed" ? seedTeamIds[match.home.value - 1] : null,
+                        awayTeamId: match.away.type === "seed" ? seedTeamIds[match.away.value - 1] : null
                     }
 
                     const playoffBracket:InsertPlayoffBracketDto = {

@@ -5,6 +5,7 @@ export {resetPlayoffBracketsService} from "./commands/resetPlayoffBrackets";
 export {calculateRounds} from "./helpers/calculateRounds";
 export {getFirstRoundSeeding} from "./helpers/getFirstRoundSeeding";
 export {templates} from "./helpers/playoffTemplates";
+export {getTemplateMatchOrder} from "./helpers/getTemplateMatchOrder";
 export type {
     PlayoffRound,
     GetPlayoffScheduleInput,

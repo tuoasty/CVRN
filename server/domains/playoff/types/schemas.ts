@@ -5,6 +5,9 @@ export type PlayoffRound = z.infer<typeof PlayoffRoundSchema>
 
 export const GeneratePlayoffBracketSchema = z.object({
     seasonId: z.uuid(),
+    // Optional custom seed order: index 0 = seed 1 … N-1 = seed N (team UUIDs).
+    // When omitted, seeds are auto-filled from standings order.
+    seedOrder: z.array(z.uuid()).optional(),
 })
 export type GeneratePlayoffBracketInput = z.infer<typeof GeneratePlayoffBracketSchema>
 

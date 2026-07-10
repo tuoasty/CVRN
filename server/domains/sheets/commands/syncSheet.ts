@@ -7,6 +7,7 @@ import {syncTeamRoster} from "./syncTeamRoster";
 import {syncMatchResults} from "./syncMatchResults";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
+import { syncPlayoffResults } from "./syncPlayoffResults";
 
 export async function syncSheet(
     supabase: DBClient,
@@ -26,6 +27,8 @@ export async function syncSheet(
             syncResult = await syncTeamRoster(supabase, config);
         } else if (config.sheet_type === 'qualifier') {
             syncResult = await syncMatchResults(supabase, config);
+        } else if (config.sheet_type === 'playoff') {
+            syncResult = await syncPlayoffResults(supabase, config);
         } else {
             return Err({message: `Sheet type "${config.sheet_type}" sync not yet implemented`, code: "VALIDATION_ERROR"});
         }
