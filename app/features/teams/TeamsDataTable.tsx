@@ -1,24 +1,24 @@
 "use client";
 
-import React, { useMemo, useState, useTransition } from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ImageOff, ChevronDown } from "lucide-react";
-import { Input } from "@/app/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
+import { ImageOff } from "lucide-react";
 import { TeamWithRegion } from "@/server/domains/team";
 import { useTeams } from "@/app/hooks/useTeams";
 import { clientLogger } from "@/app/utils/clientLogger";
 import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasons } from "@/app/hooks/useSeasons";
-import { cn } from "@/lib/utils";
-import UploadTeamLogoDialog from "@/app/features/teams/UploadTeamLogoDialog";
 import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
-
-// Preferred button order; any other region codes are appended after these.
-const REGION_ORDER = ["AS", "EU", "NA", "SA"];
-
-type Scope = "all" | string; // "all" or a region id
+import UploadTeamLogoDialog from "@/app/features/teams/UploadTeamLogoDialog";
+import TeamsFilterBar from "@/app/features/teams/TeamsFilterBar";
+import { buildTeamsQuery, useTeamsFilters } from "@/app/features/teams/useTeamsFilters";
+import {
+    isSpecificSeason,
+    REGION_ALL,
+    SEASON_INACTIVE,
+    selectTeams,
+} from "@/app/features/teams/selectTeams";
 
 export default function TeamsDataTable() {
     const { teams, isLoading, error } = useTeams();
@@ -26,89 +26,34 @@ export default function TeamsDataTable() {
     const { seasons } = useSeasons();
     const router = useRouter();
 
-    const [searchQuery, setSearchQuery] = useState("");
-    const [scope, setScope] = useState<Scope>("all");
-    // Explicit past-season pick within a region; null = use active/latest.
-    const [seasonOverride, setSeasonOverride] = useState<string | null>(null);
-    const [seasonOpen, setSeasonOpen] = useState(false);
-    const [, startTransition] = useTransition();
+    const { filters, setRegion, setSeason, setQuery, reset } = useTeamsFilters(regions, seasons);
 
-    const selectScope = (next: Scope) => {
-        setScope(next);
-        setSeasonOverride(null); // reset to the region's current season
-    };
+    const filteredTeams = useMemo(
+        () => selectTeams({ teams, seasons, filters }),
+        [teams, seasons, filters]
+    );
 
-    // Regions ordered for the segmented control.
-    const orderedRegions = useMemo(() => {
-        return [...regions].sort((a, b) => {
-            const ai = REGION_ORDER.indexOf(a.code.toUpperCase());
-            const bi = REGION_ORDER.indexOf(b.code.toUpperCase());
-            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-        });
-    }, [regions]);
+    const showRegionColumn = filters.region === REGION_ALL;
+    const showSeasonColumn = !isSpecificSeason(filters.season);
 
-    // The active season for a region, falling back to the latest by start_date.
-    const activeOrLatestByRegion = useMemo(() => {
-        const map = new Map<string, string>(); // regionId -> seasonId
-        for (const region of regions) {
-            const regionSeasons = seasons.filter((s) => s.region_id === region.id);
-            if (regionSeasons.length === 0) continue;
-            const active = regionSeasons.find((s) => isSeasonActive(s));
-            const chosen =
-                active ??
-                [...regionSeasons][0];
-            if (chosen) map.set(region.id, chosen.id);
-        }
-        return map;
-    }, [regions, seasons]);
-
-    // Seasons for the selected region, newest first (for the past-season picker).
-    const regionSeasons = useMemo(() => {
-        if (scope === "all") return [];
-        return seasons
-            .filter((s) => s.region_id === scope)
-    }, [scope, seasons]);
-
-    // The season actually shown when a region is selected.
-    const effectiveSeasonId =
-        scope === "all" ? null : seasonOverride ?? activeOrLatestByRegion.get(scope) ?? null;
-    const effectiveSeason = regionSeasons.find((s) => s.id === effectiveSeasonId);
-
-    // Season ids in scope: every region's current season, or just one region's.
-    const allowedSeasonIds = useMemo(() => {
-        if (scope === "all") return new Set(activeOrLatestByRegion.values());
-        return new Set(effectiveSeasonId ? [effectiveSeasonId] : []);
-    }, [scope, activeOrLatestByRegion, effectiveSeasonId]);
-
-    const showSeasonColumn = scope === "all";
-
-    // Past-season picker is only usable for a region with more than one season.
-    const seasonPickerDisabled = scope === "all" || regionSeasons.length <= 1;
-    const seasonButtonLabel =
-        scope === "all" ? "All regions" : effectiveSeason?.name ?? "Season";
-    const seasonDisabledReason =
-        scope === "all"
-            ? "Pick a region to change season"
-            : regionSeasons.length <= 1
-                ? "Only one season in this region"
-                : undefined;
-
-    const filteredTeams = teams.filter((team) => {
-        const seasonId = team.seasons?.id;
-        if (!seasonId || !allowedSeasonIds.has(seasonId)) return false;
-
-        const searchLower = searchQuery.toLowerCase();
-        return (
-            team.name?.toLowerCase().includes(searchLower) ||
-            team.seasons?.regions?.code?.toLowerCase().includes(searchLower) ||
-            team.seasons?.regions?.name?.toLowerCase().includes(searchLower) ||
-            team.seasons?.name?.toLowerCase().includes(searchLower)
+    // Distinguishes "your filter is too narrow" from "this league has no history yet".
+    const hasConcludedSeasonsInScope = useMemo(() => {
+        if (filters.season !== SEASON_INACTIVE) return true;
+        const region =
+            filters.region === REGION_ALL
+                ? null
+                : regions.find((r) => r.code.toLowerCase() === filters.region);
+        return seasons.some(
+            (season) =>
+                !isSeasonActive(season) && (!region || season.region_id === region.id)
         );
-    });
+    }, [filters.season, filters.region, regions, seasons]);
 
     const handleTeamClick = (team: TeamWithRegion) => {
         if (!team.seasons?.regions?.code || !team.seasons?.slug) {
-            clientLogger.warn("TeamsDataTable", "Cannot navigate - missing season or region data", { teamId: team.id });
+            clientLogger.warn("TeamsDataTable", "Cannot navigate - missing season or region data", {
+                teamId: team.id,
+            });
             return;
         }
 
@@ -116,9 +61,11 @@ export default function TeamsDataTable() {
         const seasonSlug = encodeURIComponent(team.seasons.slug.toLowerCase());
         const teamSlug = encodeURIComponent(team.slug.toLowerCase());
 
-        startTransition(() => {
-            router.push(`/admin/teams/${regionCode}/${seasonSlug}/${teamSlug}`);
-        });
+        // Carry the list's filters so the detail page's own back link can restore them.
+        const listQuery = buildTeamsQuery(filters);
+        const href = `/admin/teams/${regionCode}/${seasonSlug}/${teamSlug}`;
+
+        router.push(listQuery ? `${href}?${listQuery}` : href);
     };
 
     if (isLoading) {
@@ -139,108 +86,22 @@ export default function TeamsDataTable() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex items-center h-9 rounded-sm border border-border bg-muted/50 p-0.5">
-                    <button
-                        onClick={() => selectScope("all")}
-                        className={cn(
-                            "px-3 h-full text-xs font-semibold rounded-sm transition-colors",
-                            scope === "all"
-                                ? "bg-primary text-primary-foreground"
-                                : "text-muted-foreground hover:text-foreground"
-                        )}
-                    >
-                        All
-                    </button>
-                    {orderedRegions.map((region) => (
-                        <button
-                            key={region.id}
-                            onClick={() => selectScope(region.id)}
-                            className={cn(
-                                "px-3 h-full text-xs font-semibold rounded-sm transition-colors uppercase",
-                                scope === region.id
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            {region.code}
-                        </button>
-                    ))}
-                </div>
-
-                <Popover
-                    open={seasonOpen && !seasonPickerDisabled}
-                    onOpenChange={(next) => !seasonPickerDisabled && setSeasonOpen(next)}
-                >
-                    <PopoverTrigger asChild>
-                        <button
-                            disabled={seasonPickerDisabled}
-                            title={seasonDisabledReason}
-                            className={cn(
-                                "flex items-center gap-1 h-8 px-2.5 rounded-sm border border-border bg-background text-xs focus:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                                seasonPickerDisabled
-                                    ? "text-muted-foreground/50 cursor-not-allowed"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            <span className={cn(!seasonPickerDisabled && "text-foreground")}>
-                                {seasonButtonLabel}
-                            </span>
-                            {!seasonPickerDisabled && seasonOverride === null && (
-                                <span className="text-[9px] text-primary font-semibold uppercase">Current</span>
-                            )}
-                            <ChevronDown className={cn(
-                                "h-3 w-3 transition-transform duration-150",
-                                seasonOpen && !seasonPickerDisabled && "rotate-180"
-                            )} />
-                        </button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" sideOffset={6} className="w-44 p-1">
-                            {regionSeasons.map((season) => {
-                                const isCurrent = season.id === activeOrLatestByRegion.get(scope);
-                                return (
-                                    <button
-                                        key={season.id}
-                                        onClick={() => {
-                                            setSeasonOverride(isCurrent ? null : season.id);
-                                            setSeasonOpen(false);
-                                        }}
-                                        className={cn(
-                                            "w-full text-left text-xs px-2 py-1.5 rounded-sm transition-colors flex items-center justify-between",
-                                            season.id === effectiveSeasonId
-                                                ? "bg-primary/10 text-foreground border border-primary/20"
-                                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                                        )}
-                                    >
-                                        {season.name}
-                                        {isCurrent && (
-                                            <span className="text-[9px] text-primary font-semibold uppercase ml-2">Current</span>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </PopoverContent>
-                    </Popover>
-
-                <div className="w-full sm:flex-1 sm:max-w-sm">
-                    <Input
-                        type="text"
-                        placeholder="Search teams..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="rounded-sm"
-                    />
-                </div>
-
-                <div className="text-sm text-muted-foreground sm:ml-auto">
-                    {filteredTeams.length} {filteredTeams.length === 1 ? "team" : "teams"}
-                </div>
-            </div>
+            <TeamsFilterBar
+                filters={filters}
+                regions={regions}
+                seasons={seasons}
+                resultCount={filteredTeams.length}
+                onRegionChange={setRegion}
+                onSeasonChange={setSeason}
+                onQueryChange={setQuery}
+            />
 
             {filteredTeams.length === 0 ? (
-                <div className="panel p-6">
-                    <p className="text-muted-foreground text-center">No teams found</p>
-                </div>
+                <EmptyState
+                    query={filters.q}
+                    hasConcludedSeasonsInScope={hasConcludedSeasonsInScope}
+                    onReset={reset}
+                />
             ) : (
                 <div className="panel overflow-x-auto">
                     <table className="table-dense">
@@ -248,7 +109,7 @@ export default function TeamsDataTable() {
                             <tr>
                                 <th className="w-10">Logo</th>
                                 <th>Team Name</th>
-                                {showSeasonColumn && <th className="w-16">Region</th>}
+                                {showRegionColumn && <th className="w-16">Region</th>}
                                 {showSeasonColumn && <th>Season</th>}
                                 <th>Color</th>
                                 <th className="w-20 text-right">Players</th>
@@ -294,7 +155,7 @@ export default function TeamsDataTable() {
                                         <td>
                                             <span className="font-medium">{team.name}</span>
                                         </td>
-                                        {showSeasonColumn && (
+                                        {showRegionColumn && (
                                             <td>
                                                 <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wide">
                                                     {team.seasons?.regions?.code ?? "—"}
@@ -333,6 +194,38 @@ export default function TeamsDataTable() {
                     </table>
                 </div>
             )}
+        </div>
+    );
+}
+
+function EmptyState({
+    query,
+    hasConcludedSeasonsInScope,
+    onReset,
+}: {
+    query: string;
+    hasConcludedSeasonsInScope: boolean;
+    onReset: () => void;
+}) {
+    let message: string;
+    if (!hasConcludedSeasonsInScope) {
+        message = "No concluded seasons yet.";
+    } else if (query.trim()) {
+        message = `No team named "${query.trim()}" in this season.`;
+    } else {
+        message = "No teams match these filters.";
+    }
+
+    return (
+        <div className="panel p-6 flex flex-col items-center gap-3">
+            <p className="text-muted-foreground text-center">{message}</p>
+            <button
+                type="button"
+                onClick={onReset}
+                className="text-xs font-semibold text-primary hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm px-1"
+            >
+                Reset filters
+            </button>
         </div>
     );
 }

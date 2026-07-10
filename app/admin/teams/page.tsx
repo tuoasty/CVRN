@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import TeamsDataTable from "@/app/features/teams/TeamsDataTable";
 import CreateTeamForm from "@/app/features/teams/CreateTeamForm";
@@ -30,7 +30,16 @@ export default function AdminTeamsPage() {
                     </TabsList>
 
                     <TabsContent value="view" className="mt-6">
-                        <TeamsDataTable />
+                        {/* TeamsDataTable reads filters from useSearchParams, which needs a boundary. */}
+                        <Suspense
+                            fallback={
+                                <div className="panel p-6">
+                                    <p className="text-muted-foreground">Loading teams...</p>
+                                </div>
+                            }
+                        >
+                            <TeamsDataTable />
+                        </Suspense>
                     </TabsContent>
 
                     <TabsContent value="create" className="mt-6">
