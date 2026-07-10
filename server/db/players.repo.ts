@@ -21,6 +21,8 @@ type PlayerSearchResult = PlayerSummary & {
     current_team_id: string | null;
     current_season_id: string | null;
     current_team_name: string | null;
+    season_team_id: string | null;
+    season_team_name: string | null;
 };
 
 export async function upsertPlayer(supabase: DBClient, p: SavePlayerInput): Promise<Result<Player>> {
@@ -299,7 +301,7 @@ export async function findActivePlayerTeamSeasons(
     return Ok(data ?? []);
 }
 
-export async function findPlayersBySimilarity(supabase: DBClient, query: string): Promise<Result<PlayerSearchResult[]>> {
+export async function findPlayersBySimilarity(supabase: DBClient, query: string, seasonId?: string): Promise<Result<PlayerSearchResult[]>> {
     const {data, error} = await supabase.rpc('search_players_with_similarity', {
         search_term: query.toLowerCase()
     });
@@ -334,8 +336,31 @@ export async function findPlayersBySimilarity(supabase: DBClient, query: string)
         ])
     );
 
+    const seasonTeamMap = new Map<string, {team_id: string; team_name: string | null}>();
+    if (seasonId) {
+        const {data: seasonTeamSeasons, error: seasonTeamError} = await supabase
+            .from("player_team_seasons")
+            .select(`
+                player_id,
+                team_id,
+                team:teams(name)
+            `)
+            .in("player_id", playerIds)
+            .eq("season_id", seasonId);
+
+        if (seasonTeamError) return Err(serializeError(seasonTeamError, "DB_ERROR"));
+
+        for (const pts of seasonTeamSeasons ?? []) {
+            seasonTeamMap.set(pts.player_id, {
+                team_id: pts.team_id,
+                team_name: pts.team?.name || null
+            });
+        }
+    }
+
     const results: PlayerSearchResult[] = topPlayers.map(player => {
         const teamInfo = teamMap.get(player.id);
+        const seasonTeamInfo = seasonTeamMap.get(player.id);
         return {
             id: player.id,
             roblox_user_id: player.roblox_user_id,
@@ -344,7 +369,9 @@ export async function findPlayersBySimilarity(supabase: DBClient, query: string)
             avatar_url: player.avatar_url,
             current_team_id: teamInfo?.team_id || null,
             current_season_id: teamInfo?.season_id || null,
-            current_team_name: teamInfo?.team_name || null
+            current_team_name: teamInfo?.team_name || null,
+            season_team_id: seasonTeamInfo?.team_id || null,
+            season_team_name: seasonTeamInfo?.team_name || null
         };
     });
 

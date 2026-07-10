@@ -31,6 +31,7 @@ export type PlayersByIdsInput = z.infer<typeof PlayersByIdsSchema>
 
 export const SearchPlayersSchema = z.object({
     query: z.string().min(1),
+    seasonId: z.uuid().optional(),
 })
 export type SearchPlayersInput = z.infer<typeof SearchPlayersSchema>
 

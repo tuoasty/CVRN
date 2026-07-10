@@ -15,7 +15,7 @@ import { clientLogger } from "@/app/utils/clientLogger";
 function TeamLogoSmall({ name, logoUrl, size = 28, priority = false }: { name: string; logoUrl: string | null; size?: number; priority?: boolean }) {
     if (logoUrl) {
         return (
-            <Image src={logoUrl} alt={name} width={size} height={size} style={{ width: size, height: size }} className="rounded-sm object-contain mix-blend-multiply dark:mix-blend-screen" priority={priority} />
+            <Image src={logoUrl} alt={name} width={size} height={size} style={{ width: size, height: size }} className="rounded-sm object-contain" priority={priority} />
         );
     }
     return (
@@ -109,9 +109,9 @@ function IndividualAwardCard({ award, index, seasonId }: { award: SeasonDetail["
     );
 
     const teamBlock = (
-        <div className="w-[20%] shrink-0 relative overflow-hidden bg-muted/30 dark:bg-muted/10">
+        <div className="w-[20%] shrink-0 relative overflow-hidden">
             {team?.logo_url ? (
-                <Image src={team.logo_url} alt={team.name} fill className="object-contain p-4 mix-blend-multiply dark:mix-blend-screen" sizes="20vw" />
+                <Image src={team.logo_url} alt={team.name} fill className="object-contain p-4" sizes="20vw" />
             ) : (
                 <div className="w-full h-full flex items-center justify-center">
                     <span className="text-xl font-bold text-muted-foreground/40">{team?.name.slice(0, 2).toUpperCase() ?? "—"}</span>
@@ -143,7 +143,7 @@ function IndividualAwardCard({ award, index, seasonId }: { award: SeasonDetail["
                             <div className="flex items-center gap-1.5 mt-1">
                                 {team.logo_url && (
                                     <div className="relative w-3 h-3 shrink-0">
-                                        <Image src={team.logo_url} alt={team.name} fill className="object-contain mix-blend-multiply dark:mix-blend-screen" sizes="16px" />
+                                        <Image src={team.logo_url} alt={team.name} fill className="object-contain" sizes="16px" />
                                     </div>
                                 )}
                                 <p className="text-[10px] font-semibold tracking-wide truncate" style={{ color: team.brick_color ?? undefined }}>{team.name}</p>
@@ -212,7 +212,7 @@ function FirstTeamMobileCard({ award, seasonId }: { award: SeasonDetail["season_
                     <div className="flex items-center gap-1.5">
                         {team.logo_url && (
                             <div className="relative w-4 h-4 shrink-0">
-                                <Image src={team.logo_url} alt={team.name} fill className="object-contain mix-blend-multiply dark:mix-blend-screen" sizes="16px" />
+                                <Image src={team.logo_url} alt={team.name} fill className="object-contain" sizes="16px" />
                             </div>
                         )}
                         <p className="text-[10px] font-semibold tracking-wide truncate" style={{ color: team.brick_color ?? undefined }}>{team.name}</p>
