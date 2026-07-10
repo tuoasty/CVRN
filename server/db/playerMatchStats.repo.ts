@@ -4,15 +4,17 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {PlayerMatchStatsInsert} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
 
 // Of the given match ids, returns those that already have at least one stat row.
+// Reads the DISTINCT view, not the base table: `player_match_stats` is one row
+// per player per set, so selecting from it directly truncates at max_rows once
+// enough matches are queried, silently reporting synced matches as unsynced.
 export async function findMatchIdsWithStats(supabase: DBClient, matchIds: string[]): Promise<Result<string[]>> {
     if (matchIds.length === 0) return Ok([]);
     const {data, error} = await supabase
-        .from("player_match_stats")
+        .from("v_matches_with_stats")
         .select("match_id")
         .in("match_id", matchIds);
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    const unique = Array.from(new Set((data ?? []).map(r => r.match_id)));
-    return Ok(unique);
+    return Ok((data ?? []).flatMap(r => (r.match_id ? [r.match_id] : [])));
 }
 
 // Per-set rows for a single match, ordered by (set, team, contributions desc).
