@@ -27,6 +27,10 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
         setOpen(false);
     }, [pathname]);
 
+    // Teams drives region/season from its own URL params, so the global selector would be a
+    // second, conflicting source of truth on that route.
+    const showRegionSeasonSelector = !pathname.startsWith("/admin/teams");
+
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-card">
             <div className="page-wide">
@@ -43,8 +47,12 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <AdminRegionSeasonSelector />
-                        <div className="h-6 w-px bg-border" />
+                        {showRegionSeasonSelector && (
+                            <>
+                                <AdminRegionSeasonSelector />
+                                <div className="h-6 w-px bg-border" />
+                            </>
+                        )}
                         <ModeToggle />
                         <div className="h-6 w-px bg-border" />
                         <LogoutButton />
@@ -102,8 +110,12 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
                                         userRole={userRole}
                                         onNavigate={() => setOpen(false)}
                                     />
-                                    <div className="h-px bg-border" />
-                                    <AdminRegionSeasonSelector />
+                                    {showRegionSeasonSelector && (
+                                        <>
+                                            <div className="h-px bg-border" />
+                                            <AdminRegionSeasonSelector />
+                                        </>
+                                    )}
                                     <div className="h-px bg-border" />
                                     <LogoutButton
                                         showLabel

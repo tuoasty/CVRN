@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
@@ -42,7 +42,28 @@ export default function TeamDetailPage({
                                            teamSlug: teamSlugProp
                                        }: TeamDetailPageProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const addFormRef = useRef<HTMLDivElement>(null);
+
+    // The teams list passes its filters through so we can send the admin back where they were.
+    // Only the known filter keys are echoed, never the raw query string.
+    const backHrefs = useMemo(() => {
+        const build = (keys: string[]) => {
+            const params = new URLSearchParams();
+            for (const key of keys) {
+                const value = searchParams.get(key);
+                if (value) params.set(key, value);
+            }
+            const query = params.toString();
+            return query ? `/admin/teams?${query}` : "/admin/teams";
+        };
+        return {
+            // After a delete the searched-for team no longer exists, so `q` would strand the
+            // admin on an empty table.
+            afterDelete: build(["region", "season"]),
+            back: build(["region", "season", "q"]),
+        };
+    }, [searchParams]);
 
     const regionCode = safeDecodeURIComponent(regionCodeProp).toLowerCase();
     const seasonSlug = safeDecodeURIComponent(seasonSlugProp).toLowerCase();
@@ -98,7 +119,7 @@ export default function TeamDetailPage({
         }
 
         await mutateAllTeams();
-        router.push("/admin/teams");
+        router.push(backHrefs.afterDelete);
     };
 
     const handleRoleChanged = () => {
@@ -192,7 +213,7 @@ export default function TeamDetailPage({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push("/admin/teams")}
+                            onClick={() => router.push(backHrefs.back)}
                             className="rounded-sm -ml-2"
                         >
                             ← Back to Teams
