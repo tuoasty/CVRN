@@ -66,9 +66,9 @@ export async function previewSheetAction(input: {
     blockStride: number;
 }) {
     try {
-        const {values, bgColors, fgColors} = await readSheetRangeWithColors(input.sheetId, input.tabName);
+        const {values, bgColors} = await readSheetRangeWithColors(input.sheetId, input.tabName);
         if (input.sheetType === 'qualifier') {
-            const {results, errors} = parseQualifierRows(values, input.headerRow, fgColors);
+            const {results, errors} = parseQualifierRows(values, input.headerRow);
             const totalRows = values.length;
             const sampleCodes = values
                 .slice(input.headerRow, input.headerRow + 5)

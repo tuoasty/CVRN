@@ -23,20 +23,12 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {randomUUID} from "node:crypto";
 
-function isPendingColor(color: string | null): boolean {
-    if (!color) return false;
-    const r = parseInt(color.slice(1, 3), 16);
-    const g = parseInt(color.slice(3, 5), 16);
-    const b = parseInt(color.slice(5, 7), 16);
-    return r > 200 && g > 180 && b < 100;
-}
-
 export async function syncMatchResults(
     supabase: DBClient,
     config: SheetConfig
 ): Promise<Result<SyncResult>> {
     try {
-        const {values, fgColors} = await readSheetRangeWithColors(config.sheet_id, config.tab_name);
+        const {values} = await readSheetRangeWithColors(config.sheet_id, config.tab_name);
 
         const seasonResult = await findSeasonById(supabase, config.season_id);
         if (!seasonResult.ok) return seasonResult;
@@ -45,7 +37,7 @@ export async function syncMatchResults(
         }
         const year = parseInt(seasonResult.value.start_date.substring(0, 4), 10);
 
-        const {results: parsed, errors: parseErrors} = parseQualifierRows(values, config.header_row ?? 8, fgColors);
+        const {results: parsed, errors: parseErrors} = parseQualifierRows(values, config.header_row ?? 8);
 
         const teamsResult = await findTeamsBySeasonId(supabase, config.season_id);
         if (!teamsResult.ok) return teamsResult;
@@ -117,11 +109,10 @@ export async function syncMatchResults(
 
             const parsed = result.scheduleRaw ? parseScheduleCell(result.scheduleRaw, year) : null;
             if (result.scheduleRaw && !parsed) {
-                errors.push({row: result.rowNumber, message: `[${mc}] Schedule "${result.scheduleRaw}": unrecognized format — expected "Month Dth, H:MM AM/PM [GMT±N]", "Month Dth", or "Month Dth - Month Dth" (e.g. "May 2nd, 5:00 PM [GMT+8]", "May 2nd", or "May 2nd - May 5th"). Yellow text = pending, any other color = scheduled.`});
+                errors.push({row: result.rowNumber, message: `[${mc}] Schedule "${result.scheduleRaw}": unrecognized format — expected "Month Dth, H:MM AM/PM [GMT±N]", "Month Dth", or "Month Dth - Month Dth" (e.g. "May 2nd, 5:00 PM [GMT+8]", "May 2nd", or "May 2nd - May 5th").`});
                 rowsErrored++;
             }
             const scheduledAt = parsed?.iso ?? null;
-            const isPlaceholderDate = isPendingColor(result.scheduleCellColor);
 
             const existingResult = await findMatchByCode(supabase, mc, config.season_id);
             if (!existingResult.ok) {
@@ -132,7 +123,7 @@ export async function syncMatchResults(
             let match = existingResult.value;
 
             const hasScores = result.isForfeit || result.sets.length > 0;
-            const hasSchedule = scheduledAt !== null && !isPlaceholderDate;
+            const hasSchedule = scheduledAt !== null;
 
             const wasCreated = !match;
             if (!match) {
@@ -195,7 +186,7 @@ export async function syncMatchResults(
                         after: {matchCode: mc, status: hasSchedule ? 'scheduled' : 'pending', reverted: true},
                     });
                     if (scheduledAt) {
-                        const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, isPlaceholderDate ? 'pending' : 'scheduled');
+                        const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, 'scheduled');
                         if (!scheduleResult.ok) {
                             errors.push({row: result.rowNumber, message: `[${mc}] Failed to update schedule after revert: ${scheduleResult.error.message}`});
                             rowsErrored++;
@@ -218,21 +209,6 @@ export async function syncMatchResults(
                         entityId: match.id,
                         before: wasCreated ? {} : {status: match.status},
                         after: {matchCode: mc, status: 'scheduled', scheduledAt, created: wasCreated},
-                    });
-                } else if (isPlaceholderDate && scheduledAt) {
-                    if (!wasCreated) {
-                        const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, 'pending');
-                        if (!scheduleResult.ok) {
-                            errors.push({row: result.rowNumber, message: `[${mc}] Failed to update placeholder date: ${scheduleResult.error.message}`});
-                            rowsErrored++;
-                            continue;
-                        }
-                    }
-                    changes.push({
-                        type: 'match_result',
-                        entityId: match.id,
-                        before: wasCreated ? {} : {scheduledAt: match.scheduled_at},
-                        after: {matchCode: mc, status: 'pending', scheduledAt, placeholder: true, created: wasCreated},
                     });
                 } else if (wasCreated) {
                     changes.push({

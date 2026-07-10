@@ -41,7 +41,6 @@ function parseSetScore(
 export function parseQualifierRows(
     rows: string[][],
     headerRow: number,
-    fgColors?: (string | null)[][],
 ): { results: ParsedMatchResult[]; errors: SyncError[] } {
     const results: ParsedMatchResult[] = [];
     const errors: SyncError[] = [];
@@ -70,7 +69,6 @@ export function parseQualifierRows(
         }
 
         const scheduleRaw = row[COL_SCHEDULE]?.trim() || null;
-        const scheduleCellColor = fgColors?.[i]?.[COL_SCHEDULE] ?? null;
         const winnerRaw = row[COL_WINNER]?.trim() || null;
         const noteRaw = row[COL_NOTE]?.trim() ?? '';
         let isForfeit = noteRaw.toUpperCase() === 'FF';
@@ -111,7 +109,6 @@ export function parseQualifierRows(
             isForfeit,
             isByeAway,
             scheduleRaw,
-            scheduleCellColor,
             referees,
             media,
             rowNumber,

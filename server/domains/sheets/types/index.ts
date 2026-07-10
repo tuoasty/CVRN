@@ -50,7 +50,6 @@ export interface ParsedMatchResult {
     isForfeit: boolean
     isByeAway: boolean
     scheduleRaw: string | null
-    scheduleCellColor: string | null
     referees: string[]
     media: string[]
     rowNumber: number
