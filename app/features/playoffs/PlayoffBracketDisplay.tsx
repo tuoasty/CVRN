@@ -23,6 +23,7 @@ type PlayoffBracketDisplayProps = {
 
 type RoundType =
     | "play_in"
+    | "round_of_32"
     | "round_of_16"
     | "quarterfinal"
     | "semifinal"
@@ -50,6 +51,7 @@ type RoundData = {
 
 const ROUND_LABELS: Record<RoundType, string> = {
     play_in: "Play-In Round",
+    round_of_32: "Round of 32",
     round_of_16: "Round of 16",
     quarterfinal: "Quarterfinals",
     semifinal: "Semifinals",
@@ -70,6 +72,7 @@ const ROUND_LABELS: Record<RoundType, string> = {
 // `winners_final` → `grand_final` → `bracket_reset`. Empty rounds filter out.
 const UPPER_ROUND_ORDER: RoundType[] = [
     "play_in",
+    "round_of_32",
     "round_of_16",
     "quarterfinal",
     "semifinal",

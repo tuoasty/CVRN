@@ -29,6 +29,7 @@ interface SeasonWeekPickerProps {
 
 const ROUND_LABELS: Record<string, string> = {
     play_in: "Play-in",
+    round_of_32: "Round of 32",
     round_of_16: "Round of 16",
     quarterfinal: "Quarterfinals",
     semifinal: "Semifinals",
@@ -38,11 +39,12 @@ const ROUND_LABELS: Record<string, string> = {
 
 const ROUND_ORDER: Record<string, number> = {
     play_in: 1,
-    round_of_16: 2,
-    quarterfinal: 3,
-    semifinal: 4,
-    third_place: 5,
-    final: 6,
+    round_of_32: 2,
+    round_of_16: 3,
+    quarterfinal: 4,
+    semifinal: 5,
+    third_place: 6,
+    final: 7,
 };
 
 export default function SeasonWeekPicker({

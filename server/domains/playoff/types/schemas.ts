@@ -7,6 +7,7 @@ import {z} from "zod"
 // this enum is the only gate. Array order doubles as sort order for UI steppers.
 export const PLAYOFF_ROUNDS = [
     "play_in",
+    "round_of_32",
     "round_of_16",
     "quarterfinal",
     "semifinal",

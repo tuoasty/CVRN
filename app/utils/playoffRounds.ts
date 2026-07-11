@@ -6,6 +6,7 @@ import { PLAYOFF_ROUNDS, type PlayoffRound } from "@/server/domains/playoff/type
 // side by side. Long labels for anywhere with room (mobile pickers, headers).
 export const ROUND_LABEL_SHORT: Record<PlayoffRound, string> = {
     play_in: "Play-in",
+    round_of_32: "R32",
     round_of_16: "R16",
     quarterfinal: "QF",
     semifinal: "SF",
@@ -24,6 +25,7 @@ export const ROUND_LABEL_SHORT: Record<PlayoffRound, string> = {
 
 export const ROUND_LABEL_LONG: Record<PlayoffRound, string> = {
     play_in: "Play-in",
+    round_of_32: "Round of 32",
     round_of_16: "Round of 16",
     quarterfinal: "Quarterfinals",
     semifinal: "Semifinals",

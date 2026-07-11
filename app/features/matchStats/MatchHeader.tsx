@@ -9,6 +9,7 @@ import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
 
 const ROUND_LABELS: Record<string, string> = {
     play_in: "Play-In",
+    round_of_32: "Round of 32",
     round_of_16: "Round of 16",
     quarterfinal: "Quarterfinals",
     semifinal: "Semifinals",
