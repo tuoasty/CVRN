@@ -47,6 +47,20 @@ export function parseScheduleCell(value: string, year: number): ParsedSchedule |
 // "07/05/2026 5 PM GMT(+8)" / "7/5/2026 5:30 PM GMT (+8)" — minutes and the parens are optional.
 const SLASH_DATE = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\s*GMT\s*\(?\s*([+-]\d+(?:\.\d+)?)\s*\)?$/i;
 
+// US timezone abbreviations → fixed UTC offset (hours). These are intentionally NOT
+// DST-resolved: the sheet author writes EST vs EDT (etc.) for the season, and we honor
+// the literal label rather than second-guessing it from the match date.
+const TZ_ABBREV_OFFSETS: Record<string, number> = {
+    EST: -5, EDT: -4,
+    CST: -6, CDT: -5,
+    MST: -7, MDT: -6,
+    PST: -8, PDT: -7,
+};
+
+// "February 28th, 7:00 PM EST" — same date/time shape as parseScheduleCell's full form,
+// but the zone is a named US abbreviation instead of a numeric [GMT±N] offset.
+const NAMED_TZ = /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*([A-Za-z]{3})$/i;
+
 // Playoff sheet cells are prefixed "Date:" and carry either the MM/DD/YYYY form above
 // or any of the formats parseScheduleCell already handles. The MM/DD/YYYY form supplies
 // its own year, so the `year` argument is only consulted on the fallback path.
@@ -75,6 +89,20 @@ export function parsePlayoffScheduleCell(value: string, year: number): ParsedSch
             + toIsoOffset(offsetNum);
 
         const date = new Date(iso);
+        if (isNaN(date.getTime())) return null;
+        return { iso: date.toISOString() };
+    }
+
+    // "February 28th, 7:00 PM EST" — named US zone in place of a numeric offset.
+    const namedMatch = stripped.match(NAMED_TZ);
+    if (namedMatch) {
+        const [, month, day, time, abbrev] = namedMatch;
+        const offsetNum = TZ_ABBREV_OFFSETS[abbrev.toUpperCase()];
+        if (offsetNum === undefined) return null;
+
+        const normalizedTime = time.replace(/\s*(AM|PM)$/i, ' $1');
+        const dateStr = `${month} ${day} ${year} ${normalizedTime} GMT${toIsoOffset(offsetNum)}`;
+        const date = new Date(dateStr);
         if (isNaN(date.getTime())) return null;
         return { iso: date.toISOString() };
     }
