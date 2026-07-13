@@ -28,7 +28,7 @@ export async function syncMatchResults(
     config: SheetConfig
 ): Promise<Result<SyncResult>> {
     try {
-        const {values} = await readSheetRangeWithColors(config.sheet_id, config.tab_name);
+        const {values, fgColors} = await readSheetRangeWithColors(config.sheet_id, config.tab_name);
 
         const seasonResult = await findSeasonById(supabase, config.season_id);
         if (!seasonResult.ok) return seasonResult;
@@ -37,7 +37,7 @@ export async function syncMatchResults(
         }
         const year = parseInt(seasonResult.value.start_date.substring(0, 4), 10);
 
-        const {results: parsed, errors: parseErrors} = parseQualifierRows(values, config.header_row ?? 8);
+        const {results: parsed, errors: parseErrors} = parseQualifierRows(values, fgColors, config.header_row ?? 8);
 
         const teamsResult = await findTeamsBySeasonId(supabase, config.season_id);
         if (!teamsResult.ok) return teamsResult;

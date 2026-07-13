@@ -101,10 +101,10 @@ export async function findSeasonBySlugAndRegion(
     supabase: DBClient,
     slug: string,
     regionId: string
-): Promise<Result<Season | null>> {
+): Promise<Result<SeasonWithPlayoffConfig | null>> {
     const {data, error} = await supabase
         .from("seasons")
-        .select("*")
+        .select("*, playoff_configs(*)")
         .eq("slug", slug)
         .eq("region_id", regionId)
         .single();
@@ -112,5 +112,5 @@ export async function findSeasonBySlugAndRegion(
         if (error.code === "PGRST116") return Ok(null);
         return Err(serializeError(error, "DB_ERROR"));
     }
-    return Ok(data);
+    return Ok(data as SeasonWithPlayoffConfig);
 }

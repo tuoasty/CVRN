@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { parseQualifierRows } from '../parseQualifierRows'
 
 // Column layout (0-indexed) from parseQualifierRows:
-//   E=4 code, G=6 home, I=8 away, K=10 schedule, M..Q=12..16 sets, S=18 winner, T=19 note
+//   E=4 code, G=6 home, I=8 away, K=10 schedule, M..O=12..14 sets, Q=16 winner, R=17 note
+const COL_HOME = 6
+const COL_AWAY = 8
+const GREEN = '#00b050'
+const RED = '#ff0000'
+
 function makeRow(overrides: Record<number, string>): string[] {
   const row: string[] = []
   const maxCol = Math.max(...Object.keys(overrides).map(Number))
@@ -10,9 +15,17 @@ function makeRow(overrides: Record<number, string>): string[] {
   return row
 }
 
+function makeColors(overrides: Record<number, string>): (string | null)[] {
+  const maxCol = Math.max(...Object.keys(overrides).map(Number))
+  const colors: (string | null)[] = []
+  for (let c = 0; c <= maxCol; c++) colors.push(overrides[c] ?? null)
+  return colors
+}
+
 // headerRow=0 → data starts at index 0
-function parseOne(overrides: Record<number, string>) {
-  const { results, errors } = parseQualifierRows([makeRow(overrides)], 0)
+function parseOne(overrides: Record<number, string>, colorOverrides?: Record<number, string>) {
+  const fgColors = colorOverrides ? [makeColors(colorOverrides)] : undefined
+  const { results, errors } = parseQualifierRows([makeRow(overrides)], fgColors, 0)
   return { results, errors }
 }
 
@@ -60,5 +73,51 @@ describe('parseQualifierRows — bye handling', () => {
     expect(results).toHaveLength(0)
     expect(errors).toHaveLength(1)
     expect(errors[0].message).toMatch(/missing away team name/)
+  })
+})
+
+describe('parseQualifierRows — color-driven score orientation', () => {
+  const row = { 4: '1-M1', 6: 'Alpha', 8: 'Beta', 12: '25-20' }
+
+  it('home name green + away red, green set → digits map straight to home/away', () => {
+    const { results, errors } = parseOne(row, { [COL_HOME]: GREEN, [COL_AWAY]: RED, 12: GREEN })
+    expect(errors).toHaveLength(0)
+    expect(results[0].sets).toEqual([{ setNumber: 1, homeScore: 25, awayScore: 20 }])
+  })
+
+  it('red set (loser took the set) flips the order to the losing side', () => {
+    // Home is the match winner, but this set is red → the loser (Beta/away) won it → away 25.
+    const { results } = parseOne(row, { [COL_HOME]: GREEN, [COL_AWAY]: RED, 12: RED })
+    expect(results[0].sets).toEqual([{ setNumber: 1, homeScore: 20, awayScore: 25 }])
+  })
+
+  it('away name green (away is the match winner), green set → higher score goes to away', () => {
+    const { results } = parseOne(row, { [COL_HOME]: RED, [COL_AWAY]: GREEN, 12: GREEN })
+    expect(results[0].sets).toEqual([{ setNumber: 1, homeScore: 20, awayScore: 25 }])
+  })
+
+  it('ignores digit order: reversed "20-25" green set still gives the winner the higher score', () => {
+    const { results } = parseOne(
+      { 4: '1-M1', 6: 'Alpha', 8: 'Beta', 12: '20-25' },
+      { [COL_HOME]: GREEN, [COL_AWAY]: RED, 12: GREEN },
+    )
+    // Home is match winner, green set → home won the set → home gets the 25.
+    expect(results[0].sets).toEqual([{ setNumber: 1, homeScore: 25, awayScore: 20 }])
+  })
+
+  it('falls back to positional home-away when there are no colors', () => {
+    const { results } = parseOne(row)
+    expect(results[0].sets).toEqual([{ setNumber: 1, homeScore: 25, awayScore: 20 }])
+  })
+
+  it('falls back to positional per set when a set cell is uncolored but names are colored', () => {
+    const { results } = parseOne(
+      { 4: '1-M1', 6: 'Alpha', 8: 'Beta', 12: '25-20', 13: '25-20' },
+      { [COL_HOME]: GREEN, [COL_AWAY]: RED, 13: RED }, // set 1 (col 12) uncolored, set 2 (col 13) red
+    )
+    expect(results[0].sets).toEqual([
+      { setNumber: 1, homeScore: 25, awayScore: 20 }, // positional fallback
+      { setNumber: 2, homeScore: 20, awayScore: 25 }, // red → loser/away took it
+    ])
   })
 })
