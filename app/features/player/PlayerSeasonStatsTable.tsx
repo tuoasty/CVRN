@@ -6,13 +6,13 @@ import {Table, TableHeader, TableBody, TableRow, TableHead, TableCell} from "@/a
 import {Tooltip, TooltipContent, TooltipTrigger, TooltipProvider} from "@/app/components/ui/tooltip";
 import {cn} from "@/lib/utils";
 import {getLogoClassName} from "@/app/lib/logoClass";
-import StatViewToggle from "@/app/features/matchStats/StatViewToggle";
+import StatViewSelector from "./StatViewSelector";
 import {
     PlayerSeasonStat,
 } from "@/server/domains/player";
 import {
-    PLAYER_COMPACT_COLUMNS,
-    PLAYER_DETAILED_COLUMNS,
+    STAT_VIEW_COLUMNS,
+    StatView,
     PlayerStatColumn,
     formatPlayerStat,
     groupPlayerColumns,
@@ -66,22 +66,22 @@ type Props = {
 };
 
 export default function PlayerSeasonStatsTable({rows, teamLogoBySeasonId}: Props) {
-    const [detailed, setDetailed] = useState(false);
-    const columns = detailed ? PLAYER_DETAILED_COLUMNS : PLAYER_COMPACT_COLUMNS;
+    const [view, setView] = useState<StatView>("overview");
+    const columns = STAT_VIEW_COLUMNS[view];
     const groups = groupPlayerColumns(columns);
     const tableRef = useDragScroll();
 
     if (rows.length === 0) {
-        return
+        return <p className="text-sm text-muted-foreground">No season stats yet.</p>;
     }
 
     return (
         <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 className="text-lg font-semibold">Season Stats</h2>
                 </div>
-                <StatViewToggle detailed={detailed} onDetailedChange={setDetailed} />
+                <StatViewSelector value={view} onChange={setView} />
             </div>
             <TooltipProvider delayDuration={200}>
                 <div className="border border-border rounded-sm overflow-hidden [&>[data-slot=table-container]]:overflow-x-auto">
@@ -111,7 +111,7 @@ export default function PlayerSeasonStatsTable({rows, teamLogoBySeasonId}: Props
                                         <TableHead
                                             key={col.key as string}
                                             className={cn(
-                                                "h-8 px-1 text-right text-[11px] font-semibold whitespace-nowrap",
+                                                "h-8 px-1 text-center text-[11px] font-semibold whitespace-nowrap",
                                                 playerHeadWidthClass(col.format),
                                                 isLastInGroup && "border-r border-border/30 last:border-r-0",
                                             )}
@@ -167,7 +167,7 @@ function SeasonStatRow({row, columns, teamLogo}: {row: PlayerSeasonStat; columns
                     <TableCell
                         key={col.key as string}
                         className={cn(
-                            "py-1 px-1 text-right text-xs font-mono tabular-nums whitespace-nowrap text-foreground/70",
+                            "py-1 px-1 text-center text-xs font-mono tabular-nums whitespace-nowrap text-foreground/70",
                             isLastInGroup && "border-r border-border/30 last:border-r-0",
                         )}
                     >
