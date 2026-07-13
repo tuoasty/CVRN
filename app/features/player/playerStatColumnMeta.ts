@@ -10,6 +10,7 @@ export type PlayerStatColumn = {
     format: StatFormat;
 };
 
+// Per-set rate column.
 const ps = (
     key: keyof PlayerSeasonStat,
     label: string,
@@ -17,58 +18,106 @@ const ps = (
     description: string
 ): PlayerStatColumn => ({key, label, group, description, format: "per_set"});
 
-// Season totals, not rates — these keep explicit labels since the group mixes both.
+// Raw season-total (count) column.
+const ct = (
+    key: keyof PlayerSeasonStat,
+    label: string,
+    group: string,
+    description: string
+): PlayerStatColumn => ({key, label, group, description, format: "count"});
+
+// The six views the profile table can show. Overview is the default landing
+// view; the five skill views are focused deep-dives.
+export type StatView = "overview" | "spiking" | "setting" | "blocking" | "receiving" | "serving";
+
+export const STAT_VIEWS: {value: StatView; label: string}[] = [
+    {value: "overview",  label: "Overview"},
+    {value: "spiking",   label: "Spiking"},
+    {value: "setting",   label: "Setting"},
+    {value: "blocking",  label: "Blocking"},
+    {value: "receiving", label: "Receiving"},
+    {value: "serving",   label: "Serving"},
+];
+
+// Constant context prefix shared by every view.
 const SEASON_COLUMNS: PlayerStatColumn[] = [
-    {key: "sets_played",    label: "SP",    group: "Season", description: "Sets played",   format: "count"},
+    {key: "sets_played",    label: "SP",    group: "Season", description: "Sets played", format: "count"},
     {key: "points_total",   label: "PTS",   group: "Season", description: "Total points scored: kills + kill blocks + aces", format: "count"},
     {key: "points_per_set", label: "PTS/S", group: "Season", description: "Points scored per set", format: "per_set"},
 ];
 
-export const PLAYER_COMPACT_COLUMNS: PlayerStatColumn[] = [
-    ...SEASON_COLUMNS,
-    ps("kills_per_set",           "K",   "Spiking",  "Kills per set"),
-    ps("kill_attempts_per_set",   "HA",  "Spiking",  "Hitting attempts per set"),
-    ps("spiking_errors_per_set",  "HE",  "Spiking",  "Hitting errors per set"),
-    {key: "hit_eff",              label: "HIT%", group: "Spiking",  description: "Hitting efficiency: (kills − errors) / attempts", format: "pct"},
-    ps("assists_per_set",         "AST", "Setting",  "Assists per set"),
-    ps("setting_errors_per_set",  "STE", "Setting",  "Setting errors per set"),
-    {key: "set_eff",              label: "SET%", group: "Setting",  description: "Set efficiency: assists / (assists + setting errors)", format: "pct"},
-    ps("blocks_per_set",          "B",   "Blocks",   "Total blocks per set"),
-    {key: "kb_pct",               label: "KB%",  group: "Blocks",   description: "Kill block rate: kill blocks / total block contacts", format: "pct"},
-    ps("receives_per_set",        "REC", "Receive",  "Total receives per set"),
-    ps("aces_per_set",            "ACE", "Serving",  "Aces per set"),
-    {key: "service_score",        label: "SRV+", group: "Serving",  description: "Service score: aces − service errors (season net total)", format: "net"},
-];
-
-export const PLAYER_DETAILED_COLUMNS: PlayerStatColumn[] = [
-    ...SEASON_COLUMNS,
-    ps("ape_kills_per_set",           "APK", "Spiking", "Ape/dump kills per set"),
-    ps("ape_attempts_per_set",        "APA", "Spiking", "Ape/dump attempts per set"),
-    ps("delay_kills_per_set",         "DLK", "Spiking", "Delay-spike kills per set"),
-    ps("quick_kills_per_set",         "QK",  "Spiking", "Quick-spike kills per set"),
-    ps("wipes_tools_per_set",         "WT",  "Spiking", "Wipes & tools per set"),
-    ps("kills_per_set",               "K",   "Spiking", "Total kills per set"),
-    ps("kill_attempts_per_set",       "HA",  "Spiking", "Hitting attempts per set"),
-    ps("spiking_errors_per_set",      "HE",  "Spiking", "Hitting errors per set"),
-    {key: "hit_eff",                  label: "HIT%", group: "Spiking",  description: "Hitting efficiency", format: "pct"},
-    ps("assists_per_set",             "AST", "Setting", "Assists per set"),
-    ps("setting_errors_per_set",      "STE", "Setting", "Setting errors per set"),
-    {key: "set_eff",                  label: "SET%", group: "Setting",  description: "Set efficiency",    format: "pct"},
-    ps("kill_blocks_per_set",         "KB",  "Blocks",  "Kill blocks per set"),
-    ps("block_touches_per_set",       "BT",  "Blocks",  "Block touches per set"),
-    ps("blocks_per_set",              "B",   "Blocks",  "Total blocks per set"),
-    {key: "kb_pct",                   label: "KB%",  group: "Blocks",   description: "Kill block rate",   format: "pct"},
-    ps("serve_receives_per_set",      "SR",  "Receive", "Serve receives per set"),
-    ps("digs_per_set",                "DIG", "Receive", "Digs per set"),
-    ps("block_follows_per_set",       "BF",  "Receive", "Block follows per set"),
-    ps("dives_per_set",               "DIV", "Receive", "Dives per set"),
-    ps("receives_per_set",            "REC", "Receive", "Total receives per set"),
-    ps("aces_per_set",                "ACE", "Serving", "Aces per set"),
-    ps("service_errors_per_set",      "SRE", "Serving", "Service errors per set"),
-    {key: "service_score",            label: "SRV+", group: "Serving",  description: "Service score: aces − service errors (net total)", format: "net"},
-    ps("misc_errors_per_set",         "ME",  "Overall", "Misc errors per set"),
-    ps("errors_per_set",              "E",   "Overall", "Total errors per set"),
-];
+// Column keys constrained to `keyof PlayerSeasonStat`. The `*_total` count keys
+// come from v_player_season_stats (migration 20260713120000).
+export const STAT_VIEW_COLUMNS: Record<StatView, PlayerStatColumn[]> = {
+    overview: [
+        ...SEASON_COLUMNS,
+        ct("kills_total",       "K",    "Spiking", "Kills (season total)"),
+        ps("kills_per_set",     "K/S",  "Spiking", "Kills per set"),
+        {key: "hit_eff",        label: "HIT%", group: "Spiking", description: "Hitting efficiency: (kills − errors) / attempts", format: "pct"},
+        ct("kill_blocks_total", "KB",   "Blocks",  "Kill blocks (season total)"),
+        ps("kill_blocks_per_set", "KB/S", "Blocks", "Kill blocks per set"),
+        ct("assists_total",     "AST",  "Setting", "Assists (season total)"),
+        ps("assists_per_set",   "AST/S", "Setting", "Assists per set"),
+        {key: "set_eff",        label: "SET%", group: "Setting", description: "Set efficiency: assists / (assists + setting errors)", format: "pct"},
+        ct("receives_total",    "REC",  "Receive", "Total receives (season total)"),
+        ps("receives_per_set",  "REC/S", "Receive", "Total receives per set"),
+    ],
+    spiking: [
+        ...SEASON_COLUMNS,
+        ct("kills_total",          "K",    "Spiking", "Kills (season total)"),
+        ps("kills_per_set",        "K/S",  "Spiking", "Kills per set"),
+        ct("spiking_errors_total", "HE",   "Spiking", "Hitting errors (season total)"),
+        ps("spiking_errors_per_set", "HE/S", "Spiking", "Hitting errors per set"),
+        {key: "hit_eff",           label: "HIT%", group: "Spiking", description: "Hitting efficiency: (kills − errors) / attempts", format: "pct"},
+        ct("ape_kills_total",      "APK",  "Spiking", "Ape/dump kills (season total)"),
+        ps("ape_kills_per_set",    "APK/S", "Spiking", "Ape/dump kills per set"),
+        ct("delay_kills_total",    "DLK",  "Spiking", "Delay-spike kills (season total)"),
+        ps("delay_kills_per_set",  "DLK/S", "Spiking", "Delay-spike kills per set"),
+        ct("quick_kills_total",    "QK",   "Spiking", "Quick-spike kills (season total)"),
+        ps("quick_kills_per_set",  "QK/S", "Spiking", "Quick-spike kills per set"),
+        ct("wipes_tools_total",    "WT",   "Spiking", "Wipes & tools (season total)"),
+        ps("wipes_tools_per_set",  "WT/S", "Spiking", "Wipes & tools per set"),
+    ],
+    setting: [
+        ...SEASON_COLUMNS,
+        ct("assists_total",        "AST",  "Setting", "Assists (season total)"),
+        ps("assists_per_set",      "AST/S", "Setting", "Assists per set"),
+        {key: "set_eff",           label: "SET%", group: "Setting", description: "Set efficiency: assists / (assists + setting errors)", format: "pct"},
+        ct("setting_errors_total", "STE",  "Setting", "Setting errors (season total)"),
+        ps("setting_errors_per_set", "STE/S", "Setting", "Setting errors per set"),
+    ],
+    blocking: [
+        ...SEASON_COLUMNS,
+        ct("kill_blocks_total",    "KB",   "Blocks", "Kill blocks (season total)"),
+        ps("kill_blocks_per_set",  "KB/S", "Blocks", "Kill blocks per set"),
+        ct("blocks_total",         "B",    "Blocks", "Total blocks (season total)"),
+        ps("blocks_per_set",       "B/S",  "Blocks", "Total blocks per set"),
+        ct("block_touches_total",  "BT",   "Blocks", "Block touches (season total)"),
+        ps("block_touches_per_set", "BT/S", "Blocks", "Block touches per set"),
+        {key: "kb_pct",            label: "KB%", group: "Blocks", description: "Kill block rate: kill blocks / total block contacts", format: "pct"},
+    ],
+    receiving: [
+        ...SEASON_COLUMNS,
+        ct("receives_total",       "REC",  "Receive", "Total receives (season total)"),
+        ps("receives_per_set",     "REC/S", "Receive", "Total receives per set"),
+        ct("serve_receives_total", "SR",   "Receive", "Serve receives (season total)"),
+        ps("serve_receives_per_set", "SR/S", "Receive", "Serve receives per set"),
+        ct("digs_total",           "DIG",  "Receive", "Digs (season total)"),
+        ps("digs_per_set",         "DIG/S", "Receive", "Digs per set"),
+        ct("block_follows_total",  "BF",   "Receive", "Block follows (season total)"),
+        ps("block_follows_per_set", "BF/S", "Receive", "Block follows per set"),
+        ct("dives_total",          "DIV",  "Receive", "Dives (season total)"),
+        ps("dives_per_set",        "DIV/S", "Receive", "Dives per set"),
+    ],
+    serving: [
+        ...SEASON_COLUMNS,
+        ct("aces_total",           "ACE",  "Serving", "Aces (season total)"),
+        ps("aces_per_set",         "ACE/S", "Serving", "Aces per set"),
+        {key: "service_score",     label: "SRV+", group: "Serving", description: "Service score: aces − service errors (season net total)", format: "net"},
+        ct("service_errors_total", "SRE",  "Serving", "Service errors (season total)"),
+        ps("service_errors_per_set", "SRE/S", "Serving", "Service errors per set"),
+    ],
+};
 
 export function formatPlayerStat(value: number | null, format: StatFormat): string {
     if (value === null || value === undefined) return "—";

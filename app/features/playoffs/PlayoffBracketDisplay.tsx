@@ -7,7 +7,8 @@ import {useTeams} from "@/app/hooks/useTeams";
 import {useAllMatches} from "@/app/hooks/useMatches";
 import {useRegions} from "@/app/hooks/useRegions";
 import {useSeasons} from "@/app/hooks/useSeasons";
-import {Loader2, Maximize, Minimize} from "lucide-react";
+import {Maximize, Minimize} from "lucide-react";
+import {PlayoffBracketLoading} from "./PlayoffBracketLoading";
 import {Button} from "@/app/components/ui/button";
 import {cn} from "@/lib/utils";
 import {buildPublicMatchHref, buildAdminMatchHref} from "@/app/utils/matchDetailHref";
@@ -485,14 +486,7 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
     );
 
     if (loadingTeams || loadingMatches) {
-        return (
-            <div className="panel p-12 border-l-4 border-l-primary/30">
-                <div className="flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">Loading bracket data...</p>
-                </div>
-            </div>
-        );
+        return <PlayoffBracketLoading />;
     }
 
     if (upperRounds.length === 0 && lowerRounds.length === 0 && !thirdPlaceMatch) {

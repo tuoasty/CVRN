@@ -6,7 +6,7 @@ import { usePlayoffBrackets } from "@/app/hooks/usePlayoffs";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
 import { Trophy } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
-import { Skeleton } from "@/app/components/ui/skeleton";
+import { PlayoffBracketLoading } from "@/app/features/playoffs/PlayoffBracketLoading";
 
 export default function PlayoffsPage() {
     const { season, region } = useSeasonContext();
@@ -77,15 +77,7 @@ export default function PlayoffsPage() {
             {hasPlayoffs && (
                 <div className="page-bleed pb-6">
                     {loadingBrackets ? (
-                        <div className="flex gap-6 justify-center overflow-x-auto py-4 px-4">
-                            {[4, 2, 1].map((count, col) => (
-                                <div key={col} className="flex flex-col gap-8 shrink-0">
-                                    {[...Array(count)].map((_, i) => (
-                                        <Skeleton key={i} className="h-24 w-48 rounded-sm" />
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
+                        <PlayoffBracketLoading />
                     ) : brackets.length > 0 ? (
                         <PlayoffBracketDisplay
                             brackets={brackets}
