@@ -32,6 +32,16 @@ export function buildPublicTeamHref(args: BuildPublicTeamHrefArgs): string | nul
     return `/${encodeURIComponent(args.regionCode.toLowerCase())}/${encodeURIComponent(args.seasonSlug.toLowerCase())}/teams/${encodeURIComponent(toSlug(args.teamSlug))}`;
 }
 
+type BuildPublicStandingsHrefArgs = {
+    regionCode?: string;
+    seasonSlug?: string;
+};
+
+export function buildPublicStandingsHref(args: BuildPublicStandingsHrefArgs): string | null {
+    if (!args.regionCode || !args.seasonSlug) return null;
+    return `/${encodeURIComponent(args.regionCode.toLowerCase())}/${encodeURIComponent(args.seasonSlug.toLowerCase())}/standings`;
+}
+
 export function buildPublicPlayerHref(username: string | null | undefined): string | null {
     if (!username) return null;
     return `/players/${encodeURIComponent(username.toLowerCase())}`;

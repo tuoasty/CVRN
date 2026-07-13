@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useMemo } from "react";
 import { getLogoClassName } from "@/app/lib/logoClass";
-import { buildPublicTeamHref } from "@/app/utils/matchDetailHref";
+import { buildPublicStandingsHref, buildPublicTeamHref } from "@/app/utils/matchDetailHref";
 
 interface StandingsPreviewProps {
     standings: StandingWithInfo[];
@@ -26,9 +26,25 @@ export default function StandingsPreview({
                                                 }: StandingsPreviewProps) {
     const topStandings = useMemo(() => {
         return [...standings]
-            .sort((a, b) => (b.total_lvr || 0) - (a.total_lvr || 0))
+            .sort((a, b) => {
+                const winsA = a.wins || 0;
+                const winsB = b.wins || 0;
+                if (winsB !== winsA) return winsB - winsA;
+
+                const lossesA = a.losses || 0;
+                const lossesB = b.losses || 0;
+                if (lossesA !== lossesB) return lossesA - lossesB;
+
+                const setsWonA = a.sets_won || 0;
+                const setsWonB = b.sets_won || 0;
+                if (setsWonB !== setsWonA) return setsWonB - setsWonA;
+
+                return (b.total_lvr || 0) - (a.total_lvr || 0);
+            })
             .slice(0, 8);
     }, [standings]);
+
+    const standingsHref = buildPublicStandingsHref({ regionCode, seasonSlug });
 
     if (isLoading) {
         return (
@@ -117,12 +133,14 @@ export default function StandingsPreview({
                 })}
             </div>
 
-            <Button variant="outline" className="w-full rounded-sm group" asChild>
-                <Link href="/standings">
-                    View Full Standings
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-            </Button>
+            {standingsHref && (
+                <Button variant="outline" className="w-full rounded-sm group" asChild>
+                    <Link href={standingsHref}>
+                        View Full Standings
+                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                </Button>
+            )}
         </div>
     );
 }

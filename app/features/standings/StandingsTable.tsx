@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StandingWithInfo } from "@/server/domains/standing";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
 import { getLogoClassName } from "@/app/lib/logoClass";
@@ -19,48 +19,26 @@ type StandingsTableProps = {
     seasonSlug?: string;
 };
 
-type SortMode = "wins" | "lvr";
-
 export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, playinTeams = 8, regionCode, seasonSlug }: StandingsTableProps) {
-    const [sortMode, setSortMode] = useState<SortMode>("lvr");
-
     const sortedStandings = useMemo(() => {
         if (standings.length === 0) return [];
 
-        const sorted = [...standings];
+        return [...standings].sort((a, b) => {
+            const winsA = a.wins || 0;
+            const winsB = b.wins || 0;
+            if (winsB !== winsA) return winsB - winsA;
 
-        if (sortMode === "wins") {
-            sorted.sort((a, b) => {
-                const winsA = a.wins || 0;
-                const winsB = b.wins || 0;
-                if (winsB !== winsA) return winsB - winsA;
+            const lossesA = a.losses || 0;
+            const lossesB = b.losses || 0;
+            if (lossesA !== lossesB) return lossesA - lossesB;
 
-                const lossesA = a.losses || 0;
-                const lossesB = b.losses || 0;
-                if (lossesA !== lossesB) return lossesA - lossesB;
+            const setsWonA = a.sets_won || 0;
+            const setsWonB = b.sets_won || 0;
+            if (setsWonB !== setsWonA) return setsWonB - setsWonA;
 
-                const setsWonA = a.sets_won || 0;
-                const setsWonB = b.sets_won || 0;
-                if (setsWonB !== setsWonA) return setsWonB - setsWonA;
-
-                const setsLostA = a.sets_lost || 0;
-                const setsLostB = b.sets_lost || 0;
-                if (setsLostA !== setsLostB) return setsLostA - setsLostB;
-
-                const lvrA = a.total_lvr || 0;
-                const lvrB = b.total_lvr || 0;
-                return lvrB - lvrA;
-            });
-        } else {
-            sorted.sort((a, b) => {
-                const lvrA = a.total_lvr || 0;
-                const lvrB = b.total_lvr || 0;
-                return lvrB - lvrA;
-            });
-        }
-
-        return sorted;
-    }, [standings, sortMode]);
+            return (b.total_lvr || 0) - (a.total_lvr || 0);
+        });
+    }, [standings]);
 
     const getQualificationStatus = (rank: number) => {
         if (rank <= qualifiedTeams) return "qualified";
@@ -199,29 +177,6 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             <span className="text-muted-foreground font-medium">Eliminated</span>
                         </div>
                     </div>
-
-                    <div className="flex items-center gap-1.5 bg-muted/50 rounded-sm p-1 border border-border">
-                        <button
-                            onClick={() => setSortMode("wins")}
-                            className={`px-2 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold uppercase tracking-wide rounded-sm transition-all duration-200 ${
-                                sortMode === "wins"
-                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                            }`}
-                        >
-                            By Wins
-                        </button>
-                        <button
-                            onClick={() => setSortMode("lvr")}
-                            className={`px-2 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold uppercase tracking-wide rounded-sm transition-all duration-200 ${
-                                sortMode === "lvr"
-                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                            }`}
-                        >
-                            By LVR
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -320,7 +275,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                     Showing {sortedStandings.length} teams • Top {qualifiedTeams} qualify for playoffs, next {playinTeams} qualify for play-ins
                 </div>
                 <div>
-                    Sorted by: <span className="font-semibold text-foreground">{sortMode === "wins" ? "Wins" : "LVR"}</span>
+                    Sorted by: <span className="font-semibold text-foreground">Wins → Set Wins → LVR</span>
                 </div>
             </div>
         </div>

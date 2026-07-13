@@ -19,14 +19,11 @@ export async function findStandingsBySeasonAndRegion(
         query = query.eq("region_id", p.regionId);
     }
 
-    if (p.sortMode === "wins") {
-        query = query
-            .order("wins", {ascending: false})
-            .order("sets_won", {ascending: false})
-            .order("total_lvr", {ascending: false});
-    } else {
-        query = query.order("total_lvr", {ascending: false});
-    }
+    query = query
+        .order("wins", {ascending: false})
+        .order("losses", {ascending: true})
+        .order("sets_won", {ascending: false})
+        .order("total_lvr", {ascending: false});
 
     const {data, error} = await query;
     if (error) return Err(serializeError(error, "DB_ERROR"));
