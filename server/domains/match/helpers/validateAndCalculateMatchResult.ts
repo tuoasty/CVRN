@@ -2,12 +2,12 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {MatchResultInput, MatchContext, MatchResultOutput} from "../types";
 
 function differentialBonus(winnerPointDiff: number): number {
-    if (winnerPointDiff > 30) return 5;
-    if (winnerPointDiff > 25) return 4;
-    if (winnerPointDiff > 20) return 3;
-    if (winnerPointDiff > 15) return 2;
-    if (winnerPointDiff > 10) return 1;
-    if (winnerPointDiff > 5) return 0.5;
+    if (winnerPointDiff >= 30) return 5;
+    if (winnerPointDiff >= 25) return 4;
+    if (winnerPointDiff >= 20) return 3;
+    if (winnerPointDiff >= 15) return 2;
+    if (winnerPointDiff >= 10) return 1;
+    if (winnerPointDiff >= 5) return 0.5;
     return 0;
 }
 

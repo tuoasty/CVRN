@@ -15,8 +15,9 @@ function ok<T extends { ok: boolean }>(r: T) {
 }
 
 describe("points computation", () => {
-    it("3-0 win, +15 total diff → winner 2 + 1.5 + 1 bonus; loser 0", () => {
-        // home wins 25-20, 25-20, 25-20 → totalHome 75, totalAway 60, diff 15 (>10 → +1)
+    it("3-0 win, diff exactly 15 → +2 tier (>= boundary is inclusive); loser 0", () => {
+        // home wins 25-20, 25-20, 25-20 → totalHome 75, totalAway 60, diff 15.
+        // diff 15 hits the >=15 tier (+2) exactly — proves inclusive boundary.
         const res = ok(validateAndCalculateMatchResult({
             sets: [
                 { setNumber: 1, homeScore: 25, awayScore: 20 },
@@ -24,13 +25,13 @@ describe("points computation", () => {
                 { setNumber: 3, homeScore: 25, awayScore: 20 },
             ],
         }, seasonBo5));
-        expect(res.value.homeTeamPoints).toBe(4.5);
+        expect(res.value.homeTeamPoints).toBe(5.5); // 2 + 0.5*3 + 2
         expect(res.value.awayTeamPoints).toBe(0);
     });
 
-    it("3-1 win, diff 10 → +0.5 tier (10 is >5 but NOT >10); loser banks 0.5 for their set", () => {
+    it("3-1 win, diff exactly 10 → +1 tier (>= boundary is inclusive); loser banks 0.5 for their set", () => {
         // home wins sets 1,3,4; away wins set 2. totalHome 95, totalAway 85, diff 10.
-        // diff 10 hits the >5 tier (+0.5), NOT the >10 tier (+1) — proves strict boundary.
+        // diff 10 hits the >=10 tier (+1) exactly — proves inclusive boundary.
         const res = ok(validateAndCalculateMatchResult({
             sets: [
                 { setNumber: 1, homeScore: 25, awayScore: 20 },
@@ -39,7 +40,7 @@ describe("points computation", () => {
                 { setNumber: 4, homeScore: 25, awayScore: 20 },
             ],
         }, seasonBo5));
-        expect(res.value.homeTeamPoints).toBe(4); // 2 + 0.5*3 + 0.5
+        expect(res.value.homeTeamPoints).toBe(4.5); // 2 + 0.5*3 + 1
         expect(res.value.awayTeamPoints).toBe(0.5); // 0 + 0.5*1 + 0
     });
 
