@@ -61,6 +61,8 @@ export const STAT_VIEW_COLUMNS: Record<StatView, PlayerStatColumn[]> = {
         {key: "set_eff",        label: "SET%", group: "Setting", description: "Set efficiency: assists / (assists + setting errors)", format: "pct"},
         ct("receives_total",    "REC",  "Receive", "Total receives (season total)"),
         ps("receives_per_set",  "REC/S", "Receive", "Total receives per set"),
+        ct("aces_total",           "ACE",  "Serving", "Aces (season total)"),
+        ps("aces_per_set",         "ACE/S", "Serving", "Aces per set"),
     ],
     spiking: [
         ...SEASON_COLUMNS,

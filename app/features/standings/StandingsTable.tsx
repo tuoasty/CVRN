@@ -56,54 +56,49 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
 
     const getRowClassName = (rank: number) => {
         const status = getQualificationStatus(rank);
-        const baseClasses = "transition-all duration-200 hover:shadow-md hover:-translate-y-0.5";
+        const baseClasses = "transition-colors duration-200 hover:bg-muted/40";
 
-        if (rank === 1) {
-            return `${baseClasses} bg-gradient-to-r from-primary/20 via-primary/10 to-transparent !border-l-4 !border-l-primary`;
+        if (status === "eliminated") {
+            return `${baseClasses} text-muted-foreground`;
         }
-        if (rank <= 3) {
-            return `${baseClasses} bg-gradient-to-r from-primary/10 to-transparent !border-l-4 !border-l-primary/70`;
-        }
-        if (status === "qualified") {
-            return `${baseClasses} !border-l-4 !border-l-primary/40 hover:bg-primary/5`;
-        }
-        if (status === "playin") {
-            return `${baseClasses} !border-l-4 !border-l-secondary/40 hover:bg-secondary/5`;
-        }
-        return `${baseClasses} !border-l-4 !border-l-destructive/20 hover:bg-muted/30`;
+        return baseClasses;
+    };
+
+    const showPlayinDivider = (rank: number) => rank === qualifiedTeams && sortedStandings.length > qualifiedTeams;
+    const showEliminatedDivider = (rank: number) => rank === qualifiedTeams + playinTeams && sortedStandings.length > qualifiedTeams + playinTeams;
+
+    const ZoneDivider = ({ label, variant }: { label: string; variant: "playin" | "eliminated" }) => {
+        const rule = variant === "playin" ? "bg-secondary/40" : "bg-border";
+        return (
+            <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={6} className="p-0">
+                    <div className="flex items-center gap-3 px-1 py-1.5">
+                        <div className={`h-px flex-1 ${rule}`}></div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider whitespace-nowrap text-muted-foreground">{label}</span>
+                        <div className={`h-px flex-1 ${rule}`}></div>
+                    </div>
+                </TableCell>
+            </TableRow>
+        );
     };
 
     const getRankBadge = (rank: number) => {
         if (rank === 1) {
-            return (
-                    <span className="text-lg font-bold text-yellow-600 tabular-nums">{rank}</span>
-            );
+            return <span className="text-lg font-bold text-amber-500 tabular-nums">{rank}</span>;
         }
         if (rank === 2) {
-            return (
-
-                    <span className="text-lg font-bold text-slate-500 tabular-nums">{rank}</span>
-
-            );
+            return <span className="text-lg font-bold text-slate-400 tabular-nums">{rank}</span>;
         }
         if (rank === 3) {
-            return (
-
-                    <span className="text-lg font-bold text-orange-600 tabular-nums">{rank}</span>
-
-            );
+            return <span className="text-lg font-bold text-orange-500 tabular-nums">{rank}</span>;
         }
-        return (
-
-                <span className="text-lg font-bold text-foreground tabular-nums">{rank}</span>
-
-        );
+        return <span className="text-lg font-bold text-foreground tabular-nums">{rank}</span>;
     };
 
     if (isLoading) {
         return (
             <div className="space-y-4">
-                <div className="panel p-4 border-l-4 border-l-primary/30">
+                <div className="panel p-4">
                     <div className="flex items-center justify-between">
                         <Skeleton className="h-8 w-64 rounded-sm" />
                         <Skeleton className="h-9 w-40 rounded-sm" />
@@ -169,7 +164,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
 
     return (
         <div className="space-y-4">
-            <div className="panel p-4 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+            <div className="panel p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="flex items-center gap-4 sm:gap-6 text-sm flex-wrap">
                         <div className="flex items-center gap-2">
@@ -181,7 +176,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             <span className="text-muted-foreground font-medium">Play-In ({playinTeams})</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-sm bg-destructive/30 border-2 border-destructive/50"></div>
+                            <div className="w-4 h-4 rounded-sm bg-muted border-2 border-border"></div>
                             <span className="text-muted-foreground font-medium">Eliminated</span>
                         </div>
                     </div>
@@ -192,12 +187,12 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                 <Table>
                     <TableHeader>
                         <TableRow className="hover:bg-transparent border-b-2 border-border bg-muted/30">
-                            <TableHead className="w-20 text-center text-[10px] uppercase tracking-wider font-semibold">Rank</TableHead>
-                            <TableHead className="text-[10px] uppercase tracking-wider font-semibold">Team</TableHead>
-                            <TableHead className="text-center text-[10px] uppercase tracking-wider font-semibold">Record</TableHead>
-                            <TableHead className="hidden sm:table-cell text-center text-[10px] uppercase tracking-wider font-semibold">Win %</TableHead>
-                            <TableHead className="hidden sm:table-cell text-center text-[10px] uppercase tracking-wider font-semibold">Sets</TableHead>
-                            <TableHead className="text-center text-[10px] uppercase tracking-wider font-semibold">{standingMethod === "points" ? "Points" : "LVR"}</TableHead>
+                            <TableHead className="w-20 text-center text-[11px] uppercase tracking-wider font-semibold">Rank</TableHead>
+                            <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Team</TableHead>
+                            <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">Record</TableHead>
+                            <TableHead className="hidden sm:table-cell text-center text-[11px] uppercase tracking-wider font-semibold">Win %</TableHead>
+                            <TableHead className="hidden sm:table-cell text-center text-[11px] uppercase tracking-wider font-semibold">Sets</TableHead>
+                            <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">{standingMethod === "points" ? "Points" : "LVR"}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -212,8 +207,8 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             const teamHref = buildPublicTeamHref({regionCode, seasonSlug, teamSlug: standing.team_slug});
 
                             return (
+                                <React.Fragment key={standing.team_id}>
                                 <TableRow
-                                    key={standing.team_id}
                                     className={getRowClassName(rank)}
                                 >
                                     <TableCell className="text-center py-4">
@@ -223,32 +218,32 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                         {teamHref ? (
                                             <Link href={teamHref} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                                                 {standing.team_logo_url && (
-                                                    <div className="w-10 h-10 flex-shrink-0 rounded border border-border bg-muted/30 p-1">
+                                                    <div className="w-11 h-11 flex-shrink-0 flex items-center justify-center">
                                                         <Image
                                                             src={standing.team_logo_url}
                                                             alt={standing.team_name || "Team"}
-                                                            width={40}
-                                                            height={40}
-                                                            className={`rounded w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
+                                                            width={44}
+                                                            height={44}
+                                                            className={`w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
                                                         />
                                                     </div>
                                                 )}
-                                                <span className="font-semibold text-sm">{standing.team_name}</span>
+                                                <span className="font-semibold text-[0.95rem] tracking-tight">{standing.team_name}</span>
                                             </Link>
                                         ) : (
                                             <div className="flex items-center gap-3">
                                                 {standing.team_logo_url && (
-                                                    <div className="w-10 h-10 flex-shrink-0 rounded border border-border bg-muted/30 p-1">
+                                                    <div className="w-11 h-11 flex-shrink-0 flex items-center justify-center">
                                                         <Image
                                                             src={standing.team_logo_url}
                                                             alt={standing.team_name || "Team"}
-                                                            width={40}
-                                                            height={40}
-                                                            className={`rounded w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
+                                                            width={44}
+                                                            height={44}
+                                                            className={`w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
                                                         />
                                                     </div>
                                                 )}
-                                                <span className="font-semibold text-sm">{standing.team_name}</span>
+                                                <span className="font-semibold text-[0.95rem] tracking-tight">{standing.team_name}</span>
                                             </div>
                                         )}
                                     </TableCell>
@@ -278,6 +273,9 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                         )}
                                     </TableCell>
                                 </TableRow>
+                                {showPlayinDivider(rank) && <ZoneDivider label="Play-Ins" variant="playin" />}
+                                {showEliminatedDivider(rank) && <ZoneDivider label="Eliminated" variant="eliminated" />}
+                                </React.Fragment>
                             );
                         })}
                     </TableBody>
@@ -287,9 +285,6 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
             <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
                 <div>
                     Showing {sortedStandings.length} teams • Top {qualifiedTeams} qualify for playoffs, next {playinTeams} qualify for play-ins
-                </div>
-                <div>
-                    Sorted by: <span className="font-semibold text-foreground">{standingMethod === "points" ? "Wins → Losses → Points → Set Wins" : "Wins → Set Wins → LVR"}</span>
                 </div>
             </div>
         </div>
