@@ -1,6 +1,16 @@
 import {Err, Ok, Result} from "@/shared/types/result";
 import {MatchResultInput, MatchContext, MatchResultOutput} from "../types";
 
+function differentialBonus(winnerPointDiff: number): number {
+    if (winnerPointDiff > 30) return 5;
+    if (winnerPointDiff > 25) return 4;
+    if (winnerPointDiff > 20) return 3;
+    if (winnerPointDiff > 15) return 2;
+    if (winnerPointDiff > 10) return 1;
+    if (winnerPointDiff > 5) return 0.5;
+    return 0;
+}
+
 export function validateAndCalculateMatchResult(
     input: MatchResultInput,
     match: MatchContext
@@ -11,6 +21,8 @@ export function validateAndCalculateMatchResult(
     let totalAwayPoints = 0;
     let homeTeamLvr: number | null = null;
     let awayTeamLvr: number | null = null;
+    let homeTeamPoints: number | null = null;
+    let awayTeamPoints: number | null = null;
     let setsToInsert = input.sets;
     let matchMvpPlayerId: string | null = input.matchMvpPlayerId || null;
     let loserMvpPlayerId: string | null = input.loserMvpPlayerId || null;
@@ -46,6 +58,15 @@ export function validateAndCalculateMatchResult(
             } else {
                 homeTeamLvr = 5;
                 awayTeamLvr = -10;
+            }
+
+            // Points: forfeit winner gets 2 + 0.5*setsWon + flat 1 bonus; loser 0.
+            if (input.forfeitingTeam === "home") {
+                homeTeamPoints = 0;
+                awayTeamPoints = 2 + 0.5 * awaySetsWon + 1;
+            } else {
+                homeTeamPoints = 2 + 0.5 * homeSetsWon + 1;
+                awayTeamPoints = 0;
             }
         }
 
@@ -113,6 +134,16 @@ export function validateAndCalculateMatchResult(
 
             homeTeamLvr = lvrValue;
             awayTeamLvr = -lvrValue;
+
+            // Points: 2 for the match win + 0.5 per set won + differential bonus to winner only.
+            const homeWon = homeSetsWon > awaySetsWon;
+            const winnerPointDiff = homeWon
+                ? totalHomePoints - totalAwayPoints
+                : totalAwayPoints - totalHomePoints;
+            const bonus = differentialBonus(winnerPointDiff);
+
+            homeTeamPoints = 0.5 * homeSetsWon + (homeWon ? 2 + bonus : 0);
+            awayTeamPoints = 0.5 * awaySetsWon + (homeWon ? 0 : 2 + bonus);
         }
     }
 
@@ -121,6 +152,8 @@ export function validateAndCalculateMatchResult(
         awaySetsWon,
         homeTeamLvr,
         awayTeamLvr,
+        homeTeamPoints,
+        awayTeamPoints,
         setsToInsert,
         matchMvpPlayerId,
         loserMvpPlayerId,

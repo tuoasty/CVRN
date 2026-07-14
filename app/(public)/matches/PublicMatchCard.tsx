@@ -27,6 +27,7 @@ interface PublicMatchCardProps {
     homeRecord?: TeamRecord;
     awayRecord?: TeamRecord;
     isPriority?: boolean;
+    standingMethod?: "lvr" | "points";
 }
 
 const getStatusConfig = (status: string) => {
@@ -95,8 +96,10 @@ export default function PublicMatchCard({
     homeRecord,
     awayRecord,
     isPriority,
+    standingMethod = "lvr",
 }: PublicMatchCardProps) {
     const { match, sets, officials } = matchDetails;
+    const isPoints = standingMethod === "points";
     const matchNumber = parseMatchNumber(match.match_code);
     const matchLabel = matchNumber != null ? `Match ${matchNumber}` : "Match";
     const statusConfig = getStatusConfig(match.status);
@@ -235,27 +238,39 @@ export default function PublicMatchCard({
 
                     {isCompleted &&
                         !homeTeam?.is_bye &&
-                        !awayTeam?.is_bye &&
-                        match.home_team_lvr !== null &&
-                        match.home_team_lvr !== undefined &&
-                        match.away_team_lvr !== null &&
-                        match.away_team_lvr !== undefined && (
-                            match.is_forfeit ? (
-                                <span className="text-[10px] font-semibold tabular-nums">
-                                    <span className="text-green-500">
-                                        {(homeWon ? match.home_team_lvr : match.away_team_lvr) >= 0 ? "+" : ""}
-                                        {(homeWon ? match.home_team_lvr : match.away_team_lvr).toFixed(1)}
+                        !awayTeam?.is_bye && (
+                            isPoints ? (
+                                (match.home_team_points != null || match.away_team_points != null) && (
+                                    <span className="text-[10px] font-semibold tabular-nums text-muted-foreground/80">
+                                        <span className="text-foreground">+{(match.home_team_points ?? 0).toFixed(1)}</span>
+                                        <span className="text-border mx-1">/</span>
+                                        <span className="text-foreground">+{(match.away_team_points ?? 0).toFixed(1)}</span>
+                                        <span className="text-muted-foreground/60 ml-1">pts</span>
                                     </span>
-                                    <span className="text-border mx-1">/</span>
-                                    <span className="text-red-500">
-                                        {(homeWon ? match.away_team_lvr : match.home_team_lvr).toFixed(1)}
-                                    </span>
-                                    <span className="text-muted-foreground/60 ml-1">LVR</span>
-                                </span>
+                                )
                             ) : (
-                                <span className="text-[10px] font-semibold text-green-500 tabular-nums">
-                                    ±{Math.abs(match.home_team_lvr).toFixed(1)} LVR
-                                </span>
+                                match.home_team_lvr !== null &&
+                                match.home_team_lvr !== undefined &&
+                                match.away_team_lvr !== null &&
+                                match.away_team_lvr !== undefined && (
+                                    match.is_forfeit ? (
+                                        <span className="text-[10px] font-semibold tabular-nums">
+                                            <span className="text-green-500">
+                                                {(homeWon ? match.home_team_lvr : match.away_team_lvr) >= 0 ? "+" : ""}
+                                                {(homeWon ? match.home_team_lvr : match.away_team_lvr).toFixed(1)}
+                                            </span>
+                                            <span className="text-border mx-1">/</span>
+                                            <span className="text-red-500">
+                                                {(homeWon ? match.away_team_lvr : match.home_team_lvr).toFixed(1)}
+                                            </span>
+                                            <span className="text-muted-foreground/60 ml-1">LVR</span>
+                                        </span>
+                                    ) : (
+                                        <span className="text-[10px] font-semibold text-green-500 tabular-nums">
+                                            ±{Math.abs(match.home_team_lvr).toFixed(1)} LVR
+                                        </span>
+                                    )
+                                )
                             )
                         )
                     }
@@ -380,30 +395,44 @@ export default function PublicMatchCard({
                 {/* Footer — completed matches only */}
                 {isCompleted && (
                     <div className="space-y-2 pt-2 border-t border-border/50">
-                        {/* LVR row — always two badges */}
+                        {/* LVR / Points row — two badges */}
                         <div className="flex items-center justify-between gap-2">
                             <div>
-                                {!homeTeam?.is_bye && match.home_team_lvr !== null && match.home_team_lvr !== undefined && (
-                                    <Badge variant="outline" className={cn(
-                                        "h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm",
-                                        match.home_team_lvr >= 0
-                                            ? "bg-green-600/10 text-green-600 border-green-600/20"
-                                            : "bg-red-600/10 text-red-600 border-red-600/20"
-                                    )}>
-                                        {match.home_team_lvr >= 0 ? "+" : ""}{match.home_team_lvr.toFixed(1)} LVR
-                                    </Badge>
+                                {!homeTeam?.is_bye && (isPoints
+                                    ? (match.home_team_points != null && (
+                                        <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-primary/10 text-primary border-primary/20">
+                                            +{match.home_team_points.toFixed(1)} pts
+                                        </Badge>
+                                    ))
+                                    : (match.home_team_lvr !== null && match.home_team_lvr !== undefined && (
+                                        <Badge variant="outline" className={cn(
+                                            "h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm",
+                                            match.home_team_lvr >= 0
+                                                ? "bg-green-600/10 text-green-600 border-green-600/20"
+                                                : "bg-red-600/10 text-red-600 border-red-600/20"
+                                        )}>
+                                            {match.home_team_lvr >= 0 ? "+" : ""}{match.home_team_lvr.toFixed(1)} LVR
+                                        </Badge>
+                                    ))
                                 )}
                             </div>
                             <div>
-                                {!awayTeam?.is_bye && match.away_team_lvr !== null && match.away_team_lvr !== undefined && (
-                                    <Badge variant="outline" className={cn(
-                                        "h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm",
-                                        match.away_team_lvr >= 0
-                                            ? "bg-green-600/10 text-green-600 border-green-600/20"
-                                            : "bg-red-600/10 text-red-600 border-red-600/20"
-                                    )}>
-                                        {match.away_team_lvr >= 0 ? "+" : ""}{match.away_team_lvr.toFixed(1)} LVR
-                                    </Badge>
+                                {!awayTeam?.is_bye && (isPoints
+                                    ? (match.away_team_points != null && (
+                                        <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-primary/10 text-primary border-primary/20">
+                                            +{match.away_team_points.toFixed(1)} pts
+                                        </Badge>
+                                    ))
+                                    : (match.away_team_lvr !== null && match.away_team_lvr !== undefined && (
+                                        <Badge variant="outline" className={cn(
+                                            "h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm",
+                                            match.away_team_lvr >= 0
+                                                ? "bg-green-600/10 text-green-600 border-green-600/20"
+                                                : "bg-red-600/10 text-red-600 border-red-600/20"
+                                        )}>
+                                            {match.away_team_lvr >= 0 ? "+" : ""}{match.away_team_lvr.toFixed(1)} LVR
+                                        </Badge>
+                                    ))
                                 )}
                             </div>
                         </div>

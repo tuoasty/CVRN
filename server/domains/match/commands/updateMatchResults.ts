@@ -34,7 +34,7 @@ export async function updateMatchResultsService(
 
         const calcResult = validateAndCalculateMatchResult(p, match);
         if (!calcResult.ok) return calcResult;
-        const { homeSetsWon, awaySetsWon, homeTeamLvr, awayTeamLvr, setsToInsert, matchMvpPlayerId, loserMvpPlayerId } = calcResult.value;
+        const { homeSetsWon, awaySetsWon, homeTeamLvr, awayTeamLvr, homeTeamPoints, awayTeamPoints, setsToInsert, matchMvpPlayerId, loserMvpPlayerId } = calcResult.value;
 
         const result = await rpcReapplyMatchResult(supabase, {
             matchId:         p.matchId,
@@ -43,6 +43,8 @@ export async function updateMatchResultsService(
             awaySetsWon,
             homeLvr:         homeTeamLvr,
             awayLvr:         awayTeamLvr,
+            homePoints:      homeTeamPoints,
+            awayPoints:      awayTeamPoints,
             mvpPlayerId:     matchMvpPlayerId,
             loserMvpPlayerId,
             isForfeit:       p.isForfeit || false,

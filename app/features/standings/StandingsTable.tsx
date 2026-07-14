@@ -17,9 +17,10 @@ type StandingsTableProps = {
     playinTeams?: number;
     regionCode?: string;
     seasonSlug?: string;
+    standingMethod?: "lvr" | "points";
 };
 
-export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, playinTeams = 8, regionCode, seasonSlug }: StandingsTableProps) {
+export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, playinTeams = 8, regionCode, seasonSlug, standingMethod = "lvr" }: StandingsTableProps) {
     const sortedStandings = useMemo(() => {
         if (standings.length === 0) return [];
 
@@ -32,13 +33,20 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
             const lossesB = b.losses || 0;
             if (lossesA !== lossesB) return lossesA - lossesB;
 
+            if (standingMethod === "points") {
+                const ptsA = a.total_points || 0;
+                const ptsB = b.total_points || 0;
+                if (ptsB !== ptsA) return ptsB - ptsA;
+                return (b.sets_won || 0) - (a.sets_won || 0);
+            }
+
             const setsWonA = a.sets_won || 0;
             const setsWonB = b.sets_won || 0;
             if (setsWonB !== setsWonA) return setsWonB - setsWonA;
 
             return (b.total_lvr || 0) - (a.total_lvr || 0);
         });
-    }, [standings]);
+    }, [standings, standingMethod]);
 
     const getQualificationStatus = (rank: number) => {
         if (rank <= qualifiedTeams) return "qualified";
@@ -189,7 +197,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             <TableHead className="text-center text-[10px] uppercase tracking-wider font-semibold">Record</TableHead>
                             <TableHead className="hidden sm:table-cell text-center text-[10px] uppercase tracking-wider font-semibold">Win %</TableHead>
                             <TableHead className="hidden sm:table-cell text-center text-[10px] uppercase tracking-wider font-semibold">Sets</TableHead>
-                            <TableHead className="text-center text-[10px] uppercase tracking-wider font-semibold">LVR</TableHead>
+                            <TableHead className="text-center text-[10px] uppercase tracking-wider font-semibold">{standingMethod === "points" ? "Points" : "LVR"}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -254,14 +262,20 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                         {standing.sets_won || 0}-{standing.sets_lost || 0}
                                     </TableCell>
                                     <TableCell className="text-center py-4">
-                                        <div className="flex flex-col items-center gap-0.5">
-                                            <span className={`font-bold text-base tabular-nums ${displayLvr >= 100 ? 'text-primary' : 'text-destructive'}`}>
-                                                {displayLvr.toFixed(1)}
+                                        {standingMethod === "points" ? (
+                                            <span className="font-bold text-base tabular-nums text-primary">
+                                                {(standing.total_points || 0).toFixed(1)}
                                             </span>
-                                            <span className={`text-[10px] font-semibold tabular-nums ${lvrDiff >= 0 ? 'text-primary/70' : 'text-destructive/70'}`}>
-                                                {lvrDiff >= 0 ? '+' : ''}{lvrDiff.toFixed(1)}
-                                            </span>
-                                        </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-0.5">
+                                                <span className={`font-bold text-base tabular-nums ${displayLvr >= 100 ? 'text-primary' : 'text-destructive'}`}>
+                                                    {displayLvr.toFixed(1)}
+                                                </span>
+                                                <span className={`text-[10px] font-semibold tabular-nums ${lvrDiff >= 0 ? 'text-primary/70' : 'text-destructive/70'}`}>
+                                                    {lvrDiff >= 0 ? '+' : ''}{lvrDiff.toFixed(1)}
+                                                </span>
+                                            </div>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             );
@@ -275,7 +289,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                     Showing {sortedStandings.length} teams • Top {qualifiedTeams} qualify for playoffs, next {playinTeams} qualify for play-ins
                 </div>
                 <div>
-                    Sorted by: <span className="font-semibold text-foreground">Wins → Set Wins → LVR</span>
+                    Sorted by: <span className="font-semibold text-foreground">{standingMethod === "points" ? "Wins → Losses → Points → Set Wins" : "Wins → Set Wins → LVR"}</span>
                 </div>
             </div>
         </div>

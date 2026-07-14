@@ -30,7 +30,7 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
 
     return (
         <div className="space-y-6">
-            <MatchHeader detail={detail} regionCode={regionCode} seasonSlug={seasonSlug} />
+            <MatchHeader detail={detail} regionCode={regionCode} seasonSlug={seasonSlug} standingMethod={detail.standingMethod} />
 
             {!isPlayable ? (
                 match.is_forfeit || !detail.rosters ? (

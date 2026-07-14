@@ -205,6 +205,7 @@ export default function HomePage() {
                                     qualifiedTeams={season.playoff_configs?.qualified_teams}
                                     regionCode={regionCode}
                                     seasonSlug={seasonSlug}
+                                    standingMethod={region.standing_method === "points" ? "points" : "lvr"}
                                 />
                             </div>
                         </div>

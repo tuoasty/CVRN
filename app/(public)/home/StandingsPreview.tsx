@@ -15,6 +15,7 @@ interface StandingsPreviewProps {
     qualifiedTeams?: number;
     regionCode?: string;
     seasonSlug?: string;
+    standingMethod?: "lvr" | "points";
 }
 
 export default function StandingsPreview({
@@ -23,6 +24,7 @@ export default function StandingsPreview({
                                                     qualifiedTeams = 12,
                                                     regionCode,
                                                     seasonSlug,
+                                                    standingMethod = "lvr",
                                                 }: StandingsPreviewProps) {
     const topStandings = useMemo(() => {
         return [...standings]
@@ -35,6 +37,13 @@ export default function StandingsPreview({
                 const lossesB = b.losses || 0;
                 if (lossesA !== lossesB) return lossesA - lossesB;
 
+                if (standingMethod === "points") {
+                    const ptsA = a.total_points || 0;
+                    const ptsB = b.total_points || 0;
+                    if (ptsB !== ptsA) return ptsB - ptsA;
+                    return (b.sets_won || 0) - (a.sets_won || 0);
+                }
+
                 const setsWonA = a.sets_won || 0;
                 const setsWonB = b.sets_won || 0;
                 if (setsWonB !== setsWonA) return setsWonB - setsWonA;
@@ -42,7 +51,7 @@ export default function StandingsPreview({
                 return (b.total_lvr || 0) - (a.total_lvr || 0);
             })
             .slice(0, 8);
-    }, [standings]);
+    }, [standings, standingMethod]);
 
     const standingsHref = buildPublicStandingsHref({ regionCode, seasonSlug });
 
@@ -114,10 +123,16 @@ export default function StandingsPreview({
                                 {wins}-{losses}
                             </div>
 
-                            {/* LVR */}
-                            <div className={`text-sm font-bold tabular-nums ${displayLvr >= 100 ? 'text-primary' : 'text-destructive'}`}>
-                                {displayLvr.toFixed(1)}
-                            </div>
+                            {/* LVR / Points */}
+                            {standingMethod === "points" ? (
+                                <div className="text-sm font-bold tabular-nums text-primary">
+                                    {(standing.total_points || 0).toFixed(1)}
+                                </div>
+                            ) : (
+                                <div className={`text-sm font-bold tabular-nums ${displayLvr >= 100 ? 'text-primary' : 'text-destructive'}`}>
+                                    {displayLvr.toFixed(1)}
+                                </div>
+                            )}
                         </>
                     );
 

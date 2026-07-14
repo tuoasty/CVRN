@@ -131,6 +131,8 @@ export async function rpcCompleteMatch(
         awaySetsWon: number;
         homeLvr: number | null;
         awayLvr: number | null;
+        homePoints: number | null;
+        awayPoints: number | null;
         mvpPlayerId: string | null;
         loserMvpPlayerId: string | null;
         isForfeit: boolean;
@@ -145,6 +147,8 @@ export async function rpcCompleteMatch(
         p_is_forfeit:          params.isForfeit,
         p_home_lvr:            params.homeLvr          ?? undefined,
         p_away_lvr:            params.awayLvr          ?? undefined,
+        p_home_points:         params.homePoints       ?? undefined,
+        p_away_points:         params.awayPoints       ?? undefined,
         p_mvp_player_id:       params.mvpPlayerId      ?? undefined,
         p_loser_mvp_player_id: params.loserMvpPlayerId ?? undefined,
         p_scheduled_at:        params.scheduledAt      ?? undefined,
@@ -173,6 +177,8 @@ export async function rpcReapplyMatchResult(
         awaySetsWon: number;
         homeLvr: number | null;
         awayLvr: number | null;
+        homePoints: number | null;
+        awayPoints: number | null;
         mvpPlayerId: string | null;
         loserMvpPlayerId: string | null;
         isForfeit: boolean;
@@ -186,6 +192,8 @@ export async function rpcReapplyMatchResult(
         p_is_forfeit:          params.isForfeit,
         p_home_lvr:            params.homeLvr          ?? undefined,
         p_away_lvr:            params.awayLvr          ?? undefined,
+        p_home_points:         params.homePoints       ?? undefined,
+        p_away_points:         params.awayPoints       ?? undefined,
         p_mvp_player_id:       params.mvpPlayerId      ?? undefined,
         p_loser_mvp_player_id: params.loserMvpPlayerId ?? undefined,
     });

@@ -261,6 +261,8 @@ export async function syncPlayoffResults(
         awaySetsWon: calc.awaySetsWon,
         homeLvr: calc.homeTeamLvr,
         awayLvr: calc.awayTeamLvr,
+        homePoints: calc.homeTeamPoints,
+        awayPoints: calc.awayTeamPoints,
         mvpPlayerId: null,
         loserMvpPlayerId: null,
         isForfeit: sheetMatch.isForfeit,

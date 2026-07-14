@@ -34,10 +34,12 @@ type Props = {
     detail: MatchDetail;
     regionCode?: string;
     seasonSlug?: string;
+    standingMethod?: "lvr" | "points";
 };
 
-export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
+export default function MatchHeader({detail, regionCode, seasonSlug, standingMethod = "lvr"}: Props) {
     const {match, sets, homeTeam, awayTeam, officials, playoffRound} = detail;
+    const isPoints = standingMethod === "points";
 
     const homeSets = match.home_sets_won ?? 0;
     const awaySets = match.away_sets_won ?? 0;
@@ -250,8 +252,34 @@ export default function MatchHeader({detail, regionCode, seasonSlug}: Props) {
                 </div>
             )}
 
-            {/* LVR row */}
-            {isCompleted && (match.home_team_lvr !== null || match.away_team_lvr !== null) && (
+            {/* Points row (points regions) */}
+            {isCompleted && isPoints && (match.home_team_points !== null || match.away_team_points !== null) && (
+                <div className="flex items-center justify-between gap-2 pt-1">
+                    <div>
+                        {!homeTeam?.is_bye && match.home_team_points !== null && match.home_team_points !== undefined && (
+                            <Badge
+                                variant="outline"
+                                className="h-5 px-2 text-[11px] font-semibold tabular-nums bg-primary/10 text-primary border-primary/20"
+                            >
+                                +{match.home_team_points.toFixed(1)} pts
+                            </Badge>
+                        )}
+                    </div>
+                    <div>
+                        {!awayTeam?.is_bye && match.away_team_points !== null && match.away_team_points !== undefined && (
+                            <Badge
+                                variant="outline"
+                                className="h-5 px-2 text-[11px] font-semibold tabular-nums bg-primary/10 text-primary border-primary/20"
+                            >
+                                +{match.away_team_points.toFixed(1)} pts
+                            </Badge>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* LVR row (lvr regions) */}
+            {isCompleted && !isPoints && (match.home_team_lvr !== null || match.away_team_lvr !== null) && (
                 <div className="flex items-center justify-between gap-2 pt-1">
                     <div>
                         {!homeTeam?.is_bye && match.home_team_lvr !== null && match.home_team_lvr !== undefined && (

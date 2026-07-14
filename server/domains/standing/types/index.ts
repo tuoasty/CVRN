@@ -12,6 +12,7 @@ export interface StandingWithInfo {
     sets_won: number | null;
     sets_lost: number | null;
     total_lvr: number | null;
+    total_points: number | null;
     rank: number | null;
 }
 
