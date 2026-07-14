@@ -6,7 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useMemo } from "react";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { Trophy } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
+import { Trophy, Info } from "lucide-react";
 import { getLogoClassName } from "@/app/lib/logoClass";
 import { buildPublicTeamHref } from "@/app/utils/matchDetailHref";
 
@@ -40,11 +41,11 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                 return (b.sets_won || 0) - (a.sets_won || 0);
             }
 
-            const setsWonA = a.sets_won || 0;
-            const setsWonB = b.sets_won || 0;
-            if (setsWonB !== setsWonA) return setsWonB - setsWonA;
+            const lvrA = a.total_lvr || 0;
+            const lvrB = b.total_lvr || 0;
+            if (lvrB !== lvrA) return lvrB - lvrA;
 
-            return (b.total_lvr || 0) - (a.total_lvr || 0);
+            return (b.sets_won || 0) - (a.sets_won || 0);
         });
     }, [standings, standingMethod]);
 
@@ -82,6 +83,68 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
         );
     };
 
+    const MetricInfo = () => {
+        const isPoints = standingMethod === "points";
+        return (
+            <Popover>
+                <PopoverTrigger asChild>
+                    <button
+                        type="button"
+                        aria-label={isPoints ? "What is Points?" : "What is LVR?"}
+                        className="inline-flex items-center justify-center text-muted-foreground/70 hover:text-foreground focus-visible:text-foreground focus-visible:outline-none transition-colors"
+                    >
+                        <Info className="h-3.5 w-3.5" />
+                    </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80 p-3 text-left normal-case tracking-normal">
+                    {isPoints ? (
+                        <div className="space-y-2.5">
+                            <p className="text-sm font-semibold text-foreground">Points <span className="font-normal text-muted-foreground">· per match</span></p>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                                <div className="flex items-baseline justify-between gap-4">
+                                    <span>Match win</span><span className="font-mono text-foreground">+2.0</span>
+                                </div>
+                                <div className="flex items-baseline justify-between gap-4">
+                                    <span>Each set won</span><span className="font-mono text-foreground">+0.5</span>
+                                </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                <p className="mb-1">Winner point-margin bonus</p>
+                                <div className="grid grid-cols-3 gap-x-3 gap-y-1 font-mono text-foreground">
+                                    <span>≥30 +5</span><span>≥25 +4</span><span>≥20 +3</span>
+                                    <span>≥15 +2</span><span>≥10 +1</span><span>≥5 +0.5</span>
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                                Forfeit win: <span className="font-mono text-foreground">2 + 0.5·sets + 1</span>
+                            </p>
+                            <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
+                                Rank: Wins → fewer Losses → Points → Set Wins
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2.5">
+                            <p className="text-sm font-semibold text-foreground">LVR <span className="font-normal text-muted-foreground">· per match</span></p>
+                            <p className="text-xs text-muted-foreground">
+                                Starts at <span className="font-mono text-foreground">100.0</span>. Each match, winner <span className="text-foreground">+</span> / loser <span className="text-foreground">−</span>:
+                            </p>
+                            <p className="font-mono text-[11px] text-foreground bg-muted rounded-sm px-2 py-2 leading-relaxed">
+                                10 × (0.7·(setDiff/2) + 0.3·(pointDiff/50))
+                            </p>
+                            <div className="text-[11px] text-muted-foreground space-y-0.5">
+                                <div><span className="font-mono text-foreground">setDiff</span> = set margin, <span className="font-mono text-foreground">pointDiff</span> = total-point margin</div>
+                                <div>Forfeit: win <span className="font-mono text-foreground">+5</span>, loss <span className="font-mono text-foreground">−10</span></div>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
+                                Rank: Wins → fewer Losses → LVR → Set Wins
+                            </p>
+                        </div>
+                    )}
+                </PopoverContent>
+            </Popover>
+        );
+    };
+
     const getRankBadge = (rank: number) => {
         if (rank === 1) {
             return <span className="text-lg font-bold text-amber-500 tabular-nums">{rank}</span>;
@@ -98,22 +161,16 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
     if (isLoading) {
         return (
             <div className="space-y-4">
-                <div className="panel p-4">
-                    <div className="flex items-center justify-between">
-                        <Skeleton className="h-8 w-64 rounded-sm" />
-                        <Skeleton className="h-9 w-40 rounded-sm" />
-                    </div>
-                </div>
                 <div className="rounded-sm border border-border overflow-hidden">
                     <Table>
                         <TableHeader>
-                            <TableRow className="hover:bg-transparent border-b-2 border-border">
-                                <TableHead className="w-20 text-center">RANK</TableHead>
-                                <TableHead>TEAM</TableHead>
-                                <TableHead className="text-center">RECORD</TableHead>
-                                <TableHead className="hidden sm:table-cell text-center">WIN %</TableHead>
-                                <TableHead className="hidden sm:table-cell text-center">SETS</TableHead>
-                                <TableHead className="text-center">LVR</TableHead>
+                            <TableRow className="hover:bg-transparent border-b-2 border-border bg-muted/30">
+                                <TableHead className="w-20 text-center text-[11px] uppercase tracking-wider font-semibold">Rank</TableHead>
+                                <TableHead className="text-[11px] uppercase tracking-wider font-semibold">Team</TableHead>
+                                <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">Record</TableHead>
+                                <TableHead className="hidden sm:table-cell text-center text-[11px] uppercase tracking-wider font-semibold">Win %</TableHead>
+                                <TableHead className="hidden sm:table-cell text-center text-[11px] uppercase tracking-wider font-semibold">Sets</TableHead>
+                                <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">{standingMethod === "points" ? "Points" : "LVR"}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -124,7 +181,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                     </TableCell>
                                     <TableCell className="py-4">
                                         <div className="flex items-center gap-3">
-                                            <Skeleton className="h-10 w-10 rounded shrink-0" />
+                                            <Skeleton className="h-11 w-11 rounded shrink-0" />
                                             <Skeleton className="h-5 w-32 rounded-sm" />
                                         </div>
                                     </TableCell>
@@ -164,25 +221,6 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
 
     return (
         <div className="space-y-4">
-            <div className="panel p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="flex items-center gap-4 sm:gap-6 text-sm flex-wrap">
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-sm bg-primary/60 border-2 border-primary"></div>
-                            <span className="text-muted-foreground font-medium">Playoffs ({qualifiedTeams})</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-sm bg-secondary/60 border-2 border-secondary"></div>
-                            <span className="text-muted-foreground font-medium">Play-In ({playinTeams})</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-sm bg-muted border-2 border-border"></div>
-                            <span className="text-muted-foreground font-medium">Eliminated</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div className="rounded-sm border border-border overflow-x-auto shadow-sm">
                 <Table>
                     <TableHeader>
@@ -192,7 +230,12 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">Record</TableHead>
                             <TableHead className="hidden sm:table-cell text-center text-[11px] uppercase tracking-wider font-semibold">Win %</TableHead>
                             <TableHead className="hidden sm:table-cell text-center text-[11px] uppercase tracking-wider font-semibold">Sets</TableHead>
-                            <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">{standingMethod === "points" ? "Points" : "LVR"}</TableHead>
+                            <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">
+                                <span className="inline-flex items-center justify-center gap-1">
+                                    {standingMethod === "points" ? "Points" : "LVR"}
+                                    <MetricInfo />
+                                </span>
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
