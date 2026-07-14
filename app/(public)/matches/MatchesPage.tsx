@@ -200,6 +200,7 @@ export default function MatchesPage() {
                         recordByTeamId={recordByTeamId}
                         regionCode={regionCode}
                         seasonSlug={season.slug}
+                        standingMethod={region.standing_method === "points" ? "points" : "lvr"}
                         loading={loading}
                         emptyMessage={
                             activeTab === "season"
@@ -221,11 +222,12 @@ interface MatchListProps {
     recordByTeamId: Map<string, { wins: number; losses: number }>;
     regionCode?: string;
     seasonSlug?: string;
+    standingMethod?: "lvr" | "points";
     loading: boolean;
     emptyMessage: string;
 }
 
-function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonSlug, loading, emptyMessage }: MatchListProps) {
+function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonSlug, standingMethod, loading, emptyMessage }: MatchListProps) {
     if (loading) {
         return (
             <div className="space-y-3">
@@ -276,6 +278,7 @@ function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonS
                         homeRecord={homeRecord}
                         awayRecord={awayRecord}
                         isPriority={index < 2}
+                        standingMethod={standingMethod}
                     />
                 );
             })}

@@ -221,12 +221,26 @@ export async function syncMatchResults(
                 continue;
             }
 
+            let isForfeit = result.isForfeit;
             let forfeitingTeam: 'home' | 'away' | undefined;
-            if (result.isForfeit) {
+            if (isForfeit) {
                 const winnerNorm = result.winner ? teamNameKey(result.winner) : '';
                 if (winnerNorm === teamNameKey(result.homeTeamName)) {
                     forfeitingTeam = 'away';
                 } else {
+                    forfeitingTeam = 'home';
+                }
+            } else if (result.sets.length > 0) {
+                // Secondary forfeit detection: regions that don't use the FF column
+                // (e.g. NA) record forfeits as 25-0 sweeps. If every set is a 25-0
+                // shutout for the same team, treat it as a forfeit by the shut-out side.
+                const allHomeShutouts = result.sets.every(s => s.homeScore === 25 && s.awayScore === 0);
+                const allAwayShutouts = result.sets.every(s => s.awayScore === 25 && s.homeScore === 0);
+                if (allHomeShutouts) {
+                    isForfeit = true;
+                    forfeitingTeam = 'away';
+                } else if (allAwayShutouts) {
+                    isForfeit = true;
                     forfeitingTeam = 'home';
                 }
             }
@@ -239,7 +253,7 @@ export async function syncMatchResults(
             };
             const matchInput = {
                 sets: result.sets,
-                isForfeit: result.isForfeit,
+                isForfeit,
                 forfeitingTeam,
                 matchMvpPlayerId: null,
                 loserMvpPlayerId: null,
@@ -260,9 +274,11 @@ export async function syncMatchResults(
                 awaySetsWon: calc.awaySetsWon,
                 homeLvr: calc.homeTeamLvr,
                 awayLvr: calc.awayTeamLvr,
+                homePoints: calc.homeTeamPoints,
+                awayPoints: calc.awayTeamPoints,
                 mvpPlayerId: null,
                 loserMvpPlayerId: null,
-                isForfeit: result.isForfeit,
+                isForfeit,
                 scheduledAt,
             };
 
@@ -289,7 +305,7 @@ export async function syncMatchResults(
                     status: 'completed',
                     homeSetsWon: calc.homeSetsWon,
                     awaySetsWon: calc.awaySetsWon,
-                    isForfeit: result.isForfeit,
+                    isForfeit,
                 },
             });
         }

@@ -69,6 +69,8 @@ export type MatchResultOutput = {
     awaySetsWon: number;
     homeTeamLvr: number | null;
     awayTeamLvr: number | null;
+    homeTeamPoints: number | null;
+    awayTeamPoints: number | null;
     setsToInsert: Array<{setNumber: number; homeScore: number; awayScore: number}>;
     matchMvpPlayerId: string | null;
     loserMvpPlayerId: string | null;

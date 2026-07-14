@@ -35,7 +35,7 @@ export async function completeMatchService(
 
         const calcResult = validateAndCalculateMatchResult(p, match);
         if (!calcResult.ok) return calcResult;
-        const { homeSetsWon, awaySetsWon, homeTeamLvr, awayTeamLvr, setsToInsert, matchMvpPlayerId, loserMvpPlayerId } = calcResult.value;
+        const { homeSetsWon, awaySetsWon, homeTeamLvr, awayTeamLvr, homeTeamPoints, awayTeamPoints, setsToInsert, matchMvpPlayerId, loserMvpPlayerId } = calcResult.value;
 
         let scheduledAt: string | null = match.scheduled_at ?? null;
 
@@ -68,6 +68,8 @@ export async function completeMatchService(
             awaySetsWon,
             homeLvr:         homeTeamLvr,
             awayLvr:         awayTeamLvr,
+            homePoints:      homeTeamPoints,
+            awayPoints:      awayTeamPoints,
             mvpPlayerId:     matchMvpPlayerId,
             loserMvpPlayerId,
             isForfeit:       p.isForfeit || false,

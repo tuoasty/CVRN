@@ -21,11 +21,13 @@ export type MatchDetail = {
     statTotals: PlayerMatchStatTotal[];
     playoffRound: string | null;
     rosters: TeamRosters | null;
+    standingMethod: "lvr" | "points";
 };
 
 async function loadDetailForMatch(
     supabase: DBClient,
-    match: Match
+    match: Match,
+    standingMethod: "lvr" | "points" = "lvr"
 ): Promise<Result<MatchDetail, SerializableError>> {
     const teamIds = [match.home_team_id, match.away_team_id].filter((id): id is string => !!id);
 
@@ -83,6 +85,7 @@ async function loadDetailForMatch(
         statTotals: statTotalsRes.value,
         playoffRound,
         rosters,
+        standingMethod,
     });
 }
 
@@ -101,9 +104,12 @@ export async function getMatchDetail(
         const matchRes = await findMatchByCode(supabase, p.matchCode, seasonRes.value.id);
         if (!matchRes.ok) return matchRes;
         if (!matchRes.value) return Err({message: "Match not found", code: "NOT_FOUND"});
-        
-        
-        return loadDetailForMatch(supabase, matchRes.value);
+
+        return loadDetailForMatch(
+            supabase,
+            matchRes.value,
+            regionRes.value.standing_method === "points" ? "points" : "lvr"
+        );
     } catch (error) {
         logger.error({...p, error}, "Unexpected error fetching match detail");
         return Err(serializeError(error));

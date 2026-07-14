@@ -6,7 +6,6 @@ import { useStandings } from "@/app/hooks/useStandings";
 import { StandingsTable } from "@/app/features/standings/StandingsTable";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
-import {clientLogger} from "@/app/utils/clientLogger";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 
 export default function StandingsPage() {
@@ -16,14 +15,15 @@ export default function StandingsPage() {
     const regionCode = region.code;
     const seasonSlug = season.slug;
 
+    const isPoints = region.standing_method === "points";
     const stats = useMemo(() => {
         if (standings.length === 0) return null;
         const totalTeams = standings.length;
-        const avgLvr = standings.reduce((sum, s) => sum + (s.total_lvr || 0), 0) / totalTeams;
-        clientLogger.info("standings", "standings lvr value", standings)
-        const topLvr = Math.max(...standings.map(s => s.total_lvr || 0));
-        return { totalTeams, avgLvr, topLvr };
-    }, [standings]);
+        const key = (s: typeof standings[number]) => isPoints ? (s.total_points || 0) : (s.total_lvr || 0);
+        const avg = standings.reduce((sum, s) => sum + key(s), 0) / totalTeams;
+        const top = Math.max(...standings.map(key));
+        return { totalTeams, avg, top };
+    }, [standings, isPoints]);
 
     const subtitle = `${season.name} · ${region.name}`;
 
@@ -45,17 +45,17 @@ export default function StandingsPage() {
                                 )}
                             </div>
                             <div className="text-right">
-                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg LVR</div>
+                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{isPoints ? "Avg Points" : "Avg LVR"}</div>
                                 {stats ? (
-                                    <div className="text-lg font-bold tabular-nums">{(stats.avgLvr).toFixed(1)}</div>
+                                    <div className="text-lg font-bold tabular-nums">{stats.avg.toFixed(1)}</div>
                                 ) : (
                                     <Skeleton className="h-6 w-10 mt-0.5" />
                                 )}
                             </div>
                             <div className="text-right">
-                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Top LVR</div>
+                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{isPoints ? "Top Points" : "Top LVR"}</div>
                                 {stats ? (
-                                    <div className="text-lg font-bold text-primary tabular-nums">{(stats.topLvr).toFixed(1)}</div>
+                                    <div className="text-lg font-bold text-primary tabular-nums">{stats.top.toFixed(1)}</div>
                                 ) : (
                                     <Skeleton className="h-6 w-10 mt-0.5" />
                                 )}
@@ -71,6 +71,7 @@ export default function StandingsPage() {
                     playinTeams={season.playoff_configs?.playin_teams}
                     regionCode={regionCode}
                     seasonSlug={seasonSlug}
+                    standingMethod={isPoints ? "points" : "lvr"}
                 />
             </div>
         </>
