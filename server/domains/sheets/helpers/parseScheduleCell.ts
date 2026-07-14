@@ -41,7 +41,8 @@ export function parseScheduleCell(value: string, year: number): ParsedSchedule |
         return { iso: date.toISOString() };
     }
 
-    return null;
+    // "February 28th, 7:00 PM EST" — named US zone in place of a numeric [GMT±N] offset.
+    return parseNamedTzCell(value.trim(), year);
 }
 
 // "07/05/2026 5 PM GMT(+8)" / "7/5/2026 5:30 PM GMT (+8)" — minutes and the parens are optional.
@@ -60,6 +61,24 @@ const TZ_ABBREV_OFFSETS: Record<string, number> = {
 // "February 28th, 7:00 PM EST" — same date/time shape as parseScheduleCell's full form,
 // but the zone is a named US abbreviation instead of a numeric [GMT±N] offset.
 const NAMED_TZ = /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*([A-Za-z]{3})$/i;
+
+// Resolves the named-US-zone form to an ISO instant. Shared by the regular-season
+// (parseScheduleCell) and playoff (parsePlayoffScheduleCell) paths so both honor
+// EST/EDT/CST/... labels identically. Returns null when the cell isn't this shape.
+function parseNamedTzCell(value: string, year: number): ParsedSchedule | null {
+    const namedMatch = value.match(NAMED_TZ);
+    if (!namedMatch) return null;
+
+    const [, month, day, time, abbrev] = namedMatch;
+    const offsetNum = TZ_ABBREV_OFFSETS[abbrev.toUpperCase()];
+    if (offsetNum === undefined) return null;
+
+    const normalizedTime = time.replace(/\s*(AM|PM)$/i, ' $1');
+    const dateStr = `${month} ${day} ${year} ${normalizedTime} GMT${toIsoOffset(offsetNum)}`;
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return null;
+    return { iso: date.toISOString() };
+}
 
 // Playoff sheet cells are prefixed "Date:" and carry either the MM/DD/YYYY form above
 // or any of the formats parseScheduleCell already handles. The MM/DD/YYYY form supplies
@@ -94,18 +113,8 @@ export function parsePlayoffScheduleCell(value: string, year: number): ParsedSch
     }
 
     // "February 28th, 7:00 PM EST" — named US zone in place of a numeric offset.
-    const namedMatch = stripped.match(NAMED_TZ);
-    if (namedMatch) {
-        const [, month, day, time, abbrev] = namedMatch;
-        const offsetNum = TZ_ABBREV_OFFSETS[abbrev.toUpperCase()];
-        if (offsetNum === undefined) return null;
-
-        const normalizedTime = time.replace(/\s*(AM|PM)$/i, ' $1');
-        const dateStr = `${month} ${day} ${year} ${normalizedTime} GMT${toIsoOffset(offsetNum)}`;
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return null;
-        return { iso: date.toISOString() };
-    }
+    const named = parseNamedTzCell(stripped, year);
+    if (named) return named;
 
     return parseScheduleCell(stripped, year);
 }
