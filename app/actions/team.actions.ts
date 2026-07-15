@@ -45,6 +45,7 @@ export async function createTeamAction(formData: FormData) {
         brickNumber: formData.get('brickNumber'),
         brickColor: formData.get('brickColor'),
         startingLvr: formData.get('startingLvr'),
+        startingPoints: formData.get('startingPoints'),
     });
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 
@@ -63,6 +64,7 @@ export async function createTeamAction(formData: FormData) {
         brickNumber: parsed.data.brickNumber,
         brickColor: parsed.data.brickColor,
         startingLvr: parsed.data.startingLvr,
+        startingPoints: parsed.data.startingPoints,
         removeBackground,
     });
 }
@@ -126,6 +128,7 @@ export async function updateTeamAction(formData: FormData) {
         brickNumber: formData.get('brickNumber'),
         brickColor: formData.get('brickColor'),
         startingLvr: formData.get('startingLvr'),
+        startingPoints: formData.get('startingPoints'),
     });
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 
@@ -144,6 +147,7 @@ export async function updateTeamAction(formData: FormData) {
         brickNumber: parsed.data.brickNumber,
         brickColor: parsed.data.brickColor,
         startingLvr: parsed.data.startingLvr,
+        startingPoints: parsed.data.startingPoints,
         removeBackground,
     });
 }

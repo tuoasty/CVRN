@@ -32,6 +32,7 @@ export const CreateTeamFormSchema = z.object({
     brickNumber: z.coerce.number().int().positive(),
     brickColor: z.string().min(1).transform(s => s.toUpperCase()),
     startingLvr: z.coerce.number(),
+    startingPoints: z.coerce.number(),
 })
 export type CreateTeamFormInput = z.infer<typeof CreateTeamFormSchema>
 
@@ -41,5 +42,6 @@ export const UpdateTeamFormSchema = z.object({
     brickNumber: z.coerce.number().int().positive(),
     brickColor: z.string().min(1).transform(s => s.toUpperCase()),
     startingLvr: z.coerce.number(),
+    startingPoints: z.coerce.number(),
 })
 export type UpdateTeamFormInput = z.infer<typeof UpdateTeamFormSchema>

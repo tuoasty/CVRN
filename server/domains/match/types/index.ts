@@ -71,6 +71,9 @@ export type MatchResultOutput = {
     awayTeamLvr: number | null;
     homeTeamPoints: number | null;
     awayTeamPoints: number | null;
+    homeTeamBonus: number | null;
+    awayTeamBonus: number | null;
+    pointDiff: number | null;
     setsToInsert: Array<{setNumber: number; homeScore: number; awayScore: number}>;
     matchMvpPlayerId: string | null;
     loserMvpPlayerId: string | null;

@@ -47,6 +47,7 @@ export async function createTeam(supabase: DBClient, p: CreateTeamInput): Promis
             brickNumber: p.brickNumber,
             brickColor: p.brickColor,
             startingLvr: p.startingLvr,
+            startingPoints: p.startingPoints,
         });
         if (!insertResult.ok) {
             logger.error({teamId, error: insertResult.error}, "Failed to insert team, cleaning up uploaded file");

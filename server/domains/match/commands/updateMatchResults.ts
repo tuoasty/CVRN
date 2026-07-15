@@ -3,6 +3,7 @@ import {DBClient, Match} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findMatchById, rpcReapplyMatchResult} from "@/server/db/matches.repo";
+import {findStandingMethodBySeasonId} from "@/server/db/regions.repo";
 import {CompleteMatchInput} from "../types";
 import {validateAndCalculateMatchResult} from "../helpers/validateAndCalculateMatchResult";
 
@@ -32,9 +33,12 @@ export async function updateMatchResultsService(
             });
         }
 
-        const calcResult = validateAndCalculateMatchResult(p, match);
+        const methodRes = await findStandingMethodBySeasonId(supabase, match.season_id);
+        if (!methodRes.ok) return methodRes;
+
+        const calcResult = validateAndCalculateMatchResult(p, match, methodRes.value);
         if (!calcResult.ok) return calcResult;
-        const { homeSetsWon, awaySetsWon, homeTeamLvr, awayTeamLvr, homeTeamPoints, awayTeamPoints, setsToInsert, matchMvpPlayerId, loserMvpPlayerId } = calcResult.value;
+        const { homeSetsWon, awaySetsWon, homeTeamLvr, awayTeamLvr, homeTeamPoints, awayTeamPoints, homeTeamBonus, awayTeamBonus, pointDiff, setsToInsert, matchMvpPlayerId, loserMvpPlayerId } = calcResult.value;
 
         const result = await rpcReapplyMatchResult(supabase, {
             matchId:         p.matchId,
@@ -45,6 +49,9 @@ export async function updateMatchResultsService(
             awayLvr:         awayTeamLvr,
             homePoints:      homeTeamPoints,
             awayPoints:      awayTeamPoints,
+            homeBonus:       homeTeamBonus,
+            awayBonus:       awayTeamBonus,
+            pointDiff,
             mvpPlayerId:     matchMvpPlayerId,
             loserMvpPlayerId,
             isForfeit:       p.isForfeit || false,

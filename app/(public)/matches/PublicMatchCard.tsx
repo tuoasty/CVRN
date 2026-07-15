@@ -10,6 +10,7 @@ import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOpt
 import { getLogoClassName } from "@/app/lib/logoClass";
 import { parseMatchNumber } from "@/app/utils/matchLabel";
 import { cn } from "@/lib/utils";
+import { StandingMethod } from "@/shared/types/standing";
 
 interface TeamRecord {
     wins: number;
@@ -27,7 +28,7 @@ interface PublicMatchCardProps {
     homeRecord?: TeamRecord;
     awayRecord?: TeamRecord;
     isPriority?: boolean;
-    standingMethod?: "lvr" | "points";
+    standingMethod?: StandingMethod;
 }
 
 const getStatusConfig = (status: string) => {
@@ -99,7 +100,10 @@ export default function PublicMatchCard({
     standingMethod = "lvr",
 }: PublicMatchCardProps) {
     const { match, sets, officials } = matchDetails;
-    const isPoints = standingMethod === "points";
+    const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
+    // 'points' shows base + margin bonus; 'points_without_bonus' shows base only.
+    const homePts = (match.home_team_points ?? 0) + (standingMethod === "points" ? (match.home_team_bonus ?? 0) : 0);
+    const awayPts = (match.away_team_points ?? 0) + (standingMethod === "points" ? (match.away_team_bonus ?? 0) : 0);
     const matchNumber = parseMatchNumber(match.match_code);
     const matchLabel = matchNumber != null ? `Match ${matchNumber}` : "Match";
     const statusConfig = getStatusConfig(match.status);
@@ -242,9 +246,9 @@ export default function PublicMatchCard({
                             isPoints ? (
                                 (match.home_team_points != null || match.away_team_points != null) && (
                                     <span className="text-[10px] font-semibold tabular-nums text-muted-foreground/80">
-                                        <span className="text-foreground">+{(match.home_team_points ?? 0).toFixed(1)}</span>
+                                        <span className="text-foreground">+{homePts.toFixed(1)}</span>
                                         <span className="text-border mx-1">/</span>
-                                        <span className="text-foreground">+{(match.away_team_points ?? 0).toFixed(1)}</span>
+                                        <span className="text-foreground">+{awayPts.toFixed(1)}</span>
                                         <span className="text-muted-foreground/60 ml-1">pts</span>
                                     </span>
                                 )
@@ -401,7 +405,7 @@ export default function PublicMatchCard({
                                 {!homeTeam?.is_bye && (isPoints
                                     ? (match.home_team_points != null && (
                                         <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-primary/10 text-primary border-primary/20">
-                                            +{match.home_team_points.toFixed(1)} pts
+                                            +{homePts.toFixed(1)} pts
                                         </Badge>
                                     ))
                                     : (match.home_team_lvr !== null && match.home_team_lvr !== undefined && (
@@ -420,7 +424,7 @@ export default function PublicMatchCard({
                                 {!awayTeam?.is_bye && (isPoints
                                     ? (match.away_team_points != null && (
                                         <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-primary/10 text-primary border-primary/20">
-                                            +{match.away_team_points.toFixed(1)} pts
+                                            +{awayPts.toFixed(1)} pts
                                         </Badge>
                                     ))
                                     : (match.away_team_lvr !== null && match.away_team_lvr !== undefined && (

@@ -2,6 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
 import { StandingWithInfo } from "@/server/domains/standing";
+import { StandingMethod } from "@/shared/types/standing";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useMemo } from "react";
@@ -18,10 +19,12 @@ type StandingsTableProps = {
     playinTeams?: number;
     regionCode?: string;
     seasonSlug?: string;
-    standingMethod?: "lvr" | "points";
+    standingMethod?: StandingMethod;
 };
 
 export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, playinTeams = 8, regionCode, seasonSlug, standingMethod = "lvr" }: StandingsTableProps) {
+    const isPointsMethod = standingMethod === "points" || standingMethod === "points_without_bonus";
+
     const sortedStandings = useMemo(() => {
         if (standings.length === 0) return [];
 
@@ -35,10 +38,18 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
             if (lossesA !== lossesB) return lossesA - lossesB;
 
             if (standingMethod === "points") {
+                const ptsA = (a.total_points || 0) + (a.total_bonus || 0);
+                const ptsB = (b.total_points || 0) + (b.total_bonus || 0);
+                if (ptsB !== ptsA) return ptsB - ptsA;
+                return (b.sets_won || 0) - (a.sets_won || 0);
+            }
+
+            if (standingMethod === "points_without_bonus") {
                 const ptsA = a.total_points || 0;
                 const ptsB = b.total_points || 0;
                 if (ptsB !== ptsA) return ptsB - ptsA;
-                return (b.sets_won || 0) - (a.sets_won || 0);
+                // Hidden tiebreaker: raw scored-point differential of each team's most recent match.
+                return (b.last_round_point_diff || 0) - (a.last_round_point_diff || 0);
             }
 
             const lvrA = a.total_lvr || 0;
@@ -65,7 +76,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
         return baseClasses;
     };
 
-    const showPlayinDivider = (rank: number) => rank === qualifiedTeams && sortedStandings.length > qualifiedTeams;
+    const showPlayinDivider = (rank: number) => playinTeams > 0 && rank === qualifiedTeams && sortedStandings.length > qualifiedTeams;
     const showEliminatedDivider = (rank: number) => rank === qualifiedTeams + playinTeams && sortedStandings.length > qualifiedTeams + playinTeams;
 
     const ZoneDivider = ({ label, variant }: { label: string; variant: "playin" | "eliminated" }) => {
@@ -85,12 +96,13 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
 
     const MetricInfo = () => {
         const isPoints = standingMethod === "points";
+        const isPointsNoBonus = standingMethod === "points_without_bonus";
         return (
             <Popover>
                 <PopoverTrigger asChild>
                     <button
                         type="button"
-                        aria-label={isPoints ? "What is Points?" : "What is LVR?"}
+                        aria-label={isPointsMethod ? "What is Points?" : "What is LVR?"}
                         className="inline-flex items-center justify-center text-muted-foreground/70 hover:text-foreground focus-visible:text-foreground focus-visible:outline-none transition-colors"
                     >
                         <Info className="h-3.5 w-3.5" />
@@ -120,6 +132,27 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             </p>
                             <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
                                 Rank: Wins → fewer Losses → Points → Set Wins
+                            </p>
+                        </div>
+                    ) : isPointsNoBonus ? (
+                        <div className="space-y-2.5">
+                            <p className="text-sm font-semibold text-foreground">Points <span className="font-normal text-muted-foreground">· per match</span></p>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                                <div className="flex items-baseline justify-between gap-4">
+                                    <span>Win 2–0</span><span className="font-mono text-foreground">2.0</span>
+                                </div>
+                                <div className="flex items-baseline justify-between gap-4">
+                                    <span>Win 2–1</span><span className="font-mono text-foreground">1.5</span>
+                                </div>
+                                <div className="flex items-baseline justify-between gap-4">
+                                    <span>Loss 1–2 <span className="text-muted-foreground/60">(set won)</span></span><span className="font-mono text-foreground">0.5</span>
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                                Forfeit win: <span className="font-mono text-foreground">1.0</span>
+                            </p>
+                            <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
+                                Rank: Wins → fewer Losses → Points
                             </p>
                         </div>
                     ) : (
@@ -170,7 +203,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                 <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">Record</TableHead>
                                 <TableHead className="hidden sm:table-cell text-center text-[11px] uppercase tracking-wider font-semibold">Win %</TableHead>
                                 <TableHead className="hidden sm:table-cell text-center text-[11px] uppercase tracking-wider font-semibold">Sets</TableHead>
-                                <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">{standingMethod === "points" ? "Points" : "LVR"}</TableHead>
+                                <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">{isPointsMethod ? "Points" : "LVR"}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -232,7 +265,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                             <TableHead className="hidden sm:table-cell text-center text-[11px] uppercase tracking-wider font-semibold">Sets</TableHead>
                             <TableHead className="text-center text-[11px] uppercase tracking-wider font-semibold">
                                 <span className="inline-flex items-center justify-center gap-1">
-                                    {standingMethod === "points" ? "Points" : "LVR"}
+                                    {isPointsMethod ? "Points" : "LVR"}
                                     <MetricInfo />
                                 </span>
                             </TableHead>
@@ -300,9 +333,9 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                         {standing.sets_won || 0}-{standing.sets_lost || 0}
                                     </TableCell>
                                     <TableCell className="text-center py-4">
-                                        {standingMethod === "points" ? (
+                                        {isPointsMethod ? (
                                             <span className="font-bold text-base tabular-nums text-primary">
-                                                {(standing.total_points || 0).toFixed(1)}
+                                                {((standing.total_points || 0) + (standingMethod === "points" ? (standing.total_bonus || 0) : 0)).toFixed(1)}
                                             </span>
                                         ) : (
                                             <div className="flex flex-col items-center gap-0.5">
@@ -327,7 +360,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
 
             <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
                 <div>
-                    Showing {sortedStandings.length} teams • Top {qualifiedTeams} qualify for playoffs, next {playinTeams} qualify for play-ins
+                    Showing {sortedStandings.length} teams • Top {qualifiedTeams} qualify for playoffs{playinTeams > 0 ? `, next ${playinTeams} qualify for play-ins` : ""}
                 </div>
             </div>
         </div>

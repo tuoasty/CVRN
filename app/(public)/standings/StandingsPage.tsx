@@ -7,6 +7,7 @@ import { StandingsTable } from "@/app/features/standings/StandingsTable";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
+import { StandingMethod } from "@/shared/types/standing";
 
 export default function StandingsPage() {
     const { season, region } = useSeasonContext();
@@ -15,15 +16,21 @@ export default function StandingsPage() {
     const regionCode = region.code;
     const seasonSlug = season.slug;
 
-    const isPoints = region.standing_method === "points";
+    const standingMethod = region.standing_method as StandingMethod;
+    const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
     const stats = useMemo(() => {
         if (standings.length === 0) return null;
         const totalTeams = standings.length;
-        const key = (s: typeof standings[number]) => isPoints ? (s.total_points || 0) : (s.total_lvr || 0);
+        const key = (s: typeof standings[number]) =>
+            standingMethod === "points"
+                ? (s.total_points || 0) + (s.total_bonus || 0)
+                : standingMethod === "points_without_bonus"
+                    ? (s.total_points || 0)
+                    : (s.total_lvr || 0);
         const avg = standings.reduce((sum, s) => sum + key(s), 0) / totalTeams;
         const top = Math.max(...standings.map(key));
         return { totalTeams, avg, top };
-    }, [standings, isPoints]);
+    }, [standings, standingMethod]);
 
     const subtitle = `${season.name} · ${region.name}`;
 
@@ -71,7 +78,7 @@ export default function StandingsPage() {
                     playinTeams={season.playoff_configs?.playin_teams}
                     regionCode={regionCode}
                     seasonSlug={seasonSlug}
-                    standingMethod={isPoints ? "points" : "lvr"}
+                    standingMethod={standingMethod}
                 />
             </div>
         </>

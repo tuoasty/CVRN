@@ -17,6 +17,7 @@ import { TeamWithRegion } from "@/server/domains/team";
 import { Player } from "@/shared/types/db";
 import type { PlayoffRound } from "@/server/domains/playoff";
 import { isPlayoffRound, sortRounds } from "@/app/utils/playoffRounds";
+import { StandingMethod } from "@/shared/types/standing";
 import { MatchTypeTabs, WeekSelector, PlayoffStepper } from "@/app/features/matches/ScheduleSelectors";
 
 function matchCodeSortKey(code: string | null | undefined): number {
@@ -200,7 +201,7 @@ export default function MatchesPage() {
                         recordByTeamId={recordByTeamId}
                         regionCode={regionCode}
                         seasonSlug={season.slug}
-                        standingMethod={region.standing_method === "points" ? "points" : "lvr"}
+                        standingMethod={region.standing_method as StandingMethod}
                         loading={loading}
                         emptyMessage={
                             activeTab === "season"
@@ -222,7 +223,7 @@ interface MatchListProps {
     recordByTeamId: Map<string, { wins: number; losses: number }>;
     regionCode?: string;
     seasonSlug?: string;
-    standingMethod?: "lvr" | "points";
+    standingMethod?: StandingMethod;
     loading: boolean;
     emptyMessage: string;
 }

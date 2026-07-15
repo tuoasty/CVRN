@@ -118,6 +118,7 @@ export async function insertTeam(supabase: DBClient, p: InsertTeamDto): Promise<
         brick_number: p.brickNumber,
         brick_color: p.brickColor,
         starting_lvr: p.startingLvr,
+        starting_points: p.startingPoints,
     }).select().single();
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data);
@@ -156,6 +157,18 @@ export async function findTeamsBySeasonId(supabase: DBClient, seasonId: string):
         .select("*")
         .eq("season_id", seasonId)
         .is("deleted_at", null)
+        .eq("is_bye", false);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+// Like findTeamsBySeasonId but keeps disbanded (soft-deleted) teams. Result syncs use this:
+// a team can disband mid-season yet its completed matches still need to resolve to its id.
+export async function findAllTeamsBySeasonIdIncludingDeleted(supabase: DBClient, seasonId: string): Promise<Result<Team[]>> {
+    const {data, error} = await supabase
+        .from("teams")
+        .select("*")
+        .eq("season_id", seasonId)
         .eq("is_bye", false);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
@@ -227,6 +240,7 @@ export async function updateTeamById(supabase: DBClient, id: string, p: {
     brickNumber?: number;
     brickColor?: string;
     startingLvr?: number;
+    startingPoints?: number;
 }): Promise<Result<Team>> {
     const {data, error} = await supabase
         .from("teams")
@@ -238,6 +252,7 @@ export async function updateTeamById(supabase: DBClient, id: string, p: {
             ...(p.brickNumber !== undefined && {brick_number: p.brickNumber}),
             ...(p.brickColor !== undefined && {brick_color: p.brickColor}),
             ...(p.startingLvr !== undefined && {starting_lvr: p.startingLvr}),
+            ...(p.startingPoints !== undefined && {starting_points: p.startingPoints}),
         })
         .eq("id", id)
         .is("deleted_at", null)
