@@ -133,6 +133,9 @@ export async function rpcCompleteMatch(
         awayLvr: number | null;
         homePoints: number | null;
         awayPoints: number | null;
+        homeBonus: number | null;
+        awayBonus: number | null;
+        pointDiff: number | null;
         mvpPlayerId: string | null;
         loserMvpPlayerId: string | null;
         isForfeit: boolean;
@@ -149,6 +152,9 @@ export async function rpcCompleteMatch(
         p_away_lvr:            params.awayLvr          ?? undefined,
         p_home_points:         params.homePoints       ?? undefined,
         p_away_points:         params.awayPoints       ?? undefined,
+        p_home_bonus:          params.homeBonus        ?? undefined,
+        p_away_bonus:          params.awayBonus        ?? undefined,
+        p_point_diff:          params.pointDiff        ?? undefined,
         p_mvp_player_id:       params.mvpPlayerId      ?? undefined,
         p_loser_mvp_player_id: params.loserMvpPlayerId ?? undefined,
         p_scheduled_at:        params.scheduledAt      ?? undefined,
@@ -179,6 +185,9 @@ export async function rpcReapplyMatchResult(
         awayLvr: number | null;
         homePoints: number | null;
         awayPoints: number | null;
+        homeBonus: number | null;
+        awayBonus: number | null;
+        pointDiff: number | null;
         mvpPlayerId: string | null;
         loserMvpPlayerId: string | null;
         isForfeit: boolean;
@@ -194,6 +203,9 @@ export async function rpcReapplyMatchResult(
         p_away_lvr:            params.awayLvr          ?? undefined,
         p_home_points:         params.homePoints       ?? undefined,
         p_away_points:         params.awayPoints       ?? undefined,
+        p_home_bonus:          params.homeBonus        ?? undefined,
+        p_away_bonus:          params.awayBonus        ?? undefined,
+        p_point_diff:          params.pointDiff        ?? undefined,
         p_mvp_player_id:       params.mvpPlayerId      ?? undefined,
         p_loser_mvp_player_id: params.loserMvpPlayerId ?? undefined,
     });

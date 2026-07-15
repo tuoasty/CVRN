@@ -10,6 +10,7 @@ import {findMatchStatSets, findMatchStatTotals} from "@/server/db/playerMatchSta
 import {findMatchOfficials} from "@/server/db/matchOfficial.repo";
 import {MatchOfficialEntry} from "../types";
 import {getTeamRosters, TeamRosters} from "./getTeamRosters";
+import {StandingMethod} from "@/shared/types/standing";
 
 export type MatchDetail = {
     match: Match;
@@ -21,13 +22,13 @@ export type MatchDetail = {
     statTotals: PlayerMatchStatTotal[];
     playoffRound: string | null;
     rosters: TeamRosters | null;
-    standingMethod: "lvr" | "points";
+    standingMethod: StandingMethod;
 };
 
 async function loadDetailForMatch(
     supabase: DBClient,
     match: Match,
-    standingMethod: "lvr" | "points" = "lvr"
+    standingMethod: StandingMethod = "lvr"
 ): Promise<Result<MatchDetail, SerializableError>> {
     const teamIds = [match.home_team_id, match.away_team_id].filter((id): id is string => !!id);
 
@@ -108,7 +109,7 @@ export async function getMatchDetail(
         return loadDetailForMatch(
             supabase,
             matchRes.value,
-            regionRes.value.standing_method === "points" ? "points" : "lvr"
+            regionRes.value.standing_method as StandingMethod
         );
     } catch (error) {
         logger.error({...p, error}, "Unexpected error fetching match detail");

@@ -6,6 +6,7 @@ import {getLogoClassName} from "@/app/lib/logoClass";
 import type {MatchDetail} from "@/server/domains/match";
 import {formatMatchDate} from "@/app/lib/formatDate";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
+import {StandingMethod} from "@/shared/types/standing";
 
 const ROUND_LABELS: Record<string, string> = {
     play_in: "Play-In",
@@ -34,12 +35,15 @@ type Props = {
     detail: MatchDetail;
     regionCode?: string;
     seasonSlug?: string;
-    standingMethod?: "lvr" | "points";
+    standingMethod?: StandingMethod;
 };
 
 export default function MatchHeader({detail, regionCode, seasonSlug, standingMethod = "lvr"}: Props) {
     const {match, sets, homeTeam, awayTeam, officials, playoffRound} = detail;
-    const isPoints = standingMethod === "points";
+    const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
+    // 'points' shows base + margin bonus; 'points_without_bonus' shows base only.
+    const homePts = (match.home_team_points ?? 0) + (standingMethod === "points" ? (match.home_team_bonus ?? 0) : 0);
+    const awayPts = (match.away_team_points ?? 0) + (standingMethod === "points" ? (match.away_team_bonus ?? 0) : 0);
 
     const homeSets = match.home_sets_won ?? 0;
     const awaySets = match.away_sets_won ?? 0;
@@ -261,7 +265,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                                 variant="outline"
                                 className="h-5 px-2 text-[11px] font-semibold tabular-nums bg-primary/10 text-primary border-primary/20"
                             >
-                                +{match.home_team_points.toFixed(1)} pts
+                                +{homePts.toFixed(1)} pts
                             </Badge>
                         )}
                     </div>
@@ -271,7 +275,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                                 variant="outline"
                                 className="h-5 px-2 text-[11px] font-semibold tabular-nums bg-primary/10 text-primary border-primary/20"
                             >
-                                +{match.away_team_points.toFixed(1)} pts
+                                +{awayPts.toFixed(1)} pts
                             </Badge>
                         )}
                     </div>

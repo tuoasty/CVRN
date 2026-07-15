@@ -59,6 +59,7 @@ export async function updateTeam(supabase: DBClient, p: UpdateTeamInput): Promis
             brickNumber: p.brickNumber,
             brickColor: p.brickColor,
             startingLvr: p.startingLvr,
+            startingPoints: p.startingPoints,
         });
         if (!updateResult.ok) {
             logger.error({teamId: p.teamId, error: updateResult.error}, "Failed to update team");

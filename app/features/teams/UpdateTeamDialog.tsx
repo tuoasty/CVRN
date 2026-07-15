@@ -39,6 +39,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
     const [compressing, setCompressing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [startingLvr, setStartingLvr] = useState(team.starting_lvr.toString());
+    const [startingPoints, setStartingPoints] = useState(team.starting_points.toString());
 
     const resetForm = () => {
         setName(team.name);
@@ -47,6 +48,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
         setFile(null);
         setPreview(team.logo_url);
         setStartingLvr(team.starting_lvr.toString());
+        setStartingPoints(team.starting_points.toString());
     };
 
     const handleOpenChange = (val: boolean) => {
@@ -112,6 +114,12 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
             return;
         }
 
+        const pointsVal = parseFloat(startingPoints);
+        if (isNaN(pointsVal)) {
+            toast.error("Starting points must be a valid number");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -122,6 +130,7 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
             if (brickColor.trim()) formData.append("brickColor", brickColor.toUpperCase());
             if (file) formData.append("logo", file);
             formData.append("startingLvr", lvrVal.toString());
+            formData.append("startingPoints", pointsVal.toString());
             formData.append("removeBackground", String(removeBackground));
 
             const result = await updateTeamAction(formData);
@@ -253,6 +262,18 @@ export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogPr
                                 step="0.1"
                                 value={startingLvr}
                                 onChange={(e) => setStartingLvr(e.target.value)}
+                                disabled={loading}
+                                className="rounded-sm"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="update-starting-points">Starting Points</Label>
+                            <Input
+                                id="update-starting-points"
+                                type="number"
+                                step="0.1"
+                                value={startingPoints}
+                                onChange={(e) => setStartingPoints(e.target.value)}
                                 disabled={loading}
                                 className="rounded-sm"
                             />

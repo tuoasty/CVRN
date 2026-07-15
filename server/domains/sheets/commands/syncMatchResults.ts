@@ -6,7 +6,8 @@ import {parseScheduleCell} from "@/server/domains/sheets/helpers/parseScheduleCe
 import {resolveTeamNames} from "@/server/domains/sheets/helpers/resolveTeamNames";
 import {teamNameKey} from "@/server/domains/team/helpers/normalizeTeamName";
 import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
-import {findTeamsBySeasonId, getOrCreateByeTeam} from "@/server/db/teams.repo";
+import {findAllTeamsBySeasonIdIncludingDeleted, getOrCreateByeTeam} from "@/server/db/teams.repo";
+import {findStandingMethodBySeasonId} from "@/server/db/regions.repo";
 import {findTeamNameHistoryByTeamIds} from "@/server/db/teamNameHistory.repo";
 import {
     insertMatches,
@@ -39,12 +40,16 @@ export async function syncMatchResults(
 
         const {results: parsed, errors: parseErrors} = parseQualifierRows(values, fgColors, config.header_row ?? 8);
 
-        const teamsResult = await findTeamsBySeasonId(supabase, config.season_id);
+        const teamsResult = await findAllTeamsBySeasonIdIncludingDeleted(supabase, config.season_id);
         if (!teamsResult.ok) return teamsResult;
         const teamIds = teamsResult.value.map(t => t.id);
         const historyResult = await findTeamNameHistoryByTeamIds(supabase, teamIds);
         if (!historyResult.ok) return historyResult;
         const nameMap = resolveTeamNames(teamsResult.value, historyResult.value);
+
+        const methodResult = await findStandingMethodBySeasonId(supabase, config.season_id);
+        if (!methodResult.ok) return methodResult;
+        const standingMethod = methodResult.value;
 
         const changes: SyncChange[] = [];
         let rowsProcessed = 0;
@@ -259,7 +264,7 @@ export async function syncMatchResults(
                 loserMvpPlayerId: null,
             };
 
-            const calcResult = validateAndCalculateMatchResult(matchInput, matchContext);
+            const calcResult = validateAndCalculateMatchResult(matchInput, matchContext, standingMethod);
             if (!calcResult.ok) {
                 errors.push({row: result.rowNumber, message: `[${mc}] Invalid match result: ${calcResult.error.message}`});
                 rowsErrored++;
@@ -276,6 +281,9 @@ export async function syncMatchResults(
                 awayLvr: calc.awayTeamLvr,
                 homePoints: calc.homeTeamPoints,
                 awayPoints: calc.awayTeamPoints,
+                homeBonus: calc.homeTeamBonus,
+                awayBonus: calc.awayTeamBonus,
+                pointDiff: calc.pointDiff,
                 mvpPlayerId: null,
                 loserMvpPlayerId: null,
                 isForfeit,

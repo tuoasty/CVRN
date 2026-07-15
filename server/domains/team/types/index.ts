@@ -12,6 +12,7 @@ export interface TeamWithRegion {
     brick_number: number;
     brick_color: string;
     starting_lvr: number;
+    starting_points: number;
     is_bye: boolean;
     playerCount?: number;
     captain?: {
@@ -46,6 +47,7 @@ export interface InsertTeamDto {
     brickNumber: number;
     brickColor: string;
     startingLvr: number;
+    startingPoints: number;
 }
 
 export interface CreateTeamInput {
@@ -56,6 +58,7 @@ export interface CreateTeamInput {
     brickNumber: number;
     brickColor: string;
     startingLvr: number;
+    startingPoints: number;
     removeBackground: boolean;
 }
 
@@ -67,6 +70,7 @@ export interface UpdateTeamInput {
     brickColor: string;
     userId: string;
     startingLvr: number;
+    startingPoints: number;
     removeBackground: boolean;
 }
 

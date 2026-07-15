@@ -11,6 +11,7 @@ import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
 import SeasonChampionCard from "@/app/(public)/home/SeasonChampionCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import StandingsPreview from "@/app/(public)/home/StandingsPreview";
+import { StandingMethod } from "@/shared/types/standing";
 import { useStandings } from "@/app/hooks/useStandings";
 import { MatchWithDetails } from "@/server/domains/match";
 import { computeMatchLabels } from "@/app/utils/matchLabel";
@@ -205,7 +206,7 @@ export default function HomePage() {
                                     qualifiedTeams={season.playoff_configs?.qualified_teams}
                                     regionCode={regionCode}
                                     seasonSlug={seasonSlug}
-                                    standingMethod={region.standing_method === "points" ? "points" : "lvr"}
+                                    standingMethod={region.standing_method as StandingMethod}
                                 />
                             </div>
                         </div>

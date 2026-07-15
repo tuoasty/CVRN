@@ -5,7 +5,7 @@ import { serializeError } from "@/server/utils/serializeableError";
 import { DBClient, SheetConfig } from "@/shared/types/db";
 import { Err, Ok, Result } from "@/shared/types/result";
 import { SyncChange, SyncError, SyncResult } from "../types";
-import { findTeamsBySeasonId } from "@/server/db/teams.repo";
+import { findAllTeamsBySeasonIdIncludingDeleted } from "@/server/db/teams.repo";
 import { findTeamNameHistoryByTeamIds } from "@/server/db/teamNameHistory.repo";
 import { resolveTeamNames } from "../helpers/resolveTeamNames";
 import {
@@ -99,7 +99,7 @@ export async function syncPlayoffResults(
     // Parse all playoff matches
     const {results: parsed, errors: parseErrors} = parsePlayoffMatches(values, knownCodes)
 
-    const teamsResult = await findTeamsBySeasonId(supabase, config.season_id);
+    const teamsResult = await findAllTeamsBySeasonIdIncludingDeleted(supabase, config.season_id);
     if (!teamsResult.ok) return teamsResult;
     const teamIds = teamsResult.value.map(t => t.id);
     const historyResult = await findTeamNameHistoryByTeamIds(supabase, teamIds);
@@ -263,6 +263,9 @@ export async function syncPlayoffResults(
         awayLvr: calc.awayTeamLvr,
         homePoints: calc.homeTeamPoints,
         awayPoints: calc.awayTeamPoints,
+        homeBonus: calc.homeTeamBonus,
+        awayBonus: calc.awayTeamBonus,
+        pointDiff: calc.pointDiff,
         mvpPlayerId: null,
         loserMvpPlayerId: null,
         isForfeit: sheetMatch.isForfeit,

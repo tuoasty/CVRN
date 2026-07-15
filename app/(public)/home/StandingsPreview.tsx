@@ -1,6 +1,7 @@
 "use client";
 
 import { StandingWithInfo } from "@/server/domains/standing";
+import { StandingMethod } from "@/shared/types/standing";
 import { ArrowRight, Trophy } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import Link from "next/link";
@@ -15,7 +16,7 @@ interface StandingsPreviewProps {
     qualifiedTeams?: number;
     regionCode?: string;
     seasonSlug?: string;
-    standingMethod?: "lvr" | "points";
+    standingMethod?: StandingMethod;
 }
 
 export default function StandingsPreview({
@@ -38,10 +39,17 @@ export default function StandingsPreview({
                 if (lossesA !== lossesB) return lossesA - lossesB;
 
                 if (standingMethod === "points") {
+                    const ptsA = (a.total_points || 0) + (a.total_bonus || 0);
+                    const ptsB = (b.total_points || 0) + (b.total_bonus || 0);
+                    if (ptsB !== ptsA) return ptsB - ptsA;
+                    return (b.sets_won || 0) - (a.sets_won || 0);
+                }
+
+                if (standingMethod === "points_without_bonus") {
                     const ptsA = a.total_points || 0;
                     const ptsB = b.total_points || 0;
                     if (ptsB !== ptsA) return ptsB - ptsA;
-                    return (b.sets_won || 0) - (a.sets_won || 0);
+                    return (b.last_round_point_diff || 0) - (a.last_round_point_diff || 0);
                 }
 
                 const setsWonA = a.sets_won || 0;
@@ -124,9 +132,9 @@ export default function StandingsPreview({
                             </div>
 
                             {/* LVR / Points */}
-                            {standingMethod === "points" ? (
+                            {standingMethod === "points" || standingMethod === "points_without_bonus" ? (
                                 <div className="text-sm font-bold tabular-nums text-primary">
-                                    {(standing.total_points || 0).toFixed(1)}
+                                    {((standing.total_points || 0) + (standingMethod === "points" ? (standing.total_bonus || 0) : 0)).toFixed(1)}
                                 </div>
                             ) : (
                                 <div className={`text-sm font-bold tabular-nums ${displayLvr >= 100 ? 'text-primary' : 'text-destructive'}`}>

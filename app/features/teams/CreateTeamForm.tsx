@@ -33,6 +33,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     const [brickNumber, setBrickNumber] = useState("");
     const [brickColor, setBrickColor] = useState("");
     const [startingLvr, setStartingLvr] = useState("100");
+    const [startingPoints, setStartingPoints] = useState("0");
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -130,6 +131,12 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             return;
         }
 
+        const pointsVal = parseFloat(startingPoints);
+        if (isNaN(pointsVal)) {
+            setError("Starting points must be a valid number");
+            return;
+        }
+
         setLoading(true);
         setError(null);
         setSuccess(null);
@@ -142,6 +149,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             formData.append("brickNumber", brickNum.toString());
             formData.append("brickColor", brickColor.toUpperCase());
             formData.append("startingLvr", lvrVal.toString());
+            formData.append("startingPoints", pointsVal.toString());
             formData.append("removeBackground", String(removeBackground));
 
             const result = await createTeamAction(formData);
@@ -164,6 +172,7 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             setBrickNumber("");
             setBrickColor("");
             setStartingLvr("100");
+            setStartingPoints("0");
 
             if (onSuccess) {
                 setTimeout(() => {
@@ -340,6 +349,20 @@ export default function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                             placeholder="100"
                             value={startingLvr}
                             onChange={(e) => setStartingLvr(e.target.value)}
+                            disabled={loading}
+                            className="rounded-sm"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="startingPoints">Starting Points</Label>
+                        <Input
+                            id="startingPoints"
+                            type="number"
+                            step="0.1"
+                            placeholder="0"
+                            value={startingPoints}
+                            onChange={(e) => setStartingPoints(e.target.value)}
                             disabled={loading}
                             className="rounded-sm"
                         />
