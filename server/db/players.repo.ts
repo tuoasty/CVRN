@@ -6,6 +6,7 @@ import {
     RemovePlayerFromTeamInput,
     SetPlayerRoleInput, PlayerRole
 } from "@/server/domains/player";
+import type {PlayerSearchHit} from "@/server/domains/player/types";
 import {Database} from "@/database.types";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
@@ -392,6 +393,86 @@ export async function findPlayersBySimilarity(supabase: DBClient, query: string,
             current_team_name: teamInfo?.team_name || null,
             season_team_id: seasonTeamInfo?.team_id || null,
             season_team_name: seasonTeamInfo?.team_name || null
+        };
+    });
+
+    return Ok(results);
+}
+
+const SEARCH_RESULT_LIMIT = 20;
+
+type SearchStintRow = {
+    player_id: string;
+    left_at: string | null;
+    team: {id: string; name: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null} | null;
+    season: {name: string; league_type: string; region: {code: string; name: string} | null} | null;
+};
+
+/**
+ * Public player search. Reuses the fuzzy-similarity RPC, then enriches each hit with:
+ *  - region  → the player's most-recent stint of any kind (always shown)
+ *  - team    → their most-recent *active* (left_at null) *main-league* team, or null
+ * Deliberately independent of findPlayersBySimilarity so the admin callers stay untouched.
+ */
+export async function findPlayersForSearch(supabase: DBClient, query: string): Promise<Result<PlayerSearchHit[]>> {
+    const {data, error} = await supabase.rpc('search_players_with_similarity', {
+        search_term: query.toLowerCase()
+    });
+
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    if (!data || data.length === 0) return Ok([]);
+
+    const topPlayers = data.slice(0, SEARCH_RESULT_LIMIT);
+    const playerIds = topPlayers.map(p => p.id);
+
+    const {data: stints, error: stintError} = await supabase
+        .from("player_team_seasons")
+        .select(`
+            player_id,
+            left_at,
+            team:teams!team_id(id, name, logo_url, logo_bg_removed, brick_color),
+            season:seasons!season_id(name, league_type, region:regions!region_id(code, name))
+        `)
+        .in("player_id", playerIds)
+        .order("joined_at", {ascending: false});
+
+    if (stintError) return Err(serializeError(stintError, "DB_ERROR"));
+
+    // Rows are newest-first. First row per player = most-recent stint (→ region).
+    // First qualifying row per player (active + main) = the team to display.
+    const regionByPlayer = new Map<string, {code: string; name: string} | null>();
+    const teamByPlayer = new Map<string, PlayerSearchHit["team"]>();
+
+    for (const row of (stints ?? []) as SearchStintRow[]) {
+        if (!regionByPlayer.has(row.player_id)) {
+            regionByPlayer.set(row.player_id, row.season?.region ?? null);
+        }
+        if (!teamByPlayer.has(row.player_id)
+            && row.left_at === null
+            && row.season?.league_type === "main"
+            && row.team) {
+            teamByPlayer.set(row.player_id, {
+                id: row.team.id,
+                name: row.team.name,
+                logo_url: row.team.logo_url,
+                logo_bg_removed: row.team.logo_bg_removed,
+                brick_color: row.team.brick_color,
+                season_name: row.season.name,
+            });
+        }
+    }
+
+    const results: PlayerSearchHit[] = topPlayers.map(p => {
+        const region = regionByPlayer.get(p.id) ?? null;
+        return {
+            id: p.id,
+            roblox_user_id: p.roblox_user_id,
+            username: p.username,
+            display_name: p.display_name,
+            avatar_url: p.avatar_url,
+            region_code: region?.code ?? null,
+            region_name: region?.name ?? null,
+            team: teamByPlayer.get(p.id) ?? null,
         };
     });
 
