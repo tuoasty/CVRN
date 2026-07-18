@@ -23,6 +23,7 @@ import {
 import {getRobloxUserByName, getRobloxAvatarsById} from "@/server/roblox/users";
 import {RobloxUser} from "@/shared/types/roblox";
 import {generateSlug} from "@/server/domains/team/helpers/generateSlug";
+import {classifyTeamNameChange} from "@/server/domains/sheets/helpers/classifyTeamNameChange";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 
@@ -156,6 +157,63 @@ export async function syncTeamRoster(
 
         for (const parsedTeam of activeTeams) {
             rowsProcessed++;
+
+            // Rebrand-vs-disband gate: a same-slot name change is only a rebrand if the
+            // roster substantially carried over. If it didn't, the old team disbanded and a
+            // new team took the slot — soft-delete the old team here so upsertTeamByNumber
+            // below inserts a fresh one (wasExisting becomes false via the map delete, so
+            // the existing team_creation + Phase 2 add-all path runs for the new team).
+            const prevForNumber = existingByNumber.get(parsedTeam.teamNumber);
+            if (prevForNumber && prevForNumber.name !== parsedTeam.teamName) {
+                const oldRosterResult = await findAllTeamPlayers(supabase, prevForNumber.id, config.season_id);
+                if (oldRosterResult.ok) {
+                    const oldUsernames = oldRosterResult.value
+                        .filter(r => r.player?.username)
+                        .map(r => r.player!.username!.toLowerCase());
+                    const newUsernames = parsedTeam.players.map(p => p.username.toLowerCase());
+                    const newCaptain = parsedTeam.players.find(p => p.role === 'captain')?.username.toLowerCase() ?? null;
+
+                    if (classifyTeamNameChange({usernames: oldUsernames}, {usernames: newUsernames, captain: newCaptain}) === 'disband') {
+                        // Remove the old roster individually (revert-safe: each emits a
+                        // player_remove with its playerTeamSeasonId), then soft-delete.
+                        for (const r of oldRosterResult.value) {
+                            if (!r.player) continue;
+                            const removeResult = await removePlayerFromTeam(supabase, {
+                                playerId: r.player.id,
+                                seasonId: config.season_id,
+                            });
+                            if (removeResult.ok) {
+                                changes.push({
+                                    type: 'player_remove',
+                                    entityId: r.player.id,
+                                    before: {username: r.player.username?.toLowerCase(), teamId: prevForNumber.id, playerTeamSeasonId: removeResult.value.id},
+                                    after: {},
+                                });
+                            } else {
+                                logger.error({playerId: r.player.id, error: removeResult.error}, "Failed to remove player during disband");
+                                errors.push({row: 0, message: `[${prevForNumber.name}] Remove during disband: ${removeResult.error.message}`});
+                                rowsErrored++;
+                            }
+                        }
+
+                        const disbandResult = await softDeleteTeamById(supabase, prevForNumber.id);
+                        if (disbandResult.ok) {
+                            changes.push({
+                                type: 'team_disband',
+                                entityId: prevForNumber.id,
+                                before: {name: prevForNumber.name},
+                                after: {},
+                            });
+                            existingByNumber.delete(parsedTeam.teamNumber);
+                        } else {
+                            logger.error({teamId: prevForNumber.id, error: disbandResult.error}, "Failed to disband replaced team");
+                            errors.push({row: 0, message: `Failed to disband ${prevForNumber.name}: ${disbandResult.error.message}`});
+                            rowsErrored++;
+                        }
+                    }
+                }
+            }
+
             const slug = generateSlug(parsedTeam.teamName);
             const teamResult = await upsertTeamByNumber(supabase, {
                 seasonId: config.season_id,
