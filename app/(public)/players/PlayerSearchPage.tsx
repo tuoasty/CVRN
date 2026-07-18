@@ -6,6 +6,7 @@ import { PublicPageHeader } from "@/app/components/public/PublicPageHeader"
 import { Skeleton } from "@/app/components/ui/skeleton"
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue"
 import { usePlayerSearch } from "@/app/hooks/usePlayerSearch"
+import { useRecentPlayers } from "@/app/hooks/useRecentPlayers"
 import PlayerSearchResultCard from "@/app/features/players/PlayerSearchResultCard"
 
 function RowSkeleton() {
@@ -26,6 +27,7 @@ export default function PlayerSearchPage() {
     const debounced = useDebouncedValue(query.trim(), 300)
 
     const { players, isLoading } = usePlayerSearch(debounced)
+    const { players: recent, isLoading: recentLoading } = useRecentPlayers()
 
     const hasQuery = debounced.length > 0
 
@@ -62,12 +64,27 @@ export default function PlayerSearchPage() {
             </form>
 
             {/* Results — aria-live so screen readers hear updates as the user types */}
-            <div aria-live="polite" aria-busy={isLoading}>
+            <div aria-live="polite" aria-busy={hasQuery ? isLoading : recentLoading}>
                 {!hasQuery ? (
-                    <div className="flex flex-col items-center justify-center py-20 space-y-3">
-                        <Users className="h-10 w-10 text-muted-foreground/30" />
-                        <p className="text-sm text-muted-foreground">Start typing a player&apos;s name to search.</p>
-                    </div>
+                    recentLoading && recent.length === 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {[...Array(4)].map((_, i) => <RowSkeleton key={i} />)}
+                        </div>
+                    ) : recent.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                            <Users className="h-10 w-10 text-muted-foreground/30" />
+                            <p className="text-sm text-muted-foreground">Start typing a player&apos;s name to search.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-sm text-muted-foreground mb-3">Recently active players</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {recent.map(player => (
+                                    <PlayerSearchResultCard key={player.id} player={player} />
+                                ))}
+                            </div>
+                        </>
+                    )
                 ) : isLoading && players.length === 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[...Array(4)].map((_, i) => <RowSkeleton key={i} />)}

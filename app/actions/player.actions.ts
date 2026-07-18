@@ -9,6 +9,7 @@ import {
     getPlayersByIds,
     searchPlayersInDatabase,
     searchPlayersForPublic,
+    getRecentPlayersForPublic,
     addExistingPlayerToTeam,
     getPlayerByExactUsername,
     setPlayerRoleService,
@@ -79,6 +80,11 @@ export async function searchPlayersForPublicAction(input: unknown) {
     if (!parsed.success) return Err({message: "Search query must not be empty", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return searchPlayersForPublic(supabase, parsed.data);
+}
+
+export async function getRecentPlayersForPublicAction() {
+    const supabase = await createServerSupabase();
+    return getRecentPlayersForPublic(supabase);
 }
 
 export async function addExistingPlayerToTeamAction(input: unknown) {

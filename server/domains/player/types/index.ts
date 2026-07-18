@@ -62,6 +62,7 @@ export interface PlayerSearchHit {
         logo_bg_removed: boolean;
         brick_color: string | null;
         season_name: string;
+        joined_at: string;
     } | null;
 }
 

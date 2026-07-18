@@ -11,6 +11,7 @@ import {Database} from "@/database.types";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
+import {isSeasonActive} from "@/server/domains/season/helpers/isSeasonActive";
 
 type PlayerTeamSeasonWithPlayer = PlayerTeamSeason & {player: Player | null};
 type PlayerTeamSeasonWithRefs = PlayerTeamSeason & {
@@ -401,37 +402,42 @@ export async function findPlayersBySimilarity(supabase: DBClient, query: string,
 
 const SEARCH_RESULT_LIMIT = 20;
 
+const RECENT_STINT_SCAN = 300;
+
 type SearchStintRow = {
     player_id: string;
+    joined_at: string;
     left_at: string | null;
     team: {id: string; name: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null} | null;
-    season: {name: string; league_type: string; region: {code: string; name: string} | null} | null;
+    season: {name: string; league_type: string; end_date: string | null; region: {code: string; name: string} | null} | null;
+};
+
+type SearchBaseRow = {
+    id: string;
+    roblox_user_id: string;
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
 };
 
 /**
- * Public player search. Reuses the fuzzy-similarity RPC, then enriches each hit with:
+ * Shared enrichment for the public player search + default-list queries. `base` arrives
+ * already in the desired display order. Each hit is enriched with:
  *  - region  → the player's most-recent stint of any kind (always shown)
  *  - team    → their most-recent *active* (left_at null) *main-league* team, or null
- * Deliberately independent of findPlayersBySimilarity so the admin callers stay untouched.
  */
-export async function findPlayersForSearch(supabase: DBClient, query: string): Promise<Result<PlayerSearchHit[]>> {
-    const {data, error} = await supabase.rpc('search_players_with_similarity', {
-        search_term: query.toLowerCase()
-    });
-
-    if (error) return Err(serializeError(error, "DB_ERROR"));
-    if (!data || data.length === 0) return Ok([]);
-
-    const topPlayers = data.slice(0, SEARCH_RESULT_LIMIT);
-    const playerIds = topPlayers.map(p => p.id);
+async function enrichPlayerHits(supabase: DBClient, base: SearchBaseRow[]): Promise<Result<PlayerSearchHit[]>> {
+    if (base.length === 0) return Ok([]);
+    const playerIds = base.map(p => p.id);
 
     const {data: stints, error: stintError} = await supabase
         .from("player_team_seasons")
         .select(`
             player_id,
+            joined_at,
             left_at,
             team:teams!team_id(id, name, logo_url, logo_bg_removed, brick_color),
-            season:seasons!season_id(name, league_type, region:regions!region_id(code, name))
+            season:seasons!season_id(name, league_type, end_date, region:regions!region_id(code, name))
         `)
         .in("player_id", playerIds)
         .order("joined_at", {ascending: false});
@@ -450,6 +456,7 @@ export async function findPlayersForSearch(supabase: DBClient, query: string): P
         if (!teamByPlayer.has(row.player_id)
             && row.left_at === null
             && row.season?.league_type === "main"
+            && isSeasonActive(row.season)
             && row.team) {
             teamByPlayer.set(row.player_id, {
                 id: row.team.id,
@@ -458,11 +465,12 @@ export async function findPlayersForSearch(supabase: DBClient, query: string): P
                 logo_bg_removed: row.team.logo_bg_removed,
                 brick_color: row.team.brick_color,
                 season_name: row.season.name,
+                joined_at: row.joined_at,
             });
         }
     }
 
-    const results: PlayerSearchHit[] = topPlayers.map(p => {
+    const results: PlayerSearchHit[] = base.map(p => {
         const region = regionByPlayer.get(p.id) ?? null;
         return {
             id: p.id,
@@ -477,6 +485,57 @@ export async function findPlayersForSearch(supabase: DBClient, query: string): P
     });
 
     return Ok(results);
+}
+
+/**
+ * Public player search. Reuses the fuzzy-similarity RPC, then enriches each hit.
+ * Deliberately independent of findPlayersBySimilarity so the admin callers stay untouched.
+ */
+export async function findPlayersForSearch(supabase: DBClient, query: string): Promise<Result<PlayerSearchHit[]>> {
+    const {data, error} = await supabase.rpc('search_players_with_similarity', {
+        search_term: query.toLowerCase()
+    });
+
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    if (!data || data.length === 0) return Ok([]);
+
+    const topPlayers = data.slice(0, SEARCH_RESULT_LIMIT);
+    return enrichPlayerHits(supabase, topPlayers);
+}
+
+/**
+ * Default (empty-query) player list: the N most-recently-rostered distinct players.
+ * Scans the newest `RECENT_STINT_SCAN` stints and dedupes in JS — correct at CVRN scale;
+ * bump the scan constant if degenerate data (few players holding all newest stints) bites.
+ */
+export async function findRecentPlayers(supabase: DBClient, limit = SEARCH_RESULT_LIMIT): Promise<Result<PlayerSearchHit[]>> {
+    const {data: recent, error} = await supabase
+        .from("player_team_seasons")
+        .select("player_id")
+        .order("joined_at", {ascending: false})
+        .limit(RECENT_STINT_SCAN);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+
+    const orderedIds: string[] = [];
+    const seen = new Set<string>();
+    for (const r of recent ?? []) {
+        if (seen.has(r.player_id)) continue;
+        seen.add(r.player_id);
+        orderedIds.push(r.player_id);
+        if (orderedIds.length >= limit) break;
+    }
+    if (orderedIds.length === 0) return Ok([]);
+
+    const {data: players, error: pErr} = await supabase
+        .from("players")
+        .select("id, roblox_user_id, username, display_name, avatar_url")
+        .in("id", orderedIds);
+    if (pErr) return Err(serializeError(pErr, "DB_ERROR"));
+
+    // Re-sort to orderedIds order (.in() doesn't preserve it), then enrich.
+    const byId = new Map((players ?? []).map(p => [p.id, p]));
+    const base = orderedIds.map(id => byId.get(id)).filter(Boolean) as SearchBaseRow[];
+    return enrichPlayerHits(supabase, base);
 }
 
 export async function findPlayerByExactUsername(supabase: DBClient, username: string): Promise<Result<PlayerSummary | null>> {
