@@ -8,6 +8,8 @@ import {
     removePlayerFromTeamService,
     getPlayersByIds,
     searchPlayersInDatabase,
+    searchPlayersForPublic,
+    getRecentPlayersForPublic,
     addExistingPlayerToTeam,
     getPlayerByExactUsername,
     setPlayerRoleService,
@@ -71,6 +73,18 @@ export async function searchPlayersInDatabaseAction(input: unknown) {
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return searchPlayersInDatabase(supabase, parsed.data);
+}
+
+export async function searchPlayersForPublicAction(input: unknown) {
+    const parsed = z.object({query: z.string().min(1)}).safeParse(input);
+    if (!parsed.success) return Err({message: "Search query must not be empty", code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return searchPlayersForPublic(supabase, parsed.data);
+}
+
+export async function getRecentPlayersForPublicAction() {
+    const supabase = await createServerSupabase();
+    return getRecentPlayersForPublic(supabase);
 }
 
 export async function addExistingPlayerToTeamAction(input: unknown) {

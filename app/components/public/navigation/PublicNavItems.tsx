@@ -11,6 +11,7 @@ const NAV_PAGES = [
     { page: "standings", label: "Standings" },
     { page: "playoffs", label: "Playoffs" },
     { page: "teams", label: "Teams" },
+    { page: "players", label: "Players" },
     { page: "media", label: "Media" },
     { page: "archive", label: "Archive" },
 ];
@@ -59,7 +60,9 @@ export default function PublicNavItems({
             {NAV_PAGES.map((item) => {
                 const href = item.page === "archive"
                     ? "/archive"
-                    : hasEffectiveContext
+                    : item.page === "players"
+                        ? "/players"
+                        : hasEffectiveContext
                         ? item.page === "home"
                             ? prefix
                             : `${prefix}/${item.page}`
@@ -67,11 +70,13 @@ export default function PublicNavItems({
                             ? "/select"
                             : `/select?next=${item.page}`;
                 const base = `/${params.region}/${params.season}`;
-                const isActive = hasContext
-                    ? item.page === "home"
-                        ? pathname === base
-                        : pathname.startsWith(`${base}/${item.page}`)
-                    : pathname === `/${item.page}`;
+                const isActive = item.page === "players"
+                    ? pathname.startsWith("/players")
+                    : hasContext
+                        ? item.page === "home"
+                            ? pathname === base
+                            : pathname.startsWith(`${base}/${item.page}`)
+                        : pathname === `/${item.page}`;
                 return (
                     <Link
                         key={item.page}

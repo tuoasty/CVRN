@@ -42,6 +42,30 @@ export interface PlayerWithTeamInfo {
     season_team_name?: string | null;
 }
 
+/**
+ * Result row for the public player search page. Region is always populated from the
+ * player's most-recent stint (any league); `team` is only their most-recent *active
+ * main-league* team, and is null when they have none.
+ */
+export interface PlayerSearchHit {
+    id: string;
+    roblox_user_id: string;
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+    region_code: string | null;
+    region_name: string | null;
+    team: {
+        id: string;
+        name: string;
+        logo_url: string | null;
+        logo_bg_removed: boolean;
+        brick_color: string | null;
+        season_name: string;
+        joined_at: string;
+    } | null;
+}
+
 export interface PlayerWithRole {
     id: string;
     roblox_user_id: string;
