@@ -27,39 +27,12 @@ export default function StandingsPreview({
                                                     seasonSlug,
                                                     standingMethod = "lvr",
                                                 }: StandingsPreviewProps) {
+    // Ranking logic lives in the standings view's rank column — the single source of truth.
     const topStandings = useMemo(() => {
         return [...standings]
-            .sort((a, b) => {
-                const winsA = a.wins || 0;
-                const winsB = b.wins || 0;
-                if (winsB !== winsA) return winsB - winsA;
-
-                const lossesA = a.losses || 0;
-                const lossesB = b.losses || 0;
-                if (lossesA !== lossesB) return lossesA - lossesB;
-
-                if (standingMethod === "points") {
-                    const ptsA = (a.total_points || 0) + (a.total_bonus || 0);
-                    const ptsB = (b.total_points || 0) + (b.total_bonus || 0);
-                    if (ptsB !== ptsA) return ptsB - ptsA;
-                    return (b.sets_won || 0) - (a.sets_won || 0);
-                }
-
-                if (standingMethod === "points_without_bonus") {
-                    const ptsA = a.total_points || 0;
-                    const ptsB = b.total_points || 0;
-                    if (ptsB !== ptsA) return ptsB - ptsA;
-                    return (b.last_round_point_diff || 0) - (a.last_round_point_diff || 0);
-                }
-
-                const setsWonA = a.sets_won || 0;
-                const setsWonB = b.sets_won || 0;
-                if (setsWonB !== setsWonA) return setsWonB - setsWonA;
-
-                return (b.total_lvr || 0) - (a.total_lvr || 0);
-            })
+            .sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER))
             .slice(0, 8);
-    }, [standings, standingMethod]);
+    }, [standings]);
 
     const standingsHref = buildPublicStandingsHref({ regionCode, seasonSlug });
 
