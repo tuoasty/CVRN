@@ -21,10 +21,11 @@ export function usePlayerSearch(query: string) {
     const key: [string, string] | null = trimmed
         ? [playerSearchKey(trimmed), trimmed]
         : null
-    const { data, error, isLoading } = useSWR(key, fetchPlayerSearch, { keepPreviousData: true })
+    const { data, error, isLoading, mutate } = useSWR(key, fetchPlayerSearch, { keepPreviousData: true })
     return {
         players:   data ?? [],
         isLoading: isLoading && !!key,
         error,
+        retry:     () => mutate(),
     }
 }
