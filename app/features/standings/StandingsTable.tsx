@@ -25,40 +25,14 @@ type StandingsTableProps = {
 export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, playinTeams = 8, regionCode, seasonSlug, standingMethod = "lvr" }: StandingsTableProps) {
     const isPointsMethod = standingMethod === "points" || standingMethod === "points_without_bonus";
 
+    // Ranking logic lives in the standings view's rank column — the single source of truth.
     const sortedStandings = useMemo(() => {
         if (standings.length === 0) return [];
 
-        return [...standings].sort((a, b) => {
-            const winsA = a.wins || 0;
-            const winsB = b.wins || 0;
-            if (winsB !== winsA) return winsB - winsA;
-
-            const lossesA = a.losses || 0;
-            const lossesB = b.losses || 0;
-            if (lossesA !== lossesB) return lossesA - lossesB;
-
-            if (standingMethod === "points") {
-                const ptsA = (a.total_points || 0) + (a.total_bonus || 0);
-                const ptsB = (b.total_points || 0) + (b.total_bonus || 0);
-                if (ptsB !== ptsA) return ptsB - ptsA;
-                return (b.sets_won || 0) - (a.sets_won || 0);
-            }
-
-            if (standingMethod === "points_without_bonus") {
-                const ptsA = a.total_points || 0;
-                const ptsB = b.total_points || 0;
-                if (ptsB !== ptsA) return ptsB - ptsA;
-                // Hidden tiebreaker: raw scored-point differential of each team's most recent match.
-                return (b.last_round_point_diff || 0) - (a.last_round_point_diff || 0);
-            }
-
-            const lvrA = a.total_lvr || 0;
-            const lvrB = b.total_lvr || 0;
-            if (lvrB !== lvrA) return lvrB - lvrA;
-
-            return (b.sets_won || 0) - (a.sets_won || 0);
-        });
-    }, [standings, standingMethod]);
+        return [...standings].sort(
+            (a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER)
+        );
+    }, [standings]);
 
     const getQualificationStatus = (rank: number) => {
         if (rank <= qualifiedTeams) return "qualified";
