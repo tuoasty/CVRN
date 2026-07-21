@@ -43,12 +43,30 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL(`/${region}/${season}`, request.url));
     }
 
-    request.headers.set("x-pathname", pathname);
     return updateSession(request);
 }
 
+// Scoped deliberately: updateSession() is a Supabase auth round-trip and only /admin and
+// /auth need it. The remaining entries exist solely so the legacy redirects above still
+// fire. A catch-all matcher here runs on every public page view, every server action POST
+// and every prefetch — which is pure invocation cost on traffic that has no session.
 export const config = {
     matcher: [
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+        // Session refresh
+        "/admin/:path*",
+        "/auth/:path*",
+        // Legacy flat list routes → "/"
+        "/home",
+        "/matches",
+        "/standings",
+        "/teams",
+        "/playoffs",
+        "/media",
+        // Legacy detail routes → nested equivalents
+        "/matches/:region/:season/:code/:teams",
+        "/teams/:region/:season/:teamName",
+        "/archive/:region/:slug",
+        // Legacy season home → bare season path
+        "/:region/:season/home",
     ],
 };

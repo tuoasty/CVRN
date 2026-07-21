@@ -76,7 +76,9 @@ export default function RootLayout({
             </SWRProvider>
             <Toaster/>
             <Analytics/>
-            <SpeedInsights/>
+            {/* Off by default: Speed Insights bills per pageview and was 160% over the
+                Hobby quota. Set NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS=1 to re-enable. */}
+            {process.env.NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS === "1" && <SpeedInsights/>}
         </ThemeProvider>
         </body>
         </html>
