@@ -1,19 +1,12 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import AvatarImage from "@/app/components/ui/AvatarImage";
-import { useRouter } from "next/navigation";
+import BackButton from "@/app/components/public/BackButton";
 import { buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
-import { useTeamWithPlayers } from "@/app/hooks/useTeams";
-import { useTeamNameHistory } from "@/app/hooks/useTeamNameHistory";
-import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
-import { Button } from "@/app/components/ui/button";
-import { Skeleton } from "@/app/components/ui/skeleton";
-import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getLogoClassName } from "@/app/lib/logoClass";
 import { PlayerWithRole } from "@/server/domains/player";
+import { TeamWithRegion, TeamNameHistoryEntry } from "@/server/domains/team";
 
 const LEADERSHIP_CONFIG = {
     captain:       { label: "Captain",       from: "#9e6bff", to: "#9fc1ff", textColor: "#ffffff" },
@@ -158,86 +151,20 @@ function PublicOpenSlotCard({ index }: { index: number }) {
 }
 
 type Props = {
-    regionCode: string;
-    seasonSlug: string;
-    teamSlug: string;
+    team: TeamWithRegion;
+    players: PlayerWithRole[];
+    history: TeamNameHistoryEntry[];
 };
 
-export default function PublicTeamDetailPage({
-    regionCode: regionCodeProp,
-    seasonSlug: seasonSlugProp,
-    teamSlug: teamSlugProp,
-}: Props) {
-    const router = useRouter();
-
-    const regionCode = safeDecodeURIComponent(regionCodeProp).toLowerCase();
-    const seasonSlug = safeDecodeURIComponent(seasonSlugProp).toLowerCase();
-    const teamSlug = safeDecodeURIComponent(teamSlugProp).toLowerCase();
-
-    const { team: teamData, players, isLoading: loading, error: displayError } = useTeamWithPlayers(teamSlug, seasonSlug, regionCode);
-    const { history } = useTeamNameHistory(teamData?.id ?? null);
-
-    if (loading && !teamData) {
-        return (
-            <div className="page-wide space-y-6 py-6">
-                {/* Header */}
-                <div className="pt-2 pb-4">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Skeleton className="h-8 w-28 rounded-sm" />
-                    </div>
-                    <div className="flex items-center gap-5">
-                        <Skeleton className="w-36 h-36 sm:w-44 sm:h-44 shrink-0 rounded-sm" />
-                        <div className="space-y-2">
-                            <Skeleton className="h-10 w-52 rounded-sm" />
-                            <Skeleton className="h-3 w-32 rounded-sm" />
-                            <Skeleton className="h-4 w-44 rounded-sm" />
-                            <Skeleton className="h-3 w-28 rounded-sm" />
-                        </div>
-                    </div>
-                </div>
-                {/* Roster */}
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <Skeleton className="h-3 w-16 rounded-sm" />
-                        <Skeleton className="h-3 w-10 rounded-sm" />
-                    </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-9 gap-2 sm:gap-3">
-                        {/* Leadership: 1/3 width square on mobile, 1/9 on desktop */}
-                        {[...Array(3)].map((_, i) => (
-                            <Skeleton key={i} className="aspect-square rounded-md" />
-                        ))}
-                        {/* Players: full-width row on mobile (~60px), square on desktop */}
-                        {[...Array(9)].map((_, i) => (
-                            <div key={i + 3} className="col-span-3 sm:col-span-1 rounded-md overflow-hidden border border-border">
-                                <Skeleton className="h-[60px] sm:h-auto sm:aspect-square rounded-none" />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (displayError) {
-        return (
-            <div className="page-wide py-6">
-                <div className="panel p-6">
-                    <p className="text-destructive">{displayError}</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (!teamData) {
-        return (
-            <div className="page-wide py-6">
-                <div className="panel p-6">
-                    <p className="text-muted-foreground">Team not found</p>
-                </div>
-            </div>
-        );
-    }
-
+/**
+ * Presentational only. Data is resolved and cached on the server by the route above
+ * (app/(public)/[region]/[season]/teams/[teamName]/page.tsx) — this used to fetch via
+ * SWR, which meant two waterfalled server-action POSTs per view that no CDN could cache.
+ *
+ * The loading state now lives in the route's loading.tsx, and missing teams are handled
+ * by notFound() on the server, so neither is duplicated here.
+ */
+export default function PublicTeamDetailPage({ team: teamData, players, history }: Props) {
     const regionName = teamData.seasons?.regions?.name || "Unknown Region";
     const regionCodeDisplay = teamData.seasons?.regions?.code?.toUpperCase() || "??";
     const seasonName = teamData.seasons?.name || "Unknown Season";
@@ -261,15 +188,7 @@ export default function PublicTeamDetailPage({
             {/* Header */}
             <div className="pt-2 pb-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.back()}
-                        className="rounded-sm -ml-2"
-                    >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Back
-                    </Button>
+                    <BackButton />
                 </div>
                 <div className="flex items-center gap-5">
                     {teamData.logo_url && (

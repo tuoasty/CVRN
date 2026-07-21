@@ -3,8 +3,6 @@ import {DBClient} from "@/shared/types/db";
 import {PlayerWithCurrentTeam} from "../types";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {lazySyncPlayer} from "../helpers/lazySyncPlayer";
-import {runInBackground} from "@/server/utils/runInBackground";
 import { isSeasonActive } from "../../season/helpers/isSeasonActive";
 
 export async function getPlayerByUsername(
@@ -24,8 +22,10 @@ export async function getPlayerByUsername(
         }
         if (!player) return Ok(null);
 
-        runInBackground(() => lazySyncPlayer(supabase, player), "lazySyncPlayer");
-
+        // Roblox profile sync deliberately does NOT run here. This query backs the public
+        // player page, so every concurrent viewer of a stale profile fired the same
+        // outbound Roblox calls (waitUntil keeps the invocation alive to do it). Freshness
+        // is now owned by the sync-players cron. Admin write paths still sync eagerly.
         const {data: rows} = await supabase
             .from("player_team_seasons")
             .select(`

@@ -2,17 +2,20 @@ import { Suspense } from "react";
 import RedirectCleaner from "@/app/components/providers/RedirectCleaner";
 import HeroSection from "@/app/components/public/landing/HeroSection";
 import CVRNInfo from "@/app/components/public/landing/CVRNInfo";
-import { getAllSeasonsAction } from "@/app/actions/season.actions";
-import { getAllRegionsAction } from "@/app/actions/region.actions";
+import { getCachedRegions, getCachedSeasons } from "@/server/cache/publicReads";
+import { logger } from "@/server/utils/logger";
 
 export default async function PublicHome() {
-    const [regionsResult, seasonsResult] = await Promise.all([
-        getAllRegionsAction(),
-        getAllSeasonsAction(),
+    const [regions, seasons] = await Promise.all([
+        getCachedRegions().catch((error) => {
+            logger.error({ error }, "PublicHome: failed to load regions");
+            return [];
+        }),
+        getCachedSeasons().catch((error) => {
+            logger.error({ error }, "PublicHome: failed to load seasons");
+            return [];
+        }),
     ]);
-
-    const regions = regionsResult.ok ? regionsResult.value : [];
-    const seasons = seasonsResult.ok ? seasonsResult.value : [];
 
     const active = seasons.filter(s => !s.end_date || new Date(s.end_date) > new Date());
 

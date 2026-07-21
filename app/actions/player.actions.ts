@@ -1,5 +1,11 @@
 "use server"
 
+import {revalidatePublicData} from "@/server/cache/revalidate";
+import {CACHE_TAGS} from "@/server/cache/tags";
+
+// Rosters render on the public team page, so roster edits invalidate teams too.
+const ROSTER_TAGS = [CACHE_TAGS.players, CACHE_TAGS.teams];
+
 import {z} from "zod"
 import {
     savePlayerToTeam,
@@ -44,14 +50,18 @@ export async function savePlayerToTeamAction(input: unknown) {
     const parsed = SavePlayerToTeamSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return savePlayerToTeam(supabase, parsed.data);
+    const result = await savePlayerToTeam(supabase, parsed.data);
+    if (result.ok) revalidatePublicData(ROSTER_TAGS);
+    return result;
 }
 
 export async function removePlayerFromTeamAction(input: unknown) {
     const parsed = RemovePlayerFromTeamSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return removePlayerFromTeamService(supabase, parsed.data);
+    const result = await removePlayerFromTeamService(supabase, parsed.data);
+    if (result.ok) revalidatePublicData(ROSTER_TAGS);
+    return result;
 }
 
 export async function getTeamPlayersAction(input: unknown) {
@@ -91,7 +101,9 @@ export async function addExistingPlayerToTeamAction(input: unknown) {
     const parsed = AddExistingPlayerToTeamSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return addExistingPlayerToTeam(supabase, parsed.data);
+    const result = await addExistingPlayerToTeam(supabase, parsed.data);
+    if (result.ok) revalidatePublicData(ROSTER_TAGS);
+    return result;
 }
 
 export async function getPlayerByExactUsernameAction(input: unknown) {
@@ -105,14 +117,18 @@ export async function setPlayerRoleAction(input: unknown) {
     const parsed = SetPlayerRoleSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return setPlayerRoleService(supabase, parsed.data);
+    const result = await setPlayerRoleService(supabase, parsed.data);
+    if (result.ok) revalidatePublicData(ROSTER_TAGS);
+    return result;
 }
 
 export async function transferCaptainAction(input: unknown) {
     const parsed = TransferCaptainSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return transferCaptainService(supabase, parsed.data);
+    const result = await transferCaptainService(supabase, parsed.data);
+    if (result.ok) revalidatePublicData(ROSTER_TAGS);
+    return result;
 }
 
 export async function getPlayerDetailAction(username: string): Promise<Result<PlayerDetail>> {

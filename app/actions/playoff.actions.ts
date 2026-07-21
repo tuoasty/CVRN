@@ -1,5 +1,11 @@
 "use server"
 
+import {revalidatePublicData} from "@/server/cache/revalidate";
+import {CACHE_TAGS} from "@/server/cache/tags";
+
+// Bracket generation and reset both create/delete playoff match rows.
+const PLAYOFF_TAGS = [CACHE_TAGS.playoffs, CACHE_TAGS.matches];
+
 import {z} from "zod"
 import {createServerSupabase} from "@/server/supabase/server";
 import {Err} from "@/shared/types/result";
@@ -18,7 +24,9 @@ export async function generatePlayoffBracketAction(input: unknown) {
     const parsed = GeneratePlayoffBracketSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return buildPlayoffBracket(supabase, parsed.data);
+    const result = await buildPlayoffBracket(supabase, parsed.data);
+    if (result.ok) revalidatePublicData(PLAYOFF_TAGS);
+    return result;
 }
 
 export async function getPlayoffBracketBySeasonIdAction(seasonId: string) {
@@ -39,5 +47,7 @@ export async function resetPlayoffBracketsAction(seasonId: string) {
     const supabase = await createServerSupabase();
     const guard = await requireSuperAdmin(supabase);
     if (!guard.ok) return guard;
-    return resetPlayoffBracketsService(supabase, parsed.data);
+    const result = await resetPlayoffBracketsService(supabase, parsed.data);
+    if (result.ok) revalidatePublicData(PLAYOFF_TAGS);
+    return result;
 }

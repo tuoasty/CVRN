@@ -1,24 +1,30 @@
-"use client";
-
-import { useMemo } from "react";
-import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
-import { useStandings } from "@/app/hooks/useStandings";
 import { StandingsTable } from "@/app/features/standings/StandingsTable";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Trophy } from "lucide-react";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 import { StandingMethod } from "@/shared/types/standing";
+import { StandingWithInfo } from "@/server/domains/standing";
+import type { Region } from "@/shared/types/db";
+import type { SeasonWithPlayoffConfig } from "@/server/domains/season";
 
-export default function StandingsPage() {
-    const { season, region } = useSeasonContext();
-    const { standings, isLoading: standingsLoading } = useStandings(season.id, region.id);
+type Props = {
+    season: SeasonWithPlayoffConfig;
+    region: Region;
+    standings: StandingWithInfo[];
+};
 
+/**
+ * Presentational only. Standings are fetched and cached on the server by the route above.
+ * This previously read them through SWR, which meant an uncacheable server-action POST on
+ * every view — so statically rendering the shell saved nothing.
+ */
+export default function StandingsPage({ season, region, standings }: Props) {
     const regionCode = region.code;
     const seasonSlug = season.slug;
 
     const standingMethod = region.standing_method as StandingMethod;
     const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
-    const stats = useMemo(() => {
+    const stats = (() => {
         if (standings.length === 0) return null;
         const totalTeams = standings.length;
         const key = (s: typeof standings[number]) =>
@@ -30,7 +36,7 @@ export default function StandingsPage() {
         const avg = standings.reduce((sum, s) => sum + key(s), 0) / totalTeams;
         const top = Math.max(...standings.map(key));
         return { totalTeams, avg, top };
-    }, [standings, standingMethod]);
+    })();
 
     const subtitle = `${season.name} · ${region.name}`;
 
@@ -73,7 +79,7 @@ export default function StandingsPage() {
 
                 <StandingsTable
                     standings={standings}
-                    isLoading={standingsLoading}
+                    isLoading={false}
                     qualifiedTeams={season.playoff_configs?.qualified_teams}
                     playinTeams={season.playoff_configs?.playin_teams}
                     regionCode={regionCode}

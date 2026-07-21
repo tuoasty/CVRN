@@ -3,8 +3,6 @@ import {DBClient, Player} from "@/shared/types/db";
 import {TeamPlayersInput, PlayerRole, PlayerWithRole} from "../types";
 import {serializeError} from "@/server/utils/serializeableError";
 import {findAllTeamPlayers} from "@/server/db/players.repo";
-import {batchSyncPlayers} from "../helpers/batchSyncPlayers";
-import {runInBackground} from "@/server/utils/runInBackground";
 import {logger} from "@/server/utils/logger";
 
 export async function getTeamPlayers(
@@ -19,10 +17,12 @@ export async function getTeamPlayers(
         }
 
         const records = result.value.filter(r => r.player);
-        const players = records.map(r => r.player!) as Player[];
 
-        runInBackground(() => batchSyncPlayers(supabase, players), "batchSyncPlayers");
-
+        // Roblox profile sync deliberately does NOT run here. This backs the public team
+        // page, where every concurrent viewer of a stale roster fired the same outbound
+        // Roblox calls — batchSyncPlayers filters for staleness but never claims the work,
+        // so N viewers meant N identical syncs. Freshness is owned by the sync-players
+        // cron; admin write paths still sync eagerly.
         const withRoles: PlayerWithRole[] = records.map(record => {
             const role: PlayerRole = (record.role as PlayerRole) || 'player';
             return {...(record.player as Player), role};
