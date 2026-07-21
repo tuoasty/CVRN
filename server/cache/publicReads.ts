@@ -22,7 +22,7 @@ import {
 } from "@/server/domains/team";
 import {getStandings} from "@/server/domains/standing";
 import {getPlayoffBracketBySeasonId} from "@/server/domains/playoff";
-import {getUpcomingMatches, getRecentMatches} from "@/server/domains/match";
+import {getUpcomingMatches, getRecentMatches, getMatchDetail} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {Result} from "@/shared/types/result";
@@ -214,6 +214,20 @@ export const getCachedRecentMatches = unstable_cache(
         unwrap(await getRecentMatches(createPublicClient(), seasonId, limit), "getCachedRecentMatches"),
     ["public:recent-matches"],
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+// Box scores live here too, so per-set stats invalidate alongside the match itself.
+export const getCachedMatchDetail = unstable_cache(
+    async (regionCode: string, seasonSlug: string, matchCode: string) =>
+        unwrapNullable(
+            await getMatchDetail(createPublicClient(), {regionCode, seasonSlug, matchCode}),
+            "getCachedMatchDetail",
+        ),
+    ["public:match-detail"],
+    {
+        tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players],
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+    },
 );
 
 export const getCachedSeasonPodium = unstable_cache(
