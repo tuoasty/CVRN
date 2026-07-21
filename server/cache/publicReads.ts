@@ -2,7 +2,12 @@ import "server-only";
 import {unstable_cache} from "next/cache";
 import {createPublicClient} from "@/server/supabase/server-public";
 import {getAllRegions, getRegionByCode} from "@/server/domains/region";
-import {getAllSeasons, getSeasonBySlugAndRegion, getArchive} from "@/server/domains/season";
+import {
+    getAllSeasons,
+    getSeasonBySlugAndRegion,
+    getArchive,
+    getSeasonHistoryDetail,
+} from "@/server/domains/season";
 import {
     getPlayerByUsername,
     getPlayerSeasonStats,
@@ -10,8 +15,16 @@ import {
     getPlayerTeamHistory,
 } from "@/server/domains/player";
 import type {PlayerDetail} from "@/server/domains/player";
-import {getTeamWithRegionAndPlayers, getTeamNameHistory} from "@/server/domains/team";
+import {
+    getTeamWithRegionAndPlayers,
+    getTeamNameHistory,
+    getAllTeamsWithRegions,
+} from "@/server/domains/team";
 import {getStandings} from "@/server/domains/standing";
+import {getPlayoffBracketBySeasonId} from "@/server/domains/playoff";
+import {getUpcomingMatches, getRecentMatches} from "@/server/domains/match";
+import {getSeasonPodium} from "@/server/domains/season";
+import {getAllMediaPosts} from "@/server/domains/media";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS} from "./tags";
 
@@ -82,6 +95,21 @@ export const getCachedArchive = unstable_cache(
     {tags: [CACHE_TAGS.seasons], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
+// Podium and awards for one archived season. Tagged with teams and players because the
+// detail embeds team logos and player avatars.
+export const getCachedSeasonHistoryDetail = unstable_cache(
+    async (slug: string, regionCode: string) =>
+        unwrapNullable(
+            await getSeasonHistoryDetail(createPublicClient(), slug, regionCode),
+            "getCachedSeasonHistoryDetail",
+        ),
+    ["public:season-history-detail"],
+    {
+        tags: [CACHE_TAGS.seasons, CACHE_TAGS.teams, CACHE_TAGS.players],
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+    },
+);
+
 // Arguments participate in the cache key, so each region code gets its own entry.
 export const getCachedRegionByCode = unstable_cache(
     async (code: string) =>
@@ -125,6 +153,18 @@ export const getCachedPlayerDetail = unstable_cache(
     {tags: [CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
+/**
+ * All teams with their nested season/region. Callers filter by season in memory — the set
+ * is ~220 rows and the card grid needs the nested region shape this query already builds.
+ * Tagged with players too: captain and playerCount derive from rosters.
+ */
+export const getCachedTeamsWithRegions = unstable_cache(
+    async () =>
+        unwrap(await getAllTeamsWithRegions(createPublicClient()), "getCachedTeamsWithRegions"),
+    ["public:teams-with-regions"],
+    {tags: [CACHE_TAGS.teams, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
 export const getCachedTeamWithPlayers = unstable_cache(
     async (slug: string, seasonId: string) =>
         unwrapNullable(
@@ -145,6 +185,48 @@ export const getCachedStandings = unstable_cache(
         tags: [CACHE_TAGS.standings, CACHE_TAGS.matches],
         revalidate: PUBLIC_REVALIDATE_SECONDS,
     },
+);
+
+// Brackets advance when matches complete (advance_playoff_winner runs inside the RPC),
+// so match mutations must invalidate this too.
+export const getCachedPlayoffBrackets = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(
+            await getPlayoffBracketBySeasonId(createPublicClient(), seasonId),
+            "getCachedPlayoffBrackets",
+        ),
+    ["public:playoff-brackets"],
+    {tags: [CACHE_TAGS.playoffs, CACHE_TAGS.matches], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedUpcomingMatches = unstable_cache(
+    async (seasonId: string, limit: number) =>
+        unwrap(
+            await getUpcomingMatches(createPublicClient(), seasonId, limit),
+            "getCachedUpcomingMatches",
+        ),
+    ["public:upcoming-matches"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedRecentMatches = unstable_cache(
+    async (seasonId: string, limit: number) =>
+        unwrap(await getRecentMatches(createPublicClient(), seasonId, limit), "getCachedRecentMatches"),
+    ["public:recent-matches"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedSeasonPodium = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(await getSeasonPodium(createPublicClient(), seasonId), "getCachedSeasonPodium"),
+    ["public:season-podium"],
+    {tags: [CACHE_TAGS.seasons, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedAllMediaPosts = unstable_cache(
+    async () => unwrap(await getAllMediaPosts(createPublicClient(), {}), "getCachedAllMediaPosts"),
+    ["public:media-posts"],
+    {tags: [CACHE_TAGS.media], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedTeamNameHistory = unstable_cache(

@@ -4,8 +4,6 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Image as ImageIcon, Play, ArrowRight } from 'lucide-react'
-import { Skeleton } from '@/app/components/ui/skeleton'
-import { useAllMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
@@ -18,8 +16,11 @@ import type { MediaPost } from '@/server/domains/media'
 // video (0.75u): aspect-ratio 3/1   (compact row, thumbnail left + text right)
 // All three scale together with sidebar width.
 
-export default function MediaSidebar() {
-    const { posts, isLoading } = useAllMediaPosts()
+/**
+ * Renders on every home page view, so its SWR fetch was a per-view server-action POST on
+ * the busiest route. Posts now arrive from the route; the dialog state stays client-side.
+ */
+export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
 
@@ -29,18 +30,6 @@ export default function MediaSidebar() {
     const clip   = pinned.find(p => p.type === 'clip') ?? null
     const hasAny = !!gfx || videos.length > 0 || !!clip
 
-    if (isLoading) {
-        return (
-            <div className="panel p-3 space-y-3">
-                <div className="rounded-sm overflow-hidden border border-border/30">
-                    <Skeleton className="w-full" style={{ aspectRatio: '16/9' }} />
-                    <Skeleton className="h-7 w-full rounded-none" />
-                </div>
-                <Skeleton className="w-full rounded-sm" style={{ aspectRatio: '3/1' }} />
-                <Skeleton className="w-full rounded-sm" style={{ aspectRatio: '9/16' }} />
-            </div>
-        )
-    }
 
     if (!hasAny) {
         return (
