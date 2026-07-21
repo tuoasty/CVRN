@@ -105,7 +105,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                 Forfeit win: <span className="font-mono text-foreground">2 + 0.5·sets + 1</span>
                             </p>
                             <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
-                                Rank: Wins → fewer Losses → Points → Set Wins
+                                Rank: Wins → Points → Set Wins → fewer Losses
                             </p>
                         </div>
                     ) : isPointsNoBonus ? (
@@ -126,7 +126,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                 Forfeit win: <span className="font-mono text-foreground">1.0</span>
                             </p>
                             <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
-                                Rank: Wins → fewer Losses → Points
+                                Rank: Points → last match point diff
                             </p>
                         </div>
                     ) : (
@@ -143,7 +143,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                 <div>Forfeit: win <span className="font-mono text-foreground">+5</span>, loss <span className="font-mono text-foreground">−10</span></div>
                             </div>
                             <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
-                                Rank: Wins → fewer Losses → LVR → Set Wins
+                                Rank: LVR
                             </p>
                         </div>
                     )}
