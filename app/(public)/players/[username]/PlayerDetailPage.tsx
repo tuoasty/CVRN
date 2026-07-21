@@ -282,27 +282,27 @@ function TeamLogoLink({award}: {award: PlayerAward}) {
     }) : null;
     if (!award.team_logo_url) return <span className="text-muted-foreground">—</span>;
     const logo = (
-        <div className="relative w-6 h-6 shrink-0 rounded-sm overflow-hidden">
+        <div className="relative w-9 h-9 shrink-0 overflow-hidden">
             <Image
                 src={award.team_logo_url}
                 alt={award.team_name ?? ""}
                 fill
-                sizes="24px"
-                className={cn("object-contain", getLogoClassName(award.team_logo_bg_removed))}
+                sizes="36px"
+                className={getLogoClassName(award.team_logo_bg_removed)}
                 unoptimized
             />
         </div>
     );
     if (!href) return logo;
     return (
-        <Link href={href} className="block w-6 h-6 rounded-sm overflow-hidden hover:opacity-70 transition-opacity">
+        <Link href={href} className="block w-9 h-9 overflow-hidden hover:opacity-70 transition-opacity">
             <div className="relative w-full h-full">
                 <Image
                     src={award.team_logo_url}
                     alt={award.team_name ?? ""}
                     fill
-                    sizes="24px"
-                    className={cn("object-contain", getLogoClassName(award.team_logo_bg_removed))}
+                    sizes="36px"
+                    className={getLogoClassName(award.team_logo_bg_removed)}
                     unoptimized
                 />
             </div>
@@ -413,13 +413,13 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
                 style={{backgroundColor: entry.team_brick_color ?? "hsl(var(--border))"}}
             />
             {entry.team_logo_url && (
-                <div className="relative w-7 h-7 rounded-sm overflow-hidden shrink-0">
+                <div className="relative w-9 h-9 overflow-hidden shrink-0">
                     <Image
                         src={entry.team_logo_url}
                         alt={entry.team_name}
                         fill
-                        sizes="28px"
-                        className={cn("object-contain", getLogoClassName(entry.team_logo_bg_removed))}
+                        sizes="36px"
+                        className={getLogoClassName(entry.team_logo_bg_removed)}
                         unoptimized
                     />
                 </div>
