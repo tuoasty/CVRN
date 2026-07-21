@@ -1,5 +1,8 @@
 "use server"
 
+import {revalidatePublicData} from "@/server/cache/revalidate";
+import {CACHE_TAGS} from "@/server/cache/tags";
+
 import { Err, Result } from '@/shared/types/result'
 import { createServerSupabase } from '@/server/supabase/server'
 import {
@@ -41,7 +44,7 @@ export async function createMediaPostAction(formData: FormData): Promise<Result<
 
     const imageFile = formData.get('imageFile') as File | null
 
-    return createMediaPost(supabase, {
+    const result = await createMediaPost(supabase, {
         type:        parsed.data.type,
         title:       parsed.data.title,
         description: parsed.data.description ?? null,
@@ -52,6 +55,8 @@ export async function createMediaPostAction(formData: FormData): Promise<Result<
         seasonId:    parsed.data.seasonId || null,
         userId:      user.id,
     })
+    if (result.ok) revalidatePublicData([CACHE_TAGS.media])
+    return result
 }
 
 export async function deleteMediaPostAction(input: unknown): Promise<Result<void>> {
@@ -62,7 +67,9 @@ export async function deleteMediaPostAction(input: unknown): Promise<Result<void
     const user = await requireAuth(supabase)
     if (!user) return Err({ message: 'Not authenticated', code: 'UNAUTHORIZED' })
 
-    return deleteMediaPost(supabase, { postId: parsed.data.postId, userId: user.id })
+    const result = await deleteMediaPost(supabase, { postId: parsed.data.postId, userId: user.id })
+    if (result.ok) revalidatePublicData([CACHE_TAGS.media])
+    return result
 }
 
 export async function getAllMediaPostsAction(filters?: unknown): Promise<Result<MediaPost[]>> {
@@ -96,5 +103,7 @@ export async function togglePinMediaPostAction(input: unknown): Promise<Result<M
     if (!postResult.ok) return postResult
     if (!postResult.value) return Err({ message: 'Post not found', code: 'NOT_FOUND' })
 
-    return togglePinMediaPost(supabase, parsed.data.postId, !postResult.value.is_pinned, postResult.value.type)
+    const result = await togglePinMediaPost(supabase, parsed.data.postId, !postResult.value.is_pinned, postResult.value.type)
+    if (result.ok) revalidatePublicData([CACHE_TAGS.media])
+    return result
 }

@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Trophy, Medal, Award, ChevronLeft, Users } from "lucide-react";
-import { getSeasonHistoryDetailAction } from "@/app/actions/season.actions";
-import { getAllRegionsAction } from "@/app/actions/region.actions";
+import { getCachedSeasonHistoryDetail, getCachedRegions } from "@/server/cache/publicReads";
 import { SeasonDetail } from "@/server/domains/season";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
@@ -407,20 +406,15 @@ function SeasonDetailSkeleton() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: string; regionCode: string; seasonSlug: string }) {
-    const [seasonResult, regionsResult] = await Promise.all([
-        getSeasonHistoryDetailAction(slug, regionCode),
-        getAllRegionsAction(),
+    // Cached reads return null only for a genuine miss and throw on infrastructure
+    // failure, so a Supabase blip can never be cached as a permanent 404.
+    const [season, regions] = await Promise.all([
+        getCachedSeasonHistoryDetail(slug, regionCode),
+        getCachedRegions(),
     ]);
-    
-    clientLogger.debug("ArchivePage", "SeasonResult", seasonResult)
 
-    if (!seasonResult.ok) {
-        if (seasonResult.error.code === "NOT_FOUND") notFound();
-        throw new Error(seasonResult.error.message);
-    }
+    if (!season) notFound();
 
-    const season = seasonResult.value;
-    const regions = regionsResult.ok ? regionsResult.value : [];
     const matchedRegion = regions.find(r => r.code.toLowerCase() === regionCode.toLowerCase());
     if (!matchedRegion || matchedRegion.id !== season.region_id) notFound();
 

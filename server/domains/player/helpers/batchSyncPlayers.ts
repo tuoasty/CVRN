@@ -37,8 +37,6 @@ export async function batchSyncPlayers(
             return Ok(players);
         }
         const userMap = new Map(usersResult.value.map(u => [String(u.id), u]));
-        logger.info({usersResult: avatarsResult}, "batchSyncPlayers: user results");
-        logger.info({avatarsResult: avatarsResult}, "batchSyncPlayers: avatars results");
 
         const avatarMap = new Map<string, string>();
         if (avatarsResult.ok) {

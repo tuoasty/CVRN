@@ -6,6 +6,8 @@ import {z} from "zod"
 import {Result, Err, Ok} from "@/shared/types/result";
 import {getUserRole} from "@/server/db/roles.repo";
 import {revalidatePath} from "next/cache";
+import {revalidatePublicData} from "@/server/cache/revalidate";
+import {CACHE_TAGS} from "@/server/cache/tags";
 import {BUCKETS, STORAGE_PATHS, extractStoragePath} from "@/server/storage/storage.paths";
 import {uploadFile, deleteFile} from "@/server/storage/storage.service";
 import {findTeamById, updateTeamById, findTeamsBySeasonId} from "@/server/db/teams.repo";
@@ -56,7 +58,7 @@ export async function createTeamAction(formData: FormData) {
     const file = formData.get('logo') as File;
     const removeBackground = formData.get('removeBackground') !== 'false';
 
-    return createTeam(supabase, {
+    const result = await createTeam(supabase, {
         name: parsed.data.name,
         logoFile: file,
         seasonId: parsed.data.seasonId,
@@ -67,6 +69,8 @@ export async function createTeamAction(formData: FormData) {
         startingPoints: parsed.data.startingPoints,
         removeBackground,
     });
+    if (result.ok) revalidatePublicData([CACHE_TAGS.teams]);
+    return result;
 }
 
 export async function getAllTeamsAction() {
@@ -90,7 +94,9 @@ export async function deleteTeamAction(input: unknown): Promise<Result<void>> {
     const parsed = TeamIdSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    return deleteTeam(supabase, parsed.data);
+    const result = await deleteTeam(supabase, parsed.data);
+    if (result.ok) revalidatePublicData([CACHE_TAGS.teams, CACHE_TAGS.players]);
+    return result;
 }
 
 export async function getTeamWithPlayersAction(params: unknown): Promise<Result<TeamWithRegionAndPlayers>> {
@@ -139,7 +145,7 @@ export async function updateTeamAction(formData: FormData) {
     const file = formData.get('logo') as File | null;
     const removeBackground = formData.get('removeBackground') !== 'false';
 
-    return updateTeam(supabase, {
+    const result = await updateTeam(supabase, {
         teamId: parsed.data.teamId,
         name: parsed.data.name,
         logoFile: file && file.size > 0 ? file : null,
@@ -150,6 +156,9 @@ export async function updateTeamAction(formData: FormData) {
         startingPoints: parsed.data.startingPoints,
         removeBackground,
     });
+    // Name, colour and logo all render on public team and standings pages.
+    if (result.ok) revalidatePublicData([CACHE_TAGS.teams, CACHE_TAGS.standings]);
+    return result;
 }
 
 export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
@@ -206,5 +215,8 @@ export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
     }
 
     revalidatePath('/admin/teams');
+    // Logos render on team, standings and match pages — this is the manual edit path
+    // that most often needs to show up on the public site immediately.
+    revalidatePublicData([CACHE_TAGS.teams, CACHE_TAGS.standings, CACHE_TAGS.matches]);
     return Ok({ logoUrl: uploadResult.value.url });
 }

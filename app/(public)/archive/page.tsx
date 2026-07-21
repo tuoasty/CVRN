@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Globe, Trophy, Medal } from "lucide-react";
-import { getArchiveAction } from "@/app/actions/season.actions";
-import { getAllRegionsAction } from "@/app/actions/region.actions";
+import { getCachedArchive, getCachedRegions } from "@/server/cache/publicReads";
+import { logger } from "@/server/utils/logger";
 import { ArchiveSeason } from "@/server/domains/season";
 
 const PLACE_META = {
@@ -81,13 +81,16 @@ function SeasonCard({ season, regionCode }: { season: ArchiveSeason; regionCode:
 }
 
 export default async function GlobalArchivePage() {
-    const [archiveResult, regionsResult] = await Promise.all([
-        getArchiveAction(),
-        getAllRegionsAction(),
+    const [archive, regions] = await Promise.all([
+        getCachedArchive().catch((error) => {
+            logger.error({ error }, "GlobalArchivePage: failed to load archive");
+            return [];
+        }),
+        getCachedRegions().catch((error) => {
+            logger.error({ error }, "GlobalArchivePage: failed to load regions");
+            return [];
+        }),
     ]);
-
-    const archive = archiveResult.ok ? archiveResult.value : [];
-    const regions = regionsResult.ok ? regionsResult.value : [];
 
     const byRegion = regions
         .map(r => ({

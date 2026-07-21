@@ -19,7 +19,12 @@ async function fetchBrackets([, seasonId]: [string, string]): Promise<PlayoffBra
     return result.value;
 }
 
-function buildIncomingMap(brackets: PlayoffBracket[]): Map<string, Incoming> {
+/**
+ * Exported so server-fed components can derive the same map without re-fetching.
+ * Kept out of the RSC payload deliberately — a Map crossing the server/client boundary is
+ * avoidable risk when the input array is cheap to re-derive on mount.
+ */
+export function buildIncomingMap(brackets: PlayoffBracket[]): Map<string, Incoming> {
     const map = new Map<string, Incoming>();
     for (const bracket of brackets) {
         if (bracket.next_bracket_id && (bracket.winner_position === "home" || bracket.winner_position === "away")) {

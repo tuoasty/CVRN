@@ -1,35 +1,51 @@
 "use client";
 
 import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
-import { useUpcomingMatches, useRecentMatches } from "@/app/hooks/useMatches";
-import { useTeams } from "@/app/hooks/useTeams";
-import { useSeasonPodium } from "@/app/hooks/useSeasonPodium";
 import { Calendar, Clock, Trophy } from "lucide-react";
-import { Skeleton } from "@/app/components/ui/skeleton";
 import CompactMatchCard from "@/app/(public)/home/CompactMatchCard";
 import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
 import SeasonChampionCard from "@/app/(public)/home/SeasonChampionCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import StandingsPreview from "@/app/(public)/home/StandingsPreview";
 import { StandingMethod } from "@/shared/types/standing";
-import { useStandings } from "@/app/hooks/useStandings";
 import { MatchWithDetails } from "@/server/domains/match";
 import { computeMatchLabels } from "@/app/utils/matchLabel";
 import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
+import type { TeamWithRegion } from "@/server/domains/team";
+import type { StandingWithInfo } from "@/server/domains/standing";
+import type { SeasonPodiumEntryWithTeam } from "@/server/domains/season";
+import type { MediaPost } from "@/server/domains/media";
 
-export default function HomePage() {
+type Props = {
+    teams: TeamWithRegion[];
+    upcomingMatches: MatchWithDetails[];
+    recentMatches: MatchWithDetails[];
+    standings: StandingWithInfo[];
+    podium: SeasonPodiumEntryWithTeam[];
+    mediaPosts: MediaPost[];
+};
+
+/**
+ * Still a client component — season/region come from the layout's context and the child
+ * cards own their own dialog state. What changed is that all six datasets arrive as props
+ * from the route instead of six SWR hooks firing after hydration, which was six
+ * uncacheable server-action POSTs on every view of the most-trafficked page.
+ *
+ * Loading flags are gone with them: data ships with the HTML, so there is nothing to wait
+ * for. The route's loading.tsx covers the server render.
+ */
+export default function HomePage({
+    teams,
+    upcomingMatches,
+    recentMatches,
+    standings,
+    podium,
+    mediaPosts,
+}: Props) {
     const { season, region } = useSeasonContext();
 
-    const selectedSeasonId = season.id;
-    const selectedRegionId = region.id;
     const regionCode = region.code.toLowerCase();
     const seasonSlug = season.slug;
-
-    const { teams, isLoading: loadingTeams } = useTeams();
-
-    const { matches: upcomingMatches, isLoading: loadingUpcoming } = useUpcomingMatches(selectedSeasonId, 5);
-    const { matches: recentMatches, isLoading: loadingRecent } = useRecentMatches(selectedSeasonId, 6);
-    const { standings, isLoading: standingsLoading } = useStandings(selectedSeasonId, selectedRegionId);
 
     const isSeasonCompleted = season.end_date
         ? new Date(season.end_date) < new Date()
@@ -38,10 +54,6 @@ export default function HomePage() {
     const bothSections = !isSeasonCompleted;
     const upcomingDisplay = bothSections ? upcomingMatches.slice(0, 4) : upcomingMatches;
     const recentDisplay   = bothSections ? recentMatches.slice(0, 4) : recentMatches.slice(0, 6);
-
-    const { podium, isLoading: podiumLoading } = useSeasonPodium(
-        isSeasonCompleted ? selectedSeasonId : null
-    );
 
     const hasFeaturedUpcoming = !isSeasonCompleted && upcomingMatches.length > 0;
     const hasFeaturedRecent = !isSeasonCompleted && upcomingMatches.length === 0 && recentMatches.length > 0;
@@ -63,8 +75,6 @@ export default function HomePage() {
         ? computeMatchLabels([recentMatches[0]])[0]
         : "";
 
-    const featuredLoading = loadingUpcoming || loadingTeams || (isSeasonCompleted && podiumLoading);
-
     return (
         <>
             <div className="page-wide py-6">
@@ -79,13 +89,7 @@ export default function HomePage() {
                                         Upcoming
                                     </h3>
                                 </div>
-                                {(loadingUpcoming || loadingTeams) ? (
-                                    <div className="space-y-2">
-                                        {[1, 2, 3, 4].map((i) => (
-                                            <Skeleton key={i} className={bothSections ? 'h-[100px] rounded-sm' : 'h-[120px] rounded-sm'} />
-                                        ))}
-                                    </div>
-                                ) : upcomingDisplay.length === 0 ? (
+                                {upcomingDisplay.length === 0 ? (
                                     <div className="panel p-4 text-center">
                                         <p className="text-xs text-muted-foreground">No upcoming matches</p>
                                     </div>
@@ -125,13 +129,7 @@ export default function HomePage() {
                                     Recent
                                 </h3>
                             </div>
-                            {(loadingRecent || loadingTeams) ? (
-                                <div className="space-y-2">
-                                    {(bothSections ? [1,2,3,4] : [1,2,3,4,5,6]).map((i) => (
-                                        <Skeleton key={i} className={bothSections ? 'h-[100px] rounded-sm' : 'h-[120px] rounded-sm'} />
-                                    ))}
-                                </div>
-                            ) : recentDisplay.length === 0 ? (
+                            {recentDisplay.length === 0 ? (
                                 <div className="panel p-4 text-center">
                                     <p className="text-xs text-muted-foreground">No recent matches</p>
                                 </div>
@@ -166,9 +164,7 @@ export default function HomePage() {
 
                     {/* Center Column */}
                     <section className="space-y-6">
-                        {featuredLoading ? (
-                            <Skeleton className="h-[376px] rounded-sm" />
-                        ) : isSeasonCompleted ? (
+                        {isSeasonCompleted ? (
                             <SeasonChampionCard podium={podium} seasonName={season.name} regionCode={regionCode} seasonSlug={seasonSlug} />
                         ) : featuredMatch ? (
                             <FeaturedMatchCard
@@ -202,7 +198,7 @@ export default function HomePage() {
                                 </h3>
                                 <StandingsPreview
                                     standings={standings}
-                                    isLoading={standingsLoading}
+                                    isLoading={false}
                                     qualifiedTeams={season.playoff_configs?.qualified_teams}
                                     regionCode={regionCode}
                                     seasonSlug={seasonSlug}
@@ -214,7 +210,7 @@ export default function HomePage() {
 
                     {/* Right Sidebar */}
                     <aside>
-                        <MediaSidebar />
+                        <MediaSidebar posts={mediaPosts} />
                     </aside>
                 </div>
             </div>

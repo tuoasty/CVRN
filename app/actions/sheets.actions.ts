@@ -2,6 +2,7 @@
 
 import {z} from "zod";
 import {revalidatePath} from "next/cache";
+import {revalidatePublicData, SHEET_SYNC_TAGS} from "@/server/cache/revalidate";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
@@ -175,6 +176,9 @@ export async function resetConfigAction(configId: string, options: {
 
     revalidatePath('/admin/sync');
     revalidatePath('/admin/sync/history');
+    // Highest-risk path for stale cache: this wipes teams, rosters and matches. Without
+    // invalidation the public site would keep serving deleted data for up to 24h.
+    if (options.wipeData) revalidatePublicData(SHEET_SYNC_TAGS);
     return Ok(true as const);
 }
 
@@ -183,7 +187,10 @@ export async function runSyncAction(configId: string) {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
     const result = await syncSheet(supabase, configId, 'manual');
-    if (result.ok) revalidatePath('/admin/sync');
+    if (result.ok) {
+        revalidatePath('/admin/sync');
+        revalidatePublicData(SHEET_SYNC_TAGS);
+    }
     return result;
 }
 
@@ -223,6 +230,9 @@ export async function revertSyncsAction(configId: string, targetSyncId: string) 
     if (result.ok) {
         revalidatePath('/admin/sync/history');
         revalidatePath('/admin/sync');
+        // Rolls public data back to an earlier state — cached pages must not keep
+        // serving the reverted version.
+        revalidatePublicData(SHEET_SYNC_TAGS);
     }
     return result;
 }

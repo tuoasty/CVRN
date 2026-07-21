@@ -1,23 +1,35 @@
 "use client";
 
 
+import { useMemo } from "react";
 import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
-import { usePlayoffBrackets } from "@/app/hooks/usePlayoffs";
+import { buildIncomingMap } from "@/app/hooks/usePlayoffs";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
 import { Trophy } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
-import { PlayoffBracketLoading } from "@/app/features/playoffs/PlayoffBracketLoading";
+import type { PlayoffBracket } from "@/shared/types/db";
 
-export default function PlayoffsPage() {
+type Props = {
+    brackets: PlayoffBracket[];
+};
+
+/**
+ * Still a client component — PlayoffBracketDisplay owns fullscreen, drag and zoom state,
+ * and its `incomingMap` prop is a Map, which is cheaper to rebuild on mount than to send
+ * through the RSC payload.
+ *
+ * What changed is where the data comes from: brackets are fetched and cached by the route
+ * above instead of via a per-view server-action POST. Season and region still come from
+ * the layout's client context, which costs no request.
+ */
+export default function PlayoffsPage({ brackets }: Props) {
     const { season, region } = useSeasonContext();
     const hasPlayoffs = season.playoff_started;
     const isCompleted = season.end_date
         ? new Date(season.end_date) < new Date()
         : false;
 
-    const { brackets, incomingMap, isLoading: loadingBrackets } = usePlayoffBrackets(
-        hasPlayoffs ? season.id : null
-    );
+    const incomingMap = useMemo(() => buildIncomingMap(brackets), [brackets]);
 
     return (
         <>
@@ -62,7 +74,7 @@ export default function PlayoffsPage() {
                             </p>
                         </div>
                     </div>
-                ) : loadingBrackets ? null : brackets.length === 0 ? (
+                ) : brackets.length === 0 ? (
                     <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">
                         <div className="text-center space-y-3">
                             <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
@@ -76,9 +88,7 @@ export default function PlayoffsPage() {
 
             {hasPlayoffs && (
                 <div className="page-bleed pb-6">
-                    {loadingBrackets ? (
-                        <PlayoffBracketLoading />
-                    ) : brackets.length > 0 ? (
+                    {brackets.length > 0 ? (
                         <PlayoffBracketDisplay
                             brackets={brackets}
                             incomingMap={incomingMap}

@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/server/supabase/admin";
 import { findCronEnabledConfigs } from "@/server/db/sheetConfig.repo";
 import { syncSheet } from "@/server/domains/sheets/commands/syncSheet";
+import { revalidatePublicData, SHEET_SYNC_TAGS } from "@/server/cache/revalidate";
 import { logger } from "@/server/utils/logger";
 
 const log = logger.child({ module: "cron/sync-sheets" });
@@ -48,6 +49,11 @@ export async function GET(req: Request) {
     });
 
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
+
+    // Public pages cache for 24h, so without this the site would not reflect this sync
+    // until tomorrow. Unconditional: a partial sync still changed data.
+    revalidatePublicData(SHEET_SYNC_TAGS);
+
     log.info({ synced: configs.length, succeeded }, "Cron sync complete");
 
     return Response.json({ synced: configs.length, succeeded });
