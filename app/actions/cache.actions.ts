@@ -31,22 +31,26 @@ export async function purgeCacheTagAction(input: unknown) {
         return Err(createError("Invalid cache tag", "VALIDATION_ERROR", 400));
     }
 
+    // super_admin, same as the purge-all below. Purging `matches` alone clears eleven cached
+    // reads and re-materialises most of the site — thousands of ISR writes against a 200k
+    // monthly budget — so the per-tag buttons are only nominally cheaper than the big one.
+    // Called repeatedly this is a denial-of-wallet, and it must not be reachable by
+    // stat_tracker, staff, or a user left role-less by the invite flow. Hiding the nav entry
+    // does not gate this: server actions are callable directly.
     const supabase = await createServerSupabase();
-    const {data: {user}} = await supabase.auth.getUser();
-    if (!user) return Err(createError("Unauthorized", "UNAUTHORIZED", 401));
+    const guard = await requireSuperAdmin(supabase);
+    if (!guard.ok) return guard;
 
     revalidatePublicData([parsed.data.tag]);
-    logger.info({tag: parsed.data.tag, userId: user.id}, "Admin purged cache tag");
+    logger.info({tag: parsed.data.tag, userId: guard.value}, "Super admin purged cache tag");
     return Ok({tag: parsed.data.tag});
 }
 
 /**
- * super_admin only, unlike the per-tag purge above.
- *
- * This clears all eight tags, which re-renders essentially every cached page — on the order
- * of a few thousand ISR writes against a 200k monthly budget. That is a real cost per press,
- * not the "handful of extra DB reads" it would be on an unmetered host, so it follows the
- * same guard as the other batch-destructive actions in this codebase.
+ * Clears all eight tags, re-rendering essentially every cached page — on the order of a few
+ * thousand ISR writes against a 200k monthly budget. A real cost per press, not the "handful
+ * of extra DB reads" it would be on an unmetered host, so it follows the same guard as the
+ * other batch-destructive actions in this codebase.
  */
 export async function purgeAllCacheAction() {
     const supabase = await createServerSupabase();
@@ -54,6 +58,6 @@ export async function purgeAllCacheAction() {
     if (!guard.ok) return guard;
 
     revalidatePublicData();  // defaults to ALL_CACHE_TAGS
-    logger.info({userId: guard.value}, "Admin purged all cache tags");
+    logger.info({userId: guard.value}, "Super admin purged all cache tags");
     return Ok({tags: ALL_CACHE_TAGS});
 }
