@@ -25,11 +25,20 @@ export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];
 export const ALL_CACHE_TAGS: CacheTag[] = Object.values(CACHE_TAGS);
 
 /**
- * Fallback revalidation window (24h) for cached public reads.
+ * Fallback revalidation window (7 days) for cached public reads.
  *
  * This is a safety net, not the refresh mechanism. Public data changes on the daily
  * sheets cron and on admin mutations, and both invalidate by tag. If you find yourself
  * wanting to shorten this, the real fix is almost always a missing `revalidateTag` call
  * on whatever mutation went stale.
+ *
+ * It was 24h, which meant every entry expired roughly one cron cycle after the tag purge
+ * that had already refreshed it — a second full re-render wave per day buying no extra
+ * freshness. Each wave is thousands of ISR writes against a 200k monthly budget, which is
+ * the tightest limit on the plan.
+ *
+ * Widening the window makes tags the sole refresh mechanism in practice, so the recovery
+ * path matters more: /admin/cache purges any tag by hand, which is what covers the cases
+ * tags cannot see (a migration redefining a view, direct SQL, a Supabase-side edit).
  */
-export const PUBLIC_REVALIDATE_SECONDS = 86400;
+export const PUBLIC_REVALIDATE_SECONDS = 604800;

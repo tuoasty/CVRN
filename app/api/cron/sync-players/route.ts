@@ -103,7 +103,9 @@ export async function GET(req: Request) {
     // Sequential, not parallel: the Roblox client sits behind a circuit breaker that trips
     // after 5 failures, and firing every chunk at once is the fastest way to trip it.
     // batchSyncPlayers drops anything already fresh, so most runs do far less than this.
+    const before = new Map(target.map((p) => [p.id, p]));
     let batches = 0;
+    let changed = 0;
     for (let i = 0; i < target.length; i += ROBLOX_BATCH_SIZE) {
         const result = await batchSyncPlayers(
             supabaseAdmin as unknown as DBClient,
@@ -111,15 +113,48 @@ export async function GET(req: Request) {
         );
         if (!result.ok) {
             log.error({ error: result.error, offset: i }, "Player batch sync failed");
+            continue;
+        }
+        // Only these three fields reach a public page. `last_synced_at` advances on every
+        // run and is deliberately excluded — gating on it would make this test always true.
+        for (const after of result.value) {
+            const b = before.get(after.id);
+            if (!b) continue;
+            if (
+                b.username !== after.username ||
+                b.display_name !== after.display_name ||
+                b.avatar_url !== after.avatar_url
+            ) {
+                changed++;
+            }
         }
         batches++;
     }
 
-    revalidatePublicData([CACHE_TAGS.players, CACHE_TAGS.teams]);
+    // Gated deliberately. These two tags cover nine of the cached reads — including
+    // getCachedPlayerDetail, which has an entry per player — so an unconditional purge
+    // re-renders most of the site every night whether or not anything moved. Roblox
+    // usernames and avatars rarely change, so most runs should now invalidate nothing.
+    if (changed > 0) {
+        revalidatePublicData([CACHE_TAGS.players, CACHE_TAGS.teams]);
+    } else {
+        log.info("No public-facing player fields changed; skipping revalidation");
+    }
 
     log.info(
-        { rostered: playerIds.length, candidates: players.length, attempted: target.length, batches },
+        {
+            rostered: playerIds.length,
+            candidates: players.length,
+            attempted: target.length,
+            batches,
+            changed,
+        },
         "Player sync complete",
     );
-    return Response.json({ rostered: playerIds.length, attempted: target.length, batches });
+    return Response.json({
+        rostered: playerIds.length,
+        attempted: target.length,
+        batches,
+        changed,
+    });
 }

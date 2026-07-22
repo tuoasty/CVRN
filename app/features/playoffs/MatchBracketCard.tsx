@@ -172,7 +172,7 @@ export function MatchBracketCard({
     );
 
     return href ? (
-        <Link href={href} className={cn(baseClass, "cursor-pointer")}>
+        <Link href={href} prefetch={false} className={cn(baseClass, "cursor-pointer")}>
             {inner}
         </Link>
     ) : (

@@ -246,21 +246,21 @@ export default function PublicTeamDetailPage({ team: teamData, players, history 
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-9 gap-2 sm:gap-3">
                     {captain?.username ? (
-                        <Link href={buildPublicPlayerHref(captain.username) ?? "#"}>
+                        <Link href={buildPublicPlayerHref(captain.username) ?? "#"} prefetch={false}>
                             <PublicLeadershipCard role="captain" player={captain} />
                         </Link>
                     ) : (
                         <PublicLeadershipCard role="captain" player={captain} />
                     )}
                     {viceCaptain?.username ? (
-                        <Link href={buildPublicPlayerHref(viceCaptain.username) ?? "#"}>
+                        <Link href={buildPublicPlayerHref(viceCaptain.username) ?? "#"} prefetch={false}>
                             <PublicLeadershipCard role="vice_captain" player={viceCaptain} />
                         </Link>
                     ) : (
                         <PublicLeadershipCard role="vice_captain" player={viceCaptain} />
                     )}
                     {courtCaptain?.username ? (
-                        <Link href={buildPublicPlayerHref(courtCaptain.username) ?? "#"}>
+                        <Link href={buildPublicPlayerHref(courtCaptain.username) ?? "#"} prefetch={false}>
                             <PublicLeadershipCard role="court_captain" player={courtCaptain} />
                         </Link>
                     ) : (
@@ -268,7 +268,7 @@ export default function PublicTeamDetailPage({ team: teamData, players, history 
                     )}
                     {otherPlayers.map((player, i) => (
                         player.username ? (
-                            <Link key={player.id} href={buildPublicPlayerHref(player.username) ?? "#"} className="col-span-3 sm:col-span-1 block">
+                            <Link key={player.id} href={buildPublicPlayerHref(player.username) ?? "#"} prefetch={false} className="col-span-3 sm:col-span-1 block">
                                 <PublicPlayerCard
                                     player={player}
                                     index={i + 4}

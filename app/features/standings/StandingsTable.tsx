@@ -266,7 +266,7 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                     </TableCell>
                                     <TableCell className="py-4">
                                         {teamHref ? (
-                                            <Link href={teamHref} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                                            <Link href={teamHref} prefetch={false} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                                                 {standing.team_logo_url && (
                                                     <div className="w-11 h-11 flex-shrink-0 flex items-center justify-center">
                                                         <Image

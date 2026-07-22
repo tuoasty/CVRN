@@ -26,6 +26,7 @@ export default function LeagueGrid({ byRegion, nextPage }: Props) {
                             <Link
                                 key={s.id}
                                 href={`/${region.code.toLowerCase()}/${s.slug}${nextPage ? `/${nextPage}` : ""}`}
+                                prefetch={false}
                                 className="flex items-center justify-between gap-2 panel p-3 hover:border-primary/40 transition-colors group"
                             >
                                 <span className="text-xs font-medium group-hover:text-primary transition-colors truncate">

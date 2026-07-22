@@ -37,7 +37,7 @@ function ChampionCard({ entry, priority = false, regionCode, seasonSlug }: { ent
         </div>
     );
     if (!href) return inner;
-    return <Link href={href} className="block group">{inner}</Link>;
+    return <Link href={href} prefetch={false} className="block group">{inner}</Link>;
 }
 
 function PlacementCard({ entry, regionCode, seasonSlug }: { entry: SeasonDetail["season_podium"][number]; regionCode: string; seasonSlug: string }) {
@@ -58,7 +58,7 @@ function PlacementCard({ entry, regionCode, seasonSlug }: { entry: SeasonDetail[
         </div>
     );
     if (!href) return inner;
-    return <Link href={href} className="block group">{inner}</Link>;
+    return <Link href={href} prefetch={false} className="block group">{inner}</Link>;
 }
 
 function PodiumSection({ entries, regionCode, seasonSlug }: { entries: SeasonDetail["season_podium"]; regionCode: string; seasonSlug: string }) {
@@ -165,7 +165,7 @@ function IndividualAwardCard({ award, index, seasonId }: { award: SeasonDetail["
     );
 
     if (!playerHref) return inner;
-    return <Link href={playerHref} className="block">{inner}</Link>;
+    return <Link href={playerHref} prefetch={false} className="block">{inner}</Link>;
 }
 
 function FirstTeamCard({ award, seasonId }: { award: SeasonDetail["season_awards"][number]; seasonId: string }) {
@@ -192,7 +192,7 @@ function FirstTeamCard({ award, seasonId }: { award: SeasonDetail["season_awards
         </div>
     );
     if (!playerHref) return inner;
-    return <Link href={playerHref}>{inner}</Link>;
+    return <Link href={playerHref} prefetch={false}>{inner}</Link>;
 }
 
 function FirstTeamMobileCard({ award, seasonId }: { award: SeasonDetail["season_awards"][number]; seasonId: string }) {
@@ -230,7 +230,7 @@ function FirstTeamMobileCard({ award, seasonId }: { award: SeasonDetail["season_
         </div>
     );
     if (!playerHref) return inner;
-    return <Link href={playerHref} className="block">{inner}</Link>;
+    return <Link href={playerHref} prefetch={false} className="block">{inner}</Link>;
 }
 
 function FirstTeamSection({ awards, seasonId }: { awards: SeasonDetail["season_awards"]; seasonId: string }) {
@@ -321,7 +321,7 @@ function ChampionRosterCard({ award }: { award: RosterEntry }) {
         </div>
     );
     if (!playerHref) return inner;
-    return <Link href={playerHref}>{inner}</Link>;
+    return <Link href={playerHref} prefetch={false}>{inner}</Link>;
 }
 
 function ChampionRosterMobileCard({ award, index }: { award: RosterEntry; index: number }) {
@@ -354,7 +354,7 @@ function ChampionRosterMobileCard({ award, index }: { award: RosterEntry; index:
         </div>
     );
     if (!playerHref) return inner;
-    return <Link href={playerHref} className="block">{inner}</Link>;
+    return <Link href={playerHref} prefetch={false} className="block">{inner}</Link>;
 }
 
 function ChampionRosterSection({ awards }: { awards: SeasonDetail["season_awards"] }) {

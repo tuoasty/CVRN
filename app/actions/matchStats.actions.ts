@@ -1,6 +1,8 @@
 "use server"
 
 import {revalidatePath} from "next/cache";
+import {revalidatePublicData} from "@/server/cache/revalidate";
+import {CACHE_TAGS} from "@/server/cache/tags";
 import {Err} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {
@@ -70,6 +72,14 @@ export async function syncMatchStatsAction(
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
     const result = await syncMatchStats(supabase, configId, {force, playerOverrides});
-    if (result.ok) revalidatePath('/admin/stats');
+    if (result.ok) {
+        revalidatePath('/admin/stats');
+        // This is the only action here that writes player_match_stats, and box scores are
+        // served by getCachedMatchDetail (tagged `matches`). Without this a stat correction
+        // never reached the public match page — it stayed wrong until something else
+        // happened to purge the tag. The config save/delete actions above deliberately do
+        // NOT invalidate: they only touch admin-side config rows.
+        revalidatePublicData([CACHE_TAGS.matches]);
+    }
     return result;
 }

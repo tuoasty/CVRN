@@ -35,26 +35,41 @@ export async function GET(req: Request) {
         configs.map((c) => syncSheet(supabaseAdmin as any, c.id, "cron"))
     );
 
+    let changes = 0;
+    let failed = false;
+
     results.forEach((result, i) => {
         const configId = configs[i].id;
         if (result.status === "fulfilled") {
             if (result.value.ok) {
-                log.info({ configId }, "Sheet sync succeeded");
+                changes += result.value.value.changes.length;
+                log.info({ configId, changes: result.value.value.changes.length }, "Sheet sync succeeded");
             } else {
+                failed = true;
                 log.error({ configId, error: result.value.error }, "Sheet sync returned error");
             }
         } else {
+            failed = true;
             log.error({ configId, reason: result.reason }, "Sheet sync threw exception");
         }
     });
 
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
 
-    // Public pages cache for 24h, so without this the site would not reflect this sync
-    // until tomorrow. Unconditional: a partial sync still changed data.
-    revalidatePublicData(SHEET_SYNC_TAGS);
+    // Public pages cache until a tag purge, so without this the site would not reflect the
+    // sync at all. Gated on the sync actually having changed something: SHEET_SYNC_TAGS is
+    // five of the eight tags and re-renders nearly every cached page, which is a large bill
+    // for a night where the sheet was untouched.
+    //
+    // A failed or throwing config still invalidates. It may have committed some rows before
+    // dying, and serving a stale page is worse than paying for one extra re-render.
+    if (changes > 0 || failed) {
+        revalidatePublicData(SHEET_SYNC_TAGS);
+    } else {
+        log.info("Sheet sync produced no changes; skipping revalidation");
+    }
 
-    log.info({ synced: configs.length, succeeded }, "Cron sync complete");
+    log.info({ synced: configs.length, succeeded, changes, failed }, "Cron sync complete");
 
-    return Response.json({ synced: configs.length, succeeded });
+    return Response.json({ synced: configs.length, succeeded, changes });
 }

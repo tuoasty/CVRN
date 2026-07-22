@@ -503,7 +503,10 @@ export default function PublicMatchCard({
     );
 
     return href ? (
-        <Link href={href} className="block panel p-3 sm:p-4 transition-colors hover:border-primary/30 cursor-pointer">
+        // prefetch off: a matches list renders 20-40 of these, and since the detail route
+        // is static Next would prefetch each one's full RSC payload on scroll — forcing a
+        // cold render + ISR write for pages nobody opened.
+        <Link href={href} prefetch={false} className="block panel p-3 sm:p-4 transition-colors hover:border-primary/30 cursor-pointer">
             {inner}
         </Link>
     ) : (
