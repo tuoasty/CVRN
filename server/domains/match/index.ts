@@ -8,6 +8,7 @@ export {getAvailablePlayoffRounds} from "./queries/getAvailablePlayoffRounds";
 export {getDefaultWeekForSeason} from "./queries/getDefaultWeekForSeason";
 export {getPlayoffRoundCounts} from "./queries/getPlayoffRoundCounts";
 export {getWeekMatchCounts} from "./queries/getWeekMatchCounts";
+export {getPlayoffMatchesBySeason} from "./queries/getPlayoffMatchesBySeason";
 export {getUpcomingMatches} from "./queries/getUpcomingMatches";
 export {getRecentMatches} from "./queries/getRecentMatches";
 export {getMatchDetail, getMatchDetailById} from "./queries/getMatchDetail";

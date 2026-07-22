@@ -34,6 +34,7 @@ import {
     getDefaultWeekForSeason,
     getPlayoffRoundCounts,
     getWeekMatchCounts,
+    getPlayoffMatchesBySeason,
 } from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
@@ -319,6 +320,19 @@ export const getCachedPlayoffRoundCounts = unstable_cache(
             "getCachedPlayoffRoundCounts",
         ),
     ["public:playoff-round-counts"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+// Full match rows for a season's bracket. The public playoffs page used to fetch the
+// ENTIRE matches table client-side (`findAllMatches` — no filter, no limit) on every view,
+// to render ~30 cards.
+export const getCachedPlayoffMatches = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(
+            await getPlayoffMatchesBySeason(createPublicClient(), seasonId),
+            "getCachedPlayoffMatches",
+        ),
+    ["public:playoff-matches"],
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 

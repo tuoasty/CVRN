@@ -2,11 +2,8 @@
 
 import React, {useMemo, useEffect, useRef, useCallback, useState} from "react";
 import {PlayoffBracket, Match} from "@/shared/types/db";
+import type {TeamWithRegion} from "@/server/domains/team";
 import {MatchBracketCard} from "./MatchBracketCard";
-import {useTeams} from "@/app/hooks/useTeams";
-import {useAllMatches} from "@/app/hooks/useMatches";
-import {useRegions} from "@/app/hooks/useRegions";
-import {useSeasons} from "@/app/hooks/useSeasons";
 import {Maximize, Minimize} from "lucide-react";
 import {PlayoffBracketLoading} from "./PlayoffBracketLoading";
 import {Button} from "@/app/components/ui/button";
@@ -17,8 +14,19 @@ import { Incoming, IncomingSource } from "@/server/domains/playoff";
 type PlayoffBracketDisplayProps = {
     brackets: PlayoffBracket[];
     incomingMap: Map<string, Incoming>;
-    seasonId: string;
-    regionId: string;
+    /** Teams referenced by the bracket. Only id/name/logo are read. */
+    teams: TeamWithRegion[];
+    /**
+     * Matches referenced by the bracket, plus any match an `incomingMap` slot points at
+     * (those supply the "Winner of W3-M2" labels).
+     *
+     * This used to be `useAllMatches()` inside the component — the entire matches table,
+     * unfiltered, fetched on every view to render ~30 cards. Callers now pass a scoped set.
+     */
+    matches: Match[];
+    /** Public link building only; omit for `linkContext="admin"`, which links by match id. */
+    regionCode?: string;
+    seasonSlug?: string;
     linkContext?: "public" | "admin";
 };
 
@@ -210,12 +218,15 @@ function computeBandLayout(rounds: RoundData[], yOffset: number) {
     return { positions, lines, maxBottom };
 }
 
-export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId, linkContext = "public"}: PlayoffBracketDisplayProps) {
-    const {teams, isLoading: loadingTeams} = useTeams();
-    const {matches, isLoading: loadingMatches} = useAllMatches();
-    const {regions} = useRegions();
-    const {seasons} = useSeasons();
-
+export function PlayoffBracketDisplay({
+    brackets,
+    incomingMap,
+    teams,
+    matches,
+    regionCode,
+    seasonSlug,
+    linkContext = "public",
+}: PlayoffBracketDisplayProps) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     const teamsMap = useMemo(() => {
@@ -337,15 +348,6 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
 
         return {totalHeight: height, totalWidth: width};
     }, [upperRounds, lowerRounds, matchPositions, thirdPlacePosition]);
-
-    const regionCode = useMemo(() => {
-        const region = regions.find(r => r.id === regionId);
-        return region?.code;
-    }, [regions, regionId]);
-
-    const seasonSlug = useMemo(() => {
-        return seasons.find(s => s.id === seasonId)?.slug;
-    }, [seasons, seasonId]);
 
     const buildHref = useCallback((match: Match, homeName?: string | null, awayName?: string | null): string | null => {
         if (linkContext === "admin") return buildAdminMatchHref(match.id);
@@ -485,7 +487,10 @@ export function PlayoffBracketDisplay({brackets, incomingMap, seasonId, regionId
         </div>
     );
 
-    if (loadingTeams || loadingMatches) {
+    // Teams and matches arrive as props now, so there is no in-component fetch to wait on.
+    // The public route covers first paint with its own loading.tsx; the admin page still
+    // gates on its bracket query before rendering this at all.
+    if (brackets.length === 0) {
         return <PlayoffBracketLoading />;
     }
 
