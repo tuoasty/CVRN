@@ -7,10 +7,15 @@ import { buildIncomingMap } from "@/app/hooks/usePlayoffs";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
 import { Trophy } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
-import type { PlayoffBracket } from "@/shared/types/db";
+import type { PlayoffBracket, Match } from "@/shared/types/db";
+import type { TeamWithRegion } from "@/server/domains/team";
 
 type Props = {
     brackets: PlayoffBracket[];
+    /** Playoff matches for this season only — see getCachedPlayoffMatches. */
+    matches: Match[];
+    /** Teams appearing in the bracket. */
+    teams: TeamWithRegion[];
 };
 
 /**
@@ -22,7 +27,7 @@ type Props = {
  * above instead of via a per-view server-action POST. Season and region still come from
  * the layout's client context, which costs no request.
  */
-export default function PlayoffsPage({ brackets }: Props) {
+export default function PlayoffsPage({ brackets, matches, teams }: Props) {
     const { season, region } = useSeasonContext();
     const hasPlayoffs = season.playoff_started;
     const isCompleted = season.end_date
@@ -92,8 +97,10 @@ export default function PlayoffsPage({ brackets }: Props) {
                         <PlayoffBracketDisplay
                             brackets={brackets}
                             incomingMap={incomingMap}
-                            seasonId={season.id}
-                            regionId={season.region_id}
+                            teams={teams}
+                            matches={matches}
+                            regionCode={region.code}
+                            seasonSlug={season.slug}
                             linkContext="public"
                         />
                     ) : null}

@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { usePlayoffBrackets, usePlayoffConfigs, generateBracket, resetBrackets } from "@/app/hooks/usePlayoffs";
 import { useAllMatches } from "@/app/hooks/useMatches";
+import { useTeams } from "@/app/hooks/useTeams";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { mutate } from "swr";
 import { templates } from "@/server/domains/playoff/helpers/playoffTemplates";
@@ -39,8 +40,11 @@ export default function PlayoffManagementPage() {
     const { seasons: allSeasons } = useSeasons();
     const { configs } = usePlayoffConfigs();
     const { brackets, incomingMap, isLoading: loadingBrackets } = usePlayoffBrackets(selectedSeasonId ?? null);
-    // Same SWR key PlayoffBracketDisplay already fetches on this page — no extra request.
+    // Admin keeps the whole-table read: this page is low volume, behind auth, and its
+    // completed-count needs matches across the season anyway. The public bracket no longer
+    // does this — it receives a season-scoped set from the server.
     const { matches } = useAllMatches();
+    const { teams } = useTeams();
 
     const completedCount = useMemo(() => {
         if (brackets.length === 0) return 0;
@@ -233,7 +237,7 @@ export default function PlayoffManagementPage() {
                         </div>
                     </div>
                 ) : seasonIdValue && brackets.length > 0 ? (
-                    <PlayoffBracketDisplay brackets={brackets} incomingMap={incomingMap} seasonId={seasonIdValue} regionId={regionIdValue} linkContext="admin" />
+                    <PlayoffBracketDisplay brackets={brackets} incomingMap={incomingMap} teams={teams} matches={matches} linkContext="admin" />
                 ) : seasonIdValue && !isProcessing ? (
                     <div className="panel p-12 border-l-4 border-l-muted">
                         <p className="text-sm text-muted-foreground text-center">
