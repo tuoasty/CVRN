@@ -1,13 +1,11 @@
 ﻿"use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Image from 'next/image'
 import { Image as ImageIcon, Play, Pin, Search, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader"
 import { Badge } from '@/app/components/ui/badge'
-import { Skeleton } from '@/app/components/ui/skeleton'
 import { Button } from '@/app/components/ui/button'
-import { usePagedMediaPosts } from '@/app/hooks/useMediaPosts'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
@@ -133,23 +131,6 @@ function MediaCard({ post, onVideoClick, onGfxClick }: {
     )
 }
 
-function CardSkeleton() {
-    return (
-        <div className="panel overflow-hidden">
-            <Skeleton className="aspect-video w-full rounded-none" />
-            <div className="p-3 space-y-2">
-                <Skeleton className="h-3 w-12 rounded-sm" />
-                <Skeleton className="h-4 w-3/4 rounded-sm" />
-                <Skeleton className="h-3 w-full rounded-sm" />
-            </div>
-        </div>
-    )
-}
-
-function ClipSkeleton() {
-    return <Skeleton className="w-full rounded-sm" style={{ aspectRatio: '9/16' }} />
-}
-
 function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (p: number) => void }) {
     if (totalPages <= 1) return null
     return (
@@ -179,7 +160,46 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
     )
 }
 
-export default function MediaFeedPage() {
+/**
+ * Which post types each tab shows. Mirrors FILTER_TYPE_MAP in
+ * server/domains/media/queries/getPagedMediaPosts.ts — note `all` deliberately excludes
+ * clips, which have their own tab and their own grid.
+ */
+const FILTER_TYPES: Record<MediaFilterType, MediaPost['type'][]> = {
+    all:    ['gfx', 'video', 'news', 'recap'],
+    videos: ['video'],
+    gfx:    ['gfx'],
+    clips:  ['clip'],
+}
+
+const PAGE_SIZE = 12
+const CLIPS_PAGE_SIZE = 9
+
+/** Matches the repo's `title.ilike.%q%,description.ilike.%q%`. */
+function matchesSearch(post: MediaPost, q: string): boolean {
+    if (!q) return true
+    const needle = q.toLowerCase()
+    return (
+        post.title.toLowerCase().includes(needle) ||
+        (post.description?.toLowerCase().includes(needle) ?? false)
+    )
+}
+
+type Props = {
+    /**
+     * Every media post, already ordered `pinned_at DESC NULLS LAST, published_at DESC` by
+     * the repo — the same order the old paged query used, so filtering and slicing in
+     * memory reproduces it exactly.
+     *
+     * Paging, filtering and search all used to be server round trips: one server-action
+     * POST per tab click, per page click, and per debounced keystroke. The whole list is
+     * already fetched and cached for the season home page, so serving this page from the
+     * same cache entry costs nothing extra and lets the route stay statically rendered.
+     */
+    posts: MediaPost[]
+}
+
+export default function MediaFeedPage({ posts: allPosts }: Props) {
     const [filter, setFilter] = useState<MediaFilterType>('all')
     const [page, setPage]         = useState(1)
     const [clipsPage, setClipsPage] = useState(1)
@@ -204,22 +224,29 @@ export default function MediaFeedPage() {
 
     const isOnClips = filter === 'clips'
 
-    // Main feed — disabled while on clips tab to avoid a wasted fetch
-    const { posts, totalPages, isLoading } = usePagedMediaPosts(
-        isOnClips ? 'all' : filter,
-        page,
-        debouncedSearch,
-        isOnClips,
-    )
+    // Main feed. Filter → search → slice, all in memory; no network on tab, page or
+    // keystroke. The list arrives pre-sorted, so slicing preserves pinned-first order.
+    const { posts, totalPages } = useMemo(() => {
+        const types = FILTER_TYPES[isOnClips ? 'all' : filter]
+        const matched = allPosts.filter(
+            p => types.includes(p.type) && matchesSearch(p, debouncedSearch),
+        )
+        const from = (page - 1) * PAGE_SIZE
+        return {
+            posts: matched.slice(from, from + PAGE_SIZE),
+            totalPages: Math.ceil(matched.length / PAGE_SIZE),
+        }
+    }, [allPosts, filter, isOnClips, debouncedSearch, page])
 
-    // Clips feed — fetched lazily on first visit, never disabled after that
-    const { posts: clipsPosts, totalPages: clipsTotalPages, isLoading: clipsLoading } = usePagedMediaPosts(
-        'clips',
-        clipsPage,
-        '',
-        !clipsEverVisited,
-        9,
-    )
+    // Clips feed. Search never applied here — the clips tab hides the search box.
+    const { clipsPosts, clipsTotalPages } = useMemo(() => {
+        const matched = allPosts.filter(p => FILTER_TYPES.clips.includes(p.type))
+        const from = (clipsPage - 1) * CLIPS_PAGE_SIZE
+        return {
+            clipsPosts: matched.slice(from, from + CLIPS_PAGE_SIZE),
+            clipsTotalPages: Math.ceil(matched.length / CLIPS_PAGE_SIZE),
+        }
+    }, [allPosts, clipsPage])
 
     const handleFilter = useCallback((f: MediaFilterType) => {
         setFilter(f)
@@ -275,11 +302,7 @@ export default function MediaFeedPage() {
             {/* Clips — always mounted after first visit, hidden via CSS when not active */}
             {clipsEverVisited && (
                 <div className={isOnClips ? undefined : 'hidden'}>
-                    {clipsLoading && clipsPosts.length === 0 ? (
-                        <div className="grid grid-cols-3 gap-3">
-                            {[...Array(6)].map((_, i) => <ClipSkeleton key={i} />)}
-                        </div>
-                    ) : clipsPosts.length === 0 ? (
+                    {clipsPosts.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 space-y-3">
                             <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
                             <p className="text-sm text-muted-foreground">No clips yet.</p>
@@ -297,11 +320,7 @@ export default function MediaFeedPage() {
 
             {/* Main feed — card grid for all non-clip tabs */}
             {!isOnClips && (
-                isLoading && posts.length === 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                        {[...Array(8)].map((_, i) => <CardSkeleton key={i} />)}
-                    </div>
-                ) : posts.length === 0 ? (
+                posts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 space-y-3">
                         <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
                         <p className="text-sm text-muted-foreground">

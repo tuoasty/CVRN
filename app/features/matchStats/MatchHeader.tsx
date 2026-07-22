@@ -139,6 +139,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                     {homeTeamHref ? (
                         <Link
                             href={homeTeamHref}
+                            prefetch={false}
                             className={`w-full text-sm sm:text-lg text-center truncate hover:underline ${
                                 homeWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"
                             }`}
@@ -207,6 +208,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                     {awayTeamHref ? (
                         <Link
                             href={awayTeamHref}
+                            prefetch={false}
                             className={`w-full text-sm sm:text-lg text-center truncate hover:underline ${
                                 awayWon ? "font-bold text-foreground" : "font-medium text-muted-foreground"
                             }`}

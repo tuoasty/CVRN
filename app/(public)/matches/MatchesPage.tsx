@@ -1,22 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
-import { useWeekSchedule, usePlayoffSchedule, useAvailablePlayoffRounds, useDefaultWeekForSeason, usePlayoffRoundCounts, useWeekMatchCounts } from "@/app/hooks/useMatches";
-import { useTeamsByIds } from "@/app/hooks/useTeams";
-import { usePlayersByIds } from "@/app/hooks/usePlayers";
-import { useStandings } from "@/app/hooks/useStandings";
-import { Skeleton } from "@/app/components/ui/skeleton";
 import { CalendarDays } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
 import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
 import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
-import { Player } from "@/shared/types/db";
+import { Player, Region } from "@/shared/types/db";
 import type { PlayoffRound } from "@/server/domains/playoff";
-import { isPlayoffRound, sortRounds } from "@/app/utils/playoffRounds";
+import type { SeasonWithPlayoffConfig } from "@/server/domains/season";
+import type { StandingWithInfo } from "@/server/domains/standing";
 import { StandingMethod } from "@/shared/types/standing";
 import { MatchTypeTabs, WeekSelector, PlayoffStepper } from "@/app/features/matches/ScheduleSelectors";
 
@@ -29,63 +25,77 @@ function matchCodeSortKey(code: string | null | undefined): number {
     return Infinity;
 }
 
-export default function MatchesPage() {
+/** The selector value a user just clicked, held until the server render catches up. */
+type Pending = { tab?: "season" | "playoffs"; week?: number; round?: PlayoffRound };
+
+type Props = {
+    season: SeasonWithPlayoffConfig;
+    region: Region;
+    activeTab: "season" | "playoffs";
+    effectiveWeek: number;
+    effectiveRound: PlayoffRound;
+    sortedRounds: PlayoffRound[];
+    roundCounts: { round: string; count: number }[];
+    weekCounts: { week: number; total: number; completed: number }[];
+    schedule: MatchWithDetails[];
+    teams: TeamWithRegion[];
+    players: Player[];
+    standings: StandingWithInfo[];
+};
+
+/**
+ * Presentational plus URL state. Every piece of data is resolved and cached by the route
+ * above; this component previously fetched all of it through nine SWR hooks, which meant
+ * nine uncacheable server-action POSTs on every view.
+ *
+ * Still a client component because the tab/week/round selectors write to the URL. Those
+ * writes trigger a server round trip, and the skeleton for it lives in the route's
+ * `loading.tsx` rather than in local state.
+ */
+export default function MatchesPage({
+    season,
+    region,
+    activeTab,
+    effectiveWeek,
+    effectiveRound,
+    sortedRounds,
+    roundCounts,
+    weekCounts,
+    schedule,
+    teams,
+    players,
+    standings,
+}: Props) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { season, region } = useSeasonContext();
 
-    // URL state
-    const tabParam = searchParams.get("tab");
-    const activeTab = tabParam === "playoffs" ? "playoffs" : "season";
-    const weekParam = searchParams.get("week");
-    const rawRound = searchParams.get("round");
-    const roundParam: PlayoffRound | null = isPlayoffRound(rawRound) ? rawRound : null;
+    /**
+     * Optimistic selector state.
+     *
+     * Switching week/round only changes `searchParams`, which re-renders this route's
+     * server component without remounting the segment — so `loading.tsx` never fires and
+     * React holds the old UI until the new payload lands. Without this the click has no
+     * visible effect for the length of a server round trip.
+     *
+     * `pending` carries the value the user just clicked so the selector can reflect it
+     * immediately, while the list dims to mark the content behind it as stale. It clears
+     * as soon as the transition settles, at which point the props already hold the same
+     * value — so the swap is invisible.
+     */
+    const [pending, setPending] = useState<Pending | null>(null);
+    const [isPending, startTransition] = useTransition();
+
+    useEffect(() => {
+        if (!isPending) setPending(null);
+    }, [isPending]);
+
+    const displayTab = pending?.tab ?? activeTab;
+    const displayWeek = pending?.week ?? effectiveWeek;
+    const displayRound = pending?.round ?? effectiveRound;
 
     const regionCode = region.code;
     const hasPlayoffs = season.playoff_started;
 
-    // Default week query (used when no ?week in URL)
-    const { defaultWeek, isLoading: defaultWeekLoading } = useDefaultWeekForSeason(
-        activeTab === "season" && !weekParam ? season.id : null
-    );
-    const parsedWeek = weekParam ? parseInt(weekParam, 10) : NaN;
-    const effectiveWeek = Number.isFinite(parsedWeek) ? parsedWeek : (defaultWeek ?? 1);
-
-    const { rounds: availableRounds } = useAvailablePlayoffRounds(
-        hasPlayoffs ? season.id : null
-    );
-    const { roundCounts } = usePlayoffRoundCounts(
-        hasPlayoffs ? season.id : null
-    );
-
-    const sortedRounds = useMemo(
-        () => sortRounds(availableRounds.filter(isPlayoffRound)),
-        [availableRounds]
-    );
-
-    // Default round = first available
-    const effectiveRound: PlayoffRound = (roundParam && sortedRounds.includes(roundParam))
-        ? roundParam
-        : sortedRounds[0] ?? "play_in";
-
-    // Schedule fetches
-    const weekArg = activeTab === "season"
-        ? (weekParam ? effectiveWeek : (defaultWeekLoading ? null : effectiveWeek))
-        : null;
-    const { schedule: weekSchedule, isLoading: loadingWeek } = useWeekSchedule(
-        activeTab === "season" ? season.id : null,
-        weekArg
-    );
-    const { schedule: playoffSchedule, isLoading: loadingPlayoff } = usePlayoffSchedule(
-        activeTab === "playoffs" ? season.id : null,
-        activeTab === "playoffs" ? effectiveRound : null
-    );
-
-    const schedule = activeTab === "season" ? weekSchedule : playoffSchedule;
-    const loading = activeTab === "season" ? loadingWeek : loadingPlayoff;
-
-    // Standings for W-L records
-    const { standings } = useStandings(season.id, region.id);
     const recordByTeamId = useMemo(() => {
         const map = new Map<string, { wins: number; losses: number }>();
         for (const s of standings) {
@@ -94,29 +104,8 @@ export default function MatchesPage() {
         return map;
     }, [standings]);
 
-    // Team/player fetches
-    const teamIds = useMemo(() => {
-        const ids = new Set<string>();
-        schedule.forEach(({ match }) => {
-            if (match.home_team_id) ids.add(match.home_team_id);
-            if (match.away_team_id) ids.add(match.away_team_id);
-        });
-        return Array.from(ids);
-    }, [schedule]);
-
-    const playerIds = useMemo(() => {
-        const ids = new Set<string>();
-        schedule.forEach(({ match }) => {
-            if (match.match_mvp_player_id) ids.add(match.match_mvp_player_id);
-            if (match.loser_mvp_player_id) ids.add(match.loser_mvp_player_id);
-        });
-        return Array.from(ids);
-    }, [schedule]);
-
-    const { teams: fetchedTeams } = useTeamsByIds(teamIds);
-    const { players: fetchedPlayers } = usePlayersByIds(playerIds);
-    const teams = useMemo(() => new Map(fetchedTeams.map(t => [t.id, t])), [fetchedTeams]);
-    const players = useMemo(() => new Map(fetchedPlayers.map(p => [p.id, p])), [fetchedPlayers]);
+    const teamsMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
+    const playersMap = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
 
     const roundCountMap = useMemo(() => {
         const m = new Map<string, number>();
@@ -124,7 +113,6 @@ export default function MatchesPage() {
         return m;
     }, [roundCounts]);
 
-    const { weekCounts } = useWeekMatchCounts(season.id);
     const availableWeeks = useMemo(
         () => weekCounts.map(w => w.week).sort((a, b) => a - b),
         [weekCounts]
@@ -132,7 +120,8 @@ export default function MatchesPage() {
 
     const matchesBase = `/${region.code.toLowerCase()}/${season.slug}/matches`;
 
-    // URL writers
+    // URL writers. Each marks its optimistic value before navigating so the selector
+    // updates on click rather than a round trip later.
     function setTab(tab: "season" | "playoffs") {
         const params = new URLSearchParams(searchParams.toString());
         if (tab === "season") {
@@ -142,21 +131,24 @@ export default function MatchesPage() {
             params.set("tab", "playoffs");
             params.delete("week");
         }
-        router.replace(`${matchesBase}?${params.toString()}`);
+        setPending({ tab });
+        startTransition(() => router.replace(`${matchesBase}?${params.toString()}`));
     }
 
     function setWeek(week: number) {
         const params = new URLSearchParams(searchParams.toString());
         params.set("week", week.toString());
         params.delete("tab");
-        router.replace(`${matchesBase}?${params.toString()}`);
+        setPending({ week, tab: "season" });
+        startTransition(() => router.replace(`${matchesBase}?${params.toString()}`));
     }
 
     function setRound(round: string) {
         const params = new URLSearchParams(searchParams.toString());
         params.set("round", round);
         params.set("tab", "playoffs");
-        router.replace(`${matchesBase}?${params.toString()}`);
+        setPending({ round: round as PlayoffRound, tab: "playoffs" });
+        startTransition(() => router.replace(`${matchesBase}?${params.toString()}`));
     }
 
     const subtitle = `${season.name} · ${region.name}`;
@@ -172,43 +164,51 @@ export default function MatchesPage() {
 
             <div className="space-y-4">
                     <MatchTypeTabs
-                        activeTab={activeTab}
+                        activeTab={displayTab}
                         playoffsEnabled={!!hasPlayoffs}
                         onTabChange={setTab}
                     />
 
                     {/* Selector */}
-                    {activeTab === "season" ? (
+                    {displayTab === "season" ? (
                         <WeekSelector
-                            effectiveWeek={effectiveWeek}
+                            effectiveWeek={displayWeek}
                             weeks={availableWeeks}
                             onWeekChange={setWeek}
                         />
                     ) : (
                         <PlayoffStepper
                             rounds={sortedRounds}
-                            effectiveRound={effectiveRound}
+                            effectiveRound={displayRound}
                             roundCountMap={roundCountMap}
                             onRoundChange={setRound}
                         />
                     )}
 
-                    {/* Match list */}
-                    <MatchList
-                        sorted={sorted}
-                        teams={teams}
-                        players={players}
-                        recordByTeamId={recordByTeamId}
-                        regionCode={regionCode}
-                        seasonSlug={season.slug}
-                        standingMethod={region.standing_method as StandingMethod}
-                        loading={loading}
-                        emptyMessage={
-                            activeTab === "season"
-                                ? "No matches scheduled for this week"
-                                : "No matches in this playoff round"
-                        }
-                    />
+                    {/* Match list. Dimmed while a switch is in flight — the rows below are
+                        still the previous week's until the server render lands. */}
+                    <div
+                        className={cn(
+                            "transition-opacity duration-150",
+                            isPending && "opacity-50 pointer-events-none"
+                        )}
+                        aria-busy={isPending}
+                    >
+                        <MatchList
+                            sorted={sorted}
+                            teams={teamsMap}
+                            players={playersMap}
+                            recordByTeamId={recordByTeamId}
+                            regionCode={regionCode}
+                            seasonSlug={season.slug}
+                            standingMethod={region.standing_method as StandingMethod}
+                            emptyMessage={
+                                displayTab === "season"
+                                    ? "No matches scheduled for this week"
+                                    : "No matches in this playoff round"
+                            }
+                        />
+                    </div>
                 </div>
         </div>
     );
@@ -224,21 +224,10 @@ interface MatchListProps {
     regionCode?: string;
     seasonSlug?: string;
     standingMethod?: StandingMethod;
-    loading: boolean;
     emptyMessage: string;
 }
 
-function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonSlug, standingMethod, loading, emptyMessage }: MatchListProps) {
-    if (loading) {
-        return (
-            <div className="space-y-3">
-                {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="h-48 rounded-sm" />
-                ))}
-            </div>
-        );
-    }
-
+function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonSlug, standingMethod, emptyMessage }: MatchListProps) {
     if (sorted.length === 0) {
         return (
             <div className="panel p-12">

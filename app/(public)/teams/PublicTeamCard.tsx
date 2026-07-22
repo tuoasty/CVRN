@@ -151,7 +151,7 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
 
     if (href) {
         return (
-            <Link href={href} className={cardClasses}>
+            <Link href={href} prefetch={false} className={cardClasses}>
                 {inner}
             </Link>
         );

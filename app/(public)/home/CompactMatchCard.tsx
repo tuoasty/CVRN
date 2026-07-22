@@ -126,7 +126,7 @@ export default function CompactMatchCard({
     const padding = compact ? 'p-2' : 'p-3';
 
     return href ? (
-        <Link href={href} className={`block panel ${padding} hover:border-primary/30 transition-colors cursor-pointer`}>
+        <Link href={href} prefetch={false} className={`block panel ${padding} hover:border-primary/30 transition-colors cursor-pointer`}>
             {inner}
         </Link>
     ) : (

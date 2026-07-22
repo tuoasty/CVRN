@@ -33,6 +33,7 @@ const DROPDOWN_GROUPS = [
             { href: "/admin/stats",        label: "Match Stats" },
             { href: "/admin/sync",         label: "Sync" },
             { href: "/admin/sync/history", label: "Sync History" },
+            { href: "/admin/cache",        label: "Cache" },
         ],
     },
 ];

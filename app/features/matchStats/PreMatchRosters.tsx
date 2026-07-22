@@ -80,7 +80,7 @@ function PlayerRow({player, align}: {player: RosterPlayer; align: "left" | "righ
 
     if (href) {
         return (
-            <Link href={href} className={rowClass}>
+            <Link href={href} prefetch={false} className={rowClass}>
                 {inner}
             </Link>
         );

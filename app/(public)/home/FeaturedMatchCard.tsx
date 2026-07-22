@@ -128,7 +128,7 @@ export default function FeaturedMatchCard({
     const wrapperClass = "panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent h-[376px]";
 
     return href ? (
-        <Link href={href} className={`block ${wrapperClass} cursor-pointer hover:border-l-primary/60 transition-colors`}>
+        <Link href={href} prefetch={false} className={`block ${wrapperClass} cursor-pointer hover:border-l-primary/60 transition-colors`}>
             {inner}
         </Link>
     ) : (

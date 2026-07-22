@@ -31,6 +31,7 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
     return (
         <Link
             href={href ?? "#"}
+            prefetch={false}
             className={cn(
                 PLAYER_ROW_GRID,
                 PLAYER_ROW_BOX,

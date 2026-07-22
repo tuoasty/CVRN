@@ -118,7 +118,7 @@ export default function StandingsPreview({
                     );
 
                     return teamHref ? (
-                        <Link key={standing.team_id} href={teamHref} className={rowClass}>
+                        <Link key={standing.team_id} href={teamHref} prefetch={false} className={rowClass}>
                             {rowContent}
                         </Link>
                     ) : (

@@ -1,0 +1,37 @@
+import { Skeleton } from "@/app/components/ui/skeleton";
+import { CalendarDays } from "lucide-react";
+
+/**
+ * Feedback for tab/week/round switches. The schedule now resolves on the server, so
+ * changing `?week` is a navigation rather than a client fetch — this boundary replaces the
+ * in-component SWR skeleton that used to cover it.
+ */
+export default function MatchesLoading() {
+    return (
+        <div className="page-wide space-y-6 py-6">
+            {/* Page header */}
+            <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
+                    <CalendarDays className="h-5 w-5 text-primary" />
+                </div>
+                <div className="space-y-1.5">
+                    <Skeleton className="h-6 w-24 rounded-sm" />
+                    <Skeleton className="h-3 w-48 rounded-sm" />
+                </div>
+            </div>
+
+            <div className="space-y-4">
+                {/* 2-button tab — matches MatchesPage grid-cols-2 tab */}
+                <Skeleton className="h-10 w-full rounded-sm" />
+                {/* Week selector — matches WeekSelector h-[52px] */}
+                <Skeleton className="h-[52px] w-full rounded-sm" />
+                {/* 3 match cards — matches PublicMatchCard height */}
+                <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                        <Skeleton key={i} className="h-48 w-full rounded-sm" />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -82,7 +82,7 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
 
             {/* Champion */}
             {championHref ? (
-                <Link href={championHref} className="block hover:opacity-90 transition-opacity">
+                <Link href={championHref} prefetch={false} className="block hover:opacity-90 transition-opacity">
                     {championContent}
                 </Link>
             ) : championContent}
@@ -92,7 +92,7 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
                 <div className="grid grid-cols-2 gap-px border-t border-yellow-500/20">
                     {runnerUp ? (
                         runnerUpHref ? (
-                            <Link href={runnerUpHref} className="flex flex-col items-center gap-2 py-4 px-4 bg-slate-400/5 hover:opacity-90 transition-opacity">
+                            <Link href={runnerUpHref} prefetch={false} className="flex flex-col items-center gap-2 py-4 px-4 bg-slate-400/5 hover:opacity-90 transition-opacity">
                                 <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-300">
                                     <Medal className="h-3 w-3" />
                                     <span className="text-[10px] font-semibold uppercase tracking-wider">Runner-Up</span>
@@ -114,7 +114,7 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
 
                     {third ? (
                         thirdHref ? (
-                            <Link href={thirdHref} className="flex flex-col items-center gap-2 py-4 px-4 bg-amber-500/5 border-l border-yellow-500/20 hover:opacity-90 transition-opacity">
+                            <Link href={thirdHref} prefetch={false} className="flex flex-col items-center gap-2 py-4 px-4 bg-amber-500/5 border-l border-yellow-500/20 hover:opacity-90 transition-opacity">
                                 <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
                                     <Medal className="h-3 w-3" />
                                     <span className="text-[10px] font-semibold uppercase tracking-wider">3rd Place</span>

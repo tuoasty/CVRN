@@ -338,7 +338,7 @@ function PlayerCell({row}: {row: StatRow}) {
 
     if (href) {
         return (
-            <Link href={href} className="block hover:opacity-80 transition-opacity">
+            <Link href={href} prefetch={false} className="block hover:opacity-80 transition-opacity">
                 {content}
             </Link>
         );

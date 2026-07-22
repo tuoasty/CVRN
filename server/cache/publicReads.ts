@@ -13,6 +13,7 @@ import {
     getPlayerSeasonStats,
     getPlayerAwards,
     getPlayerTeamHistory,
+    getPlayersByIds,
 } from "@/server/domains/player";
 import type {PlayerDetail} from "@/server/domains/player";
 import {
@@ -22,7 +23,18 @@ import {
 } from "@/server/domains/team";
 import {getStandings} from "@/server/domains/standing";
 import {getPlayoffBracketBySeasonId} from "@/server/domains/playoff";
-import {getUpcomingMatches, getRecentMatches, getMatchDetail} from "@/server/domains/match";
+import type {PlayoffRound} from "@/server/domains/playoff";
+import {
+    getUpcomingMatches,
+    getRecentMatches,
+    getMatchDetail,
+    getWeekSchedule,
+    getPlayoffSchedule,
+    getAvailablePlayoffRounds,
+    getDefaultWeekForSeason,
+    getPlayoffRoundCounts,
+    getWeekMatchCounts,
+} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {Result} from "@/shared/types/result";
@@ -249,6 +261,96 @@ export const getCachedTeamNameHistory = unstable_cache(
     ["public:team-name-history"],
     {tags: [CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
+
+/* ── Matches page ──────────────────────────────────────────────────────────────
+ *
+ * These back the /[region]/[season]/matches route, which used to fetch all of this
+ * client-side through nine SWR hooks (nine uncacheable server-action POSTs per view,
+ * two of them waterfalled behind the schedule resolving).
+ *
+ * Note the cache-key cardinality on the parameterised ones. `unstable_cache` derives a
+ * separate entry per argument tuple, so these are only safe because their argument space
+ * is small and bounded: weeks and rounds per season. Do not extend this pattern to
+ * anything keyed on free-form user input (a search box, a page offset) — that mints an
+ * unbounded number of entries and blows the Data Cache write budget.
+ */
+
+export const getCachedWeekSchedule = unstable_cache(
+    async (seasonId: string, week: number) =>
+        unwrap(await getWeekSchedule(createPublicClient(), {seasonId, week}), "getCachedWeekSchedule"),
+    ["public:week-schedule"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedPlayoffSchedule = unstable_cache(
+    async (seasonId: string, round: PlayoffRound) =>
+        unwrap(
+            await getPlayoffSchedule(createPublicClient(), {seasonId, round}),
+            "getCachedPlayoffSchedule",
+        ),
+    ["public:playoff-schedule"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedDefaultWeekForSeason = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(
+            await getDefaultWeekForSeason(createPublicClient(), seasonId),
+            "getCachedDefaultWeekForSeason",
+        ),
+    ["public:default-week"],
+    {tags: [CACHE_TAGS.matches], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedAvailablePlayoffRounds = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(
+            await getAvailablePlayoffRounds(createPublicClient(), seasonId),
+            "getCachedAvailablePlayoffRounds",
+        ),
+    ["public:available-playoff-rounds"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedPlayoffRoundCounts = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(
+            await getPlayoffRoundCounts(createPublicClient(), seasonId),
+            "getCachedPlayoffRoundCounts",
+        ),
+    ["public:playoff-round-counts"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedWeekMatchCounts = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(await getWeekMatchCounts(createPublicClient(), seasonId), "getCachedWeekMatchCounts"),
+    ["public:week-match-counts"],
+    {tags: [CACHE_TAGS.matches], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+/**
+ * MVP players for a schedule. Takes a pre-sorted, comma-joined id list rather than an
+ * array so the cache key is stable — `["b","a"]` and `["a","b"]` must not mint two entries.
+ * Callers should use `playerIdsCacheKey()`.
+ */
+export const getCachedPlayersByIds = unstable_cache(
+    async (joinedIds: string) => {
+        const playerIds = joinedIds ? joinedIds.split(",") : [];
+        if (playerIds.length === 0) return [];
+        return unwrap(
+            await getPlayersByIds(createPublicClient(), {playerIds}),
+            "getCachedPlayersByIds",
+        );
+    },
+    ["public:players-by-ids"],
+    {tags: [CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+/** Stable cache key for `getCachedPlayersByIds` — dedupes and sorts. */
+export function playerIdsCacheKey(ids: string[]): string {
+    return [...new Set(ids)].sort().join(",");
+}
 
 export const getCachedSeasonBySlugAndRegion = unstable_cache(
     async (slug: string, regionId: string) =>

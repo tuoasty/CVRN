@@ -295,7 +295,7 @@ function TeamLogoLink({award}: {award: PlayerAward}) {
     );
     if (!href) return logo;
     return (
-        <Link href={href} className="block w-9 h-9 overflow-hidden hover:opacity-70 transition-opacity">
+        <Link href={href} prefetch={false} className="block w-9 h-9 overflow-hidden hover:opacity-70 transition-opacity">
             <div className="relative w-full h-full">
                 <Image
                     src={award.team_logo_url}
@@ -452,7 +452,7 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
     );
     if (teamHref) {
         return (
-            <Link href={teamHref} className="block hover:bg-muted/30 transition-colors">
+            <Link href={teamHref} prefetch={false} className="block hover:bg-muted/30 transition-colors">
                 {inner}
             </Link>
         );

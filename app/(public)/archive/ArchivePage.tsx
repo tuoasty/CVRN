@@ -80,7 +80,7 @@ function SeasonCard({season, regionName, regionCode, contextSeasonSlug}: {season
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 
     return (
-        <Link href={`/${regionCode.toLowerCase()}/${contextSeasonSlug}/archive/${season.slug}`} className="block group">
+        <Link href={`/${regionCode.toLowerCase()}/${contextSeasonSlug}/archive/${season.slug}`} prefetch={false} className="block group">
         <div className="panel p-5 space-y-4 group-hover:border-primary/40 transition-colors cursor-pointer">
             <div>
                 <h2 className="text-lg font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
