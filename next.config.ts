@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Emits a self-contained .next/standalone tree (server.js + minimal node_modules)
+  // so the app runs under plain `node server.js` on the VPS, not just `next start` on
+  // Vercel. Harmless on Vercel (it builds standalone anyway). Static assets
+  // (.next/static, public/) are intentionally NOT bundled — the deploy step copies them.
+  output: "standalone",
   images: {
     minimumCacheTTL: 2678400,
     qualities: [75],

@@ -8,7 +8,10 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import {SWRProvider} from "@/app/providers/SWRProvider";
 import NextTopLoader from "nextjs-toploader";
 
-const siteUrl = "https://cvrn.vercel.app";
+// Canonical public domain for OG/SEO metadata. Runtime-overridable via SITE_URL, but
+// falls back to the brand domain so a missing env var (e.g. at build time) still yields
+// correct canonical URLs rather than throwing on `new URL(undefined)`.
+const siteUrl = process.env.SITE_URL ?? "https://cvrn.net";
 
 export const metadata: Metadata = {
     metadataBase: new URL(siteUrl),

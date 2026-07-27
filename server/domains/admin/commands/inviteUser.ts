@@ -1,5 +1,5 @@
 import {Err, Ok, Result} from "@/shared/types/result";
-import {supabaseAdmin} from "@/server/supabase/admin";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 
@@ -9,8 +9,10 @@ export async function inviteUser(
     invitedBy: string
 ): Promise<Result<null>> {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
+
         const { error: inviteError} = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+            redirectTo: `${process.env.SITE_URL}/auth/callback`
         });
         if(inviteError){
             logger.error({email, role, invitedBy, error: inviteError}, "Failed to send invite email");

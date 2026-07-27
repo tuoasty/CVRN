@@ -1,4 +1,4 @@
-import {supabaseAdmin} from "@/server/supabase/admin";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {BUCKETS, STORAGE_PATHS} from "@/server/storage/storage.paths";
 import {Ok, Err, Result} from "@/shared/types/result";
 import {logger} from "@/server/utils/logger";
@@ -16,6 +16,7 @@ export async function storeAwardAvatar(
 
         const buffer = Buffer.from(await response.arrayBuffer());
         const path = STORAGE_PATHS.awardAvatar(awardId);
+        const supabaseAdmin = getSupabaseAdmin();
 
         const {error: uploadError} = await supabaseAdmin.storage
             .from(BUCKETS.PUBLIC)

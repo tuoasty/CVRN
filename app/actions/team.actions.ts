@@ -1,7 +1,7 @@
 "use server"
 
 import {createServerSupabase} from "@/server/supabase/server";
-import {supabaseAdmin} from "@/server/supabase/admin";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {z} from "zod"
 import {Result, Err, Ok} from "@/shared/types/result";
 import {getUserRole} from "@/server/db/roles.repo";
@@ -177,7 +177,7 @@ export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
     if (!file || file.size === 0) return Err({ message: "No file provided", code: "VALIDATION_ERROR" as const });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const admin = supabaseAdmin as any;
+    const admin = getSupabaseAdmin() as any;
 
     const teamResult = await findTeamById(admin, teamId);
     if (!teamResult.ok) return Err(teamResult.error);

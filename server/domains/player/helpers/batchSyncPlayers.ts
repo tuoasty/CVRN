@@ -2,7 +2,7 @@ import {Ok, Result} from "@/shared/types/result";
 import {DBClient, Player} from "@/shared/types/db";
 import {getRobloxAvatarsById, getRobloxUsersById} from "@/server/roblox/users";
 import {updatePlayersBulk, BulkPlayerUpdate} from "@/server/db/players.repo";
-import {supabaseAdmin} from "@/server/supabase/admin";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {logger} from "@/server/utils/logger";
 import {needsSync} from "./lazySyncPlayer";
 
@@ -70,7 +70,7 @@ export async function batchSyncPlayers(
 
         if (updates.length === 0) return Ok(players);
 
-        const updateResult = await updatePlayersBulk(supabaseAdmin as unknown as DBClient, updates);
+        const updateResult = await updatePlayersBulk(getSupabaseAdmin() as unknown as DBClient, updates);
         if (!updateResult.ok) {
             logger.error({error: updateResult.error}, "batchSyncPlayers: failed to bulk update");
             return Ok(players);

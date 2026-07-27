@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/server/supabase/admin";
+import { getSupabaseAdmin } from "@/server/supabase/admin";
 import { findCronEnabledConfigs } from "@/server/db/sheetConfig.repo";
 import { syncSheet } from "@/server/domains/sheets/commands/syncSheet";
 import { revalidatePublicData, SHEET_SYNC_TAGS } from "@/server/cache/revalidate";
@@ -14,6 +14,8 @@ export async function GET(req: Request) {
     }
 
     log.info("Cron triggered: fetching cron-enabled sheet configs");
+
+    const supabaseAdmin = getSupabaseAdmin();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const configsResult = await findCronEnabledConfigs(supabaseAdmin as any);

@@ -1,20 +1,23 @@
-import {createClient} from "@supabase/supabase-js";
+import {createClient, SupabaseClient} from "@supabase/supabase-js";
 
-if(!process.env.SUPABASE_URL){
-    throw new Error("Missing SUPABASE_URL")
-}
+let client: SupabaseClient | null = null;
 
-if(!process.env.SUPABASE_SERVICE_ROLE_KEY){
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY")
-}
+// Lazy so `next build` doesn't require SUPABASE_SERVICE_ROLE_KEY. Asserted at boot in instrumentation.ts.
+export function getSupabaseAdmin() {
+    if (client) return client;
 
-export const supabaseAdmin = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    {
+    const url = process.env.SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url) throw new Error("Missing SUPABASE_URL");
+    if (!serviceRoleKey) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+
+    client = createClient(url, serviceRoleKey, {
         auth: {
             autoRefreshToken: false,
             persistSession: false,
         }
-    }
-)
+    });
+
+    return client;
+}

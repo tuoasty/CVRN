@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/server/supabase/admin";
+import { getSupabaseAdmin } from "@/server/supabase/admin";
 import { batchSyncPlayers } from "@/server/domains/player/helpers/batchSyncPlayers";
 import { revalidatePublicData } from "@/server/cache/revalidate";
 import { CACHE_TAGS } from "@/server/cache/tags";
@@ -41,6 +41,7 @@ export async function GET(req: Request) {
 
     const limit = Number(new URL(req.url).searchParams.get("limit")) || DEFAULT_LIMIT;
     const nowIso = new Date().toISOString();
+    const supabaseAdmin = getSupabaseAdmin();
 
     const { data: seasons, error: seasonError } = await supabaseAdmin
         .from("seasons")

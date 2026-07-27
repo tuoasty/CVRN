@@ -2,7 +2,7 @@ import {getRobloxAvatarsById, getRobloxUsersById} from "@/server/roblox/users";
 import {Ok, Result} from "@/shared/types/result";
 import {DBClient, Player} from "@/shared/types/db";
 import {updatePlayer} from "@/server/db/players.repo";
-import {supabaseAdmin} from "@/server/supabase/admin";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {logger} from "@/server/utils/logger";
 
 /**
@@ -57,7 +57,7 @@ export async function lazySyncPlayer(
             logger.error({userId: user.id, error: avatarResult.error}, "Failed to fetch avatar during lazy sync");
         }
 
-        const updateResult = await updatePlayer(supabaseAdmin as unknown as DBClient, {
+        const updateResult = await updatePlayer(getSupabaseAdmin() as unknown as DBClient, {
             robloxUserId: String(user.id),
             username: user.name,
             displayName: user.displayName ?? null,
