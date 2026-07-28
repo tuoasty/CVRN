@@ -6,6 +6,23 @@ const nextConfig: NextConfig = {
   // Vercel. Harmless on Vercel (it builds standalone anyway). Static assets
   // (.next/static, public/) are intentionally NOT bundled — the deploy step copies them.
   output: "standalone",
+  experimental: {
+    serverActions: {
+      /**
+       * Next's default is 1MB, enforced as a 413 thrown before the action body is parsed —
+       * so it pre-empted storage.service.ts's own 2MB MAX_FILE_SIZE check and any logo or
+       * media image in the 1–2MB band failed with an opaque error instead of the renderable
+       * "File size exceeds 2MB" the UI expects.
+       *
+       * The three ceilings are ordered on purpose: the app's 2MB check is the *binding* one
+       * because only it produces a user-facing message; this sits just above it, and nginx's
+       * client_max_body_size (3M) sits above that as an abuse backstop. The gaps matter —
+       * nginx measures the whole multipart body, so a file at exactly 2MB is a request
+       * slightly over it.
+       */
+      bodySizeLimit: "2.5mb",
+    },
+  },
   images: {
     minimumCacheTTL: 2678400,
     qualities: [75],
