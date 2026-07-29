@@ -1,4 +1,4 @@
-name: Build
+name: Build and Deploy
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -41,3 +41,49 @@ jobs:
           path: cvrn-standalone.tar.gz
           retention-days: 14
           if-no-files-found: error
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cvrn-standalone
+
+      - name: Extract
+        run: mkdir -p release && tar -xzf cvrn-standalone.tar.gz -C release
+
+      - name: Configure SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST_KEY: ${{ vars.VPS_HOST_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$HOST_KEY" > ~/.ssh/known_hosts
+
+      - name: Ship
+        run: |
+          rsync -az --delete --exclude '.next/cache/' \
+            -e "ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes" \
+            release/ ${{ vars.VPS_USER }}@${{ vars.VPS_HOST }}:/srv/cvrn/app/
+
+      - name: Restart
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes \
+          ${{ vars.VPS_USER }}@${{ vars.VPS_HOST }} \
+          'sudo /usr/bin/systemctl restart cvrn'
+      
+      - name: Health gate
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes \
+          ${{ vars.VPS_USER }}@${{ vars.VPS_HOST }} \
+          'for i in $(seq 1 20); do
+            curl -fsS -o /dev/null http://127.0.0.1:3000/api/health && echo healthy && exit 0
+            sleep 2
+          done
+          echo UNHEALTHY
+          journalctl -u cvrn -n 80 --no-pager
+          exit 1'
