@@ -80,10 +80,22 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes \
           ${{ vars.VPS_USER }}@${{ vars.VPS_HOST }} \
-          'for i in $(seq 1 20); do
-            curl -fsS -o /dev/null http://127.0.0.1:3000/api/health && echo healthy && exit 0
+          'ok=0
+          for i in $(seq 1 20); do
+            curl -fsS -o /dev/null http://127.0.0.1:3000/api/health && ok=1 && break
             sleep 2
           done
-          echo UNHEALTHY
-          journalctl -u cvrn -n 80 --no-pager
-          exit 1'
+          if [ "$ok" -ne 1 ]; then
+            echo UNHEALTHY
+            journalctl -u cvrn -n 80 --no-pager
+            exit 1
+          fi
+          echo healthy
+          for p in / /players /archive; do
+            curl -fsS -o /dev/null "http://127.0.0.1:3000$p" || {
+              echo "ROUTE FAILED: $p"
+              journalctl -u cvrn -n 80 --no-pager
+              exit 1
+            }
+          done
+          echo "routes ok"'
