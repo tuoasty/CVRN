@@ -24,6 +24,23 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    /**
+     * Off-Vercel the optimizer is a net loss. Almost everything it touches was already
+     * optimized upstream — team logos are resized to 256px WebP q85 at upload
+     * (storage.service.ts), the hero ships as a 113K AVIF, and Roblox avatars and video
+     * thumbnails come from their own CDNs at fixed sizes. What it adds is a `sharp`
+     * transform per variant on 1 vCPU, and for a client advertising neither AVIF nor
+     * WebP it re-encodes a WebP source to JPEG — a larger file than the original. The
+     * responses also carry `Vary: Accept`, which makes them awkward to absorb at the edge.
+     *
+     * Known exception: media post images upload uncompressed (createMediaPost.ts passes
+     * `compress: false`), so those are served full-size. That belongs fixed at upload,
+     * not re-encoded on every view.
+     *
+     * Everything below is inert while this is true. Kept because it documents the
+     * intended shape, and `remotePatterns` is still required if the optimizer returns.
+     */
+    unoptimized: true,
     minimumCacheTTL: 2678400,
     qualities: [75],
     /**
