@@ -12,6 +12,7 @@ import {findTeamNameHistoryByTeamIds} from "@/server/db/teamNameHistory.repo";
 import {
     insertMatches,
     findMatchByCode,
+    findMatchSets,
     updateMatchSchedule,
     rpcCompleteMatch,
     rpcReapplyMatchResult,
@@ -20,6 +21,7 @@ import {
 import {findSeasonById} from "@/server/db/seasons.repo";
 import {validateAndCalculateMatchResult} from "@/server/domains/match/helpers/validateAndCalculateMatchResult";
 import {resolveAndAssignMatchOfficials} from "@/server/domains/sheets/helpers/resolveMatchOfficials";
+import {hasMatchResultChanged} from "@/server/domains/sheets/helpers/hasMatchResultChanged";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {randomUUID} from "node:crypto";
@@ -201,20 +203,23 @@ export async function syncMatchResults(
                 }
 
                 if (hasSchedule) {
-                    if (!wasCreated) {
-                        const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, 'scheduled');
-                        if (!scheduleResult.ok) {
-                            errors.push({row: result.rowNumber, message: `[${mc}] Failed to update schedule: ${scheduleResult.error.message}`});
-                            rowsErrored++;
-                            continue;
+                    const scheduleUnchanged = !wasCreated && scheduledAt === match.scheduled_at && match.status === 'scheduled';
+                    if (!scheduleUnchanged) {
+                        if (!wasCreated) {
+                            const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, 'scheduled');
+                            if (!scheduleResult.ok) {
+                                errors.push({row: result.rowNumber, message: `[${mc}] Failed to update schedule: ${scheduleResult.error.message}`});
+                                rowsErrored++;
+                                continue;
+                            }
                         }
+                        changes.push({
+                            type: 'match_result',
+                            entityId: match.id,
+                            before: wasCreated ? {} : {status: match.status},
+                            after: {matchCode: mc, status: 'scheduled', scheduledAt, created: wasCreated},
+                        });
                     }
-                    changes.push({
-                        type: 'match_result',
-                        entityId: match.id,
-                        before: wasCreated ? {} : {status: match.status},
-                        after: {matchCode: mc, status: 'scheduled', scheduledAt, created: wasCreated},
-                    });
                 } else if (wasCreated) {
                     changes.push({
                         type: 'match_result',
@@ -289,6 +294,22 @@ export async function syncMatchResults(
                 isForfeit,
                 scheduledAt,
             };
+
+            if (match.status === 'completed') {
+                const existingSetsResult = await findMatchSets(supabase, match.id);
+                if (!existingSetsResult.ok) {
+                    errors.push({row: result.rowNumber, message: `[${mc}] Failed to load existing sets: ${existingSetsResult.error.message}`});
+                    rowsErrored++;
+                    continue;
+                }
+                const unchanged = !hasMatchResultChanged(
+                    existingSetsResult.value,
+                    match.is_forfeit ?? false,
+                    calc.setsToInsert,
+                    isForfeit,
+                );
+                if (unchanged) continue;
+            }
 
             let completeResult;
             if (match.status === 'completed') {

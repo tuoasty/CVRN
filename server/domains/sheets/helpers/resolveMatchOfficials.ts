@@ -1,8 +1,9 @@
 import {DBClient} from "@/shared/types/db";
 import {SyncError} from "@/server/domains/sheets/types";
 import {findPlayerByExactUsername, upsertPlayer} from "@/server/db/players.repo";
-import {assignMultipleOfficials, removeAllOfficialsByType} from "@/server/db/matchOfficial.repo";
+import {assignMultipleOfficials, removeAllOfficialsByType, findMatchOfficialsByType} from "@/server/db/matchOfficial.repo";
 import {getRobloxUserByName, getRobloxAvatarsById} from "@/server/roblox/users";
+import {officialsUnchanged} from "@/server/domains/sheets/helpers/officialsUnchanged";
 
 async function resolveOfficialId(
     supabase: DBClient,
@@ -57,6 +58,16 @@ export async function resolveAndAssignMatchOfficials(
         [mediaUsernames, 'media'],
     ] as [string[], 'referee' | 'media'][]) {
         if (usernames.length === 0) continue;
+
+        const currentResult = await findMatchOfficialsByType(supabase, matchId, type);
+        if (!currentResult.ok) {
+            errors.push({row: rowNumber, message: `[${matchCode}] Failed to load current ${type}s: ${currentResult.error.message}`});
+            continue;
+        }
+        const currentUsernames = currentResult.value
+            .map(o => o.player?.username)
+            .filter((u): u is string => !!u);
+        if (officialsUnchanged(currentUsernames, usernames)) continue;
 
         const clearResult = await removeAllOfficialsByType(supabase, matchId, type);
         if (!clearResult.ok) {

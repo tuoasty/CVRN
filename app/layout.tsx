@@ -3,14 +3,10 @@ import {Geist} from "next/font/google";
 import {ThemeProvider} from "next-themes";
 import "./globals.css";
 import {Toaster} from "@/app/components/ui/sonner";
-import {Analytics} from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import Script from "next/script";
 import {SWRProvider} from "@/app/providers/SWRProvider";
 import NextTopLoader from "nextjs-toploader";
 
-// Canonical public domain for OG/SEO metadata. Runtime-overridable via SITE_URL, but
-// falls back to the brand domain so a missing env var (e.g. at build time) still yields
-// correct canonical URLs rather than throwing on `new URL(undefined)`.
 const siteUrl = process.env.SITE_URL ?? "https://cvrn.net";
 
 export const metadata: Metadata = {
@@ -78,11 +74,12 @@ export default function RootLayout({
             {children}
             </SWRProvider>
             <Toaster/>
-            <Analytics/>
-            {/* Off by default: Speed Insights bills per pageview and was 160% over the
-                Hobby quota. Set NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS=1 to re-enable. */}
-            {process.env.NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS === "1" && <SpeedInsights/>}
         </ThemeProvider>
+        <Script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon='{"token": "cdf0f4780d604a9698ab07b2eb026a95", "spa": true}'
+        />
         </body>
         </html>
     );

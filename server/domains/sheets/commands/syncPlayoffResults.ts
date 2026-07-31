@@ -10,6 +10,7 @@ import { findTeamNameHistoryByTeamIds } from "@/server/db/teamNameHistory.repo";
 import { resolveTeamNames } from "../helpers/resolveTeamNames";
 import {
   findMatchByCode,
+  findMatchSets,
   findPlayoffMatchesBySeason,
   rpcCompleteMatch,
   rpcReapplyMatchResult,
@@ -20,6 +21,7 @@ import { getTemplateMatchOrder } from "../../playoff";
 import { findPlayoffConfigBySeasonId } from "@/server/db/playoff.repo";
 import { parsePlayoffScheduleCell } from "../helpers/parseScheduleCell";
 import { resolveAndAssignMatchOfficials } from "../helpers/resolveMatchOfficials";
+import { hasMatchResultChanged } from "../helpers/hasMatchResultChanged";
 import { validateAndCalculateMatchResult } from "@/server/domains/match/helpers/validateAndCalculateMatchResult";
 
 import { teamNameKey as norm } from "@/server/domains/team/helpers/normalizeTeamName";
@@ -203,18 +205,21 @@ export async function syncPlayoffResults(
         }
 
         if (scheduledAt) {
-          const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, 'scheduled');
-          if (!scheduleResult.ok) {
-            errors.push({row, message: `[${code}] Failed to update schedule: ${scheduleResult.error.message}`});
-            rowsErrored++;
-            continue;
+          const scheduleUnchanged = scheduledAt === match.scheduled_at && match.status === 'scheduled';
+          if (!scheduleUnchanged) {
+            const scheduleResult = await updateMatchSchedule(supabase, match.id, scheduledAt, 'scheduled');
+            if (!scheduleResult.ok) {
+              errors.push({row, message: `[${code}] Failed to update schedule: ${scheduleResult.error.message}`});
+              rowsErrored++;
+              continue;
+            }
+            changes.push({
+              type: 'match_result',
+              entityId: match.id,
+              before: {status: match.status, scheduledAt: match.scheduled_at},
+              after: {matchCode: code, status: 'scheduled', scheduledAt},
+            });
           }
-          changes.push({
-            type: 'match_result',
-            entityId: match.id,
-            before: {status: match.status, scheduledAt: match.scheduled_at},
-            after: {matchCode: code, status: 'scheduled', scheduledAt},
-          });
         }
         continue;
       }
@@ -270,6 +275,22 @@ export async function syncPlayoffResults(
         loserMvpPlayerId: null,
         isForfeit: sheetMatch.isForfeit,
       };
+
+      if (match.status === 'completed') {
+        const existingSetsResult = await findMatchSets(supabase, match.id);
+        if (!existingSetsResult.ok) {
+          errors.push({row, message: `[${code}] Failed to load existing sets: ${existingSetsResult.error.message}`});
+          rowsErrored++;
+          continue;
+        }
+        const unchanged = !hasMatchResultChanged(
+          existingSetsResult.value,
+          match.is_forfeit ?? false,
+          calc.setsToInsert,
+          sheetMatch.isForfeit,
+        );
+        if (unchanged) continue;
+      }
 
       // Both RPCs call advance_playoff_winner internally for match_type='playoffs'.
       // Do not advance the bracket from here.
