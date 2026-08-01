@@ -14,6 +14,7 @@ import {
     getPlayerAwards,
     getPlayerTeamHistory,
     getPlayersByIds,
+    getPlayerLeaderboard,
 } from "@/server/domains/player";
 import type {PlayerDetail} from "@/server/domains/player";
 import {
@@ -196,6 +197,28 @@ export const getCachedStandings = unstable_cache(
     ["public:standings"],
     {
         tags: [CACHE_TAGS.standings, CACHE_TAGS.matches],
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+    },
+);
+
+/**
+ * Every player-season stat row for one season, with display context.
+ *
+ * The heaviest public read in the app: one row per player in the season, each carrying
+ * ~40 stat columns. It was previously fetched through a server action, which meant a
+ * cookie-bound client and an uncacheable POST on every view — the same problem the home
+ * page had. Tagged on players (identity, avatars) and matches (stats arrive with the
+ * per-match sheet sync, so a sync must refresh the board).
+ */
+export const getCachedPlayerLeaderboard = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(
+            await getPlayerLeaderboard(createPublicClient(), {seasonId}),
+            "getCachedPlayerLeaderboard",
+        ),
+    ["public:player-leaderboard"],
+    {
+        tags: [CACHE_TAGS.players, CACHE_TAGS.matches, CACHE_TAGS.teams],
         revalidate: PUBLIC_REVALIDATE_SECONDS,
     },
 );

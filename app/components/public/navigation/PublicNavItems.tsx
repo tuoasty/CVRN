@@ -12,6 +12,7 @@ const NAV_PAGES = [
     { page: "playoffs", label: "Playoffs" },
     { page: "teams", label: "Teams" },
     { page: "players", label: "Players" },
+    { page: "leaderboard", label: "Leaderboard" },
     { page: "media", label: "Media" },
     { page: "archive", label: "Archive" },
 ];

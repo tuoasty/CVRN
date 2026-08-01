@@ -14,6 +14,7 @@ export {transferCaptainService} from "./commands/transferCaptain";
 export {lazySyncPlayer} from "./helpers/lazySyncPlayer";
 export {getPlayerByUsername} from "./queries/getPlayerByUsername";
 export {getPlayerSeasonStats} from "./queries/getPlayerSeasonStats";
+export {getPlayerLeaderboard} from "./queries/getPlayerLeaderboard";
 export {getPlayerAwards} from "./queries/getPlayerAwards";
 export {getPlayerTeamHistory} from "./queries/getPlayerTeamHistory";
 export type {
@@ -36,6 +37,8 @@ export type {
     TransferCaptainInput,
     PlayerWithCurrentTeam,
     PlayerSeasonStat,
+    PlayerLeaderboardRow,
+    PlayerLeaderboardInput,
     PlayerAward,
     PlayerTeamHistoryEntry,
     PlayerDetail,
@@ -50,4 +53,5 @@ export {
     AddExistingPlayerToTeamSchema,
     SetPlayerRoleSchema,
     TransferCaptainSchema,
+    PlayerLeaderboardSchema,
 } from "./types";

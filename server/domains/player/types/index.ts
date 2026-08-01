@@ -99,6 +99,23 @@ export interface PlayerSeasonStat extends PlayerSeasonStatRow {
     region_code: string;
 }
 
+// Extends PlayerSeasonStat rather than the raw view row so STAT_VIEW_COLUMNS —
+// typed `keyof PlayerSeasonStat` — indexes leaderboard rows unchanged. Team
+// fields stay nullable: the view's team join is a LEFT JOIN LATERAL, so a player
+// with no roster row for that season has none.
+export interface PlayerLeaderboardRow extends PlayerSeasonStat {
+    player_id: string;
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    region_id: string;
+    team_id: string | null;
+    team_name: string | null;
+    team_slug: string | null;
+    team_logo_url: string | null;
+    team_logo_bg_removed: boolean | null;
+}
+
 export interface PlayerAward {
     id: string;
     award_name: string;
@@ -151,6 +168,7 @@ export type {
     AddExistingPlayerToTeamInput,
     SetPlayerRoleInput,
     TransferCaptainInput,
+    PlayerLeaderboardInput,
 } from "./schemas";
 
 export {
@@ -163,4 +181,5 @@ export {
     AddExistingPlayerToTeamSchema,
     SetPlayerRoleSchema,
     TransferCaptainSchema,
+    PlayerLeaderboardSchema,
 } from "./schemas";
