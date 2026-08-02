@@ -32,6 +32,8 @@ const DROPDOWN_GROUPS: { label: string; items: NavItem[] }[] = [
             { href: "/admin/standings", label: "Standings" },
             { href: "/admin/seasons",   label: "Seasons" },
             { href: "/admin/playoffs",  label: "Playoffs" },
+            { href: "/admin/specs",     label: "Specs" },
+            { href: "/admin/specs/qualify", label: "Spec Calibration" },
         ],
     },
     {

@@ -65,3 +65,9 @@ export type PlayerSeasonStatRow =
 
 export type PlayerLeaderboardViewRow =
     Database["public"]["Views"]["v_player_leaderboard"]["Row"];
+
+export type Spec =
+    Database["public"]["Tables"]["specs"]["Row"];
+
+export type SpecRequirement =
+    Database["public"]["Tables"]["spec_requirements"]["Row"];
