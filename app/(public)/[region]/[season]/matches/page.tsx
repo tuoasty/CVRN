@@ -11,8 +11,6 @@ import {
     getCachedAvailablePlayoffRounds,
     getCachedPlayoffRoundCounts,
     getCachedWeekMatchCounts,
-    getCachedPlayersByIds,
-    playerIdsCacheKey,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { isPlayoffRound, sortRounds } from "@/app/utils/playoffRounds";
@@ -90,14 +88,9 @@ export default async function Page({ params, searchParams }: PageProps) {
         schedule = await getCachedPlayoffSchedule(seasonRecord.id, effectiveRound);
     }
 
-    // MVP avatars. Teams come from the already-cached all-teams read rather than a
-    // per-id-set query — filtering ~220 rows in memory is cheaper than minting a new cache
-    // entry for every distinct set of team ids a week happens to contain.
-    const mvpIds = schedule.flatMap(({ match }) =>
-        [match.match_mvp_player_id, match.loser_mvp_player_id].filter((id): id is string => !!id),
-    );
-    const mvpPlayers = await getCachedPlayersByIds(playerIdsCacheKey(mvpIds));
-
+    // Teams come from the already-cached all-teams read rather than a per-id-set query —
+    // filtering ~220 rows in memory is cheaper than minting a new cache entry for every
+    // distinct set of team ids a week happens to contain.
     const neededTeamIds = new Set(
         schedule.flatMap(({ match }) =>
             [match.home_team_id, match.away_team_id].filter((id): id is string => !!id),
@@ -116,7 +109,6 @@ export default async function Page({ params, searchParams }: PageProps) {
             weekCounts={weekCounts}
             schedule={schedule}
             teams={allTeams.filter((t) => neededTeamIds.has(t.id))}
-            players={mvpPlayers}
             standings={standings}
         />
     );

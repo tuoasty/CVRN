@@ -1,5 +1,8 @@
 export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap' | 'clip'
 
+/** The two post types a match can carry: one graphic, one VOD. `clip` is deliberately excluded. */
+export type MatchMediaSlot = Extract<MediaPostType, 'gfx' | 'video'>
+
 export interface MediaPost {
     id: string
     type: MediaPostType
@@ -64,6 +67,7 @@ export type {
     GetAllMediaInput,
     GetPagedMediaInput,
     MediaFilterType,
+    AssignMediaToMatchInput,
 } from './schemas'
 
 export {
@@ -71,5 +75,6 @@ export {
     MediaPostIdSchema,
     GetAllMediaSchema,
     GetPagedMediaSchema,
+    AssignMediaToMatchSchema,
     MEDIA_FILTER_TYPES,
 } from './schemas'

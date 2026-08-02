@@ -238,7 +238,7 @@ export const getCachedMatchDetail = unstable_cache(
         ),
     ["public:match-detail"],
     {
-        tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players],
+        tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.media],
         revalidate: PUBLIC_REVALIDATE_SECONDS,
     },
 );

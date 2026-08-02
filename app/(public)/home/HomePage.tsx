@@ -66,6 +66,11 @@ export default function HomePage({
     const featuredHomeTeam = teams.find((t) => t.id === featuredMatch?.match.home_team_id);
     const featuredAwayTeam = teams.find((t) => t.id === featuredMatch?.match.away_team_id);
 
+    // No extra fetch: mediaPosts already ships whole for MediaSidebar.
+    const featuredGfx = featuredMatch
+        ? mediaPosts.find((p) => p.type === "gfx" && p.match_id === featuredMatch.match.id) ?? null
+        : null;
+
     const upcomingLabels = computeMatchLabels(upcomingMatches);
     const recentLabels = computeMatchLabels(recentMatches);
 
@@ -174,6 +179,7 @@ export default function HomePage({
                                 regionCode={regionCode}
                                 matchLabel={featuredLabel}
                                 isRecent={hasFeaturedRecent}
+                                gfx={featuredGfx}
                                 href={buildPublicMatchHref({
                                     matchCode: featuredMatch.match.match_code,
                                     homeTeamName: featuredHomeTeam?.name,

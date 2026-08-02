@@ -1,30 +1,7 @@
 "use client"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
-
-function toEmbedUrl(url: string): string | null {
-    try {
-        const u = new URL(url)
-        if (u.hostname.includes('youtube.com')) {
-            const v = u.searchParams.get('v')
-            return v ? `https://www.youtube.com/embed/${v}` : null
-        }
-        if (u.hostname.includes('youtu.be')) {
-            return `https://www.youtube.com/embed${u.pathname}`
-        }
-        if (u.hostname.includes('twitch.tv')) {
-            const parent = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-            const channel = u.pathname.replace(/^\/videos\//, '')
-            const isVod = u.pathname.startsWith('/videos/')
-            return isVod
-                ? `https://player.twitch.tv/?video=${channel}&parent=${parent}`
-                : `https://player.twitch.tv/?channel=${channel}&parent=${parent}`
-        }
-        return url
-    } catch {
-        return null
-    }
-}
+import { toEmbedUrl } from '@/app/features/media/mediaUtils'
 
 interface VideoEmbedDialogProps {
     url: string

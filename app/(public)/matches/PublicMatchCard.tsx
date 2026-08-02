@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Badge } from "@/app/components/ui/badge";
 import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
-import { Player } from "@/shared/types/db";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { getLogoClassName } from "@/app/lib/logoClass";
 import { parseMatchNumber } from "@/app/utils/matchLabel";
@@ -21,8 +20,6 @@ interface PublicMatchCardProps {
     matchDetails: MatchWithDetails;
     homeTeam?: TeamWithRegion;
     awayTeam?: TeamWithRegion;
-    matchMvp?: Player | null;
-    loserMvp?: Player | null;
     regionCode?: string;
     href?: string | null;
     homeRecord?: TeamRecord;
@@ -77,21 +74,10 @@ function TeamLogo({
     );
 }
 
-function OfficialPill({ name }: { name: string }) {
-    return (
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/50 border border-border/50 text-xs text-muted-foreground">
-            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 shrink-0" />
-            <span>{name}</span>
-        </div>
-    );
-}
-
 export default function PublicMatchCard({
     matchDetails,
     homeTeam,
     awayTeam,
-    matchMvp,
-    loserMvp,
     regionCode,
     href,
     homeRecord,
@@ -99,7 +85,7 @@ export default function PublicMatchCard({
     isPriority,
     standingMethod = "lvr",
 }: PublicMatchCardProps) {
-    const { match, sets, officials } = matchDetails;
+    const { match, sets } = matchDetails;
     const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
     // 'points' shows base + margin bonus; 'points_without_bonus' shows base only.
     const homePts = (match.home_team_points ?? 0) + (standingMethod === "points" ? (match.home_team_bonus ?? 0) : 0);
@@ -107,8 +93,6 @@ export default function PublicMatchCard({
     const matchNumber = parseMatchNumber(match.match_code);
     const matchLabel = matchNumber != null ? `Match ${matchNumber}` : "Match";
     const statusConfig = getStatusConfig(match.status);
-    const referees = officials.filter(o => o.official_type === "referee");
-    const media = officials.filter(o => o.official_type === "media");
     const regionTimezone = regionCode ? getRegionTimezone(regionCode) : undefined;
 
     const isCompleted = match.status === "completed";
@@ -123,19 +107,15 @@ export default function PublicMatchCard({
 
     const inner = (
         <div>
-            {/* ── MOBILE LAYOUT (< 640px) ── */}
-            <div className="sm:hidden">
+            {/* ── STACKED LAYOUT (< 1024px) ──
+                Two team rows with per-set scores inline. Runs up to lg: the single-line
+                layout below needs ~1024px before team names stop crushing. */}
+            <div className="lg:hidden">
 
                 {/* Row 1 — Match context */}
                 <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-border">
+                    {/* Season vs playoffs is already the tab the reader is standing on. */}
                     <div className="flex items-center">
-                        <span className={cn(
-                            "text-[10px] font-bold uppercase tracking-[0.06em]",
-                            match.match_type === "playoffs" ? "text-purple-500" : "text-indigo-500"
-                        )}>
-                            {match.match_type === "playoffs" ? "Playoffs" : "Season"}
-                        </span>
-                        <span className="mx-1.5 inline-block w-[3px] h-[3px] rounded-full bg-border align-middle" />
                         <span className="text-[10px] font-semibold text-muted-foreground">
                             {matchLabel}
                         </span>
@@ -282,10 +262,13 @@ export default function PublicMatchCard({
 
             </div>
 
-            {/* ── DESKTOP LAYOUT (≥ 640px) — unchanged ── */}
-            <div className="hidden sm:block space-y-3">
-                {/* Meta row */}
-                <div className="flex items-start justify-between gap-2 pb-2 border-b border-border">
+            {/* ── SINGLE-LINE LAYOUT (≥ 1024px) ──
+                Fixed tracks so the score sits at the same x on every row of the list. Meta and
+                margin columns are fixed; both team columns share what's left, which keeps the
+                score centred without it drifting when one name is longer than the other. */}
+            <div className="hidden lg:grid grid-cols-[190px_minmax(0,1fr)_72px_minmax(0,1fr)_230px_100px] items-center gap-4">
+                {/* Meta */}
+                <div className="flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             {matchLabel}
@@ -302,202 +285,95 @@ export default function PublicMatchCard({
                         <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2">
                             BO{match.best_of}
                         </Badge>
-                        {match.match_type === "playoffs" && (
-                            <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 bg-purple-600/10 text-purple-600 border-purple-600/20">
-                                Playoff
-                            </Badge>
-                        )}
                     </div>
-                    <span className="text-xs text-muted-foreground shrink-0">{timeDisplay}</span>
+                    <span className="text-xs text-muted-foreground">{timeDisplay}</span>
                 </div>
 
-                {/* Hero: fixed 40% center, teams in Q1/Q3 */}
-                <div className="grid grid-cols-[1fr_18%_1fr] items-center gap-2 sm:gap-4 py-2">
-                    {/* Home column */}
-                    <div className={cn(
-                        "flex flex-col items-center gap-1.5 min-w-0 transition-opacity",
-                        isCompleted && !homeWon && "opacity-40"
-                    )}>
-                        <TeamLogo team={homeTeam} isPriority={isPriority} />
-                        <span className={cn(
-                            "text-sm text-center truncate w-full",
-                            homeWon ? "font-bold text-foreground" : "font-medium"
-                        )}>
-                            {homeTeam?.is_bye ? "" : (homeTeam?.name || "TBD")}
+                {/* Home — mirrors inward toward the score */}
+                <div className={cn(
+                    "flex flex-row-reverse items-center gap-2.5 min-w-0 transition-opacity",
+                    isCompleted && !homeWon && "opacity-40"
+                )}>
+                    <TeamLogo team={homeTeam} isPriority={isPriority} sizeClass="w-12 h-12" />
+                    <div className="flex-1 min-w-0 text-right">
+                        <span className={cn("block text-sm truncate", homeWon ? "font-bold text-foreground" : "font-medium")}>
+                            {homeTeam?.is_bye ? "BYE" : (homeTeam?.name || "TBD")}
                         </span>
                         {homeRecord && !homeTeam?.is_bye && (
-                            <span className="text-xs text-muted-foreground tabular-nums">
+                            <span className="block text-xs text-muted-foreground tabular-nums">
                                 {homeRecord.wins} – {homeRecord.losses}
                             </span>
                         )}
                     </div>
+                </div>
 
-                    {/* Center: score + set pills */}
-                    <div className="flex flex-col items-center gap-2">
-                        {isCompleted && match.home_sets_won !== null && match.away_sets_won !== null ? (
-                            <div className="flex items-center gap-1 sm:gap-2">
-                                <span className={cn(
-                                    "text-[28px] sm:text-[40px] font-bold tabular-nums leading-none",
-                                    homeWon ? "text-foreground" : "text-muted-foreground"
-                                )}>
-                                    {match.home_sets_won}
-                                </span>
-                                <span className="text-base sm:text-lg text-muted-foreground/50 font-medium">–</span>
-                                <span className={cn(
-                                    "text-[28px] sm:text-[40px] font-bold tabular-nums leading-none",
-                                    awayWon ? "text-foreground" : "text-muted-foreground"
-                                )}>
-                                    {match.away_sets_won}
-                                </span>
-                            </div>
-                        ) : (
-                            <span className="text-xl sm:text-2xl font-bold text-muted-foreground/40">VS</span>
-                        )}
-                        {isCompleted && !match.is_forfeit && sets.length > 0 && (
-                            <div className="flex items-center gap-1 flex-wrap justify-center">
-                                {sets.map(set => (
-                                    <div key={set.set_number} className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm bg-muted/50 border border-border/50">
-                                        <span className={cn(
-                                            "text-[10px] font-semibold tabular-nums",
-                                            set.home_score > set.away_score ? "text-foreground" : "text-muted-foreground/50"
-                                        )}>
-                                            {set.home_score}
-                                        </span>
-                                        <span className="text-[10px] text-muted-foreground/40">–</span>
-                                        <span className={cn(
-                                            "text-[10px] font-semibold tabular-nums",
-                                            set.away_score > set.home_score ? "text-foreground" : "text-muted-foreground/50"
-                                        )}>
-                                            {set.away_score}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                {/* Score */}
+                <div className="text-center">
+                    {isCompleted && match.home_sets_won !== null && match.away_sets_won !== null ? (
+                        <span className="text-2xl font-bold tabular-nums leading-none">
+                            <span className={homeWon ? "text-foreground" : "text-muted-foreground"}>{match.home_sets_won}</span>
+                            <span className="text-muted-foreground/50 px-1.5 text-base">–</span>
+                            <span className={awayWon ? "text-foreground" : "text-muted-foreground"}>{match.away_sets_won}</span>
+                        </span>
+                    ) : (
+                        <span className="text-base font-bold text-muted-foreground/40">VS</span>
+                    )}
+                </div>
 
-                    {/* Away column */}
-                    <div className={cn(
-                        "flex flex-col items-center gap-1.5 min-w-0 transition-opacity",
-                        isCompleted && !awayWon && "opacity-40"
-                    )}>
-                        <TeamLogo team={awayTeam} isPriority={isPriority} />
-                        <span className={cn(
-                            "text-sm text-center truncate w-full",
-                            awayWon ? "font-bold text-foreground" : "font-medium"
-                        )}>
-                            {awayTeam?.is_bye ? "" : (awayTeam?.name || "TBD")}
+                {/* Away */}
+                <div className={cn(
+                    "flex items-center gap-2.5 min-w-0 transition-opacity",
+                    isCompleted && !awayWon && "opacity-40"
+                )}>
+                    <TeamLogo team={awayTeam} isPriority={isPriority} sizeClass="w-12 h-12" />
+                    <div className="flex-1 min-w-0">
+                        <span className={cn("block text-sm truncate", awayWon ? "font-bold text-foreground" : "font-medium")}>
+                            {awayTeam?.is_bye ? "BYE" : (awayTeam?.name || "TBD")}
                         </span>
                         {awayRecord && !awayTeam?.is_bye && (
-                            <span className="text-xs text-muted-foreground tabular-nums">
+                            <span className="block text-xs text-muted-foreground tabular-nums">
                                 {awayRecord.wins} – {awayRecord.losses}
                             </span>
                         )}
                     </div>
                 </div>
 
-                {/* Footer — completed matches only */}
-                {isCompleted && (
-                    <div className="space-y-2 pt-2 border-t border-border/50">
-                        {/* LVR / Points row — two badges */}
-                        <div className="flex items-center justify-between gap-2">
-                            <div>
-                                {!homeTeam?.is_bye && (isPoints
-                                    ? (match.home_team_points != null && (
-                                        <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-primary/10 text-primary border-primary/20">
-                                            +{homePts.toFixed(1)} pts
-                                        </Badge>
-                                    ))
-                                    : (match.home_team_lvr !== null && match.home_team_lvr !== undefined && (
-                                        <Badge variant="outline" className={cn(
-                                            "h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm",
-                                            match.home_team_lvr >= 0
-                                                ? "bg-green-600/10 text-green-600 border-green-600/20"
-                                                : "bg-red-600/10 text-red-600 border-red-600/20"
-                                        )}>
-                                            {match.home_team_lvr >= 0 ? "+" : ""}{match.home_team_lvr.toFixed(1)} LVR
-                                        </Badge>
-                                    ))
-                                )}
-                            </div>
-                            <div>
-                                {!awayTeam?.is_bye && (isPoints
-                                    ? (match.away_team_points != null && (
-                                        <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-primary/10 text-primary border-primary/20">
-                                            +{awayPts.toFixed(1)} pts
-                                        </Badge>
-                                    ))
-                                    : (match.away_team_lvr !== null && match.away_team_lvr !== undefined && (
-                                        <Badge variant="outline" className={cn(
-                                            "h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm",
-                                            match.away_team_lvr >= 0
-                                                ? "bg-green-600/10 text-green-600 border-green-600/20"
-                                                : "bg-red-600/10 text-red-600 border-red-600/20"
-                                        )}>
-                                            {match.away_team_lvr >= 0 ? "+" : ""}{match.away_team_lvr.toFixed(1)} LVR
-                                        </Badge>
-                                    ))
-                                )}
-                            </div>
+                {/* Set scores */}
+                <div className="flex items-center gap-1">
+                    {isCompleted && !match.is_forfeit && sets.map(set => (
+                        <div key={set.set_number} className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm bg-muted/50 border border-border/50">
+                            <span className={cn(
+                                "text-[11px] font-semibold tabular-nums",
+                                set.home_score > set.away_score ? "text-foreground" : "text-muted-foreground/50"
+                            )}>
+                                {set.home_score}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/40">–</span>
+                            <span className={cn(
+                                "text-[11px] font-semibold tabular-nums",
+                                set.away_score > set.home_score ? "text-foreground" : "text-muted-foreground/50"
+                            )}>
+                                {set.away_score}
+                            </span>
                         </div>
+                    ))}
+                </div>
 
-                        {/* MVP row — only if at least one MVP exists */}
-                        {(matchMvp || loserMvp) && (
-                            <div className="flex items-center gap-2">
-                                {matchMvp ? (
-                                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                        {matchMvp.avatar_url && (
-                                            <div className="relative w-6 h-6 rounded-full overflow-hidden border border-primary/30 shrink-0">
-                                                <Image src={matchMvp.avatar_url} alt={matchMvp.username || "Player"} fill sizes="24px" className="object-cover" unoptimized />
-                                            </div>
-                                        )}
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-[9px] uppercase tracking-wider text-primary font-semibold">Match MVP</span>
-                                            <span className="text-xs font-semibold truncate">{matchMvp.display_name || matchMvp.username || "Unknown"}</span>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex-1" />
-                                )}
-                                {loserMvp && (
-                                    <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
-                                        <div className="flex flex-col items-end min-w-0">
-                                            <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">Loser MVP</span>
-                                            <span className="text-xs font-semibold truncate">{loserMvp.display_name || loserMvp.username || "Unknown"}</span>
-                                        </div>
-                                        {loserMvp.avatar_url && (
-                                            <div className="relative w-6 h-6 rounded-full overflow-hidden border border-border shrink-0">
-                                                <Image src={loserMvp.avatar_url} alt={loserMvp.username || "Player"} fill sizes="24px" className="object-cover" unoptimized />
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Officials row — hidden on mobile */}
-                        {(referees.length > 0 || media.length > 0) && (
-                            <div className="hidden sm:flex items-center gap-3 flex-wrap">
-                                {referees.length > 0 && (
-                                    <>
-                                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">Refs</span>
-                                        {referees.map(o => (
-                                            <OfficialPill key={o.id} name={o.display_name || o.username || "Unknown"} />
-                                        ))}
-                                    </>
-                                )}
-                                {media.length > 0 && (
-                                    <>
-                                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">Media</span>
-                                        {media.map(o => (
-                                            <OfficialPill key={o.id} name={o.display_name || o.username || "Unknown"} />
-                                        ))}
-                                    </>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
+                {/* Margin — the winner's figure; the loser's is its mirror and the row has no space for both */}
+                <div className="flex justify-end">
+                    {isCompleted && !homeTeam?.is_bye && !awayTeam?.is_bye && (isPoints
+                        ? (match.home_team_points != null && match.away_team_points != null && (
+                            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-primary/10 text-primary border-primary/20">
+                                +{(homeWon ? homePts : awayPts).toFixed(1)} pts
+                            </Badge>
+                        ))
+                        : (match.home_team_lvr != null && match.away_team_lvr != null && (
+                            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-green-600/10 text-green-600 border-green-600/20">
+                                ±{Math.abs(homeWon ? match.home_team_lvr : match.away_team_lvr).toFixed(1)} LVR
+                            </Badge>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );
