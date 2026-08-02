@@ -65,9 +65,9 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     },
     [CACHE_TAGS.media]: {
         label: "Media",
-        description: "Media posts.",
-        readCount: 1,
-        affects: "Media page, home sidebar",
+        description: "Media posts, including the GFX and VOD attached to a match.",
+        readCount: 2,
+        affects: "Media page, home sidebar, match detail",
     },
 };
 

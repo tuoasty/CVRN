@@ -8,6 +8,8 @@ import {findMatchByCode, findMatchById, findMatchSets} from "@/server/db/matches
 import {findTeamsByIdsForMatch} from "@/server/db/teams.repo";
 import {findMatchStatSets, findMatchStatTotals} from "@/server/db/playerMatchStats.repo";
 import {findMatchOfficials} from "@/server/db/matchOfficial.repo";
+import {findAllMediaPosts} from "@/server/db/mediaPost.repo";
+import type {MediaPost} from "@/server/domains/media";
 import {MatchOfficialEntry} from "../types";
 import {getTeamRosters, TeamRosters} from "./getTeamRosters";
 import {StandingMethod} from "@/shared/types/standing";
@@ -23,6 +25,8 @@ export type MatchDetail = {
     playoffRound: string | null;
     rosters: TeamRosters | null;
     standingMethod: StandingMethod;
+    /** Named `mediaPosts`, not `media` — `media` already means media *officials* on this page. */
+    mediaPosts: MediaPost[];
 };
 
 async function loadDetailForMatch(
@@ -32,12 +36,13 @@ async function loadDetailForMatch(
 ): Promise<Result<MatchDetail, SerializableError>> {
     const teamIds = [match.home_team_id, match.away_team_id].filter((id): id is string => !!id);
 
-    const [setsRes, teamsRes, officialsRes, statSetsRes, statTotalsRes] = await Promise.all([
+    const [setsRes, teamsRes, officialsRes, statSetsRes, statTotalsRes, mediaRes] = await Promise.all([
         findMatchSets(supabase, match.id),
         findTeamsByIdsForMatch(supabase, teamIds),
         findMatchOfficials(supabase, match.id),
         findMatchStatSets(supabase, match.id),
         findMatchStatTotals(supabase, match.id),
+        findAllMediaPosts(supabase, {matchId: match.id}),
     ]);
 
     if (!setsRes.ok) return setsRes;
@@ -45,6 +50,11 @@ async function loadDetailForMatch(
     if (!officialsRes.ok) return officialsRes;
     if (!statSetsRes.ok) return statSetsRes;
     if (!statTotalsRes.ok) return statTotalsRes;
+
+    // Attached media is decoration; losing it must not take the whole match page down.
+    if (!mediaRes.ok) {
+        logger.warn({matchId: match.id, error: mediaRes.error}, "Failed to load match media posts");
+    }
 
     const teamById = new Map(teamsRes.value.map(t => [t.id, t]));
 
@@ -87,6 +97,7 @@ async function loadDetailForMatch(
         playoffRound,
         rosters,
         standingMethod,
+        mediaPosts: mediaRes.ok ? mediaRes.value : [],
     });
 }
 

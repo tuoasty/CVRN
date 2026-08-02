@@ -15,11 +15,14 @@ import {
     getMediaPostById,
     MediaPost,
     PagedMediaResult,
+    assignMediaToMatch,
     CreateMediaFormSchema,
     MediaPostIdSchema,
     GetAllMediaSchema,
     GetPagedMediaSchema,
+    AssignMediaToMatchSchema,
 } from '@/server/domains/media'
+import { requireAdmin } from '@/server/domains/auth'
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
     const { data: { user } } = await supabase.auth.getUser()
@@ -68,6 +71,21 @@ export async function deleteMediaPostAction(input: unknown): Promise<Result<void
     if (!user) return Err({ message: 'Not authenticated', code: 'UNAUTHORIZED' })
 
     const result = await deleteMediaPost(supabase, { postId: parsed.data.postId, userId: user.id })
+    if (result.ok) revalidatePublicData([CACHE_TAGS.media])
+    return result
+}
+
+// requireAdmin, not this file's requireAuth: the other media actions predate the guard and
+// lean on RLS alone, which is exactly what requireAdmin exists to replace.
+export async function assignMediaToMatchAction(input: unknown): Promise<Result<MediaPost>> {
+    const parsed = AssignMediaToMatchSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: 'Invalid assignment input', code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const result = await assignMediaToMatch(supabase, parsed.data)
     if (result.ok) revalidatePublicData([CACHE_TAGS.media])
     return result
 }

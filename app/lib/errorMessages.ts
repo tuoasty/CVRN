@@ -10,6 +10,7 @@ const messages: Record<ErrorCode, string> = {
     INTEGRATION_ERROR: "An external service error occurred. Please try again.",
     UNKNOWN: "Something went wrong. Please try again.",
     MEDIA_PIN_LIMIT_EXCEEDED: "Only 3 posts can be pinned at a time. Unpin one first.",
+    MEDIA_MATCH_SLOT_TAKEN: "This match already has a GFX/VOD attached. Remove it first.",
 };
 
 export function errorCodeToUserMessage(code: ErrorCode | string): string {
