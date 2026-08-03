@@ -16,7 +16,7 @@ import {
     AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
-import {useSeasonPlayoffMatches, deleteMatchSheetConfig} from '@/app/hooks/useMatchSheetConfigs';
+import {useSeasonPlayoffMatches, deleteMatchSheetConfig, publishStats} from '@/app/hooks/useMatchSheetConfigs';
 import {useTeamsBySeason} from '@/app/hooks/useTeams';
 import {PlayoffMatchStatRow} from '@/server/domains/matchStats';
 import {toast} from '@/app/utils/toast';
@@ -39,6 +39,24 @@ export default function AdminStatsPage() {
     const [syncTarget, setSyncTarget] = useState<PlayoffMatchStatRow | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<PlayoffMatchStatRow | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [publishing, setPublishing] = useState(false);
+
+    const handlePublish = async () => {
+        setPublishing(true);
+        try {
+            const result = await publishStats();
+            if (!result.ok) {
+                toast.error(result.error.message);
+                return;
+            }
+            toast.success('Public leaderboards refreshed');
+        } catch (err) {
+            clientLogger.error('AdminStatsPage', 'Exception publishing stats', {err});
+            toast.error('Something went wrong');
+        } finally {
+            setPublishing(false);
+        }
+    };
 
     const teamName = useMemo(() => {
         const map = new Map(teams.map(t => [t.id, t.name]));
@@ -80,7 +98,22 @@ export default function AdminStatsPage() {
                             Attach a stats sheet to a playoff match in the selected season
                         </p>
                     </div>
+                    <Button
+                        variant="outline"
+                        className="rounded-sm gap-2 shrink-0"
+                        onClick={handlePublish}
+                        disabled={publishing}
+                    >
+                        <RefreshCw className={publishing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+                        Publish to site
+                    </Button>
                 </div>
+
+                <p className="text-xs text-muted-foreground mt-3">
+                    Syncing a sheet writes the stats but does not refresh the public
+                    leaderboards. Press <span className="font-medium text-foreground">Publish to site</span> once
+                    after finishing a batch of matches.
+                </p>
 
                 {!seasonId && (
                     <div className="panel p-6 mt-6 text-center">

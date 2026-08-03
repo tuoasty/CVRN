@@ -14,7 +14,7 @@ function toEmbedUrl(url: string): string | null {
         }
         if (u.hostname.includes('twitch.tv')) {
             const parent = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-            const channel = u.pathname.replace(/^\/videos\
+            const channel = u.pathname.replace(/^\/videos\//, '')
             const isVod = u.pathname.startsWith('/videos/')
             return isVod
                 ? `https://player.twitch.tv/?video=${channel}&parent=${parent}`

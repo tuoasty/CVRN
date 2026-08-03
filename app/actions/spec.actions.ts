@@ -3,7 +3,8 @@
 import {revalidatePath} from "next/cache";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
-import {getCachedPlayerLeaderboard} from "@/server/cache/publicReads";
+import {getCachedPlayerLeaderboard, getCachedLeaderboardIdentity} from "@/server/cache/publicReads";
+import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
 import {requireAdmin} from "@/server/domains/auth";
 import {getSeasonFinalsSlots} from "@/server/domains/season";
 import {getSpecs, saveSpec, removeSpec, SaveSpecSchema} from "@/server/domains/spec";
@@ -52,13 +53,14 @@ export async function getSpecLeaderboardAction(seasonId: string) {
 
     try {
 
-        const [players, slots] = await Promise.all([
+        const [statRows, identity, slots] = await Promise.all([
             getCachedPlayerLeaderboard(seasonId),
+            getCachedLeaderboardIdentity(),
             getSeasonFinalsSlots(supabase, seasonId),
         ]);
 
         return Ok({
-            players,
+            players: joinLeaderboardIdentity(statRows, identity),
             placementTiers: slots.ok ? placementTiersFromSlots(slots.value) : {},
         });
     } catch (err) {

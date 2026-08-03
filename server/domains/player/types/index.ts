@@ -117,6 +117,27 @@ export interface AllTimeLeaderboardRow extends Omit<PlayerLeaderboardRow, "seaso
 
 export type LeaderboardDisplayRow = PlayerLeaderboardRow | AllTimeLeaderboardRow;
 
+export type LeaderboardIdentityFields =
+    | "username"
+    | "display_name"
+    | "avatar_url"
+    | "season_name"
+    | "season_slug"
+    | "season_start_date"
+    | "region_code"
+    | "team_name"
+    | "team_slug"
+    | "team_logo_url"
+    | "team_logo_bg_removed";
+
+export type LeaderboardStatRow = Omit<PlayerLeaderboardRow, LeaderboardIdentityFields>;
+
+export interface LeaderboardIdentity {
+    players: Record<string, {username: string; display_name: string | null; avatar_url: string | null}>;
+    teams: Record<string, {name: string; slug: string; logo_url: string | null; logo_bg_removed: boolean}>;
+    seasons: Record<string, {name: string; slug: string; start_date: string; region_code: string}>;
+}
+
 export interface PlayerAward {
     id: string;
     award_name: string;

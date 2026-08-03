@@ -5,6 +5,7 @@ import {
     deleteMatchSheetConfigAction,
     previewMatchStatsAction,
     syncMatchStatsAction,
+    publishStatsAction,
 } from '@/app/actions/matchStats.actions';
 import {PlayoffMatchStatRow, SaveMatchSheetConfigInput} from '@/server/domains/matchStats';
 import type {PlayerOverrides} from '@/server/domains/sheets/commands/buildMatchStatsPlan';
@@ -50,4 +51,8 @@ export async function syncMatchStats(configId: string, force = false, playerOver
     const result = await syncMatchStatsAction(configId, force, playerOverrides);
     if (result.ok) await revalidateSeasonPlayoffMatches();
     return result;
+}
+
+export async function publishStats() {
+    return publishStatsAction();
 }
