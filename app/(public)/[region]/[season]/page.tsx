@@ -32,15 +32,20 @@ export default async function Page({ params }: PageProps) {
         ? new Date(seasonRecord.end_date) < new Date()
         : false;
 
-    // The limits (5 upcoming, 6 recent) mirror what HomePage previously requested via SWR.
-    const [teams, upcomingMatches, recentMatches, standings, podium, mediaPosts] = await Promise.all([
+    const [teams, standings, podium, mediaPosts] = await Promise.all([
         getCachedTeamsWithRegions(),
-        getCachedUpcomingMatches(seasonRecord.id, 5),
-        getCachedRecentMatches(seasonRecord.id, 6),
         getCachedStandings(seasonRecord.id, regionRecord.id),
-        // Only completed seasons render a podium.
-        isSeasonCompleted ? getCachedSeasonPodium(seasonRecord.id) : Promise.resolve([]),
+        isSeasonCompleted
+            ? getCachedSeasonPodium(seasonRecord.id)
+            : Promise.resolve([]),
         getCachedAllMediaPosts(),
+    ]);
+
+    const matchLimit = Math.ceil(standings.length / 2);
+
+    const [upcomingMatches, recentMatches] = await Promise.all([
+        getCachedUpcomingMatches(seasonRecord.id, matchLimit),
+        getCachedRecentMatches(seasonRecord.id, matchLimit),
     ]);
 
     return (
