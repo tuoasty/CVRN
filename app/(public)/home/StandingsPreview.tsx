@@ -6,13 +6,13 @@ import { ArrowRight, Trophy } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { getLogoClassName } from "@/app/lib/logoClass";
 import { buildPublicStandingsHref, buildPublicTeamHref } from "@/app/utils/matchDetailHref";
 
 interface StandingsPreviewProps {
     standings: StandingWithInfo[];
-    isLoading: boolean;
     qualifiedTeams?: number;
     regionCode?: string;
     seasonSlug?: string;
@@ -21,7 +21,6 @@ interface StandingsPreviewProps {
 
 export default function StandingsPreview({
                                                     standings,
-                                                    isLoading,
                                                     qualifiedTeams = 12,
                                                     regionCode,
                                                     seasonSlug,
@@ -36,16 +35,6 @@ export default function StandingsPreview({
 
     const standingsHref = buildPublicStandingsHref({ regionCode, seasonSlug });
 
-    if (isLoading) {
-        return (
-            <div className="space-y-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="h-12 bg-muted/30 rounded-sm animate-pulse" />
-                ))}
-            </div>
-        );
-    }
-
     if (standings.length === 0) {
         return (
             <div className="text-center py-8">
@@ -59,30 +48,43 @@ export default function StandingsPreview({
         <div className="space-y-3">
             <div className="space-y-1">
                 {topStandings.map((standing, index) => {
-                    const rank = index + 1;
+                    // The view's rank column is the source of truth; index is only a fallback, and
+                    // using it directly would desync the moment the view returns a tie or a gap.
+                    const rank = standing.rank ?? index + 1;
+                    const nextRank = topStandings[index + 1]?.rank ?? index + 2;
                     const wins = standing.wins || 0;
                     const losses = standing.losses || 0;
-                    const displayLvr = standing.total_lvr || 0;
                     const isQualified = rank <= qualifiedTeams;
+                    const isPodium = rank <= 3;
                     const teamHref = buildPublicTeamHref({regionCode, seasonSlug, teamSlug: standing.team_slug});
-                    const rowClass = `
-                        flex items-center gap-3 p-2.5 rounded-sm border transition-all
-                        ${rank === 1 ? 'bg-gradient-to-r from-primary/15 to-transparent border-l-4 border-l-primary' : ''}
-                        ${rank === 2 || rank === 3 ? 'bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-l-primary/70' : ''}
-                        ${rank > 3 && isQualified ? 'border-l-2 border-l-primary/40' : ''}
-                        ${!isQualified ? 'opacity-60' : ''}
-                        hover:bg-muted/30
-                    `;
+
+                    // One rule replaces four stripe weights: a line where qualification ends. Only
+                    // renders when the cutoff actually falls inside the eight rows on show.
+                    const showCutoff = isQualified
+                        && index < topStandings.length - 1
+                        && nextRank > qualifiedTeams;
+
+                    // Uniform border on every row — the old conditional border-l-2/4 changed the
+                    // border width per row, so content started at a different x on each one.
+                    const rowClass = cn(
+                        "flex items-center gap-3 p-2.5 rounded-sm border border-border",
+                        "transition-colors hover:bg-muted/30"
+                    );
 
                     const rowContent = (
                         <>
-                            {/* Rank Badge */}
                             <div className="flex items-center justify-center w-6 h-6 rounded-sm bg-muted border border-border shrink-0">
-                                <span className="text-xs font-bold tabular-nums">{rank}</span>
+                                <span className={cn(
+                                    "text-xs font-bold tabular-nums",
+                                    isPodium ? "text-foreground" : "text-muted-foreground"
+                                )}>
+                                    {rank}
+                                </span>
                             </div>
 
-                            {/* Team Logo & Name */}
                             <div className="flex items-center gap-2 flex-1 min-w-0">
+                                {/* Logos keep full opacity below the cutoff — dimming the whole row
+                                    took the team identity with it. */}
                                 {standing.team_logo_url && (
                                     <div className="relative w-6 h-6 shrink-0">
                                         <Image
@@ -94,37 +96,43 @@ export default function StandingsPreview({
                                         />
                                     </div>
                                 )}
-                                <span className="text-sm font-semibold truncate">
+                                <span className={cn(
+                                    "text-sm truncate",
+                                    isPodium ? "font-bold" : "font-semibold",
+                                    !isQualified && "text-muted-foreground"
+                                )}>
                                     {standing.team_name}
                                 </span>
                             </div>
 
-                            {/* Record */}
                             <div className="text-xs font-bold tabular-nums text-muted-foreground">
                                 {wins}-{losses}
                             </div>
 
-                            {/* LVR / Points */}
-                            {standingMethod === "points" || standingMethod === "points_without_bonus" ? (
-                                <div className="text-sm font-bold tabular-nums text-primary">
-                                    {((standing.total_points || 0) + (standingMethod === "points" ? (standing.total_bonus || 0) : 0)).toFixed(1)}
-                                </div>
-                            ) : (
-                                <div className={`text-sm font-bold tabular-nums ${displayLvr >= 100 ? 'text-primary' : 'text-destructive'}`}>
-                                    {displayLvr.toFixed(1)}
-                                </div>
-                            )}
+                            {/* Neutral, not blue or red: a rating is data, and this system reserves
+                                blue for actions and red for errors. */}
+                            <div className={cn(
+                                "text-sm font-bold tabular-nums",
+                                isQualified ? "text-foreground" : "text-muted-foreground"
+                            )}>
+                                {standingMethod === "points" || standingMethod === "points_without_bonus"
+                                    ? ((standing.total_points || 0) + (standingMethod === "points" ? (standing.total_bonus || 0) : 0)).toFixed(1)
+                                    : (standing.total_lvr || 0).toFixed(1)}
+                            </div>
                         </>
                     );
 
-                    return teamHref ? (
-                        <Link key={standing.team_id} href={teamHref} prefetch={false} className={rowClass}>
-                            {rowContent}
-                        </Link>
-                    ) : (
-                        <div key={standing.team_id} className={rowClass}>
-                            {rowContent}
-                        </div>
+                    return (
+                        <Fragment key={standing.team_id}>
+                            {teamHref ? (
+                                <Link href={teamHref} prefetch={false} className={rowClass}>
+                                    {rowContent}
+                                </Link>
+                            ) : (
+                                <div className={rowClass}>{rowContent}</div>
+                            )}
+                            {showCutoff && <PlayoffCutoff />}
+                        </Fragment>
                     );
                 })}
             </div>
@@ -137,6 +145,21 @@ export default function StandingsPreview({
                     </Link>
                 </Button>
             )}
+        </div>
+    );
+}
+
+/**
+ * Where the playoff places run out. A dashed rule reads as a boundary without spending a colour —
+ * blue means act and yellow means location in this system, and a cutoff is neither.
+ */
+function PlayoffCutoff() {
+    return (
+        <div className="relative flex items-center justify-center py-2" aria-hidden>
+            <div className="absolute inset-x-0 border-t border-dashed border-muted-foreground/40" />
+            <span className="relative bg-background px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Playoff cutoff
+            </span>
         </div>
     );
 }

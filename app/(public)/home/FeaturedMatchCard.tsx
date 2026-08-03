@@ -9,6 +9,7 @@ import { Badge } from "@/app/components/ui/badge";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import GfxFrame from "@/app/features/media/GfxFrame";
 
 interface FeaturedMatchCardProps {
     matchDetails: MatchWithDetails;
@@ -55,13 +56,12 @@ export default function FeaturedMatchCard({
      */
     const bleedInner = gfx?.image_url && (
         <>
-            <Image
+            <GfxFrame
                 src={gfx.image_url}
                 alt={gfx.title}
-                fill
                 priority
                 sizes="768px"
-                className="object-cover"
+                className="absolute inset-0"
             />
 
             <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 px-5 py-4 bg-gradient-to-b from-black/85 to-transparent">
@@ -168,9 +168,11 @@ export default function FeaturedMatchCard({
         </div>
     );
 
-    // Same 376px either way so the card stays aligned with the sidebar beside it.
+    // The bleed variant is 16:9 so a correctly-sized graphic fills it exactly at every breakpoint;
+    // min-h keeps the overlays from crushing it in the narrow three-column range. The plain variant
+    // holds no artwork, so it keeps a fixed height — the two never render together.
     const wrapperClass = bleedInner
-        ? "panel relative overflow-hidden h-[376px] bg-black"
+        ? "panel relative overflow-hidden aspect-video min-h-[280px] bg-black"
         : "panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent h-[376px]";
     const hoverClass = bleedInner ? "hover:border-primary/60" : "hover:border-l-primary/60";
 
@@ -192,7 +194,16 @@ function BleedTeam({ team, dim, reverse }: { team?: TeamWithRegion; dim: boolean
         <div className={cn("flex items-center gap-2.5 min-w-0", reverse && "flex-row-reverse", dim && "opacity-60")}>
             {team?.logo_url && (
                 <div className="relative w-9 h-9 shrink-0">
-                    <Image src={team.logo_url} alt={team.name} fill sizes="36px" className="object-contain" />
+                    {/* A dark logo on a transparent PNG disappears into the bottom gradient, and a
+                        dark shadow cannot rescue it. The white halo does; the dark one grounds
+                        light logos. */}
+                    <Image
+                        src={team.logo_url}
+                        alt={team.name}
+                        fill
+                        sizes="36px"
+                        className="object-contain [filter:drop-shadow(0_0_1px_rgba(255,255,255,0.65))_drop-shadow(0_1px_3px_rgba(0,0,0,0.85))]"
+                    />
                 </div>
             )}
             <span className={cn("text-sm font-bold text-white truncate min-w-0", reverse && "text-right")}>

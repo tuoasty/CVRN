@@ -4,6 +4,7 @@ import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { Calendar, Clock, Trophy } from "lucide-react";
 import CompactMatchCard from "@/app/(public)/home/CompactMatchCard";
 import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
+import FeaturedMatchCarousel, { type FeaturedSlide } from "@/app/(public)/home/FeaturedMatchCarousel";
 import SeasonChampionCard from "@/app/(public)/home/SeasonChampionCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import StandingsPreview from "@/app/(public)/home/StandingsPreview";
@@ -79,6 +80,40 @@ export default function HomePage({
         : hasFeaturedRecent
         ? computeMatchLabels([recentMatches[0]])[0]
         : "";
+
+    // Only matches that actually have a graphic earn a slide — the carousel exists to surface the
+    // artwork, and a plain card mixed into a strip of graphics reads as a loading failure.
+    // Upcoming first so "what's next" leads; recent backfills a quiet week.
+    const slides: FeaturedSlide[] = isSeasonCompleted
+        ? []
+        : [
+              ...upcomingMatches.map((m, i) => ({ m, label: upcomingLabels[i], isRecent: false })),
+              ...recentMatches.map((m, i) => ({ m, label: recentLabels[i], isRecent: true })),
+          ]
+              .flatMap(({ m, label, isRecent }) => {
+                  const gfx = mediaPosts.find(
+                      (p) => p.type === "gfx" && p.image_url && p.match_id === m.match.id
+                  );
+                  if (!gfx) return [];
+                  const homeTeam = teams.find((t) => t.id === m.match.home_team_id);
+                  const awayTeam = teams.find((t) => t.id === m.match.away_team_id);
+                  return [{
+                      matchDetails: m,
+                      homeTeam,
+                      awayTeam,
+                      gfx,
+                      matchLabel: label,
+                      isRecent,
+                      href: buildPublicMatchHref({
+                          matchCode: m.match.match_code,
+                          homeTeamName: homeTeam?.name,
+                          awayTeamName: awayTeam?.name,
+                          regionCode,
+                          seasonSlug,
+                      }),
+                  }];
+              })
+              .slice(0, 5);
 
     return (
         <>
@@ -171,6 +206,8 @@ export default function HomePage({
                     <section className="space-y-6">
                         {isSeasonCompleted ? (
                             <SeasonChampionCard podium={podium} seasonName={season.name} regionCode={regionCode} seasonSlug={seasonSlug} />
+                        ) : slides.length > 0 ? (
+                            <FeaturedMatchCarousel slides={slides} regionCode={regionCode} />
                         ) : featuredMatch ? (
                             <FeaturedMatchCard
                                 matchDetails={featuredMatch}
@@ -198,13 +235,12 @@ export default function HomePage({
                         )}
 
                         <div className="space-y-3">
-                            <div className="border-t-2 border-primary/20 pt-4">
-                                <h3 className="text-base font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-4">
+                            <div className="border-t border-border pt-4">
+                                <h3 className="text-base font-bold uppercase tracking-wider text-foreground mb-4">
                                     Season Standings
                                 </h3>
                                 <StandingsPreview
                                     standings={standings}
-                                    isLoading={false}
                                     qualifiedTeams={season.playoff_configs?.qualified_teams}
                                     regionCode={regionCode}
                                     seasonSlug={seasonSlug}

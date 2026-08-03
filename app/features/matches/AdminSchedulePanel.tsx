@@ -18,6 +18,7 @@ import { PlayoffRound } from "@/server/domains/playoff";
 import type { MediaPost } from "@/server/domains/media";
 import type { TeamWithRegion } from "@/server/domains/team";
 import DeleteMatchDialog from "@/app/features/matches/DeleteMatchDialog";
+import AdminScheduleRowsSkeleton from "@/app/features/matches/AdminScheduleRowsSkeleton";
 
 interface SchedulePanelProps {
     seasonId: string;
@@ -113,13 +114,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
     }
 
     if (loading) {
-        return (
-            <div className="panel p-8">
-                <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                </div>
-            </div>
-        );
+        return <AdminScheduleRowsSkeleton />;
     }
 
     if (schedule.length === 0) {
