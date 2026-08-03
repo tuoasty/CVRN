@@ -98,7 +98,6 @@ export async function syncTeamRoster(
             ...activeTeams.map(t => t.teamNumber),
         ]);
 
-        // ── Phase 0: all disbands (explicit + implicit) ──────────────────────
         const allDisbandNumbers = [
             ...disbandedNumbers,
             ...[...existingByNumber.keys()].filter(n => !accountedNumbers.has(n)),
@@ -151,18 +150,12 @@ export async function syncTeamRoster(
             rowsErrored++;
         }
 
-        // ── Phase 1: team upserts, Roblox resolution, removals, role syncs ───
         const UNIQUE_ROLES = new Set(['captain', 'vice_captain', 'court_captain']);
         const phaseStates: TeamPhaseState[] = [];
 
         for (const parsedTeam of activeTeams) {
             rowsProcessed++;
 
-            // Rebrand-vs-disband gate: a same-slot name change is only a rebrand if the
-            // roster substantially carried over. If it didn't, the old team disbanded and a
-            // new team took the slot — soft-delete the old team here so upsertTeamByNumber
-            // below inserts a fresh one (wasExisting becomes false via the map delete, so
-            // the existing team_creation + Phase 2 add-all path runs for the new team).
             const prevForNumber = existingByNumber.get(parsedTeam.teamNumber);
             if (prevForNumber && prevForNumber.name !== parsedTeam.teamName) {
                 const oldRosterResult = await findAllTeamPlayers(supabase, prevForNumber.id, config.season_id);
@@ -174,8 +167,7 @@ export async function syncTeamRoster(
                     const newCaptain = parsedTeam.players.find(p => p.role === 'captain')?.username.toLowerCase() ?? null;
 
                     if (classifyTeamNameChange({usernames: oldUsernames}, {usernames: newUsernames, captain: newCaptain}) === 'disband') {
-                        // Remove the old roster individually (revert-safe: each emits a
-                        // player_remove with its playerTeamSeasonId), then soft-delete.
+
                         for (const r of oldRosterResult.value) {
                             if (!r.player) continue;
                             const removeResult = await removePlayerFromTeam(supabase, {
@@ -283,7 +275,6 @@ export async function syncTeamRoster(
                 parsedTeam.players.map(p => [p.username.toLowerCase(), p])
             );
 
-            // Resolve Roblox IDs for all players not already on this team
             const resolvedByRobloxId = new Map<string, Resolution>();
             const resolvedUsernameToRobloxId = new Map<string, string>();
             const failedResolutions = new Set<string>();
@@ -321,7 +312,6 @@ export async function syncTeamRoster(
                 }
             }
 
-            // Remove players not on sheet
             for (const [uname, pts] of currentByUsername) {
                 if (parsedByUsername.has(uname)) continue;
                 if (canonicalNamesToSkip.has(uname)) continue;
@@ -344,8 +334,6 @@ export async function syncTeamRoster(
                 }
             }
 
-            // Sync roles for players already on this team
-            // Process demotions first so unique-role slots (C/VC/CC) are vacated before promotions fill them
             const roleChanges = [...parsedByUsername.entries()]
                 .filter(([uname, parsedPlayer]) => {
                     const existing = currentByUsername.get(uname);
@@ -354,13 +342,12 @@ export async function syncTeamRoster(
                 .sort(([unameA], [unameB]) => {
                     const roleA = currentByUsername.get(unameA)!.role ?? '';
                     const roleB = currentByUsername.get(unameB)!.role ?? '';
-                    // Demotions (currently holding a unique role) come first
+
                     if (UNIQUE_ROLES.has(roleA) && !UNIQUE_ROLES.has(roleB)) return -1;
                     if (!UNIQUE_ROLES.has(roleA) && UNIQUE_ROLES.has(roleB)) return 1;
                     return 0;
                 });
 
-            // Reverse map for pre-clear: player_id → lowercase username (pre-Phase-1 state)
             const playerIdToUsername = new Map(
                 Array.from(currentByUsername.entries()).map(([uname, pts]) => [pts.player_id, uname])
             );
@@ -368,15 +355,12 @@ export async function syncTeamRoster(
             for (const [uname, parsedPlayer] of roleChanges) {
                 const existing = currentByUsername.get(uname)!;
 
-                // Before assigning a unique role, clear any current holder who is vacating
-                // the slot. Uses current DB state so it's safe across multiple iterations
-                // (e.g. A: captain→vc, B: vc→captain won't double-demote either player).
                 if (UNIQUE_ROLES.has(parsedPlayer.role)) {
                     const holderResult = await findPlayerByRole(supabase, team.id, config.season_id, parsedPlayer.role);
                     if (holderResult.ok && holderResult.value && holderResult.value.player_id !== existing.player_id) {
                         const holderUname = playerIdToUsername.get(holderResult.value.player_id);
                         const holderSheetRole = holderUname ? parsedByUsername.get(holderUname)?.role : undefined;
-                        // Only clear if the holder is vacating the slot (off sheet or moving to a different role)
+
                         if (!holderSheetRole || holderSheetRole !== parsedPlayer.role) {
                             await setPlayerRole(supabase, {
                                 playerId: holderResult.value.player_id,
@@ -420,8 +404,6 @@ export async function syncTeamRoster(
             });
         }
 
-        // ── Phase 2: additions (all removals have committed, no duplicate conflicts) ──
-        // Maps every sheet username → all teams it appears on (in-memory, no extra queries)
         const sheetUsernameToTeams = new Map<string, string[]>();
         for (const {parsedTeam} of phaseStates) {
             for (const p of parsedTeam.players) {
@@ -456,9 +438,6 @@ export async function syncTeamRoster(
                     continue;
                 }
 
-                // If inserting into a unique role slot, demote any current holder who should
-                // be vacating it. Phase 1 handles this in the happy path; this is a fallback
-                // for when Phase 1's role sync or removal didn't fully clear the slot.
                 if (UNIQUE_ROLES.has(parsedPlayer.role)) {
                     const holderResult = await findPlayerByRole(supabase, team.id, config.season_id, parsedPlayer.role);
                     if (holderResult.ok && holderResult.value && holderResult.value.player_id !== upsertResult.value.id) {

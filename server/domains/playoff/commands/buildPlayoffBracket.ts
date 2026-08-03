@@ -88,8 +88,6 @@ export async function buildPlayoffBracket(
         const playoffConfig = templates[template as keyof typeof templates];
         const totalTeams = playoffConfig.teams;
 
-        // Seeds come from an explicit custom order when provided, else standings order.
-        // seedTeamIds[value - 1] resolves each template SeedSlot's team_id below.
         let seedTeamIds: (string | null)[];
         if (p.seedOrder) {
             const teamsResult = await findTeamsBySeasonId(supabase, p.seasonId);
@@ -130,8 +128,7 @@ export async function buildPlayoffBracket(
         }
 
         const byCode = new Map<string, BracketNode>();
-        // Global 1..N draw order: upper rounds first, then lower, in template order.
-        // The display filters by round and sorts by this within each round.
+
         let displayOrder = 1;
         const tracks = [
             { group: "upper" as const, rounds: playoffConfig.upper},
@@ -142,11 +139,11 @@ export async function buildPlayoffBracket(
             for(const roundGroup of rounds){
                 for(const match of roundGroup.matches){
                     const matchId = randomUUID();
-                    // check if match.home and match.away is of SeedSlot. If yes, fill with the team_id obtained by the seed. Else leave null
+
                     const playoffMatch:InsertPlayoffMatchDto = {
                         id: matchId,
                         seasonId:season.id,
-                        week:1, // left as 1 for default to avoid rewriting weeks
+                        week:1, 
                         matchType: "playoffs",
                         status: "pending",
                         bestOf: match.best_of,
@@ -157,7 +154,7 @@ export async function buildPlayoffBracket(
 
                     const playoffBracket:InsertPlayoffBracketDto = {
                         id: randomUUID(),
-                        
+
                         seasonId: season.id,
                         round: roundGroup.round,
                         playoffGroup: group,
@@ -201,10 +198,7 @@ export async function buildPlayoffBracket(
 
         const matchesToInsert = Array.from(byCode.values(), (node) => node.match);
         const bracketsToInsert = Array.from(byCode.values(), (node) => node.bracket);
-        // These three writes are not a single DB transaction (separate PostgREST calls).
-        // If a later step fails after matches land, delete the just-inserted playoff
-        // matches so the season can be re-generated. playoff_brackets FK is ON DELETE
-        // CASCADE, so removing the matches also clears their brackets.
+
         const rollback = async (stage: string) => {
             const cleanup = await deletePlayoffMatchesBySeasonId(supabase, p.seasonId);
             if (!cleanup.ok) {

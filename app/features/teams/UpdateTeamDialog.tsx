@@ -28,7 +28,6 @@ interface UpdateTeamDialogProps {
 
 export default function UpdateTeamDialog({ team, onSuccess }: UpdateTeamDialogProps) {
 
-
     const [open, setOpen] = useState(false);
     const [name, setName] = useState(team.name);
     const [brickNumber, setBrickNumber] = useState(team.brick_number?.toString() ?? "");

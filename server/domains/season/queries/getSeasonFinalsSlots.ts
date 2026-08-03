@@ -3,18 +3,10 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 
-/**
- * Who occupied which slot at the end of a season's playoffs.
- *
- * Deliberately not a podium. `season_podium` ranks teams 1-3 by how they *finished*,
- * which cannot express that a team reached the grand final through the upper bracket —
- * the upper finalist is place 1 when it wins and place 2 when it loses. Callers that
- * care about the route a team took rather than where it landed need this instead.
- */
 export type SeasonFinalsSlots = {
-    /** Double-elim only. Null in single-elim, where no team skipped a bracket. */
+
     upperFinalistTeamId: string | null;
-    /** The grand-final away team, or both finalists in a single-elim season. */
+
     finalistTeamIds: string[];
     thirdTeamId: string | null;
 };
@@ -43,8 +35,6 @@ export async function getSeasonFinalsSlots(
         const final = await readRoundMatch(supabase, seasonId, "final");
         if (final) return Ok(await singleElimSlots(supabase, seasonId, final));
 
-        // Neither bracket shape present — playoffs unseeded, or a season that never ran
-        // them. No slots rather than an error: callers treat this as "nobody placed".
         return Ok(NO_SLOTS);
     } catch (error) {
         logger.error({error, seasonId}, "Unexpected error reading season finals slots");
@@ -52,17 +42,6 @@ export async function getSeasonFinalsSlots(
     }
 }
 
-/**
- * GF home is the upper-bracket finalist, GF away the lower-bracket champion — the
- * convention every double-elim template encodes (`playoff/templates/16q-lb.json:42`).
- *
- * Neither slot requires the grand final to be played: both fill the moment the winners
- * final and losers final advance, so a season mid-playoffs already reports its finalists.
- *
- * `bracket_reset` is never read. BR home is the *winner* of the grand final
- * (`16q-lb.json:48`), which identifies the champion — and the champion is precisely
- * what this function is built to avoid conflating with the upper finalist.
- */
 async function doubleElimSlots(
     supabase: DBClient,
     seasonId: string,
@@ -78,13 +57,11 @@ async function doubleElimSlots(
     return {
         upperFinalistTeamId: grandFinal.homeTeamId,
         finalistTeamIds: grandFinal.awayTeamId ? [grandFinal.awayTeamId] : [],
-        // Third is the loser of the losers final — it already beat everyone else in the
-        // lower bracket. Distinct from both grand-final teams by construction.
+
         thirdTeamId: decided?.loser ?? null,
     };
 }
 
-/** No upper bracket means no upper finalist: both finalists played the same field. */
 async function singleElimSlots(
     supabase: DBClient,
     seasonId: string,
@@ -108,11 +85,6 @@ async function singleElimSlots(
     };
 }
 
-/**
- * Fallback for brackets with no third-place match, mirroring how the podium resolves the
- * same gap (`helpers/deriveSeasonPodium.ts:56-86`). Excluding the finalists is defensive —
- * in a well-formed bracket a semifinal loser is never a finalist.
- */
 async function firstSemifinalLoser(
     supabase: DBClient,
     seasonId: string,
@@ -166,7 +138,6 @@ async function readMatch(supabase: DBClient, matchId: string): Promise<RoundMatc
     };
 }
 
-/** Null while a match is unplayed, unresolved, or missing a side. */
 function decideMatch(match: RoundMatch): {winner: string; loser: string} | null {
     if (!match.homeTeamId || !match.awayTeamId) return null;
     if (match.homeSetsWon === null || match.awaySetsWon === null) return null;

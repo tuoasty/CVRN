@@ -1,6 +1,5 @@
 import {Skeleton} from "@/app/components/ui/skeleton";
 
-// Mirrors LeaderboardPage's shell: header, view selector row, table.
 export default function LeaderboardLoading() {
     return (
         <div className="page-bleed py-6 space-y-6">

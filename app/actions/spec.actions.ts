@@ -9,9 +9,6 @@ import {getSeasonFinalsSlots} from "@/server/domains/season";
 import {getSpecs, saveSpec, removeSpec, SaveSpecSchema} from "@/server/domains/spec";
 import {placementTiersFromSlots} from "@/server/domains/spec/helpers/placementBonus";
 
-// Admin-guarded rather than public: `specs` itself is readable by anyone, but the
-// embedded requirements are not, and a caller who silently got empty arrays back
-// would read as "this spec has no requirements" instead of "you can't see them".
 export async function getSpecsAction() {
     const supabase = await createServerSupabase();
     const guard = await requireAdmin(supabase);
@@ -48,23 +45,13 @@ export async function deleteSpecAction(id: string) {
     return result;
 }
 
-/**
- * Season stat rows for the calibration screen.
- *
- * `getPlayerLeaderboardAction` was deleted when the public board moved to a server
- * component — a cookie-bound, uncacheable POST for the heaviest read in the app. This
- * is not that: the season comes from the admin store rather than the route, so a
- * server component cannot resolve it, and it reads through `getCachedPlayerLeaderboard`,
- * so an admin switching seasons hits the same warm cache the public board fills.
- */
 export async function getSpecLeaderboardAction(seasonId: string) {
     const supabase = await createServerSupabase();
     const guard = await requireAdmin(supabase);
     if (!guard.ok) return guard;
 
     try {
-        // Finals slots, not the podium: the bonus follows the bracket a team came through,
-        // and `season_podium` only records where teams finished. See placementBonus.ts.
+
         const [players, slots] = await Promise.all([
             getCachedPlayerLeaderboard(seasonId),
             getSeasonFinalsSlots(supabase, seasonId),

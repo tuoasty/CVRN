@@ -7,14 +7,13 @@ export interface SpecWithRequirements extends Spec {
     requirements: SpecRequirement[];
 }
 
-/** One requirement evaluated against one player. */
 export interface SpecRequirementCheck {
     statKey: string;
     tier: SpecTier;
     minValue: number;
-    /** The player's raw value. Null when the view has no value — always a fail. */
+
     value: number | null;
-    /** `value` after the placement bonus. What `passed` is actually judged on. */
+
     adjustedValue: number | null;
     passed: boolean;
 }
@@ -28,9 +27,9 @@ export interface SpecQualificationRow {
     teamSlug: string | null;
     teamLogoUrl: string | null;
     teamLogoBgRemoved: boolean | null;
-    /** Which finals slot this player's team occupied. `outside` for most of the league. */
+
     placementTier: PlacementTier;
-    /** Multiplier offset applied to this player's stats, e.g. 0.15 or -0.1. */
+
     placementBonus: number;
     qualified: boolean;
     mainPassed: number;
@@ -43,12 +42,9 @@ export interface SpecQualificationRow {
 
 export interface SpecQualification {
     spec: SpecWithRequirements;
-    /** Qualified first, then by how close they came. */
+
     rows: SpecQualificationRow[];
-    /**
-     * Requirement stat_keys that are not in SPEC_STAT_KEYS. Surfaced rather than
-     * skipped: a key that matches nothing would otherwise silently pass everyone.
-     */
+
     unknownStatKeys: string[];
 }
 

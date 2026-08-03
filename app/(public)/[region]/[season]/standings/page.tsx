@@ -14,9 +14,6 @@ type PageProps = {
 export default async function Page({ params }: PageProps) {
     const { region, season } = await params;
 
-    // The parent layout resolves these too, but its result lives in a client context that
-    // a server component cannot read. Both calls hit the same cache entries, so the repeat
-    // lookup costs nothing.
     const regionRecord = await getCachedRegionByCode(safeDecodeURIComponent(region).toLowerCase());
     if (!regionRecord) notFound();
 

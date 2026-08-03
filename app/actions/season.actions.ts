@@ -73,8 +73,6 @@ export async function deleteSeasonAction(data: unknown) {
     return result;
 }
 
-// ── Season History ─────────────────────────────────────────────────────────────
-
 export async function getSeasonPodiumAction(input: unknown) {
     const parsed = SeasonIdSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});

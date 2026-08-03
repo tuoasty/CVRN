@@ -45,11 +45,7 @@ function row(
 }
 
 describe("aggregateCareerRows", () => {
-    /**
-     * The landmine. 1-for-1 is 1.000 and 10-for-40 is .250; the honest career figure is
-     * 11/41 = .268, while averaging the two seasons gives .625. If this test ever passes
-     * with .625 the leaderboard is lying.
-     */
+
     it("re-derives hit_eff from summed attempts rather than averaging seasons", () => {
         const [career] = aggregateCareerRows([
             row({
@@ -146,7 +142,7 @@ describe("aggregateCareerRows", () => {
 
         expect(career.team_name).toBe("New Team");
         expect(career.season_slug).toBe("s2");
-        // A career spans seasons, so it holds no single season identity.
+
         expect(career.season_id).toBeNull();
         expect(career.season_name).toBeNull();
     });
@@ -179,8 +175,6 @@ describe("deriveSeasonCohorts", () => {
         expect(cohorts.find(c => c.slug === "s1")!.regionCount).toBe(2);
     });
 
-    // Ordering is on the real start date, so double-digit seasons cannot sort as strings
-    // and land "Season 10" between 1 and 2.
     it("orders by start date, not slug text", () => {
         const cohorts = deriveSeasonCohorts([
             row({season_slug: "s9", season_start_date: "2025-01-01"}),

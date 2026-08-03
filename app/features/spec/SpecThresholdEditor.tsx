@@ -26,7 +26,7 @@ interface Props {
     tier: SpecTier;
     rows: DraftThreshold[];
     takenKeys: Set<string>;
-    /** Live count of players clearing each requirement, keyed by rowId. */
+
     passCounts: Map<string, number>;
     totalPlayers: number;
     onChange: (rowId: string, patch: Partial<DraftThreshold>) => void;
@@ -91,9 +91,7 @@ export default function SpecThresholdEditor({
                             className="rounded-sm w-24 font-mono tabular-nums text-sm"
                         />
 
-                        {/* Per-requirement pass count. Calibrating one threshold at a time
-                            is far easier than reading the qualified total and guessing
-                            which line is doing the cutting. */}
+                        {}
                         <span
                             className="text-xs font-mono tabular-nums text-muted-foreground w-20 text-right shrink-0"
                             title={`${passing} of ${totalPlayers} players clear this`}

@@ -16,7 +16,7 @@ export default function GFXImageDialog({ url, title, open, onOpenChange }: GFXIm
                 <DialogHeader className="sr-only">
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {}
                 <img
                     src={url}
                     alt={title}

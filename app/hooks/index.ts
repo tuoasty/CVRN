@@ -1,4 +1,4 @@
-// Re-export all hooks for ergonomic imports
+
 export { useRegions, useRegionByCode } from './useRegions';
 export { useSeasons, useSeasonBySlugAndRegion } from './useSeasons';
 export { useTeams, useTeamWithPlayers, useTeamsByIds, mutateAllTeams, mutateTeamWithPlayers } from './useTeams';

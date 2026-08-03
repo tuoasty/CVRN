@@ -3,7 +3,6 @@
 import {revalidatePublicData} from "@/server/cache/revalidate";
 import {CACHE_TAGS} from "@/server/cache/tags";
 
-// Bracket generation and reset both create/delete playoff match rows.
 const PLAYOFF_TAGS = [CACHE_TAGS.playoffs, CACHE_TAGS.matches];
 
 import {z} from "zod"

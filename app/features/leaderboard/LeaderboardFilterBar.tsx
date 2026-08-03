@@ -19,14 +19,14 @@ type Props = {
     query: string;
     onViewChange: (view: StatView) => void;
     onQueryChange: (q: string) => void;
-    /** Total rows in the board's pool. */
+
     totalCount: number;
-    /** Rows left after search. Equal to `totalCount` when nothing is typed. */
+
     shownCount: number;
-    /** All-time only. Omit both to hide the region picker. */
+
     region?: string;
     onRegionChange?: (region: string) => void;
-    /** All-time only. Omit to hide the season picker. */
+
     cohorts?: SeasonCohort[];
     selectedSeasons?: string[];
     onToggleSeason?: (slug: string) => void;
@@ -87,23 +87,15 @@ export default function LeaderboardFilterBar({
     );
 }
 
-/**
- * Local state drives the input so typing never waits on a router write; the debounced
- * copy is what reaches the URL. Without the split, `router.replace` on every keystroke
- * makes the field feel like it is dropping characters.
- */
 function PlayerSearchInput({value, onChange}: {value: string; onChange: (q: string) => void}) {
     const [draft, setDraft] = useState(value);
     const debounced = useDebouncedValue(draft, 250);
 
     useEffect(() => {
         if (debounced !== value) onChange(debounced);
-        // `value` is deliberately absent: including it re-fires whenever the URL settles,
-        // which would fight the user mid-keystroke.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [debounced]);
 
-    // Reflect external clears (the empty-state button, a back navigation).
     useEffect(() => {
         if (value === "") setDraft("");
     }, [value]);
@@ -124,8 +116,7 @@ function PlayerSearchInput({value, onChange}: {value: string; onChange: (q: stri
                     "h-9 w-full rounded-sm border border-border bg-background pl-8 pr-8 text-sm",
                     "placeholder:text-muted-foreground",
                     "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                    // The native search clear button is inconsistent across browsers and
-                    // sits outside the design system; a real button replaces it.
+
                     "[&::-webkit-search-cancel-button]:appearance-none",
                 )}
             />
@@ -173,14 +164,6 @@ function RegionFilter({value, onChange}: {value: string; onChange: (region: stri
     );
 }
 
-/**
- * Season cohorts, multi-select. Picking S1 and S2 sums them into one career line per
- * player rather than listing the seasons separately — the board is a ranking, and a
- * player appearing twice in it would have no defensible rank.
- *
- * Nothing selected means every season, which is what a bare /leaderboard shows. That is
- * why the reset reads "All seasons" rather than being a checkbox of its own.
- */
 function SeasonFilter({
     cohorts,
     selected,
@@ -252,8 +235,7 @@ function SeasonFilter({
                                 aria-hidden
                             />
                             <span className="flex-1 text-left">{cohort.label}</span>
-                            {/* A cohort only some regions ran would otherwise look like a
-                                fair cross-region comparison when it is not. */}
+                            {}
                             <span className="text-xs text-muted-foreground tabular-nums">
                                 {cohort.regionCount}
                                 {cohort.regionCount === 1 ? " region" : " regions"}
@@ -266,12 +248,6 @@ function SeasonFilter({
     );
 }
 
-/**
- * The only path to a column's meaning on touch. Every definition otherwise lives in a
- * hover tooltip, and the header buttons already own their click for sorting, so they
- * cannot double as a tap target for the tooltip. A disclosure reaches every device and
- * doubles as a glossary you can read all at once on desktop.
- */
 function ColumnGlossary({view}: {view: StatView}) {
     const columns = STAT_VIEW_COLUMNS[view];
 

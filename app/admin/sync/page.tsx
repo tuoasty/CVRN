@@ -260,7 +260,7 @@ export default function AdminSyncPage() {
     };
 
     const handleToggleCron = async (cfg: SheetConfig) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const current = (cfg as any).cron_enabled as boolean;
         setTogglingCronId(cfg.id);
         try {
@@ -332,7 +332,7 @@ export default function AdminSyncPage() {
     return (
         <div className="admin-container">
             <div className="admin-section">
-                {/* Header */}
+                {}
                 <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
                     <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
                         <Sheet className="h-7 w-7 text-primary" />
@@ -351,7 +351,7 @@ export default function AdminSyncPage() {
                     </Button>
                 </div>
 
-                {/* Config table */}
+                {}
                 {configsLoading && (
                     <div className="panel overflow-x-auto mt-6">
                         <table className="table-dense">
@@ -401,7 +401,7 @@ export default function AdminSyncPage() {
                             </thead>
                             <tbody>
                                 {configs.map((cfg) => {
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                                     const cronEnabled = (cfg as any).cron_enabled as boolean ?? true;
                                     return (
                                     <tr key={cfg.id}>
@@ -511,7 +511,7 @@ export default function AdminSyncPage() {
                 )}
             </div>
 
-            {/* Add Config Dialog */}
+            {}
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
                 <DialogContent className="w-[calc(100%-2rem)] !max-w-lg rounded-sm" aria-describedby={undefined}>
                     <DialogHeader>
@@ -638,7 +638,7 @@ export default function AdminSyncPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Preview Dialog */}
+            {}
             <Dialog open={!!previewConfig} onOpenChange={(open) => { if (!open) setPreviewConfig(null); }}>
                 <DialogContent className="w-[calc(100%-2rem)] !max-w-2xl rounded-sm" aria-describedby={undefined}>
                     <DialogHeader>
@@ -773,7 +773,7 @@ export default function AdminSyncPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Reset Confirm */}
+            {}
             <Dialog open={!!resetTarget} onOpenChange={(open) => { if (!open) setResetTarget(null); }}>
                 <DialogContent className="w-[calc(100%-2rem)] !max-w-md rounded-sm" aria-describedby={undefined}>
                     <DialogHeader>
@@ -839,7 +839,7 @@ export default function AdminSyncPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Sync Result Dialog */}
+            {}
             <Dialog open={!!syncResultDialog} onOpenChange={open => { if (!open) setSyncResultDialog(null); }}>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby={undefined}>
                     <DialogHeader>
@@ -920,7 +920,7 @@ export default function AdminSyncPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Confirm */}
+            {}
             <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
                 <AlertDialogContent className="rounded-sm">
                     <AlertDialogHeader>

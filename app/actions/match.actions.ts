@@ -3,8 +3,6 @@
 import {revalidatePublicData} from "@/server/cache/revalidate";
 import {CACHE_TAGS} from "@/server/cache/tags";
 
-// Completing or voiding a match cascades into standings and the playoff bracket via the
-// complete_match / void_match RPCs, so all three tags move together.
 const MATCH_MUTATION_TAGS = [CACHE_TAGS.matches, CACHE_TAGS.standings, CACHE_TAGS.playoffs];
 
 import {z} from "zod"

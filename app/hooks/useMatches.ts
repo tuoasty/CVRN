@@ -27,8 +27,6 @@ import { SerializableError } from '@/server/utils/serializeableError';
 const MATCHES_TTL = 2 * 60 * 1000;
 const AVAILABLE_TEAMS_TTL = 60 * 1000;
 
-// --- Fetchers ---
-
 async function fetchAllMatches(): Promise<Match[]> {
     const result = await getAllMatchesAction();
     if (!result.ok) throw new Error(result.error.message);
@@ -94,8 +92,6 @@ async function fetchWeekMatchCounts([, seasonId]: [string, string]): Promise<{ w
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
 }
-
-// --- Hooks ---
 
 export function useAllMatches() {
     const { data, error, isLoading, mutate } = useSWR('matches', fetchAllMatches, {
@@ -206,8 +202,6 @@ export function useWeekMatchCounts(seasonId: string | null) {
     };
 }
 
-// --- Mutation actions ---
-
 export async function updateMatchSchedule(input: UpdateMatchScheduleInput): Promise<Result<true, SerializableError>> {
     const result = await updateMatchScheduleAction(input);
     if (!result.ok) return result;
@@ -258,7 +252,6 @@ export async function deleteMatch(matchId: string): Promise<Result<true, Seriali
     return Ok(true);
 }
 
-// Utility for invalidating match related caches from outside
 export function invalidateMatchCaches() {
     globalMutate('matches');
     globalMutate((key: unknown) => Array.isArray(key) && ['matchesForWeek', 'weekSchedule', 'playoffSchedule', 'availableTeams', 'upcoming', 'recent', 'matchSets', 'playoffRounds', 'playoffRoundCounts'].includes(key[0]), undefined, { revalidate: true });

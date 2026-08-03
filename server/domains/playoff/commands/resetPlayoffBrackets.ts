@@ -31,9 +31,6 @@ export async function resetPlayoffBracketsService(
             });
         }
 
-        // Completed matches no longer block the reset — the admin UI confirms first.
-        // The delete cascades to match_sets, match_officials, player_match_stats and
-        // playoff_brackets, so completed results are destroyed along with the bracket.
         const deleteResult = await deletePlayoffMatchesBySeasonId(supabase, seasonId);
         if (!deleteResult.ok) {
             logger.error({ seasonId, error: deleteResult.error }, "Failed to delete playoff matches");

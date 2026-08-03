@@ -160,11 +160,6 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
     )
 }
 
-/**
- * Which post types each tab shows. Mirrors FILTER_TYPE_MAP in
- * server/domains/media/queries/getPagedMediaPosts.ts — note `all` deliberately excludes
- * clips, which have their own tab and their own grid.
- */
 const FILTER_TYPES: Record<MediaFilterType, MediaPost['type'][]> = {
     all:    ['gfx', 'video', 'news', 'recap'],
     videos: ['video'],
@@ -175,7 +170,6 @@ const FILTER_TYPES: Record<MediaFilterType, MediaPost['type'][]> = {
 const PAGE_SIZE = 12
 const CLIPS_PAGE_SIZE = 9
 
-/** Matches the repo's `title.ilike.%q%,description.ilike.%q%`. */
 function matchesSearch(post: MediaPost, q: string): boolean {
     if (!q) return true
     const needle = q.toLowerCase()
@@ -186,16 +180,7 @@ function matchesSearch(post: MediaPost, q: string): boolean {
 }
 
 type Props = {
-    /**
-     * Every media post, already ordered `pinned_at DESC NULLS LAST, published_at DESC` by
-     * the repo — the same order the old paged query used, so filtering and slicing in
-     * memory reproduces it exactly.
-     *
-     * Paging, filtering and search all used to be server round trips: one server-action
-     * POST per tab click, per page click, and per debounced keystroke. The whole list is
-     * already fetched and cached for the season home page, so serving this page from the
-     * same cache entry costs nothing extra and lets the route stay statically rendered.
-     */
+
     posts: MediaPost[]
 }
 
@@ -205,7 +190,7 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
     const [clipsPage, setClipsPage] = useState(1)
     const [search, setSearch]     = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
-    // Track first clips visit so we mount the iframes once and never unmount them
+
     const [clipsEverVisited, setClipsEverVisited] = useState(false)
 
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
@@ -224,8 +209,6 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
 
     const isOnClips = filter === 'clips'
 
-    // Main feed. Filter → search → slice, all in memory; no network on tab, page or
-    // keystroke. The list arrives pre-sorted, so slicing preserves pinned-first order.
     const { posts, totalPages } = useMemo(() => {
         const types = FILTER_TYPES[isOnClips ? 'all' : filter]
         const matched = allPosts.filter(
@@ -238,7 +221,6 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
         }
     }, [allPosts, filter, isOnClips, debouncedSearch, page])
 
-    // Clips feed. Search never applied here — the clips tab hides the search box.
     const { clipsPosts, clipsTotalPages } = useMemo(() => {
         const matched = allPosts.filter(p => FILTER_TYPES.clips.includes(p.type))
         const from = (clipsPage - 1) * CLIPS_PAGE_SIZE
@@ -261,7 +243,7 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
                 subtitle="GFX, highlights, and league content"
             />
 
-            {/* Controls row */}
+            {}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <div className="flex gap-1.5">
                     {(Object.keys(TAB_LABELS) as MediaFilterType[]).map(f => (
@@ -299,7 +281,7 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
                 </div>
             </div>
 
-            {/* Clips — always mounted after first visit, hidden via CSS when not active */}
+            {}
             {clipsEverVisited && (
                 <div className={isOnClips ? undefined : 'hidden'}>
                     {clipsPosts.length === 0 ? (
@@ -318,7 +300,7 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
                 </div>
             )}
 
-            {/* Main feed — card grid for all non-clip tabs */}
+            {}
             {!isOnClips && (
                 posts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 space-y-3">

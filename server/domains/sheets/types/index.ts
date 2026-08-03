@@ -22,7 +22,7 @@ export interface SyncChange {
 export interface SyncError {
     row: number
     message: string
-    /** Absent means fatal. Only the match-stats pipeline sets this. */
+
     kind?: 'skippable' | 'fatal'
 }
 
@@ -87,11 +87,10 @@ export interface ParsedStatLine {
 }
 
 export interface ParsedSection {
-    sectionIndex: number;     // 0-based, order of appearance in the tab
-    headerLabel: string;      // raw column A text; may be typo'd
+    sectionIndex: number;     
+    headerLabel: string;      
     lines: ParsedStatLine[];
 }
-
 
 export type StatCounts = Omit<PlayerMatchStats,
       "id" | "match_id" | "player_id" | "team_id" | "set_number" | "created_at">;

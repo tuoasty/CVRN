@@ -52,12 +52,10 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
         timezone: "Asia/Singapore"
     });
 
-    // Reset match pairs when season/week changes
     useEffect(() => {
         setMatchPairs([]);
     }, [seasonId, week]);
 
-    // Compute available teams by filtering out teams already used in match pairs
     const availableTeams = useMemo(() => {
         const usedTeamIds = new Set(
             matchPairs.flatMap(m => [m.homeTeamId, m.awayTeamId]).filter(Boolean)
@@ -123,7 +121,6 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                 timezone: "Asia/Singapore"
             });
 
-            // Invalidate SWR caches to trigger refetch
             invalidateMatchCaches();
             mutateAvailable();
 

@@ -22,8 +22,7 @@ export default function MatchOfficialSection({
                                                  title,
                                              }: MatchOfficialSectionProps) {
     const { officials: allOfficials, mutate } = useMatchOfficials(matchId);
-    
-    // Filter officials by type
+
     const officials = allOfficials.filter(mo => mo.official_type === officialType);
 
     const [removing, setRemoving] = useState<string | null>(null);

@@ -18,7 +18,6 @@ export async function findRegionByCode(supabase: DBClient, code: string): Promis
     return Ok(data);
 }
 
-// Resolves the standings method of a season's region — drives method-aware points at match completion.
 export async function findStandingMethodBySeasonId(supabase: DBClient, seasonId: string): Promise<Result<StandingMethod>> {
     const {data, error} = await supabase
         .from("seasons")

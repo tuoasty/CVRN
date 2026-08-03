@@ -1,9 +1,6 @@
-// Imported from the leaf schema module, not the domain barrel: the barrel pulls
-// commands → repos → the pino logger, which breaks in the browser bundle.
+
 import { PLAYOFF_ROUNDS, type PlayoffRound } from "@/server/domains/playoff/types/schemas";
 
-// Compact labels for steppers, where a double-elim season shows up to 12 rounds
-// side by side. Long labels for anywhere with room (mobile pickers, headers).
 export const ROUND_LABEL_SHORT: Record<PlayoffRound, string> = {
     play_in: "Play-in",
     round_of_32: "R32",
@@ -53,8 +50,6 @@ export const roundLabelShort = (round: string): string =>
 export const roundLabelLong = (round: string): string =>
     isPlayoffRound(round) ? ROUND_LABEL_LONG[round] : round;
 
-// Unknown rounds sort last rather than being dropped — a template can add a
-// round before this file learns about it.
 export const sortRounds = <T extends string>(rounds: readonly T[]): T[] =>
     [...rounds].sort(
         (a, b) => (ROUND_ORDER.get(a) ?? Infinity) - (ROUND_ORDER.get(b) ?? Infinity)

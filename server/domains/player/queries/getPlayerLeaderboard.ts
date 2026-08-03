@@ -16,11 +16,6 @@ export async function getPlayerLeaderboard(
             return result;
         }
 
-        // Postgres types every view column nullable regardless of the underlying joins.
-        // player_id / season_id / username / region_id come from inner joins on NOT NULL
-        // columns, so a null there means the row cannot identify a player — drop it rather
-        // than render a blank entry. The remaining display strings are coerced the same way
-        // getPlayerSeasonStats does.
         const rows: PlayerLeaderboardRow[] = result.value.flatMap(r => {
             if (r.player_id === null || r.season_id === null || r.username === null || r.region_id === null) {
                 return [];

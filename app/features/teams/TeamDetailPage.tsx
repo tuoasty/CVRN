@@ -45,8 +45,6 @@ export default function TeamDetailPage({
     const searchParams = useSearchParams();
     const addFormRef = useRef<HTMLDivElement>(null);
 
-    // The teams list passes its filters through so we can send the admin back where they were.
-    // Only the known filter keys are echoed, never the raw query string.
     const backHrefs = useMemo(() => {
         const build = (keys: string[]) => {
             const params = new URLSearchParams();
@@ -58,8 +56,7 @@ export default function TeamDetailPage({
             return query ? `/admin/teams?${query}` : "/admin/teams";
         };
         return {
-            // After a delete the searched-for team no longer exists, so `q` would strand the
-            // admin on an empty table.
+
             afterDelete: build(["region", "season"]),
             back: build(["region", "season", "q"]),
         };
@@ -73,7 +70,6 @@ export default function TeamDetailPage({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // SWR hook for team and players (single fetch)
     const {
         team: teamData,
         players,

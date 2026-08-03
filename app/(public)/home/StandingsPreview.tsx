@@ -27,7 +27,7 @@ export default function StandingsPreview({
                                                     seasonSlug,
                                                     standingMethod = "lvr",
                                                 }: StandingsPreviewProps) {
-    // Ranking logic lives in the standings view's rank column — the single source of truth.
+
     const topStandings = useMemo(() => {
         return [...standings]
             .sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER))
@@ -76,12 +76,12 @@ export default function StandingsPreview({
 
                     const rowContent = (
                         <>
-                            {/* Rank Badge */}
+                            {}
                             <div className="flex items-center justify-center w-6 h-6 rounded-sm bg-muted border border-border shrink-0">
                                 <span className="text-xs font-bold tabular-nums">{rank}</span>
                             </div>
 
-                            {/* Team Logo & Name */}
+                            {}
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                                 {standing.team_logo_url && (
                                     <div className="relative w-6 h-6 shrink-0">
@@ -99,12 +99,12 @@ export default function StandingsPreview({
                                 </span>
                             </div>
 
-                            {/* Record */}
+                            {}
                             <div className="text-xs font-bold tabular-nums text-muted-foreground">
                                 {wins}-{losses}
                             </div>
 
-                            {/* LVR / Points */}
+                            {}
                             {standingMethod === "points" || standingMethod === "points_without_bonus" ? (
                                 <div className="text-sm font-bold tabular-nums text-primary">
                                     {((standing.total_points || 0) + (standingMethod === "points" ? (standing.total_bonus || 0) : 0)).toFixed(1)}

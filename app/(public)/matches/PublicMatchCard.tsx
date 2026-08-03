@@ -101,7 +101,7 @@ export default function PublicMatchCard({
 }: PublicMatchCardProps) {
     const { match, sets, officials } = matchDetails;
     const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
-    // 'points' shows base + margin bonus; 'points_without_bonus' shows base only.
+
     const homePts = (match.home_team_points ?? 0) + (standingMethod === "points" ? (match.home_team_bonus ?? 0) : 0);
     const awayPts = (match.away_team_points ?? 0) + (standingMethod === "points" ? (match.away_team_bonus ?? 0) : 0);
     const matchNumber = parseMatchNumber(match.match_code);
@@ -123,10 +123,10 @@ export default function PublicMatchCard({
 
     const inner = (
         <div>
-            {/* ── MOBILE LAYOUT (< 640px) ── */}
+            {}
             <div className="sm:hidden">
 
-                {/* Row 1 — Match context */}
+                {}
                 <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-border">
                     <div className="flex items-center">
                         <span className={cn(
@@ -143,7 +143,7 @@ export default function PublicMatchCard({
                     <span className="text-[10px] text-muted-foreground/60 shrink-0">{timeDisplay}</span>
                 </div>
 
-                {/* Rows 2–3 — Home then Away */}
+                {}
                 {[
                     { team: homeTeam, setsWon: match.home_sets_won, won: homeWon },
                     { team: awayTeam, setsWon: match.away_sets_won, won: awayWon },
@@ -206,7 +206,7 @@ export default function PublicMatchCard({
                     );
                 })}
 
-                {/* Footer — always shown */}
+                {}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
                     <div className="flex items-center gap-1.5">
                         {match.is_forfeit ? (
@@ -282,9 +282,9 @@ export default function PublicMatchCard({
 
             </div>
 
-            {/* ── DESKTOP LAYOUT (≥ 640px) — unchanged ── */}
+            {}
             <div className="hidden sm:block space-y-3">
-                {/* Meta row */}
+                {}
                 <div className="flex items-start justify-between gap-2 pb-2 border-b border-border">
                     <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -311,9 +311,9 @@ export default function PublicMatchCard({
                     <span className="text-xs text-muted-foreground shrink-0">{timeDisplay}</span>
                 </div>
 
-                {/* Hero: fixed 40% center, teams in Q1/Q3 */}
+                {}
                 <div className="grid grid-cols-[1fr_18%_1fr] items-center gap-2 sm:gap-4 py-2">
-                    {/* Home column */}
+                    {}
                     <div className={cn(
                         "flex flex-col items-center gap-1.5 min-w-0 transition-opacity",
                         isCompleted && !homeWon && "opacity-40"
@@ -332,7 +332,7 @@ export default function PublicMatchCard({
                         )}
                     </div>
 
-                    {/* Center: score + set pills */}
+                    {}
                     <div className="flex flex-col items-center gap-2">
                         {isCompleted && match.home_sets_won !== null && match.away_sets_won !== null ? (
                             <div className="flex items-center gap-1 sm:gap-2">
@@ -376,7 +376,7 @@ export default function PublicMatchCard({
                         )}
                     </div>
 
-                    {/* Away column */}
+                    {}
                     <div className={cn(
                         "flex flex-col items-center gap-1.5 min-w-0 transition-opacity",
                         isCompleted && !awayWon && "opacity-40"
@@ -396,10 +396,10 @@ export default function PublicMatchCard({
                     </div>
                 </div>
 
-                {/* Footer — completed matches only */}
+                {}
                 {isCompleted && (
                     <div className="space-y-2 pt-2 border-t border-border/50">
-                        {/* LVR / Points row — two badges */}
+                        {}
                         <div className="flex items-center justify-between gap-2">
                             <div>
                                 {!homeTeam?.is_bye && (isPoints
@@ -441,7 +441,7 @@ export default function PublicMatchCard({
                             </div>
                         </div>
 
-                        {/* MVP row — only if at least one MVP exists */}
+                        {}
                         {(matchMvp || loserMvp) && (
                             <div className="flex items-center gap-2">
                                 {matchMvp ? (
@@ -475,7 +475,7 @@ export default function PublicMatchCard({
                             </div>
                         )}
 
-                        {/* Officials row — hidden on mobile */}
+                        {}
                         {(referees.length > 0 || media.length > 0) && (
                             <div className="hidden sm:flex items-center gap-3 flex-wrap">
                                 {referees.length > 0 && (
@@ -503,9 +503,7 @@ export default function PublicMatchCard({
     );
 
     return href ? (
-        // prefetch off: a matches list renders 20-40 of these, and since the detail route
-        // is static Next would prefetch each one's full RSC payload on scroll — forcing a
-        // cold render + ISR write for pages nobody opened.
+
         <Link href={href} prefetch={false} className="block panel p-3 sm:p-4 transition-colors hover:border-primary/30 cursor-pointer">
             {inner}
         </Link>

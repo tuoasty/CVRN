@@ -100,7 +100,6 @@ const POINTS: StatColumn = {
         sumKey(rows, "total_kills") + sumKey(rows, "kill_blocks") + sumKey(rows, "aces"),
 };
 
-// Only present on the totals view; per-set rows have set_number instead.
 const SETS_PLAYED: StatColumn = {
     key: "sets_played",
     label: "SP",
@@ -108,7 +107,7 @@ const SETS_PLAYED: StatColumn = {
     description: "Sets played",
     format: "count",
     accessor: r => ("sets_played" in r ? r.sets_played : null),
-    // A team's sets played is the max across its players, never the sum.
+
     aggregator: rows =>
         rows.reduce((max, r) => {
             const v = "sets_played" in r ? r.sets_played ?? 0 : 0;
@@ -132,7 +131,6 @@ const CONTRIBUTIONS: StatColumn = {
         sumKey(rows, "total_errors"),
 };
 
-
 export const DEFAULT_COLUMNS: StatColumn[] = [
     countCol("total_kills", "K", "Spiking", "Kills"),
     countCol("total_attempts", "HA", "Spiking", "Hitting attempts"),
@@ -150,7 +148,7 @@ export const DEFAULT_COLUMNS: StatColumn[] = [
 ];
 
 export const DETAILED_COLUMNS: StatColumn[] = [
-    // Spiking
+
     countCol("ape_kills", "APEK", "Spiking", "Ape / dump kills"),
     countCol("ape_attempts", "APEA", "Spiking", "Ape / dump attempts"),
     countCol("delay_kills", "DLK", "Spiking", "Delay-spike kills"),
@@ -160,26 +158,26 @@ export const DETAILED_COLUMNS: StatColumn[] = [
     countCol("kill_attempts", "HA", "Spiking", "Hitting attempts"),
     countCol("spiking_errors", "HE", "Spiking", "Hitting errors"),
     HIT_EFF,
-    // Setting
+
     countCol("assists", "AST", "Setting", "Assists"),
     countCol("setting_errors", "STE", "Setting", "Setting errors"),
     SET_EFF,
-    // Blocks
+
     countCol("kill_blocks", "KB", "Blocks", "Kill blocks"),
     countCol("block_touches", "BT", "Blocks", "Block touches"),
     countCol("total_blocks", "B", "Blocks", "Total blocks"),
     KB_PCT,
-    // Receive
+
     countCol("serve_receives", "SR", "Receive", "Serve receives"),
     countCol("digs", "DIG", "Receive", "Digs"),
     countCol("block_follows", "BF", "Receive", "Block follows / Block covers"),
     countCol("dives", "DIV", "Receive", "Dives"),
     countCol("total_receives", "REC", "Receive", "Total receives"),
-    // Serving
+
     countCol("aces", "ACE", "Serving", "Service aces"),
     countCol("service_errors", "SRE", "Serving", "Service errors"),
     SERVICE_SCORE,
-    // Overall
+
     countCol("misc_errors", "ME", "Overall", "Miscellaneous errors"),
     countCol("total_errors", "E", "Overall", "Total errors"),
     CONTRIBUTIONS,
@@ -191,10 +189,6 @@ export const buildColumns = (detailed: boolean, includeSetsPlayed: boolean): Sta
     ...(detailed ? DETAILED_COLUMNS : DEFAULT_COLUMNS),
 ];
 
-// Reserves width for a 3-digit count / a signed percentage so column widths
-// don't shift between tabs when one tab's values are all single-digit.
-// Sized to the content, not rounded up: at text-xs mono, 3 digits ≈ 22px and
-// px-1 adds 8px. Every extra px here is multiplied by ~26 detailed columns.
 export const statHeadWidthClass = (format: "count" | "pct"): string =>
     format === "pct" ? "min-w-[3.25rem]" : "min-w-[2rem]";
 
@@ -223,7 +217,7 @@ export const groupColumns = (columns: StatColumn[]): Array<{group: string; colum
 export const findLeaderKeys = (rows: StatRow[], columns: StatColumn[]): Set<string> => {
     const leaders = new Set<string>();
     for (const col of columns) {
-        // Every player on a team shares the same SP — there is no leader.
+
         if (col.key === "sets_played") continue;
         let maxValue: number | null = null;
         let leaderId: string | null = null;

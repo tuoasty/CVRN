@@ -6,20 +6,13 @@ import { getLogoClassName } from "@/app/lib/logoClass"
 import { cn } from "@/lib/utils"
 import type { PlayerSearchHit } from "@/server/domains/player"
 
-/**
- * Shared column layout — kept in sync with PlayerTable's header + skeleton.
- * Username is the only flexible track, so slack collects between the player
- * cluster and the team block instead of stranding columns at the edges.
- */
 export const PLAYER_ROW_GRID =
     "grid items-center gap-3 pl-3 pr-3 sm:gap-4 sm:pr-4 " +
     "grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] " +
     "sm:grid-cols-[3.5rem_13rem_minmax(0,1fr)_3rem_8rem_3.25rem]"
 
-/** Row height and vertical padding, shared so the images can size against it. */
 export const PLAYER_ROW_BOX = "min-h-[3.75rem] py-1.5"
 
-/** Opaque well into the band — a shorter ramp would leave only the faint tail on-canvas. */
 const LOGO_BLEED_MASK = "linear-gradient(to right, black 0%, black 55%, transparent 100%)"
 
 export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
@@ -41,7 +34,7 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
                 !href && "pointer-events-none opacity-60"
             )}
         >
-            {/* Colour wash, then the logo fragment on top — one team-identity zone at the left. */}
+            {}
             {team?.brick_color && (
                 <span
                     aria-hidden
@@ -67,12 +60,12 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
                 </span>
             )}
 
-            {/* Bust — bleeds to the row's bottom edge via self-alignment in its own track. */}
+            {}
             <div className="relative z-10 -mb-1.5 h-[3.5rem] w-full self-end">
                 <PlayerAvatar src={player.avatar_url} alt={player.username || "Player"} />
             </div>
 
-            {/* Below sm the name also carries handle/region/team, which have no tracks there. */}
+            {}
             <div className="relative z-10 min-w-0">
                 <div className="truncate text-sm font-semibold">{name}</div>
                 <div className="truncate text-xs text-muted-foreground sm:hidden">
@@ -84,7 +77,7 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
                 {handle}
             </div>
 
-            {/* Fixed track, so a missing logo holds its space and team names stay aligned. */}
+            {}
             <div className="relative z-10 h-[2.75rem] w-full self-center sm:h-[3rem]">
                 {team?.logo_url && (
                     <Image
@@ -102,7 +95,7 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
                 {team?.name ?? ""}
             </div>
 
-            {/* Always a 2-letter code, so right-aligning costs nothing in raggedness. */}
+            {}
             <div className="relative z-10 hidden text-right text-sm font-semibold uppercase tracking-wide text-muted-foreground sm:block">
                 {player.region_code ?? ""}
             </div>

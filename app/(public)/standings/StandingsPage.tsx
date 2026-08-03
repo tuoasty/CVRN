@@ -13,11 +13,6 @@ type Props = {
     standings: StandingWithInfo[];
 };
 
-/**
- * Presentational only. Standings are fetched and cached on the server by the route above.
- * This previously read them through SWR, which meant an uncacheable server-action POST on
- * every view — so statically rendering the shell saved nothing.
- */
 export default function StandingsPage({ season, region, standings }: Props) {
     const regionCode = region.code;
     const seasonSlug = season.slug;

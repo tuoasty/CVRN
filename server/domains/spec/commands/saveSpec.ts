@@ -8,16 +8,6 @@ import {
 } from "@/server/db/specs.repo";
 import {SaveSpecInput, SpecWithRequirements} from "../types";
 
-/**
- * Creates or updates a spec and its full requirement set.
- *
- * Two writes, not one transaction. Both invariants that could be violated —
- * duplicate stat keys, and secondary_required exceeding the secondary row count —
- * are checked by SaveSpecSchema before either write runs, so the only way to land
- * half-applied is a connection drop between them, which the caller sees as an
- * error and resolves by saving again. An RPC would close that window; it is not
- * worth one for a single-operator admin screen.
- */
 export async function saveSpec(
     supabase: DBClient,
     input: SaveSpecInput

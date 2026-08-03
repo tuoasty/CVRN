@@ -25,7 +25,6 @@ function matchCodeSortKey(code: string | null | undefined): number {
     return Infinity;
 }
 
-/** The selector value a user just clicked, held until the server render catches up. */
 type Pending = { tab?: "season" | "playoffs"; week?: number; round?: PlayoffRound };
 
 type Props = {
@@ -43,15 +42,6 @@ type Props = {
     standings: StandingWithInfo[];
 };
 
-/**
- * Presentational plus URL state. Every piece of data is resolved and cached by the route
- * above; this component previously fetched all of it through nine SWR hooks, which meant
- * nine uncacheable server-action POSTs on every view.
- *
- * Still a client component because the tab/week/round selectors write to the URL. Those
- * writes trigger a server round trip, and the skeleton for it lives in the route's
- * `loading.tsx` rather than in local state.
- */
 export default function MatchesPage({
     season,
     region,
@@ -69,19 +59,6 @@ export default function MatchesPage({
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    /**
-     * Optimistic selector state.
-     *
-     * Switching week/round only changes `searchParams`, which re-renders this route's
-     * server component without remounting the segment — so `loading.tsx` never fires and
-     * React holds the old UI until the new payload lands. Without this the click has no
-     * visible effect for the length of a server round trip.
-     *
-     * `pending` carries the value the user just clicked so the selector can reflect it
-     * immediately, while the list dims to mark the content behind it as stale. It clears
-     * as soon as the transition settles, at which point the props already hold the same
-     * value — so the swap is invisible.
-     */
     const [pending, setPending] = useState<Pending | null>(null);
     const [isPending, startTransition] = useTransition();
 
@@ -120,8 +97,6 @@ export default function MatchesPage({
 
     const matchesBase = `/${region.code.toLowerCase()}/${season.slug}/matches`;
 
-    // URL writers. Each marks its optimistic value before navigating so the selector
-    // updates on click rather than a round trip later.
     function setTab(tab: "season" | "playoffs") {
         const params = new URLSearchParams(searchParams.toString());
         if (tab === "season") {
@@ -169,7 +144,7 @@ export default function MatchesPage({
                         onTabChange={setTab}
                     />
 
-                    {/* Selector */}
+                    {}
                     {displayTab === "season" ? (
                         <WeekSelector
                             effectiveWeek={displayWeek}
@@ -185,8 +160,7 @@ export default function MatchesPage({
                         />
                     )}
 
-                    {/* Match list. Dimmed while a switch is in flight — the rows below are
-                        still the previous week's until the server render lands. */}
+                    {}
                     <div
                         className={cn(
                             "transition-opacity duration-150",
@@ -213,8 +187,6 @@ export default function MatchesPage({
         </div>
     );
 }
-
-// ─── Match List ────────────────────────────────────────────────────────────────
 
 interface MatchListProps {
     sorted: MatchWithDetails[];

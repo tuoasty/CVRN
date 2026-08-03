@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseTeamsSheet } from '../parseTeamsSheet'
 
-// Helpers to build minimal sheet row arrays
 function makeRows(rowCount: number): string[][] {
   return Array.from({ length: rowCount }, () => [])
 }
@@ -11,10 +10,6 @@ function setCell(rows: string[][], rowIdx: number, colIdx: number, value: string
   rows[rowIdx][colIdx] = value
 }
 
-// Parser formula: col = slot * blockStride + 1
-// Default stride=4: col offsets per slot are 1, 5, 9, 13, 17
-// Within each slot: col+1 = team number, col+2 = team name / player username, col+1 = player role
-
 describe('parseTeamsSheet', () => {
   it('returns empty array for empty input', () => {
     expect(parseTeamsSheet([], 1, 18)).toEqual([])
@@ -22,12 +17,12 @@ describe('parseTeamsSheet', () => {
 
   it('parses single team in slot 0 with explicit team number', () => {
     const rows = makeRows(3)
-    // headerRow=1 → headerRowIdx=0, stride=4 (default), slot 0 → col=1
-    setCell(rows, 0, 2, '7')          // team number: col+1=2
-    setCell(rows, 0, 3, 'TeamAlpha')  // team name: col+2=3
+
+    setCell(rows, 0, 2, '7')          
+    setCell(rows, 0, 3, 'TeamAlpha')  
     setCell(rows, 1, 2, 'C')
     setCell(rows, 1, 3, 'PlayerOne')
-    setCell(rows, 2, 3, 'PlayerTwo')  // no role tag → player
+    setCell(rows, 2, 3, 'PlayerTwo')  
 
     const result = parseTeamsSheet(rows, 1, 18)
 
@@ -40,18 +35,16 @@ describe('parseTeamsSheet', () => {
 
   it('strips emoji and collapses whitespace from the team name', () => {
     const rows = makeRows(2)
-    setCell(rows, 0, 3, '\u{1F525}  Team   Alpha ')  // team name: col+2=3
+    setCell(rows, 0, 3, '\u{1F525}  Team   Alpha ')  
 
     const result = parseTeamsSheet(rows, 1, 18)
 
     expect(result[0].teamName).toBe('Team Alpha')
   })
 
-  // An emoji-only cell normalizes to '', which is indistinguishable from a blank name cell —
-  // so it takes the "name cleared" branch and the roster underneath is preserved.
   it('treats an emoji-only team name as a cleared name', () => {
     const rows = makeRows(2)
-    setCell(rows, 0, 3, '\u{1F525}')  // team name: col+2=3
+    setCell(rows, 0, 3, '\u{1F525}')  
     setCell(rows, 1, 3, 'PlayerOne')
 
     const result = parseTeamsSheet(rows, 1, 18)
@@ -63,9 +56,9 @@ describe('parseTeamsSheet', () => {
   })
 
   it('falls back to derived team number when col+1 is empty', () => {
-    // k=0, slot=0 → derived = 0*5+0+1 = 1
+
     const rows = makeRows(2)
-    setCell(rows, 0, 3, 'NoBadge')  // team name: col+2=3
+    setCell(rows, 0, 3, 'NoBadge')  
 
     const result = parseTeamsSheet(rows, 1, 18)
 
@@ -74,14 +67,14 @@ describe('parseTeamsSheet', () => {
 
   it('maps all role tags correctly', () => {
     const rows = makeRows(5)
-    setCell(rows, 0, 3, 'RoleTeam')  // team name: col+2=3
+    setCell(rows, 0, 3, 'RoleTeam')  
     setCell(rows, 1, 2, 'C')
     setCell(rows, 1, 3, 'Cap')
     setCell(rows, 2, 2, 'VC')
     setCell(rows, 2, 3, 'ViceCap')
     setCell(rows, 3, 2, 'CC')
     setCell(rows, 3, 3, 'CourtCap')
-    setCell(rows, 4, 3, 'Regular')   // no role → player
+    setCell(rows, 4, 3, 'Regular')   
 
     const players = parseTeamsSheet(rows, 1, 18)[0].players
 
@@ -94,7 +87,7 @@ describe('parseTeamsSheet', () => {
   it('parses 5 teams across one header row with stride=4', () => {
     const rows = makeRows(2)
     for (let slot = 0; slot < 5; slot++) {
-      const col = slot * 4 + 1  // matches parser: col = slot * blockStride + 1
+      const col = slot * 4 + 1  
       setCell(rows, 0, col + 1, String(slot + 1))
       setCell(rows, 0, col + 2, `Team${slot + 1}`)
       setCell(rows, 1, col + 2, `Player${slot + 1}`)
@@ -110,11 +103,10 @@ describe('parseTeamsSheet', () => {
   })
 
   it('silently skips empty slots (disbanded team gap) — no error', () => {
-    // Slot 0 empty, slots 1 and 2 have teams
-    // stride=4: slot 1 col=5 → name at col+2=7; slot 2 col=9 → name at col+2=11
+
     const rows = makeRows(2)
-    setCell(rows, 0, 7, 'TeamB')   // slot 1, name at 7
-    setCell(rows, 0, 11, 'TeamC')  // slot 2, name at 11
+    setCell(rows, 0, 7, 'TeamB')   
+    setCell(rows, 0, 11, 'TeamC')  
 
     const result = parseTeamsSheet(rows, 1, 18, 4)
 
@@ -124,8 +116,7 @@ describe('parseTeamsSheet', () => {
   })
 
   it('parses two block rows', () => {
-    // headerRow=1, blockHeight=4 → block 0 at row 0, block 1 at row 4
-    // slot 0, col=1, name at col+2=3
+
     const rows = makeRows(8)
     setCell(rows, 0, 3, 'Block0Team')
     setCell(rows, 4, 3, 'Block1Team')
@@ -138,9 +129,9 @@ describe('parseTeamsSheet', () => {
   })
 
   it('stops when headerRowIdx >= rows.length', () => {
-    // 1 row only — only block 0 fits (headerRowIdx=0), block 1 at row 18 is out of bounds
+
     const rows = makeRows(1)
-    setCell(rows, 0, 3, 'OnlyTeam')  // slot 0, name at col+2=3
+    setCell(rows, 0, 3, 'OnlyTeam')  
 
     const result = parseTeamsSheet(rows, 1, 18, 4)
 
@@ -148,7 +139,7 @@ describe('parseTeamsSheet', () => {
   })
 
   it('stops iteration when header row has no team names', () => {
-    // Rows exist but no team names → hasAnyTeam false → break
+
     const rows = makeRows(5)
 
     const result = parseTeamsSheet(rows, 1, 18, 4)
@@ -158,9 +149,9 @@ describe('parseTeamsSheet', () => {
 
   it('skips player rows with empty username', () => {
     const rows = makeRows(4)
-    setCell(rows, 0, 3, 'SparseTeam')  // slot 0, name at col+2=3
+    setCell(rows, 0, 3, 'SparseTeam')  
     setCell(rows, 1, 3, 'Player1')
-    // row 2 intentionally empty
+
     setCell(rows, 3, 3, 'Player3')
 
     const players = parseTeamsSheet(rows, 1, 18, 4)[0].players
@@ -170,9 +161,9 @@ describe('parseTeamsSheet', () => {
   })
 
   it('caps players at 18 rows regardless of row count', () => {
-    // 19 rows after header — only rows 1–18 scanned (PLAYER_ROWS=18)
+
     const rows = makeRows(21)
-    setCell(rows, 0, 3, 'BigTeam')  // slot 0, name at col+2=3
+    setCell(rows, 0, 3, 'BigTeam')  
     for (let r = 1; r <= 19; r++) {
       setCell(rows, r, 3, `P${r}`)
     }
@@ -183,12 +174,11 @@ describe('parseTeamsSheet', () => {
   })
 
   it('uses custom blockStride correctly', () => {
-    // stride=6: col = slot*6+1 → slot 0 col=1, slot 1 col=7, slot 2 col=13
-    // name at col+2: slot 0→3, slot 1→9, slot 2→15
+
     const rows = makeRows(2)
-    setCell(rows, 0, 3, 'SlotA')   // slot 0, col+2=3
-    setCell(rows, 0, 9, 'SlotB')   // slot 1, col+2=9
-    setCell(rows, 0, 15, 'SlotC')  // slot 2, col+2=15
+    setCell(rows, 0, 3, 'SlotA')   
+    setCell(rows, 0, 9, 'SlotB')   
+    setCell(rows, 0, 15, 'SlotC')  
 
     const result = parseTeamsSheet(rows, 1, 18, 6)
 
@@ -199,8 +189,7 @@ describe('parseTeamsSheet', () => {
   })
 
   it('rowNumber is 1-indexed (playerRowIdx + 1)', () => {
-    // headerRow=9 → headerRowIdx=8, player at row 9 → rowNumber=10
-    // slot 0, col=1, name at col+2=3, player at col+2=3
+
     const rows = makeRows(10)
     setCell(rows, 8, 3, 'TN')
     setCell(rows, 9, 3, 'CheckRow')
@@ -211,8 +200,8 @@ describe('parseTeamsSheet', () => {
   })
 
   it('handles short/missing row data without crashing', () => {
-    // rows[0] is shorter than expected — no cols at slot positions
-    const rows: string[][] = [[]]  // completely empty header row
+
+    const rows: string[][] = [[]]  
 
     const result = parseTeamsSheet(rows, 1, 18, 4)
 
@@ -221,12 +210,11 @@ describe('parseTeamsSheet', () => {
 
   it('returns nameCleared:true for empty-name slot that still has players', () => {
     const rows = makeRows(3)
-    // slot 0: team number at col+1=2, name cell (col+2=3) left empty
-    setCell(rows, 0, 2, '3')        // col+1 = team number
-    // col+2 (teamName at col 3) is never set → empty string
-    setCell(rows, 1, 3, 'PlayerX')  // player username at col+2=3
-    // slot 1 must have a name or hasAnyTeam=false breaks the outer loop
-    // stride=4: slot 1 col=5, name at col+2=7
+
+    setCell(rows, 0, 2, '3')        
+
+    setCell(rows, 1, 3, 'PlayerX')  
+
     setCell(rows, 0, 7, 'TeamB')
 
     const result = parseTeamsSheet(rows, 1, 18, 4)
@@ -242,8 +230,7 @@ describe('parseTeamsSheet', () => {
 
   it('still skips slot when name is empty and no players', () => {
     const rows = makeRows(2)
-    // slot 0: completely empty (no name, no players)
-    // slot 1 keeps hasAnyTeam=true; stride=4: name at 7, player at 7
+
     setCell(rows, 0, 7, 'TeamB')
     setCell(rows, 1, 7, 'PlayerB')
 
@@ -255,7 +242,7 @@ describe('parseTeamsSheet', () => {
 
   it('active team result has nameCleared:false', () => {
     const rows = makeRows(2)
-    setCell(rows, 0, 3, 'ActiveTeam')  // slot 0, name at col+2=3
+    setCell(rows, 0, 3, 'ActiveTeam')  
 
     const result = parseTeamsSheet(rows, 1, 18, 4)
 
@@ -264,8 +251,8 @@ describe('parseTeamsSheet', () => {
 
   it('disbanded result has nameCleared:false', () => {
     const rows = makeRows(2)
-    setCell(rows, 0, 3, 'DISBANDED')  // slot 0, name at col+2=3
-    setCell(rows, 0, 7, 'TeamB')      // slot 1 keeps hasAnyTeam=true
+    setCell(rows, 0, 3, 'DISBANDED')  
+    setCell(rows, 0, 7, 'TeamB')      
 
     const result = parseTeamsSheet(rows, 1, 18, 4)
 

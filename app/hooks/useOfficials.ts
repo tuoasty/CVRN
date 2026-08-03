@@ -22,8 +22,6 @@ async function fetchMatchOfficials([, matchId]: [string, string]): Promise<Match
     return result.value;
 }
 
-// --- Hooks ---
-
 export function useMatchOfficials(matchId: string | null) {
     const key = matchId ? ['matchOfficials', matchId] as const : null;
     const { data, error, isLoading, mutate } = useSWR(key, fetchMatchOfficials as BareFetcher<MatchOfficialWithDetails[]>, {
@@ -39,8 +37,6 @@ export function useMatchOfficials(matchId: string | null) {
         mutate,
     };
 }
-
-// --- Imperative actions ---
 
 export async function searchOfficials(username: string): Promise<RobloxUserWithAvatar[]> {
     const result = await searchOfficialsByNameAction(username);

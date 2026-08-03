@@ -1,8 +1,8 @@
 import {describe, expect, it} from "vitest";
 import {formatDateInTimezone, getRegionTimezone, getTimezoneOffset} from "../timezoneOptions";
 
-const JULY = new Date("2026-07-15T12:00:00Z");   // northern summer — DST active
-const JANUARY = new Date("2026-01-15T12:00:00Z"); // northern winter — standard time
+const JULY = new Date("2026-07-15T12:00:00Z");   
+const JANUARY = new Date("2026-01-15T12:00:00Z"); 
 
 describe("getTimezoneOffset", () => {
     it("reports GMT+1 for the EU region in summer (BST)", () => {
@@ -38,7 +38,7 @@ describe("getTimezoneOffset", () => {
 
 describe("formatDateInTimezone", () => {
     it("labels a summer EU match GMT+1 and shifts the clock", () => {
-        // 19:00Z in July → 20:00 BST
+
         const out = formatDateInTimezone("2026-07-15T19:00:00Z", getRegionTimezone("eu"));
         expect(out).toContain("20:00");
         expect(out).toContain("GMT+1");

@@ -36,7 +36,6 @@ export default function TeamsDataTable() {
     const showRegionColumn = filters.region === REGION_ALL;
     const showSeasonColumn = !isSpecificSeason(filters.season);
 
-    // Distinguishes "your filter is too narrow" from "this league has no history yet".
     const hasConcludedSeasonsInScope = useMemo(() => {
         if (filters.season !== SEASON_INACTIVE) return true;
         const region =
@@ -61,7 +60,6 @@ export default function TeamsDataTable() {
         const seasonSlug = encodeURIComponent(team.seasons.slug.toLowerCase());
         const teamSlug = encodeURIComponent(team.slug.toLowerCase());
 
-        // Carry the list's filters so the detail page's own back link can restore them.
         const listQuery = buildTeamsQuery(filters);
         const href = `/admin/teams/${regionCode}/${seasonSlug}/${teamSlug}`;
 

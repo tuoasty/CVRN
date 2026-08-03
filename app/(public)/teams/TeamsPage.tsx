@@ -11,10 +11,6 @@ type Props = {
     teams: TeamWithRegion[];
 };
 
-/**
- * Presentational only — teams are fetched and cached on the server by the route above.
- * The loading branch is gone: it lives in the route's loading.tsx now.
- */
 export default function TeamsPage({ season, region, teams }: Props) {
     const subtitle = `${season.name} · ${region.name}${teams.length > 0 ? ` · ${teams.length} teams` : ""}`;
 

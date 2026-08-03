@@ -16,8 +16,7 @@ function ok<T extends { ok: boolean }>(r: T) {
 
 describe("points computation (base / bonus split)", () => {
     it("3-0 win, diff exactly 15 → base 3.5, bonus +2 (>= boundary inclusive); loser 0", () => {
-        // home wins 25-20, 25-20, 25-20 → totalHome 75, totalAway 60, diff 15.
-        // diff 15 hits the >=15 tier (+2) exactly — proves inclusive boundary.
+
         const res = ok(validateAndCalculateMatchResult({
             sets: [
                 { setNumber: 1, homeScore: 25, awayScore: 20 },
@@ -25,7 +24,7 @@ describe("points computation (base / bonus split)", () => {
                 { setNumber: 3, homeScore: 25, awayScore: 20 },
             ],
         }, seasonBo5));
-        expect(res.value.homeTeamPoints).toBe(3.5); // 2 + 0.5*3 (base only)
+        expect(res.value.homeTeamPoints).toBe(3.5); 
         expect(res.value.homeTeamBonus).toBe(2);
         expect(res.value.awayTeamPoints).toBe(0);
         expect(res.value.awayTeamBonus).toBe(0);
@@ -33,8 +32,7 @@ describe("points computation (base / bonus split)", () => {
     });
 
     it("3-1 win, diff exactly 10 → base 3.5, bonus +1; loser banks 0.5 for their set, no bonus", () => {
-        // home wins sets 1,3,4; away wins set 2. totalHome 95, totalAway 85, diff 10.
-        // diff 10 hits the >=10 tier (+1) exactly — proves inclusive boundary.
+
         const res = ok(validateAndCalculateMatchResult({
             sets: [
                 { setNumber: 1, homeScore: 25, awayScore: 20 },
@@ -43,15 +41,15 @@ describe("points computation (base / bonus split)", () => {
                 { setNumber: 4, homeScore: 25, awayScore: 20 },
             ],
         }, seasonBo5));
-        expect(res.value.homeTeamPoints).toBe(3.5); // 2 + 0.5*3 (base only)
+        expect(res.value.homeTeamPoints).toBe(3.5); 
         expect(res.value.homeTeamBonus).toBe(1);
-        expect(res.value.awayTeamPoints).toBe(0.5); // 0.5*1 (base only)
+        expect(res.value.awayTeamPoints).toBe(0.5); 
         expect(res.value.awayTeamBonus).toBe(0);
         expect(res.value.pointDiff).toBe(10);
     });
 
     it("forfeit → winner base 2 + 0.5*minSets, flat bonus 1; loser 0; point_diff from 25-0 sweep", () => {
-        // BO5, home forfeits → away wins 3 sets (25-0 each)
+
         const res = ok(validateAndCalculateMatchResult({
             sets: [],
             isForfeit: true,
@@ -59,9 +57,9 @@ describe("points computation (base / bonus split)", () => {
         }, seasonBo5));
         expect(res.value.homeTeamPoints).toBe(0);
         expect(res.value.homeTeamBonus).toBe(0);
-        expect(res.value.awayTeamPoints).toBe(3.5); // 2 + 0.5*3 (base only)
+        expect(res.value.awayTeamPoints).toBe(3.5); 
         expect(res.value.awayTeamBonus).toBe(1);
-        expect(res.value.pointDiff).toBe(-75); // -25 * 3 (home-relative)
+        expect(res.value.pointDiff).toBe(-75); 
     });
 
     it("playoff match → points, bonus, and point_diff are null", () => {
@@ -94,8 +92,8 @@ describe("points_without_bonus (EU) computation", () => {
                 { setNumber: 2, homeScore: 25, awayScore: 20 },
             ],
         }, seasonBo3, "points_without_bonus"));
-        expect(res.value.homeTeamPoints).toBe(2);   // 2 - 0.5*0
-        expect(res.value.awayTeamPoints).toBe(0);   // 0.5*0
+        expect(res.value.homeTeamPoints).toBe(2);   
+        expect(res.value.awayTeamPoints).toBe(0);   
         expect(res.value.homeTeamBonus).toBe(0);
         expect(res.value.awayTeamBonus).toBe(0);
     });
@@ -108,8 +106,8 @@ describe("points_without_bonus (EU) computation", () => {
                 { setNumber: 3, homeScore: 25, awayScore: 20 },
             ],
         }, seasonBo3, "points_without_bonus"));
-        expect(res.value.homeTeamPoints).toBe(1.5); // 2 - 0.5*1
-        expect(res.value.awayTeamPoints).toBe(0.5); // 0.5*1
+        expect(res.value.homeTeamPoints).toBe(1.5); 
+        expect(res.value.awayTeamPoints).toBe(0.5); 
         expect(res.value.homeTeamBonus).toBe(0);
         expect(res.value.awayTeamBonus).toBe(0);
     });

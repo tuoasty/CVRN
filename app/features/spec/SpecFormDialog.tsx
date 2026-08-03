@@ -24,18 +24,12 @@ import {toast} from '@/app/utils/toast';
 import {clientLogger} from '@/app/utils/clientLogger';
 
 interface Props {
-    /** The spec being edited, or null for a new one. `open` drives visibility. */
+
     spec: SpecWithRequirements | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
 
-// Not SpecRequirementInput: that type's statKey is narrowed to the stat-key union
-// by the Zod refine, and a row being edited holds "" until a stat is picked.
-// Converted to the strict shape on submit.
-//
-// rowId keeps React from reordering inputs when a row is removed — statKey would
-// serve until two rows are both briefly unset.
 type DraftRow = {
     rowId: string;
     tier: SpecTier;
@@ -77,8 +71,6 @@ export default function SpecFormDialog({spec, open, onOpenChange}: Props) {
     const mainRows = rows.filter(r => r.tier === 'main');
     const secondaryRows = rows.filter(r => r.tier === 'secondary');
 
-    // Keys already taken, so the select can grey them out rather than letting the
-    // save fail on the (spec_id, stat_key) unique.
     const takenKeys = useMemo(
         () => new Set(rows.map(r => r.statKey).filter(Boolean)),
         [rows]
@@ -105,8 +97,7 @@ export default function SpecFormDialog({spec, open, onOpenChange}: Props) {
             toast.error(validationError);
             return;
         }
-        // flatMap + a length check rather than a filter: a row whose stat key does not
-        // resolve must fail the save loudly, not disappear from the spec silently.
+
         const requirements = rows.flatMap(r =>
             isSpecStatKey(r.statKey) ? [{tier: r.tier, statKey: r.statKey, minValue: r.minValue}] : []
         );

@@ -12,11 +12,8 @@ const STAFF = [
     { name: "Hunter", role: "NA Commissioner" },
     { name: "tee", role: "EU Commissioner" },
     { name: "thor", role: "SA Commissioner" },
-    // { name: "Ard", role: "Acting Commissioner" },
-    // { name: "Roppy", role: "Staff" },
-    // { name: "Toast", role: "Staff" },
-];
 
+];
 
 export default function PublicFooter() {
     const pathname = usePathname();
@@ -25,7 +22,7 @@ export default function PublicFooter() {
         <footer className="border-t border-border bg-card">
             <div className="page-wide py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
 
-                {/* Game Info */}
+                {}
                 <div className="space-y-4">
                     <div className="border-l-4 border-l-primary/40 pl-3">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Game</p>
@@ -66,7 +63,7 @@ export default function PublicFooter() {
                     </div>
                 </div>
 
-                {/* Staff */}
+                {}
                 <div className="space-y-3">
                     <div className="flex items-center gap-2 pb-2 border-b border-border">
                         <Users className="h-3.5 w-3.5 text-primary" />
@@ -87,7 +84,7 @@ export default function PublicFooter() {
                     </div>
                 </div>
 
-                {/* Creator */}
+                {}
                 <div className="space-y-3">
                     <div className="flex items-center gap-2 pb-2 border-b border-border">
                         <Code2 className="h-3.5 w-3.5 text-primary" />

@@ -18,11 +18,6 @@ export async function getTeamPlayers(
 
         const records = result.value.filter(r => r.player);
 
-        // Roblox profile sync deliberately does NOT run here. This backs the public team
-        // page, where every concurrent viewer of a stale roster fired the same outbound
-        // Roblox calls — batchSyncPlayers filters for staleness but never claims the work,
-        // so N viewers meant N identical syncs. Freshness is owned by the sync-players
-        // cron; admin write paths still sync eagerly.
         const withRoles: PlayerWithRole[] = records.map(record => {
             const role: PlayerRole = (record.role as PlayerRole) || 'player';
             return {...(record.player as Player), role};

@@ -1,6 +1,5 @@
 import { isPlayoffRound, roundLabelLong } from "@/app/utils/playoffRounds";
 
-// Parses match number from match_code: "W1-M3" → 3, "PF-2" → 2, unknown → null
 export function parseMatchNumber(code: string | null | undefined): number | null {
     if (!code) return null;
     const season = code.match(/^W\d+-M(\d+)$/i);
@@ -38,7 +37,7 @@ export function computeMatchLabels(
         if (codeNum !== null) {
             return getMatchTypeLabel("season", week, null, codeNum);
         }
-        // fallback: positional count when no match code present
+
         weekCounts[week] = (weekCounts[week] ?? 0) + 1;
         return getMatchTypeLabel("season", week, null, weekCounts[week]);
     });

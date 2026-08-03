@@ -4,4 +4,3 @@ export async function hasRole(supabase: DBClient, userId:string): Promise<boolea
     const {data} = await supabase.from("user_roles").select("user_id").eq("user_id", userId).single();
     return !!data
 }
-

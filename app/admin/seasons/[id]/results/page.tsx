@@ -423,7 +423,7 @@ export default function SeasonResultsPage() {
                     </div>
                 </div>
 
-                {/* Podium */}
+                {}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Podium</h2>
@@ -450,7 +450,7 @@ export default function SeasonResultsPage() {
                     }
                 </div>
 
-                {/* Awards */}
+                {}
                 <div className="space-y-4 pt-4 border-t border-border">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -464,7 +464,7 @@ export default function SeasonResultsPage() {
                         </Button>
                     </div>
 
-                    {/* Add award form */}
+                    {}
                     <div className="panel p-3 space-y-2">
                         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Add Award</p>
                         <div className="flex gap-2 flex-wrap items-end">

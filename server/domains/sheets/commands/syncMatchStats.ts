@@ -4,15 +4,6 @@ import {findMatchSheetConfigById} from "@/server/db/matchSheetConfig.repo";
 import {replaceMatchStats} from "@/server/db/playerMatchStats.repo";
 import {buildMatchStatsPlan, MatchStatsPlan, PlayerOverrides} from "./buildMatchStatsPlan";
 
-// Validate-first + atomic-write orchestrator. Mirrors syncSheet's shape:
-// load config (repo) → run the pipeline (buildMatchStatsPlan) → write (RPC).
-// The match's existing rows are replaced in one RPC call (delete + insert in one
-// transaction).
-//
-// `force` lets the operator commit despite skippable errors — a player who isn't
-// on Roblox or isn't registered here. Their rows were already dropped by
-// buildMatchStatsPlan, so what remains is correct, just incomplete. Fatal errors
-// mean the parse itself is wrong and are never bypassable.
 export async function syncMatchStats(
     supabase: DBClient,
     configId: string,
@@ -28,7 +19,6 @@ export async function syncMatchStats(
     if (!planRes.ok) return planRes;
     const plan = planRes.value;
 
-    // Absent `kind` means fatal — every other sheets sync predates that field.
     const fatal = plan.errors.filter(e => e.kind !== "skippable");
     if (fatal.length > 0) {
         return Err({
@@ -44,9 +34,6 @@ export async function syncMatchStats(
         });
     }
 
-    // replaceMatchStats deletes every existing row for the match before inserting.
-    // A set that contributes no rows would therefore be silently erased — which
-    // is reachable precisely when `force` drops every player in that set.
     for (let n = 1; n <= plan.summary.sets; n++) {
         if (!plan.rows.some(r => r.set_number === n)) {
             return Err({

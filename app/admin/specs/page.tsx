@@ -18,8 +18,7 @@ import SpecFormDialog from '@/app/features/spec/SpecFormDialog';
 import {useSpecs, deleteSpec} from '@/app/hooks/useSpecs';
 import {toast} from '@/app/utils/toast';
 import {clientLogger} from '@/app/utils/clientLogger';
-// Imported from the types entrypoint, not the domain barrel: the barrel re-exports
-// getSpecs, which pulls the repo (and Supabase) into the client bundle.
+
 import {SpecWithRequirements, specStatLabel, formatSpecStatValue, specStatMeta} from '@/server/domains/spec/types';
 
 function StarRating({stars}: {stars: number}) {

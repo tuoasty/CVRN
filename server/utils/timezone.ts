@@ -1,13 +1,5 @@
 import { logger } from "@/server/utils/logger";
 
-/**
- * Converts date + time + timezone to UTC ISO string
- * @param date YYYY-MM-DD format
- * @param time HH:MM format (24-hour)
- * @param timezone IANA timezone (e.g., "America/New_York", "Asia/Jakarta")
- * @returns ISO 8601 timestamptz string in UTC, or null if invalid
- */
-
 export function convertToUTC(
     date: string,
     time: string,

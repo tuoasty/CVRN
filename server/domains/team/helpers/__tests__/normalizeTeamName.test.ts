@@ -3,7 +3,7 @@ import {normalizeTeamName, teamNameKey} from "../normalizeTeamName";
 
 const FIRE = "\u{1F525}";
 const FLAG_GB = "\u{1F1EC}\u{1F1E7}";
-const ASTRONAUT = "\u{1F469}\u{1F3FD}\u{200D}\u{1F680}"; // skin tone + ZWJ sequence
+const ASTRONAUT = "\u{1F469}\u{1F3FD}\u{200D}\u{1F680}"; 
 const NO_ENTRY = "\u{1F6AB}";
 
 describe("normalizeTeamName", () => {
@@ -27,7 +27,6 @@ describe("normalizeTeamName", () => {
         expect(normalizeTeamName("  Deep   Blue  ")).toBe("Deep Blue");
     });
 
-    // Guards the \p{Emoji} trap: that property also matches digits, '#' and '*'.
     it("preserves digits, hash and asterisk", () => {
         expect(normalizeTeamName("Team 99")).toBe("Team 99");
         expect(normalizeTeamName("C*mets #1")).toBe("C*mets #1");
@@ -37,7 +36,6 @@ describe("normalizeTeamName", () => {
         expect(normalizeTeamName("Titans")).toBe("Titans");
     });
 
-    // An emoji-only cell collapses to empty, which parseTeamsSheet reads as "name cleared".
     it("returns empty string for an emoji-only name", () => {
         expect(normalizeTeamName(FIRE)).toBe("");
     });

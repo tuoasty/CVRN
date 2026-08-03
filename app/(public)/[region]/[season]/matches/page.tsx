@@ -24,21 +24,6 @@ type PageProps = {
     searchParams: Promise<{ tab?: string; week?: string; round?: string }>;
 };
 
-/**
- * Server-rendered matches schedule.
- *
- * This route previously rendered a client component with no props, which fetched
- * everything through nine SWR hooks — nine server-action POSTs per view, two of them
- * waterfalled behind the schedule resolving. All of that now happens in one render.
- *
- * Reading `searchParams` opts the route out of the Full Route Cache, which is deliberate:
- * a dynamic route produces no ISR entry and therefore no ISR write, and ISR writes are the
- * metric currently furthest over budget. The underlying reads are still cached, so the
- * per-request cost is a cache lookup rather than a round of queries.
- *
- * The week/round resolution below was previously client-side. It has to live here now
- * because the answer determines which schedule to fetch.
- */
 export default async function Page({ params, searchParams }: PageProps) {
     const { region, season } = await params;
     const { tab, week: weekParam, round: rawRound } = await searchParams;
@@ -55,8 +40,6 @@ export default async function Page({ params, searchParams }: PageProps) {
     const activeTab = tab === "playoffs" ? "playoffs" : "season";
     const hasPlayoffs = !!seasonRecord.playoff_started;
 
-    // Independent of each other and of the schedule, so resolve together. Playoff metadata
-    // is skipped entirely when the season has no bracket yet.
     const [standings, allTeams, weekCounts, availableRounds, roundCounts] = await Promise.all([
         getCachedStandings(seasonRecord.id, regionRecord.id),
         getCachedTeamsWithRegions(),
@@ -65,8 +48,6 @@ export default async function Page({ params, searchParams }: PageProps) {
         hasPlayoffs ? getCachedPlayoffRoundCounts(seasonRecord.id) : Promise.resolve([]),
     ]);
 
-    // Week: an explicit ?week wins; otherwise fall back to the season's default week. The
-    // default is only queried when it is actually needed, matching the old hook's `null` key.
     const parsedWeek = weekParam ? parseInt(weekParam, 10) : NaN;
     let effectiveWeek: number;
     if (Number.isFinite(parsedWeek)) {
@@ -82,7 +63,6 @@ export default async function Page({ params, searchParams }: PageProps) {
     const effectiveRound: PlayoffRound =
         roundParam && sortedRounds.includes(roundParam) ? roundParam : sortedRounds[0] ?? "play_in";
 
-    // Only the active tab's schedule is fetched — the other one is never rendered.
     let schedule: MatchWithDetails[] = [];
     if (activeTab === "season") {
         schedule = await getCachedWeekSchedule(seasonRecord.id, effectiveWeek);
@@ -90,9 +70,6 @@ export default async function Page({ params, searchParams }: PageProps) {
         schedule = await getCachedPlayoffSchedule(seasonRecord.id, effectiveRound);
     }
 
-    // MVP avatars. Teams come from the already-cached all-teams read rather than a
-    // per-id-set query — filtering ~220 rows in memory is cheaper than minting a new cache
-    // entry for every distinct set of team ids a week happens to contain.
     const mvpIds = schedule.flatMap(({ match }) =>
         [match.match_mvp_player_id, match.loser_mvp_player_id].filter((id): id is string => !!id),
     );

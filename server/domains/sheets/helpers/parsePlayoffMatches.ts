@@ -1,21 +1,6 @@
 import { ParsedPlayoffResult, SyncError } from "../types";
 import { parseOfficialsCell } from "./parseOfficialsCell";
 
-// Cell layout, relative to the anchor cell holding the match code at [row][col]:
-//
-//   [row-1][col]              schedule  ("Date: ...")
-//   [row  ][col]  = ANCHOR    match code
-//   [row  ][col+1]            home team name
-//   [row+1][col+1]            away team name
-//   [row  ][col+5..col+9]     home set scores (up to 5, BO5)
-//   [row+1][col+5..col+9]     away set scores
-//   [row+2][col]              "REFS: a, b"
-//   [row+3][col]              "MEDIA: a, b"
-//
-// The sheet is externally owned, so every read tolerates a missing row or column:
-// Google returns jagged rows, and a merged range only carries its value in the
-// top-left cell.
-
 const SET_COL_OFFSET = 5;
 const MAX_SETS = 5;
 
@@ -28,10 +13,6 @@ function isForfeitToken(value: string): boolean {
     return value.toUpperCase() === 'FF';
 }
 
-// A forfeit written as scores rather than an FF token: every set is a shutout for
-// the same side (25-0, or 15-0 for a BO5 fifth set). A genuine shutout set is
-// legal volleyball but effectively never happens, and the sheet uses this form
-// interchangeably with "FF".
 function isForfeitScoreline(sets: { homeScore: number; awayScore: number }[]): 'home' | 'away' | null {
     if (sets.length === 0) return null;
     if (sets.every(s => s.awayScore === 0 && s.homeScore > 0)) return 'away';
@@ -102,7 +83,7 @@ export function parsePlayoffMatches(
         if (homeIsFF || awayIsFF) {
           isForfeit = true;
           forfeitingTeam = homeIsFF ? 'home' : 'away';
-          sets.length = 0; // scores are regenerated from best_of downstream
+          sets.length = 0; 
           break;
         }
 
@@ -148,8 +129,7 @@ export function parsePlayoffMatches(
       if (isForfeit && forfeitingTeam) {
         winner = forfeitingTeam === 'home' ? awayTeamName : homeTeamName;
       } else if (sets.length > 0) {
-        // Mirrors validateAndCalculateMatchResult's set-win rule, including its
-        // draw-goes-to-away convention.
+
         const homeSetsWon = sets.filter(s => s.homeScore > s.awayScore).length;
         winner = homeSetsWon > sets.length - homeSetsWon ? homeTeamName : awayTeamName;
       }

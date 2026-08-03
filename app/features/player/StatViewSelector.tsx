@@ -24,9 +24,7 @@ export default function StatViewSelector({value, onChange}: Props) {
                         aria-pressed={active}
                         onClick={() => onChange(v)}
                         className={cn(
-                            // Square and flat, per DESIGN.md. The active tab was carrying a
-                            // resting shadow, which the system reserves for overlays and
-                            // hover; surface lift plus weight reads the same and stays flat.
+
                             "h-full shrink-0 rounded-sm px-3 text-sm transition-colors",
                             "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                             active

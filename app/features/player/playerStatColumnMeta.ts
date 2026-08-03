@@ -10,7 +10,6 @@ export type PlayerStatColumn = {
     format: StatFormat;
 };
 
-// Per-set rate column.
 const ps = (
     key: keyof PlayerSeasonStat,
     label: string,
@@ -18,7 +17,6 @@ const ps = (
     description: string
 ): PlayerStatColumn => ({key, label, group, description, format: "per_set"});
 
-// Raw season-total (count) column.
 const ct = (
     key: keyof PlayerSeasonStat,
     label: string,
@@ -26,8 +24,6 @@ const ct = (
     description: string
 ): PlayerStatColumn => ({key, label, group, description, format: "count"});
 
-// The six views the profile table can show. Overview is the default landing
-// view; the five skill views are focused deep-dives.
 export type StatView = "overview" | "spiking" | "setting" | "blocking" | "receiving" | "serving";
 
 export const STAT_VIEWS: {value: StatView; label: string}[] = [
@@ -39,15 +35,12 @@ export const STAT_VIEWS: {value: StatView; label: string}[] = [
     {value: "serving",   label: "Serving"},
 ];
 
-// Constant context prefix shared by every view.
 const SEASON_COLUMNS: PlayerStatColumn[] = [
     {key: "sets_played",    label: "SP",    group: "Season", description: "Sets played", format: "count"},
     {key: "points_total",   label: "PTS",   group: "Season", description: "Total points scored: kills + kill blocks + aces", format: "count"},
     {key: "points_per_set", label: "PTS/S", group: "Season", description: "Points scored per set", format: "per_set"},
 ];
 
-// Column keys constrained to `keyof PlayerSeasonStat`. The `*_total` count keys
-// come from v_player_season_stats (migration 20260713120000).
 export const STAT_VIEW_COLUMNS: Record<StatView, PlayerStatColumn[]> = {
     overview: [
         ...SEASON_COLUMNS,
@@ -121,21 +114,8 @@ export const STAT_VIEW_COLUMNS: Record<StatView, PlayerStatColumn[]> = {
     ],
 };
 
-/**
- * Sets a player must have played before a ratio column can rank them.
- *
- * Only ratios need this. A rate like K/S is a real per-set average at any sample size,
- * but hit_eff, set_eff and kb_pct are quotients that a two-set player can max out —
- * 2-for-2 is 100%, and without a floor that tops the board.
- *
- * The three `pct`-format columns are the whole set this applies to; `net` (SRV+) is a
- * season total, and counts speak for themselves.
- */
 export const MIN_SETS_FOR_RATE = 6;
 
-// The column each view sorts by when the reader has not picked one. Every entry is a
-// count, never a rate. The qualifier above now catches the two-set-at-100% case when a
-// reader sorts by a ratio, but landing on a count is still the more useful first read.
 export const STAT_VIEW_DEFAULT_SORT: Record<StatView, keyof PlayerSeasonStat> = {
     overview:  "points_total",
     spiking:   "points_total",
@@ -152,20 +132,9 @@ export function formatPlayerStat(value: number | null, format: StatFormat): stri
     return String(value);
 }
 
-// Reserves width so a column of single-digit values doesn't render narrower
-// than the same column on another row set. Sized to the content — per_set
-// prints 2 decimals ("12.34"), counts print at most 3 digits.
 export const playerHeadWidthClass = (format: StatFormat): string =>
     format === "pct" ? "min-w-[3.25rem]" : format === "count" ? "min-w-[2rem]" : "min-w-[2.75rem]";
 
-// Hard widths for the leaderboard, which is `table-fixed`. A min-width would not be
-// enough there: auto layout re-measures every column when the view changes, so the stat
-// block slides sideways as columns are added and removed.
-//
-// These are NOT playerHeadWidthClass's numbers. Those are floors under auto layout — a
-// min-w-[2rem] column actually rendered at whatever the header needed — so reusing them
-// as hard caps clips the label. Sized to real content instead: the widest label plus the
-// sort arrow, and the widest value ("12.34", "100.0%"), plus px-2 either side.
 export const playerColWidthClass = (format: StatFormat): string =>
     format === "pct" ? "w-[3.75rem]" : format === "count" ? "w-[3.25rem]" : "w-16";
 

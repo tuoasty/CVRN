@@ -25,15 +25,6 @@ type Props = {
     mediaPosts: MediaPost[];
 };
 
-/**
- * Still a client component — season/region come from the layout's context and the child
- * cards own their own dialog state. What changed is that all six datasets arrive as props
- * from the route instead of six SWR hooks firing after hydration, which was six
- * uncacheable server-action POSTs on every view of the most-trafficked page.
- *
- * Loading flags are gone with them: data ships with the HTML, so there is nothing to wait
- * for. The route's loading.tsx covers the server render.
- */
 export default function HomePage({
     teams,
     upcomingMatches,
@@ -79,7 +70,7 @@ export default function HomePage({
         <>
             <div className="page-wide py-6">
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-6">
-                    {/* Left Sidebar */}
+                    {}
                     <aside className="hidden lg:block space-y-6">
                         {!isSeasonCompleted && (
                             <div className="space-y-3">
@@ -162,7 +153,7 @@ export default function HomePage({
                         </div>
                     </aside>
 
-                    {/* Center Column */}
+                    {}
                     <section className="space-y-6">
                         {isSeasonCompleted ? (
                             <SeasonChampionCard podium={podium} seasonName={season.name} regionCode={regionCode} seasonSlug={seasonSlug} />
@@ -208,7 +199,7 @@ export default function HomePage({
                         </div>
                     </section>
 
-                    {/* Right Sidebar */}
+                    {}
                     <aside>
                         <MediaSidebar posts={mediaPosts} />
                     </aside>

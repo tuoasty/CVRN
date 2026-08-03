@@ -69,7 +69,7 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
 
     return (
         <div className="panel border-l-4 border-l-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent h-[376px]">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between px-6 pt-3 pb-3 border-b-2 border-yellow-500/20">
                 <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
                     <Trophy className="h-4 w-4" />
@@ -80,14 +80,14 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
                 )}
             </div>
 
-            {/* Champion */}
+            {}
             {championHref ? (
                 <Link href={championHref} prefetch={false} className="block hover:opacity-90 transition-opacity">
                     {championContent}
                 </Link>
             ) : championContent}
 
-            {/* Runner-up and 3rd place */}
+            {}
             {(runnerUp || third) && (
                 <div className="grid grid-cols-2 gap-px border-t border-yellow-500/20">
                     {runnerUp ? (

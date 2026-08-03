@@ -1,6 +1,4 @@
-// Levenshtein distance, case-insensitive. Used to rank roster candidates against
-// a mistyped username in the stats sheet. Rosters cap at ~36 names, so the
-// O(n*m) fill is irrelevant here.
+
 export function editDistance(a: string, b: string): number {
     const s = a.toLowerCase();
     const t = b.toLowerCase();

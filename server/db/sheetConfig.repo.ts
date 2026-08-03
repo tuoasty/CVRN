@@ -102,7 +102,7 @@ export async function findCronEnabledConfigs(supabase: DBClient): Promise<Result
         .from("sheet_configs")
         .select("*")
         .eq("is_active", true)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         .eq("cron_enabled" as any, true)
         .order("created_at", {ascending: true});
     if (error) return Err(serializeError(error, "DB_ERROR"));

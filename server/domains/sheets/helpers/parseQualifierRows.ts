@@ -3,24 +3,19 @@ import {normalizeTeamName, teamNameKey} from "@/server/domains/team/helpers/norm
 import {classifyWinLossColor} from "@/server/domains/sheets/helpers/classifyWinLossColor";
 import {logger} from "@/server/utils/logger";
 
-const COL_CODE = 4;      // E
-const COL_HOME = 6;      // G
-const COL_AWAY = 8;      // I
-const COL_SCHEDULE = 10; // K
-const COL_SET_START = 12; // M (Sets 1-5: M=12, N=13, O=14, P=15, Q=16)
-const COL_SET_END = 14;   // O
-const COL_WINNER = 16;   // Q
-const COL_NOTE = 17;     // R
-const COL_REFEREE = 19;  // T
-const COL_MEDIA = 21;    // V
+const COL_CODE = 4;      
+const COL_HOME = 6;      
+const COL_AWAY = 8;      
+const COL_SCHEDULE = 10; 
+const COL_SET_START = 12; 
+const COL_SET_END = 14;   
+const COL_WINNER = 16;   
+const COL_NOTE = 17;     
+const COL_REFEREE = 19;  
+const COL_MEDIA = 21;    
 
-// Away-team cell values that mean "this team has a bye this round", not a real
-// opponent. Explicit allowlist (normalized lowercase) so a typo'd real team name
-// still fails the name lookup rather than being silently swallowed as a bye.
 const BYE_AWAY_TOKENS = new Set(["n/a", "na", "by round", "(by round)", "bye"]);
 
-// Parses the raw "a-b" cell into its two numbers, in the order written. Orientation into
-// home/away happens later, once the cell color is known.
 function parseSetScore(
     cell: string,
     setNumber: number,
@@ -41,9 +36,6 @@ function parseSetScore(
     return {setNumber, first, second};
 }
 
-// Which team won the match, read from the two team-name cell colors. Green name = won,
-// red name = lost. Returns null when the colors are absent, contradictory, or inconclusive —
-// in which case the caller keeps the positional home-away order.
 function resolveMatchWinnerSide(
     homeColor: string | null,
     awayColor: string | null
@@ -57,9 +49,6 @@ function resolveMatchWinnerSide(
     return null;
 }
 
-// Turns the two raw set numbers into home/away scores using the set cell's color plus the
-// known match winner. Green set = won by the match winner, red = won by the match loser; the
-// set winner always holds the higher score. Falls back to positional order when we can't tell.
 function orientSetScore(
     first: number,
     second: number,
@@ -87,7 +76,6 @@ export function parseQualifierRows(
     const results: ParsedMatchResult[] = [];
     const errors: SyncError[] = [];
 
-    // Data starts at headerRow (0-indexed), since header is at headerRow - 1
     const dataStartIndex = headerRow;
 
     for (let i = dataStartIndex; i < rows.length; i++) {

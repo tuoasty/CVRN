@@ -17,13 +17,10 @@ import {
 
 interface Props {
     rows: SpecQualificationRow[];
-    /** Column order, taken from the threshold editor so the table matches it. */
+
     statKeys: string[];
 }
 
-// Every cell is padded tighter than .table-dense's px-2 sm:px-4 default. With a
-// dozen stat columns the default spacing pushes the table into horizontal scroll
-// on its own, before any of the values are even wide.
 const CELL = 'px-1.5';
 
 export default function SpecQualificationTable({rows, statKeys}: Props) {
@@ -131,9 +128,7 @@ export default function SpecQualificationTable({rows, statKeys}: Props) {
                             {statKeys.map(key => {
                                 const check = row.checks.find(c => c.statKey === key);
                                 const format = specStatMeta(key)?.format ?? 'count';
-                                // The raw value only earns a second line when the bonus moved
-                                // it. Printing the same number twice is noise, and most cells
-                                // in a zero-bonus row would do exactly that.
+
                                 const shifted =
                                     check !== undefined &&
                                     check.value !== null &&

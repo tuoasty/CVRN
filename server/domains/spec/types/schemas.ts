@@ -9,14 +9,6 @@ export const SpecRequirementSchema = z.object({
     minValue: z.number().finite(),
 });
 
-/**
- * A spec and its requirements save as one unit.
- *
- * Splitting them would let `secondary_required` and the secondary row count drift
- * apart between two calls — a spec needing 4 of 3 requirements qualifies nobody,
- * and the DB cannot express that CHECK across two tables. Saving together makes
- * the invariant checkable at the boundary.
- */
 export const SaveSpecSchema = z
     .object({
         id: z.string().uuid().optional(),

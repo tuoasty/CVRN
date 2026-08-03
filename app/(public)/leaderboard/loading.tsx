@@ -1,7 +1,5 @@
 import {Skeleton} from "@/app/components/ui/skeleton";
 
-// Mirrors AllTimeLeaderboardPage's shell: header, view + search row, region + count row,
-// table. One more row than the season board because of the region picker.
 export default function AllTimeLeaderboardLoading() {
     return (
         <div className="page-bleed py-6 space-y-6">

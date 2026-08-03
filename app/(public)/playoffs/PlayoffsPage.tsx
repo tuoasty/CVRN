@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useMemo } from "react";
 import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { buildIncomingMap } from "@/app/hooks/usePlayoffs";
@@ -12,21 +11,12 @@ import type { TeamWithRegion } from "@/server/domains/team";
 
 type Props = {
     brackets: PlayoffBracket[];
-    /** Playoff matches for this season only — see getCachedPlayoffMatches. */
+
     matches: Match[];
-    /** Teams appearing in the bracket. */
+
     teams: TeamWithRegion[];
 };
 
-/**
- * Still a client component — PlayoffBracketDisplay owns fullscreen, drag and zoom state,
- * and its `incomingMap` prop is a Map, which is cheaper to rebuild on mount than to send
- * through the RSC payload.
- *
- * What changed is where the data comes from: brackets are fetched and cached by the route
- * above instead of via a per-view server-action POST. Season and region still come from
- * the layout's client context, which costs no request.
- */
 export default function PlayoffsPage({ brackets, matches, teams }: Props) {
     const { season, region } = useSeasonContext();
     const hasPlayoffs = season.playoff_started;

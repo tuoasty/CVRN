@@ -4,7 +4,7 @@ import { SeasonWithPlayoffConfig } from "@/server/domains/season";
 
 interface Props {
     byRegion: Array<{ region: Region; seasons: SeasonWithPlayoffConfig[] }>;
-    /** When set, season cards deep-link to this sub-page (e.g. "media") instead of home. */
+
     nextPage?: string;
 }
 

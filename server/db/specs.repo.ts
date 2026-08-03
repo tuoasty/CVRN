@@ -3,8 +3,6 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {SpecRequirementInput, SpecWithRequirements} from "@/server/domains/spec/types";
 
-// The whole catalog with each spec's requirements embedded. Small table (a handful
-// of specs, a few requirements each) — no pagination, no filtering.
 export async function findSpecsWithRequirements(
     supabase: DBClient
 ): Promise<Result<SpecWithRequirements[]>> {
@@ -56,9 +54,6 @@ export async function upsertSpec(
     return Ok(data);
 }
 
-// Delete-then-insert. Requirements are a set, not individually addressable rows —
-// the editor hands over the whole list every save, so diffing would only add a way
-// to get it wrong.
 export async function replaceSpecRequirements(
     supabase: DBClient,
     specId: string,
@@ -84,7 +79,6 @@ export async function replaceSpecRequirements(
     return Ok(true);
 }
 
-// Requirements cascade via the FK.
 export async function deleteSpec(supabase: DBClient, id: string): Promise<Result<true>> {
     const {error} = await supabase.from("specs").delete().eq("id", id);
     if (error) return Err(serializeError(error, "DB_ERROR"));

@@ -34,7 +34,7 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
 
     const inner = (
         <>
-            {/* Hero area */}
+            {}
             <div
                 className="relative flex items-center justify-center h-36"
                 style={{ backgroundColor: brickColor ? `${brickColor}18` : undefined }}
@@ -76,9 +76,9 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                 )}
             </div>
 
-            {/* Info area */}
+            {}
             <div className="border-t border-border">
-                {/* Name + brick number */}
+                {}
                 <div className={`flex items-center justify-between gap-2 px-3 ${hasMeta ? "pt-2.5 pb-1.5" : "py-2.5"}`}>
                     <span className="text-sm font-bold truncate min-w-0 leading-tight">
                         {team.name}
@@ -98,7 +98,7 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                     )}
                 </div>
 
-                {/* Captain + player count */}
+                {}
                 {hasMeta && (
                     <div className="flex items-center gap-1.5 px-3 pb-2.5 min-w-0">
                         {team.captain && (

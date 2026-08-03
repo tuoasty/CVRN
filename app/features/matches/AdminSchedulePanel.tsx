@@ -225,14 +225,14 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                 </div>
                             </div>
 
-                            {/* Team matchup - vertical stacking within each column */}
+                            {}
                             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4 py-2">
-                                {/* Home Team */}
+                                {}
                                 <div className="flex flex-col items-end gap-1">
-                                    {/* Empty space for symmetry */}
+                                    {}
                                     <div className="min-h-[20px]"></div>
 
-                                    {/* Team name and logo */}
+                                    {}
                                     <div className="flex items-center gap-2 justify-end w-full">
             <span className={`font-semibold text-xs sm:text-sm text-right truncate ${(match.home_sets_won ?? 0) > (match.away_sets_won ?? 0) ? "text-foreground" : "text-muted-foreground"}`}>
                 {homeTeam?.name || "TBD"}
@@ -258,7 +258,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                         </div>
                                     </div>
 
-                                    {/* LVR below */}
+                                    {}
                                     <div className="min-h-[20px] flex justify-end">
                                         {match.status === "completed" && match.home_team_lvr !== null && match.home_team_lvr !== undefined && (
                                             <Badge variant="outline" className={`h-4 px-1.5 text-[9px] font-semibold tabular-nums ${match.home_team_lvr >= 0 ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-red-600/10 text-red-600 border-red-600/20'}`}>
@@ -268,7 +268,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                     </div>
                                 </div>
 
-                                {/* Score/VS - Centered */}
+                                {}
                                 {match.status === 'completed' && match.home_sets_won !== null && match.away_sets_won !== null ? (
                                     <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2">
                                         <span className={`text-lg sm:text-xl font-bold tabular-nums ${(match.home_sets_won ?? 0) > (match.away_sets_won ?? 0) ? "text-foreground" : "text-muted-foreground"}`}>{match.home_sets_won}</span>
@@ -281,12 +281,12 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                     </div>
                                 )}
 
-                                {/* Away Team */}
+                                {}
                                 <div className="flex flex-col items-start gap-1">
-                                    {/* Empty space for symmetry */}
+                                    {}
                                     <div className="min-h-[20px]"></div>
 
-                                    {/* Team name and logo */}
+                                    {}
                                     <div className="flex items-center gap-2 justify-start w-full">
                                         <div className="relative w-8 h-8 sm:w-10 sm:h-10 shrink-0">
                                             {awayTeam?.is_bye ? (
@@ -312,7 +312,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
             </span>
                                     </div>
 
-                                    {/* LVR below */}
+                                    {}
                                     <div className="min-h-[20px] flex justify-start">
                                         {match.status === "completed" && match.away_team_lvr !== null && match.away_team_lvr !== undefined && (
                                             <Badge variant="outline" className={`h-4 px-1.5 text-[9px] font-semibold tabular-nums ${match.away_team_lvr >= 0 ? 'bg-green-600/10 text-green-600 border-green-600/20' : 'bg-red-600/10 text-red-600 border-red-600/20'}`}>

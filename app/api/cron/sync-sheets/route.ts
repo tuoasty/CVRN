@@ -17,7 +17,6 @@ export async function GET(req: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const configsResult = await findCronEnabledConfigs(supabaseAdmin as any);
     if (!configsResult.ok) {
         log.error({ error: configsResult.error }, "Failed to fetch cron-enabled configs");
@@ -33,7 +32,7 @@ export async function GET(req: Request) {
     log.info({ count: configs.length }, "Starting sync for cron-enabled configs");
 
     const results = await Promise.allSettled(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         configs.map((c) => syncSheet(supabaseAdmin as any, c.id, "cron"))
     );
 
@@ -58,13 +57,6 @@ export async function GET(req: Request) {
 
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
 
-    // Public pages cache until a tag purge, so without this the site would not reflect the
-    // sync at all. Gated on the sync actually having changed something: SHEET_SYNC_TAGS is
-    // five of the eight tags and re-renders nearly every cached page, which is a large bill
-    // for a night where the sheet was untouched.
-    //
-    // A failed or throwing config still invalidates. It may have committed some rows before
-    // dying, and serving a stale page is worse than paying for one extra re-render.
     if (changes > 0 || failed) {
         revalidatePublicData(SHEET_SYNC_TAGS);
     } else {

@@ -110,7 +110,7 @@ export default function PreMatchRosters({homeTeam, awayTeam, rosters}: Props) {
 
     return (
         <div>
-            {/* Desktop: mirrored two-column grid */}
+            {}
             <div className="hidden sm:grid grid-cols-[1fr_1px_1fr]">
                 <div>
                     <div className="px-4 py-2.5 text-right border-b border-border">
@@ -131,7 +131,7 @@ export default function PreMatchRosters({homeTeam, awayTeam, rosters}: Props) {
                 </div>
             </div>
 
-            {/* Mobile: tabbed single-team list */}
+            {}
             <div className="sm:hidden">
                 <Tabs defaultValue="home">
                     <TabsList className="w-full rounded-none border-b border-border bg-transparent h-auto p-0">

@@ -38,7 +38,7 @@ export default function FeaturedMatchCard({
 
     const inner = (
         <div className="flex flex-col justify-between h-full">
-                {/* Header */}
+                {}
                 <div className="flex items-center justify-between pb-3 border-b-2 border-primary/20">
                     <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                         {isRecent ? "Most Recent Match" : "Next Match"}
@@ -60,7 +60,7 @@ export default function FeaturedMatchCard({
                     </div>
                 </div>
 
-                {/* Teams */}
+                {}
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-8">
                     <div className={`flex flex-col items-center gap-3 ${homeWon ? "opacity-100" : isCompleted ? "opacity-60" : ""}`}>
                         {homeTeam?.logo_url && (
@@ -109,7 +109,7 @@ export default function FeaturedMatchCard({
                     </div>
                 </div>
 
-                {/* Footer */}
+                {}
                 <div className="flex items-center justify-center gap-4 pt-3 border-t border-border">
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-primary" />

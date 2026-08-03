@@ -40,9 +40,7 @@ export default function PlayoffManagementPage() {
     const { seasons: allSeasons } = useSeasons();
     const { configs } = usePlayoffConfigs();
     const { brackets, incomingMap, isLoading: loadingBrackets } = usePlayoffBrackets(selectedSeasonId ?? null);
-    // Admin keeps the whole-table read: this page is low volume, behind auth, and its
-    // completed-count needs matches across the season anyway. The public bracket no longer
-    // does this — it receives a season-scoped set from the server.
+
     const { matches } = useAllMatches();
     const { teams } = useTeams();
 
@@ -58,7 +56,6 @@ export default function PlayoffManagementPage() {
     const seasonIdValue = selectedSeasonId ?? "";
     const regionIdValue = selectedRegionId ?? "";
 
-    // Seed count for the selected season = its playoff config template's team count.
     const seasonConfig = configs.find((c) => c.id === selectedSeason?.playoff_config_id);
     const templateKey = seasonConfig?.template;
     const totalTeams =

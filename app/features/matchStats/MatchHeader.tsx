@@ -41,7 +41,7 @@ type Props = {
 export default function MatchHeader({detail, regionCode, seasonSlug, standingMethod = "lvr"}: Props) {
     const {match, sets, homeTeam, awayTeam, officials, playoffRound} = detail;
     const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
-    // 'points' shows base + margin bonus; 'points_without_bonus' shows base only.
+
     const homePts = (match.home_team_points ?? 0) + (standingMethod === "points" ? (match.home_team_bonus ?? 0) : 0);
     const awayPts = (match.away_team_points ?? 0) + (standingMethod === "points" ? (match.away_team_bonus ?? 0) : 0);
 
@@ -65,7 +65,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
 
     return (
         <div className="space-y-4 pb-6 border-b border-border">
-            {/* Metadata row */}
+            {}
             <div className="flex items-start justify-between gap-2 pb-3 border-b border-border">
                 <div className="flex flex-col gap-1.5">
                     {(roundLabel ?? match.match_code) && (
@@ -112,9 +112,9 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                 </span>
             </div>
 
-            {/* Team matchup */}
+            {}
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6 py-2 sm:py-3">
-                {/* Home */}
+                {}
                 <div className="flex flex-col items-center gap-2 min-w-0">
                     <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-sm overflow-hidden">
                         {homeTeam?.is_bye ? (
@@ -160,7 +160,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                     )}
                 </div>
 
-                {/* Score / VS */}
+                {}
                 {isCompleted ? (
                     <div className="flex items-center gap-2 sm:gap-4 px-1 sm:px-2">
                         <span
@@ -183,7 +183,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                     <span className="text-lg sm:text-2xl font-bold text-muted-foreground/50 px-2">VS</span>
                 )}
 
-                {/* Away */}
+                {}
                 <div className="flex flex-col items-center gap-2 min-w-0">
                     <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-sm overflow-hidden">
                         {awayTeam?.is_bye ? (
@@ -230,7 +230,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                 </div>
             </div>
 
-            {/* Set chips */}
+            {}
             {isCompleted && sets.length > 0 && (
                 <div className="flex items-center justify-center gap-1.5 flex-wrap">
                     {sets.map(set => (
@@ -258,7 +258,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                 </div>
             )}
 
-            {/* Points row (points regions) */}
+            {}
             {isCompleted && isPoints && (match.home_team_points !== null || match.away_team_points !== null) && (
                 <div className="flex items-center justify-between gap-2 pt-1">
                     <div>
@@ -284,7 +284,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                 </div>
             )}
 
-            {/* LVR row (lvr regions) */}
+            {}
             {isCompleted && !isPoints && (match.home_team_lvr !== null || match.away_team_lvr !== null) && (
                 <div className="flex items-center justify-between gap-2 pt-1">
                     <div>
@@ -320,7 +320,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                 </div>
             )}
 
-            {/* Officials */}
+            {}
             {(referees.length > 0 || media.length > 0) && (
                 <div className="flex flex-wrap items-start gap-x-6 gap-y-2 pt-3 border-t border-border">
                     {referees.length > 0 && (

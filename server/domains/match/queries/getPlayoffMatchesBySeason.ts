@@ -4,13 +4,6 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findPlayoffMatchesFullBySeason} from "@/server/db/matches.repo";
 
-/**
- * Every playoff match in one season, as full rows.
- *
- * Backs the public bracket display, which needs `home_sets_won` / `away_sets_won` /
- * `best_of` to render scores and therefore cannot use the narrow projection that
- * `getSeasonPlayoffMatches` (matchStats) builds on.
- */
 export async function getPlayoffMatchesBySeason(
     supabase: DBClient,
     seasonId: string

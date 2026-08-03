@@ -28,7 +28,7 @@ export default function PlayerSearchPage() {
                 subtitle="Search players across every region and season"
             />
 
-            {/* Search — the focal element. Debounced; Enter submits immediately as an accessible fallback. */}
+            {}
             <form onSubmit={e => e.preventDefault()} role="search" className="relative w-full">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -52,11 +52,10 @@ export default function PlayerSearchPage() {
                 )}
             </form>
 
-            {/* Results — aria-live so screen readers hear updates as the user types */}
+            {}
             <div aria-live="polite" aria-busy={loading}>
                 {searchFailed ? (
-                    /* A failed fetch must never render as "no players found" — that answers the
-                       user's question wrongly and confidently. */
+
                     <div className="flex flex-col items-center justify-center space-y-3 py-20">
                         <AlertCircle className="h-10 w-10 text-muted-foreground/40" />
                         <p className="text-sm text-muted-foreground">
@@ -84,8 +83,7 @@ export default function PlayerSearchPage() {
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {/* The default list is otherwise unexplained — the user can't tell what
-                            they're looking at before they type. */}
+                        {}
                         <p className="px-1 text-xs text-muted-foreground">
                             {hasQuery
                                 ? `${list.length} result${list.length === 1 ? "" : "s"}`

@@ -37,16 +37,11 @@ export interface PlayerWithTeamInfo {
     current_team_id: string | null;
     current_season_id: string | null;
     current_team_name: string | null;
-    /** Only populated by searchPlayersInDatabase when a seasonId is supplied. */
+
     season_team_id?: string | null;
     season_team_name?: string | null;
 }
 
-/**
- * Result row for the public player search page. Region is always populated from the
- * player's most-recent stint (any league); `team` is only their most-recent *active
- * main-league* team, and is null when they have none.
- */
 export interface PlayerSearchHit {
     id: string;
     roblox_user_id: string;
@@ -99,17 +94,13 @@ export interface PlayerSeasonStat extends PlayerSeasonStatRow {
     region_code: string;
 }
 
-// Extends PlayerSeasonStat rather than the raw view row so STAT_VIEW_COLUMNS —
-// typed `keyof PlayerSeasonStat` — indexes leaderboard rows unchanged. Team
-// fields stay nullable: the view's team join is a LEFT JOIN LATERAL, so a player
-// with no roster row for that season has none.
 export interface PlayerLeaderboardRow extends PlayerSeasonStat {
     player_id: string;
     username: string;
     display_name: string | null;
     avatar_url: string | null;
     region_id: string;
-    /** Orders seasons into cohorts and picks a player's most recent team. */
+
     season_start_date: string;
     team_id: string | null;
     team_name: string | null;
@@ -118,25 +109,12 @@ export interface PlayerLeaderboardRow extends PlayerSeasonStat {
     team_logo_bg_removed: boolean | null;
 }
 
-/**
- * A career row: one per (player, region), summed over a chosen set of seasons.
- *
- * Computed in the browser by `aggregateCareerRows`, not read from a view. A
- * pre-aggregated view cannot serve this: once S1..S4 are summed into one row, "S1 and
- * S2 only" is unrecoverable, and the season-cohort filter needs exactly that.
- *
- * `season_id` and `season_name` are null by construction — the row spans seasons, so
- * there is no single one. `season_slug` and `season_start_date` survive as real values
- * naming the player's most recent season in the region, which is what the team link
- * needs to resolve. Nulling the identity while keeping the slug is deliberate.
- */
 export interface AllTimeLeaderboardRow extends Omit<PlayerLeaderboardRow, "season_id" | "season_name"> {
     season_id: null;
     season_name: null;
     seasons_played: number;
 }
 
-/** Either board's row. What `LeaderboardTable` accepts. */
 export type LeaderboardDisplayRow = PlayerLeaderboardRow | AllTimeLeaderboardRow;
 
 export interface PlayerAward {

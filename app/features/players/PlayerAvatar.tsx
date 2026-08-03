@@ -4,11 +4,6 @@ import { useState } from "react"
 import Image from "next/image"
 import { User } from "lucide-react"
 
-/**
- * Roblox avatar-headshot rendered as a free-floating bust: transparent PNG, no container,
- * bottom-anchored so the shoulders sit flush with the row's bottom edge and the head rises
- * above the text. Falls back to a small glyph chip when the thumbnail is missing.
- */
 export default function PlayerAvatar({ src, alt }: { src: string | null | undefined; alt: string }) {
     const [errored, setErrored] = useState(false)
 

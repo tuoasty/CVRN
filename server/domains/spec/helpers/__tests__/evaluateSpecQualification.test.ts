@@ -3,8 +3,6 @@ import {PlayerLeaderboardRow} from '@/server/domains/player'
 import {evaluateSpecQualification, EvaluableRequirement} from '../evaluateSpecQualification'
 import type {PlacementTier} from '../placementBonus'
 
-// Only the fields the evaluator touches matter; the rest of the view row is padded
-// so the fixture stays readable.
 function player(username: string, stats: Partial<Record<string, number | null>> = {}): PlayerLeaderboardRow {
     return {
         player_id: `id-${username}`,
@@ -58,9 +56,6 @@ describe('evaluateSpecQualification', () => {
         expect(rows[0].qualified).toBe(true)
     })
 
-    // The footgun this whole guard exists for: hit_eff is null when a player took no
-    // attempts, and `null >= 0` is true in JS, so an unguarded compare would qualify
-    // every player who never swung.
     it('fails a null stat even against a zero threshold', () => {
         const {rows} = evaluateSpecQualification(
             [player('benched', {hit_eff: null})],
@@ -119,7 +114,7 @@ describe('evaluateSpecQualification', () => {
         )
         expect(unknownStatKeys).toEqual(['not_a_real_stat'])
         expect(rows[0].qualified).toBe(false)
-        // The bad key is dropped from checks rather than rendered as a broken row.
+
         expect(rows[0].checks).toHaveLength(1)
     })
 
@@ -134,10 +129,6 @@ describe('evaluateSpecQualification', () => {
             team_id: teamId,
         })
 
-        // A double-elim season where the LOWER bracket team won the championship. `upper`
-        // lost the grand final and still holds the top band; `lower` is the champion and
-        // sits neutral. This is the whole point of keying on the slot, so every case below
-        // runs against it.
         const tiers = new Map<string, PlacementTier>([
             ['upper', 'upper_finalist'],
             ['lower', 'finalist'],
@@ -168,8 +159,6 @@ describe('evaluateSpecQualification', () => {
             expect(rows[0].qualified).toBe(true)
         })
 
-        // The behaviour change this rework exists for: winning the championship out of the
-        // lower bracket earns no bonus, because that team played MORE matches, not fewer.
         it('gives the grand-final away team nothing, even as champion', () => {
             for (const stars of [3, 4, 5]) {
                 const {rows} = evaluateSpecQualification(
@@ -212,8 +201,6 @@ describe('evaluateSpecQualification', () => {
             expect(rows[0].qualified).toBe(false)
         })
 
-        // A single-elim season has no upper_finalist, so both finalists land neutral and
-        // the only bands in play are `finalist`, `third` and `outside`.
         it('gives no top band when the season has no upper finalist', () => {
             const singleElim = new Map<string, PlacementTier>([
                 ['finalistA', 'finalist'],
@@ -232,8 +219,6 @@ describe('evaluateSpecQualification', () => {
             expect(rows.every(r => r.placementBonus === 0)).toBe(true)
         })
 
-        // sets_played is a sample-size floor. Scaling it would let an upper finalist clear
-        // a 10-set minimum on 9 sets, which is not what the bonus is for.
         it('never scales participation stats', () => {
             const {rows} = evaluateSpecQualification(
                 [onTeam('runnerUp', 'upper', {sets_played: 9})],

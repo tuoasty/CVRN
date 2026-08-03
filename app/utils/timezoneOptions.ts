@@ -20,14 +20,9 @@ export function getRegionTimezone(regionCode: string): string {
     return regionTimezoneMap[regionCode.toLowerCase()] || 'UTC';
 }
 
-/**
- * Offset label for a zone *at a given instant*. Must be computed rather than hardcoded: London is
- * GMT+0 in winter but GMT+1 on BST, and New York is GMT-5 in winter but GMT-4 on EDT. Pass the
- * match's own date so a January fixture stays labelled GMT+0 even when viewed in July.
- */
 export function getTimezoneOffset(timezone: string, date: Date = new Date()): string {
     try {
-        // 'longOffset' yields "GMT+01:00"; UTC yields a bare "GMT".
+
         const raw = new Intl.DateTimeFormat('en-US', {timeZone: timezone, timeZoneName: 'longOffset'})
             .formatToParts(date)
             .find(p => p.type === 'timeZoneName')?.value ?? 'GMT';

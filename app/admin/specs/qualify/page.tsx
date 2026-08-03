@@ -22,11 +22,6 @@ import {SpecTier} from '@/server/domains/spec/types';
 
 const newRowId = () => Math.random().toString(36).slice(2);
 
-/**
- * Calibration scratchpad. Picking a spec copies its thresholds into local state;
- * everything after that is local. Nothing here writes — once the numbers look
- * right they get typed into the spec on /admin/specs.
- */
 export default function AdminSpecQualifyPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId);
     const {specs, isLoading: specsLoading} = useSpecs();
@@ -40,20 +35,13 @@ export default function AdminSpecQualifyPage() {
 
     const selectedSpec = specs.find(s => s.id === specId) ?? null;
 
-    // Placement bonus only needs team -> finals slot, and that is at most 3 or 4 rows.
     const tierByTeamId = useMemo(
         () => new Map(Object.entries(placementTiers)),
         [placementTiers]
     );
 
-    // No upper finalist means the season ran a single-elim bracket (or has not reached
-    // its final yet). Worth saying out loud — otherwise an admin sees a board with no
-    // +15% anywhere and reads it as a bug.
     const hasUpperBand = Object.values(placementTiers).includes('upper_finalist');
 
-    // Loading a spec resets the scratchpad to its saved numbers. Guarded on specId
-    // rather than the spec object so a background SWR refresh does not wipe edits
-    // in progress.
     useEffect(() => {
         const spec = specs.find(s => s.id === specId);
         if (!spec) {
@@ -73,7 +61,7 @@ export default function AdminSpecQualifyPage() {
         setSecondaryRequired(spec.secondary_required);
         setStars(spec.stars);
         setDirty(false);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [specId]);
 
     const mainRows = thresholds.filter(t => t.tier === 'main');
@@ -95,9 +83,6 @@ export default function AdminSpecQualifyPage() {
         [players, thresholds, secondaryRequired, stars, tierByTeamId]
     );
 
-    // Per-requirement pass counts, evaluated in isolation so each threshold shows
-    // how many players it alone admits. Carries the same placement bonus, or the
-    // counts would not add up against the combined result.
     const passCounts = useMemo(() => {
         const counts = new Map<string, number>();
         for (const t of thresholds) {
@@ -129,8 +114,6 @@ export default function AdminSpecQualifyPage() {
         setDirty(true);
     };
 
-    // Not admin-container: that is page-narrow, and a dozen stat columns need every
-    // pixel. Full width with a minimal gutter instead.
     return (
         <div className="w-full px-3 sm:px-4 py-6">
             <div className="admin-section">

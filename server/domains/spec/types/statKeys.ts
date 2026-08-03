@@ -4,27 +4,14 @@ export type SpecStatFormat = "count" | "per_set" | "pct";
 
 export type SpecStatKeyMeta = {
     key: keyof PlayerSeasonStatRow;
-    /** Full name, for pickers and tooltips. */
+
     label: string;
-    /** Column-header abbreviation. Matches the public leaderboard's vocabulary. */
+
     short: string;
     group: string;
     format: SpecStatFormat;
 };
 
-/**
- * The stats a spec requirement may threshold.
- *
- * A deliberate subset of v_player_season_stats, not the whole view. Requirements
- * are a league rulebook read by humans — "40 kills, 30% hitting" — so the list
- * stays to stats a player could recognise as a goal. The per-set variants of
- * every error column, `misc_errors`, and the raw attempt counts are all real
- * columns and all excluded on that basis.
- *
- * Lives in the domain rather than alongside playerStatColumnMeta.ts because the
- * Zod schema validating requirement writes needs it, and a server schema
- * importing from app/features/ is backwards.
- */
 export const SPEC_STAT_KEYS: SpecStatKeyMeta[] = [
     {key: "sets_played",         label: "Sets played",        short: "SP",     group: "Season",  format: "count"},
     {key: "matches_played",      label: "Matches played",     short: "MP",     group: "Season",  format: "count"},
@@ -74,22 +61,11 @@ export const specStatLabel = (key: string): string => BY_KEY.get(key)?.label ?? 
 
 export const specStatShort = (key: string): string => BY_KEY.get(key)?.short ?? key;
 
-/**
- * Participation floors. The placement bonus never scales these — a team finishing
- * first does not make its players have played more sets, and the 10/8/6 sets gate
- * is a sample-size rule rather than a performance one.
- */
 export const PARTICIPATION_STAT_KEYS: ReadonlySet<string> = new Set([
     "sets_played",
     "matches_played",
 ]);
 
-/**
- * Formats a threshold or a player's value the way the leaderboard prints it.
- *
- * Counts round rather than printing raw: the placement bonus multiplies them, so
- * 47 kills at +15% is 54.049999999999997 and would otherwise render in full.
- */
 export function formatSpecStatValue(value: number | null, format: SpecStatFormat): string {
     if (value === null || value === undefined) return "—";
     if (format === "pct") return `${(value * 100).toFixed(1)}%`;

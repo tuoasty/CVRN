@@ -21,25 +21,16 @@ import {
 import {LeaderboardFilters, matchesPlayerQuery, SortKey} from "./useLeaderboardFilters";
 
 type Props = {
-    /** The full pool, already narrowed to the board's scope (season, or region). */
+
     rows: LeaderboardDisplayRow[];
     filters: LeaderboardFilters;
     onSort: (key: SortKey) => void;
     onClearSearch: () => void;
-    /**
-     * Season boards scope every row to one region, so the column would repeat a single
-     * value down the whole table. Set on the all-time board, where region varies.
-     */
+
     showRegion?: boolean;
     emptyMessage?: string;
 };
 
-/**
- * Nulls sort last in BOTH directions. A player with no attempts has `hit_eff: null`,
- * and treating that as -Infinity/0 would float them to the top of an ascending sort.
- * The min-sets qualifier does not cover this: a player can clear six sets and still
- * have never attempted a spike, so null and unqualified are separate cases.
- */
 function compareRows(a: LeaderboardDisplayRow, b: LeaderboardDisplayRow, key: SortKey, desc: boolean): number {
     const av = a[key] as number | null;
     const bv = b[key] as number | null;
@@ -201,8 +192,7 @@ export default function LeaderboardTable({
                                 <TableHead
                                     rowSpan={2}
                                     className={cn(
-                                        // px-1, not px-2: the column is 40px wide and the
-                                        // label has to fit beside two characters of value.
+
                                         "text-left align-bottom px-1 border-r border-border/30 text-xs font-semibold uppercase tracking-wider",
                                         HEAD_BG,
                                         HEAD_RULE,
@@ -229,14 +219,7 @@ export default function LeaderboardTable({
                                     {g.group}
                                 </TableHead>
                             ))}
-                            {/*
-                              * Not a column — the row's run-out to the container edge. It
-                              * carries no border and no label. It exists because `table-fixed`
-                              * distributes leftover width across every column that has one,
-                              * which would push the stat block sideways as views change the
-                              * column count; parking the slack here pins every real column
-                              * instead. It also keeps row hover and borders reaching the edge.
-                              */}
+                            {}
                             <TableHead
                                 rowSpan={2}
                                 className={cn("w-auto p-0", HEAD_BG, HEAD_RULE)}
@@ -276,8 +259,7 @@ export default function LeaderboardTable({
                                             </TooltipTrigger>
                                             <TooltipContent side="top">
                                                 {col.description}
-                                                {/* Stated before the reader sorts, so the split
-                                                    that appears afterwards is expected. */}
+                                                {}
                                                 {col.format === "pct" && (
                                                     <span className="block text-muted-foreground">
                                                         Ranks players with {MIN_SETS_FOR_RATE}+ sets played
@@ -346,7 +328,7 @@ function LeaderboardRow({
     showRegion,
 }: {
     row: LeaderboardDisplayRow;
-    /** `null` for players below the sets qualifier — listed, but holding no rank. */
+
     rank: number | null;
     columns: PlayerStatColumn[];
     sortKey: SortKey;
@@ -358,18 +340,10 @@ function LeaderboardRow({
         teamSlug: row.team_slug,
     });
 
-    // Roblox display names are optional and frequently equal the username; showing both
-    // in that case is just a repeated line.
     const hasDistinctDisplayName = !!row.display_name && row.display_name !== row.username;
 
     return (
-        // `group` so the sticky identity cells pick up the row's hover — their own
-        // `hover:` would only fire when the pointer is over those cells, leaving them
-        // unhighlighted whenever the reader is scanning the stat columns.
-        // Fixed height on the row, not padding on the cells: a player with a distinct
-        // display name renders two lines and one without renders one, so padding alone
-        // produced rows of two different heights down the same table. 3.25rem is the
-        // natural two-line height — the taller of the two cases, so nothing grew.
+
         <TableRow className="group h-[3.25rem] hover:bg-muted/30">
             <TableCell
                 className={cn(
@@ -449,9 +423,7 @@ function LeaderboardRow({
                         className={cn(
                             "py-0 px-1.5 text-right text-xs font-mono tabular-nums whitespace-nowrap",
                             isLastInGroup && !isLastColumn && "border-r border-border/30",
-                            // Weight rather than a background tint: the sorted column is the
-                            // one the reader is scanning, and a fill competes with the row
-                            // hover it sits underneath.
+
                             active ? "font-semibold text-foreground" : "text-foreground/70",
                         )}
                     >
@@ -477,8 +449,7 @@ function TeamCell({
 }) {
     const content = (
         <>
-            {/* Sized to the 3.25rem row rather than to the text beside it — the row height
-                is the constraint, and the logo is the fastest thing to recognise here. */}
+            {}
             {logoUrl && (
                 <div className="relative w-10 h-10 shrink-0">
                     <Image

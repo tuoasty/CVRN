@@ -9,12 +9,6 @@ type MatchRow = {
     away_sets_won: number | null
 }
 
-/**
- * Minimal stand-in for the two query shapes this file issues: `playoff_brackets`
- * filtered by season + round, and `matches` filtered by id. Building the real client is
- * not worth it — the logic under test is entirely about which round it reads and which
- * side of the result it takes.
- */
 function stubClient(brackets: Record<string, string | string[]>, matches: Record<string, MatchRow>): DBClient {
     return {
         from(table: string) {
@@ -33,7 +27,7 @@ function stubClient(brackets: Record<string, string | string[]>, matches: Record
                     }
                     return Promise.resolve({data: matches[filters.id] ?? null})
                 },
-                // Unawaited `.eq()` chains resolve here — only the semifinal list does this.
+
                 then(resolve: (r: {data: {match_id: string}[]}) => unknown) {
                     const hit = brackets[filters.round] ?? []
                     const ids = Array.isArray(hit) ? hit : [hit]
@@ -81,8 +75,6 @@ describe('getSeasonFinalsSlots', () => {
             })
         })
 
-        // The case the whole rework exists for. `lower` wins the championship; `upper` is
-        // still the team that skipped the lower bracket, so it keeps the upper slot.
         it('keeps the upper slot when the lower bracket team wins the grand final', async () => {
             const slots = await unwrap(
                 stubClient(

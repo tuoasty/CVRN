@@ -25,7 +25,6 @@ type StandingsTableProps = {
 export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, playinTeams = 8, regionCode, seasonSlug, standingMethod = "lvr" }: StandingsTableProps) {
     const isPointsMethod = standingMethod === "points" || standingMethod === "points_without_bonus";
 
-    // Ranking logic lives in the standings view's rank column — the single source of truth.
     const sortedStandings = useMemo(() => {
         if (standings.length === 0) return [];
 

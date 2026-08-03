@@ -80,7 +80,6 @@ export function usePlayersByIds(playerIds: string[]) {
     };
 }
 
-// Cache mutation helpers
 export function mutateTeamPlayers(teamId: string, seasonId: string) {
     return globalMutate(['players', teamId, seasonId]);
 }

@@ -8,10 +8,6 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {PlayerMatchStatsInsert} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
 
-// Of the given match ids, returns those that already have at least one stat row.
-// Reads the DISTINCT view, not the base table: `player_match_stats` is one row
-// per player per set, so selecting from it directly truncates at max_rows once
-// enough matches are queried, silently reporting synced matches as unsynced.
 export async function findMatchIdsWithStats(supabase: DBClient, matchIds: string[]): Promise<Result<string[]>> {
     if (matchIds.length === 0) return Ok([]);
     const {data, error} = await supabase
@@ -22,7 +18,6 @@ export async function findMatchIdsWithStats(supabase: DBClient, matchIds: string
     return Ok((data ?? []).flatMap(r => (r.match_id ? [r.match_id] : [])));
 }
 
-// Per-set rows for a single match, ordered by (set, team, contributions desc).
 export async function findMatchStatSets(
     supabase: DBClient,
     matchId: string
@@ -38,7 +33,6 @@ export async function findMatchStatSets(
     return Ok(data ?? []);
 }
 
-// Per-match per-player totals (summed across sets).
 export async function findMatchStatTotals(
     supabase: DBClient,
     matchId: string
@@ -53,13 +47,6 @@ export async function findMatchStatTotals(
     return Ok(data ?? []);
 }
 
-// Every player-season stat row with its display context, optionally narrowed to one
-// region and/or one season. Ordered by points so the default landing sort needs no
-// client work; the table re-sorts in place for every other column.
-//
-// Season is matched on id rather than slug: slugs are unique only per region
-// (seasons.slug + region_id), so an unqualified slug filter would pull every region's
-// season of that name.
 export async function findPlayerLeaderboard(
     supabase: DBClient,
     p: {regionCode?: string; seasonId?: string}
@@ -73,13 +60,6 @@ export async function findPlayerLeaderboard(
     return Ok(data ?? []);
 }
 
-// Atomic delete-then-insert via the replace_match_player_stats RPC.
-// One transaction inside the function body — caller sees old rows on failure,
-// only the new rows on success.
-//
-// NOTE: after `supabase gen types typescript --linked > database.types.ts` is
-// re-run (post-migration), the rpc() call becomes fully typed. Until then the
-// argument shape is checked against the SQL function signature only.
 export async function replaceMatchStats(
     supabase: DBClient,
     matchId: string,

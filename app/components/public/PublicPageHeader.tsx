@@ -16,9 +16,7 @@ export function PublicPageHeader({ icon: Icon, title, subtitle, actions }: Publi
                     <Icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                    {/* Solid, not gradient-clipped text: the gradient reduced contrast on
-                        the tail of every title and carried no meaning. Weight and size do
-                        the work, per DESIGN.md's headline token. */}
+                    {}
                     <h1 className="text-xl font-semibold tracking-tight text-foreground">
                         {title}
                     </h1>

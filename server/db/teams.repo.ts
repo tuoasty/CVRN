@@ -162,8 +162,6 @@ export async function findTeamsBySeasonId(supabase: DBClient, seasonId: string):
     return Ok(data ?? []);
 }
 
-// Like findTeamsBySeasonId but keeps disbanded (soft-deleted) teams. Result syncs use this:
-// a team can disband mid-season yet its completed matches still need to resolve to its id.
 export async function findAllTeamsBySeasonIdIncludingDeleted(supabase: DBClient, seasonId: string): Promise<Result<Team[]>> {
     const {data, error} = await supabase
         .from("teams")
