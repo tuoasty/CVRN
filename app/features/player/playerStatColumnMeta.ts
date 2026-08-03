@@ -114,6 +114,17 @@ export const STAT_VIEW_COLUMNS: Record<StatView, PlayerStatColumn[]> = {
     ],
 };
 
+export const MIN_SETS_FOR_RATE = 6;
+
+export const STAT_VIEW_DEFAULT_SORT: Record<StatView, keyof PlayerSeasonStat> = {
+    overview:  "points_total",
+    spiking:   "points_total",
+    setting:   "assists_total",
+    blocking:  "blocks_total",
+    receiving: "receives_total",
+    serving:   "aces_total",
+};
+
 export function formatPlayerStat(value: number | null, format: StatFormat): string {
     if (value === null || value === undefined) return "—";
     if (format === "pct") return `${(value * 100).toFixed(1)}%`;
@@ -123,6 +134,9 @@ export function formatPlayerStat(value: number | null, format: StatFormat): stri
 
 export const playerHeadWidthClass = (format: StatFormat): string =>
     format === "pct" ? "min-w-[3.25rem]" : format === "count" ? "min-w-[2rem]" : "min-w-[2.75rem]";
+
+export const playerColWidthClass = (format: StatFormat): string =>
+    format === "pct" ? "w-[3.75rem]" : format === "count" ? "w-[3.25rem]" : "w-16";
 
 export function groupPlayerColumns(
     columns: PlayerStatColumn[]

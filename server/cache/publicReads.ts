@@ -14,6 +14,8 @@ import {
     getPlayerAwards,
     getPlayerTeamHistory,
     getPlayersByIds,
+    getLeaderboardStatRows,
+    getLeaderboardIdentity,
 } from "@/server/domains/player";
 import type {PlayerDetail} from "@/server/domains/player";
 import {
@@ -39,7 +41,7 @@ import {
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {Result} from "@/shared/types/result";
-import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS} from "./tags";
+import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS} from "./tags";
 
 function unwrap<T>(result: Result<T, {message: string}>, label: string): T {
     if (!result.ok) {
@@ -147,6 +149,39 @@ export const getCachedStandings = unstable_cache(
     ["public:standings"],
     {
         tags: [CACHE_TAGS.standings, CACHE_TAGS.matches],
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+    },
+);
+
+export const getCachedPlayerLeaderboard = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(
+            await getLeaderboardStatRows(createPublicClient(), {seasonId}),
+            "getCachedPlayerLeaderboard",
+        ),
+    ["public:player-leaderboard"],
+    {
+        tags: [CACHE_TAGS.stats],
+        revalidate: STATS_REVALIDATE_SECONDS,
+    },
+);
+
+export const getCachedAllSeasonRows = unstable_cache(
+    async () =>
+        unwrap(await getLeaderboardStatRows(createPublicClient(), {}), "getCachedAllSeasonRows"),
+    ["public:all-season-rows"],
+    {
+        tags: [CACHE_TAGS.stats],
+        revalidate: STATS_REVALIDATE_SECONDS,
+    },
+);
+
+export const getCachedLeaderboardIdentity = unstable_cache(
+    async () =>
+        unwrap(await getLeaderboardIdentity(createPublicClient()), "getCachedLeaderboardIdentity"),
+    ["public:leaderboard-identity"],
+    {
+        tags: [CACHE_TAGS.players, CACHE_TAGS.teams, CACHE_TAGS.seasons],
         revalidate: PUBLIC_REVALIDATE_SECONDS,
     },
 );

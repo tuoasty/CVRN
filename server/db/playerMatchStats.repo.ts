@@ -1,4 +1,9 @@
-import {DBClient, PlayerMatchStatSet, PlayerMatchStatTotal} from "@/shared/types/db";
+import {
+    DBClient,
+    PlayerLeaderboardViewRow,
+    PlayerMatchStatSet,
+    PlayerMatchStatTotal,
+} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {PlayerMatchStatsInsert} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
@@ -38,6 +43,19 @@ export async function findMatchStatTotals(
         .eq("match_id", matchId)
         .order("team_id", {ascending: true})
         .order("contributions", {ascending: false, nullsFirst: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+export async function findPlayerLeaderboard(
+    supabase: DBClient,
+    p: {regionCode?: string; seasonId?: string}
+): Promise<Result<PlayerLeaderboardViewRow[]>> {
+    let query = supabase.from("v_player_leaderboard").select("*");
+    if (p.regionCode) query = query.ilike("region_code", p.regionCode);
+    if (p.seasonId) query = query.eq("season_id", p.seasonId);
+
+    const {data, error} = await query.order("points_total", {ascending: false, nullsFirst: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
 }

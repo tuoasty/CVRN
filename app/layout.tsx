@@ -61,7 +61,7 @@ export default function RootLayout({
         <body className={`${geistSans.variable} ${geistSans.className} antialiased`}>
         <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="dark"
             enableSystem
         >
             <NextTopLoader

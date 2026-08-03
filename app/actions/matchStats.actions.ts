@@ -3,7 +3,7 @@
 import {revalidatePath} from "next/cache";
 import {revalidatePublicData} from "@/server/cache/revalidate";
 import {CACHE_TAGS} from "@/server/cache/tags";
-import {Err} from "@/shared/types/result";
+import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {
     insertMatchSheetConfig,
@@ -72,4 +72,13 @@ export async function syncMatchStatsAction(
         revalidatePublicData([CACHE_TAGS.matches]);
     }
     return result;
+}
+
+export async function publishStatsAction() {
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+
+    revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.stats]);
+    return Ok(true);
 }

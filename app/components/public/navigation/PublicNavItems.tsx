@@ -12,9 +12,15 @@ const NAV_PAGES = [
     { page: "playoffs", label: "Playoffs" },
     { page: "teams", label: "Teams" },
     { page: "players", label: "Players" },
+    { page: "leaderboard", label: "Leaderboard" },
     { page: "media", label: "Media" },
     { page: "archive", label: "Archive" },
 ];
+
+const GLOBAL_HREFS: Record<string, string> = {
+    archive: "/archive",
+    players: "/players",
+};
 
 interface PublicNavItemsProps {
     layout?: "horizontal" | "vertical";
@@ -52,11 +58,10 @@ export default function PublicNavItems({
     return (
         <nav className={navClasses}>
             {NAV_PAGES.map((item) => {
-                const href = item.page === "archive"
-                    ? "/archive"
-                    : item.page === "players"
-                        ? "/players"
-                        : hasEffectiveContext
+                const globalHref = GLOBAL_HREFS[item.page];
+                const href = globalHref
+                    ? globalHref
+                    : hasEffectiveContext
                         ? item.page === "home"
                             ? prefix
                             : `${prefix}/${item.page}`
@@ -65,12 +70,15 @@ export default function PublicNavItems({
                             : `/select?next=${item.page}`;
                 const base = `/${params.region}/${params.season}`;
                 const isActive = item.page === "players"
+
                     ? pathname.startsWith("/players")
-                    : hasContext
-                        ? item.page === "home"
-                            ? pathname === base
-                            : pathname.startsWith(`${base}/${item.page}`)
-                        : pathname === `/${item.page}`;
+                    : globalHref
+                        ? pathname === globalHref
+                        : hasContext
+                            ? item.page === "home"
+                                ? pathname === base
+                                : pathname.startsWith(`${base}/${item.page}`)
+                            : pathname === `/${item.page}`;
                 return (
                     <Link
                         key={item.page}

@@ -213,7 +213,7 @@ export default function HomePage({
                                 })}
                             />
                         ) : (
-                            <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent h-[376px] flex items-center justify-center">
+                            <div className="panel p-6 border border-border h-[376px] flex items-center justify-center">
                                 <div className="flex flex-col items-center gap-3">
                                     <Trophy className="h-12 w-12 text-muted-foreground/40" />
                                     <p className="text-sm text-muted-foreground">No upcoming matches scheduled</p>

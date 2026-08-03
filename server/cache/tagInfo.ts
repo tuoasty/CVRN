@@ -30,19 +30,19 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     [CACHE_TAGS.teams]: {
         label: "Teams",
         description: "Team pages, logos, and rosters.",
-        readCount: 9,
+        readCount: 10,
         affects: "Teams, team detail, matches, match detail, archive, home",
     },
     [CACHE_TAGS.players]: {
         label: "Players",
         description: "Player profiles, avatars, and rosters.",
-        readCount: 6,
+        readCount: 7,
         affects: "Players, player detail, teams, match detail, archive",
     },
     [CACHE_TAGS.seasons]: {
         label: "Seasons",
         description: "Season metadata, archive, and podium.",
-        readCount: 5,
+        readCount: 6,
         affects: "Archive, season routing, podium",
     },
     [CACHE_TAGS.regions]: {
@@ -57,9 +57,17 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         readCount: 2,
         affects: "Media page, home sidebar, match detail",
     },
+    [CACHE_TAGS.stats]: {
+        label: "Stats",
+        description:
+            "Player box-score numbers behind both leaderboards. Held for 30 days and purged only by a stats sync, so this is the tag to press after uploading match sheets.",
+        readCount: 2,
+        affects: "Season leaderboard, all-time leaderboard, spec calibration",
+    },
 };
 
 export const CACHE_TAG_ORDER: CacheTag[] = [
+    CACHE_TAGS.stats,
     CACHE_TAGS.standings,
     CACHE_TAGS.matches,
     CACHE_TAGS.playoffs,

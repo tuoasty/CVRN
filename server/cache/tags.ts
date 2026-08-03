@@ -8,6 +8,7 @@ export const CACHE_TAGS = {
     matches: "matches",
     playoffs: "playoffs",
     media: "media",
+    stats: "stats",
 } as const;
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];
@@ -15,3 +16,5 @@ export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];
 export const ALL_CACHE_TAGS: CacheTag[] = Object.values(CACHE_TAGS);
 
 export const PUBLIC_REVALIDATE_SECONDS = 604800;
+
+export const STATS_REVALIDATE_SECONDS = 2592000;
