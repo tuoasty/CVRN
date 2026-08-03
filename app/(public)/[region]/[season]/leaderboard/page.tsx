@@ -9,6 +9,7 @@ import {
 } from "@/server/cache/publicReads";
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
+import { logger } from "@/server/utils/logger";
 
 type PageProps = {
     params: Promise<{ region: string; season: string }>;

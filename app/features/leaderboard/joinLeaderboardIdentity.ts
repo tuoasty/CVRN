@@ -9,6 +9,7 @@ export function joinLeaderboardIdentity(
     identity: LeaderboardIdentity
 ): PlayerLeaderboardRow[] {
     return rows.flatMap(row => {
+
         const player = identity.players[row.player_id];
         if (!player) return [];
 
