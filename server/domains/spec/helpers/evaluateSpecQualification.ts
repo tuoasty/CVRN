@@ -1,7 +1,7 @@
 import {PlayerLeaderboardRow} from "@/server/domains/player";
 import {SpecQualificationRow, SpecRequirementCheck, SpecTier} from "../types";
 import {isSpecStatKey, PARTICIPATION_STAT_KEYS} from "../types/statKeys";
-import {placementBonus} from "./placementBonus";
+import {placementBonus, PlacementTier} from "./placementBonus";
 
 export type EvaluableRequirement = {
     tier: SpecTier;
@@ -12,8 +12,8 @@ export type EvaluableRequirement = {
 export type EvaluateOptions = {
     /** Star tier being tested. Drives the placement bonus curve. */
     stars?: number;
-    /** team_id -> podium place (1-3). Absent team = finished outside the podium. */
-    placementByTeamId?: Map<string, number>;
+    /** team_id -> finals slot. Absent team = `outside`, which is most of the league. */
+    tierByTeamId?: Map<string, PlacementTier>;
 };
 
 export type SpecEvaluation = {
@@ -47,10 +47,10 @@ export function evaluateSpecQualification(
     const applyPlacement = options.stars !== undefined;
 
     const rows = players.map<SpecQualificationRow>(player => {
-        const placement = player.team_id
-            ? (options.placementByTeamId?.get(player.team_id) ?? null)
-            : null;
-        const bonus = applyPlacement ? placementBonus(placement, options.stars as number) : 0;
+        const placementTier: PlacementTier = player.team_id
+            ? (options.tierByTeamId?.get(player.team_id) ?? "outside")
+            : "outside";
+        const bonus = applyPlacement ? placementBonus(placementTier, options.stars as number) : 0;
 
         const checks = known.map(r => check(player, r, bonus));
 
@@ -66,7 +66,7 @@ export function evaluateSpecQualification(
             teamSlug: player.team_slug,
             teamLogoUrl: player.team_logo_url,
             teamLogoBgRemoved: player.team_logo_bg_removed,
-            placement,
+            placementTier,
             placementBonus: bonus,
             // An unresolvable stat key disqualifies everyone rather than being skipped.
             // Skipping it would quietly relax the spec, and a spec that is easier than

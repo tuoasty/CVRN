@@ -5,7 +5,7 @@ import {
     deleteSpecAction,
     getSpecLeaderboardAction,
 } from '@/app/actions/spec.actions';
-import {SaveSpecInput, SpecWithRequirements} from '@/server/domains/spec/types';
+import {PlacementTier, SaveSpecInput, SpecWithRequirements} from '@/server/domains/spec/types';
 import {PlayerLeaderboardRow} from '@/server/domains/player';
 
 const TTL = 2 * 60 * 1000;
@@ -48,7 +48,7 @@ export async function deleteSpec(id: string) {
 
 type SpecLeaderboardData = {
     players: PlayerLeaderboardRow[];
-    placements: Record<string, number>;
+    placementTiers: Record<string, PlacementTier>;
 };
 
 async function fetchSpecLeaderboard([, seasonId]: [string, string]): Promise<SpecLeaderboardData> {
@@ -67,7 +67,7 @@ export function useSpecLeaderboard(seasonId: string | null) {
     const value = data as SpecLeaderboardData | undefined;
     return {
         rows: value?.players ?? [],
-        placements: value?.placements ?? {},
+        placementTiers: value?.placementTiers ?? {},
         isLoading,
         error: error?.message ?? null,
     };

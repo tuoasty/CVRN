@@ -1,6 +1,7 @@
 import {describe, it, expect} from 'vitest'
 import {PlayerLeaderboardRow} from '@/server/domains/player'
 import {evaluateSpecQualification, EvaluableRequirement} from '../evaluateSpecQualification'
+import type {PlacementTier} from '../placementBonus'
 
 // Only the fields the evaluator touches matter; the rest of the view row is padded
 // so the fixture stays readable.
@@ -132,65 +133,113 @@ describe('evaluateSpecQualification', () => {
             ...player(username, stats),
             team_id: teamId,
         })
-        const podium = new Map([['champs', 1], ['second', 2], ['third', 3]])
+
+        // A double-elim season where the LOWER bracket team won the championship. `upper`
+        // lost the grand final and still holds the top band; `lower` is the champion and
+        // sits neutral. This is the whole point of keying on the slot, so every case below
+        // runs against it.
+        const tiers = new Map<string, PlacementTier>([
+            ['upper', 'upper_finalist'],
+            ['lower', 'finalist'],
+            ['third', 'third'],
+        ])
 
         it('is not applied when no star tier is given', () => {
             const {rows} = evaluateSpecQualification(
-                [onTeam('a', 'champs', {points_total: 100})],
+                [onTeam('a', 'upper', {points_total: 100})],
                 [main('points_total', 110)],
                 0,
-                {placementByTeamId: podium}
+                {tierByTeamId: tiers}
             )
             expect(rows[0].placementBonus).toBe(0)
             expect(rows[0].qualified).toBe(false)
         })
 
-        it('lifts a first-place player over a bar they miss on raw stats', () => {
+        it('lifts the upper-bracket finalist over a bar they miss on raw stats', () => {
             const {rows} = evaluateSpecQualification(
-                [onTeam('champ', 'champs', {points_total: 100})],
+                [onTeam('runnerUp', 'upper', {points_total: 100})],
                 [main('points_total', 110)],
                 0,
-                {stars: 5, placementByTeamId: podium}
+                {stars: 5, tierByTeamId: tiers}
             )
+            expect(rows[0].placementTier).toBe('upper_finalist')
             expect(rows[0].placementBonus).toBe(0.15)
             expect(rows[0].checks[0].adjustedValue).toBeCloseTo(115)
             expect(rows[0].qualified).toBe(true)
         })
 
-        it('penalises 3rd place at 5-star but not at 4-star', () => {
+        // The behaviour change this rework exists for: winning the championship out of the
+        // lower bracket earns no bonus, because that team played MORE matches, not fewer.
+        it('gives the grand-final away team nothing, even as champion', () => {
+            for (const stars of [3, 4, 5]) {
+                const {rows} = evaluateSpecQualification(
+                    [onTeam('champ', 'lower', {points_total: 100})],
+                    [main('points_total', 101)],
+                    0,
+                    {stars, tierByTeamId: tiers}
+                )
+                expect(rows[0].placementTier).toBe('finalist')
+                expect(rows[0].placementBonus).toBe(0)
+                expect(rows[0].qualified).toBe(false)
+            }
+        })
+
+        it('penalises 3rd place at 5-star but not at 4- or 3-star', () => {
             const bronze = () => [onTeam('bronze', 'third', {points_total: 100})]
             const reqs = [main('points_total', 100)]
 
-            const five = evaluateSpecQualification(bronze(), reqs, 0, {stars: 5, placementByTeamId: podium})
+            const five = evaluateSpecQualification(bronze(), reqs, 0, {stars: 5, tierByTeamId: tiers})
             expect(five.rows[0].placementBonus).toBe(-0.05)
             expect(five.rows[0].qualified).toBe(false)
 
-            const four = evaluateSpecQualification(bronze(), reqs, 0, {stars: 4, placementByTeamId: podium})
-            expect(four.rows[0].placementBonus).toBe(0)
-            expect(four.rows[0].qualified).toBe(true)
+            for (const stars of [4, 3]) {
+                const lower = evaluateSpecQualification(bronze(), reqs, 0, {stars, tierByTeamId: tiers})
+                expect(lower.rows[0].placementBonus).toBe(0)
+                expect(lower.rows[0].qualified).toBe(true)
+            }
         })
 
-        it('penalises a player whose team missed the podium', () => {
+        it('penalises a player whose team reached no finals slot', () => {
             const {rows} = evaluateSpecQualification(
-                [onTeam('nobody', 'unranked-team', {points_total: 100})],
+                [onTeam('nobody', 'eliminated-early', {points_total: 100})],
                 [main('points_total', 95)],
                 0,
-                {stars: 5, placementByTeamId: podium}
+                {stars: 5, tierByTeamId: tiers}
             )
-            expect(rows[0].placement).toBeNull()
+            expect(rows[0].placementTier).toBe('outside')
             expect(rows[0].placementBonus).toBe(-0.1)
             expect(rows[0].checks[0].adjustedValue).toBeCloseTo(90)
             expect(rows[0].qualified).toBe(false)
         })
 
-        // sets_played is a sample-size floor. Scaling it would let a champion clear a
-        // 10-set minimum on 9 sets, which is not what the bonus is for.
+        // A single-elim season has no upper_finalist, so both finalists land neutral and
+        // the only bands in play are `finalist`, `third` and `outside`.
+        it('gives no top band when the season has no upper finalist', () => {
+            const singleElim = new Map<string, PlacementTier>([
+                ['finalistA', 'finalist'],
+                ['finalistB', 'finalist'],
+            ])
+
+            const {rows} = evaluateSpecQualification(
+                [
+                    onTeam('a', 'finalistA', {points_total: 100}),
+                    onTeam('b', 'finalistB', {points_total: 100}),
+                ],
+                [main('points_total', 100)],
+                0,
+                {stars: 5, tierByTeamId: singleElim}
+            )
+            expect(rows.every(r => r.placementBonus === 0)).toBe(true)
+        })
+
+        // sets_played is a sample-size floor. Scaling it would let an upper finalist clear
+        // a 10-set minimum on 9 sets, which is not what the bonus is for.
         it('never scales participation stats', () => {
             const {rows} = evaluateSpecQualification(
-                [onTeam('champ', 'champs', {sets_played: 9})],
+                [onTeam('runnerUp', 'upper', {sets_played: 9})],
                 [main('sets_played', 10)],
                 0,
-                {stars: 5, placementByTeamId: podium}
+                {stars: 5, tierByTeamId: tiers}
             )
             expect(rows[0].placementBonus).toBe(0.15)
             expect(rows[0].checks[0].adjustedValue).toBe(9)

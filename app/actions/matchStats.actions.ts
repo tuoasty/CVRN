@@ -74,12 +74,12 @@ export async function syncMatchStatsAction(
     const result = await syncMatchStats(supabase, configId, {force, playerOverrides});
     if (result.ok) {
         revalidatePath('/admin/stats');
-        // This is the only action here that writes player_match_stats, and box scores are
-        // served by getCachedMatchDetail (tagged `matches`). Without this a stat correction
-        // never reached the public match page — it stayed wrong until something else
-        // happened to purge the tag. The config save/delete actions above deliberately do
-        // NOT invalidate: they only touch admin-side config rows.
-        revalidatePublicData([CACHE_TAGS.matches]);
+        // This is the only action here that writes player_match_stats. `matches` covers
+        // box scores via getCachedMatchDetail; `stats` covers the two leaderboards, which
+        // are tagged on nothing else — without it a stat correction would sit invisible on
+        // the boards for the full seven-day TTL. The config save/delete actions above
+        // deliberately do NOT invalidate: they only touch admin-side config rows.
+        revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.stats]);
     }
     return result;
 }

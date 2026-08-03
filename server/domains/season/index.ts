@@ -9,6 +9,8 @@ export type {CreateSeasonInput, UpdateSeasonInput, InsertSeasonDto, SeasonIdInpu
 export {SeasonIdSchema, SeasonSlugRegionSchema, CreateSeasonSchema, UpdateSeasonSchema} from "./types";
 
 export {getSeasonPodium} from "./queries/getSeasonPodium";
+export {getSeasonFinalsSlots} from "./queries/getSeasonFinalsSlots";
+export type {SeasonFinalsSlots} from "./queries/getSeasonFinalsSlots";
 export {getSeasonAwards} from "./queries/getSeasonAwards";
 export {getArchive} from "./queries/getArchive";
 export {getSeasonHistoryDetail} from "./queries/getSeasonDetail";

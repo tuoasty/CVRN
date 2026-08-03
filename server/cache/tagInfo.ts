@@ -30,7 +30,7 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Matches",
         description:
             "Match lists, schedules, match detail pages, box scores, standings and playoff rounds. Widest blast radius.",
-        readCount: 12,
+        readCount: 14,
         affects: "Matches, match detail, standings, playoffs, home",
     },
     [CACHE_TAGS.playoffs]: {
@@ -42,13 +42,13 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     [CACHE_TAGS.teams]: {
         label: "Teams",
         description: "Team pages, logos, and rosters.",
-        readCount: 9,
+        readCount: 11,
         affects: "Teams, team detail, matches, match detail, archive, home",
     },
     [CACHE_TAGS.players]: {
         label: "Players",
         description: "Player profiles, avatars, and rosters.",
-        readCount: 6,
+        readCount: 8,
         affects: "Players, player detail, teams, match detail, archive",
     },
     [CACHE_TAGS.seasons]: {

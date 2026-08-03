@@ -183,7 +183,7 @@ export default function HomePage({
                                 })}
                             />
                         ) : (
-                            <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent h-[376px] flex items-center justify-center">
+                            <div className="panel p-6 border border-border h-[376px] flex items-center justify-center">
                                 <div className="flex flex-col items-center gap-3">
                                     <Trophy className="h-12 w-12 text-muted-foreground/40" />
                                     <p className="text-sm text-muted-foreground">No upcoming matches scheduled</p>
@@ -193,7 +193,7 @@ export default function HomePage({
 
                         <div className="space-y-3">
                             <div className="border-t-2 border-primary/20 pt-4">
-                                <h3 className="text-base font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-4">
+                                <h3 className="text-base font-semibold tracking-tight text-foreground mb-4">
                                     Season Standings
                                 </h3>
                                 <StandingsPreview

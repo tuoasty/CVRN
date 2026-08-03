@@ -10,7 +10,10 @@ import {
     specStatMeta,
     specStatShort,
 } from '@/server/domains/spec/types';
-import {formatPlacementBonus} from '@/server/domains/spec/helpers/placementBonus';
+import {
+    formatPlacementBonus,
+    PLACEMENT_TIER_LABEL,
+} from '@/server/domains/spec/helpers/placementBonus';
 
 interface Props {
     rows: SpecQualificationRow[];
@@ -40,7 +43,7 @@ export default function SpecQualificationTable({rows, statKeys}: Props) {
                         <th className={cn(CELL, 'w-8')}>#</th>
                         <th className={cn(CELL, 'w-44')}>Player</th>
                         <th className={cn(CELL, 'w-28')}>Team</th>
-                        <th className={cn(CELL, 'w-8')} title="Podium placement">P</th>
+                        <th className={cn(CELL, 'w-24')} title="Finals slot the team reached">SLOT</th>
                         <th className={cn(CELL, 'w-14 text-right')} title="Placement bonus">BON</th>
                         <th className={cn(CELL, 'w-8')} title="Qualifies">Q</th>
                         <th className={cn(CELL, 'w-12')} title="Main requirements cleared">MAIN</th>
@@ -80,8 +83,14 @@ export default function SpecQualificationTable({rows, statKeys}: Props) {
                             <td className={cn(CELL, 'text-xs text-muted-foreground truncate')}>
                                 {row.teamName ?? '—'}
                             </td>
-                            <td className={cn(CELL, 'font-mono tabular-nums text-xs')}>
-                                {row.placement ?? '—'}
+                            <td
+                                className={cn(
+                                    CELL,
+                                    'text-xs whitespace-nowrap',
+                                    row.placementTier === 'outside' && 'text-muted-foreground'
+                                )}
+                            >
+                                {PLACEMENT_TIER_LABEL[row.placementTier]}
                             </td>
                             <td
                                 className={cn(

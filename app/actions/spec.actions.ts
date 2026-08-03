@@ -5,8 +5,9 @@ import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {getCachedPlayerLeaderboard} from "@/server/cache/publicReads";
 import {requireAdmin} from "@/server/domains/auth";
-import {getSeasonPodium} from "@/server/domains/season";
+import {getSeasonFinalsSlots} from "@/server/domains/season";
 import {getSpecs, saveSpec, removeSpec, SaveSpecSchema} from "@/server/domains/spec";
+import {placementTiersFromSlots} from "@/server/domains/spec/helpers/placementBonus";
 
 // Admin-guarded rather than public: `specs` itself is readable by anyone, but the
 // embedded requirements are not, and a caller who silently got empty arrays back
@@ -62,20 +63,17 @@ export async function getSpecLeaderboardAction(seasonId: string) {
     if (!guard.ok) return guard;
 
     try {
-        const [players, podium] = await Promise.all([
+        // Finals slots, not the podium: the bonus follows the bracket a team came through,
+        // and `season_podium` only records where teams finished. See placementBonus.ts.
+        const [players, slots] = await Promise.all([
             getCachedPlayerLeaderboard(seasonId),
-            getSeasonPodium(supabase, seasonId),
+            getSeasonFinalsSlots(supabase, seasonId),
         ]);
 
-        // A plain object, not a Map — server action results cross the wire as JSON.
-        const placements: Record<string, number> = {};
-        if (podium.ok) {
-            for (const entry of podium.value) {
-                if (entry.team_id) placements[entry.team_id] = entry.place;
-            }
-        }
-
-        return Ok({players, placements});
+        return Ok({
+            players,
+            placementTiers: slots.ok ? placementTiersFromSlots(slots.value) : {},
+        });
     } catch (err) {
         return Err({
             message: err instanceof Error ? err.message : "Failed to load season stats",

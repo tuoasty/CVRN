@@ -218,7 +218,37 @@ export const getCachedPlayerLeaderboard = unstable_cache(
         ),
     ["public:player-leaderboard"],
     {
-        tags: [CACHE_TAGS.players, CACHE_TAGS.matches, CACHE_TAGS.teams],
+        // `stats` alone, not players/matches/teams. Every number on this board comes
+        // from a match-sheet sync and nothing else moves it, so purging on schedule
+        // edits or roster changes was re-rendering the heaviest read in the app for no
+        // change in output. Accepted tradeoff: a renamed player or a new team logo waits
+        // for the next stats sync (or a manual purge at /admin/cache) to appear here.
+        tags: [CACHE_TAGS.stats],
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+    },
+);
+
+/**
+ * Every player-season row in the league — every player, every season, every region.
+ * The source the all-time board aggregates in the browser.
+ *
+ * Unfiltered on purpose. Region and season-cohort are client-side filters, so one cache
+ * entry serves every view of the page and the route stays statically renderable. It has
+ * to be per-season rather than pre-summed: once a region's seasons are added together,
+ * "S1 and S2 only" cannot be recovered, and that is exactly what the cohort filter asks
+ * for.
+ *
+ * The largest read in the app: roughly (players x seasons) rows. Worth watching as
+ * seasons accumulate; the fix when it bites is trimming columns, not paging. Tagged
+ * `stats` only, for the reason spelled out on the season board above — and it matters
+ * more here, because this entry grows with every season the league plays.
+ */
+export const getCachedAllSeasonRows = unstable_cache(
+    async () =>
+        unwrap(await getPlayerLeaderboard(createPublicClient(), {}), "getCachedAllSeasonRows"),
+    ["public:all-season-rows"],
+    {
+        tags: [CACHE_TAGS.stats],
         revalidate: PUBLIC_REVALIDATE_SECONDS,
     },
 );

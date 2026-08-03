@@ -33,6 +33,7 @@ export async function getPlayerLeaderboard(
                 region_id: r.region_id,
                 season_name: r.season_name ?? "",
                 season_slug: r.season_slug ?? "",
+                season_start_date: r.season_start_date ?? "",
                 region_code: r.region_code ?? "",
             }];
         });

@@ -18,6 +18,12 @@ export const CACHE_TAGS = {
     matches: "matches",
     playoffs: "playoffs",
     media: "media",
+    // Per-player box-score data: the leaderboards. Separate from `matches` because
+    // stats only ever change when a match sheet is synced, while `matches` churns on
+    // every schedule edit, result entry and playoff advance. Sharing the tag meant the
+    // two heaviest reads in the app were re-rendered by mutations that could not
+    // possibly have changed them.
+    stats: "stats",
 } as const;
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];

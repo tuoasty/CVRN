@@ -1,4 +1,5 @@
 import {Spec, SpecRequirement} from "@/shared/types/db";
+import type {PlacementTier} from "../helpers/placementBonus";
 
 export type SpecTier = "main" | "secondary";
 
@@ -27,8 +28,8 @@ export interface SpecQualificationRow {
     teamSlug: string | null;
     teamLogoUrl: string | null;
     teamLogoBgRemoved: boolean | null;
-    /** Podium place 1-3, or null for a team that finished off the podium. */
-    placement: number | null;
+    /** Which finals slot this player's team occupied. `outside` for most of the league. */
+    placementTier: PlacementTier;
     /** Multiplier offset applied to this player's stats, e.g. 0.15 or -0.1. */
     placementBonus: number;
     qualified: boolean;
@@ -50,6 +51,14 @@ export interface SpecQualification {
      */
     unknownStatKeys: string[];
 }
+
+export type {PlacementTier} from "../helpers/placementBonus";
+export {
+    placementBonus,
+    placementTiersFromSlots,
+    formatPlacementBonus,
+    PLACEMENT_TIER_LABEL,
+} from "../helpers/placementBonus";
 
 export type {SaveSpecInput, SpecRequirementInput, SpecQualificationInput} from "./schemas";
 export {SaveSpecSchema, SpecRequirementSchema, SpecQualificationSchema} from "./schemas";

@@ -38,6 +38,8 @@ export type {
     PlayerWithCurrentTeam,
     PlayerSeasonStat,
     PlayerLeaderboardRow,
+    AllTimeLeaderboardRow,
+    LeaderboardDisplayRow,
     PlayerLeaderboardInput,
     PlayerAward,
     PlayerTeamHistoryEntry,

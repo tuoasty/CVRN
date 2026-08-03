@@ -17,6 +17,18 @@ const NAV_PAGES = [
     { page: "archive", label: "Archive" },
 ];
 
+// Pages that live outside a season. Their href never picks up the /[region]/[season]
+// prefix and they stay reachable when no season context exists.
+//
+// The all-time board (/leaderboard) is deliberately NOT here. It is reached from the
+// season leaderboard rather than the navbar — it answers a follow-up question, not a
+// first one, and a tenth top-level item crowds the bar. The route stays directly
+// linkable, so a shared URL still opens it.
+const GLOBAL_HREFS: Record<string, string> = {
+    archive: "/archive",
+    players: "/players",
+};
+
 interface PublicNavItemsProps {
     layout?: "horizontal" | "vertical";
     onNavigate?: () => void;
@@ -59,11 +71,10 @@ export default function PublicNavItems({
     return (
         <nav className={navClasses}>
             {NAV_PAGES.map((item) => {
-                const href = item.page === "archive"
-                    ? "/archive"
-                    : item.page === "players"
-                        ? "/players"
-                        : hasEffectiveContext
+                const globalHref = GLOBAL_HREFS[item.page];
+                const href = globalHref
+                    ? globalHref
+                    : hasEffectiveContext
                         ? item.page === "home"
                             ? prefix
                             : `${prefix}/${item.page}`
@@ -72,12 +83,15 @@ export default function PublicNavItems({
                             : `/select?next=${item.page}`;
                 const base = `/${params.region}/${params.season}`;
                 const isActive = item.page === "players"
+                    // Player detail pages live under /players/[username].
                     ? pathname.startsWith("/players")
-                    : hasContext
-                        ? item.page === "home"
-                            ? pathname === base
-                            : pathname.startsWith(`${base}/${item.page}`)
-                        : pathname === `/${item.page}`;
+                    : globalHref
+                        ? pathname === globalHref
+                        : hasContext
+                            ? item.page === "home"
+                                ? pathname === base
+                                : pathname.startsWith(`${base}/${item.page}`)
+                            : pathname === `/${item.page}`;
                 return (
                     <Link
                         key={item.page}

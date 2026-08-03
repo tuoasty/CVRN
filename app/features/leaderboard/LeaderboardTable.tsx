@@ -9,7 +9,7 @@ import {Tooltip, TooltipContent, TooltipTrigger, TooltipProvider} from "@/app/co
 import {cn} from "@/lib/utils";
 import {getLogoClassName} from "@/app/lib/logoClass";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
-import {PlayerLeaderboardRow} from "@/server/domains/player";
+import {LeaderboardDisplayRow} from "@/server/domains/player";
 import {
     STAT_VIEW_COLUMNS,
     MIN_SETS_FOR_RATE,
@@ -18,17 +18,20 @@ import {
     groupPlayerColumns,
     playerColWidthClass,
 } from "@/app/features/player/playerStatColumnMeta";
-import {LeaderboardFilters, SortKey} from "./useLeaderboardFilters";
+import {LeaderboardFilters, matchesPlayerQuery, SortKey} from "./useLeaderboardFilters";
 
 type Props = {
-    rows: PlayerLeaderboardRow[];
+    /** The full pool, already narrowed to the board's scope (season, or region). */
+    rows: LeaderboardDisplayRow[];
     filters: LeaderboardFilters;
     onSort: (key: SortKey) => void;
+    onClearSearch: () => void;
     /**
      * Season boards scope every row to one region, so the column would repeat a single
-     * value down the whole table. Built here for the all-time board, where region varies.
+     * value down the whole table. Set on the all-time board, where region varies.
      */
     showRegion?: boolean;
+    emptyMessage?: string;
 };
 
 /**
@@ -37,7 +40,7 @@ type Props = {
  * The min-sets qualifier does not cover this: a player can clear six sets and still
  * have never attempted a spike, so null and unqualified are separate cases.
  */
-function compareRows(a: PlayerLeaderboardRow, b: PlayerLeaderboardRow, key: SortKey, desc: boolean): number {
+function compareRows(a: LeaderboardDisplayRow, b: LeaderboardDisplayRow, key: SortKey, desc: boolean): number {
     const av = a[key] as number | null;
     const bv = b[key] as number | null;
     if (av === null || av === undefined) return bv === null || bv === undefined ? 0 : 1;
@@ -46,25 +49,38 @@ function compareRows(a: PlayerLeaderboardRow, b: PlayerLeaderboardRow, key: Sort
     return desc ? bv - av : av - bv;
 }
 
-// Left offsets for the sticky identity block. Must match the rank and player widths
-// below — `left-*` cannot be derived from a sibling's width in CSS.
-const RANK_W = "w-14";
-const PLAYER_W = "w-[15rem]";
-const TEAM_W = "w-[11rem]";
-const REGION_W = "w-20";
+const rowKey = (row: LeaderboardDisplayRow) => `${row.player_id}-${row.season_id ?? row.region_code}`;
 
-export default function LeaderboardTable({rows, filters, onSort, showRegion = false}: Props) {
+const RANK_W = "w-14";
+const PLAYER_W = "w-52";
+const TEAM_W = "w-36";
+const REGION_W = "w-10";
+
+const Z_HEAD = "z-20";
+const Z_HEAD_CORNER = "z-10";
+const Z_BODY_STICKY = "z-10";
+
+const HEAD_RULE = "shadow-[inset_0_-1px_0_var(--border)]";
+
+const HEAD_BG = "bg-background";
+const HEAD_BG_ACTIVE = "bg-[color-mix(in_srgb,hsl(var(--primary))_10%,hsl(var(--background)))]";
+
+export default function LeaderboardTable({
+    rows,
+    filters,
+    onSort,
+    onClearSearch,
+    showRegion = false,
+    emptyMessage = "No player stats recorded yet.",
+}: Props) {
     const columns = STAT_VIEW_COLUMNS[filters.view];
     const groups = groupPlayerColumns(columns);
 
-    // Only ratio columns are gated. Per-set rates are honest at any sample size, so
-    // sorting by K/S ranks everyone.
     const activeColumn = columns.find(c => c.key === filters.sort);
     const isRatioSort = activeColumn?.format === "pct";
 
     const {qualified, unqualified} = useMemo(() => {
         const desc = filters.order === "desc";
-        // Ties break on sets played so a stable, meaningful order survives equal values.
         const all = [...rows].sort(
             (a, b) =>
                 compareRows(a, b, filters.sort, desc) ||
@@ -73,45 +89,70 @@ export default function LeaderboardTable({rows, filters, onSort, showRegion = fa
         );
 
         if (!isRatioSort) return {qualified: all, unqualified: []};
-
-        // Partition preserves the sort, so each block stays ordered without re-sorting.
-        // Unqualified players are shown rather than filtered out: a player checking his
-        // own numbers should never simply vanish from the board.
         return {
             qualified: all.filter(r => (r.sets_played ?? 0) >= MIN_SETS_FOR_RATE),
             unqualified: all.filter(r => (r.sets_played ?? 0) < MIN_SETS_FOR_RATE),
         };
     }, [rows, filters.sort, filters.order, isRatioSort]);
 
+    const visible = useMemo(() => {
+        let previousValue: number | null | undefined;
+        let previousRank = 0;
+
+        return qualified
+            .map((row, i) => {
+                const value = row[filters.sort] as number | null;
+                const rank = i > 0 && value === previousValue ? previousRank : i + 1;
+                previousValue = value;
+                previousRank = rank;
+                return {row, rank};
+            })
+            .filter(({row}) => matchesPlayerQuery(row, filters.q));
+    }, [qualified, filters.sort, filters.q]);
+
+    const visibleUnqualified = useMemo(
+        () => unqualified.filter(row => matchesPlayerQuery(row, filters.q)),
+        [unqualified, filters.q]
+    );
+
     const totalColumnCount = 3 + (showRegion ? 1 : 0) + columns.length + 1;
 
     if (rows.length === 0) {
+        return <p className="text-sm text-muted-foreground py-8 text-center">{emptyMessage}</p>;
+    }
+
+    const searching = filters.q.trim() !== "";
+    if (searching && visible.length === 0 && visibleUnqualified.length === 0) {
         return (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-                No player stats recorded for this season yet.
-            </p>
+            <div className="py-12 text-center">
+                <p className="text-sm text-muted-foreground">
+                    No player matching &ldquo;{filters.q}&rdquo;.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                    Search by username or display name.
+                </p>
+                <button
+                    type="button"
+                    onClick={onClearSearch}
+                    className="mt-4 text-sm text-primary underline-offset-4 hover:underline rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                    Clear search
+                </button>
+            </div>
         );
     }
 
     return (
         <TooltipProvider delayDuration={200}>
-            <div className="border border-border rounded-sm overflow-hidden [&>[data-slot=table-container]]:overflow-x-auto">
-                {/*
-                  * table-fixed is what stops the stat block sliding when the view changes.
-                  * Auto layout re-measures every column against its content, so switching
-                  * Overview (16 stat columns) to Setting (5) moved the whole grid.
-                  */}
+            <div
+                className={cn(
+                    "border border-border rounded-sm",
+                    "[&>[data-slot=table-container]]:max-h-[calc(100vh-18rem)]",
+                    "[&>[data-slot=table-container]]:min-h-[20rem]",
+                    "[&>[data-slot=table-container]]:overflow-auto",
+                )}
+            >
                 <Table className="table-fixed border-collapse">
-                    {/*
-                      * Widths live here, not on the cells. Fixed layout reads column widths
-                      * from the FIRST row only, and this table's first row is group bands
-                      * with colSpan — so per-column widths declared on the second header row
-                      * are ignored, and the browser splits each band evenly instead. That is
-                      * what made the Season block change width between views. A colgroup is
-                      * the one place fixed layout will honour widths when the first row spans
-                      * columns. The trailing width-less col absorbs leftover space so no real
-                      * column stretches to fill the container.
-                      */}
                     <colgroup>
                         <col className={RANK_W} />
                         <col className={PLAYER_W} />
@@ -122,32 +163,57 @@ export default function LeaderboardTable({rows, filters, onSort, showRegion = fa
                         ))}
                         <col />
                     </colgroup>
-                    <TableHeader>
+                    <TableHeader className={cn("h-7 sticky top-0 bg-background", Z_HEAD)}>
                         <TableRow className="border-b-0 hover:bg-transparent">
                             <TableHead
                                 rowSpan={2}
-                                className="sticky left-0 z-10 bg-background text-right align-bottom px-2 text-xs font-semibold uppercase tracking-wider"
+                                className={cn(
+                                    "sticky left-0 text-right align-bottom px-2 py-0 my-0 text-xs font-semibold uppercase tracking-wider",
+                                    HEAD_BG,
+                                    Z_HEAD_CORNER,
+                                    HEAD_RULE,
+                                )}
                             >
                                 #
                             </TableHead>
                             <TableHead
                                 rowSpan={2}
-                                className="sticky left-14 z-10 bg-background text-left align-bottom px-2 text-xs font-semibold uppercase tracking-wider"
+                                className={cn(
+                                    "sticky left-14 text-left align-bottom px-2 text-xs font-semibold uppercase tracking-wider",
+                                    HEAD_BG,
+                                    Z_HEAD_CORNER,
+                                    HEAD_RULE,
+                                )}
                             >
                                 Player
                             </TableHead>
                             <TableHead
                                 rowSpan={2}
-                                className="text-left align-bottom px-2 border-r border-border/30 text-xs font-semibold uppercase tracking-wider"
+                                className={cn(
+                                    "text-left align-bottom px-2 border-r border-border/30 text-xs font-semibold uppercase tracking-wider",
+                                    HEAD_BG,
+                                    HEAD_RULE,
+                                )}
                             >
                                 Team
                             </TableHead>
                             {showRegion && (
                                 <TableHead
                                     rowSpan={2}
-                                    className="text-left align-bottom px-2 border-r border-border/30 text-xs font-semibold uppercase tracking-wider"
+                                    className={cn(
+                                        // px-1, not px-2: the column is 40px wide and the
+                                        // label has to fit beside two characters of value.
+                                        "text-left align-bottom px-1 border-r border-border/30 text-xs font-semibold uppercase tracking-wider",
+                                        HEAD_BG,
+                                        HEAD_RULE,
+                                    )}
                                 >
-                                    Region
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span>Reg</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">Region</TooltipContent>
+                                    </Tooltip>
                                 </TableHead>
                             )}
                             {groups.map((g, idx) => (
@@ -156,6 +222,7 @@ export default function LeaderboardTable({rows, filters, onSort, showRegion = fa
                                     colSpan={g.columns.length}
                                     className={cn(
                                         "h-7 px-1 text-center text-xs uppercase tracking-wider font-semibold text-muted-foreground",
+                                        HEAD_BG,
                                         idx < groups.length - 1 && "border-r border-border/30",
                                     )}
                                 >
@@ -170,9 +237,12 @@ export default function LeaderboardTable({rows, filters, onSort, showRegion = fa
                               * column count; parking the slack here pins every real column
                               * instead. It also keeps row hover and borders reaching the edge.
                               */}
-                            <TableHead rowSpan={2} className="w-auto p-0" />
+                            <TableHead
+                                rowSpan={2}
+                                className={cn("w-auto p-0", HEAD_BG, HEAD_RULE)}
+                            />
                         </TableRow>
-                        <TableRow className="hover:bg-transparent">
+                        <TableRow className="h-8 hover:bg-transparent">
                             {columns.map((col, i) => {
                                 const isLastColumn = i === columns.length - 1;
                                 const isLastInGroup = isLastColumn || columns[i + 1].group !== col.group;
@@ -183,8 +253,9 @@ export default function LeaderboardTable({rows, filters, onSort, showRegion = fa
                                         aria-sort={active ? (filters.order === "desc" ? "descending" : "ascending") : "none"}
                                         className={cn(
                                             "h-8 px-1.5 text-right text-xs font-semibold whitespace-nowrap",
+                                            HEAD_RULE,
                                             isLastInGroup && !isLastColumn && "border-r border-border/30",
-                                            active && "bg-primary/10",
+                                            active ? HEAD_BG_ACTIVE : HEAD_BG,
                                         )}
                                     >
                                         <Tooltip>
@@ -220,18 +291,18 @@ export default function LeaderboardTable({rows, filters, onSort, showRegion = fa
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {qualified.map((row, i) => (
+                        {visible.map(({row, rank}) => (
                             <LeaderboardRow
-                                key={`${row.player_id}-${row.season_id}`}
+                                key={rowKey(row)}
                                 row={row}
-                                rank={i + 1}
+                                rank={rank}
                                 columns={columns}
                                 sortKey={filters.sort}
                                 showRegion={showRegion}
                             />
                         ))}
 
-                        {unqualified.length > 0 && (
+                        {visibleUnqualified.length > 0 && (
                             <>
                                 <TableRow className="hover:bg-transparent">
                                     <TableCell
@@ -243,19 +314,19 @@ export default function LeaderboardTable({rows, filters, onSort, showRegion = fa
                                         </span>
                                         {" — "}
                                         {activeColumn?.label} is a ratio, so a small sample can top the
-                                        board. These {unqualified.length}{" "}
-                                        {unqualified.length === 1 ? "player is" : "players are"} listed
+                                        board. These {visibleUnqualified.length}{" "}
+                                        {visibleUnqualified.length === 1 ? "player is" : "players are"} listed
                                         but not ranked.
                                     </TableCell>
                                 </TableRow>
-                                {unqualified.map(row => (
+                                {visibleUnqualified.map(row => (
                                     <LeaderboardRow
-                                        key={`${row.player_id}-${row.season_id}`}
+                                        key={rowKey(row)}
                                         row={row}
                                         rank={null}
                                         columns={columns}
                                         sortKey={filters.sort}
-                                        showRegion={showRegion}
+                                showRegion={showRegion}
                                     />
                                 ))}
                             </>
@@ -274,7 +345,7 @@ function LeaderboardRow({
     sortKey,
     showRegion,
 }: {
-    row: PlayerLeaderboardRow;
+    row: LeaderboardDisplayRow;
     /** `null` for players below the sets qualifier — listed, but holding no rank. */
     rank: number | null;
     columns: PlayerStatColumn[];
@@ -300,7 +371,12 @@ function LeaderboardRow({
         // produced rows of two different heights down the same table. 3.25rem is the
         // natural two-line height — the taller of the two cases, so nothing grew.
         <TableRow className="group h-[3.25rem] hover:bg-muted/30">
-            <TableCell className="sticky left-0 z-[1] bg-background group-hover:bg-muted/30 transition-colors py-0 px-2 text-right align-middle">
+            <TableCell
+                className={cn(
+                    "sticky left-0 bg-background group-hover:bg-muted/30 transition-colors py-0 px-2 text-right align-middle",
+                    Z_BODY_STICKY,
+                )}
+            >
                 <span
                     className={cn(
                         "font-mono tabular-nums text-sm",
@@ -313,7 +389,12 @@ function LeaderboardRow({
                 </span>
             </TableCell>
 
-            <TableCell className="sticky left-14 z-[1] bg-background group-hover:bg-muted/30 transition-colors py-0 px-2 align-middle">
+            <TableCell
+                className={cn(
+                    "sticky left-14 bg-background group-hover:bg-muted/30 transition-colors py-0 px-2 align-middle",
+                    Z_BODY_STICKY,
+                )}
+            >
                 <div className="flex items-center gap-2.5 min-w-0">
                     {row.avatar_url && (
                         <div className="relative w-10 h-10 shrink-0 rounded-full overflow-hidden bg-muted">

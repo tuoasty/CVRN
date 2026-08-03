@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import LeaderboardPage from "@/app/(public)/leaderboard/LeaderboardPage";
+import SeasonLeaderboardPage from "@/app/features/leaderboard/SeasonLeaderboardPage";
 import {
     getCachedRegionByCode,
     getCachedSeasonBySlugAndRegion,
@@ -43,7 +43,7 @@ export default async function Page({ params }: PageProps) {
 
     return (
         <Suspense fallback={null}>
-            <LeaderboardPage rows={rows} season={seasonRecord} region={regionRecord} />
+            <SeasonLeaderboardPage rows={rows} season={seasonRecord} region={regionRecord} />
         </Suspense>
     );
 }

@@ -13,7 +13,7 @@ export default function StatViewSelector({value, onChange}: Props) {
         <div
             role="group"
             aria-label="Stat view"
-            className="inline-flex h-9 max-w-full items-center gap-0.5 overflow-x-auto rounded-lg border border-border bg-muted p-[3px]"
+            className="inline-flex h-9 max-w-full items-center gap-0.5 overflow-x-auto rounded-sm border border-border bg-muted p-[3px]"
         >
             {STAT_VIEWS.map(({value: v, label}) => {
                 const active = v === value;
@@ -24,10 +24,14 @@ export default function StatViewSelector({value, onChange}: Props) {
                         aria-pressed={active}
                         onClick={() => onChange(v)}
                         className={cn(
-                            "h-full shrink-0 rounded-md px-3 text-sm font-medium transition-colors",
+                            // Square and flat, per DESIGN.md. The active tab was carrying a
+                            // resting shadow, which the system reserves for overlays and
+                            // hover; surface lift plus weight reads the same and stays flat.
+                            "h-full shrink-0 rounded-sm px-3 text-sm transition-colors",
+                            "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                             active
-                                ? "bg-background text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground",
+                                ? "bg-background text-foreground font-semibold"
+                                : "text-muted-foreground font-medium hover:text-foreground",
                         )}
                     >
                         {label}

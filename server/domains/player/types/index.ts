@@ -109,12 +109,35 @@ export interface PlayerLeaderboardRow extends PlayerSeasonStat {
     display_name: string | null;
     avatar_url: string | null;
     region_id: string;
+    /** Orders seasons into cohorts and picks a player's most recent team. */
+    season_start_date: string;
     team_id: string | null;
     team_name: string | null;
     team_slug: string | null;
     team_logo_url: string | null;
     team_logo_bg_removed: boolean | null;
 }
+
+/**
+ * A career row: one per (player, region), summed over a chosen set of seasons.
+ *
+ * Computed in the browser by `aggregateCareerRows`, not read from a view. A
+ * pre-aggregated view cannot serve this: once S1..S4 are summed into one row, "S1 and
+ * S2 only" is unrecoverable, and the season-cohort filter needs exactly that.
+ *
+ * `season_id` and `season_name` are null by construction — the row spans seasons, so
+ * there is no single one. `season_slug` and `season_start_date` survive as real values
+ * naming the player's most recent season in the region, which is what the team link
+ * needs to resolve. Nulling the identity while keeping the slug is deliberate.
+ */
+export interface AllTimeLeaderboardRow extends Omit<PlayerLeaderboardRow, "season_id" | "season_name"> {
+    season_id: null;
+    season_name: null;
+    seasons_played: number;
+}
+
+/** Either board's row. What `LeaderboardTable` accepts. */
+export type LeaderboardDisplayRow = PlayerLeaderboardRow | AllTimeLeaderboardRow;
 
 export interface PlayerAward {
     id: string;

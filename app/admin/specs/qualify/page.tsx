@@ -30,7 +30,7 @@ const newRowId = () => Math.random().toString(36).slice(2);
 export default function AdminSpecQualifyPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId);
     const {specs, isLoading: specsLoading} = useSpecs();
-    const {rows: players, placements, isLoading: playersLoading, error} = useSpecLeaderboard(seasonId);
+    const {rows: players, placementTiers, isLoading: playersLoading, error} = useSpecLeaderboard(seasonId);
 
     const [specId, setSpecId] = useState<string>('');
     const [thresholds, setThresholds] = useState<DraftThreshold[]>([]);
@@ -40,11 +40,16 @@ export default function AdminSpecQualifyPage() {
 
     const selectedSpec = specs.find(s => s.id === specId) ?? null;
 
-    // Placement bonus only needs team -> place, and the podium is at most 3 rows.
-    const placementByTeamId = useMemo(
-        () => new Map(Object.entries(placements)),
-        [placements]
+    // Placement bonus only needs team -> finals slot, and that is at most 3 or 4 rows.
+    const tierByTeamId = useMemo(
+        () => new Map(Object.entries(placementTiers)),
+        [placementTiers]
     );
+
+    // No upper finalist means the season ran a single-elim bracket (or has not reached
+    // its final yet). Worth saying out loud — otherwise an admin sees a board with no
+    // +15% anywhere and reads it as a bug.
+    const hasUpperBand = Object.values(placementTiers).includes('upper_finalist');
 
     // Loading a spec resets the scratchpad to its saved numbers. Guarded on specId
     // rather than the spec object so a background SWR refresh does not wipe edits
@@ -85,9 +90,9 @@ export default function AdminSpecQualifyPage() {
                 players,
                 thresholds.filter(t => t.statKey).map(({tier, statKey, minValue}) => ({tier, statKey, minValue})),
                 secondaryRequired,
-                {stars, placementByTeamId}
+                {stars, tierByTeamId}
             ),
-        [players, thresholds, secondaryRequired, stars, placementByTeamId]
+        [players, thresholds, secondaryRequired, stars, tierByTeamId]
     );
 
     // Per-requirement pass counts, evaluated in isolation so each threshold shows
@@ -101,12 +106,12 @@ export default function AdminSpecQualifyPage() {
                 players,
                 [{tier: 'main', statKey: t.statKey, minValue: t.minValue}],
                 0,
-                {stars, placementByTeamId}
+                {stars, tierByTeamId}
             );
             counts.set(t.rowId, solo.rows.filter(r => r.qualified).length);
         }
         return counts;
-    }, [players, thresholds, stars, placementByTeamId]);
+    }, [players, thresholds, stars, tierByTeamId]);
 
     const statKeys = thresholds.filter(t => t.statKey).map(t => t.statKey);
     const qualifiedCount = evaluation.rows.filter(r => r.qualified).length;
@@ -211,10 +216,16 @@ export default function AdminSpecQualifyPage() {
                                         </span>
                                     </p>
                                     <p className="text-xs text-muted-foreground mt-1">
-                                        {stars === 5
-                                            ? 'Placement: 1st +15% · 2nd 0% · 3rd −5% · off podium −10%'
-                                            : 'Placement: 1st +15% · 2nd–3rd 0% · off podium −10%'}
+                                        Placement: upper final +15% · final 0% ·{' '}
+                                        {stars === 5 ? '3rd −5%' : '3rd 0%'} · rest −10%
                                     </p>
+                                    {!hasUpperBand && (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            No upper-bracket finalist this season — single-elim
+                                            playoffs, or the final is not seeded yet. Nobody
+                                            receives +15%.
+                                        </p>
+                                    )}
                                     {selectedSpec && dirty && (
                                         <p className="text-xs text-muted-foreground mt-1">
                                             Edited — differs from the saved {selectedSpec.name} spec.
