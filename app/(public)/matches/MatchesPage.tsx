@@ -9,7 +9,7 @@ import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
 import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
 import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
-import { Player, Region } from "@/shared/types/db";
+import { Region } from "@/shared/types/db";
 import type { PlayoffRound } from "@/server/domains/playoff";
 import type { SeasonWithPlayoffConfig } from "@/server/domains/season";
 import type { StandingWithInfo } from "@/server/domains/standing";
@@ -38,7 +38,6 @@ type Props = {
     weekCounts: { week: number; total: number; completed: number }[];
     schedule: MatchWithDetails[];
     teams: TeamWithRegion[];
-    players: Player[];
     standings: StandingWithInfo[];
 };
 
@@ -53,7 +52,6 @@ export default function MatchesPage({
     weekCounts,
     schedule,
     teams,
-    players,
     standings,
 }: Props) {
     const router = useRouter();
@@ -82,7 +80,6 @@ export default function MatchesPage({
     }, [standings]);
 
     const teamsMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
-    const playersMap = useMemo(() => new Map(players.map(p => [p.id, p])), [players]);
 
     const roundCountMap = useMemo(() => {
         const m = new Map<string, number>();
@@ -171,7 +168,6 @@ export default function MatchesPage({
                         <MatchList
                             sorted={sorted}
                             teams={teamsMap}
-                            players={playersMap}
                             recordByTeamId={recordByTeamId}
                             regionCode={regionCode}
                             seasonSlug={season.slug}
@@ -191,7 +187,6 @@ export default function MatchesPage({
 interface MatchListProps {
     sorted: MatchWithDetails[];
     teams: Map<string, TeamWithRegion>;
-    players: Map<string, Player>;
     recordByTeamId: Map<string, { wins: number; losses: number }>;
     regionCode?: string;
     seasonSlug?: string;
@@ -199,7 +194,7 @@ interface MatchListProps {
     emptyMessage: string;
 }
 
-function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonSlug, standingMethod, emptyMessage }: MatchListProps) {
+function MatchList({ sorted, teams, recordByTeamId, regionCode, seasonSlug, standingMethod, emptyMessage }: MatchListProps) {
     if (sorted.length === 0) {
         return (
             <div className="panel p-12">
@@ -216,8 +211,6 @@ function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonS
             {sorted.map(({ match, sets, officials }, index) => {
                 const homeTeam = match.home_team_id ? teams.get(match.home_team_id) : undefined;
                 const awayTeam = match.away_team_id ? teams.get(match.away_team_id) : undefined;
-                const matchMvp = match.match_mvp_player_id ? players.get(match.match_mvp_player_id) : null;
-                const loserMvp = match.loser_mvp_player_id ? players.get(match.loser_mvp_player_id) : null;
                 const homeRecord = match.home_team_id ? recordByTeamId.get(match.home_team_id) : undefined;
                 const awayRecord = match.away_team_id ? recordByTeamId.get(match.away_team_id) : undefined;
 
@@ -227,8 +220,6 @@ function MatchList({ sorted, teams, players, recordByTeamId, regionCode, seasonS
                         matchDetails={{ match, sets, officials }}
                         homeTeam={homeTeam}
                         awayTeam={awayTeam}
-                        matchMvp={matchMvp}
-                        loserMvp={loserMvp}
                         regionCode={regionCode}
                         href={buildPublicMatchHref({
                             matchCode: match.match_code,

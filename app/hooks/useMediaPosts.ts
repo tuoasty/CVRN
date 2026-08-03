@@ -1,6 +1,12 @@
 import useSWR, { mutate as globalMutate } from 'swr'
-import { getAllMediaPostsAction, getPagedMediaPostsAction, getRecentMediaPostsAction } from '@/app/actions/media.actions'
+import {
+    assignMediaToMatchAction,
+    getAllMediaPostsAction,
+    getPagedMediaPostsAction,
+    getRecentMediaPostsAction,
+} from '@/app/actions/media.actions'
 import { MediaFilterType, MediaPost, PagedMediaResult } from '@/server/domains/media'
+import { Result } from '@/shared/types/result'
 
 const ALL_MEDIA_KEY = 'media/all'
 const RECENT_MEDIA_KEY = (limit: number) => `media/recent/${limit}`
@@ -29,6 +35,12 @@ export function useRecentMediaPosts(limit = 4) {
 
 export function mutateAllMedia() {
     return globalMutate(ALL_MEDIA_KEY)
+}
+
+export async function assignMediaToMatch(postId: string, matchId: string | null): Promise<Result<MediaPost>> {
+    const result = await assignMediaToMatchAction({ postId, matchId })
+    if (result.ok) await mutateAllMedia()
+    return result
 }
 
 const pagedMediaKey = (filter: MediaFilterType, page: number, search: string, pageSize: number) =>

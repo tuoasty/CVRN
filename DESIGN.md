@@ -242,6 +242,8 @@ The one deliberate exception is affordance. A panel that navigates somewhere mus
 
 **Interactive panel.** Same shape, plus: a full-opacity border at rest (static panels may use `border-border/50`), a trailing chevron at `12px` in Quiet Ink, and on hover — border to Action Blue, `shadow-sm`, `-translate-y-px`, all at 150ms.
 
+**Exception — full-bleed graphic panels.** The featured match card and its carousel take the border change on hover and nothing else: no `shadow-sm`, no `-translate-y-px`. Lifting a 376px graphic is a far heavier gesture than lifting a list row, and these surfaces already carry two persistent affordances a row does not — visible arrows and visible dots. This is the only sanctioned deviation; a panel that is mostly text still lifts.
+
 ### Buttons
 - **Shape:** Barely-rounded (`rounded-md`, 2px). Height `36px` default, with `24px` / `32px` / `40px` steps and matching square icon sizes.
 - **Primary:** Action Blue fill, white text, `8px 16px` padding. Hover drops to `90%` opacity.

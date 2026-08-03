@@ -66,7 +66,11 @@ export async function syncMatchStatsAction(
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
     const result = await syncMatchStats(supabase, configId, {force, playerOverrides});
-    if (result.ok) revalidatePath('/admin/stats');
+    if (result.ok) {
+        revalidatePath('/admin/stats');
+
+        revalidatePublicData([CACHE_TAGS.matches]);
+    }
     return result;
 }
 

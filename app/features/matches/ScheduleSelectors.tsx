@@ -99,7 +99,7 @@ export function WeekSelector({ effectiveWeek, weeks, onWeekChange }: WeekSelecto
             </Popover>
 
             {}
-            <div className="hidden sm:flex overflow-x-auto border border-border rounded-sm overflow-hidden">
+            <div className="hidden sm:flex min-h-[36px] overflow-x-auto border border-border rounded-sm overflow-hidden">
                 {weeks.map(w => {
                     const isActive = w === effectiveWeek;
                     return (
@@ -181,7 +181,7 @@ export function PlayoffStepper({ rounds, effectiveRound, roundCountMap, onRoundC
             </Popover>
 
             {}
-            <div className="hidden sm:flex overflow-x-auto gap-0 scrollbar-hide border border-border rounded-sm">
+            <div className="hidden sm:flex min-h-[52px] overflow-x-auto gap-0 scrollbar-hide border border-border rounded-sm">
                 {rounds.map((round, idx) => {
                     const isCompleted = idx < activeIdx;
                     const isActive = round === effectiveRound;

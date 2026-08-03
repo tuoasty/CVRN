@@ -14,6 +14,12 @@ export type CreateMediaFormInput = z.infer<typeof CreateMediaFormSchema>
 export const MediaPostIdSchema = z.object({ postId: z.string().uuid() })
 export type MediaPostIdInput = z.infer<typeof MediaPostIdSchema>
 
+export const AssignMediaToMatchSchema = z.object({
+    postId:  z.string().uuid(),
+    matchId: z.string().uuid().nullable(),
+})
+export type AssignMediaToMatchInput = z.infer<typeof AssignMediaToMatchSchema>
+
 export const GetAllMediaSchema = z.object({
     type:     z.enum(['gfx', 'video', 'news', 'recap', 'clip']).optional(),
     matchId:  z.string().uuid().optional(),

@@ -6,6 +6,7 @@ import { logger } from '@/server/utils/logger'
 import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
 import { uploadFile, deleteFile } from '@/server/storage/storage.service'
 import { insertMediaPost } from '@/server/db/mediaPost.repo'
+import { assertMatchSlotFree } from '../helpers/assertMatchSlotFree'
 import { CreateMediaInput, MediaPost } from '../types'
 
 const TIKTOK_HOSTNAMES = new Set(['www.tiktok.com', 'tiktok.com', 'vt.tiktok.com', 'm.tiktok.com'])
@@ -90,6 +91,11 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
             if (!title) title = 'TikTok Clip'
         } else if (!title) {
             return Err({ message: 'Title is required', code: 'VALIDATION_ERROR' })
+        }
+
+        if (p.matchId && (p.type === 'gfx' || p.type === 'video')) {
+            const free = await assertMatchSlotFree(supabase, p.matchId, p.type)
+            if (!free.ok) return free
         }
 
         if (p.imageFile && p.imageFile.size > 0) {

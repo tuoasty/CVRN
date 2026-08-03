@@ -92,7 +92,6 @@ export const getCachedSeasonHistoryDetail = unstable_cache(
     },
 );
 
-// Arguments participate in the cache key, so each region code gets its own entry.
 export const getCachedRegionByCode = unstable_cache(
     async (code: string) =>
         unwrapNullable(await getRegionByCode(createPublicClient(), code), "getCachedRegionByCode"),
@@ -222,7 +221,7 @@ export const getCachedMatchDetail = unstable_cache(
         ),
     ["public:match-detail"],
     {
-        tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players],
+        tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.media],
         revalidate: PUBLIC_REVALIDATE_SECONDS,
     },
 );

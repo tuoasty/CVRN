@@ -24,6 +24,25 @@ export function getMatchTypeLabel(
     return "Season Match";
 }
 
+export function buildMatchMediaTitle(p: {
+    homeTeamName?: string | null;
+    awayTeamName?: string | null;
+    matchType: string;
+    week: number | null;
+    matchCode?: string | null;
+    playoffRound?: string | null;
+}): string {
+    const label = getMatchTypeLabel(
+        p.matchType,
+        p.week,
+        p.playoffRound ?? null,
+        parseMatchNumber(p.matchCode) ?? undefined
+    );
+
+    const teams = p.homeTeamName && p.awayTeamName ? `${p.homeTeamName} x ${p.awayTeamName}` : null;
+    return teams ? `${teams} - ${label}` : label;
+}
+
 export function computeMatchLabels(
     matches: Array<{ match: { match_type: string; week: number | null; match_code?: string | null }; playoff_round?: string | null }>
 ): string[] {

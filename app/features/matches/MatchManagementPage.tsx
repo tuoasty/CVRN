@@ -18,9 +18,14 @@ import { isPlayoffRound, sortRounds } from "@/app/utils/playoffRounds";
 import { Calendar } from "lucide-react";
 import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
+import { useAdminReady } from "@/app/admin/AdminReadyContext";
+import AdminScheduleRowsSkeleton from "@/app/features/matches/AdminScheduleRowsSkeleton";
+import { Skeleton } from "@/app/components/ui/skeleton";
 
 export default function MatchManagementPage() {
     const { selectedSeasonId } = useAdminContextStore();
+
+    const adminReady = useAdminReady();
     const [matchType, setMatchType] = useState<"season" | "playoffs">("season");
     const [activeTab, setActiveTab] = useState("schedule");
 
@@ -85,7 +90,20 @@ export default function MatchManagementPage() {
                     description="Schedule and manage matches by season and week"
                 />
 
-                {seasonIdValue ? (
+                {!adminReady ? (
+                    <>
+                        <div className="space-y-4">
+                            <Skeleton className="h-[38px] w-full rounded-sm" />
+                            <Skeleton className="h-11 sm:h-[38px] w-full rounded-sm" />
+                        </div>
+                        <div className="w-full">
+                            <Skeleton className="h-10 w-72 rounded-sm" />
+                            <div className="mt-6">
+                                <AdminScheduleRowsSkeleton />
+                            </div>
+                        </div>
+                    </>
+                ) : seasonIdValue ? (
                     <>
                         <div className="space-y-4">
                             <MatchTypeTabs

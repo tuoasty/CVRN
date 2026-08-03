@@ -8,6 +8,7 @@ import MatchHeader from "@/app/features/matchStats/MatchHeader";
 import StatViewToggle from "@/app/features/matchStats/StatViewToggle";
 import TeamSelectorBar, {TeamView} from "@/app/features/matchStats/TeamSelectorBar";
 import PreMatchRosters from "@/app/features/matchStats/PreMatchRosters";
+import MatchVodSection from "@/app/features/media/MatchVodSection";
 
 type Props = {
     detail: MatchDetail;
@@ -28,6 +29,9 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
 
     const isPlayable = match.status === "completed" && !match.is_forfeit;
 
+    const hasStats = statTotals.length > 0;
+    const vod = detail.mediaPosts.find(p => p.type === "video") ?? null;
+
     return (
         <div className="space-y-6">
             <MatchHeader detail={detail} regionCode={regionCode} seasonSlug={seasonSlug} standingMethod={detail.standingMethod} />
@@ -42,7 +46,7 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
                         rosters={detail.rosters}
                     />
                 )
-            ) : (
+            ) : hasStats ? (
                 <Tabs defaultValue="total" className="space-y-3">
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                         <TabsList>
@@ -86,7 +90,9 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
                         </TabsContent>
                     ))}
                 </Tabs>
-            )}
+            ) : null}
+
+            {vod && <MatchVodSection post={vod} />}
         </div>
     );
 }
