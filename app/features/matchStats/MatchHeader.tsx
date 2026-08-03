@@ -11,6 +11,7 @@ import type {Team} from "@/shared/types/db";
 import {formatMatchDate} from "@/app/lib/formatDate";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
 import GFXImageDialog from "@/app/features/media/GFXImageDialog";
+import GfxFrame from "@/app/features/media/GfxFrame";
 import {StandingMethod} from "@/shared/types/standing";
 
 const ROUND_LABELS: Record<string, string> = {
@@ -71,18 +72,16 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
         ? buildPublicTeamHref({regionCode, seasonSlug, teamSlug: awayTeam.slug})
         : null;
 
+    const margin = resolveMatchMargin({
+        isCompleted, isPoints, match, homeTeam, awayTeam, homePts, awayPts,
+    });
+    const homeMargin = margin?.mode === "per-team" ? margin.home : null;
+    const awayMargin = margin?.mode === "per-team" ? margin.away : null;
+
     const setChips = <SetChips sets={sets} visible={isCompleted && sets.length > 0} />;
-    const marginRow = (
-        <MarginRow
-            isCompleted={isCompleted}
-            isPoints={isPoints}
-            match={match}
-            homeTeam={homeTeam}
-            awayTeam={awayTeam}
-            homePts={homePts}
-            awayPts={awayPts}
-        />
-    );
+    const marginChip = margin?.mode === "symmetric"
+        ? <MatchMarginChip magnitude={margin.magnitude} unit={margin.unit} />
+        : null;
     const officialsRow = <OfficialsRow referees={referees} media={media} />;
 
     return (
@@ -142,36 +141,51 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                     <button
                         type="button"
                         onClick={() => setGfxOpen(true)}
-                        className="relative aspect-video w-full overflow-hidden rounded-sm border border-border transition-shadow hover:shadow-md"
+                        className="block w-full rounded-sm border border-border transition-shadow hover:shadow-md"
                         aria-label={`View ${gfx.title} full size`}
                     >
-                        <Image
+                        <GfxFrame
                             src={gfx.image_url}
                             alt={gfx.title}
-                            fill
                             priority
                             sizes="(min-width: 1024px) 55vw, 100vw"
-                            className="object-cover"
+                            className="aspect-video w-full"
                         />
                     </button>
 
                     <div className="flex flex-col justify-center gap-3 min-w-0">
-                        <TeamScoreRow
-                            team={homeTeam}
-                            href={homeTeamHref}
-                            setsWon={homeSets}
-                            won={homeWon}
-                            isCompleted={isCompleted}
-                        />
-                        <TeamScoreRow
-                            team={awayTeam}
-                            href={awayTeamHref}
-                            setsWon={awaySets}
-                            won={awayWon}
-                            isCompleted={isCompleted}
-                        />
+                        {isCompleted ? (
+                            <>
+                                <TeamScoreRow
+                                    team={homeTeam}
+                                    href={homeTeamHref}
+                                    setsWon={homeSets}
+                                    won={homeWon}
+                                    margin={homeMargin}
+                                    unit={margin?.unit}
+                                />
+                                <TeamScoreRow
+                                    team={awayTeam}
+                                    href={awayTeamHref}
+                                    setsWon={awaySets}
+                                    won={awayWon}
+                                    margin={awayMargin}
+                                    unit={margin?.unit}
+                                />
+                            </>
+                        ) : (
+                            /* Nothing has happened yet, so the stacked rows would read as two
+                               dashes above each other. Side by side states the fixture instead. */
+                            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                                <TeamColumn team={homeTeam} href={homeTeamHref} won={false} size="md" />
+                                <span className="text-lg sm:text-xl font-bold text-muted-foreground/50 px-1">
+                                    VS
+                                </span>
+                                <TeamColumn team={awayTeam} href={awayTeamHref} won={false} size="md" />
+                            </div>
+                        )}
                         {setChips}
-                        {marginRow}
+                        {marginChip}
                         {officialsRow}
                     </div>
                 </div>
@@ -179,7 +193,13 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                 <>
                     {/* Team matchup */}
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6 py-2 sm:py-3">
-                        <TeamColumn team={homeTeam} href={homeTeamHref} won={homeWon} />
+                        <TeamColumn
+                            team={homeTeam}
+                            href={homeTeamHref}
+                            won={homeWon}
+                            margin={homeMargin}
+                            unit={margin?.unit}
+                        />
 
                         {isCompleted ? (
                             <div className="flex items-center gap-2 sm:gap-4 px-1 sm:px-2">
@@ -203,11 +223,17 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                             <span className="text-lg sm:text-2xl font-bold text-muted-foreground/50 px-2">VS</span>
                         )}
 
-                        <TeamColumn team={awayTeam} href={awayTeamHref} won={awayWon} />
+                        <TeamColumn
+                            team={awayTeam}
+                            href={awayTeamHref}
+                            won={awayWon}
+                            margin={awayMargin}
+                            unit={margin?.unit}
+                        />
                     </div>
 
                     {setChips}
-                    {marginRow}
+                    {marginChip}
                     {officialsRow}
                 </>
             )}
@@ -257,13 +283,15 @@ function TeamScoreRow({
     href,
     setsWon,
     won,
-    isCompleted,
+    margin,
+    unit,
 }: {
     team: Team | null;
     href: string | null;
     setsWon: number;
     won: boolean;
-    isCompleted: boolean;
+    margin?: number | null;
+    unit?: MarginUnit;
 }) {
     const nameClass = `text-base sm:text-lg truncate ${
         won ? "font-bold text-foreground" : "font-medium text-muted-foreground"
@@ -287,27 +315,50 @@ function TeamScoreRow({
                         )}
                     </span>
                 )}
+                {margin !== null && margin !== undefined && unit && (
+                    <div className="mt-1">
+                        <MarginBadge value={margin} unit={unit} />
+                    </div>
+                )}
             </div>
             <span
                 className={`text-3xl sm:text-4xl font-bold tabular-nums shrink-0 ${
                     won ? "text-foreground" : "text-muted-foreground"
                 }`}
             >
-                {isCompleted ? setsWon : "–"}
+                {setsWon}
             </span>
         </div>
     );
 }
 
-/** Default layout: logo above name, mirrored either side of the score. */
-function TeamColumn({team, href, won}: {team: Team | null; href: string | null; won: boolean}) {
-    const nameClass = `w-full text-sm sm:text-lg text-center truncate ${
+/**
+ * Default layout: logo above name, mirrored either side of the score. `md` is for the GFX
+ * spread, where this sits in a ~430px column rather than the full page width.
+ */
+function TeamColumn({
+    team,
+    href,
+    won,
+    size = "lg",
+    margin,
+    unit,
+}: {
+    team: Team | null;
+    href: string | null;
+    won: boolean;
+    size?: "md" | "lg";
+    margin?: number | null;
+    unit?: MarginUnit;
+}) {
+    const nameClass = `w-full text-sm text-center truncate ${size === "lg" ? "sm:text-lg" : "sm:text-base"} ${
         won ? "font-bold text-foreground" : "font-medium text-muted-foreground"
     }`;
+    const logoClass = size === "lg" ? "w-20 h-20 sm:w-24 sm:h-24" : "w-16 h-16 sm:w-20 sm:h-20";
 
     return (
         <div className="flex flex-col items-center gap-2 min-w-0">
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-sm overflow-hidden">
+            <div className={`relative ${logoClass} rounded-sm overflow-hidden`}>
                 <TeamLogo team={team} sizes="96px" />
             </div>
             {href ? (
@@ -321,6 +372,9 @@ function TeamColumn({team, href, won}: {team: Team | null; href: string | null; 
                         <span className="block text-[10px] text-muted-foreground/50 font-normal normal-case tracking-normal">disbanded</span>
                     )}
                 </span>
+            )}
+            {margin !== null && margin !== undefined && unit && (
+                <MarginBadge value={margin} unit={unit} />
             )}
         </div>
     );
@@ -356,7 +410,26 @@ function SetChips({sets, visible}: {sets: MatchDetail["sets"]; visible: boolean}
     );
 }
 
-function MarginRow({
+/**
+ * Which shape the margin takes is decided by the data, not by match status.
+ *
+ * A normal result is an exact mirror — `validateAndCalculateMatchResult` sets
+ * `awayLvr = -homeLvr` — so a single `±` figure is complete information and two signed badges are
+ * redundant. A forfeit is hard-coded `-10 / +5`, points are `2.5 / 0.5`, and a BYE has one side
+ * missing: none of those cancel out, so each value has to stay welded to the team it belongs to.
+ * That one test also removes the old left-means-home convention, which silently broke the moment
+ * the GFX layout started stacking the teams vertically.
+ */
+const MARGIN_EPSILON = 0.001;
+
+type MarginUnit = "LVR" | "pts";
+
+type MatchMargin =
+    | {mode: "symmetric"; magnitude: number; unit: MarginUnit}
+    | {mode: "per-team"; home: number | null; away: number | null; unit: MarginUnit}
+    | null;
+
+function resolveMatchMargin({
     isCompleted,
     isPoints,
     match,
@@ -372,71 +445,61 @@ function MarginRow({
     awayTeam: Team | null;
     homePts: number;
     awayPts: number;
-}) {
+}): MatchMargin {
     if (!isCompleted) return null;
 
-    if (isPoints) {
-        if (match.home_team_points === null && match.away_team_points === null) return null;
-        return (
-            <div className="flex items-center justify-between gap-2 pt-1">
-                <div>
-                    {!homeTeam?.is_bye && match.home_team_points !== null && match.home_team_points !== undefined && (
-                        <Badge
-                            variant="outline"
-                            className="h-5 px-2 text-[11px] font-semibold tabular-nums bg-primary/10 text-primary border-primary/20"
-                        >
-                            +{homePts.toFixed(1)} pts
-                        </Badge>
-                    )}
-                </div>
-                <div>
-                    {!awayTeam?.is_bye && match.away_team_points !== null && match.away_team_points !== undefined && (
-                        <Badge
-                            variant="outline"
-                            className="h-5 px-2 text-[11px] font-semibold tabular-nums bg-primary/10 text-primary border-primary/20"
-                        >
-                            +{awayPts.toFixed(1)} pts
-                        </Badge>
-                    )}
-                </div>
-            </div>
-        );
-    }
+    const unit: MarginUnit = isPoints ? "pts" : "LVR";
+    const rawHome = isPoints ? match.home_team_points : match.home_team_lvr;
+    const rawAway = isPoints ? match.away_team_points : match.away_team_lvr;
 
-    if (match.home_team_lvr === null && match.away_team_lvr === null) return null;
+    // A bye neither gains nor loses anything, so its side is absent rather than zero.
+    const home = homeTeam?.is_bye || rawHome === null || rawHome === undefined
+        ? null
+        : (isPoints ? homePts : rawHome);
+    const away = awayTeam?.is_bye || rawAway === null || rawAway === undefined
+        ? null
+        : (isPoints ? awayPts : rawAway);
+
+    if (home === null && away === null) return null;
+
+    // Points are awarded, not traded, so they are never a swing even if two values happen to cancel.
+    const cancels = !isPoints
+        && home !== null
+        && away !== null
+        && Math.abs(home + away) <= MARGIN_EPSILON;
+
+    return cancels
+        ? {mode: "symmetric", magnitude: Math.abs(home!), unit}
+        : {mode: "per-team", home, away, unit};
+}
+
+/** One figure for the whole match, on the same centre line as the set chips. */
+function MatchMarginChip({magnitude, unit}: {magnitude: number; unit: MarginUnit}) {
     return (
-        <div className="flex items-center justify-between gap-2 pt-1">
-            <div>
-                {!homeTeam?.is_bye && match.home_team_lvr !== null && match.home_team_lvr !== undefined && (
-                    <Badge
-                        variant="outline"
-                        className={`h-5 px-2 text-[11px] font-semibold tabular-nums ${
-                            match.home_team_lvr >= 0
-                                ? "bg-green-600/10 text-green-600 border-green-600/20"
-                                : "bg-red-600/10 text-red-600 border-red-600/20"
-                        }`}
-                    >
-                        {match.home_team_lvr >= 0 ? "+" : ""}
-                        {match.home_team_lvr.toFixed(1)} LVR
-                    </Badge>
-                )}
-            </div>
-            <div>
-                {!awayTeam?.is_bye && match.away_team_lvr !== null && match.away_team_lvr !== undefined && (
-                    <Badge
-                        variant="outline"
-                        className={`h-5 px-2 text-[11px] font-semibold tabular-nums ${
-                            match.away_team_lvr >= 0
-                                ? "bg-green-600/10 text-green-600 border-green-600/20"
-                                : "bg-red-600/10 text-red-600 border-red-600/20"
-                        }`}
-                    >
-                        {match.away_team_lvr >= 0 ? "+" : ""}
-                        {match.away_team_lvr.toFixed(1)} LVR
-                    </Badge>
-                )}
-            </div>
+        <div className="flex items-center justify-center pt-1">
+            <Badge
+                variant="outline"
+                className="h-5 px-2 text-[11px] font-semibold tabular-nums bg-green-600/10 text-green-600 border-green-600/20"
+            >
+                ±{magnitude.toFixed(1)} {unit}
+            </Badge>
         </div>
+    );
+}
+
+/** One team's own figure, rendered inside that team's element so position carries no meaning. */
+function MarginBadge({value, unit}: {value: number; unit: MarginUnit}) {
+    const tone = unit === "pts"
+        ? "bg-primary/10 text-primary border-primary/20"
+        : value >= 0
+            ? "bg-green-600/10 text-green-600 border-green-600/20"
+            : "bg-red-600/10 text-red-600 border-red-600/20";
+
+    return (
+        <Badge variant="outline" className={`h-5 px-2 text-[11px] font-semibold tabular-nums ${tone}`}>
+            {value >= 0 ? "+" : ""}
+            {value.toFixed(1)} {unit}
+        </Badge>
     );
 }
 
