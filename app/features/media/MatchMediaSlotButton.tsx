@@ -23,10 +23,6 @@ interface MatchMediaSlotButtonProps {
     defaultTitle?: string
 }
 
-/**
- * Row-level entry point: one button per slot so attachment state is legible down the whole
- * schedule list without opening anything.
- */
 export default function MatchMediaSlotButton({ matchId, slot, current, onChanged, defaultTitle }: MatchMediaSlotButtonProps) {
     const [open, setOpen] = useState(false)
     const { label, Icon } = SLOT_META[slot]

@@ -6,9 +6,8 @@ export const REGION_ALL = "all" as const;
 export const SEASON_ACTIVE = "active" as const;
 export const SEASON_INACTIVE = "inactive" as const;
 
-/** `all`, or a lowercase region code. */
 export type RegionFilter = typeof REGION_ALL | string;
-/** `active`, `inactive`, or a lowercase season slug. A slug is only legal alongside a region. */
+
 export type SeasonFilter = typeof SEASON_ACTIVE | typeof SEASON_INACTIVE | string;
 
 export interface TeamsFilters {
@@ -33,10 +32,6 @@ interface SelectTeamsArgs {
     filters: TeamsFilters;
 }
 
-/**
- * A team row carries its season's id/name/slug but not its end_date, so active/inactive
- * has to be resolved against the seasons list rather than the team itself.
- */
 export function selectTeams({ teams, seasons, filters }: SelectTeamsArgs): TeamWithRegion[] {
     const activeSeasonIds = new Set(
         seasons.filter(isSeasonActive).map((season) => season.id)

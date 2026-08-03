@@ -5,18 +5,8 @@ import { SWRFallback } from "@/app/providers/SWRFallback";
 import { getCachedRegions, getCachedSeasons } from "@/server/cache/publicReads";
 import { logger } from "@/server/utils/logger";
 
-/**
- * Reads go through the cached, cookie-free helpers rather than the server actions.
- *
- * This layout wraps every route under (public), and a layout's render is part of each
- * descendant's render — so the `cookies()` call inside `createServerSupabase()` used to
- * mark all ~20 public routes as dynamic, making them impossible to serve from the CDN.
- * Keep this file free of Dynamic APIs (`cookies`, `headers`, `searchParams`, …) or every
- * public page silently goes back to rendering per-request.
- */
 async function PublicLayoutDataProvider({ children }: { children: React.ReactNode }) {
-    // The cached readers throw rather than return an empty result, so a transient failure
-    // is never written to the cache. Catch here to keep the shell rendering.
+
     const [regions, seasons] = await Promise.all([
         getCachedRegions().catch((error) => {
             logger.error({ error }, "PublicLayout: failed to load regions");

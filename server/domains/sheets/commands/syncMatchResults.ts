@@ -58,7 +58,6 @@ export async function syncMatchResults(
         let rowsErrored = parseErrors.length;
         const errors = [...parseErrors];
 
-        // Resolved once on the first bye row, then reused for the rest of the sync.
         let byeTeamId: string | null = null;
 
         for (const result of parsed) {
@@ -241,9 +240,7 @@ export async function syncMatchResults(
                     forfeitingTeam = 'home';
                 }
             } else if (result.sets.length > 0) {
-                // Secondary forfeit detection: regions that don't use the FF column
-                // (e.g. NA) record forfeits as 25-0 sweeps. If every set is a 25-0
-                // shutout for the same team, treat it as a forfeit by the shut-out side.
+
                 const allHomeShutouts = result.sets.every(s => s.homeScore === 25 && s.awayScore === 0);
                 const allAwayShutouts = result.sets.every(s => s.awayScore === 25 && s.homeScore === 0);
                 if (allHomeShutouts) {

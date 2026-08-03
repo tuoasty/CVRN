@@ -1,14 +1,5 @@
 import { Skeleton } from "@/app/components/ui/skeleton";
 
-/**
- * Lives here rather than under `home/` because `app/(public)/home/` holds components, not a
- * route — a loading.tsx there creates no boundary and the page fell back to the bare spinner
- * in `(public)/loading.tsx`.
- *
- * Heights are measured against the real components, not guessed: 376px is the fixed height
- * every center-card branch shares, 100px is `CompactMatchCard` in compact mode, and 46px is a
- * `StandingsPreview` row (p-2.5 around a 24px logo).
- */
 export default function HomeLoading() {
     return (
         <div className="page-wide py-6">
@@ -19,8 +10,7 @@ export default function HomeLoading() {
                 </aside>
 
                 <section className="space-y-6">
-                    {/* Matches the featured carousel, which is the branch that renders whenever any
-                        upcoming or recent match has a graphic attached. */}
+                    {}
                     <Skeleton className="aspect-video min-h-[280px] w-full rounded-sm" />
 
                     <div className="space-y-3">
@@ -38,8 +28,7 @@ export default function HomeLoading() {
                     </div>
                 </section>
 
-                {/* No `hidden lg:block` — the real right aside has none, so hiding it here would
-                    blank the column below lg while the page shows a full media panel. */}
+                {}
                 <aside>
                     <div className="panel p-3 space-y-3">
                         <div className="border border-border rounded-sm overflow-hidden">

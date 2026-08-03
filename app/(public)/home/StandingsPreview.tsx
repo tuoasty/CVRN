@@ -26,7 +26,7 @@ export default function StandingsPreview({
                                                     seasonSlug,
                                                     standingMethod = "lvr",
                                                 }: StandingsPreviewProps) {
-    // Ranking logic lives in the standings view's rank column — the single source of truth.
+
     const topStandings = useMemo(() => {
         return [...standings]
             .sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER))
@@ -48,8 +48,7 @@ export default function StandingsPreview({
         <div className="space-y-3">
             <div className="space-y-1">
                 {topStandings.map((standing, index) => {
-                    // The view's rank column is the source of truth; index is only a fallback, and
-                    // using it directly would desync the moment the view returns a tie or a gap.
+
                     const rank = standing.rank ?? index + 1;
                     const nextRank = topStandings[index + 1]?.rank ?? index + 2;
                     const wins = standing.wins || 0;
@@ -58,14 +57,10 @@ export default function StandingsPreview({
                     const isPodium = rank <= 3;
                     const teamHref = buildPublicTeamHref({regionCode, seasonSlug, teamSlug: standing.team_slug});
 
-                    // One rule replaces four stripe weights: a line where qualification ends. Only
-                    // renders when the cutoff actually falls inside the eight rows on show.
                     const showCutoff = isQualified
                         && index < topStandings.length - 1
                         && nextRank > qualifiedTeams;
 
-                    // Uniform border on every row — the old conditional border-l-2/4 changed the
-                    // border width per row, so content started at a different x on each one.
                     const rowClass = cn(
                         "flex items-center gap-3 p-2.5 rounded-sm border border-border",
                         "transition-colors hover:bg-muted/30"
@@ -83,8 +78,7 @@ export default function StandingsPreview({
                             </div>
 
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                {/* Logos keep full opacity below the cutoff — dimming the whole row
-                                    took the team identity with it. */}
+                                {}
                                 {standing.team_logo_url && (
                                     <div className="relative w-6 h-6 shrink-0">
                                         <Image
@@ -109,8 +103,7 @@ export default function StandingsPreview({
                                 {wins}-{losses}
                             </div>
 
-                            {/* Neutral, not blue or red: a rating is data, and this system reserves
-                                blue for actions and red for errors. */}
+                            {}
                             <div className={cn(
                                 "text-sm font-bold tabular-nums",
                                 isQualified ? "text-foreground" : "text-muted-foreground"
@@ -149,10 +142,6 @@ export default function StandingsPreview({
     );
 }
 
-/**
- * Where the playoff places run out. A dashed rule reads as a boundary without spending a colour —
- * blue means act and yellow means location in this system, and a cutoff is neither.
- */
 function PlayoffCutoff() {
     return (
         <div className="relative flex items-center justify-center py-2" aria-hidden>

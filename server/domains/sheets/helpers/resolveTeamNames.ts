@@ -8,9 +8,6 @@ export function resolveTeamNames(
 ): Map<string, string> {
     const map = new Map<string, string>();
 
-    // Disbanded teams are still resolvable — a team can disband mid-season but its
-    // completed matches must keep syncing. Apply disbanded first, then active, so an
-    // active team always wins a name collision (e.g. a reused or reassigned name).
     const apply = (subset: Team[]) => {
         const ids = new Set(subset.map(t => t.id));
         for (const entry of history) {

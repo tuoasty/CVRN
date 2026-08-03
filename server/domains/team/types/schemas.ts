@@ -1,8 +1,6 @@
 import {z} from "zod"
 import {normalizeTeamName} from "../helpers/normalizeTeamName";
 
-// Strips emoji before the name is written, so admin-entered names key the same way as sheet cells.
-// The refine catches names that were *only* emoji and normalized down to nothing.
 const teamNameField = () =>
     z.string()
         .min(1)

@@ -19,7 +19,6 @@ async function resolveOfficialId(
     }
     if (existing.value) return existing.value.id;
 
-    // Not in DB — look up on Roblox
     const robloxResult = await getRobloxUserByName(username);
     if (!robloxResult.ok || robloxResult.value.length === 0) {
         errors.push({row: rowNumber, message: `[${matchCode}] Official "${username}": not found on Roblox — check username spelling`});

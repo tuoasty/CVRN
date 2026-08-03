@@ -6,10 +6,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/pop
 import { roundLabelShort, roundLabelLong } from "@/app/utils/playoffRounds";
 import { cn } from "@/lib/utils";
 
-// Shared by the public matches page and the admin match management page. Both
-// pick a week or a playoff round the same way; only the state backing them
-// differs (URL params on public, local state on admin).
-
 interface MatchTypeTabsProps {
     activeTab: "season" | "playoffs";
     playoffsEnabled: boolean;
@@ -61,7 +57,7 @@ export function WeekSelector({ effectiveWeek, weeks, onWeekChange }: WeekSelecto
 
     return (
         <>
-            {/* Mobile */}
+            {}
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <div className="sm:hidden flex items-center border border-border rounded-md h-11 overflow-hidden cursor-pointer">
@@ -102,8 +98,7 @@ export function WeekSelector({ effectiveWeek, weeks, onWeekChange }: WeekSelecto
                 </PopoverContent>
             </Popover>
 
-            {/* Desktop — min-h holds the bar open while the week list is still loading;
-                without it an empty children array collapses to a 2px sliver that jumps. */}
+            {}
             <div className="hidden sm:flex min-h-[36px] overflow-x-auto border border-border rounded-sm overflow-hidden">
                 {weeks.map(w => {
                     const isActive = w === effectiveWeek;
@@ -144,7 +139,7 @@ export function PlayoffStepper({ rounds, effectiveRound, roundCountMap, onRoundC
 
     return (
         <>
-            {/* Mobile */}
+            {}
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                     <div className="sm:hidden flex items-center border border-border rounded-md h-11 overflow-hidden cursor-pointer">
@@ -185,7 +180,7 @@ export function PlayoffStepper({ rounds, effectiveRound, roundCountMap, onRoundC
                 </PopoverContent>
             </Popover>
 
-            {/* Desktop */}
+            {}
             <div className="hidden sm:flex min-h-[52px] overflow-x-auto gap-0 scrollbar-hide border border-border rounded-sm">
                 {rounds.map((round, idx) => {
                     const isCompleted = idx < activeIdx;

@@ -12,7 +12,7 @@ import {
 export default function StandingsLoading() {
     return (
         <div className="page-wide space-y-6 py-6">
-            {/* Page header — matches StandingsPage header */}
+            {}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
@@ -34,7 +34,7 @@ export default function StandingsLoading() {
             </div>
 
             <div className="space-y-4">
-                {/* Legend panel — REQUIRED; matches StandingsTable isLoading state */}
+                {}
                 <div className="panel p-4 border-l-4 border-l-primary/30">
                     <div className="flex items-center justify-between">
                         <Skeleton className="h-8 w-64 rounded-sm" />
@@ -42,7 +42,7 @@ export default function StandingsLoading() {
                     </div>
                 </div>
 
-                {/* Table — same component structure as StandingsTable to match row heights */}
+                {}
                 <div className="rounded-sm border border-border overflow-hidden">
                     <Table>
                         <TableHeader>

@@ -22,7 +22,7 @@ interface MatchMediaSlotProps {
     matchId: string
     current: MediaPost | null
     onChanged: () => void
-    /** Prefills the create form; see `buildMatchMediaTitle`. Still editable. */
+
     defaultTitle?: string
 }
 
@@ -208,8 +208,6 @@ function CreateForSlot({ slot, label, matchId, onChanged, defaultTitle }: { slot
             if (slot === 'gfx' && imageFile) formData.set('imageFile', imageFile)
             if (slot === 'video') formData.set('videoUrl', videoUrl.trim())
 
-            // message, not the code map: create failures are field-level ("Invalid URL") and
-            // the slot guard already returns a user-facing sentence.
             const result = await createMediaPostAction(formData)
             if (!result.ok) { toast.error(result.error.message); return }
             toast.success(`${label} created`)
@@ -248,7 +246,7 @@ function CreateForSlot({ slot, label, matchId, onChanged, defaultTitle }: { slot
                 >
                     {preview ? (
                         <div className="space-y-3">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            {}
                             <img src={preview} alt="preview" className="max-h-40 mx-auto rounded object-contain" />
                             <Button
                                 type="button"

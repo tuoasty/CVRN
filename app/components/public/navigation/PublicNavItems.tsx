@@ -29,12 +29,6 @@ export default function PublicNavItems({
     const params = useParams<{ region?: string; season?: string }>();
     const [fallbackCtx, setFallbackCtx] = useState<{ region: string; season: string } | null>(null);
 
-    // The navbar lives in the persistent layout and never remounts, so a `[]` effect
-    // would only ever see the cookie as it was on first load (null in a fresh incognito
-    // session, even after picking a season). Re-read when the season context changes —
-    // i.e. when leaving a season page (params -> undefined) we pick up the cookie that
-    // RegionSeasonSelector just wrote. Intra-season navigation (matches -> standings)
-    // leaves params unchanged and does not re-read.
     useEffect(() => {
         const entry = document.cookie.split(";").map(c => c.trim()).find(c => c.startsWith("cvrn_last_ctx="));
         if (entry) {

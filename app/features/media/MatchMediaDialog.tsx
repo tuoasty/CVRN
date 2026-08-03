@@ -23,7 +23,6 @@ export default function MatchMediaDialog({ matchId, mediaPosts, defaultTitle }: 
     const gfx = mediaPosts.find(p => p.type === 'gfx') ?? null
     const vod = mediaPosts.find(p => p.type === 'video') ?? null
 
-    // The page is server-rendered, so the slots only pick up their new state after a refresh.
     function handleChanged() {
         router.refresh()
     }

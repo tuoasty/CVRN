@@ -7,8 +7,7 @@ export function compareSeasons(a: Season, b:Season): number {
   if(rankA !== rankB) return rankA - rankB;
 
   if(rankA !== 2) return new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
-  
-  // end date is guaranteed to be not null as checked in isSeasonActive
+
   return new Date(b.end_date!).getTime() - new Date(a.end_date!).getTime()
 }
 

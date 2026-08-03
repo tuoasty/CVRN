@@ -41,25 +41,6 @@ import {getAllMediaPosts} from "@/server/domains/media";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS} from "./tags";
 
-/**
- * Cached, cookie-free reads for public pages.
- *
- * Two rules make this work, and breaking either one silently undoes the caching:
- *
- * 1. Always use `createPublicClient()`, never `createServerSupabase()`. The latter calls
- *    `cookies()`, which is a Dynamic API — it forces every route beneath the calling
- *    layout to render per-request, so nothing can be served from the CDN. (`unstable_cache`
- *    also throws outright if `cookies()` is called inside it.)
- *
- * 2. Never cache a failure. `unstable_cache` stores whatever the callback returns, so a
- *    momentary Supabase hiccup returning `[]` would be pinned for the full 24h window.
- *    `unwrap` throws instead, which leaves the cache empty, and callers catch to degrade
- *    gracefully — so a transient error costs one bad render, not a bad day.
- *
- * Results here are shared across ALL viewers. Only ever cache data that is safe for
- * anonymous users. The publishable key plus RLS public-read policies is the structural
- * guard: this client cannot read admin-only rows even if wired incorrectly.
- */
 function unwrap<T>(result: Result<T, {message: string}>, label: string): T {
     if (!result.ok) {
         throw new Error(`${label}: ${result.error.message}`);
@@ -67,18 +48,6 @@ function unwrap<T>(result: Result<T, {message: string}>, label: string): T {
     return result.value;
 }
 
-/**
- * For queries that signal "genuinely does not exist" as `Err` with code NOT_FOUND.
- *
- * The distinction matters far more once results are cached: a real absence is a stable
- * fact worth caching as `null` (and it shields us from bots probing random slugs), while
- * a transient DB failure must throw so nothing is written. The underlying queries return
- * `Err` for both cases, so callers that treat any `Err` as a 404 will happily cache a
- * "season not found" page for 24h because Supabase blipped once.
- *
- * Note the cached `null` depends on region/season mutations calling `revalidateTag` —
- * otherwise a newly created season stays invisible for up to the fallback window.
- */
 function unwrapNullable<T>(
     result: Result<T, {message: string; code?: string}>,
     label: string,
@@ -108,8 +77,6 @@ export const getCachedArchive = unstable_cache(
     {tags: [CACHE_TAGS.seasons], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
-// Podium and awards for one archived season. Tagged with teams and players because the
-// detail embeds team logos and player avatars.
 export const getCachedSeasonHistoryDetail = unstable_cache(
     async (slug: string, regionCode: string) =>
         unwrapNullable(
@@ -123,7 +90,6 @@ export const getCachedSeasonHistoryDetail = unstable_cache(
     },
 );
 
-// Arguments participate in the cache key, so each region code gets its own entry.
 export const getCachedRegionByCode = unstable_cache(
     async (code: string) =>
         unwrapNullable(await getRegionByCode(createPublicClient(), code), "getCachedRegionByCode"),
@@ -131,14 +97,6 @@ export const getCachedRegionByCode = unstable_cache(
     {tags: [CACHE_TAGS.regions], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
-/**
- * Mirrors `getPlayerDetailAction`, minus the cookie-bound client and the read-path
- * Roblox sync. Profile freshness now comes from the nightly sync-players cron, so a
- * page view no longer triggers outbound Roblox calls.
- *
- * Returns `null` for an unknown username so the caller can 404 without caching a
- * transient failure as a permanent miss.
- */
 export const getCachedPlayerDetail = unstable_cache(
     async (username: string): Promise<PlayerDetail | null> => {
         const supabase = createPublicClient();
@@ -166,11 +124,6 @@ export const getCachedPlayerDetail = unstable_cache(
     {tags: [CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
-/**
- * All teams with their nested season/region. Callers filter by season in memory — the set
- * is ~220 rows and the card grid needs the nested region shape this query already builds.
- * Tagged with players too: captain and playerCount derive from rosters.
- */
 export const getCachedTeamsWithRegions = unstable_cache(
     async () =>
         unwrap(await getAllTeamsWithRegions(createPublicClient()), "getCachedTeamsWithRegions"),
@@ -188,8 +141,6 @@ export const getCachedTeamWithPlayers = unstable_cache(
     {tags: [CACHE_TAGS.teams, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
-// Standings are a database view computed from match results, so they change only when
-// matches do — invalidated by the matches tag as well as standings.
 export const getCachedStandings = unstable_cache(
     async (seasonId: string, regionId: string) =>
         unwrap(await getStandings(createPublicClient(), {seasonId, regionId}), "getCachedStandings"),
@@ -200,8 +151,6 @@ export const getCachedStandings = unstable_cache(
     },
 );
 
-// Brackets advance when matches complete (advance_playoff_winner runs inside the RPC),
-// so match mutations must invalidate this too.
 export const getCachedPlayoffBrackets = unstable_cache(
     async (seasonId: string) =>
         unwrap(
@@ -229,7 +178,6 @@ export const getCachedRecentMatches = unstable_cache(
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
-// Box scores live here too, so per-set stats invalidate alongside the match itself.
 export const getCachedMatchDetail = unstable_cache(
     async (regionCode: string, seasonSlug: string, matchCode: string) =>
         unwrapNullable(
@@ -262,19 +210,6 @@ export const getCachedTeamNameHistory = unstable_cache(
     ["public:team-name-history"],
     {tags: [CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
-
-/* ── Matches page ──────────────────────────────────────────────────────────────
- *
- * These back the /[region]/[season]/matches route, which used to fetch all of this
- * client-side through nine SWR hooks (nine uncacheable server-action POSTs per view,
- * two of them waterfalled behind the schedule resolving).
- *
- * Note the cache-key cardinality on the parameterised ones. `unstable_cache` derives a
- * separate entry per argument tuple, so these are only safe because their argument space
- * is small and bounded: weeks and rounds per season. Do not extend this pattern to
- * anything keyed on free-form user input (a search box, a page offset) — that mints an
- * unbounded number of entries and blows the Data Cache write budget.
- */
 
 export const getCachedWeekSchedule = unstable_cache(
     async (seasonId: string, week: number) =>
@@ -323,9 +258,6 @@ export const getCachedPlayoffRoundCounts = unstable_cache(
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
-// Full match rows for a season's bracket. The public playoffs page used to fetch the
-// ENTIRE matches table client-side (`findAllMatches` — no filter, no limit) on every view,
-// to render ~30 cards.
 export const getCachedPlayoffMatches = unstable_cache(
     async (seasonId: string) =>
         unwrap(
@@ -343,11 +275,6 @@ export const getCachedWeekMatchCounts = unstable_cache(
     {tags: [CACHE_TAGS.matches], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
-/**
- * MVP players for a schedule. Takes a pre-sorted, comma-joined id list rather than an
- * array so the cache key is stable — `["b","a"]` and `["a","b"]` must not mint two entries.
- * Callers should use `playerIdsCacheKey()`.
- */
 export const getCachedPlayersByIds = unstable_cache(
     async (joinedIds: string) => {
         const playerIds = joinedIds ? joinedIds.split(",") : [];
@@ -361,7 +288,6 @@ export const getCachedPlayersByIds = unstable_cache(
     {tags: [CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
-/** Stable cache key for `getCachedPlayersByIds` — dedupes and sorts. */
 export function playerIdsCacheKey(ids: string[]): string {
     return [...new Set(ids)].sort().join(",");
 }

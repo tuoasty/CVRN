@@ -8,13 +8,6 @@ const SLOT_LABELS: Record<MatchMediaSlot, string> = {
     video: 'VOD',
 }
 
-/**
- * One GFX and one VOD per match, enforced here rather than by a unique index — same
- * trade-off as the pin caps in `togglePinMediaPost`: a DB constraint would surface as an
- * opaque DB_ERROR, and the cap is a product rule that may well change.
- *
- * `excludePostId` lets a post keep its own slot when it is re-assigned to the same match.
- */
 export async function assertMatchSlotFree(
     supabase: DBClient,
     matchId: string,

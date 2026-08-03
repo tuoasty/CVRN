@@ -75,8 +75,6 @@ export async function deleteMediaPostAction(input: unknown): Promise<Result<void
     return result
 }
 
-// requireAdmin, not this file's requireAuth: the other media actions predate the guard and
-// lean on RLS alone, which is exactly what requireAdmin exists to replace.
 export async function assignMediaToMatchAction(input: unknown): Promise<Result<MediaPost>> {
     const parsed = AssignMediaToMatchSchema.safeParse(input)
     if (!parsed.success) return Err({ message: 'Invalid assignment input', code: 'VALIDATION_ERROR' })

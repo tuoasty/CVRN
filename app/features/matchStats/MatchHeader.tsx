@@ -50,7 +50,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
 
     const gfx = detail.mediaPosts.find(p => p.type === "gfx" && p.image_url) ?? null;
     const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
-    // 'points' shows base + margin bonus; 'points_without_bonus' shows base only.
+
     const homePts = (match.home_team_points ?? 0) + (standingMethod === "points" ? (match.home_team_bonus ?? 0) : 0);
     const awayPts = (match.away_team_points ?? 0) + (standingMethod === "points" ? (match.away_team_bonus ?? 0) : 0);
 
@@ -86,7 +86,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
 
     return (
         <div className="space-y-4 pb-6 border-b border-border">
-            {/* Metadata row */}
+            {}
             <div className="flex items-start justify-between gap-2 pb-3 border-b border-border">
                 <div className="flex flex-col gap-1.5">
                     {(roundLabel ?? match.match_code) && (
@@ -134,9 +134,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
             </div>
 
             {gfx?.image_url ? (
-                /* With a graphic the page is a two-column spread: at 1440px a full-width 16:9
-                   GFX is 810px tall and pushes the entire result below the fold. Side by side
-                   both land ~430px and the graphic is never cropped. */
+
                 <div className="grid grid-cols-1 lg:grid-cols-[7fr_5fr] gap-5 lg:gap-6">
                     <button
                         type="button"
@@ -174,8 +172,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                                 />
                             </>
                         ) : (
-                            /* Nothing has happened yet, so the stacked rows would read as two
-                               dashes above each other. Side by side states the fixture instead. */
+
                             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                                 <TeamColumn team={homeTeam} href={homeTeamHref} won={false} size="md" />
                                 <span className="text-lg sm:text-xl font-bold text-muted-foreground/50 px-1">
@@ -191,7 +188,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                 </div>
             ) : (
                 <>
-                    {/* Team matchup */}
+                    {}
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6 py-2 sm:py-3">
                         <TeamColumn
                             team={homeTeam}
@@ -277,7 +274,6 @@ function TeamLogo({team, sizes}: {team: Team | null; sizes: string}) {
     );
 }
 
-/** Split layout: one row per team, so the set count reads as that team's result. */
 function TeamScoreRow({
     team,
     href,
@@ -332,10 +328,6 @@ function TeamScoreRow({
     );
 }
 
-/**
- * Default layout: logo above name, mirrored either side of the score. `md` is for the GFX
- * spread, where this sits in a ~430px column rather than the full page width.
- */
 function TeamColumn({
     team,
     href,
@@ -410,16 +402,6 @@ function SetChips({sets, visible}: {sets: MatchDetail["sets"]; visible: boolean}
     );
 }
 
-/**
- * Which shape the margin takes is decided by the data, not by match status.
- *
- * A normal result is an exact mirror — `validateAndCalculateMatchResult` sets
- * `awayLvr = -homeLvr` — so a single `±` figure is complete information and two signed badges are
- * redundant. A forfeit is hard-coded `-10 / +5`, points are `2.5 / 0.5`, and a BYE has one side
- * missing: none of those cancel out, so each value has to stay welded to the team it belongs to.
- * That one test also removes the old left-means-home convention, which silently broke the moment
- * the GFX layout started stacking the teams vertically.
- */
 const MARGIN_EPSILON = 0.001;
 
 type MarginUnit = "LVR" | "pts";
@@ -452,7 +434,6 @@ function resolveMatchMargin({
     const rawHome = isPoints ? match.home_team_points : match.home_team_lvr;
     const rawAway = isPoints ? match.away_team_points : match.away_team_lvr;
 
-    // A bye neither gains nor loses anything, so its side is absent rather than zero.
     const home = homeTeam?.is_bye || rawHome === null || rawHome === undefined
         ? null
         : (isPoints ? homePts : rawHome);
@@ -462,7 +443,6 @@ function resolveMatchMargin({
 
     if (home === null && away === null) return null;
 
-    // Points are awarded, not traded, so they are never a swing even if two values happen to cancel.
     const cancels = !isPoints
         && home !== null
         && away !== null
@@ -473,7 +453,6 @@ function resolveMatchMargin({
         : {mode: "per-team", home, away, unit};
 }
 
-/** One figure for the whole match, on the same centre line as the set chips. */
 function MatchMarginChip({magnitude, unit}: {magnitude: number; unit: MarginUnit}) {
     return (
         <div className="flex items-center justify-center pt-1">
@@ -487,7 +466,6 @@ function MatchMarginChip({magnitude, unit}: {magnitude: number; unit: MarginUnit
     );
 }
 
-/** One team's own figure, rendered inside that team's element so position carries no meaning. */
 function MarginBadge({value, unit}: {value: number; unit: MarginUnit}) {
     const tone = unit === "pts"
         ? "bg-primary/10 text-primary border-primary/20"

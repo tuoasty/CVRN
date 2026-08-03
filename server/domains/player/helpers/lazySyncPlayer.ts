@@ -5,16 +5,6 @@ import {updatePlayer} from "@/server/db/players.repo";
 import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {logger} from "@/server/utils/logger";
 
-/**
- * How long a Roblox profile stays fresh before the sync-players cron will refresh it.
- *
- * Was 24h, which meant every rostered player went stale every single day — roughly 1200
- * outbound Roblox calls daily to catch the occasional username or avatar change. Usernames
- * and avatars change rarely, so a week is ample and cuts the traffic by ~7x.
- *
- * This does not delay new players: `needsSync` treats a null `last_synced_at` as stale, so
- * a freshly added player still syncs immediately on the admin write path.
- */
 const SYNC_INTERVAL = 1000 * 60 * 60 * 24 * 7;
 
 export async function lazySyncPlayer(

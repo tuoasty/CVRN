@@ -19,7 +19,7 @@ interface FeaturedMatchCardProps {
     matchLabel: string;
     isRecent?: boolean;
     href?: string | null;
-    /** When present the graphic becomes the card itself; see the full-bleed branch below. */
+
     gfx?: MediaPost | null;
 }
 
@@ -48,12 +48,6 @@ export default function FeaturedMatchCard({
         ? new Date(match.scheduled_at).toLocaleString()
         : "Time TBD";
 
-    /**
-     * Full bleed. The card is 768×376 (2.04:1) against a 16:9 graphic, so filling it crops
-     * roughly 13% of the width — every layout that puts the graphic in a strip above the
-     * matchup crops 30–60% of its height instead. Colours here are literal white rather than
-     * theme tokens: the surface is someone's artwork, not `--card`, in either theme.
-     */
     const bleedInner = gfx?.image_url && (
         <>
             <GfxFrame
@@ -104,7 +98,7 @@ export default function FeaturedMatchCard({
 
     const plainInner = (
         <div className="flex flex-col justify-between h-full">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between pb-3 border-b-2 border-primary/20">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                     {heading}
@@ -127,7 +121,7 @@ export default function FeaturedMatchCard({
                 </div>
             </div>
 
-            {/* Teams */}
+            {}
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-8">
                 <div className={cn("flex flex-col items-center gap-3", isCompleted && !homeWon && "opacity-60")}>
                     {homeTeam?.logo_url && (
@@ -158,7 +152,7 @@ export default function FeaturedMatchCard({
                 </div>
             </div>
 
-            {/* Footer */}
+            {}
             <div className="flex items-center justify-center gap-4 pt-3 border-t border-border">
                 <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-primary" />
@@ -168,9 +162,6 @@ export default function FeaturedMatchCard({
         </div>
     );
 
-    // The bleed variant is 16:9 so a correctly-sized graphic fills it exactly at every breakpoint;
-    // min-h keeps the overlays from crushing it in the narrow three-column range. The plain variant
-    // holds no artwork, so it keeps a fixed height — the two never render together.
     const wrapperClass = bleedInner
         ? "panel relative overflow-hidden aspect-video min-h-[280px] bg-black"
         : "panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent h-[376px]";
@@ -187,16 +178,12 @@ export default function FeaturedMatchCard({
     );
 }
 
-// min-w-0 without flex-1: the pair sits at its natural width so the matchup packs to the left,
-// and only gives ground once long names would overflow the bar.
 function BleedTeam({ team, dim, reverse }: { team?: TeamWithRegion; dim: boolean; reverse?: boolean }) {
     return (
         <div className={cn("flex items-center gap-2.5 min-w-0", reverse && "flex-row-reverse", dim && "opacity-60")}>
             {team?.logo_url && (
                 <div className="relative w-9 h-9 shrink-0">
-                    {/* A dark logo on a transparent PNG disappears into the bottom gradient, and a
-                        dark shadow cannot rescue it. The white halo does; the dark one grounds
-                        light logos. */}
+                    {}
                     <Image
                         src={team.logo_url}
                         alt={team.name}

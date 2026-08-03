@@ -1,15 +1,6 @@
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { ChevronLeft } from "lucide-react";
 
-/**
- * Mirrors the no-GFX header, not the GFX spread. `loading.tsx` gets no params so it cannot know
- * whether a match has a graphic, and the two branches differ by ~300px. Failing toward the smaller
- * one is the safer miss: an aspect-video block that resolves to nothing reads as a broken image,
- * while a compact header resolving to a large graphic reads as a reveal.
- *
- * `MatchHeader`'s root is a bare `space-y-4 pb-6 border-b` — deliberately not a `.panel`, so this
- * must not draw one either.
- */
 export default function MatchDetailLoading() {
     return (
         <div className="page-wide py-6 space-y-4">
@@ -53,7 +44,7 @@ export default function MatchDetailLoading() {
                     ))}
                 </div>
 
-                {/* Symmetric margin: one centred chip, which is every non-forfeit match. */}
+                {}
                 <div className="flex items-center justify-center pt-1">
                     <Skeleton className="h-5 w-24 rounded-sm" />
                 </div>
@@ -81,13 +72,12 @@ export default function MatchDetailLoading() {
                     <Skeleton className="h-9 w-28 rounded-sm" />
                 </div>
 
-                {/* TeamSelectorBar is two h-12 buttons plus a 1px border. */}
+                {}
                 <Skeleton className="h-[50px] w-full rounded-sm" />
 
                 <div className="border border-border rounded-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        {/* The real table is 15 columns by default and 29 when detailed, which is
-                            the desktop default — so this must read as wider than the viewport. */}
+                        {}
                         <div className="min-w-[900px]">
                             <div className="flex items-center gap-3 px-2 h-6 bg-muted/30 border-b border-border/50">
                                 <div className="w-40 shrink-0" />
@@ -120,7 +110,7 @@ export default function MatchDetailLoading() {
                                 </div>
                             ))}
 
-                            {/* Team Totals label row, then one row per team. */}
+                            {}
                             <div className="flex items-center gap-3 px-2 h-8 bg-muted border-t-2 border-border">
                                 <Skeleton className="h-3 w-24 rounded-sm shrink-0" />
                             </div>

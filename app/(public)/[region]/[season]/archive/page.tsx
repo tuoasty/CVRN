@@ -9,8 +9,6 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import { buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
 import { clientLogger } from "@/app/utils/clientLogger";
 
-// ─── Podium ──────────────────────────────────────────────────────────────────
-
 function TeamLogoSmall({ name, logoUrl, size = 28, priority = false }: { name: string; logoUrl: string | null; size?: number; priority?: boolean }) {
     if (logoUrl) {
         return (
@@ -81,8 +79,6 @@ function PodiumSection({ entries, regionCode, seasonSlug }: { entries: SeasonDet
         </div>
     );
 }
-
-// ─── Awards ──────────────────────────────────────────────────────────────────
 
 function getAwardTeam(award: SeasonDetail["season_awards"][number], seasonId: string) {
     const pts = award.players.player_team_seasons?.find(p => p.season_id === seasonId);
@@ -292,8 +288,6 @@ function StaffTeamSection({ awards }: { awards: SeasonDetail["season_awards"] })
     );
 }
 
-// ─── Champion Roster ─────────────────────────────────────────────────────────
-
 type RosterEntry = SeasonDetail["season_awards"][number];
 const ROSTER_ROLE_RANK: Record<string, number> = { captain: 0, vice_captain: 1, court_captain: 2 };
 const ROSTER_ROLE_LABEL: Record<string, string> = { captain: "C", vice_captain: "VC", court_captain: "CC" };
@@ -378,8 +372,6 @@ function ChampionRosterSection({ awards }: { awards: SeasonDetail["season_awards
     );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
 function SeasonDetailSkeleton() {
     return (
         <div className="space-y-6">
@@ -403,11 +395,8 @@ function SeasonDetailSkeleton() {
     );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: string; regionCode: string; seasonSlug: string }) {
-    // Cached reads return null only for a genuine miss and throw on infrastructure
-    // failure, so a Supabase blip can never be cached as a permanent 404.
+
     const [season, regions] = await Promise.all([
         getCachedSeasonHistoryDetail(slug, regionCode),
         getCachedRegions(),

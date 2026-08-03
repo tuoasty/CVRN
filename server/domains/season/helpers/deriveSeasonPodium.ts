@@ -12,8 +12,6 @@ export async function deriveSeasonPodiumFromPlayoffs(
         .eq("round", "final")
         .maybeSingle();
 
-    // No single-elim `final` round -> this is a double-elim season (grand_final +
-    // bracket_reset). Derive the podium from that shape instead.
     if (!finalBracket?.match_id) return deriveDoubleElimPodium(supabase, seasonId);
 
     const {data: finalMatch} = await supabase
@@ -88,9 +86,6 @@ export async function deriveSeasonPodiumFromPlayoffs(
     return podium;
 }
 
-// Double-elim podium. Champion is decided by the grand final unless the
-// lower-bracket finalist wins it and forces the bracket reset (BR), in which case
-// BR is the true final. 3rd place is the loser of the losers final (LF).
 async function deriveDoubleElimPodium(
     supabase: DBClient,
     seasonId: string
@@ -102,7 +97,6 @@ async function deriveDoubleElimPodium(
         .eq("round", "grand_final")
         .maybeSingle();
 
-    // Neither single- nor double-elim final present -> nothing to derive.
     if (!gfBracket?.match_id) return [];
 
     const {data: gfMatch} = await supabase
@@ -114,8 +108,6 @@ async function deriveDoubleElimPodium(
     if (!gfMatch?.home_team_id || !gfMatch?.away_team_id) return [];
     if (gfMatch.home_sets_won == null || gfMatch.away_sets_won == null) return [];
 
-    // GF home = upper-bracket finalist, away = lower-bracket finalist. If home wins
-    // the tournament is over (BR skipped); if away wins, BR is played and decides it.
     const gfHomeWins = gfMatch.home_sets_won > gfMatch.away_sets_won;
 
     let podium: {place: 1 | 2 | 3; teamId: string}[];
@@ -141,7 +133,6 @@ async function deriveDoubleElimPodium(
             .eq("id", brBracket.match_id)
             .maybeSingle();
 
-        // BR forced but not yet resolved -> podium still pending.
         if (!brMatch?.home_team_id || !brMatch?.away_team_id) return [];
         if (brMatch.home_sets_won == null || brMatch.away_sets_won == null) return [];
 
@@ -152,8 +143,6 @@ async function deriveDoubleElimPodium(
         ];
     }
 
-    // 3rd place = loser of the losers final (already beat everyone else in the LB).
-    // Distinct from the GF/BR teams by construction, so no dedup needed.
     const {data: lfBracket} = await supabase
         .from("playoff_brackets")
         .select("match_id")

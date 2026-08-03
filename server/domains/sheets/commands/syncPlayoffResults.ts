@@ -79,7 +79,6 @@ export async function syncPlayoffResults(
         });
     }
 
-    // Also validates the template key — an unknown one comes back as VALIDATION_ERROR.
     const orderResult = getTemplateMatchOrder(template);
     if (!orderResult.ok) {
         logger.error({ seasonId: config.season_id, template, error: orderResult.error }, "Failed to derive playoff match order");
@@ -87,18 +86,14 @@ export async function syncPlayoffResults(
     }
     const codeOrder = orderResult.value;
 
-    // questionable year parse method
     const year = parseInt(seasonResult.value.start_date.substring(0, 4), 10);
 
-    // Codes only. These never mutate, so a prefetch is safe here — the match rows
-    // themselves are re-read inside the loop (see below).
     const playoffMatchesResult = await findPlayoffMatchesBySeason(supabase, config.season_id);
     if(!playoffMatchesResult.ok) return playoffMatchesResult;
     const knownCodes = new Set(playoffMatchesResult.value
       .map(match => match.match_code)
       .filter((code): code is string => code !== null))
 
-    // Parse all playoff matches
     const {results: parsed, errors: parseErrors} = parsePlayoffMatches(values, knownCodes)
 
     const teamsResult = await findAllTeamsBySeasonIdIncludingDeleted(supabase, config.season_id);
@@ -115,13 +110,9 @@ export async function syncPlayoffResults(
 
     const parsedByCode = new Map(parsed.map(p => [p.matchCode.toUpperCase(), p]));
 
-    // Template order, not sheet order: completing W1 fills QF1's home slot via
-    // advance_playoff_winner, so W1 must be processed first or QF1 is skipped as TBD.
     for (const code of codeOrder) {
       const sheetMatch = parsedByCode.get(code.toUpperCase());
 
-      // Absent from the sheet, or a block whose team cells are still empty. An
-      // unplayed bracket is the normal state — not an error.
       if (!sheetMatch) continue;
 
       const row = sheetMatch.rowNumber;
@@ -134,20 +125,14 @@ export async function syncPlayoffResults(
       }
       const match = existingResult.value;
 
-      // Playoff matches exist only via buildPlayoffBracket. Never insert one here.
       if (!match) {
         errors.push({row, message: `[${code}] No playoff match with this code exists for the season — generate the bracket first`});
         rowsErrored++;
         continue;
       }
 
-      // A null slot means the feeder hasn't completed yet. Skip silently: the sheet's
-      // scores are home-then-away by sheet layout, and only the team names establish
-      // which side is which, so scoring an unfilled slot would transpose them.
       if (!match.home_team_id || !match.away_team_id) continue;
 
-      // DB wins. The sheet is a results feed; advance_playoff_winner owns topology.
-      // Verify the names agree, never write a team id.
       const sheetHomeId = nameMap.get(norm(sheetMatch.homeTeamName));
       const sheetAwayId = nameMap.get(norm(sheetMatch.awayTeamName));
       if (!sheetHomeId || !sheetAwayId) {
@@ -193,8 +178,7 @@ export async function syncPlayoffResults(
       const hasScores = sheetMatch.isForfeit || sheetMatch.sets.length > 0;
 
       if (!hasScores) {
-        // Never void from a sheet we don't own: void_match cascades a subtree reset
-        // and would wipe an entire bracket branch on a blanked cell.
+
         if (match.status === 'completed') {
           errors.push({
             row,
@@ -224,8 +208,6 @@ export async function syncPlayoffResults(
         continue;
       }
 
-      // The template sets bo3/bo5 per match; a bo5 GF scored 3-2 fails validation
-      // against a defaulted best_of of 3.
       if (!match.best_of) {
         errors.push({row, message: `[${code}] Match has no best_of set — regenerate the bracket`});
         rowsErrored++;
@@ -292,8 +274,6 @@ export async function syncPlayoffResults(
         if (unchanged) continue;
       }
 
-      // Both RPCs call advance_playoff_winner internally for match_type='playoffs'.
-      // Do not advance the bracket from here.
       const completeResult = match.status === 'completed'
         ? await rpcReapplyMatchResult(supabase, resultParams)
         : await rpcCompleteMatch(supabase, {...resultParams, scheduledAt});

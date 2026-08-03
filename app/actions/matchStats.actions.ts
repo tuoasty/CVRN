@@ -45,8 +45,6 @@ export async function deleteMatchSheetConfigAction(id: string) {
     return result;
 }
 
-// Read-only: run the full parse + resolve pipeline and return the plan.
-// UI uses this to show the structural summary + errors before the user commits.
 export async function previewMatchStatsAction(configId: string, playerOverrides?: PlayerOverrides) {
     const supabase = await createServerSupabase();
     const user = await requireAuth(supabase);
@@ -59,10 +57,6 @@ export async function previewMatchStatsAction(configId: string, playerOverrides?
     return buildMatchStatsPlan(supabase, configRes.value, {playerOverrides});
 }
 
-// Delegates to the syncMatchStats command (load config → build plan → refuse
-// if errors → atomic replace via RPC). Mirrors runSyncAction.
-// `force` commits despite skippable errors (unregistered players); it can never
-// bypass a fatal one.
 export async function syncMatchStatsAction(
     configId: string,
     force = false,
@@ -74,11 +68,7 @@ export async function syncMatchStatsAction(
     const result = await syncMatchStats(supabase, configId, {force, playerOverrides});
     if (result.ok) {
         revalidatePath('/admin/stats');
-        // This is the only action here that writes player_match_stats, and box scores are
-        // served by getCachedMatchDetail (tagged `matches`). Without this a stat correction
-        // never reached the public match page — it stayed wrong until something else
-        // happened to purge the tag. The config save/delete actions above deliberately do
-        // NOT invalidate: they only touch admin-side config rows.
+
         revalidatePublicData([CACHE_TAGS.matches]);
     }
     return result;

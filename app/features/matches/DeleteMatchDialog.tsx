@@ -28,7 +28,6 @@ export default function DeleteMatchDialog({ matchId, onSuccess }: DeleteMatchDia
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
-
     const handleDelete = async () => {
         setLoading(true);
 

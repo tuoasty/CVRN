@@ -1,12 +1,5 @@
 import { Skeleton } from "@/app/components/ui/skeleton";
 
-/**
- * Mirrors the row grid in `AdminSchedulePanel` rather than centring a spinner. Switching week
- * or round is the most frequent action on this page, and a `panel p-8` spinner collapsing into
- * six 56px rows moved everything below it on every switch.
- *
- * Track widths and the lg/xl breakpoints are copied from the real row; keep them in sync.
- */
 export default function AdminScheduleRowsSkeleton({ rows = 6 }: { rows?: number }) {
     return (
         <div className="space-y-1.5">

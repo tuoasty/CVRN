@@ -9,17 +9,6 @@ import GFXImageDialog from '@/app/features/media/GFXImageDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import type { MediaPost } from '@/server/domains/media'
 
-// Proportional slot system derived from clip = 9:16 at 4 units.
-// 1 unit = clip_height/4 = (16w/9)/4 = 4w/9
-// clip  (4u):    aspect-ratio 9/16  (portrait TikTok)
-// gfx   (~1.3u): aspect-ratio 16/9  (standard widescreen)
-// video (0.75u): aspect-ratio 3/1   (compact row, thumbnail left + text right)
-// All three scale together with sidebar width.
-
-/**
- * Renders on every home page view, so its SWR fetch was a per-view server-action POST on
- * the busiest route. Posts now arrive from the route; the dialog state stays client-side.
- */
 export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
@@ -29,7 +18,6 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     const videos = pinned.filter(p => p.type === 'video').slice(0, 2)
     const clip   = pinned.find(p => p.type === 'clip') ?? null
     const hasAny = !!gfx || videos.length > 0 || !!clip
-
 
     if (!hasAny) {
         return (
@@ -46,7 +34,7 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     return (
         <>
             <div className="panel p-3 space-y-3">
-                {/* GFX — image is 16:9, title band is extra height below */}
+                {}
                 {gfx && (
                     <div
                         className="flex flex-col border border-border rounded-sm overflow-hidden cursor-pointer"
@@ -66,7 +54,7 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
                     </div>
                 )}
 
-                {/* Videos — 3:1 compact row (0.75u), thumbnail left + text right */}
+                {}
                 {videos.map(post => {
                     const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
                     return (
@@ -94,7 +82,7 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
                     )
                 })}
 
-                {/* Clip — 9:16 TikTok portrait ratio */}
+                {}
                 {clip && (
                     <iframe
                         src={`https://www.tiktok.com/embed/v3/${clip.video_url}`}

@@ -11,8 +11,6 @@ export async function inviteUser(
     try {
         const supabaseAdmin = getSupabaseAdmin();
 
-        // SITE_URL comes from a hand-edited env file on the VPS, where a trailing slash is an
-        // easy typo and would send invitees to a double-slashed callback.
         const siteUrl = process.env.SITE_URL!.replace(/\/+$/, "");
 
         const { error: inviteError} = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {

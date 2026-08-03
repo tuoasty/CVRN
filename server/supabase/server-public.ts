@@ -1,4 +1,4 @@
-// lib/supabase/server-public.ts
+
 import { createServerClient } from "@supabase/ssr";
 import {Database} from "@/shared/types/db.override";
 
@@ -12,7 +12,7 @@ export function createPublicClient() {
                     return [];
                 },
                 setAll() {
-                    // No-op
+
                 },
             },
         },

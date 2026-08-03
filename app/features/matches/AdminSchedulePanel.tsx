@@ -53,11 +53,6 @@ const getStatusConfig = (status: string) => {
     }
 };
 
-/**
- * One row per match. This is a working surface, not a summary: MVPs, officials and LVR live
- * on the match detail page, so the row carries only what an admin acts on — who is playing,
- * the result, and the controls.
- */
 export default function AdminSchedulePanel({ seasonId, week, round, matchType, regionCode }: SchedulePanelProps) {
     const router = useRouter();
     const { schedule: weekSchedule, isLoading: weekLoading, mutate: mutateWeek } = useWeekSchedule(
@@ -89,8 +84,6 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
     const { teams: fetchedTeams } = useTeamsByIds(teamIds);
     const teams = useMemo(() => new Map(fetchedTeams.map(t => [t.id, t])), [fetchedTeams]);
 
-    // The whole media list is already cached by SWR for /admin/media, so knowing the
-    // attachment state of every row costs no extra request.
     const { posts: allMedia } = useAllMediaPosts();
     const mediaByMatch = useMemo(() => {
         const map = new Map<string, { gfx: MediaPost | null; vod: MediaPost | null }>();
@@ -156,7 +149,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                    lg:grid lg:grid-cols-[180px_minmax(0,1fr)_176px]
                                    xl:grid-cols-[180px_minmax(0,1fr)_240px_176px]"
                     >
-                        {/* Schedule / details */}
+                        {}
                         <div className="w-[180px] shrink-0 flex flex-col gap-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
@@ -190,9 +183,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                             </span>
                         </div>
 
-                        {/* Matchup — its own grid so the score lands at the same x on every row.
-                            order-last below lg puts meta + controls on line 1 and the matchup on
-                            line 2; in grid mode DOM order takes over again. */}
+                        {}
                         <div className="basis-full lg:basis-auto order-last lg:order-none min-w-0 grid grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)] items-center gap-2">
                             <TeamSide team={homeTeam} won={isCompleted && homeWon} align="end" />
                             {isCompleted && match.home_sets_won !== null && match.away_sets_won !== null ? (
@@ -207,7 +198,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                             <TeamSide team={awayTeam} won={isCompleted && awayWon} align="start" />
                         </div>
 
-                        {/* Sets scored — fixed width so a 3-set row doesn't drag the controls left */}
+                        {}
                         <div className="hidden xl:flex items-center justify-start gap-1 w-[240px]">
                             {isCompleted && sets.map(set => (
                                 <div key={set.set_number} className="flex items-center gap-0.5 px-1 py-0.5 rounded-sm bg-muted/50 border border-border/50">
@@ -222,9 +213,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                             ))}
                         </div>
 
-                        {/* Controls — five fixed slots. A scheduled row shows Complete where a
-                            completed one shows Edit, and playoff rows have no Delete; empty slots
-                            hold their width so the cluster never shifts between rows. */}
+                        {}
                         <div className="flex items-center justify-end gap-0.5 shrink-0 ml-auto lg:ml-0 lg:w-[176px]" onClick={(e) => e.stopPropagation()}>
                             <ManageMatchDialog
                                 matchId={match.id}
@@ -282,10 +271,8 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
     );
 }
 
-/** Home mirrors inward (name then logo), away reads outward (logo then name). */
 function TeamSide({ team, won, align }: { team?: TeamWithRegion; won: boolean; align: "start" | "end" }) {
-    // min-w-0 is what lets truncate actually fire — a flex item defaults to min-width:auto
-    // and would otherwise push the score column off its track.
+
     const name = (
         <span className={`text-sm truncate flex-1 min-w-0 ${align === "end" ? "text-right" : ""} ${
             won ? "font-bold text-foreground" : "font-semibold text-muted-foreground"

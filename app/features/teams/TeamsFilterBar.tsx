@@ -15,7 +15,6 @@ import {
     TeamsFilters,
 } from "./selectTeams";
 
-// Preferred button order; any other region codes are appended after these.
 const REGION_ORDER = ["AS", "EU", "NA", "SA"];
 
 const SEARCH_DEBOUNCE_MS = 250;
@@ -42,8 +41,6 @@ export default function TeamsFilterBar({
     const [seasonOpen, setSeasonOpen] = useState(false);
     const [inputValue, setInputValue] = useState(filters.q);
 
-    // Adopt external changes (back-navigation, reset). The guard avoids a redundant re-render
-    // on the round trip where our own debounced write lands back as filters.q.
     useEffect(() => {
         setInputValue((current) => (current === filters.q ? current : filters.q));
     }, [filters.q]);
@@ -64,7 +61,6 @@ export default function TeamsFilterBar({
         [regions]
     );
 
-    // Slugs are unique per-region, so a specific season is only offered once a region is chosen.
     const regionSeasons = useMemo(() => {
         if (filters.region === REGION_ALL) return [];
         const region = regions.find((r) => r.code.toLowerCase() === filters.region);

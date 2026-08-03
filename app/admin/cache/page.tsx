@@ -23,8 +23,7 @@ import {clientLogger} from "@/app/utils/clientLogger";
 import {cn} from "@/lib/utils";
 
 export default function AdminCachePage() {
-    // A single in-flight value disables every button during a purge. Purges are fast and
-    // concurrent ones serve no purpose.
+
     const [purging, setPurging] = useState<CacheTag | "all" | null>(null);
     const [confirmAll, setConfirmAll] = useState(false);
 
@@ -112,7 +111,7 @@ export default function AdminCachePage() {
                     })}
                 </div>
 
-                {/* Separated deliberately: this one is not the same kind of action. */}
+                {}
                 <div className="panel p-4 mt-6 border-destructive/30 flex flex-col sm:flex-row sm:items-center gap-3">
                     <TriangleAlert className="h-5 w-5 text-destructive shrink-0" />
                     <div className="flex-1 min-w-0">

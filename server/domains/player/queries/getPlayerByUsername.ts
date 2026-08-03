@@ -22,10 +22,6 @@ export async function getPlayerByUsername(
         }
         if (!player) return Ok(null);
 
-        // Roblox profile sync deliberately does NOT run here. This query backs the public
-        // player page, so every concurrent viewer of a stale profile fired the same
-        // outbound Roblox calls (waitUntil keeps the invocation alive to do it). Freshness
-        // is now owned by the sync-players cron. Admin write paths still sync eagerly.
         const {data: rows} = await supabase
             .from("player_team_seasons")
             .select(`

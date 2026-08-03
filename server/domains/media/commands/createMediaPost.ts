@@ -93,7 +93,6 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
             return Err({ message: 'Title is required', code: 'VALIDATION_ERROR' })
         }
 
-        // Checked before the upload so a taken slot never leaves an orphaned file behind.
         if (p.matchId && (p.type === 'gfx' || p.type === 'video')) {
             const free = await assertMatchSlotFree(supabase, p.matchId, p.type)
             if (!free.ok) return free

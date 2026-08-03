@@ -8,10 +8,6 @@ async function fetchRecentPlayers(): Promise<PlayerSearchHit[]> {
     return result.value
 }
 
-/**
- * Default (empty-query) player list for the public players page: the most-recently-rostered
- * players. Cached under a static key so it loads once and is shared across mounts.
- */
 export function useRecentPlayers() {
     const { data, error, isLoading } = useSWR("players/recent", fetchRecentPlayers)
     return {

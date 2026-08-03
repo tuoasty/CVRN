@@ -25,7 +25,7 @@ export type MatchDetail = {
     playoffRound: string | null;
     rosters: TeamRosters | null;
     standingMethod: StandingMethod;
-    /** Named `mediaPosts`, not `media` — `media` already means media *officials* on this page. */
+
     mediaPosts: MediaPost[];
 };
 
@@ -51,7 +51,6 @@ async function loadDetailForMatch(
     if (!statSetsRes.ok) return statSetsRes;
     if (!statTotalsRes.ok) return statTotalsRes;
 
-    // Attached media is decoration; losing it must not take the whole match page down.
     if (!mediaRes.ok) {
         logger.warn({matchId: match.id, error: mediaRes.error}, "Failed to load match media posts");
     }

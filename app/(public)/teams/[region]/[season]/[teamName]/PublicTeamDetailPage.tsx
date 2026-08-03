@@ -99,7 +99,7 @@ function PublicPlayerCard({
 }) {
     return (
         <div className="col-span-3 sm:col-span-1 rounded-md overflow-hidden border border-border hover:border-primary/50 transition-colors">
-            {/* Mobile: horizontal row */}
+            {}
             <div
                 className="flex items-center gap-3 px-3 py-2.5 sm:hidden"
                 style={teamColor ? { borderLeft: `3px solid ${teamColor}` } : undefined}
@@ -113,7 +113,7 @@ function PublicPlayerCard({
                 </div>
                 <span className="text-xs text-muted-foreground/60 shrink-0">#{index}</span>
             </div>
-            {/* Desktop: square card */}
+            {}
             <div className="hidden sm:block">
                 <div className="relative aspect-square w-full">
                     <AvatarImage
@@ -156,14 +156,6 @@ type Props = {
     history: TeamNameHistoryEntry[];
 };
 
-/**
- * Presentational only. Data is resolved and cached on the server by the route above
- * (app/(public)/[region]/[season]/teams/[teamName]/page.tsx) — this used to fetch via
- * SWR, which meant two waterfalled server-action POSTs per view that no CDN could cache.
- *
- * The loading state now lives in the route's loading.tsx, and missing teams are handled
- * by notFound() on the server, so neither is duplicated here.
- */
 export default function PublicTeamDetailPage({ team: teamData, players, history }: Props) {
     const regionName = teamData.seasons?.regions?.name || "Unknown Region";
     const regionCodeDisplay = teamData.seasons?.regions?.code?.toUpperCase() || "??";
@@ -183,9 +175,9 @@ export default function PublicTeamDetailPage({ team: teamData, players, history 
 
     return (
         <div className="page-wide space-y-6 py-6">
-            {/* Header */}
-            {/* Header */}
-            {/* Header */}
+            {}
+            {}
+            {}
             <div className="pt-2 pb-4">
                 <div className="flex items-center gap-2 mb-4">
                     <BackButton />
@@ -238,7 +230,7 @@ export default function PublicTeamDetailPage({ team: teamData, players, history 
                 </div>
             </div>
 
-            {/* Unified roster */}
+            {}
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm uppercase tracking-wide text-muted-foreground">Roster</h3>

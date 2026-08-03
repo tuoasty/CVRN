@@ -14,11 +14,6 @@ export function getYoutubeThumbnail(url: string): string | null {
     return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null
 }
 
-/**
- * maxres is the only variant large enough for a full-width player, but it doesn't exist for
- * every upload — YouTube answers those with a 120×90 grey placeholder rather than a 404, so
- * callers detect the miss by natural size, not by an error. hqdefault always exists.
- */
 export function getYoutubePoster(id: string, quality: 'maxres' | 'hq' = 'maxres'): string {
     return `https://img.youtube.com/vi/${id}/${quality === 'maxres' ? 'maxresdefault' : 'hqdefault'}.jpg`
 }
@@ -29,7 +24,6 @@ export function resolveMediaThumbnail(imageUrl: string | null, videoUrl: string 
     return null
 }
 
-/** Twitch embeds require the host page's domain, so this only resolves in the browser. */
 export function toEmbedUrl(url: string): string | null {
     try {
         const u = new URL(url)
@@ -42,7 +36,7 @@ export function toEmbedUrl(url: string): string | null {
         }
         if (u.hostname.includes('twitch.tv')) {
             const parent = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-            const channel = u.pathname.replace(/^\/videos\//, '')
+            const channel = u.pathname.replace(/^\/videos\
             const isVod = u.pathname.startsWith('/videos/')
             return isVod
                 ? `https://player.twitch.tv/?video=${channel}&parent=${parent}`

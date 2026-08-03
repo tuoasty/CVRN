@@ -51,9 +51,6 @@ export function useTeams() {
     };
 }
 
-/**
- * Fetch team with players. Resolves region + season from slugs.
- */
 export function useTeamWithPlayers(
     teamSlug: string | null,
     seasonSlug: string | null,
@@ -137,7 +134,6 @@ export function useTeamsBySeason(seasonId: string | null) {
     };
 }
 
-// Cache mutation helpers
 export function mutateAllTeams() {
     return globalMutate('teams');
 }

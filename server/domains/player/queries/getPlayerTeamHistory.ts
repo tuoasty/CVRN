@@ -49,7 +49,6 @@ export async function getPlayerTeamHistory(
             };
         });
 
-        // Deduplicate by (team_id, season_id) — keep the most recent joined_at
         const seen = new Map<string, PlayerTeamHistoryEntry>();
         for (const row of rows) {
             const key = `${row.team_id}::${row.season_id}`;

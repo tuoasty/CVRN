@@ -1,17 +1,5 @@
 import {CACHE_TAGS, type CacheTag} from "./tags";
 
-/**
- * Human-facing metadata for the admin cache page.
- *
- * Next exposes no API for enumerating tag registrations, so this is hand-maintained
- * against the `tags:` arrays in `publicReads.ts`. The test in `__tests__/tagInfo.test.ts`
- * parses that file and fails if `readCount` drifts, so the numbers here are checked rather
- * than trusted.
- *
- * `readCount` is what sizes the warning in the UI: the tags are wildly asymmetric —
- * purging `media` clears one read, purging `matches` clears eleven and re-renders most of
- * the site. Showing that at the point of decision is the whole reason this table exists.
- */
 export type CacheTagInfo = {
     label: string;
     description: string;
@@ -71,7 +59,6 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     },
 };
 
-/** Display order: most-likely-needed first, not alphabetical. */
 export const CACHE_TAG_ORDER: CacheTag[] = [
     CACHE_TAGS.standings,
     CACHE_TAGS.matches,

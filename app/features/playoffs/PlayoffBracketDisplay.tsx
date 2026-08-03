@@ -14,17 +14,11 @@ import { Incoming, IncomingSource } from "@/server/domains/playoff";
 type PlayoffBracketDisplayProps = {
     brackets: PlayoffBracket[];
     incomingMap: Map<string, Incoming>;
-    /** Teams referenced by the bracket. Only id/name/logo are read. */
+
     teams: TeamWithRegion[];
-    /**
-     * Matches referenced by the bracket, plus any match an `incomingMap` slot points at
-     * (those supply the "Winner of W3-M2" labels).
-     *
-     * This used to be `useAllMatches()` inside the component — the entire matches table,
-     * unfiltered, fetched on every view to render ~30 cards. Callers now pass a scoped set.
-     */
+
     matches: Match[];
-    /** Public link building only; omit for `linkContext="admin"`, which links by match id. */
+
     regionCode?: string;
     seasonSlug?: string;
     linkContext?: "public" | "admin";
@@ -77,8 +71,6 @@ const ROUND_LABELS: Record<RoundType, string> = {
     losers_final: "Losers Final",
 };
 
-// Upper band, left-to-right. Single-elim uses `final`; double-elim uses
-// `winners_final` → `grand_final` → `bracket_reset`. Empty rounds filter out.
 const UPPER_ROUND_ORDER: RoundType[] = [
     "play_in",
     "round_of_32",
@@ -91,7 +83,6 @@ const UPPER_ROUND_ORDER: RoundType[] = [
     "bracket_reset",
 ];
 
-// Lower band (double-elim only), left-to-right.
 const LOWER_ROUND_ORDER: RoundType[] = [
     "losers_round_1",
     "losers_round_2",
@@ -109,8 +100,7 @@ const HEADER_OFFSET = 64;
 const BOTTOM_PADDING = 80;
 const CANVAS_MARGIN = 24;
 const BAND_GAP = 120;
-// Extra breathing room below a card whose feeder is in the same round (bracket_reset),
-// leaving space for its inline title.
+
 const NO_FEEDER_EXTRA_GAP = 56;
 
 type ConnectorLine = {
@@ -119,19 +109,13 @@ type ConnectorLine = {
     isCompleted: boolean;
 };
 
-// Lay out one band (upper or lower) left-to-right, offset vertically by `yOffset`.
-// Base row stacks tight; later rounds center on the average Y of the feeders that
-// point to them via `next_bracket_id`. Cross-band loser drops use
-// `loser_next_bracket_id` and are intentionally not laid out or drawn here — they
-// surface as "Loser of X" labels on the cards instead.
 function computeBandLayout(rounds: RoundData[], yOffset: number) {
     const positions = new Map<string, { x: number; y: number }>();
     const lines: ConnectorLine[] = [];
     if (rounds.length === 0) return { positions, lines, maxBottom: yOffset };
 
     const BASE_PITCH = MATCH_HEIGHT + VERTICAL_SPACING_BASE;
-    // A leading play-in round is a partial pre-round, so the tight base row is
-    // round 1 in that case; otherwise round 0.
+
     const baseRoundIndex =
         rounds[0]?.type === "play_in" && rounds.length > 1 ? 1 : 0;
 
@@ -154,16 +138,14 @@ function computeBandLayout(rounds: RoundData[], yOffset: number) {
                     ) / feedingBrackets.length;
                     positions.set(bracket.id, { x, y: avgY });
                 } else {
-                    // No forward feeder (e.g. bracket_reset, fed by the grand final in
-                    // the same round): stack below the previous sibling with an extra
-                    // gap so its own title has room to sit above the card.
+
                     const prevSibling = i > 0 ? positions.get(round.brackets[i - 1].id) : undefined;
                     const y = prevSibling ? prevSibling.y + BASE_PITCH + NO_FEEDER_EXTRA_GAP : yOffset + HEADER_OFFSET;
                     positions.set(bracket.id, { x, y });
                 }
             });
         } else {
-            // Pre-base round (play-in): align each card to the base-row card it feeds.
+
             const nextRound = rounds[roundIndex + 1];
             round.brackets.forEach((bracket, i) => {
                 const targetIndex = nextRound
@@ -288,7 +270,7 @@ export function PlayoffBracketDisplay({
 
     const {matchPositions, connectorLines, thirdPlacePosition, lowerBandTop} = useMemo(() => {
         const upper = computeBandLayout(upperRounds, 0);
-        // Lower band sits beneath the upper band, sharing the same X columns.
+
         const bandTop = lowerRounds.length > 0 ? upper.maxBottom + BAND_GAP : 0;
         const lower = lowerRounds.length > 0
             ? computeBandLayout(lowerRounds, bandTop)
@@ -360,7 +342,6 @@ export function PlayoffBracketDisplay({
         });
     }, [linkContext, regionCode, seasonSlug]);
 
-    // Fullscreen toggle via the Fullscreen API on the outer container.
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     const toggleFullscreen = useCallback(() => {
@@ -378,9 +359,6 @@ export function PlayoffBracketDisplay({
         return () => document.removeEventListener("fullscreenchange", onChange);
     }, []);
 
-    // Click-and-drag to scroll the bracket horizontally (vertical is page scroll,
-    // or internal scroll in fullscreen). Wheel is left untouched so the browser's
-    // native Ctrl+scroll zoom works.
     const scrollRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
     const dragOrigin = useRef({x: 0, scrollLeft: 0});
@@ -412,7 +390,6 @@ export function PlayoffBracketDisplay({
         };
     }, [isDragging]);
 
-    // Swallow the click that ends a drag so it doesn't navigate a card link.
     const handleClickCapture = useCallback((e: React.MouseEvent) => {
         if (didDrag.current) {
             e.preventDefault();
@@ -421,9 +398,6 @@ export function PlayoffBracketDisplay({
         }
     }, []);
 
-    // Render one round's header + cards. `bandTop` places the header at the top of
-    // its band (0 for upper, the lower-band offset for lower); cards read their
-    // absolute Y from matchPositions (already band-offset).
     const renderRoundColumn = (round: RoundData, roundIndex: number, bandTop: number) => (
         <div key={round.type}>
             <div
@@ -465,7 +439,7 @@ export function PlayoffBracketDisplay({
                             width: MATCH_WIDTH,
                         }}
                     >
-                        
+
                         <MatchBracketCard
                             bracket={bracket}
                             match={bracket.match}
@@ -487,9 +461,6 @@ export function PlayoffBracketDisplay({
         </div>
     );
 
-    // Teams and matches arrive as props now, so there is no in-component fetch to wait on.
-    // The public route covers first paint with its own loading.tsx; the admin page still
-    // gates on its bracket query before rendering this at all.
     if (brackets.length === 0) {
         return <PlayoffBracketLoading />;
     }

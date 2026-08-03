@@ -38,10 +38,10 @@ function team(
 }
 
 const seasons = [
-    season("as-2", "season-2", "region-AS", FUTURE), // active
-    season("as-1", "season-1", "region-AS", PAST), // concluded
-    season("eu-2", "season-2", "region-EU", FUTURE), // active
-    season("eu-1", "season-1", "region-EU", PAST), // concluded
+    season("as-2", "season-2", "region-AS", FUTURE), 
+    season("as-1", "season-1", "region-AS", PAST), 
+    season("eu-2", "season-2", "region-EU", FUTURE), 
+    season("eu-1", "season-1", "region-EU", PAST), 
 ];
 
 const teams = [
@@ -76,7 +76,7 @@ describe("selectTeams", () => {
     });
 
     it("resolves a season slug within the selected region only", () => {
-        // Both regions have a `season-1`; the region filter disambiguates.
+
         expect(run({ region: "as", season: "season-1" })).toEqual(["t2"]);
         expect(run({ region: "eu", season: "season-1" })).toEqual(["t4"]);
     });
@@ -88,7 +88,7 @@ describe("selectTeams", () => {
     });
 
     it("does not match region or season names via the search query", () => {
-        // `eu` would previously have matched every EU team through the region code.
+
         expect(run({ q: "eu" })).toEqual([]);
         expect(run({ q: "season-2" })).toEqual([]);
     });

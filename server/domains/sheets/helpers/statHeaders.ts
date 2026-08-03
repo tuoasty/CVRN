@@ -1,8 +1,5 @@
 import { StatCounts } from "../types";
 
-// Lowercase, treat `/` as whitespace, then collapse runs of whitespace to a
-// single space. So "Wipes/Tools", "wipes / tools", and a multi-line cell
-// "wipes/\ntools" all normalize to "wipes tools".
 export function normalizeHeader(s: string): string {
   return s
     .toLowerCase()
@@ -11,7 +8,6 @@ export function normalizeHeader(s: string): string {
     .replace(/\s+/g, " ");
 }
 
-// VERIFY against the live stats sheet before trusting these.
 export const STAT_HEADERS: Record<string, keyof StatCounts> = {
   "ape kills": "ape_kills",
   "ape attempts": "ape_attempts",

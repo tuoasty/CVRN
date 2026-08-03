@@ -28,8 +28,7 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
     const selectedTeam = view === "home-only" ? homeTeam : awayTeam;
 
     const isPlayable = match.status === "completed" && !match.is_forfeit;
-    // A completed match with no stat rows renders nothing where the box score would be —
-    // no tabs, no team selector, no empty-state copy.
+
     const hasStats = statTotals.length > 0;
     const vod = detail.mediaPosts.find(p => p.type === "video") ?? null;
 

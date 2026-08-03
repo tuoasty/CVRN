@@ -37,7 +37,6 @@ export function mutateAllMedia() {
     return globalMutate(ALL_MEDIA_KEY)
 }
 
-/** Pass `null` as the match to unlink — the post itself survives in the media feed. */
 export async function assignMediaToMatch(postId: string, matchId: string | null): Promise<Result<MediaPost>> {
     const result = await assignMediaToMatchAction({ postId, matchId })
     if (result.ok) await mutateAllMedia()

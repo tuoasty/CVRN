@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseMatchSet } from '../parseMatchSet'
 
-// Column layout: A=0 label, B..S=1..18 the 18 stat columns (see statHeaders.ts).
 const STAT_COLS = [
   'Ape Kills', 'Ape Attempts', 'Delay Kills', 'Quick Kills', 'Wipes/Tools',
   'Total Attempts', 'Spiking Errors', 'Assist', 'Setting Errors', 'Kill Blocks',
@@ -11,10 +10,8 @@ const STAT_COLS = [
 
 const HEADER = ['Players', ...STAT_COLS]
 
-// A row with stat values — reads as a player.
 const player = (name: string) => [name, ...STAT_COLS.map((_, i) => String(i))]
 
-// A row with a label and no stat values — reads as a section header.
 const label = (name: string) => [name, ...STAT_COLS.map(() => '')]
 
 const BLANK: string[] = []
@@ -100,9 +97,6 @@ describe('parseMatchSet — section boundaries', () => {
     expect(usernames(sections[0])).toEqual(['budi'])
   })
 
-  // The aggregate block below Team Totals holds one row per team, each carrying
-  // a team name in column A and real stat values — shaped exactly like a player
-  // row. Parsing must never reach them.
   it('ignores the per-team totals block below Team Totals', () => {
     const { sections, errors } = parseMatchSet([
       HEADER,

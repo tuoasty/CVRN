@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { classifyTeamNameChange } from '../classifyTeamNameChange'
 
-// Usernames are lowercased by the caller, so tests use lowercase throughout.
 const roster = (n: number, prefix = 'p') =>
   Array.from({ length: n }, (_, i) => `${prefix}${i}`)
 
@@ -54,7 +53,7 @@ describe('classifyTeamNameChange', () => {
 
   it('rebrand: outsider captain but most of the roster stayed (above threshold)', () => {
     const old = roster(18, 'old')
-    const next = ['newcap', ...roster(17, 'old')] // 17 of 18 old players retained
+    const next = ['newcap', ...roster(17, 'old')] 
     expect(
       classifyTeamNameChange({ usernames: old }, { usernames: next, captain: 'newcap' })
     ).toBe('rebrand')

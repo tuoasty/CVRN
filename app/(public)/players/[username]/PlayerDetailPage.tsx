@@ -66,14 +66,14 @@ export default function PlayerDetailPage({detail}: Props) {
         <div className="max-w-[1440px] mx-auto px-4 py-6 space-y-8">
             <BackButton />
 
-            {/* Header */}
+            {}
             <div
                 className="relative rounded-lg overflow-hidden"
                 style={team?.team_brick_color ? {
                     background: `linear-gradient(115deg, ${team.team_brick_color}35 0%, ${team.team_brick_color}18 50%, transparent 100%)`,
                 } : undefined}
             >
-                {/* Mobile: text + logo left, avatar fills right */}
+                {}
                 <div className="sm:hidden flex items-stretch min-h-[148px]">
                     <div className="flex-1 p-4 flex flex-col min-w-0">
                         {team?.team_logo_url && (
@@ -116,7 +116,7 @@ export default function PlayerDetailPage({detail}: Props) {
                     )}
                 </div>
 
-                {/* Desktop: logo + avatar side by side, info to the right */}
+                {}
                 <div className="hidden sm:flex gap-1 p-4 pb-0">
                     {team?.team_logo_url && (
                         <div className="self-start relative shrink-0 w-20 h-20">
@@ -170,8 +170,6 @@ export default function PlayerDetailPage({detail}: Props) {
             {(() => {
                 const hasSideContent = achievements.length > 0 || individualAwards.length > 0;
 
-                // No achievements/awards: render Team History on its own at full width,
-                // with the two leagues side by side (avoids a dead left column).
                 if (!hasSideContent) {
                     return teamHistory.length > 0 ? (
                         <TeamHistorySection teamHistory={teamHistory} layout="grid" />
@@ -180,7 +178,7 @@ export default function PlayerDetailPage({detail}: Props) {
 
                 return (
                     <div className="grid gap-x-6 gap-y-8 lg:grid-cols-2 items-start">
-                        {/* Left: achievements + awards */}
+                        {}
                         <div className="space-y-8">
                             {achievements.length > 0 && (
                                 <AwardSection title="Achievements">
@@ -213,7 +211,7 @@ export default function PlayerDetailPage({detail}: Props) {
                             )}
                         </div>
 
-                        {/* Right: team history (main over side) */}
+                        {}
                         {teamHistory.length > 0 && (
                             <TeamHistorySection teamHistory={teamHistory} layout="stacked" />
                         )}

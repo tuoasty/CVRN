@@ -25,23 +25,9 @@ export type FeaturedSlide = {
 const SLIDE_MS = 380;
 const CHROME_FADE_MS = 130;
 
-/**
- * A black logo on a transparent PNG vanishes against the bottom gradient, and a black drop-shadow
- * cannot rescue it because the shadow matches the backdrop. The tight white halo carries dark
- * logos; the soft dark shadow grounds light ones. Both are needed — a GFX is arbitrary artwork.
- */
 const LOGO_SHADOW =
     "[filter:drop-shadow(0_0_1px_rgba(255,255,255,0.65))_drop-shadow(0_1px_3px_rgba(0,0,0,0.85))]";
 
-/**
- * The frame is fixed and the artwork travels through it: heading, badges and matchup hold their
- * position while their text crossfades at the midpoint of the slide. Reads as a broadcast lower
- * third rather than a photo gallery.
- *
- * The card is not a link. Wrapping everything in one would put the arrows and dots inside an
- * anchor, which is invalid and makes them unreachable by keyboard — so the link is an absolutely
- * positioned overlay and the controls sit above it.
- */
 export default function FeaturedMatchCarousel({
     slides,
     regionCode,
@@ -69,7 +55,7 @@ export default function FeaturedMatchCarousel({
     if (slides.length === 0) return null;
 
     const many = slides.length > 1;
-    // Link and chrome both follow displayIndex so they can never disagree mid-transition.
+
     const shown = slides[displayIndex];
     const { match } = shown.matchDetails;
     const isCompleted = match.status === "completed";
@@ -88,18 +74,11 @@ export default function FeaturedMatchCarousel({
 
     return (
         <div
-            // 16:9 rather than a fixed height, so a correctly-sized graphic fills the card exactly
-            // at every breakpoint instead of wasting 7-47% of it on blur fill. min-h stops the
-            // narrow three-column range (~1024px) from crushing the card under its own overlays,
-            // which need ~152px between them.
-            //
-            // No lift on hover: raising a graphic this size is a far heavier gesture than raising a
-            // list row, and the always-visible arrows already announce that this is interactive.
+
             className="panel relative overflow-hidden aspect-video min-h-[280px] bg-black transition-colors hover:border-primary/60"
             onKeyDown={e => {
                 if (!many) return;
-                // Scoped to this element, not the document — a page-wide listener would swallow
-                // arrow keys everywhere else.
+
                 if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
                 if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
             }}
@@ -207,8 +186,7 @@ function Arrow({ side, onClick }: { side: "left" | "right"; onClick: () => void 
             onClick={onClick}
             aria-label={side === "left" ? "Previous match" : "Next match"}
             className={cn(
-                // No box and no hover reveal — the arrow itself is the affordance. The shadow is
-                // legibility, not decoration: a pale graphic would swallow a bare white glyph.
+
                 "absolute top-1/2 -translate-y-1/2 z-40 grid place-items-center w-10 h-16 text-white",
                 "[filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.9))_drop-shadow(0_0_8px_rgba(0,0,0,0.55))]",
                 side === "left" ? "left-0.5" : "right-0.5"

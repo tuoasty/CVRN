@@ -6,11 +6,6 @@ import { ExternalLink, Play } from 'lucide-react'
 import { getYoutubeId, getYoutubePoster, toEmbedUrl, withAutoplay } from '@/app/features/media/mediaUtils'
 import type { MediaPost } from '@/server/domains/media'
 
-/**
- * A YouTube iframe costs roughly a megabyte of script and sets cookies on every view, and it
- * would be the largest element on a page most visitors open for the box score. So this renders
- * the thumbnail and only mounts the real player once someone asks for it.
- */
 export default function MatchVodSection({ post }: { post: MediaPost }) {
     const [playing, setPlaying] = useState(false)
     const [posterQuality, setPosterQuality] = useState<'maxres' | 'hq'>('maxres')
@@ -42,7 +37,7 @@ export default function MatchVodSection({ post }: { post: MediaPost }) {
                 </a>
             </div>
 
-            {/* Capped so a full 16:9 always fits the screen rather than running past the fold. */}
+            {}
             <div className="mx-auto w-full" style={{ maxWidth: 'min(100%, calc((100vh - 12rem) * 16 / 9))' }}>
                 <div className="relative aspect-video w-full overflow-hidden rounded-sm border border-border bg-black">
                     {playing && embedUrl ? (
@@ -69,9 +64,7 @@ export default function MatchVodSection({ post }: { post: MediaPost }) {
                                     unoptimized
                                     sizes="(min-width: 1024px) 1030px, 100vw"
                                     className="object-cover"
-                                    // A video with no maxres thumbnail returns a 120x90 grey
-                                    // placeholder with a 200, so the miss shows up as a tiny
-                                    // natural width rather than an error.
+
                                     onLoad={e => {
                                         if (e.currentTarget.naturalWidth <= 120) setPosterQuality('hq')
                                     }}

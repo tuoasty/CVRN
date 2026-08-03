@@ -11,11 +11,6 @@ import {
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-/**
- * `superAdminOnly` hides an entry from plain admins. It is a UI convenience, never a
- * security boundary — the server action behind the page is what actually enforces the
- * role, since actions are callable without going through this nav at all.
- */
 type NavItem = { href: string; label: string; superAdminOnly?: boolean };
 
 const FLAT_ITEMS: NavItem[] = [
@@ -40,8 +35,7 @@ const DROPDOWN_GROUPS: { label: string; items: NavItem[] }[] = [
             { href: "/admin/stats",        label: "Match Stats" },
             { href: "/admin/sync",         label: "Sync" },
             { href: "/admin/sync/history", label: "Sync History" },
-            // Every action on this page is super_admin-gated, so showing it to a plain
-            // admin would just be a page where every button returns Forbidden.
+
             { href: "/admin/cache",        label: "Cache", superAdminOnly: true },
         ],
     },
@@ -66,9 +60,6 @@ export default function AdminNavItems({
     const pathname = usePathname();
     const router = useRouter();
 
-    // ALLOWED_HREFS is an allowlist keyed by role: stat_tracker and staff are listed and
-    // therefore see only what it names, while admin and super_admin have no entry and see
-    // everything. `superAdminOnly` is the exception that narrows the top of that range.
     const allowed = userRole ? ALLOWED_HREFS[userRole] : undefined;
     const isSuperAdmin = userRole === "super_admin";
 

@@ -1,6 +1,5 @@
 export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap' | 'clip'
 
-/** The two post types a match can carry: one graphic, one VOD. `clip` is deliberately excluded. */
 export type MatchMediaSlot = Extract<MediaPostType, 'gfx' | 'video'>
 
 export interface MediaPost {

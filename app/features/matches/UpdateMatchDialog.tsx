@@ -59,7 +59,6 @@ export default function UpdateMatchDialog({
                                               onSuccess
                                           }: UpdateMatchDialogProps) {
 
-
     const [open, setOpen] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [submitting, setSubmitting] = useState(false);

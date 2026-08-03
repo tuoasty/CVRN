@@ -67,7 +67,7 @@ export default function AdminStatsPage() {
     return (
         <div className="admin-container">
             <div className="admin-section">
-                {/* Header */}
+                {}
                 <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
                     <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
                         <BarChart3 className="h-7 w-7 text-primary" />

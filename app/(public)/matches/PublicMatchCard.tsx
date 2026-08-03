@@ -87,7 +87,7 @@ export default function PublicMatchCard({
 }: PublicMatchCardProps) {
     const { match, sets } = matchDetails;
     const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
-    // 'points' shows base + margin bonus; 'points_without_bonus' shows base only.
+
     const homePts = (match.home_team_points ?? 0) + (standingMethod === "points" ? (match.home_team_bonus ?? 0) : 0);
     const awayPts = (match.away_team_points ?? 0) + (standingMethod === "points" ? (match.away_team_bonus ?? 0) : 0);
     const matchNumber = parseMatchNumber(match.match_code);
@@ -107,14 +107,12 @@ export default function PublicMatchCard({
 
     const inner = (
         <div>
-            {/* ── STACKED LAYOUT (< 1024px) ──
-                Two team rows with per-set scores inline. Runs up to lg: the single-line
-                layout below needs ~1024px before team names stop crushing. */}
+            {}
             <div className="lg:hidden">
 
-                {/* Row 1 — Match context */}
+                {}
                 <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-border">
-                    {/* Season vs playoffs is already the tab the reader is standing on. */}
+                    {}
                     <div className="flex items-center">
                         <span className="text-[10px] font-semibold text-muted-foreground">
                             {matchLabel}
@@ -123,7 +121,7 @@ export default function PublicMatchCard({
                     <span className="text-[10px] text-muted-foreground/60 shrink-0">{timeDisplay}</span>
                 </div>
 
-                {/* Rows 2–3 — Home then Away */}
+                {}
                 {[
                     { team: homeTeam, setsWon: match.home_sets_won, won: homeWon },
                     { team: awayTeam, setsWon: match.away_sets_won, won: awayWon },
@@ -186,7 +184,7 @@ export default function PublicMatchCard({
                     );
                 })}
 
-                {/* Footer — always shown */}
+                {}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
                     <div className="flex items-center gap-1.5">
                         {match.is_forfeit ? (
@@ -262,12 +260,9 @@ export default function PublicMatchCard({
 
             </div>
 
-            {/* ── SINGLE-LINE LAYOUT (≥ 1024px) ──
-                Fixed tracks so the score sits at the same x on every row of the list. Meta and
-                margin columns are fixed; both team columns share what's left, which keeps the
-                score centred without it drifting when one name is longer than the other. */}
+            {}
             <div className="hidden lg:grid grid-cols-[190px_minmax(0,1fr)_72px_minmax(0,1fr)_230px_100px] items-center gap-4">
-                {/* Meta */}
+                {}
                 <div className="flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -289,7 +284,7 @@ export default function PublicMatchCard({
                     <span className="text-xs text-muted-foreground">{timeDisplay}</span>
                 </div>
 
-                {/* Home — mirrors inward toward the score */}
+                {}
                 <div className={cn(
                     "flex flex-row-reverse items-center gap-2.5 min-w-0 transition-opacity",
                     isCompleted && !homeWon && "opacity-40"
@@ -307,7 +302,7 @@ export default function PublicMatchCard({
                     </div>
                 </div>
 
-                {/* Score */}
+                {}
                 <div className="text-center">
                     {isCompleted && match.home_sets_won !== null && match.away_sets_won !== null ? (
                         <span className="text-2xl font-bold tabular-nums leading-none">
@@ -320,7 +315,7 @@ export default function PublicMatchCard({
                     )}
                 </div>
 
-                {/* Away */}
+                {}
                 <div className={cn(
                     "flex items-center gap-2.5 min-w-0 transition-opacity",
                     isCompleted && !awayWon && "opacity-40"
@@ -338,7 +333,7 @@ export default function PublicMatchCard({
                     </div>
                 </div>
 
-                {/* Set scores */}
+                {}
                 <div className="flex items-center gap-1">
                     {isCompleted && !match.is_forfeit && sets.map(set => (
                         <div key={set.set_number} className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm bg-muted/50 border border-border/50">
@@ -359,7 +354,7 @@ export default function PublicMatchCard({
                     ))}
                 </div>
 
-                {/* Margin — the winner's figure; the loser's is its mirror and the row has no space for both */}
+                {}
                 <div className="flex justify-end">
                     {isCompleted && !homeTeam?.is_bye && !awayTeam?.is_bye && (isPoints
                         ? (match.home_team_points != null && match.away_team_points != null && (
@@ -379,9 +374,7 @@ export default function PublicMatchCard({
     );
 
     return href ? (
-        // prefetch off: a matches list renders 20-40 of these, and since the detail route
-        // is static Next would prefetch each one's full RSC payload on scroll — forcing a
-        // cold render + ISR write for pages nobody opened.
+
         <Link href={href} prefetch={false} className="block panel p-3 sm:p-4 transition-colors hover:border-primary/30 cursor-pointer">
             {inner}
         </Link>

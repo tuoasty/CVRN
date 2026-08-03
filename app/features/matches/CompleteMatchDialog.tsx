@@ -50,7 +50,6 @@ export default function CompleteMatchDialog({
                                                 onSuccess
                                             }: CompleteMatchDialogProps) {
 
-
     const [open, setOpen] = useState(false);
     const [loadingPlayers, setLoadingPlayers] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -73,14 +72,13 @@ export default function CompleteMatchDialog({
             initializeSetScores();
             loadPlayers();
         } else {
-            // Cancel player loading when dialog closes
+
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
                 abortControllerRef.current = null;
             }
         }
     }, [open]);
-
 
     const initializeSetScores = () => {
         const initialScores = Array.from({ length: minSets }, () => ({
@@ -91,12 +89,11 @@ export default function CompleteMatchDialog({
     };
 
     const loadPlayers = async () => {
-        // Cancel any existing request
+
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
 
-        // Create new abort controller
         abortControllerRef.current = new AbortController();
 
         setLoadingPlayers(true);
@@ -106,7 +103,6 @@ export default function CompleteMatchDialog({
                 getTeamPlayersAction({ teamId: awayTeamId, seasonId }),
             ]);
 
-            // Check if request was aborted
             if (abortControllerRef.current?.signal.aborted) {
                 return;
             }
@@ -224,11 +220,6 @@ export default function CompleteMatchDialog({
             return;
         }
 
-        // if (!matchMvpId || !loserMvpId) {
-        //     toast.error("Please select both MVPs");
-        //     return;
-        // }
-
         setSubmitting(true);
         clientLogger.info("CompleteMatchDialog", "Completing match", { matchId, sets });
 
@@ -290,7 +281,7 @@ export default function CompleteMatchDialog({
 
                 {loadingPlayers ? (
                     <div className="space-y-6">
-                        {/* Show match form immediately */}
+                        {}
                         <div className="flex items-center space-x-2 panel p-4">
                             <input
                                 type="checkbox"
@@ -404,7 +395,7 @@ export default function CompleteMatchDialog({
                                     )}
                                 </div>
 
-                                {/* MVP section with loading indicator */}
+                                {}
                                 <div className="space-y-3">
                                     <h3 className="font-semibold mb-2">MVP Selection</h3>
                                     <div className="flex items-center justify-center py-4">

@@ -19,8 +19,7 @@ export function parseTeamsSheet(
     maxPlayers?: number
 ): ParsedTeamResult[] {
     const results: ParsedTeamResult[] = [];
-    // Roster rows to scan per team: the season cap (total, incl. leadership),
-    // clamped by the block so the scan can never read the next team's header row.
+
     const player_rows = Math.min(maxPlayers ?? Infinity, blockHeight - 2)
 
     for (let k = 0; ; k++) {
@@ -36,9 +35,7 @@ export function parseTeamsSheet(
 
         for (let slot = 0; slot < TEAMS_PER_ROW; slot++) {
             const col = slot * blockStride + 1;
-            // Emoji stripped here so the name that reaches the DB matches what the qualifier and
-            // playoff sheets are keyed against. An emoji-only cell collapses to '' and is treated
-            // as a cleared name below, same as a blank cell.
+
             const teamName = normalizeTeamName(headerData[col + 2] ?? '');
             const teamNumberRaw = parseInt(headerData[col + 1]?.trim() ?? '', 10);
             const teamNumber = isNaN(teamNumberRaw)

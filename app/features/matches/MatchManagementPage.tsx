@@ -24,14 +24,11 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 
 export default function MatchManagementPage() {
     const { selectedSeasonId } = useAdminContextStore();
-    // The store is empty until AdminStoreInitializer resolves regions + seasons, so gating on
-    // `selectedSeasonId` alone flashes the "select a season" panel — a wrong answer, not a wait.
+
     const adminReady = useAdminReady();
     const [matchType, setMatchType] = useState<"season" | "playoffs">("season");
     const [activeTab, setActiveTab] = useState("schedule");
 
-    // Null means "no explicit pick yet" — fall back to the season's default.
-    // Both reset when the navbar switches seasons.
     const [weekOverride, setWeekOverride] = useState<number | null>(null);
     const [roundOverride, setRoundOverride] = useState<PlayoffRound | null>(null);
     useEffect(() => {
@@ -79,8 +76,6 @@ export default function MatchManagementPage() {
         return m;
     }, [roundCounts]);
 
-    // The create-matches flow is season-only; leaving it selected while
-    // switching to playoffs would strand the user on a hidden tab.
     const handleMatchTypeChange = (tab: "season" | "playoffs") => {
         setMatchType(tab);
         if (tab === "playoffs") setActiveTab("schedule");

@@ -29,7 +29,7 @@ export default function PublicNavbar() {
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-card">
             <div className="page-wide">
-                {/* Desktop: Single Row */}
+                {}
                 <div className="hidden lg:flex items-center justify-between py-3">
                     <div className="flex items-center gap-8">
                         <Link href="/">
@@ -49,7 +49,7 @@ export default function PublicNavbar() {
                     </div>
                 </div>
 
-                {/* Mobile/Tablet: Row 1 — logo + actions */}
+                {}
                 <div className="lg:hidden flex items-center justify-between py-2.5">
                     <Link href="/">
                         <h1 className="text-lg font-semibold tracking-tight">
@@ -95,7 +95,7 @@ export default function PublicNavbar() {
                     </div>
                 </div>
             </div>
-            {/* Mobile/Tablet: Row 2 — full-width region/season selector */}
+            {}
             <div className="lg:hidden border-t border-border">
                 <div className="page-wide py-2">
                     <RegionSeasonSelector fullWidth />

@@ -12,10 +12,6 @@ async function fetchPlayerSearch(
     return result.value
 }
 
-/**
- * Global (all-regions, all-seasons) player search. Pass an already-debounced query.
- * An empty/whitespace query disables the request (null key) so no fetch fires on an empty box.
- */
 export function usePlayerSearch(query: string) {
     const trimmed = query.trim()
     const key: [string, string] | null = trimmed

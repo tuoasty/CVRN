@@ -53,7 +53,6 @@ export default function ManageMatchDialog({
                                               onSuccess
                                           }: ManageMatchDialogProps) {
 
-
     const isSuperAdmin = useIsSuperAdmin();
     const [open, setOpen] = useState(false);
     const [updating, setUpdating] = useState(false);
@@ -226,7 +225,7 @@ export default function ManageMatchDialog({
                             )}
                         </div>
 
-                        {/* Always show officials section, not just for non-completed matches */}
+                        {}
                         <div className="space-y-4 pt-4 border-t border-border">
                             <h3 className="font-semibold">Officials</h3>
 

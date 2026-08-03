@@ -35,12 +35,6 @@ function hslToHex(h: number, s: number, l: number): string {
     return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-/**
- * Adjusts a brick color hex so it stays visible against the card background.
- * Very dark colors (< 20% lightness) are lightened in dark mode.
- * Very light colors (> 82% lightness) are darkened in light mode.
- * Colors in a comfortable mid-range are returned unchanged.
- */
 export function getBrickDisplayColor(
     hex: string | null | undefined,
     isDark: boolean,

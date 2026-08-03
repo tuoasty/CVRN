@@ -39,27 +39,12 @@ export async function insertMatches(
     return Ok(data ?? []);
 }
 
-/**
- * Unbounded: no filter, no limit, and it grows with every season.
- *
- * Only the admin playoff page still uses this. The public bracket used to as well, which
- * meant every view of /[region]/[season]/playoffs pulled the entire matches table to render
- * ~30 cards — use `findPlayoffMatchesFullBySeason` instead.
- */
 export async function findAllMatches(supabase: DBClient): Promise<Result<Match[]>> {
     const {data, error} = await supabase.from("matches").select("*");
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
 }
 
-/**
- * Full match rows for one season's playoffs — the scoped replacement for `findAllMatches`
- * on the bracket display.
- *
- * Distinct from `findPlayoffMatchesBySeason` below, which returns a narrow projection for
- * the admin stats table and omits `home_sets_won` / `away_sets_won` / `best_of` — the
- * fields the bracket cards render scores from.
- */
 export async function findPlayoffMatchesFullBySeason(
     supabase: DBClient,
     seasonId: string
@@ -442,7 +427,7 @@ export async function findDefaultWeekForSeason(
     supabase: DBClient,
     seasonId: string
 ): Promise<Result<number>> {
-    // First: find the week of the nearest upcoming match
+
     const { data: upcoming, error: upcomingErr } = await supabase
         .from("matches")
         .select("week")
@@ -455,7 +440,6 @@ export async function findDefaultWeekForSeason(
     if (upcomingErr) return Err(serializeError(upcomingErr, "DB_ERROR"));
     if (upcoming?.week != null) return Ok(upcoming.week);
 
-    // Fallback: last week in the season (all matches are in the past)
     const { data: latest, error: latestErr } = await supabase
         .from("matches")
         .select("week")

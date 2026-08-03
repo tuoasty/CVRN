@@ -68,8 +68,7 @@ export async function findMediaPostsPaged(
         .range(from, to)
 
     if (search?.trim()) {
-        // Escape backslashes first, then LIKE wildcards, then strip PostgREST
-        // structural metacharacters (comma/parens) that would break .or() parsing.
+
         const q = search.trim()
             .replace(/\\/g, '\\\\')
             .replace(/[%_]/g, m => `\\${m}`)

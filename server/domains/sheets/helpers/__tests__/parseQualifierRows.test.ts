@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseQualifierRows } from '../parseQualifierRows'
 
-// Column layout (0-indexed) from parseQualifierRows:
-//   E=4 code, G=6 home, I=8 away, K=10 schedule, M..O=12..14 sets, Q=16 winner, R=17 note
 const COL_HOME = 6
 const COL_AWAY = 8
 const GREEN = '#00b050'
@@ -22,7 +20,6 @@ function makeColors(overrides: Record<number, string>): (string | null)[] {
   return colors
 }
 
-// headerRow=0 → data starts at index 0
 function parseOne(overrides: Record<number, string>, colorOverrides?: Record<number, string>) {
   const fgColors = colorOverrides ? [makeColors(colorOverrides)] : undefined
   const { results, errors } = parseQualifierRows([makeRow(overrides)], fgColors, 0)
@@ -86,7 +83,7 @@ describe('parseQualifierRows — color-driven score orientation', () => {
   })
 
   it('red set (loser took the set) flips the order to the losing side', () => {
-    // Home is the match winner, but this set is red → the loser (Beta/away) won it → away 25.
+
     const { results } = parseOne(row, { [COL_HOME]: GREEN, [COL_AWAY]: RED, 12: RED })
     expect(results[0].sets).toEqual([{ setNumber: 1, homeScore: 20, awayScore: 25 }])
   })
@@ -101,7 +98,7 @@ describe('parseQualifierRows — color-driven score orientation', () => {
       { 4: '1-M1', 6: 'Alpha', 8: 'Beta', 12: '20-25' },
       { [COL_HOME]: GREEN, [COL_AWAY]: RED, 12: GREEN },
     )
-    // Home is match winner, green set → home won the set → home gets the 25.
+
     expect(results[0].sets).toEqual([{ setNumber: 1, homeScore: 25, awayScore: 20 }])
   })
 
@@ -113,11 +110,11 @@ describe('parseQualifierRows — color-driven score orientation', () => {
   it('falls back to positional per set when a set cell is uncolored but names are colored', () => {
     const { results } = parseOne(
       { 4: '1-M1', 6: 'Alpha', 8: 'Beta', 12: '25-20', 13: '25-20' },
-      { [COL_HOME]: GREEN, [COL_AWAY]: RED, 13: RED }, // set 1 (col 12) uncolored, set 2 (col 13) red
+      { [COL_HOME]: GREEN, [COL_AWAY]: RED, 13: RED }, 
     )
     expect(results[0].sets).toEqual([
-      { setNumber: 1, homeScore: 25, awayScore: 20 }, // positional fallback
-      { setNumber: 2, homeScore: 20, awayScore: 25 }, // red → loser/away took it
+      { setNumber: 1, homeScore: 25, awayScore: 20 }, 
+      { setNumber: 2, homeScore: 20, awayScore: 25 }, 
     ])
   })
 })

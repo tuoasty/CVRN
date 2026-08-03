@@ -1,7 +1,6 @@
 import { Ok, Result } from "@/shared/types/result";
 import { PlayoffMatchTemplate, templates } from "../../playoff";
 
-
 export default function getTemplateMatchOrder(
   templateKey: string,
 ): Result<string[]>{
@@ -14,7 +13,7 @@ export default function getTemplateMatchOrder(
 
     const matchesByCode = new Map(matches.map(m => [m.code, m]))
     const visited = new Set<string>();
-  
+
     function resolve(match:PlayoffMatchTemplate){
       if (visited.has(match.code)) return;
 
@@ -28,11 +27,10 @@ export default function getTemplateMatchOrder(
         const dep = matchesByCode.get(match.away.code);
         if(dep) resolve(dep);
       }
-      // add code to list
+
       codeOrder.push(match.code)
     }
 
     matches.forEach(resolve)
     return Ok(codeOrder)
 }
-

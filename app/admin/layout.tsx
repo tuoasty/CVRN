@@ -4,7 +4,6 @@ import { AdminStoreInitializer } from "@/app/admin/AdminStoreInitializier";
 import { AdminRoleProvider } from "@/app/admin/AdminRoleProvider";
 import { createServerSupabase } from "@/server/supabase/server";
 
-// TODO: thread userRole through all admin pages for role-aware UI
 async function getCurrentUserRole(): Promise<string | null> {
     const supabase = await createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();

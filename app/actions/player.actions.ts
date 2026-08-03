@@ -3,7 +3,6 @@
 import {revalidatePublicData} from "@/server/cache/revalidate";
 import {CACHE_TAGS} from "@/server/cache/tags";
 
-// Rosters render on the public team page, so roster edits invalidate teams too.
 const ROSTER_TAGS = [CACHE_TAGS.players, CACHE_TAGS.teams];
 
 import {z} from "zod"
@@ -157,4 +156,3 @@ export async function getPlayerDetailAction(username: string): Promise<Result<Pl
         teamHistory: historyResult.value,
     });
 }
-

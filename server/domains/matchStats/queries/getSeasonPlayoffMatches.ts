@@ -5,8 +5,6 @@ import {findMatchSheetConfigsByMatchIds} from "@/server/db/matchSheetConfig.repo
 import {findMatchIdsWithStats} from "@/server/db/playerMatchStats.repo";
 import {PlayoffMatchStatRow} from "@/server/domains/matchStats/types";
 
-// All playoff matches for a season, each annotated with its stats-sheet config
-// (if any) and whether its stats have been synced. Powers the admin stats table.
 export async function getSeasonPlayoffMatches(supabase: DBClient, seasonId: string): Promise<Result<PlayoffMatchStatRow[]>> {
     const matchesResult = await findPlayoffMatchesBySeason(supabase, seasonId);
     if (!matchesResult.ok) return matchesResult;

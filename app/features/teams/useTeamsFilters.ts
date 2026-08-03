@@ -13,7 +13,6 @@ import {
     TeamsFilters,
 } from "./selectTeams";
 
-/** Serializes filters to a query string, omitting defaults so the clean state is a bare path. */
 export function buildTeamsQuery(filters: TeamsFilters): string {
     const params = new URLSearchParams();
     if (filters.region !== DEFAULT_TEAMS_FILTERS.region) params.set("region", filters.region);
@@ -32,10 +31,6 @@ function seasonsForRegionCode(
     return seasons.filter((s) => s.region_id === region.id);
 }
 
-/**
- * Repairs untrusted URL input. Returns the filters unchanged when they are already valid,
- * so the caller can skip a needless `router.replace`.
- */
 function normalize(
     raw: TeamsFilters,
     regions: Region[],
@@ -49,7 +44,7 @@ function normalize(
     if (!isKnownRegion) region = REGION_ALL;
 
     if (isSpecificSeason(season)) {
-        // A season slug is only meaningful inside one region: slugs are unique per-region only.
+
         if (region === REGION_ALL) {
             season = SEASON_ACTIVE;
         } else {
@@ -79,7 +74,6 @@ export function useTeamsFilters(regions: Region[], seasons: SeasonWithPlayoffCon
         [searchParams]
     );
 
-    // Normalizing against empty reference data would "repair" every valid region into `all`.
     const filters = referenceDataLoaded ? normalize(raw, regions, seasons) : raw;
 
     const write = useCallback(
@@ -90,7 +84,6 @@ export function useTeamsFilters(regions: Region[], seasons: SeasonWithPlayoffCon
         [pathname, router]
     );
 
-    // Push the repaired URL back so a bookmarked bad link becomes a good one.
     useEffect(() => {
         if (!referenceDataLoaded) return;
         if (filters === raw) return;
@@ -102,7 +95,7 @@ export function useTeamsFilters(regions: Region[], seasons: SeasonWithPlayoffCon
             let season = filters.season;
 
             if (isSpecificSeason(season)) {
-                // Carry the slug across regions when the target region has a season by that name.
+
                 const survives =
                     region !== REGION_ALL &&
                     seasonsForRegionCode(seasons, regions, region).some(

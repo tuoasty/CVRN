@@ -15,7 +15,6 @@ import {toast} from '@/app/utils/toast';
 import {clientLogger} from '@/app/utils/clientLogger';
 import {editDistance} from '@/app/utils/editDistance';
 
-// Sentinel for "leave this player unmapped" — Radix Select forbids an empty value.
 const SKIP = '__skip__';
 
 interface Props {
@@ -29,8 +28,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
     const [previewError, setPreviewError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
-    // sheet username (lowercased) → player_id. Ephemeral: a re-opened dialog
-    // re-prompts, so a stale mapping can never silently misattribute later.
+
     const [overrides, setOverrides] = useState<PlayerOverrides>({});
 
     const runPreview = useCallback(async (configId: string, playerOverrides?: PlayerOverrides) => {
@@ -92,18 +90,15 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
         }
     };
 
-    // Absent `kind` means fatal — SyncError predates the field elsewhere.
     const fatalErrors = plan?.errors.filter(e => e.kind !== 'skippable') ?? [];
     const skippableErrors = plan?.errors.filter(e => e.kind === 'skippable') ?? [];
     const skipped = plan?.skippedPlayers ?? [];
 
     const hasErrors = (plan?.errors.length ?? 0) > 0;
     const canSave = !!plan && !hasErrors && !loading && !saving;
-    // Force is a distinct action, never a mode on Save — it must not be reachable
-    // by muscle memory, and it can never clear a fatal error.
+
     const canForce = !!plan && fatalErrors.length === 0 && skippableErrors.length > 0 && !loading && !saving;
 
-    // Closest roster names first — a typo is usually one or two edits away.
     const candidatesFor = (sheetName: string) =>
         [...(plan?.rosterCandidates ?? [])].sort(
             (a, b) => editDistance(sheetName, a.username) - editDistance(sheetName, b.username)
@@ -118,7 +113,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
 
                 {match && (
                     <div className="space-y-4 mt-2">
-                        {/* Match header */}
+                        {}
                         <div className="space-y-1">
                             <p className="text-xs text-muted-foreground uppercase tracking-wider">Match</p>
                             <p className="text-sm font-medium">
@@ -126,7 +121,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
                             </p>
                         </div>
 
-                        {/* Loading */}
+                        {}
                         {loading && (
                             <div className="panel p-6 text-center">
                                 <RefreshCw className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
@@ -134,7 +129,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
                             </div>
                         )}
 
-                        {/* Preview-level error (couldn't even run pipeline) */}
+                        {}
                         {!loading && previewError && (
                             <div className="panel p-4 border border-destructive/40 bg-destructive/5">
                                 <div className="flex items-start gap-2">
@@ -147,7 +142,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
                             </div>
                         )}
 
-                        {/* Plan summary */}
+                        {}
                         {!loading && plan && (
                             <>
                                 <div className="grid grid-cols-3 gap-3">
@@ -167,7 +162,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
                                     </div>
                                 </div>
 
-                                {/* Teams */}
+                                {}
                                 {plan.summary.teams.length > 0 && (
                                     <div className="panel p-3">
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Teams detected</p>
@@ -182,8 +177,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
                                     </div>
                                 )}
 
-                                {/* Sections whose sheet label differs from the team we matched them to.
-                                    Attribution is silent otherwise; surface it so it can be checked. */}
+                                {}
                                 {plan.summary.sections.some(s => s.headerLabel !== s.resolvedTeamName) && (
                                     <div className="panel p-3">
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
@@ -203,7 +197,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
                                     </div>
                                 )}
 
-                                {/* Blocking errors — the parse itself is wrong. Never bypassable. */}
+                                {}
                                 {fatalErrors.length > 0 && (
                                     <div className="panel p-3 border border-destructive/40 bg-destructive/5 max-h-48 overflow-y-auto">
                                         <p className="text-xs uppercase tracking-wider text-destructive mb-2 font-medium">
@@ -220,9 +214,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
                                     </div>
                                 )}
 
-                                {/* Unresolved names. Map each to a real player, or leave it to be
-                                    skipped. Candidates are restricted to the two rosters — anyone
-                                    else would cast a bogus vote in section attribution. */}
+                                {}
                                 {skipped.length > 0 && (
                                     <div className="panel p-3 border border-amber-500/40 bg-amber-500/5 max-h-60 overflow-y-auto">
                                         <p className="text-xs uppercase tracking-wider text-amber-600 dark:text-amber-500 mb-1 font-medium">
@@ -283,7 +275,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
                             </>
                         )}
 
-                        {/* Actions */}
+                        {}
                         <div className="flex gap-3 pt-1">
                             <Button
                                 type="button"

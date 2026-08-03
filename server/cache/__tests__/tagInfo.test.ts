@@ -4,13 +4,6 @@ import {join} from "node:path";
 import {ALL_CACHE_TAGS} from "../tags";
 import {CACHE_TAG_INFO, CACHE_TAG_ORDER} from "../tagInfo";
 
-/**
- * Derive the real blast radius by parsing the `tags:` arrays out of publicReads.ts.
- *
- * The admin cache page shows admins how many cached reads a purge clears, and that number
- * drives whether they press the button. A hand-maintained count silently drifts the moment
- * someone adds a cached read — so it is checked against the source rather than trusted.
- */
 function deriveReadCounts(): Record<string, number> {
     const source = readFileSync(
         join(process.cwd(), "server", "cache", "publicReads.ts"),
@@ -24,7 +17,7 @@ function deriveReadCounts(): Record<string, number> {
     for (const match of source.matchAll(readPattern)) {
         const [, name, body] = match;
         const tagsBlock = body.match(/tags:\s*\[([^\]]*)\]/);
-        // A cached read with no tags can never be invalidated — always a bug.
+
         expect(tagsBlock, `${name} is registered with no cache tags`).toBeTruthy();
         reads++;
         for (const [, tag] of tagsBlock![1].matchAll(/CACHE_TAGS\.(\w+)/g)) {
@@ -32,8 +25,6 @@ function deriveReadCounts(): Record<string, number> {
         }
     }
 
-    // Guards against the regex silently matching nothing after a refactor, which would
-    // otherwise make every count assertion trivially pass.
     expect(reads, "parsed no cached reads from publicReads.ts — has the file format changed?")
         .toBeGreaterThan(10);
 

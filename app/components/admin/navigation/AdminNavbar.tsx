@@ -27,14 +27,12 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
         setOpen(false);
     }, [pathname]);
 
-    // Teams drives region/season from its own URL params, so the global selector would be a
-    // second, conflicting source of truth on that route.
     const showRegionSeasonSelector = !pathname.startsWith("/admin/teams");
 
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-card">
             <div className="page-wide">
-                {/* Desktop: Single Row */}
+                {}
                 <div className="hidden lg:flex items-center justify-between py-3">
                     <div className="flex items-center gap-8">
                         <Link href="/admin/dashboard">
@@ -68,7 +66,7 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
                     </div>
                 </div>
 
-                {/* Mobile/Tablet: Single Row with Burger */}
+                {}
                 <div className="lg:hidden flex items-center justify-between py-2.5">
                     <Link href="/admin/dashboard">
                         <h1 className="text-lg font-semibold tracking-tight">

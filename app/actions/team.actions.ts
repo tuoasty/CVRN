@@ -156,7 +156,7 @@ export async function updateTeamAction(formData: FormData) {
         startingPoints: parsed.data.startingPoints,
         removeBackground,
     });
-    // Name, colour and logo all render on public team and standings pages.
+
     if (result.ok) revalidatePublicData([CACHE_TAGS.teams, CACHE_TAGS.standings]);
     return result;
 }
@@ -176,7 +176,6 @@ export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
     const file = formData.get('logo') as File | null;
     if (!file || file.size === 0) return Err({ message: "No file provided", code: "VALIDATION_ERROR" as const });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const admin = getSupabaseAdmin() as any;
 
     const teamResult = await findTeamById(admin, teamId);
@@ -215,8 +214,7 @@ export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
     }
 
     revalidatePath('/admin/teams');
-    // Logos render on team, standings and match pages — this is the manual edit path
-    // that most often needs to show up on the public site immediately.
+
     revalidatePublicData([CACHE_TAGS.teams, CACHE_TAGS.standings, CACHE_TAGS.matches]);
     return Ok({ logoUrl: uploadResult.value.url });
 }

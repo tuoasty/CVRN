@@ -41,13 +41,11 @@ export function SeedChooserDialog({
     const { teams } = useTeamsBySeason(seasonId);
     const { standings } = useStandings(seasonId, regionId || undefined);
 
-    // Dropdown pool: every season team, alphabetical.
     const sortedTeams = useMemo(
         () => [...teams].sort((a, b) => a.name.localeCompare(b.name)),
         [teams]
     );
 
-    // team_id -> standings rank, for the muted hint next to each slot.
     const rankByTeamId = useMemo(() => {
         const map = new Map<string, number>();
         for (const s of standings) {
@@ -56,7 +54,6 @@ export function SeedChooserDialog({
         return map;
     }, [standings]);
 
-    // Default order = standings rank; slots beyond the ranked pool start empty.
     const defaultOrder = useMemo<(string | null)[]>(() => {
         const ranked = [...standings].sort(
             (a, b) => (a.rank ?? 9999) - (b.rank ?? 9999)
@@ -67,7 +64,6 @@ export function SeedChooserDialog({
     const [slots, setSlots] = useState<(string | null)[]>([]);
     const initializedRef = useRef(false);
 
-    // Seed the slots once per opening, after the team pool has loaded.
     useEffect(() => {
         if (!open) {
             initializedRef.current = false;
@@ -79,9 +75,6 @@ export function SeedChooserDialog({
         initializedRef.current = true;
     }, [open, teams, defaultOrder]);
 
-    // Pick team T into slot k. If T already sits in another slot, swap the two
-    // (keeps the assignment a set of unique teams); otherwise place it, dropping
-    // whatever occupied slot k back to the pool.
     const handlePick = (slotIndex: number, teamId: string) => {
         setSlots((prev) => {
             const next = [...prev];

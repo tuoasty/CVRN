@@ -10,7 +10,6 @@ export type PlayerStatColumn = {
     format: StatFormat;
 };
 
-// Per-set rate column.
 const ps = (
     key: keyof PlayerSeasonStat,
     label: string,
@@ -18,7 +17,6 @@ const ps = (
     description: string
 ): PlayerStatColumn => ({key, label, group, description, format: "per_set"});
 
-// Raw season-total (count) column.
 const ct = (
     key: keyof PlayerSeasonStat,
     label: string,
@@ -26,8 +24,6 @@ const ct = (
     description: string
 ): PlayerStatColumn => ({key, label, group, description, format: "count"});
 
-// The six views the profile table can show. Overview is the default landing
-// view; the five skill views are focused deep-dives.
 export type StatView = "overview" | "spiking" | "setting" | "blocking" | "receiving" | "serving";
 
 export const STAT_VIEWS: {value: StatView; label: string}[] = [
@@ -39,15 +35,12 @@ export const STAT_VIEWS: {value: StatView; label: string}[] = [
     {value: "serving",   label: "Serving"},
 ];
 
-// Constant context prefix shared by every view.
 const SEASON_COLUMNS: PlayerStatColumn[] = [
     {key: "sets_played",    label: "SP",    group: "Season", description: "Sets played", format: "count"},
     {key: "points_total",   label: "PTS",   group: "Season", description: "Total points scored: kills + kill blocks + aces", format: "count"},
     {key: "points_per_set", label: "PTS/S", group: "Season", description: "Points scored per set", format: "per_set"},
 ];
 
-// Column keys constrained to `keyof PlayerSeasonStat`. The `*_total` count keys
-// come from v_player_season_stats (migration 20260713120000).
 export const STAT_VIEW_COLUMNS: Record<StatView, PlayerStatColumn[]> = {
     overview: [
         ...SEASON_COLUMNS,
@@ -128,9 +121,6 @@ export function formatPlayerStat(value: number | null, format: StatFormat): stri
     return String(value);
 }
 
-// Reserves width so a column of single-digit values doesn't render narrower
-// than the same column on another row set. Sized to the content — per_set
-// prints 2 decimals ("12.34"), counts print at most 3 digits.
 export const playerHeadWidthClass = (format: StatFormat): string =>
     format === "pct" ? "min-w-[3.25rem]" : format === "count" ? "min-w-[2rem]" : "min-w-[2.75rem]";
 

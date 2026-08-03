@@ -13,11 +13,6 @@ type PageProps = {
     }>;
 };
 
-/**
- * Empty on purpose — see players/[username]/page.tsx. Declaring it is what registers the
- * route for ISR; without it a dynamic-param route gets no Full Route Cache at all and
- * re-renders on every request. Match codes fill the cache as they are visited.
- */
 export async function generateStaticParams() {
     return [];
 }
@@ -29,8 +24,6 @@ export default async function MatchDetailPage({ params }: PageProps) {
     const seasonSlug = safeDecodeURIComponent(season).toLowerCase();
     const matchCode = safeDecodeURIComponent(code);
 
-    // Null only for a genuine miss; infrastructure failures throw rather than being
-    // cached as a permanent 404.
     const detail = await getCachedMatchDetail(regionCode, seasonSlug, matchCode);
     if (!detail) notFound();
 

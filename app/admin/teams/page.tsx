@@ -30,7 +30,7 @@ export default function AdminTeamsPage() {
                     </TabsList>
 
                     <TabsContent value="view" className="mt-6">
-                        {/* TeamsDataTable reads filters from useSearchParams, which needs a boundary. */}
+                        {}
                         <Suspense
                             fallback={
                                 <div className="panel p-6">

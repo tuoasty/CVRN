@@ -35,7 +35,6 @@ const isHex = (color: string | null | undefined): color is string => {
 
 const DRAG_THRESHOLD = 4;
 
-// Attaches drag-to-scroll on the shadcn Table's container div by walking up from the <table> ref.
 function useDragScroll() {
     const cleanupRef = useRef<(() => void) | null>(null);
 
