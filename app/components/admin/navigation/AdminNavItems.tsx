@@ -46,6 +46,7 @@ const DROPDOWN_GROUPS: { label: string; items: NavItem[] }[] = [
 const ALLOWED_HREFS: Record<string, Set<string>> = {
     stat_tracker: new Set(["/admin/sync/history"]),
     staff:        new Set(["/admin/teams", "/admin/sync/history"]),
+    spec_manager: new Set(["/admin/specs", "/admin/specs/qualify"]),
 };
 
 interface AdminNavItemsProps {

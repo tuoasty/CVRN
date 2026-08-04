@@ -5,14 +5,16 @@ import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {getCachedPlayerLeaderboard, getCachedLeaderboardIdentity} from "@/server/cache/publicReads";
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
-import {requireAdmin} from "@/server/domains/auth";
+import {requireRoles} from "@/server/domains/auth";
 import {getSeasonFinalsSlots} from "@/server/domains/season";
 import {getSpecs, saveSpec, removeSpec, SaveSpecSchema} from "@/server/domains/spec";
 import {placementTiersFromSlots} from "@/server/domains/spec/helpers/placementBonus";
 
+const SPEC_ROLES = ["admin", "super_admin", "spec_manager"] as const;
+
 export async function getSpecsAction() {
     const supabase = await createServerSupabase();
-    const guard = await requireAdmin(supabase);
+    const guard = await requireRoles(supabase, SPEC_ROLES);
     if (!guard.ok) return guard;
 
     return getSpecs(supabase);
@@ -28,7 +30,7 @@ export async function saveSpecAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireAdmin(supabase);
+    const guard = await requireRoles(supabase, SPEC_ROLES);
     if (!guard.ok) return guard;
 
     const result = await saveSpec(supabase, parsed.data);
@@ -38,7 +40,7 @@ export async function saveSpecAction(data: unknown) {
 
 export async function deleteSpecAction(id: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireAdmin(supabase);
+    const guard = await requireRoles(supabase, SPEC_ROLES);
     if (!guard.ok) return guard;
 
     const result = await removeSpec(supabase, id);
@@ -48,7 +50,7 @@ export async function deleteSpecAction(id: string) {
 
 export async function getSpecLeaderboardAction(seasonId: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireAdmin(supabase);
+    const guard = await requireRoles(supabase, SPEC_ROLES);
     if (!guard.ok) return guard;
 
     try {

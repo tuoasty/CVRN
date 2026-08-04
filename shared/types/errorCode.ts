@@ -8,4 +8,5 @@ export type ErrorCode =
     | "INTEGRATION_ERROR"
     | "UNKNOWN"
     | "MEDIA_PIN_LIMIT_EXCEEDED"
-    | "MEDIA_MATCH_SLOT_TAKEN";
+    | "MEDIA_MATCH_SLOT_TAKEN"
+    | "INVITE_EXPIRED";

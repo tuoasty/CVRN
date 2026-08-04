@@ -5,12 +5,17 @@ import {serializeError} from "@/server/utils/serializeableError";
 
 type PendingUser = Database["public"]["Tables"]["pending_users"]["Row"];
 
+export function normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+}
+
 export async function findPendingUsersByEmail(email: string): Promise<Result<PendingUser | null>> {
-    const {data, error} = await getSupabaseAdmin().from("pending_users").select("*").eq("email", email).single();
-    if (error) {
-        if (error.code === "PGRST116") return Ok(null);
-        return Err(serializeError(error, "DB_ERROR"));
-    }
+    const {data, error} = await getSupabaseAdmin()
+        .from("pending_users")
+        .select("*")
+        .eq("email", normalizeEmail(email))
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data);
 }
 
@@ -19,17 +24,20 @@ export async function insertUserRole(data: {
     role: string,
     promotedBy: string | null
 }): Promise<Result<true>> {
-    const {error} = await getSupabaseAdmin().from("user_roles").insert({
+    const {error} = await getSupabaseAdmin().from("user_roles").upsert({
         user_id: data.userId,
         role: data.role,
         promoted_by: data.promotedBy
-    });
+    }, {onConflict: "user_id"});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);
 }
 
 export async function deletePendingUser(email: string): Promise<Result<true>> {
-    const {error} = await getSupabaseAdmin().from("pending_users").delete().eq("email", email);
+    const {error} = await getSupabaseAdmin()
+        .from("pending_users")
+        .delete()
+        .eq("email", normalizeEmail(email));
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);
 }

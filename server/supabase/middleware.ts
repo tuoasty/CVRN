@@ -133,6 +133,14 @@ export async function updateSession(request: NextRequest) {
       );
     }
 
+    const specManagerAllowed = pathname === "/admin/specs" || pathname === "/admin/specs/qualify";
+    if (roleData.role === "spec_manager" && !specManagerAllowed) {
+      logger.debug({ user_id: user.id, pathname }, "spec_manager redirected to specs");
+      return NextResponse.redirect(
+          new URL("/admin/specs", request.url)
+      );
+    }
+
     return supabaseResponse;
   }
 

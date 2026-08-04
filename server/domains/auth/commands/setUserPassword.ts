@@ -3,6 +3,7 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {DBClient} from "@/shared/types/db";
 import {logger} from "@/server/utils/logger";
 import {finalizeInvitedUser} from "@/server/domains/admin";
+import {clearUserRoleCache} from "@/server/db/roles.repo";
 
 export async function setUserPassword(
     supabase: DBClient,
@@ -21,6 +22,12 @@ export async function setUserPassword(
             });
         }
 
+        const finalizeResult = await finalizeInvitedUser(user.id, user.email)
+        if(!finalizeResult.ok){
+            logger.error({userId: user.id, error: finalizeResult.error}, "Failed to finalize invited user");
+            return finalizeResult
+        }
+
         const {error:passwordError} = await supabase.auth.updateUser({
             password,
         });
@@ -29,12 +36,7 @@ export async function setUserPassword(
             return Err(serializeError(passwordError, "UNAUTHORIZED"))
         }
 
-        const finalizeResult = await finalizeInvitedUser(
-            user.id, user.email)
-        if(!finalizeResult.ok){
-            logger.error({userId: user.id, error: finalizeResult.error}, "Failed to finalize invited user");
-            return finalizeResult
-        }
+        clearUserRoleCache(user.id);
 
         return Ok(null)
     } catch (error){

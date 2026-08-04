@@ -17,6 +17,11 @@ export async function finalizeInvitedUser(userId: string, email: string): Promis
 
         const pending = pendingResult.value;
 
+        if (pending.expires_at && new Date(pending.expires_at).getTime() <= Date.now()) {
+            logger.warn({userId, email, expiresAt: pending.expires_at}, "Pending user invite expired");
+            return Err({message: "Invite expired", code: "INVITE_EXPIRED"});
+        }
+
         const roleResult = await insertUserRole({
             userId, role: pending.role, promotedBy: pending.invited_by
         });

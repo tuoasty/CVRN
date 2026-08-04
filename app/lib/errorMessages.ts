@@ -11,6 +11,7 @@ const messages: Record<ErrorCode, string> = {
     UNKNOWN: "Something went wrong. Please try again.",
     MEDIA_PIN_LIMIT_EXCEEDED: "Only 3 posts can be pinned at a time. Unpin one first.",
     MEDIA_MATCH_SLOT_TAKEN: "This match already has a GFX/VOD attached. Remove it first.",
+    INVITE_EXPIRED: "This invite has expired. Ask an admin to send a new one.",
 };
 
 export function errorCodeToUserMessage(code: ErrorCode | string): string {
