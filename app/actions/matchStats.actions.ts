@@ -79,6 +79,6 @@ export async function publishStatsAction() {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
 
-    revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.stats]);
+    revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.stats, CACHE_TAGS.players]);
     return Ok(true);
 }

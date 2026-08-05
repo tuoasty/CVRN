@@ -1,9 +1,9 @@
 "use client";
 
-import {useMemo} from "react";
+import {useEffect, useMemo, useState} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {ArrowDown, ArrowUp} from "lucide-react";
+import {ArrowDown, ArrowUp, ChevronLeft, ChevronRight} from "lucide-react";
 import {Table, TableHeader, TableBody, TableRow, TableHead, TableCell} from "@/app/components/ui/table";
 import {Tooltip, TooltipContent, TooltipTrigger, TooltipProvider} from "@/app/components/ui/tooltip";
 import {cn} from "@/lib/utils";
@@ -41,6 +41,8 @@ function compareRows(a: LeaderboardDisplayRow, b: LeaderboardDisplayRow, key: So
 }
 
 const rowKey = (row: LeaderboardDisplayRow) => `${row.player_id}-${row.season_id ?? row.region_code}`;
+
+const PAGE_SIZE = 50;
 
 const RANK_W = "w-14";
 const PLAYER_W = "w-52";
@@ -104,6 +106,27 @@ export default function LeaderboardTable({
     const visibleUnqualified = useMemo(
         () => unqualified.filter(row => matchesPlayerQuery(row, filters.q)),
         [unqualified, filters.q]
+    );
+
+    const [page, setPage] = useState(1);
+
+    useEffect(() => {
+        setPage(1);
+    }, [rows, filters.sort, filters.order, filters.q]);
+
+    const total = visible.length + visibleUnqualified.length;
+    const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const safePage = Math.min(page, pageCount);
+    const windowStart = (safePage - 1) * PAGE_SIZE;
+    const windowEnd = windowStart + PAGE_SIZE;
+
+    const pageQualified = visible.slice(
+        Math.min(windowStart, visible.length),
+        Math.min(windowEnd, visible.length),
+    );
+    const pageUnqualified = visibleUnqualified.slice(
+        Math.max(0, windowStart - visible.length),
+        Math.max(0, windowEnd - visible.length),
     );
 
     const totalColumnCount = 3 + (showRegion ? 1 : 0) + columns.length + 1;
@@ -273,7 +296,7 @@ export default function LeaderboardTable({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {visible.map(({row, rank}) => (
+                        {pageQualified.map(({row, rank}) => (
                             <LeaderboardRow
                                 key={rowKey(row)}
                                 row={row}
@@ -284,7 +307,7 @@ export default function LeaderboardTable({
                             />
                         ))}
 
-                        {visibleUnqualified.length > 0 && (
+                        {pageUnqualified.length > 0 && (
                             <>
                                 <TableRow className="hover:bg-transparent">
                                     <TableCell
@@ -301,7 +324,7 @@ export default function LeaderboardTable({
                                         but not ranked.
                                     </TableCell>
                                 </TableRow>
-                                {visibleUnqualified.map(row => (
+                                {pageUnqualified.map(row => (
                                     <LeaderboardRow
                                         key={rowKey(row)}
                                         row={row}
@@ -315,6 +338,48 @@ export default function LeaderboardTable({
                         )}
                     </TableBody>
                 </Table>
+                {pageCount > 1 && (
+                    <div className="flex items-center justify-between gap-3 border-t border-border px-3 py-2">
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                            {windowStart + 1}–{Math.min(windowEnd, total)} of {total}
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={safePage <= 1}
+                                aria-label="Previous page"
+                                className={cn(
+                                    "inline-flex items-center gap-1 h-8 px-2.5 rounded-sm border border-border text-xs font-medium transition-colors",
+                                    "hover:bg-accent hover:text-accent-foreground",
+                                    "disabled:opacity-40 disabled:pointer-events-none",
+                                    "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                                )}
+                            >
+                                <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+                                Prev
+                            </button>
+                            <span className="px-2 text-xs text-muted-foreground tabular-nums">
+                                Page {safePage} of {pageCount}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+                                disabled={safePage >= pageCount}
+                                aria-label="Next page"
+                                className={cn(
+                                    "inline-flex items-center gap-1 h-8 px-2.5 rounded-sm border border-border text-xs font-medium transition-colors",
+                                    "hover:bg-accent hover:text-accent-foreground",
+                                    "disabled:opacity-40 disabled:pointer-events-none",
+                                    "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                                )}
+                            >
+                                Next
+                                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </TooltipProvider>
     );

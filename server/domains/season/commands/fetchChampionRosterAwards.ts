@@ -16,7 +16,7 @@ export async function fetchChampionRosterAwards(
         const podiumResult = await findSeasonPodium(supabase, seasonId);
         if (!podiumResult.ok) return podiumResult as Result<{count: number; skipped: boolean}>;
 
-        const champion = (podiumResult.value as any[]).find((p: any) => p.place === 1);
+        const champion = (podiumResult.value as {place: number; team_id: string}[]).find(p => p.place === 1);
         if (!champion) return Ok({count: 0, skipped: true});
 
         const playersResult = await findAllTeamPlayers(supabase, champion.team_id, seasonId);

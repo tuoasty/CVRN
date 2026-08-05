@@ -1,5 +1,4 @@
 import { google } from 'googleapis';
-import { logger } from './logger';
 
 export function getGoogleSheetsClient() {
     const credentials = process.env.GOOGLE_SHEETS_CREDENTIALS;

@@ -7,7 +7,6 @@ import { getCachedSeasonHistoryDetail, getCachedRegions } from "@/server/cache/p
 import { SeasonDetail } from "@/server/domains/season";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
-import { clientLogger } from "@/app/utils/clientLogger";
 
 function TeamLogoSmall({ name, logoUrl, size = 28, priority = false }: { name: string; logoUrl: string | null; size?: number; priority?: boolean }) {
     if (logoUrl) {

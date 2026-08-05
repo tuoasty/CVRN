@@ -31,7 +31,10 @@ export async function getLeaderboardIdentity(
     try {
         const [playersRes, teamsRes, seasonsRes] = await Promise.all([
             fetchAllPages((from, to) =>
-                supabase.from("players").select("id, username, display_name, avatar_url").range(from, to)
+                supabase
+                    .from("v_leaderboard_identity")
+                    .select("id, username, display_name, avatar_url")
+                    .range(from, to)
             ),
             fetchAllPages((from, to) =>
                 supabase
@@ -54,7 +57,7 @@ export async function getLeaderboardIdentity(
         const identity: LeaderboardIdentity = {players: {}, teams: {}, seasons: {}};
 
         for (const p of playersRes.data ?? []) {
-            if (!p.username) continue;
+            if (!p.id || !p.username) continue;
             identity.players[p.id] = {
                 username: p.username,
                 display_name: p.display_name,

@@ -2,7 +2,7 @@
 
 import {useEffect, useMemo, useState} from 'react';
 import Link from 'next/link';
-import {ArrowLeft, SlidersHorizontal} from 'lucide-react';
+import {ArrowLeft, Save, SlidersHorizontal} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
 import {Input} from '@/app/components/ui/input';
 import {Label} from '@/app/components/ui/label';
@@ -14,11 +14,13 @@ import {
     SelectValue,
 } from '@/app/components/ui/select';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
-import {useSpecs, useSpecLeaderboard} from '@/app/hooks/useSpecs';
+import {useSpecs, useSpecLeaderboard, saveSpec} from '@/app/hooks/useSpecs';
 import SpecThresholdEditor, {DraftThreshold} from '@/app/features/spec/SpecThresholdEditor';
 import SpecQualificationTable from '@/app/features/spec/SpecQualificationTable';
 import {evaluateSpecQualification} from '@/server/domains/spec/helpers/evaluateSpecQualification';
-import {SpecTier} from '@/server/domains/spec/types';
+import {SpecTier, SpecRequirementInput} from '@/server/domains/spec/types';
+import {toast} from '@/app/utils/toast';
+import {clientLogger} from '@/app/utils/clientLogger';
 
 const newRowId = () => Math.random().toString(36).slice(2);
 
@@ -32,6 +34,7 @@ export default function AdminSpecQualifyPage() {
     const [secondaryRequired, setSecondaryRequired] = useState(0);
     const [stars, setStars] = useState(5);
     const [dirty, setDirty] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const selectedSpec = specs.find(s => s.id === specId) ?? null;
 
@@ -114,6 +117,52 @@ export default function AdminSpecQualifyPage() {
         setDirty(true);
     };
 
+    const saveError = (() => {
+        if (!selectedSpec) return 'Pick a spec to save into';
+        if (thresholds.some(t => !t.statKey)) return 'Every requirement needs a stat';
+        if (thresholds.some(t => !Number.isFinite(t.minValue))) return 'Every requirement needs a number';
+        if (secondaryRequired > secondaryRows.length) {
+            return `Requires ${secondaryRequired} of ${secondaryRows.length} secondary — nobody could qualify`;
+        }
+        return null;
+    })();
+
+    const handleSave = async () => {
+        if (!selectedSpec) return;
+        if (saveError) {
+            toast.error(saveError);
+            return;
+        }
+        setSaving(true);
+        try {
+            const result = await saveSpec({
+                id: selectedSpec.id,
+                name: selectedSpec.name,
+                stars,
+                secondaryRequired,
+                requirements: thresholds
+                    .filter(t => t.statKey)
+                    .map(({tier, statKey, minValue}) => ({
+                        tier,
+                        statKey: statKey as SpecRequirementInput['statKey'],
+                        minValue,
+                    })),
+            });
+            if (!result.ok) {
+                clientLogger.error('SpecQualifyPage', 'Failed to save spec', {error: result.error});
+                toast.error('Failed to save', result.error.message);
+                return;
+            }
+            toast.success('Spec updated');
+            setDirty(false);
+        } catch (err) {
+            clientLogger.error('SpecQualifyPage', 'Exception saving spec', {err});
+            toast.error('Something went wrong');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     return (
         <div className="w-full px-3 sm:px-4 py-6">
             <div className="admin-section">
@@ -124,15 +173,26 @@ export default function AdminSpecQualifyPage() {
                     <div className="flex-1">
                         <h1 className="text-2xl font-bold uppercase tracking-wider">Spec Calibration</h1>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Tune thresholds against a season and see who clears them. Nothing here saves.
+                            Tune thresholds against a season and see who clears them. Save writes back to the selected spec.
                         </p>
                     </div>
-                    <Button asChild variant="outline" className="rounded-sm gap-1 shrink-0">
-                        <Link href="/admin/specs">
-                            <ArrowLeft className="h-4 w-4" />
-                            Catalog
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                            onClick={handleSave}
+                            disabled={!selectedSpec || !!saveError || saving}
+                            className="rounded-sm gap-1"
+                            title={!selectedSpec ? 'Pick a spec to save into' : saveError ?? undefined}
+                        >
+                            <Save className="h-4 w-4" />
+                            {saving ? 'Saving…' : 'Save'}
+                        </Button>
+                        <Button asChild variant="outline" className="rounded-sm gap-1">
+                            <Link href="/admin/specs">
+                                <ArrowLeft className="h-4 w-4" />
+                                Catalog
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 {!seasonId && (

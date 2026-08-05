@@ -103,7 +103,7 @@ export async function findCronEnabledConfigs(supabase: DBClient): Promise<Result
         .select("*")
         .eq("is_active", true)
 
-        .eq("cron_enabled" as any, true)
+        .eq("cron_enabled" as keyof SheetConfig, true)
         .order("created_at", {ascending: true});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);

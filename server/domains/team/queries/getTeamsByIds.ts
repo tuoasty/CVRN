@@ -5,6 +5,11 @@ import {logger} from "@/server/utils/logger";
 import {findTeamsByIds} from "@/server/db/teams.repo";
 import {TeamWithRegion} from "../types";
 
+type TeamMemberRow = {
+    role: string | null;
+    player?: {display_name: string | null; avatar_url: string | null} | null;
+};
+
 export async function getTeamsByIds(
     supabase: DBClient,
     teamIds: string[]
@@ -21,8 +26,8 @@ export async function getTeamsByIds(
         }
 
         const teamsWithRegions = result.value.map(team => {
-            const members = (team as any).player_team_seasons ?? [];
-            const captainRow = members.find((m: any) => m.role === "captain");
+            const members: TeamMemberRow[] = (team as {player_team_seasons?: TeamMemberRow[]}).player_team_seasons ?? [];
+            const captainRow = members.find(m => m.role === "captain");
             return {
                 ...team,
                 region: team.seasons.regions,

@@ -1,5 +1,5 @@
 import {Err, Ok, Result} from "@/shared/types/result";
-import {DBClient, PlayerSeasonStatRow} from "@/shared/types/db";
+import {DBClient} from "@/shared/types/db";
 import {PlayerSeasonStat} from "../types";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";

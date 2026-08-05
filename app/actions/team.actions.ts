@@ -12,6 +12,7 @@ import {BUCKETS, STORAGE_PATHS, extractStoragePath} from "@/server/storage/stora
 import {uploadFile, deleteFile} from "@/server/storage/storage.service";
 import {findTeamById, updateTeamById, findTeamsBySeasonId} from "@/server/db/teams.repo";
 import {logger} from "@/server/utils/logger";
+import {DBClient} from "@/shared/types/db";
 import {
     TeamWithRegion,
     TeamWithRegionAndPlayers,
@@ -176,7 +177,7 @@ export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
     const file = formData.get('logo') as File | null;
     if (!file || file.size === 0) return Err({ message: "No file provided", code: "VALIDATION_ERROR" as const });
 
-    const admin = getSupabaseAdmin() as any;
+    const admin = getSupabaseAdmin() as unknown as DBClient;
 
     const teamResult = await findTeamById(admin, teamId);
     if (!teamResult.ok) return Err(teamResult.error);

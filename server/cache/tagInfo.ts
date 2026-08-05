@@ -35,9 +35,10 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     },
     [CACHE_TAGS.players]: {
         label: "Players",
-        description: "Player profiles, avatars, and rosters.",
+        description:
+            "Player profiles, avatars, and rosters. Also backs the identity (names, avatars, team logos) joined onto both leaderboards.",
         readCount: 7,
-        affects: "Players, player detail, teams, match detail, archive",
+        affects: "Players, player detail, teams, match detail, archive, leaderboards",
     },
     [CACHE_TAGS.seasons]: {
         label: "Seasons",

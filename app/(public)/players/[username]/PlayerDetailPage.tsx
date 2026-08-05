@@ -8,7 +8,6 @@ import {PlayerDetail, PlayerAward, PlayerTeamHistoryEntry} from "@/server/domain
 import PlayerSeasonStatsTable from "@/app/features/player/PlayerSeasonStatsTable";
 import BackButton from "@/app/components/public/BackButton";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
-import { clientLogger } from "@/app/utils/clientLogger";
 
 const ROLE_LABELS: Record<string, string> = {
     captain: "Captain",

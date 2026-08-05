@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { Ok, Err } from '@/shared/types/result'
+import { Ok } from '@/shared/types/result'
 import type { DBClient, Player, Team, PlayerTeamSeason } from '@/shared/types/db'
 
 vi.mock('@/server/db/teams.repo', () => ({

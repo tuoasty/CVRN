@@ -3,6 +3,7 @@ import { findCronEnabledConfigs } from "@/server/db/sheetConfig.repo";
 import { syncSheet } from "@/server/domains/sheets/commands/syncSheet";
 import { revalidatePublicData, SHEET_SYNC_TAGS } from "@/server/cache/revalidate";
 import { logger } from "@/server/utils/logger";
+import type { DBClient } from "@/shared/types/db";
 
 const log = logger.child({ module: "cron/sync-sheets" });
 
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const configsResult = await findCronEnabledConfigs(supabaseAdmin as any);
+    const configsResult = await findCronEnabledConfigs(supabaseAdmin as unknown as DBClient);
     if (!configsResult.ok) {
         log.error({ error: configsResult.error }, "Failed to fetch cron-enabled configs");
         return new Response("Failed to fetch configs", { status: 500 });
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
 
     const results = await Promise.allSettled(
 
-        configs.map((c) => syncSheet(supabaseAdmin as any, c.id, "cron"))
+        configs.map((c) => syncSheet(supabaseAdmin as unknown as DBClient, c.id, "cron"))
     );
 
     let changes = 0;

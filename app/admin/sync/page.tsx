@@ -261,7 +261,7 @@ export default function AdminSyncPage() {
 
     const handleToggleCron = async (cfg: SheetConfig) => {
 
-        const current = (cfg as any).cron_enabled as boolean;
+        const current = (cfg as SheetConfig & {cron_enabled?: boolean}).cron_enabled as boolean;
         setTogglingCronId(cfg.id);
         try {
             const result = await toggleCronEnabledAction(cfg.id, !current);
@@ -402,7 +402,7 @@ export default function AdminSyncPage() {
                             <tbody>
                                 {configs.map((cfg) => {
 
-                                    const cronEnabled = (cfg as any).cron_enabled as boolean ?? true;
+                                    const cronEnabled = (cfg as SheetConfig & {cron_enabled?: boolean}).cron_enabled ?? true;
                                     return (
                                     <tr key={cfg.id}>
                                         <td className="text-sm">{seasonName(cfg.season_id)}</td>
