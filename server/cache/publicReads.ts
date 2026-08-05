@@ -133,6 +133,16 @@ export const getCachedTeamsWithRegions = unstable_cache(
     {tags: [CACHE_TAGS.teams, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
+export const getCachedTeamsWithRegionsIncludingInactive = unstable_cache(
+    async () =>
+        unwrap(
+            await getAllTeamsWithRegions(createPublicClient(), {includeInactive: true}),
+            "getCachedTeamsWithRegionsIncludingInactive",
+        ),
+    ["public:teams-with-regions-including-inactive"],
+    {tags: [CACHE_TAGS.teams, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
 export const getCachedTeamWithPlayers = unstable_cache(
     async (slug: string, seasonId: string) =>
         unwrapNullable(

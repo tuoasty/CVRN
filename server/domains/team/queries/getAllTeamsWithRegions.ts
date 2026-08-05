@@ -5,9 +5,12 @@ import {logger} from "@/server/utils/logger";
 import {findAllTeamsWithRegions} from "@/server/db/teams.repo";
 import {TeamWithRegion} from "../types";
 
-export async function getAllTeamsWithRegions(supabase: DBClient): Promise<Result<TeamWithRegion[]>> {
+export async function getAllTeamsWithRegions(
+    supabase: DBClient,
+    opts?: { includeInactive?: boolean }
+): Promise<Result<TeamWithRegion[]>> {
     try {
-        const result = await findAllTeamsWithRegions(supabase);
+        const result = await findAllTeamsWithRegions(supabase, opts);
         if (!result.ok) {
             logger.error({error: result.error}, "Failed to fetch teams with regions");
             return result;

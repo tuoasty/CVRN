@@ -3,7 +3,7 @@ import HomePage from "@/app/(public)/home/HomePage";
 import {
     getCachedRegionByCode,
     getCachedSeasonBySlugAndRegion,
-    getCachedTeamsWithRegions,
+    getCachedTeamsWithRegionsIncludingInactive,
     getCachedUpcomingMatches,
     getCachedRecentMatches,
     getCachedStandings,
@@ -33,7 +33,7 @@ export default async function Page({ params }: PageProps) {
         : false;
 
     const [teams, standings, podium, mediaPosts] = await Promise.all([
-        getCachedTeamsWithRegions(),
+        getCachedTeamsWithRegionsIncludingInactive(),
         getCachedStandings(seasonRecord.id, regionRecord.id),
         isSeasonCompleted
             ? getCachedSeasonPodium(seasonRecord.id)

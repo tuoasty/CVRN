@@ -5,7 +5,7 @@ import {
     getCachedSeasonBySlugAndRegion,
     getCachedPlayoffBrackets,
     getCachedPlayoffMatches,
-    getCachedTeamsWithRegions,
+    getCachedTeamsWithRegionsIncludingInactive,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 
@@ -32,7 +32,7 @@ export default async function Page({ params }: PageProps) {
     const [brackets, matches, allTeams] = await Promise.all([
         getCachedPlayoffBrackets(seasonRecord.id),
         getCachedPlayoffMatches(seasonRecord.id),
-        getCachedTeamsWithRegions(),
+        getCachedTeamsWithRegionsIncludingInactive(),
     ]);
 
     const bracketTeamIds = new Set(

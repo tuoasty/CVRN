@@ -306,9 +306,6 @@ function TeamScoreRow({
                 ) : (
                     <span className={`${nameClass} block`}>
                         {team?.name || "TBD"}
-                        {team?.deleted_at && (
-                            <span className="block text-[10px] text-muted-foreground/50 font-normal">disbanded</span>
-                        )}
                     </span>
                 )}
                 {margin !== null && margin !== undefined && unit && (
@@ -360,9 +357,6 @@ function TeamColumn({
             ) : (
                 <span className={nameClass}>
                     {team?.name || "TBD"}
-                    {team?.deleted_at && (
-                        <span className="block text-[10px] text-muted-foreground/50 font-normal normal-case tracking-normal">disbanded</span>
-                    )}
                 </span>
             )}
             {margin !== null && margin !== undefined && unit && (

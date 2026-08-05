@@ -4,7 +4,7 @@ import {
     getCachedRegionByCode,
     getCachedSeasonBySlugAndRegion,
     getCachedStandings,
-    getCachedTeamsWithRegions,
+    getCachedTeamsWithRegionsIncludingInactive,
     getCachedWeekSchedule,
     getCachedPlayoffSchedule,
     getCachedDefaultWeekForSeason,
@@ -40,7 +40,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
     const [standings, allTeams, weekCounts, availableRounds, roundCounts] = await Promise.all([
         getCachedStandings(seasonRecord.id, regionRecord.id),
-        getCachedTeamsWithRegions(),
+        getCachedTeamsWithRegionsIncludingInactive(),
         getCachedWeekMatchCounts(seasonRecord.id),
         hasPlayoffs ? getCachedAvailablePlayoffRounds(seasonRecord.id) : Promise.resolve([]),
         hasPlayoffs ? getCachedPlayoffRoundCounts(seasonRecord.id) : Promise.resolve([]),

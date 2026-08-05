@@ -36,8 +36,11 @@ export async function findAllTeams(supabase: DBClient): Promise<Result<Team[]>> 
     return Ok(data ?? []);
 }
 
-export async function findAllTeamsWithRegions(supabase: DBClient): Promise<Result<TeamWithRegionRow[]>> {
-    const {data, error} = await supabase
+export async function findAllTeamsWithRegions(
+    supabase: DBClient,
+    opts?: { includeInactive?: boolean }
+): Promise<Result<TeamWithRegionRow[]>> {
+    let query = supabase
         .from("teams")
         .select(`
             *,
@@ -57,10 +60,11 @@ export async function findAllTeamsWithRegions(supabase: DBClient): Promise<Resul
                 player:players (display_name, avatar_url)
             )
         `)
-        .is("deleted_at", null)
-        .eq("is_bye", false)
-        .is("player_team_seasons.left_at", null)
-        .order("name", { ascending: true });
+        .is("player_team_seasons.left_at", null);
+    if (!opts?.includeInactive) {
+        query = query.is("deleted_at", null).eq("is_bye", false);
+    }
+    const {data, error} = await query.order("name", { ascending: true });
     if (error) return Err(serializeError(error, "DB_ERROR"));
     const rows = (data ?? []) as unknown as TeamWithRegionRow[];
     return Ok(rows.map(row => {
@@ -418,7 +422,6 @@ export async function findTeamsByIds(supabase: DBClient, teamIds: string[]): Pro
             )
         `)
         .in("id", teamIds)
-        .is("deleted_at", null)
         .is("player_team_seasons.left_at", null);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as TeamWithRegionRow[]);
