@@ -93,4 +93,4 @@ export interface ParsedSection {
 }
 
 export type StatCounts = Omit<PlayerMatchStats,
-      "id" | "match_id" | "player_id" | "team_id" | "set_number" | "created_at">;
+      "id" | "match_id" | "player_id" | "team_id" | "set_number" | "created_at" | "receive_errors">;

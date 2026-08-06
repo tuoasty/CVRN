@@ -1,11 +1,14 @@
 'use client';
 
-import {Check, X} from 'lucide-react';
+import {CSSProperties} from 'react';
+import {Check} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import AvatarImage from '@/app/components/ui/AvatarImage';
 import {
     SpecQualificationRow,
+    SpecStatFormat,
     formatSpecStatValue,
+    isLowerIsBetterStatKey,
     specStatLabel,
     specStatMeta,
     specStatShort,
@@ -17,150 +20,170 @@ import {
 
 interface Props {
     rows: SpecQualificationRow[];
-
     statKeys: string[];
+    thresholdByKey: Map<string, {minValue: number; format: string; lowerIsBetter: boolean}>;
 }
 
-const CELL = 'px-1.5';
+const FROZEN: Record<'num' | 'player' | 'team', CSSProperties> = {
+    num: {left: 0, width: 34, minWidth: 34},
+    player: {left: 34, width: 150, minWidth: 150},
+    team: {left: 184, width: 112, minWidth: 112},
+};
 
-export default function SpecQualificationTable({rows, statKeys}: Props) {
+const COL_SLOT: CSSProperties = {width: 62, minWidth: 62};
+const COL_MS: CSSProperties = {width: 46, minWidth: 46};
+const COL_STAT: CSSProperties = {minWidth: 58};
+
+const HEAD = 'bg-muted text-muted-foreground';
+
+export default function SpecQualificationTable({rows, statKeys, thresholdByKey}: Props) {
     if (rows.length === 0) {
         return (
-            <div className="panel p-6 text-center">
-                <p className="text-muted-foreground">No players with stats in this season.</p>
+            <div className="p-6 text-center text-sm text-muted-foreground">
+                No players with stats in this season.
             </div>
         );
     }
 
+    const cellBg = (qualified: boolean, frozen: boolean) =>
+        qualified ? 'bg-primary/5' : frozen ? 'bg-background' : '';
+
     return (
-        <div className="panel overflow-x-auto">
-            <table className="table-dense">
-                <thead>
-                    <tr>
-                        <th className={cn(CELL, 'w-8')}>#</th>
-                        <th className={cn(CELL, 'w-44')}>Player</th>
-                        <th className={cn(CELL, 'w-28')}>Team</th>
-                        <th className={cn(CELL, 'w-24')} title="Finals slot the team reached">SLOT</th>
-                        <th className={cn(CELL, 'w-14 text-right')} title="Placement bonus">BON</th>
-                        <th className={cn(CELL, 'w-8')} title="Qualifies">Q</th>
-                        <th className={cn(CELL, 'w-12')} title="Main requirements cleared">MAIN</th>
-                        <th className={cn(CELL, 'w-12')} title="Secondary requirements cleared">SEC</th>
-                        {statKeys.map(key => (
+        <table className="w-full border-separate border-spacing-0 text-xs">
+            <thead>
+                <tr>
+                    <th
+                        colSpan={3}
+                        style={{left: 0}}
+                        className={cn(HEAD, 'sticky top-0 z-30 h-6 px-2 text-left font-semibold uppercase tracking-wide')}
+                    >
+                        Player
+                    </th>
+                    <th className={cn(HEAD, 'sticky top-0 z-20 h-6 px-2 text-center font-semibold uppercase tracking-wide border-l border-border')}>
+                        Placement
+                    </th>
+                    <th colSpan={2} className={cn(HEAD, 'sticky top-0 z-20 h-6 px-2 text-center font-semibold uppercase tracking-wide border-l border-border')}>
+                        Qualification
+                    </th>
+                    {statKeys.length > 0 && (
+                        <th colSpan={statKeys.length} className={cn(HEAD, 'sticky top-0 z-20 h-6 px-2 text-center font-semibold uppercase tracking-wide border-l border-border')}>
+                            Stats — threshold
+                        </th>
+                    )}
+                </tr>
+                <tr>
+                    <th style={FROZEN.num} className={cn(HEAD, 'sticky top-6 z-30 px-1.5 py-1 text-right font-semibold')}>#</th>
+                    <th style={FROZEN.player} className={cn(HEAD, 'sticky top-6 z-30 px-1.5 py-1 text-left font-semibold')}>Player</th>
+                    <th style={FROZEN.team} className={cn(HEAD, 'sticky top-6 z-30 px-1.5 py-1 text-left font-semibold')}>Team</th>
+                    <th style={COL_SLOT} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold border-l border-border')}>Slot·Bon</th>
+                    <th style={COL_MS} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold border-l border-border')}>Main</th>
+                    <th style={COL_MS} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold')}>Sec</th>
+                    {statKeys.map((key, i) => {
+                        const t = thresholdByKey.get(key);
+                        return (
                             <th
                                 key={key}
-                                className={cn(CELL, 'text-right whitespace-nowrap')}
                                 title={specStatLabel(key)}
+                                style={COL_STAT}
+                                className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-right align-bottom whitespace-nowrap', i === 0 && 'border-l border-border')}
                             >
-                                {specStatShort(key)}
+                                <div className="font-semibold">{specStatShort(key)}</div>
+                                {t && (
+                                    <div className="font-normal text-primary normal-case tracking-normal">
+                                        {t.lowerIsBetter ? '≤' : '≥'} {formatSpecStatValue(t.minValue, t.format as SpecStatFormat)}
+                                    </div>
+                                )}
                             </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.map((row, i) => (
-                        <tr key={row.playerId} className={cn(row.qualified && 'bg-primary/5')}>
-                            <td className={cn(CELL, 'font-mono tabular-nums text-xs text-muted-foreground')}>
+                        );
+                    })}
+                </tr>
+            </thead>
+            <tbody>
+                {rows.map((row, i) => {
+                    const q = row.qualified;
+                    return (
+                        <tr key={row.playerId}>
+                            <td
+                                style={FROZEN.num}
+                                className={cn('sticky left-0 z-10 px-1.5 py-1 text-right font-mono tabular-nums text-muted-foreground border-b border-border', cellBg(q, true))}
+                            >
                                 {i + 1}
                             </td>
-                            <td className={CELL}>
+                            <td
+                                style={FROZEN.player}
+                                className={cn('sticky z-10 px-1.5 py-1 border-b border-border', cellBg(q, true))}
+                            >
                                 <div className="flex items-center gap-2">
-                                    <div className="relative w-8 h-8 rounded-sm overflow-hidden border border-border shrink-0">
-                                        <AvatarImage src={row.avatarUrl} alt={row.username} sizes="32px" />
+                                    {q && <Check className="h-3.5 w-3.5 text-primary shrink-0" aria-label="Qualifies" />}
+                                    <div className="relative w-6 h-6 rounded-sm overflow-hidden border border-border shrink-0">
+                                        <AvatarImage src={row.avatarUrl} alt={row.username} sizes="24px" />
                                     </div>
-                                    <div className="min-w-0">
-                                        <div className="text-sm font-medium truncate leading-tight">
-                                            {row.displayName ?? row.username}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground truncate leading-tight">
-                                            {row.username}
-                                        </div>
-                                    </div>
+                                    <span className={cn('truncate', q ? 'font-semibold' : 'font-medium')}>
+                                        {row.displayName ?? row.username}
+                                    </span>
                                 </div>
                             </td>
-                            <td className={cn(CELL, 'text-xs text-muted-foreground truncate')}>
+                            <td
+                                style={FROZEN.team}
+                                className={cn('sticky z-10 px-1.5 py-1 text-muted-foreground truncate border-b border-border', cellBg(q, true))}
+                            >
                                 {row.teamName ?? '—'}
                             </td>
-                            <td
-                                className={cn(
-                                    CELL,
-                                    'text-xs whitespace-nowrap',
-                                    row.placementTier === 'outside' && 'text-muted-foreground'
-                                )}
-                            >
-                                {PLACEMENT_TIER_LABEL[row.placementTier]}
+
+                            <td style={COL_SLOT} className={cn('px-1.5 py-1 text-center border-l border-b border-border whitespace-nowrap leading-tight', cellBg(q, false))}>
+                                <div className={cn(row.placementTier === 'outside' && 'text-muted-foreground')}>
+                                    {PLACEMENT_TIER_LABEL[row.placementTier]}
+                                </div>
+                                <div
+                                    className={cn(
+                                        'font-mono tabular-nums',
+                                        row.placementBonus > 0 && 'text-primary',
+                                        row.placementBonus < 0 && 'text-destructive'
+                                    )}
+                                >
+                                    {formatPlacementBonus(row.placementBonus)}
+                                </div>
                             </td>
-                            <td
-                                className={cn(
-                                    CELL,
-                                    'font-mono tabular-nums text-xs text-right',
-                                    row.placementBonus > 0 && 'text-primary',
-                                    row.placementBonus < 0 && 'text-destructive'
-                                )}
-                            >
-                                {formatPlacementBonus(row.placementBonus)}
-                            </td>
-                            <td className={CELL}>
-                                {row.qualified ? (
-                                    <Check className="h-4 w-4 text-primary" aria-label="Qualifies" />
-                                ) : (
-                                    <X className="h-4 w-4 text-muted-foreground/50" aria-label="Out" />
-                                )}
-                            </td>
-                            <td
-                                className={cn(
-                                    CELL,
-                                    'font-mono tabular-nums text-xs',
-                                    row.mainPassed < row.mainTotal && 'text-destructive'
-                                )}
-                            >
+                            <td style={COL_MS} className={cn('px-1.5 py-1 text-center font-mono tabular-nums border-l border-b border-border', row.mainPassed < row.mainTotal && 'text-destructive', cellBg(q, false))}>
                                 {row.mainPassed}/{row.mainTotal}
                             </td>
                             <td
-                                className={cn(
-                                    CELL,
-                                    'font-mono tabular-nums text-xs',
-                                    row.secondaryPassed < row.secondaryRequired && 'text-destructive'
-                                )}
+                                style={COL_MS}
                                 title={`Needs ${row.secondaryRequired}`}
+                                className={cn('px-1.5 py-1 text-center font-mono tabular-nums border-b border-border', row.secondaryPassed < row.secondaryRequired && 'text-destructive', cellBg(q, false))}
                             >
                                 {row.secondaryPassed}/{row.secondaryTotal}
                             </td>
-                            {statKeys.map(key => {
+
+                            {statKeys.map((key, ci) => {
                                 const check = row.checks.find(c => c.statKey === key);
                                 const format = specStatMeta(key)?.format ?? 'count';
-
                                 const shifted =
                                     check !== undefined &&
                                     check.value !== null &&
                                     check.adjustedValue !== null &&
                                     check.adjustedValue !== check.value;
-
                                 return (
                                     <td
                                         key={key}
-                                        className={cn(
-                                            CELL,
-                                            'font-mono tabular-nums text-xs text-right',
-                                            check
-                                                ? check.passed
-                                                    ? 'text-foreground'
-                                                    : 'text-destructive'
-                                                : 'text-muted-foreground'
-                                        )}
+                                        style={COL_STAT}
                                         title={
                                             check
-                                                ? `${specStatLabel(key)} — needs ${formatSpecStatValue(check.minValue, format)} (${check.tier})`
+                                                ? `${specStatLabel(key)} — ${isLowerIsBetterStatKey(key) ? 'at most' : 'needs'} ${formatSpecStatValue(check.minValue, format)} (${check.tier})`
                                                 : undefined
                                         }
+                                        className={cn(
+                                            'px-1.5 py-1 text-right font-mono tabular-nums leading-tight border-b border-border',
+                                            ci === 0 && 'border-l',
+                                            check ? (check.passed ? 'text-foreground' : 'text-destructive') : 'text-muted-foreground',
+                                            cellBg(q, false)
+                                        )}
                                     >
-                                        <div className="leading-tight font-medium">
+                                        <div className="font-medium">
                                             {formatSpecStatValue(check?.adjustedValue ?? null, format)}
                                         </div>
                                         {shifted && (
-                                            <div
-                                                className="text-muted-foreground/60 leading-tight font-normal"
-                                                title="Before placement bonus"
-                                            >
+                                            <div className="text-muted-foreground/60 font-normal" title="Before placement bonus">
                                                 {formatSpecStatValue(check.value, format)}
                                             </div>
                                         )}
@@ -168,9 +191,9 @@ export default function SpecQualificationTable({rows, statKeys}: Props) {
                                 );
                             })}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+                    );
+                })}
+            </tbody>
+        </table>
     );
 }

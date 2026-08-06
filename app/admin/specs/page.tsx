@@ -2,102 +2,41 @@
 
 import {useState} from 'react';
 import Link from 'next/link';
-import {Award, Pencil, Plus, SlidersHorizontal, Star, Trash2} from 'lucide-react';
+import {Award, Plus, SlidersHorizontal} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/app/components/ui/alert-dialog';
-import SpecFormDialog from '@/app/features/spec/SpecFormDialog';
-import {useSpecs, deleteSpec} from '@/app/hooks/useSpecs';
-import {toast} from '@/app/utils/toast';
-import {clientLogger} from '@/app/utils/clientLogger';
-
-import {SpecWithRequirements, specStatLabel, formatSpecStatValue, specStatMeta} from '@/server/domains/spec/types';
-
-function StarRating({stars}: {stars: number}) {
-    return (
-        <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${stars} star`}>
-            <span className="font-mono text-sm">{stars}</span>
-            <Star className="h-3.5 w-3.5 fill-current text-primary" />
-        </span>
-    );
-}
-
-function RequirementList({spec}: {spec: SpecWithRequirements}) {
-    const main = spec.requirements.filter(r => r.tier === 'main');
-    const secondary = spec.requirements.filter(r => r.tier === 'secondary');
-
-    if (spec.requirements.length === 0) {
-        return <span className="text-xs text-muted-foreground/60">No requirements set</span>;
-    }
-
-    const line = (r: SpecWithRequirements['requirements'][number]) => {
-        const format = specStatMeta(r.stat_key)?.format ?? 'count';
-        return `${specStatLabel(r.stat_key)} ≥ ${formatSpecStatValue(r.min_value, format)}`;
-    };
-
-    return (
-        <div className="space-y-1.5">
-            {main.length > 0 && (
-                <div className="text-xs">
-                    <span className="text-muted-foreground uppercase tracking-wide mr-2">Main</span>
-                    <span className="font-mono tabular-nums">{main.map(line).join(' · ')}</span>
-                </div>
-            )}
-            {secondary.length > 0 && (
-                <div className="text-xs">
-                    <span className="text-muted-foreground uppercase tracking-wide mr-2">
-                        Secondary {spec.secondary_required}/{secondary.length}
-                    </span>
-                    <span className="font-mono tabular-nums">{secondary.map(line).join(' · ')}</span>
-                </div>
-            )}
-        </div>
-    );
-}
+import PositionRail from '@/app/features/spec/PositionRail';
+import SpecCard from '@/app/features/spec/SpecCard';
+import SpecEditPane from '@/app/features/spec/SpecEditPane';
+import {useSpecs} from '@/app/hooks/useSpecs';
+import {SpecPosition, positionLabel} from '@/server/domains/spec/types';
 
 export default function AdminSpecsPage() {
     const {specs, isLoading, error} = useSpecs();
 
-    const [formOpen, setFormOpen] = useState(false);
-    const [editTarget, setEditTarget] = useState<SpecWithRequirements | null>(null);
-    const [deleteTarget, setDeleteTarget] = useState<SpecWithRequirements | null>(null);
-    const [deleting, setDeleting] = useState(false);
+    const [active, setActive] = useState<SpecPosition | 'ALL'>('ALL');
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [creating, setCreating] = useState(false);
 
-    const openNew = () => {
-        setEditTarget(null);
-        setFormOpen(true);
+    const visibleSpecs = active === 'ALL' ? specs : specs.filter(s => s.position === active);
+    const selectedSpec = specs.find(s => s.id === selectedId) ?? null;
+
+    const selectSpec = (id: string) => {
+        setSelectedId(id);
+        setCreating(false);
     };
 
-    const openEdit = (spec: SpecWithRequirements) => {
-        setEditTarget(spec);
-        setFormOpen(true);
+    const startCreate = () => {
+        setCreating(true);
+        setSelectedId(null);
     };
 
-    const handleDelete = async () => {
-        if (!deleteTarget) return;
-        setDeleting(true);
-        try {
-            const result = await deleteSpec(deleteTarget.id);
-            if (!result.ok) {
-                toast.error('Failed to delete', result.error.message);
-                return;
-            }
-            toast.success('Spec deleted');
-            setDeleteTarget(null);
-        } catch (err) {
-            clientLogger.error('AdminSpecsPage', 'Exception deleting spec', {err});
-            toast.error('Something went wrong');
-        } finally {
-            setDeleting(false);
-        }
+    const handleSaved = () => {
+        setCreating(false);
+    };
+
+    const handleDeleted = () => {
+        setSelectedId(null);
+        setCreating(false);
     };
 
     return (
@@ -114,97 +53,67 @@ export default function AdminSpecsPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                        <Button onClick={startCreate} className="rounded-sm gap-1">
+                            <Plus className="h-4 w-4" />
+                            New Spec
+                        </Button>
                         <Button asChild variant="outline" className="rounded-sm gap-1">
                             <Link href="/admin/specs/qualify">
                                 <SlidersHorizontal className="h-4 w-4" />
                                 Calibrate
                             </Link>
                         </Button>
-                        <Button onClick={openNew} className="rounded-sm gap-1">
-                            <Plus className="h-4 w-4" />
-                            New Spec
-                        </Button>
                     </div>
                 </div>
 
-                {error && (
+                {error ? (
                     <div className="panel p-6 mt-6 text-center">
                         <p className="text-destructive text-sm">{error}</p>
                     </div>
-                )}
+                ) : (
+                    <div className="mt-6 grid grid-cols-[minmax(96px,10%)_1fr_minmax(300px,30%)] border border-border rounded-sm overflow-hidden min-h-[560px]">
+                        <div className="border-r border-border bg-muted/30 overflow-y-auto">
+                            <PositionRail specs={specs} active={active} onSelect={setActive} />
+                        </div>
 
-                {!error && isLoading && (
-                    <div className="panel overflow-x-auto mt-6">
-                        <table className="table-dense">
-                            <thead>
-                                <tr>
-                                    <th className="w-48">Spec</th>
-                                    <th className="w-20">Stars</th>
-                                    <th>Requirements</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {[...Array(3)].map((_, i) => (
-                                    <tr key={i}>
-                                        {[...Array(3)].map((_, j) => (
-                                            <td key={j}><div className="h-4 bg-muted/40 rounded animate-pulse" /></td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                        <div className="grid grid-cols-3 gap-2 p-3 content-start overflow-y-auto">
+                            {isLoading ? (
+                                [...Array(3)].map((_, i) => (
+                                    <div key={i} className="panel w-full h-48 animate-pulse bg-muted/40" />
+                                ))
+                            ) : visibleSpecs.length === 0 ? (
+                                <div className="col-span-3 text-center text-sm text-muted-foreground py-10">
+                                    No specs in {active === 'ALL' ? 'the catalog' : positionLabel(active)} yet — use
+                                    New Spec to add one.
+                                </div>
+                            ) : (
+                                visibleSpecs.map(spec => (
+                                    <SpecCard
+                                        key={spec.id}
+                                        spec={spec}
+                                        selected={spec.id === selectedId && !creating}
+                                        onClick={() => selectSpec(spec.id)}
+                                    />
+                                ))
+                            )}
+                        </div>
 
-                {!error && !isLoading && specs.length === 0 && (
-                    <div className="panel p-6 mt-6 text-center">
-                        <p className="text-muted-foreground">No specs yet.</p>
-                    </div>
-                )}
-
-                {!error && !isLoading && specs.length > 0 && (
-                    <div className="panel overflow-x-auto mt-6">
-                        <table className="table-dense">
-                            <thead>
-                                <tr>
-                                    <th className="w-48">Spec</th>
-                                    <th className="w-20">Stars</th>
-                                    <th>Requirements</th>
-                                    <th className="w-24">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {specs.map(spec => (
-                                    <tr key={spec.id}>
-                                        <td className="text-sm font-medium">{spec.name}</td>
-                                        <td><StarRating stars={spec.stars} /></td>
-                                        <td><RequirementList spec={spec} /></td>
-                                        <td>
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="rounded-sm"
-                                                    onClick={() => openEdit(spec)}
-                                                    aria-label={`Edit ${spec.name}`}
-                                                >
-                                                    <Pencil className="h-3.5 w-3.5" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                    onClick={() => setDeleteTarget(spec)}
-                                                    aria-label={`Delete ${spec.name}`}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <div className="border-l border-border bg-muted/20 overflow-y-auto">
+                            {creating ? (
+                                <SpecEditPane spec={null} mode="create" onSaved={handleSaved} onDeleted={handleDeleted} />
+                            ) : selectedSpec ? (
+                                <SpecEditPane
+                                    spec={selectedSpec}
+                                    mode="edit"
+                                    onSaved={handleSaved}
+                                    onDeleted={handleDeleted}
+                                />
+                            ) : (
+                                <div className="p-6 text-center text-sm text-muted-foreground">
+                                    Select a spec, or ＋ to create one.
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -213,36 +122,6 @@ export default function AdminSpecsPage() {
                     no public read policy.
                 </p>
             </div>
-
-            <SpecFormDialog spec={editTarget} open={formOpen} onOpenChange={setFormOpen} />
-
-            <AlertDialog
-                open={!!deleteTarget}
-                onOpenChange={open => { if (!open) setDeleteTarget(null); }}
-            >
-                <AlertDialogContent className="rounded-sm">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Spec</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Delete <strong>{deleteTarget?.name}</strong> and its{' '}
-                            {deleteTarget?.requirements.length ?? 0} requirement
-                            {deleteTarget?.requirements.length === 1 ? '' : 's'}? This cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="rounded-sm" disabled={deleting}>
-                            Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            className="rounded-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={handleDelete}
-                            disabled={deleting}
-                        >
-                            {deleting ? 'Deleting...' : 'Delete'}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }
