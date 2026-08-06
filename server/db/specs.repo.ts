@@ -9,6 +9,7 @@ export async function findSpecsWithRequirements(
     const {data, error} = await supabase
         .from("specs")
         .select("*, spec_requirements(*)")
+        .order("position", {ascending: true})
         .order("stars", {ascending: false})
         .order("name", {ascending: true});
     if (error) return Err(serializeError(error, "DB_ERROR"));
@@ -39,12 +40,14 @@ export async function findSpecWithRequirements(
 
 export async function upsertSpec(
     supabase: DBClient,
-    p: {id?: string; name: string; stars: number; secondaryRequired: number}
+    p: {id?: string; name: string; stars: number; position: string; height: number; secondaryRequired: number}
 ): Promise<Result<Spec>> {
     const payload = {
         ...(p.id ? {id: p.id} : {}),
         name: p.name,
         stars: p.stars,
+        position: p.position,
+        height: p.height,
         secondary_required: p.secondaryRequired,
         updated_at: new Date().toISOString(),
     };

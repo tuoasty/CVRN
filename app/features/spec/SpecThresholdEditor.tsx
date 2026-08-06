@@ -1,17 +1,11 @@
 'use client';
 
-import React from 'react';
 import {Plus, Trash2} from 'lucide-react';
+import {cn} from '@/lib/utils';
 import {Button} from '@/app/components/ui/button';
 import {Input} from '@/app/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/app/components/ui/select';
-import {SPEC_STAT_KEYS, SpecTier} from '@/server/domains/spec/types';
+import SpecStatCombobox from '@/app/features/spec/SpecStatCombobox';
+import {SpecTier, isLowerIsBetterStatKey} from '@/server/domains/spec/types';
 
 export type DraftThreshold = {
     rowId: string;
@@ -19,8 +13,6 @@ export type DraftThreshold = {
     statKey: string;
     minValue: number;
 };
-
-const STAT_GROUPS = Array.from(new Set(SPEC_STAT_KEYS.map(s => s.group)));
 
 interface Props {
     tier: SpecTier;
@@ -44,6 +36,8 @@ export default function SpecThresholdEditor({
     onRemove,
     onAdd,
 }: Props) {
+    const showPass = totalPlayers > 0;
+
     return (
         <div className="space-y-2">
             {rows.length === 0 && (
@@ -51,64 +45,49 @@ export default function SpecThresholdEditor({
             )}
             {rows.map(row => {
                 const passing = passCounts.get(row.rowId) ?? 0;
+                const op = isLowerIsBetterStatKey(row.statKey) ? '≤' : '≥';
                 return (
-                    <div key={row.rowId} className="flex items-center gap-2">
-                        <Select
-                            value={row.statKey}
-                            onValueChange={v => onChange(row.rowId, {statKey: v})}
+                    <div key={row.rowId} className={cn(showPass && 'space-y-1')}>
+                        <div
+                            className={cn(
+                                'grid gap-2 items-center',
+                                showPass ? 'grid-cols-[minmax(0,1fr)_4.5rem_2rem]' : 'grid-cols-[6fr_3fr_1fr]'
+                            )}
                         >
-                            <SelectTrigger className="rounded-sm flex-1 text-sm">
-                                <SelectValue placeholder="Choose a stat" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-sm">
-                                {STAT_GROUPS.map(group => (
-                                    <React.Fragment key={group}>
-                                        <div className="px-2 py-1.5 text-xs uppercase tracking-wide text-muted-foreground">
-                                            {group}
-                                        </div>
-                                        {SPEC_STAT_KEYS.filter(s => s.group === group).map(s => (
-                                            <SelectItem
-                                                key={s.key}
-                                                value={s.key as string}
-                                                disabled={takenKeys.has(s.key as string) && row.statKey !== s.key}
-                                                className="rounded-sm text-sm"
-                                            >
-                                                {s.label}
-                                            </SelectItem>
-                                        ))}
-                                    </React.Fragment>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            <SpecStatCombobox
+                                value={row.statKey}
+                                onChange={v => onChange(row.rowId, {statKey: v})}
+                                takenKeys={takenKeys}
+                            />
 
-                        <span className="text-muted-foreground text-sm shrink-0">≥</span>
+                            <div className="flex items-center gap-1 min-w-0">
+                                <span className="text-muted-foreground text-sm shrink-0">{op}</span>
+                                <Input
+                                    type="number"
+                                    step="any"
+                                    value={String(row.minValue)}
+                                    onChange={e => onChange(row.rowId, {minValue: Number(e.target.value)})}
+                                    className="rounded-sm w-full min-w-0 font-mono tabular-nums text-sm"
+                                />
+                            </div>
 
-                        <Input
-                            type="number"
-                            step="any"
-                            value={String(row.minValue)}
-                            onChange={e => onChange(row.rowId, {minValue: Number(e.target.value)})}
-                            className="rounded-sm w-24 font-mono tabular-nums text-sm"
-                        />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 justify-self-end"
+                                onClick={() => onRemove(row.rowId)}
+                                aria-label="Remove requirement"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                        </div>
 
-                        {}
-                        <span
-                            className="text-xs font-mono tabular-nums text-muted-foreground w-20 text-right shrink-0"
-                            title={`${passing} of ${totalPlayers} players clear this`}
-                        >
-                            {row.statKey ? `${passing}/${totalPlayers}` : '—'}
-                        </span>
-
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                            onClick={() => onRemove(row.rowId)}
-                            aria-label="Remove requirement"
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {showPass && row.statKey && (
+                            <p className="text-xs font-mono tabular-nums text-muted-foreground/70 pl-1">
+                                {passing}/{totalPlayers} clear this
+                            </p>
+                        )}
                     </div>
                 );
             })}

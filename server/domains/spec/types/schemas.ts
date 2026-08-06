@@ -14,6 +14,8 @@ export const SaveSpecSchema = z
         id: z.string().uuid().optional(),
         name: z.string().trim().min(1, "Name required").max(80),
         stars: z.number().int().min(3).max(5),
+        position: z.enum(["OH", "OP", "MB", "S", "L"]),
+        height: z.number().int().min(48).max(96),
         secondaryRequired: z.number().int().min(0),
         requirements: z.array(SpecRequirementSchema),
     })

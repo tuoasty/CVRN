@@ -16,6 +16,8 @@ export async function saveSpec(
         id: input.id,
         name: input.name,
         stars: input.stars,
+        position: input.position,
+        height: input.height,
         secondaryRequired: input.secondaryRequired,
     });
     if (!specResult.ok) return specResult;

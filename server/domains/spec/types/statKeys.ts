@@ -10,6 +10,7 @@ export type SpecStatKeyMeta = {
     short: string;
     group: string;
     format: SpecStatFormat;
+    lowerIsBetter?: boolean;
 };
 
 export const SPEC_STAT_KEYS: SpecStatKeyMeta[] = [
@@ -45,10 +46,13 @@ export const SPEC_STAT_KEYS: SpecStatKeyMeta[] = [
     {key: "serve_receives_total", label: "Serve receives",    short: "SR",     group: "Receive", format: "count"},
     {key: "digs_total",          label: "Digs",               short: "DIG",    group: "Receive", format: "count"},
     {key: "digs_per_set",        label: "Digs / set",         short: "DIG/S",  group: "Receive", format: "per_set"},
+    {key: "rec_eff",             label: "Receive efficiency", short: "REC%",   group: "Receive", format: "pct"},
 
     {key: "aces_total",          label: "Aces",               short: "ACE",    group: "Serving", format: "count"},
     {key: "aces_per_set",        label: "Aces / set",         short: "ACE/S",  group: "Serving", format: "per_set"},
     {key: "service_score",       label: "Service score",      short: "SRV+",   group: "Serving", format: "count"},
+
+    {key: "errors_total",        label: "Total errors",       short: "ERR",    group: "Errors",  format: "count", lowerIsBetter: true},
 ];
 
 const BY_KEY = new Map(SPEC_STAT_KEYS.map(m => [m.key as string, m]));
@@ -60,6 +64,8 @@ export const specStatMeta = (key: string): SpecStatKeyMeta | undefined => BY_KEY
 export const specStatLabel = (key: string): string => BY_KEY.get(key)?.label ?? key;
 
 export const specStatShort = (key: string): string => BY_KEY.get(key)?.short ?? key;
+
+export const isLowerIsBetterStatKey = (key: string): boolean => BY_KEY.get(key)?.lowerIsBetter === true;
 
 export const PARTICIPATION_STAT_KEYS: ReadonlySet<string> = new Set([
     "sets_played",

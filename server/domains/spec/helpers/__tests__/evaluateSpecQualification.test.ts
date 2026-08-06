@@ -232,6 +232,39 @@ describe('evaluateSpecQualification', () => {
         })
     })
 
+    it('passes a lower-is-better stat at or under the cap', () => {
+        const {rows} = evaluateSpecQualification(
+            [player('clean', {errors_total: 8})],
+            [main('errors_total', 10)],
+            0
+        )
+        expect(rows[0].checks[0].passed).toBe(true)
+        expect(rows[0].qualified).toBe(true)
+    })
+
+    it('fails a lower-is-better stat above the cap', () => {
+        const {rows} = evaluateSpecQualification(
+            [player('sloppy', {errors_total: 12})],
+            [main('errors_total', 10)],
+            0
+        )
+        expect(rows[0].checks[0].passed).toBe(false)
+        expect(rows[0].qualified).toBe(false)
+    })
+
+    it('never scales a lower-is-better stat by placement bonus', () => {
+        const tiers = new Map<string, PlacementTier>([['upper', 'upper_finalist']])
+        const {rows} = evaluateSpecQualification(
+            [{...player('star', {errors_total: 10}), team_id: 'upper'}],
+            [main('errors_total', 10)],
+            0,
+            {stars: 5, tierByTeamId: tiers}
+        )
+        expect(rows[0].placementBonus).toBe(0.15)
+        expect(rows[0].checks[0].adjustedValue).toBe(10)
+        expect(rows[0].qualified).toBe(true)
+    })
+
     it('sorts qualified first, then by nearest miss', () => {
         const reqs = [main('points_total', 50), main('kills_total', 40), main('aces_total', 10)]
         const {rows} = evaluateSpecQualification(
