@@ -15,7 +15,7 @@ export async function insertMediaPost(supabase: DBClient, p: InsertMediaPostDto)
 
 export async function findAllMediaPosts(
     supabase: DBClient,
-    filters: { type?: string; matchId?: string; teamId?: string; seasonId?: string } = {}
+    filters: { type?: string; matchId?: string; teamId?: string; playerId?: string; seasonId?: string } = {}
 ): Promise<Result<MediaPost[]>> {
     let query = supabase
         .from('media_posts')
@@ -26,6 +26,7 @@ export async function findAllMediaPosts(
     if (filters.type)     query = query.eq('type', filters.type)
     if (filters.matchId)  query = query.eq('match_id', filters.matchId)
     if (filters.teamId)   query = query.eq('team_id', filters.teamId)
+    if (filters.playerId) query = query.eq('player_id', filters.playerId)
     if (filters.seasonId) query = query.eq('season_id', filters.seasonId)
 
     const { data, error } = await query
@@ -111,6 +112,21 @@ export async function updateMediaPostPin(supabase: DBClient, id: string, is_pinn
             pinned_at: is_pinned ? now : null,
             updated_at: now,
         })
+        .eq('id', id)
+        .select()
+        .single()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as unknown as MediaPost)
+}
+
+export async function updateMediaPost(
+    supabase: DBClient,
+    id: string,
+    fields: { title?: string; description?: string | null; author_id?: string | null },
+): Promise<Result<MediaPost>> {
+    const { data, error } = await supabase
+        .from('media_posts')
+        .update({ ...fields, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
         .single()

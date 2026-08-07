@@ -9,6 +9,7 @@ import { Button } from '@/app/components/ui/button'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
+import { usePlayersByIds } from '@/app/hooks/usePlayers'
 import { cn } from '@/lib/utils'
 import type { MediaFilterType, MediaPost } from '@/server/domains/media'
 
@@ -61,8 +62,9 @@ function ClipCard({ post, compact = false }: { post: MediaPost; compact?: boolea
     )
 }
 
-function MediaCard({ post, onVideoClick, onGfxClick }: {
+function MediaCard({ post, authorName, onVideoClick, onGfxClick }: {
     post: MediaPost
+    authorName?: string | null
     onVideoClick: (url: string) => void
     onGfxClick: (post: MediaPost) => void
 }) {
@@ -123,9 +125,14 @@ function MediaCard({ post, onVideoClick, onGfxClick }: {
                 {post.description && (
                     <p className="text-xs text-muted-foreground line-clamp-1">{post.description}</p>
                 )}
-                <p className="text-[10px] text-muted-foreground/60">
-                    {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] text-muted-foreground/60">
+                        {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                    {authorName && (
+                        <p className="text-[10px] text-muted-foreground/60 truncate">by {authorName}</p>
+                    )}
+                </div>
             </div>
         </div>
     )
@@ -161,9 +168,9 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
 }
 
 const FILTER_TYPES: Record<MediaFilterType, MediaPost['type'][]> = {
-    all:    ['gfx', 'video', 'news', 'recap'],
+    all:    ['gfx', 'video', 'news', 'recap', 'totw', 'potw'],
     videos: ['video'],
-    gfx:    ['gfx'],
+    gfx:    ['gfx', 'totw', 'potw'],
     clips:  ['clip'],
 }
 
@@ -195,6 +202,16 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
 
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [gfxPost, setGfxPost]   = useState<MediaPost | null>(null)
+
+    const authorIds = useMemo(
+        () => Array.from(new Set(allPosts.map(p => p.author_id).filter((id): id is string => !!id))),
+        [allPosts]
+    )
+    const { players: authorPlayers } = usePlayersByIds(authorIds)
+    const authorNameById = useMemo(
+        () => new Map(authorPlayers.map(p => [p.id, p.display_name || p.username])),
+        [authorPlayers]
+    )
 
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedSearch(search), 300)
@@ -313,7 +330,7 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                             {posts.map(post => (
-                                <MediaCard key={post.id} post={post} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
+                                <MediaCard key={post.id} post={post} authorName={post.author_id ? authorNameById.get(post.author_id) ?? null : null} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
                             ))}
                         </div>
                         <Pagination page={page} totalPages={totalPages} onPage={setPage} />

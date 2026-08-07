@@ -128,8 +128,10 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
             description,
             image_url:   imageUrl,
             video_url:   videoUrl,
+            author_id:   p.authorId ?? null,
             match_id:    p.matchId ?? null,
             team_id:     p.teamId ?? null,
+            player_id:   p.playerId ?? null,
             season_id:   p.seasonId ?? null,
             created_by:  p.userId,
         })

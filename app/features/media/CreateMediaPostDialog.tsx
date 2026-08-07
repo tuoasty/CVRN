@@ -11,6 +11,12 @@ import { mutateAllMedia } from '@/app/hooks/useMediaPosts'
 import { toast } from '@/app/utils/toast'
 import { clientLogger } from '@/app/utils/clientLogger'
 import { compressImage } from '@/app/utils/imageCompression'
+import { useAdminContextStore } from '@/app/stores/adminContextStore'
+import { useTeamsBySeason } from '@/app/hooks/useTeams'
+import { useTeamPlayers } from '@/app/hooks/usePlayers'
+import AuthorPicker, { type AuthorSelection } from '@/app/features/media/AuthorPicker'
+
+type MediaFormType = 'gfx' | 'video' | 'clip' | 'totw' | 'potw'
 
 interface CreateMediaPostDialogProps {
     open: boolean
@@ -18,7 +24,7 @@ interface CreateMediaPostDialogProps {
 }
 
 export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMediaPostDialogProps) {
-    const [type, setType] = useState<'gfx' | 'video' | 'clip'>('gfx')
+    const [type, setType] = useState<MediaFormType>('gfx')
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [videoUrl, setVideoUrl] = useState('')
@@ -27,6 +33,15 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
     const [isDragging, setIsDragging] = useState(false)
     const [compressing, setCompressing] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [teamId, setTeamId] = useState('')
+    const [playerId, setPlayerId] = useState('')
+    const [author, setAuthor] = useState<AuthorSelection | null>(null)
+
+    const seasonId = useAdminContextStore(s => s.selectedSeasonId)
+    const { teams } = useTeamsBySeason(type === 'totw' || type === 'potw' ? seasonId : null)
+    const { players } = useTeamPlayers(type === 'potw' && teamId ? teamId : null, seasonId)
+
+    const isImageType = type === 'gfx' || type === 'totw' || type === 'potw'
 
     function reset() {
         setType('gfx')
@@ -38,6 +53,9 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
         setIsDragging(false)
         setCompressing(false)
         setLoading(false)
+        setTeamId('')
+        setPlayerId('')
+        setAuthor(null)
     }
 
     function handleOpenChange(val: boolean) {
@@ -85,7 +103,10 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
         e.preventDefault()
         if (type !== 'clip' && !title.trim()) { toast.error('Title is required'); return }
         if ((type === 'video' || type === 'clip') && !videoUrl.trim()) { toast.error('URL is required'); return }
-        if (type === 'gfx' && !imageFile) { toast.error('Image is required for GFX posts'); return }
+        if (isImageType && !imageFile) { toast.error('Image is required'); return }
+        if ((type === 'totw' || type === 'potw') && !seasonId) { toast.error('Select a season in the admin bar first'); return }
+        if (type === 'totw' && !teamId) { toast.error('Select a team'); return }
+        if (type === 'potw' && !playerId) { toast.error('Select a player'); return }
 
         setLoading(true)
         try {
@@ -94,7 +115,11 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
             formData.set('title', type === 'clip' ? '' : title.trim())
             if (type !== 'clip' && description.trim()) formData.set('description', description.trim())
             if (type === 'video' || type === 'clip') formData.set('videoUrl', videoUrl.trim())
-            if (type === 'gfx' && imageFile) formData.set('imageFile', imageFile)
+            if (isImageType && imageFile) formData.set('imageFile', imageFile)
+            if (type === 'totw' && teamId) formData.set('teamId', teamId)
+            if (type === 'potw' && playerId) formData.set('playerId', playerId)
+            if ((type === 'totw' || type === 'potw') && seasonId) formData.set('seasonId', seasonId)
+            if (type !== 'clip' && author) formData.set('authorId', author.id)
 
             const result = await createMediaPostAction(formData)
             if (!result.ok) {
@@ -121,7 +146,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-1">
                         <Label>Type</Label>
-                        <Select value={type} onValueChange={(v) => setType(v as 'gfx' | 'video' | 'clip')}>
+                        <Select value={type} onValueChange={(v) => { setType(v as MediaFormType); setTeamId(''); setPlayerId('') }}>
                             <SelectTrigger className="rounded-sm">
                                 <SelectValue />
                             </SelectTrigger>
@@ -129,6 +154,8 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                                 <SelectItem value="gfx">GFX</SelectItem>
                                 <SelectItem value="video">Video</SelectItem>
                                 <SelectItem value="clip">Clip (TikTok / Short-form)</SelectItem>
+                                <SelectItem value="totw">Team of the Week</SelectItem>
+                                <SelectItem value="potw">Player of the Week</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -144,10 +171,54 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                                 <Label htmlFor="description">Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
                                 <Input id="description" value={description} onChange={e => setDescription(e.target.value)} className="rounded-sm" />
                             </div>
+
+                            <AuthorPicker value={author} onChange={setAuthor} />
                         </>
                     )}
 
-                    {type === 'gfx' && (
+                    {(type === 'totw' || type === 'potw') && (
+                        <div className="space-y-1">
+                            <Label>Team</Label>
+                            <Select value={teamId} onValueChange={(v) => {
+                                setTeamId(v); setPlayerId('')
+                                if (type === 'totw') {
+                                    const t = teams.find(x => x.id === v)
+                                    setTitle(t ? `${t.name} - Team of the Week` : '')
+                                }
+                            }}>
+                                <SelectTrigger className="rounded-sm">
+                                    <SelectValue placeholder={seasonId ? 'Select a team' : 'Select a season in the admin bar first'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {teams.map(t => (
+                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    {type === 'potw' && (
+                        <div className="space-y-1">
+                            <Label>Player</Label>
+                            <Select value={playerId} onValueChange={(v) => {
+                                setPlayerId(v)
+                                const p = players.find(x => x.id === v)
+                                setTitle(p ? `${p.display_name || p.username} - Player of the Week` : '')
+                            }} disabled={!teamId}>
+                                <SelectTrigger className="rounded-sm">
+                                    <SelectValue placeholder={teamId ? 'Select a player' : 'Select a team first'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {players.map(p => (
+                                        <SelectItem key={p.id} value={p.id}>{p.display_name || p.username}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    {isImageType && (
                         <div className="space-y-1">
                             <Label>Image</Label>
                             <div

@@ -11,6 +11,7 @@ export async function getAllMediaPosts(supabase: DBClient, filters: GetAllMediaI
             type:     filters.type,
             matchId:  filters.matchId,
             teamId:   filters.teamId,
+            playerId: filters.playerId,
             seasonId: filters.seasonId,
         })
         if (!result.ok) {

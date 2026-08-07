@@ -27,8 +27,8 @@ import {getStandings} from "@/server/domains/standing";
 import {getPlayoffBracketBySeasonId} from "@/server/domains/playoff";
 import type {PlayoffRound} from "@/server/domains/playoff";
 import {
-    getUpcomingMatches,
-    getRecentMatches,
+    getUpcomingWeekMatches,
+    getRecentWeekMatches,
     getMatchDetail,
     getWeekSchedule,
     getPlayoffSchedule,
@@ -207,9 +207,9 @@ export const getCachedPlayoffBrackets = unstable_cache(
 );
 
 export const getCachedUpcomingMatches = unstable_cache(
-    async (seasonId: string, limit: number) =>
+    async (seasonId: string) =>
         unwrap(
-            await getUpcomingMatches(createPublicClient(), seasonId, limit),
+            await getUpcomingWeekMatches(createPublicClient(), seasonId),
             "getCachedUpcomingMatches",
         ),
     ["public:upcoming-matches"],
@@ -217,8 +217,8 @@ export const getCachedUpcomingMatches = unstable_cache(
 );
 
 export const getCachedRecentMatches = unstable_cache(
-    async (seasonId: string, limit: number) =>
-        unwrap(await getRecentMatches(createPublicClient(), seasonId, limit), "getCachedRecentMatches"),
+    async (seasonId: string) =>
+        unwrap(await getRecentWeekMatches(createPublicClient(), seasonId), "getCachedRecentMatches"),
     ["public:recent-matches"],
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
