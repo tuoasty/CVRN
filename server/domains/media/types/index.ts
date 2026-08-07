@@ -43,6 +43,7 @@ export interface CreateMediaInput {
     description?: string | null
     imageFile?: File | null
     videoUrl?: string | null
+    authorId?: string | null
     matchId?: string | null
     teamId?: string | null
     playerId?: string | null
@@ -66,6 +67,7 @@ export interface PagedMediaResult {
 export type {
     CreateMediaFormInput,
     MediaPostIdInput,
+    UpdateMediaPostInput,
     GetAllMediaInput,
     GetPagedMediaInput,
     MediaFilterType,
@@ -75,6 +77,7 @@ export type {
 export {
     CreateMediaFormSchema,
     MediaPostIdSchema,
+    UpdateMediaPostSchema,
     GetAllMediaSchema,
     GetPagedMediaSchema,
     AssignMediaToMatchSchema,

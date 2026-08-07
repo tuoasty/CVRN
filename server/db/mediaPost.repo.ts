@@ -119,6 +119,21 @@ export async function updateMediaPostPin(supabase: DBClient, id: string, is_pinn
     return Ok(data as unknown as MediaPost)
 }
 
+export async function updateMediaPost(
+    supabase: DBClient,
+    id: string,
+    fields: { title?: string; description?: string | null; author_id?: string | null },
+): Promise<Result<MediaPost>> {
+    const { data, error } = await supabase
+        .from('media_posts')
+        .update({ ...fields, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as unknown as MediaPost)
+}
+
 export async function updateMediaPostMatch(supabase: DBClient, id: string, matchId: string | null): Promise<Result<MediaPost>> {
     const { data, error } = await supabase
         .from('media_posts')

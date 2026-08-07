@@ -1,10 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { Calendar, Clock, Trophy } from "lucide-react";
 import CompactMatchCard from "@/app/(public)/home/CompactMatchCard";
 import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
-import FeaturedMatchCarousel, { type FeaturedSlide, type FeaturedAwardSlide } from "@/app/(public)/home/FeaturedMatchCarousel";
+import FeaturedMatchCarousel, { type FeaturedSlide, type FeaturedAwardSlide, type FeaturedMatchSlide } from "@/app/(public)/home/FeaturedMatchCarousel";
 import SeasonChampionCard from "@/app/(public)/home/SeasonChampionCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import StandingsPreview from "@/app/(public)/home/StandingsPreview";
@@ -73,15 +74,37 @@ export default function HomePage({
         .filter((p) => p.type === "potw" && p.image_url && p.season_id === season.id)
         .sort((a, b) => b.published_at.localeCompare(a.published_at))[0] ?? null;
 
-    const { players: potwPlayers } = usePlayersByIds(potwPost?.player_id ? [potwPost.player_id] : []);
-    const potwPlayer = potwPlayers[0] ?? null;
+    const idsToFetch = useMemo(() => {
+        const ids = new Set<string>();
+        if (potwPost?.player_id) ids.add(potwPost.player_id);
+        mediaPosts.forEach((p) => { if (p.author_id) ids.add(p.author_id); });
+        return Array.from(ids);
+    }, [potwPost?.player_id, mediaPosts]);
+
+    const { players: fetchedPlayers } = usePlayersByIds(idsToFetch);
+    const playerById = useMemo(
+        () => new Map(fetchedPlayers.map((p) => [p.id, p])),
+        [fetchedPlayers]
+    );
+
+    const potwPlayer = potwPost?.player_id ? playerById.get(potwPost.player_id) ?? null : null;
     const totwTeam = totwPost?.team_id ? teams.find((t) => t.id === totwPost.team_id) : undefined;
+
+    const authorNameFor = (gfx: MediaPost): string | null => {
+        if (!gfx.author_id) return null;
+        const a = playerById.get(gfx.author_id);
+        return a ? (a.display_name || a.username) : null;
+    };
 
     const totwSlide: FeaturedAwardSlide | null = totwPost?.image_url
         ? {
               kind: "totw",
               gfx: totwPost,
               subjectName: totwTeam?.name ?? "Team of the Week",
+              subjectAvatarUrl: totwTeam?.logo_url,
+              subjectSubtext: null,
+              weekLabel: totwPost.description,
+              authorName: authorNameFor(totwPost),
               href: buildPublicTeamHref({ regionCode, seasonSlug, teamSlug: totwTeam?.slug }),
           }
         : null;
@@ -90,6 +113,10 @@ export default function HomePage({
               kind: "potw",
               gfx: potwPost,
               subjectName: potwPlayer?.display_name || potwPlayer?.username || "Player of the Week",
+              subjectAvatarUrl: potwPlayer?.avatar_url,
+              subjectSubtext: potwPlayer?.username ? `@${potwPlayer.username}` : null,
+              weekLabel: potwPost.description,
+              authorName: authorNameFor(potwPost),
               href: buildPublicPlayerHref(potwPlayer?.username),
           }
         : null;
@@ -104,41 +131,53 @@ export default function HomePage({
         ? computeMatchLabels([recentMatches[0]])[0]
         : "";
 
-    const matchCap = 5 - awardSlides.length;
+    const buildMatchSlide = (m: MatchWithDetails, label: string, isRecent: boolean): FeaturedMatchSlide | null => {
+        const gfx = mediaPosts.find(
+            (p) => p.type === "gfx" && p.image_url && p.match_id === m.match.id
+        );
+        if (!gfx) return null;
+        const homeTeam = teams.find((t) => t.id === m.match.home_team_id);
+        const awayTeam = teams.find((t) => t.id === m.match.away_team_id);
+        return {
+            kind: "match",
+            matchDetails: m,
+            homeTeam,
+            awayTeam,
+            gfx,
+            matchLabel: label,
+            isRecent,
+            authorName: authorNameFor(gfx),
+            href: buildPublicMatchHref({
+                matchCode: m.match.match_code,
+                homeTeamName: homeTeam?.name,
+                awayTeamName: awayTeam?.name,
+                regionCode,
+                seasonSlug,
+            }),
+        };
+    };
 
-    const matchSlides: FeaturedSlide[] = isSeasonCompleted
+    const upcomingSlides: FeaturedMatchSlide[] = isSeasonCompleted
         ? []
-        : [
-              ...upcomingMatches.map((m, i) => ({ m, label: upcomingLabels[i], isRecent: false })),
-              ...recentMatches.map((m, i) => ({ m, label: recentLabels[i], isRecent: true })),
-          ]
-              .flatMap(({ m, label, isRecent }) => {
-                  const gfx = mediaPosts.find(
-                      (p) => p.type === "gfx" && p.image_url && p.match_id === m.match.id
-                  );
-                  if (!gfx) return [];
-                  const homeTeam = teams.find((t) => t.id === m.match.home_team_id);
-                  const awayTeam = teams.find((t) => t.id === m.match.away_team_id);
-                  return [{
-                      kind: "match" as const,
-                      matchDetails: m,
-                      homeTeam,
-                      awayTeam,
-                      gfx,
-                      matchLabel: label,
-                      isRecent,
-                      href: buildPublicMatchHref({
-                          matchCode: m.match.match_code,
-                          homeTeamName: homeTeam?.name,
-                          awayTeamName: awayTeam?.name,
-                          regionCode,
-                          seasonSlug,
-                      }),
-                  }];
-              })
-              .slice(0, matchCap);
+        : upcomingMatches
+              .map((m, i) => buildMatchSlide(m, upcomingLabels[i], false))
+              .filter((s): s is FeaturedMatchSlide => s !== null);
 
-    const slides: FeaturedSlide[] = [...matchSlides, ...awardSlides];
+    const resultSlides: FeaturedMatchSlide[] = isSeasonCompleted
+        ? []
+        : recentMatches
+              .map((m, i) => buildMatchSlide(m, recentLabels[i], true))
+              .filter((s): s is FeaturedMatchSlide => s !== null);
+
+    const MAX_SLIDES = 5;
+    const upcomingTaken = upcomingSlides.slice(0, Math.max(0, MAX_SLIDES - awardSlides.length));
+    const tier2Slots = MAX_SLIDES - upcomingTaken.length;
+    const resultsTaken = resultSlides.slice(0, Math.max(0, tier2Slots - awardSlides.length));
+    const tier2 = [...awardSlides, ...resultsTaken].sort((a, b) =>
+        b.gfx.created_at.localeCompare(a.gfx.created_at)
+    );
+
+    const slides: FeaturedSlide[] = [...upcomingTaken, ...tier2].slice(0, MAX_SLIDES);
 
     return (
         <>

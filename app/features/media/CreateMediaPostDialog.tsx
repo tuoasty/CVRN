@@ -14,6 +14,7 @@ import { compressImage } from '@/app/utils/imageCompression'
 import { useAdminContextStore } from '@/app/stores/adminContextStore'
 import { useTeamsBySeason } from '@/app/hooks/useTeams'
 import { useTeamPlayers } from '@/app/hooks/usePlayers'
+import AuthorPicker, { type AuthorSelection } from '@/app/features/media/AuthorPicker'
 
 type MediaFormType = 'gfx' | 'video' | 'clip' | 'totw' | 'potw'
 
@@ -34,6 +35,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
     const [loading, setLoading] = useState(false)
     const [teamId, setTeamId] = useState('')
     const [playerId, setPlayerId] = useState('')
+    const [author, setAuthor] = useState<AuthorSelection | null>(null)
 
     const seasonId = useAdminContextStore(s => s.selectedSeasonId)
     const { teams } = useTeamsBySeason(type === 'totw' || type === 'potw' ? seasonId : null)
@@ -53,6 +55,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
         setLoading(false)
         setTeamId('')
         setPlayerId('')
+        setAuthor(null)
     }
 
     function handleOpenChange(val: boolean) {
@@ -116,6 +119,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
             if (type === 'totw' && teamId) formData.set('teamId', teamId)
             if (type === 'potw' && playerId) formData.set('playerId', playerId)
             if ((type === 'totw' || type === 'potw') && seasonId) formData.set('seasonId', seasonId)
+            if (type !== 'clip' && author) formData.set('authorId', author.id)
 
             const result = await createMediaPostAction(formData)
             if (!result.ok) {
@@ -167,6 +171,8 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                                 <Label htmlFor="description">Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
                                 <Input id="description" value={description} onChange={e => setDescription(e.target.value)} className="rounded-sm" />
                             </div>
+
+                            <AuthorPicker value={author} onChange={setAuthor} />
                         </>
                     )}
 
@@ -177,7 +183,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                                 setTeamId(v); setPlayerId('')
                                 if (type === 'totw') {
                                     const t = teams.find(x => x.id === v)
-                                    setTitle(t ? `${t.name} — Team of the Week` : '')
+                                    setTitle(t ? `${t.name} - Team of the Week` : '')
                                 }
                             }}>
                                 <SelectTrigger className="rounded-sm">
@@ -198,7 +204,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                             <Select value={playerId} onValueChange={(v) => {
                                 setPlayerId(v)
                                 const p = players.find(x => x.id === v)
-                                setTitle(p ? `${p.display_name || p.username} — Player of the Week` : '')
+                                setTitle(p ? `${p.display_name || p.username} - Player of the Week` : '')
                             }} disabled={!teamId}>
                                 <SelectTrigger className="rounded-sm">
                                     <SelectValue placeholder={teamId ? 'Select a player' : 'Select a team first'} />

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import GfxFrame from "@/app/features/media/GfxFrame";
+import AvatarImage from "@/app/components/ui/AvatarImage";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { cn } from "@/lib/utils";
 import type { MatchWithDetails } from "@/server/domains/match";
@@ -20,12 +21,17 @@ export type FeaturedMatchSlide = {
     matchLabel: string;
     href: string | null;
     isRecent: boolean;
+    authorName?: string | null;
 };
 
 export type FeaturedAwardSlide = {
     kind: "totw" | "potw";
     gfx: MediaPost;
     subjectName: string;
+    subjectAvatarUrl?: string | null;
+    subjectSubtext?: string | null;
+    weekLabel?: string | null;
+    authorName?: string | null;
     href: string | null;
 };
 
@@ -33,6 +39,7 @@ export type FeaturedSlide = FeaturedMatchSlide | FeaturedAwardSlide;
 
 const SLIDE_MS = 380;
 const CHROME_FADE_MS = 130;
+const AUTO_ADVANCE_MS = 7000;
 
 const LOGO_SHADOW =
     "[filter:drop-shadow(0_0_1px_rgba(255,255,255,0.65))_drop-shadow(0_1px_3px_rgba(0,0,0,0.85))]";
@@ -44,31 +51,63 @@ export default function FeaturedMatchCarousel({
     slides: FeaturedSlide[];
     regionCode?: string;
 }) {
-    const [index, setIndex] = useState(0);
+    const N = slides.length;
+    const many = N > 1;
+
+    const [pos, setPos] = useState(1);
     const [displayIndex, setDisplayIndex] = useState(0);
     const [fading, setFading] = useState(false);
+    const [autoPlay, setAutoPlay] = useState(true);
+    const [hovering, setHovering] = useState(false);
+    const [noAnim, setNoAnim] = useState(false);
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    const realIndex = many ? (((pos - 1) % N) + N) % N : 0;
+
     useEffect(() => {
-        if (index === displayIndex) return;
+        if (realIndex === displayIndex) return;
         setFading(true);
         timer.current = setTimeout(() => {
-            setDisplayIndex(index);
+            setDisplayIndex(realIndex);
             setFading(false);
         }, CHROME_FADE_MS);
         return () => {
             if (timer.current) clearTimeout(timer.current);
         };
-    }, [index, displayIndex]);
+    }, [realIndex, displayIndex]);
 
-    if (slides.length === 0) return null;
+    useEffect(() => {
+        if (!many || !autoPlay || hovering) return;
+        const id = setInterval(() => setPos(p => p + 1), AUTO_ADVANCE_MS);
+        return () => clearInterval(id);
+    }, [many, autoPlay, hovering]);
 
-    const many = slides.length > 1;
+    useEffect(() => {
+        if (!many || (pos !== N + 1 && pos !== 0)) return;
+        const id = setTimeout(() => {
+            setNoAnim(true);
+            setPos(pos === N + 1 ? 1 : N);
+        }, SLIDE_MS);
+        return () => clearTimeout(id);
+    }, [pos, many, N]);
 
+    useEffect(() => {
+        if (!noAnim) return;
+        const raf = requestAnimationFrame(() => requestAnimationFrame(() => setNoAnim(false)));
+        return () => cancelAnimationFrame(raf);
+    }, [noAnim]);
+
+    if (N === 0) return null;
+
+    const extended = many ? [slides[N - 1], ...slides, slides[0]] : slides;
+    const trackPos = many ? pos : 0;
     const shown = slides[displayIndex];
     const regionTimezone = regionCode ? getRegionTimezone(regionCode) : undefined;
 
-    const step = (delta: number) => setIndex(i => (i + delta + slides.length) % slides.length);
+    const step = (delta: number) => {
+        setAutoPlay(false);
+        setPos(p => p + delta);
+    };
 
     const ariaLabel = shown.kind === "match"
         ? `${shown.homeTeam?.name ?? "TBD"} vs ${shown.awayTeam?.name ?? "TBD"}`
@@ -78,6 +117,9 @@ export default function FeaturedMatchCarousel({
         <div
 
             className="panel relative overflow-hidden aspect-video min-h-[280px] bg-black transition-colors hover:border-primary/60"
+            onPointerDown={() => setAutoPlay(false)}
+            onMouseEnter={() => setHovering(true)}
+            onMouseLeave={() => setHovering(false)}
             onKeyDown={e => {
                 if (!many) return;
 
@@ -86,15 +128,18 @@ export default function FeaturedMatchCarousel({
             }}
         >
             <div
-                className="absolute inset-0 flex transition-transform ease-[cubic-bezier(.22,1,.36,1)] motion-reduce:transition-none"
-                style={{ transform: `translateX(-${index * 100}%)`, transitionDuration: `${SLIDE_MS}ms` }}
+                className={cn(
+                    "absolute inset-0 flex ease-[cubic-bezier(.22,1,.36,1)] motion-reduce:transition-none",
+                    noAnim ? "" : "transition-transform"
+                )}
+                style={{ transform: `translateX(-${trackPos * 100}%)`, transitionDuration: noAnim ? "0ms" : `${SLIDE_MS}ms` }}
             >
-                {slides.map((slide, i) => (
+                {extended.map((slide, i) => (
                     <GfxFrame
-                        key={slide.gfx.id}
+                        key={i}
                         src={slide.gfx.image_url!}
                         alt={slide.gfx.title}
-                        priority={i === 0}
+                        priority={i === (many ? 1 : 0)}
                         sizes="768px"
                         className="flex-none w-full h-full"
                     />
@@ -134,12 +179,12 @@ export default function FeaturedMatchCarousel({
                             <button
                                 key={slide.gfx.id}
                                 type="button"
-                                onClick={() => setIndex(i)}
+                                onClick={() => { setAutoPlay(false); setPos(i + 1); }}
                                 aria-label={`Show match ${i + 1} of ${slides.length}`}
-                                aria-current={i === index}
+                                aria-current={i === realIndex}
                                 className={cn(
                                     "h-[3px] w-[22px] transition-colors motion-reduce:transition-none",
-                                    i === index ? "bg-white" : "bg-white/30 hover:bg-white/60"
+                                    i === realIndex ? "bg-white" : "bg-white/30 hover:bg-white/60"
                                 )}
                             />
                         ))}
@@ -173,7 +218,7 @@ function MatchChrome({ slide, regionTimezone }: { slide: FeaturedMatchSlide; reg
             </div>
 
             <div className="absolute inset-x-0 bottom-0 px-5 pt-12 pb-4 bg-gradient-to-t from-black/95 via-black/70 to-transparent">
-                <div className="flex items-center gap-3">
+                <div className="flex h-10 items-center gap-3">
                     <SlideTeam team={slide.homeTeam} dim={isCompleted && !homeWon} />
                     <span className="shrink-0 text-xl font-bold tabular-nums text-white">
                         {isCompleted ? `${match.home_sets_won} – ${match.away_sets_won}` : "VS"}
@@ -182,8 +227,18 @@ function MatchChrome({ slide, regionTimezone }: { slide: FeaturedMatchSlide; reg
                     <span className="shrink-0 ml-auto flex items-center gap-1.5 text-xs text-white/75">
                         <Calendar className="h-3.5 w-3.5" />
                         {when}
+
+                        {slide.authorName && (
+                            <>
+                                <span className="text-white/40">•</span>
+                                <span className="uppercase tracking-wider text-white/50">
+                                    by {slide.authorName}
+                                </span>
+                            </>
+                        )}
                     </span>
                 </div>
+                {/* {slide.authorName && <AuthorCredit name={slide.authorName} />} */}
             </div>
         </>
     );
@@ -191,6 +246,7 @@ function MatchChrome({ slide, regionTimezone }: { slide: FeaturedMatchSlide; reg
 
 function AwardChrome({ slide }: { slide: FeaturedAwardSlide }) {
     const heading = slide.kind === "totw" ? "Team of the Week" : "Player of the Week";
+    const isPotw = slide.kind === "potw";
 
     return (
         <>
@@ -201,11 +257,57 @@ function AwardChrome({ slide }: { slide: FeaturedAwardSlide }) {
             </div>
 
             <div className="absolute inset-x-0 bottom-0 px-5 pt-12 pb-4 bg-gradient-to-t from-black/95 via-black/70 to-transparent">
-                <span className="block text-lg font-bold text-white truncate">
-                    {slide.subjectName}
-                </span>
+                <div className="flex h-10 items-center gap-3">
+                    {slide.subjectAvatarUrl && (
+                        isPotw ? (
+                            <div className="relative w-11 h-11 shrink-0 overflow-hidden">
+                                <AvatarImage src={slide.subjectAvatarUrl} alt={slide.subjectName} sizes="44px" />
+                            </div>
+                        ) : (
+                            <div className="relative w-11 h-11 shrink-0">
+                                <Image
+                                    src={slide.subjectAvatarUrl}
+                                    alt={slide.subjectName}
+                                    fill
+                                    sizes="44px"
+                                    className={cn("object-contain", LOGO_SHADOW)}
+                                />
+                            </div>
+                        )
+                    )}
+                    <div className="min-w-0">
+                        <span className="block text-lg font-bold text-white truncate">
+                            {slide.subjectName}
+                        </span>
+                        {slide.subjectSubtext && (
+                            <span className="block text-xs text-white/60 truncate">
+                                {slide.subjectSubtext}
+                            </span>
+                        )}
+                    </div>
+                    {slide.weekLabel && (
+                        <span className="shrink-0 ml-auto text-xs text-white/75 truncate max-w-[220px]">
+                            {slide.weekLabel}
+
+                            {slide.authorName && (
+                                <span className="uppercase tracking-wider text-white/50">
+                                    {" • "}by {slide.authorName}
+                                </span>
+                            )}
+                        </span>
+                    )}
+                </div>
+                {/* {slide.authorName && <AuthorCredit name={slide.authorName} />} */}
             </div>
         </>
+    );
+}
+
+function AuthorCredit({ name }: { name: string }) {
+    return (
+        <span className="absolute left-1/2 bottom-1 -translate-x-1/2 text-center text-xs uppercase tracking-wider text-white/45 truncate max-w-[60%]">
+            by {name}
+        </span>
     );
 }
 

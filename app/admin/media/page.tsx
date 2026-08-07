@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Image as ImageIcon, Trash2, Plus, Pin } from 'lucide-react'
+import { Image as ImageIcon, Trash2, Plus, Pin, Pencil } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import {
@@ -13,6 +13,8 @@ import { useAllMediaPosts, mutateAllMedia } from '@/app/hooks/useMediaPosts'
 import { deleteMediaPostAction, togglePinMediaPostAction } from '@/app/actions/media.actions'
 import { errorCodeToUserMessage } from '@/app/lib/errorMessages'
 import CreateMediaPostDialog from '@/app/features/media/CreateMediaPostDialog'
+import EditMediaPostDialog from '@/app/features/media/EditMediaPostDialog'
+import type { MediaPost } from '@/server/domains/media'
 import { toast } from '@/app/utils/toast'
 import { cn } from '@/lib/utils'
 
@@ -35,6 +37,7 @@ export default function AdminMediaPage() {
     const [deleting, setDeleting] = useState<string | null>(null)
     const [pinning, setPinning] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
+    const [editTarget, setEditTarget] = useState<MediaPost | null>(null)
     const [filterType, setFilterType] = useState<FilterType>('all')
 
     const filtered = filterType === 'all' ? posts : posts.filter(p => p.type === filterType)
@@ -149,6 +152,15 @@ export default function AdminMediaPage() {
                                 <Button
                                     variant="ghost"
                                     size="icon"
+                                    className="h-8 w-8 rounded-sm text-muted-foreground hover:bg-muted"
+                                    onClick={() => setEditTarget(post)}
+                                    title="Edit post"
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
                                     className="h-8 w-8 rounded-sm text-destructive hover:bg-destructive/10"
                                     disabled={deleting === post.id}
                                     onClick={() => setDeleteTarget({ id: post.id, title: post.title })}
@@ -183,6 +195,8 @@ export default function AdminMediaPage() {
             </AlertDialog>
 
             <CreateMediaPostDialog open={createOpen} onOpenChange={setCreateOpen} />
+
+            <EditMediaPostDialog post={editTarget} open={!!editTarget} onOpenChange={open => !open && setEditTarget(null)} />
         </div>
     )
 }

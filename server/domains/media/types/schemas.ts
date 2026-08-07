@@ -5,6 +5,7 @@ export const CreateMediaFormSchema = z.object({
     title:       z.string(),
     description: z.string().optional(),
     videoUrl:    z.string().url('Invalid URL').optional().or(z.literal('')),
+    authorId:    z.string().uuid().optional().or(z.literal('')),
     matchId:     z.string().uuid().optional().or(z.literal('')),
     teamId:      z.string().uuid().optional().or(z.literal('')),
     playerId:    z.string().uuid().optional().or(z.literal('')),
@@ -14,6 +15,14 @@ export type CreateMediaFormInput = z.infer<typeof CreateMediaFormSchema>
 
 export const MediaPostIdSchema = z.object({ postId: z.string().uuid() })
 export type MediaPostIdInput = z.infer<typeof MediaPostIdSchema>
+
+export const UpdateMediaPostSchema = z.object({
+    postId:      z.string().uuid(),
+    title:       z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    authorId:    z.string().uuid().nullable().optional(),
+})
+export type UpdateMediaPostInput = z.infer<typeof UpdateMediaPostSchema>
 
 export const AssignMediaToMatchSchema = z.object({
     postId:  z.string().uuid(),

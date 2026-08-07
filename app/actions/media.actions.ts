@@ -13,11 +13,13 @@ import {
     getPagedMediaPosts,
     togglePinMediaPost,
     getMediaPostById,
+    updateMediaPost,
     MediaPost,
     PagedMediaResult,
     assignMediaToMatch,
     CreateMediaFormSchema,
     MediaPostIdSchema,
+    UpdateMediaPostSchema,
     GetAllMediaSchema,
     GetPagedMediaSchema,
     AssignMediaToMatchSchema,
@@ -35,6 +37,7 @@ export async function createMediaPostAction(formData: FormData): Promise<Result<
         title:       formData.get('title'),
         description: formData.get('description') || undefined,
         videoUrl:    formData.get('videoUrl') || undefined,
+        authorId:    formData.get('authorId') || undefined,
         matchId:     formData.get('matchId') || undefined,
         teamId:      formData.get('teamId') || undefined,
         playerId:    formData.get('playerId') || undefined,
@@ -54,12 +57,26 @@ export async function createMediaPostAction(formData: FormData): Promise<Result<
         description: parsed.data.description ?? null,
         imageFile:   imageFile && imageFile.size > 0 ? imageFile : null,
         videoUrl:    parsed.data.videoUrl || null,
+        authorId:    parsed.data.authorId || null,
         matchId:     parsed.data.matchId || null,
         teamId:      parsed.data.teamId || null,
         playerId:    parsed.data.playerId || null,
         seasonId:    parsed.data.seasonId || null,
         userId:      user.id,
     })
+    if (result.ok) revalidatePublicData([CACHE_TAGS.media])
+    return result
+}
+
+export async function updateMediaPostAction(input: unknown): Promise<Result<MediaPost>> {
+    const parsed = UpdateMediaPostSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const result = await updateMediaPost(supabase, parsed.data)
     if (result.ok) revalidatePublicData([CACHE_TAGS.media])
     return result
 }
