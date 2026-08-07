@@ -41,11 +41,9 @@ export default async function Page({ params }: PageProps) {
         getCachedAllMediaPosts(),
     ]);
 
-    const matchLimit = Math.ceil(standings.length / 2);
-
     const [upcomingMatches, recentMatches] = await Promise.all([
-        getCachedUpcomingMatches(seasonRecord.id, matchLimit),
-        getCachedRecentMatches(seasonRecord.id, matchLimit),
+        getCachedUpcomingMatches(seasonRecord.id),
+        getCachedRecentMatches(seasonRecord.id),
     ]);
 
     return (

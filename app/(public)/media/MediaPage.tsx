@@ -161,9 +161,9 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
 }
 
 const FILTER_TYPES: Record<MediaFilterType, MediaPost['type'][]> = {
-    all:    ['gfx', 'video', 'news', 'recap'],
+    all:    ['gfx', 'video', 'news', 'recap', 'totw', 'potw'],
     videos: ['video'],
-    gfx:    ['gfx'],
+    gfx:    ['gfx', 'totw', 'potw'],
     clips:  ['clip'],
 }
 

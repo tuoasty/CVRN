@@ -5,7 +5,6 @@ import { TeamWithRegion } from "@/server/domains/team";
 import type { MediaPost } from "@/server/domains/media";
 import Image from "next/image";
 import Link from "next/link";
-import { Badge } from "@/app/components/ui/badge";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,8 +39,7 @@ export default function FeaturedMatchCard({
     const homeWon = isCompleted && (match.home_sets_won ?? 0) > (match.away_sets_won ?? 0);
     const awayWon = isCompleted && (match.away_sets_won ?? 0) > (match.home_sets_won ?? 0);
 
-    const isPlayoff = match.match_type === "playoffs";
-    const heading = isRecent ? "Most Recent Match" : "Next Match";
+    const heading = isRecent ? "Result" : "Up Next";
     const when = regionTimezone && match.scheduled_at
         ? formatDateInTimezone(match.scheduled_at, regionTimezone)
         : match.scheduled_at
@@ -62,22 +60,9 @@ export default function FeaturedMatchCard({
                 <h3 className="text-[13px] font-bold uppercase tracking-wider text-white/85">
                     {heading}
                 </h3>
-                <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 bg-black/50 text-white/80 border-white/25">
-                        BO{match.best_of}
-                    </Badge>
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            "rounded-sm text-[10px] h-5 px-2",
-                            isPlayoff
-                                ? "bg-purple-600/25 text-purple-200 border-purple-300/30"
-                                : "bg-black/50 text-white/80 border-white/25"
-                        )}
-                    >
-                        {matchLabel}
-                    </Badge>
-                </div>
+                <span className="text-[13px] font-semibold uppercase tracking-wider text-white/70">
+                    {matchLabel}
+                </span>
             </div>
 
             <div className="absolute inset-x-0 bottom-0 px-5 pt-12 pb-4 bg-gradient-to-t from-black/95 via-black/70 to-transparent">
@@ -103,22 +88,9 @@ export default function FeaturedMatchCard({
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                     {heading}
                 </h3>
-                <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2">
-                        BO{match.best_of}
-                    </Badge>
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            "rounded-sm text-[10px] h-5 px-2",
-                            isPlayoff
-                                ? "bg-purple-600/10 text-purple-600 border-purple-600/20"
-                                : "bg-muted/50 text-muted-foreground"
-                        )}
-                    >
-                        {matchLabel}
-                    </Badge>
-                </div>
+                <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/60">
+                    {matchLabel}
+                </span>
             </div>
 
             {}

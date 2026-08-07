@@ -4,14 +4,15 @@ import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { Calendar, Clock, Trophy } from "lucide-react";
 import CompactMatchCard from "@/app/(public)/home/CompactMatchCard";
 import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
-import FeaturedMatchCarousel, { type FeaturedSlide } from "@/app/(public)/home/FeaturedMatchCarousel";
+import FeaturedMatchCarousel, { type FeaturedSlide, type FeaturedAwardSlide } from "@/app/(public)/home/FeaturedMatchCarousel";
 import SeasonChampionCard from "@/app/(public)/home/SeasonChampionCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import StandingsPreview from "@/app/(public)/home/StandingsPreview";
 import { StandingMethod } from "@/shared/types/standing";
 import { MatchWithDetails } from "@/server/domains/match";
 import { computeMatchLabels } from "@/app/utils/matchLabel";
-import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
+import { buildPublicMatchHref, buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
+import { usePlayersByIds } from "@/app/hooks/usePlayers";
 import type { TeamWithRegion } from "@/server/domains/team";
 import type { StandingWithInfo } from "@/server/domains/standing";
 import type { SeasonPodiumEntryWithTeam } from "@/server/domains/season";
@@ -65,13 +66,47 @@ export default function HomePage({
     const upcomingLabels = computeMatchLabels(upcomingMatches);
     const recentLabels = computeMatchLabels(recentMatches);
 
+    const totwPost = mediaPosts
+        .filter((p) => p.type === "totw" && p.image_url && p.season_id === season.id)
+        .sort((a, b) => b.published_at.localeCompare(a.published_at))[0] ?? null;
+    const potwPost = mediaPosts
+        .filter((p) => p.type === "potw" && p.image_url && p.season_id === season.id)
+        .sort((a, b) => b.published_at.localeCompare(a.published_at))[0] ?? null;
+
+    const { players: potwPlayers } = usePlayersByIds(potwPost?.player_id ? [potwPost.player_id] : []);
+    const potwPlayer = potwPlayers[0] ?? null;
+    const totwTeam = totwPost?.team_id ? teams.find((t) => t.id === totwPost.team_id) : undefined;
+
+    const totwSlide: FeaturedAwardSlide | null = totwPost?.image_url
+        ? {
+              kind: "totw",
+              gfx: totwPost,
+              subjectName: totwTeam?.name ?? "Team of the Week",
+              href: buildPublicTeamHref({ regionCode, seasonSlug, teamSlug: totwTeam?.slug }),
+          }
+        : null;
+    const potwSlide: FeaturedAwardSlide | null = potwPost?.image_url
+        ? {
+              kind: "potw",
+              gfx: potwPost,
+              subjectName: potwPlayer?.display_name || potwPlayer?.username || "Player of the Week",
+              href: buildPublicPlayerHref(potwPlayer?.username),
+          }
+        : null;
+
+    const awardSlides: FeaturedAwardSlide[] = isSeasonCompleted
+        ? []
+        : [totwSlide, potwSlide].filter((s): s is FeaturedAwardSlide => s !== null);
+
     const featuredLabel = hasFeaturedUpcoming
         ? upcomingLabels[0]
         : hasFeaturedRecent
         ? computeMatchLabels([recentMatches[0]])[0]
         : "";
 
-    const slides: FeaturedSlide[] = isSeasonCompleted
+    const matchCap = 5 - awardSlides.length;
+
+    const matchSlides: FeaturedSlide[] = isSeasonCompleted
         ? []
         : [
               ...upcomingMatches.map((m, i) => ({ m, label: upcomingLabels[i], isRecent: false })),
@@ -85,6 +120,7 @@ export default function HomePage({
                   const homeTeam = teams.find((t) => t.id === m.match.home_team_id);
                   const awayTeam = teams.find((t) => t.id === m.match.away_team_id);
                   return [{
+                      kind: "match" as const,
                       matchDetails: m,
                       homeTeam,
                       awayTeam,
@@ -100,7 +136,9 @@ export default function HomePage({
                       }),
                   }];
               })
-              .slice(0, 5);
+              .slice(0, matchCap);
+
+    const slides: FeaturedSlide[] = [...matchSlides, ...awardSlides];
 
     return (
         <>

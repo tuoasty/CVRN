@@ -1,4 +1,4 @@
-export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap' | 'clip'
+export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap' | 'clip' | 'totw' | 'potw'
 
 export type MatchMediaSlot = Extract<MediaPostType, 'gfx' | 'video'>
 
@@ -12,6 +12,7 @@ export interface MediaPost {
     author_id: string | null
     match_id: string | null
     team_id: string | null
+    player_id: string | null
     season_id: string | null
     published_at: string
     is_pinned: boolean
@@ -31,18 +32,20 @@ export interface InsertMediaPostDto {
     author_id?: string | null
     match_id?: string | null
     team_id?: string | null
+    player_id?: string | null
     season_id?: string | null
     created_by: string
 }
 
 export interface CreateMediaInput {
-    type: 'gfx' | 'video' | 'clip'
+    type: 'gfx' | 'video' | 'clip' | 'totw' | 'potw'
     title: string
     description?: string | null
     imageFile?: File | null
     videoUrl?: string | null
     matchId?: string | null
     teamId?: string | null
+    playerId?: string | null
     seasonId?: string | null
     userId: string
 }
