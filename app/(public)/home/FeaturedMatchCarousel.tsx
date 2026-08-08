@@ -116,7 +116,7 @@ export default function FeaturedMatchCarousel({
     return (
         <div
 
-            className="panel relative overflow-hidden aspect-video min-h-[280px] bg-black transition-colors hover:border-primary/60"
+            className="panel relative w-full overflow-hidden aspect-video sm:min-h-[280px] bg-black transition-colors hover:border-primary/60"
             onPointerDown={() => setAutoPlay(false)}
             onMouseEnter={() => setHovering(true)}
             onMouseLeave={() => setHovering(false)}
@@ -212,19 +212,19 @@ function MatchChrome({ slide, regionTimezone }: { slide: FeaturedMatchSlide; reg
                 <h3 className="text-[13px] font-bold uppercase tracking-wider text-white/85">
                     {slide.isRecent ? "Result" : "Up Next"}
                 </h3>
-                <span className="text-[13px] font-semibold uppercase tracking-wider text-white/70">
+                <span className="hidden sm:block text-[13px] font-semibold uppercase tracking-wider text-white/70">
                     {slide.matchLabel}
                 </span>
             </div>
 
             <div className="absolute inset-x-0 bottom-0 px-5 pt-12 pb-4 bg-gradient-to-t from-black/95 via-black/70 to-transparent">
-                <div className="flex h-10 items-center gap-3">
+                <div className="flex h-10 items-center justify-center sm:justify-start gap-3">
                     <SlideTeam team={slide.homeTeam} dim={isCompleted && !homeWon} />
                     <span className="shrink-0 text-xl font-bold tabular-nums text-white">
                         {isCompleted ? `${match.home_sets_won} – ${match.away_sets_won}` : "VS"}
                     </span>
                     <SlideTeam team={slide.awayTeam} dim={isCompleted && !awayWon} reverse />
-                    <span className="shrink-0 ml-auto flex items-center gap-1.5 text-xs text-white/75">
+                    <span className="shrink-0 ml-auto hidden sm:flex items-center gap-1.5 text-xs text-white/75">
                         <Calendar className="h-3.5 w-3.5" />
                         {when}
 
@@ -280,13 +280,13 @@ function AwardChrome({ slide }: { slide: FeaturedAwardSlide }) {
                             {slide.subjectName}
                         </span>
                         {slide.subjectSubtext && (
-                            <span className="block text-xs text-white/60 truncate">
+                            <span className="hidden sm:block text-xs text-white/60 truncate">
                                 {slide.subjectSubtext}
                             </span>
                         )}
                     </div>
                     {slide.weekLabel && (
-                        <span className="shrink-0 ml-auto text-xs text-white/75 truncate max-w-[220px]">
+                        <span className="hidden sm:block shrink-0 ml-auto text-xs text-white/75 truncate max-w-[220px]">
                             {slide.weekLabel}
 
                             {slide.authorName && (
@@ -344,7 +344,7 @@ function SlideTeam({ team, dim, reverse }: { team?: TeamWithRegion; dim: boolean
                     />
                 </div>
             )}
-            <span className={cn("text-sm font-bold text-white truncate min-w-0", reverse && "text-right")}>
+            <span className={cn("hidden sm:block text-sm font-bold text-white truncate min-w-0", reverse && "text-right")}>
                 {team?.name || "TBD"}
             </span>
         </div>

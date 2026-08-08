@@ -250,7 +250,7 @@ function CreateForSlot({ slot, label, matchId, onChanged, defaultTitle }: { slot
                     {preview ? (
                         <div className="space-y-3">
                             {}
-                            <img src={preview} alt="preview" className="max-h-40 mx-auto rounded object-contain" />
+                            <img src={preview} alt="preview" className="max-h-40 mx-auto rounded-sm object-contain" />
                             <Button
                                 type="button"
                                 variant="outline"

@@ -83,7 +83,7 @@ function SeasonCard({season, regionName, regionCode, contextSeasonSlug}: {season
         <Link href={`/${regionCode.toLowerCase()}/${contextSeasonSlug}/archive/${season.slug}`} prefetch={false} className="block group">
         <div className="panel p-5 space-y-4 group-hover:border-primary/40 transition-colors cursor-pointer">
             <div>
-                <h2 className="text-lg font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">
                     {season.name}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -124,7 +124,7 @@ export default function ArchivePage() {
                         <BookOpen className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                        <h1 className="text-xl font-bold uppercase tracking-wider text-foreground">
                             League History
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5">Season champions and awards</p>

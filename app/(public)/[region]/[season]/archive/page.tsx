@@ -420,7 +420,7 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
     return (
         <>
             <div>
-                <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">
                     {season.name}
                 </h1>
                 <p className="text-xs text-muted-foreground mt-1">
