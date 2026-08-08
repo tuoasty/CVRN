@@ -415,7 +415,7 @@ export default function SeasonResultsPage() {
                             <Trophy className="h-7 w-7 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                            <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">
                                 {loading ? "Loading..." : (season?.name ?? "Season Results")}
                             </h1>
                             <p className="text-sm text-muted-foreground mt-1">Podium and awards management</p>

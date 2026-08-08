@@ -36,7 +36,7 @@ export default function PlayoffsPage({ brackets, matches, teams }: Props) {
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                                <h1 className="text-xl font-bold uppercase tracking-wider text-foreground">
                                     Playoffs
                                 </h1>
                                 {hasPlayoffs && (

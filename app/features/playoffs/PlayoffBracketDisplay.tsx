@@ -409,7 +409,7 @@ export function PlayoffBracketDisplay({
                 }}
             >
                 <div className="mb-6 pb-3 border-b-2 border-primary/20">
-                    <h3 className="text-base font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    <h3 className="text-base font-bold uppercase tracking-wider text-foreground">
                         {round.label}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1">

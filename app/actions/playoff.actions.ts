@@ -3,7 +3,7 @@
 import {revalidatePublicData} from "@/server/cache/revalidate";
 import {CACHE_TAGS} from "@/server/cache/tags";
 
-const PLAYOFF_TAGS = [CACHE_TAGS.playoffs, CACHE_TAGS.matches];
+const PLAYOFF_TAGS = [CACHE_TAGS.playoffs, CACHE_TAGS.matches, CACHE_TAGS.seasons];
 
 import {z} from "zod"
 import {createServerSupabase} from "@/server/supabase/server";

@@ -18,16 +18,6 @@ import type { MediaPost } from '@/server/domains/media'
 import { toast } from '@/app/utils/toast'
 import { cn } from '@/lib/utils'
 
-const TYPE_COLORS: Record<string, string> = {
-    gfx:   'bg-violet-500/20 text-violet-400 border-violet-500/30',
-    video: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    news:  'bg-green-500/20 text-green-400 border-green-500/30',
-    recap: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-    clip:  'bg-pink-500/20 text-pink-400 border-pink-500/30',
-    totw:  'bg-teal-500/20 text-teal-400 border-teal-500/30',
-    potw:  'bg-amber-500/20 text-amber-400 border-amber-500/30',
-}
-
 type FilterType = 'all' | 'gfx' | 'video' | 'news' | 'recap' | 'clip' | 'totw' | 'potw'
 const FILTER_OPTIONS: FilterType[] = ['all', 'gfx', 'video', 'clip', 'totw', 'potw', 'news', 'recap']
 
@@ -75,7 +65,7 @@ export default function AdminMediaPage() {
                         <ImageIcon className="h-7 w-7 text-primary" />
                     </div>
                     <div className="flex-1">
-                        <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                        <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">
                             Media
                         </h1>
                         <p className="text-sm text-muted-foreground mt-1">GFX, video embeds, and announcements</p>
@@ -131,7 +121,7 @@ export default function AdminMediaPage() {
                                     <p className="text-sm font-medium truncate">{post.title}</p>
                                     <p className="text-xs text-muted-foreground">{new Date(post.published_at).toLocaleDateString()}</p>
                                 </div>
-                                <Badge variant="outline" className={`rounded-sm text-xs uppercase ${TYPE_COLORS[post.type] ?? ''}`}>
+                                <Badge variant="outline" className="rounded-sm text-xs uppercase text-muted-foreground">
                                     {post.type}
                                 </Badge>
                                 {post.video_url && post.type !== 'clip' && (

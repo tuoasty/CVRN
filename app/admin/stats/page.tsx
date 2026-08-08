@@ -91,7 +91,7 @@ export default function AdminStatsPage() {
                         <BarChart3 className="h-7 w-7 text-primary" />
                     </div>
                     <div className="flex-1">
-                        <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                        <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">
                             Match Stats
                         </h1>
                         <p className="text-sm text-muted-foreground mt-1">

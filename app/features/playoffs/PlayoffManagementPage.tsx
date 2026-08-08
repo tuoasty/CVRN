@@ -83,7 +83,7 @@ export default function PlayoffManagementPage() {
         }
 
         toast.success("Playoff bracket generated successfully");
-        await mutate("seasons");
+        await Promise.all([mutate("seasons"), mutate("matches")]);
         setIsProcessing(false);
     };
 

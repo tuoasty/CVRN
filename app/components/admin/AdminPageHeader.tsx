@@ -16,7 +16,7 @@ export function AdminPageHeader({ icon: Icon, title, description, actions, stats
                     <Icon className="h-7 w-7 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h1 className="text-2xl font-bold uppercase tracking-wider bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">
                         {title}
                     </h1>
                     {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
