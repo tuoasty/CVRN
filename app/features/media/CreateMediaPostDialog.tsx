@@ -144,29 +144,33 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                     <DialogTitle>New Media Post</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-1">
-                        <Label>Type</Label>
-                        <Select value={type} onValueChange={(v) => { setType(v as MediaFormType); setTeamId(''); setPlayerId('') }}>
-                            <SelectTrigger className="rounded-sm">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="gfx">GFX</SelectItem>
-                                <SelectItem value="video">Video</SelectItem>
-                                <SelectItem value="clip">Clip (TikTok / Short-form)</SelectItem>
-                                <SelectItem value="totw">Team of the Week</SelectItem>
-                                <SelectItem value="potw">Player of the Week</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <div className={`grid gap-3 ${type !== 'clip' ? 'sm:grid-cols-[180px_1fr]' : ''}`}>
+                        <div className="space-y-1">
+                            <Label>Type</Label>
+                            <Select value={type} onValueChange={(v) => { setType(v as MediaFormType); setTeamId(''); setPlayerId('') }}>
+                                <SelectTrigger className="rounded-sm w-full">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="gfx">GFX</SelectItem>
+                                    <SelectItem value="video">Video</SelectItem>
+                                    <SelectItem value="clip">Clip (TikTok / Short-form)</SelectItem>
+                                    <SelectItem value="totw">Team of the Week</SelectItem>
+                                    <SelectItem value="potw">Player of the Week</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    {type !== 'clip' && (
-                        <>
+                        {type !== 'clip' && (
                             <div className="space-y-1">
                                 <Label htmlFor="title">Title</Label>
                                 <Input id="title" value={title} onChange={e => setTitle(e.target.value)} className="rounded-sm" />
                             </div>
+                        )}
+                    </div>
 
+                    {type !== 'clip' && (
+                        <>
                             <div className="space-y-1">
                                 <Label htmlFor="description">Description <span className="text-muted-foreground text-xs">(optional)</span></Label>
                                 <Input id="description" value={description} onChange={e => setDescription(e.target.value)} className="rounded-sm" />
@@ -177,44 +181,46 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                     )}
 
                     {(type === 'totw' || type === 'potw') && (
-                        <div className="space-y-1">
-                            <Label>Team</Label>
-                            <Select value={teamId} onValueChange={(v) => {
-                                setTeamId(v); setPlayerId('')
-                                if (type === 'totw') {
-                                    const t = teams.find(x => x.id === v)
-                                    setTitle(t ? `${t.name} - Team of the Week` : '')
-                                }
-                            }}>
-                                <SelectTrigger className="rounded-sm">
-                                    <SelectValue placeholder={seasonId ? 'Select a team' : 'Select a season in the admin bar first'} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teams.map(t => (
-                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
+                        <div className={`grid gap-3 ${type === 'potw' ? 'sm:grid-cols-2' : ''}`}>
+                            <div className="space-y-1">
+                                <Label>Team</Label>
+                                <Select value={teamId} onValueChange={(v) => {
+                                    setTeamId(v); setPlayerId('')
+                                    if (type === 'totw') {
+                                        const t = teams.find(x => x.id === v)
+                                        setTitle(t ? `${t.name} - Team of the Week` : '')
+                                    }
+                                }}>
+                                    <SelectTrigger className="rounded-sm w-full">
+                                        <SelectValue placeholder={seasonId ? 'Select a team' : 'Select a season in the admin bar first'} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {teams.map(t => (
+                                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                    {type === 'potw' && (
-                        <div className="space-y-1">
-                            <Label>Player</Label>
-                            <Select value={playerId} onValueChange={(v) => {
-                                setPlayerId(v)
-                                const p = players.find(x => x.id === v)
-                                setTitle(p ? `${p.display_name || p.username} - Player of the Week` : '')
-                            }} disabled={!teamId}>
-                                <SelectTrigger className="rounded-sm">
-                                    <SelectValue placeholder={teamId ? 'Select a player' : 'Select a team first'} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {players.map(p => (
-                                        <SelectItem key={p.id} value={p.id}>{p.display_name || p.username}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            {type === 'potw' && (
+                                <div className="space-y-1">
+                                    <Label>Player</Label>
+                                    <Select value={playerId} onValueChange={(v) => {
+                                        setPlayerId(v)
+                                        const p = players.find(x => x.id === v)
+                                        setTitle(p ? `${p.display_name || p.username} - Player of the Week` : '')
+                                    }} disabled={!teamId}>
+                                        <SelectTrigger className="rounded-sm w-full">
+                                            <SelectValue placeholder={teamId ? 'Select a player' : 'Select a team first'} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {players.map(p => (
+                                                <SelectItem key={p.id} value={p.id}>{p.display_name || p.username}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -233,7 +239,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                             >
                                 {preview ? (
                                     <div className="space-y-3">
-                                        <img src={preview} alt="preview" className="max-h-48 mx-auto rounded object-contain" />
+                                        <img src={preview} alt="preview" className="max-h-48 mx-auto rounded-sm object-contain" />
                                         <Button
                                             type="button"
                                             variant="outline"
