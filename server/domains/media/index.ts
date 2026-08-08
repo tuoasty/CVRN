@@ -2,6 +2,7 @@ export { createMediaPost } from './commands/createMediaPost'
 export { deleteMediaPost } from './commands/deleteMediaPost'
 export { togglePinMediaPost } from './commands/togglePinMediaPost'
 export { assignMediaToMatch } from './commands/assignMediaToMatch'
+export { updateMediaPost } from './commands/updateMediaPost'
 export { assertMatchSlotFree } from './helpers/assertMatchSlotFree'
 export { getAllMediaPosts } from './queries/getAllMediaPosts'
 export { getRecentMediaPosts } from './queries/getRecentMediaPosts'
@@ -18,6 +19,7 @@ export type {
     InsertMediaPostDto,
     CreateMediaFormInput,
     MediaPostIdInput,
+    UpdateMediaPostInput,
     GetAllMediaInput,
     GetPagedMediaInput,
     MediaFilterType,
@@ -27,6 +29,7 @@ export type {
 export {
     CreateMediaFormSchema,
     MediaPostIdSchema,
+    UpdateMediaPostSchema,
     AssignMediaToMatchSchema,
     GetAllMediaSchema,
     GetPagedMediaSchema,

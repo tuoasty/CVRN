@@ -8,6 +8,7 @@ const ROSTER_TAGS = [CACHE_TAGS.players, CACHE_TAGS.teams];
 import {z} from "zod"
 import {
     savePlayerToTeam,
+    savePlayer,
     getUsersByName,
     getTeamPlayers,
     removePlayerFromTeamService,
@@ -43,6 +44,20 @@ export async function searchPlayersAction(username: string) {
     if (!parsed.success) return Err({message: "Search query must not be empty", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return getUsersByName(supabase, parsed.data);
+}
+
+export async function savePlayerAction(input: unknown) {
+    const parsed = z.object({
+        robloxUserId: z.string().min(1),
+        username: z.string().min(1),
+        displayName: z.string().nullish(),
+        avatarUrl: z.string().nullish(),
+    }).safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const result = await savePlayer(supabase, parsed.data);
+    if (result.ok) revalidatePublicData(ROSTER_TAGS);
+    return result;
 }
 
 export async function savePlayerToTeamAction(input: unknown) {

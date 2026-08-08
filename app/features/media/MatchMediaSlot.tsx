@@ -13,6 +13,7 @@ import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import { toast } from '@/app/utils/toast'
 import { clientLogger } from '@/app/utils/clientLogger'
 import { compressImage } from '@/app/utils/imageCompression'
+import AuthorPicker, { type AuthorSelection } from '@/app/features/media/AuthorPicker'
 import type { MatchMediaSlot as Slot, MediaPost } from '@/server/domains/media'
 
 const SLOT_LABELS: Record<Slot, string> = { gfx: 'GFX', video: 'VOD' }
@@ -163,6 +164,7 @@ function PickExisting({ slot, label, matchId, onChanged }: { slot: Slot; label: 
 function CreateForSlot({ slot, label, matchId, onChanged, defaultTitle }: { slot: Slot; label: string; matchId: string; onChanged: () => void; defaultTitle?: string }) {
     const [title, setTitle] = useState(defaultTitle ?? '')
     const [videoUrl, setVideoUrl] = useState('')
+    const [author, setAuthor] = useState<AuthorSelection | null>(null)
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
     const [isDragging, setIsDragging] = useState(false)
@@ -206,6 +208,7 @@ function CreateForSlot({ slot, label, matchId, onChanged, defaultTitle }: { slot
             formData.set('title', title.trim())
             formData.set('matchId', matchId)
             if (slot === 'gfx' && imageFile) formData.set('imageFile', imageFile)
+            if (slot === 'gfx' && author) formData.set('authorId', author.id)
             if (slot === 'video') formData.set('videoUrl', videoUrl.trim())
 
             const result = await createMediaPostAction(formData)
@@ -284,6 +287,10 @@ function CreateForSlot({ slot, label, matchId, onChanged, defaultTitle }: { slot
                         className="rounded-sm"
                     />
                 </div>
+            )}
+
+            {slot === 'gfx' && (
+                <AuthorPicker value={author} onChange={setAuthor} />
             )}
 
             <div className="flex justify-end">

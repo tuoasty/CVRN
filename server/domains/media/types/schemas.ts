@@ -1,18 +1,28 @@
 import { z } from "zod"
 
 export const CreateMediaFormSchema = z.object({
-    type:        z.enum(['gfx', 'video', 'clip']),
+    type:        z.enum(['gfx', 'video', 'clip', 'totw', 'potw']),
     title:       z.string(),
     description: z.string().optional(),
     videoUrl:    z.string().url('Invalid URL').optional().or(z.literal('')),
+    authorId:    z.string().uuid().optional().or(z.literal('')),
     matchId:     z.string().uuid().optional().or(z.literal('')),
     teamId:      z.string().uuid().optional().or(z.literal('')),
+    playerId:    z.string().uuid().optional().or(z.literal('')),
     seasonId:    z.string().uuid().optional().or(z.literal('')),
 })
 export type CreateMediaFormInput = z.infer<typeof CreateMediaFormSchema>
 
 export const MediaPostIdSchema = z.object({ postId: z.string().uuid() })
 export type MediaPostIdInput = z.infer<typeof MediaPostIdSchema>
+
+export const UpdateMediaPostSchema = z.object({
+    postId:      z.string().uuid(),
+    title:       z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    authorId:    z.string().uuid().nullable().optional(),
+})
+export type UpdateMediaPostInput = z.infer<typeof UpdateMediaPostSchema>
 
 export const AssignMediaToMatchSchema = z.object({
     postId:  z.string().uuid(),
@@ -21,9 +31,10 @@ export const AssignMediaToMatchSchema = z.object({
 export type AssignMediaToMatchInput = z.infer<typeof AssignMediaToMatchSchema>
 
 export const GetAllMediaSchema = z.object({
-    type:     z.enum(['gfx', 'video', 'news', 'recap', 'clip']).optional(),
+    type:     z.enum(['gfx', 'video', 'news', 'recap', 'clip', 'totw', 'potw']).optional(),
     matchId:  z.string().uuid().optional(),
     teamId:   z.string().uuid().optional(),
+    playerId: z.string().uuid().optional(),
     seasonId: z.string().uuid().optional(),
 })
 export type GetAllMediaInput = z.infer<typeof GetAllMediaSchema>
