@@ -1,16 +1,5 @@
-export type SpecPosition = "OH" | "OP" | "MB" | "S" | "L";
-
-export const SPEC_POSITIONS: ReadonlyArray<{code: SpecPosition; label: string}> = [
-    {code: "OH", label: "Outside Hitter"},
-    {code: "OP", label: "Opposite"},
-    {code: "MB", label: "Middle Blocker"},
-    {code: "S", label: "Setter"},
-    {code: "L", label: "Libero"},
-];
-
-const LABEL_BY_CODE = new Map<string, string>(SPEC_POSITIONS.map(p => [p.code, p.label]));
-
-export const positionLabel = (code: string): string => LABEL_BY_CODE.get(code) ?? code;
+export type {PositionCode as SpecPosition} from "@/shared/volleyball/positions";
+export {POSITIONS as SPEC_POSITIONS, positionLabel} from "@/shared/volleyball/positions";
 
 export function formatHeight(inches: number): string {
     const feet = Math.floor(inches / 12);

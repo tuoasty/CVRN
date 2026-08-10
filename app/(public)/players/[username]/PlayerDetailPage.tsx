@@ -5,6 +5,7 @@ import Link from "next/link";
 import {getLogoClassName} from "@/app/lib/logoClass";
 import {cn} from "@/lib/utils";
 import {PlayerDetail, PlayerAward, PlayerTeamHistoryEntry} from "@/server/domains/player";
+import {positionLabel} from "@/shared/volleyball/positions";
 import PlayerSeasonStatsTable from "@/app/features/player/PlayerSeasonStatsTable";
 import BackButton from "@/app/components/public/BackButton";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
@@ -91,6 +92,12 @@ export default function PlayerDetailPage({detail}: Props) {
                             {team && (
                                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-0.5">
                                     {team.team_name}
+                                    {player.current_position && (
+                                        <span>
+                                            <span className="text-muted-foreground/30 mx-1">·</span>
+                                            <span title={positionLabel(player.current_position)} className="text-foreground/85">{player.current_position}</span>
+                                        </span>
+                                    )}
                                 </p>
                             )}
                             <h1 className="text-2xl font-black leading-none tracking-tight">
@@ -145,6 +152,12 @@ export default function PlayerDetailPage({detail}: Props) {
                         {team && (
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">
                                 {team.team_name}
+                                {player.current_position && (
+                                    <span>
+                                        <span className="text-muted-foreground/30 mx-1">·</span>
+                                        <span title={positionLabel(player.current_position)} className="text-foreground/85">{player.current_position}</span>
+                                    </span>
+                                )}
                             </p>
                         )}
                         <h1 className="text-4xl lg:text-5xl font-black leading-none tracking-tight truncate">
@@ -423,9 +436,19 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
             )}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium truncate">
-                        {entry.team_name}
-                    </span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-sm font-medium truncate">
+                            {entry.team_name}
+                        </span>
+                        {entry.position && (
+                            <>
+                                <span className="shrink-0 text-sm font-medium text-muted-foreground/40">·</span>
+                                <span title={positionLabel(entry.position)} className="shrink-0 text-sm font-bold text-muted-foreground">
+                                    {entry.position}
+                                </span>
+                            </>
+                        )}
+                    </div>
 
                     <div className="flex items-center gap-1 shrink-0">
                         {isActive && (

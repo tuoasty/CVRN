@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { getLogoClassName } from "@/app/lib/logoClass";
 import { PlayerWithRole } from "@/server/domains/player";
 import { TeamWithRegion, TeamNameHistoryEntry } from "@/server/domains/team";
+import { positionLabel } from "@/shared/volleyball/positions";
 
 const LEADERSHIP_CONFIG = {
     captain:       { label: "Captain",       from: "#9e6bff", to: "#9fc1ff", textColor: "#ffffff" },
@@ -54,9 +55,16 @@ function PublicLeadershipCard({
                             <p className="text-white text-[10px] font-semibold truncate leading-tight" style={{ textShadow: TEXT_SHADOW }}>
                                 {player.display_name || player.username}
                             </p>
-                            <p className="text-white/50 text-[8px] truncate" style={{ textShadow: TEXT_SHADOW }}>
-                                @{player.username}
-                            </p>
+                            <div className="flex items-baseline justify-between gap-1.5">
+                                <p className="text-white/50 text-[8px] truncate min-w-0" style={{ textShadow: TEXT_SHADOW }}>
+                                    @{player.username}
+                                </p>
+                                {player.current_position && (
+                                    <span title={positionLabel(player.current_position)} className="shrink-0 text-white/70 text-[10px] font-extrabold uppercase tracking-wide leading-none" style={{ textShadow: TEXT_SHADOW }}>
+                                        {player.current_position}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </>
                 ) : (
@@ -90,11 +98,9 @@ function PublicLeadershipCard({
 
 function PublicPlayerCard({
     player,
-    index,
     teamColor,
 }: {
     player: PlayerWithRole;
-    index: number;
     teamColor?: string | null;
 }) {
     return (
@@ -111,7 +117,9 @@ function PublicPlayerCard({
                     <p className="text-sm font-semibold truncate leading-tight">{player.display_name || player.username}</p>
                     <p className="text-xs text-muted-foreground truncate">@{player.username}</p>
                 </div>
-                <span className="text-xs text-muted-foreground/60 shrink-0">#{index}</span>
+                {player.current_position && (
+                    <span title={positionLabel(player.current_position)} className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{player.current_position}</span>
+                )}
             </div>
             {}
             <div className="hidden sm:block">
@@ -121,19 +129,20 @@ function PublicPlayerCard({
                         alt={player.username || ""}
                         sizes="160px"
                     />
-                    <div
-                        className="absolute top-1 right-1 text-white/70 text-[8px] font-semibold"
-                        style={{ textShadow: TEXT_SHADOW }}
-                    >
-                        #{index}
-                    </div>
                     <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-1.5 pt-6 pb-1.5">
                         <p className="text-white text-[10px] font-semibold truncate leading-tight" style={{ textShadow: TEXT_SHADOW }}>
                             {player.display_name || player.username}
                         </p>
-                        <p className="text-white/60 text-[8px] truncate" style={{ textShadow: TEXT_SHADOW }}>
-                            @{player.username}
-                        </p>
+                        <div className="flex items-baseline justify-between gap-1.5">
+                            <p className="text-white/60 text-[8px] truncate min-w-0" style={{ textShadow: TEXT_SHADOW }}>
+                                @{player.username}
+                            </p>
+                            {player.current_position && (
+                                <span title={positionLabel(player.current_position)} className="shrink-0 text-white/70 text-[10px] font-extrabold uppercase tracking-wide leading-none" style={{ textShadow: TEXT_SHADOW }}>
+                                    {player.current_position}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
                 {teamColor && <div className="h-[3px]" style={{ backgroundColor: teamColor }} />}
@@ -258,12 +267,11 @@ export default function PublicTeamDetailPage({ team: teamData, players, history 
                     ) : (
                         <PublicLeadershipCard role="court_captain" player={courtCaptain} />
                     )}
-                    {otherPlayers.map((player, i) => (
+                    {otherPlayers.map((player) => (
                         player.username ? (
                             <Link key={player.id} href={buildPublicPlayerHref(player.username) ?? "#"} prefetch={false} className="col-span-3 sm:col-span-1 block">
                                 <PublicPlayerCard
                                     player={player}
-                                    index={i + 4}
                                     teamColor={teamColor}
                                 />
                             </Link>
@@ -271,7 +279,6 @@ export default function PublicTeamDetailPage({ team: teamData, players, history 
                             <PublicPlayerCard
                                 key={player.id}
                                 player={player}
-                                index={i + 4}
                                 teamColor={teamColor}
                             />
                         )

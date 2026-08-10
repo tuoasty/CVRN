@@ -17,6 +17,7 @@ import {
     removePlayerFromTeam,
     bulkRemovePlayersFromTeam,
     setPlayerRole,
+    setPlayerPosition,
     upsertPlayer,
     findPlayerByRole,
 } from "@/server/db/players.repo";
@@ -392,6 +393,38 @@ export async function syncTeamRoster(
                 }
             }
 
+            for (const [uname, parsedPlayer] of parsedByUsername) {
+                const existing = currentByUsername.get(uname);
+                if (!existing) continue;
+
+                if (parsedPlayer.positionInvalid) {
+                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] ${parsedPlayer.username} has an unrecognized position — must be OH, OP, MB, S, or L`});
+                    rowsErrored++;
+                    continue;
+                }
+
+                if ((existing.position ?? null) === parsedPlayer.position) continue;
+
+                const posResult = await setPlayerPosition(supabase, {
+                    playerId: existing.player_id,
+                    teamId: team.id,
+                    seasonId: config.season_id,
+                    position: parsedPlayer.position,
+                });
+                if (!posResult.ok) {
+                    logger.error({playerId: existing.player_id, error: posResult.error}, "Failed to update position");
+                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Failed to update position for ${parsedPlayer.username}`});
+                    rowsErrored++;
+                } else {
+                    changes.push({
+                        type: 'position_change',
+                        entityId: existing.player_id,
+                        before: {position: existing.position ?? null, teamId: team.id},
+                        after: {position: parsedPlayer.position, teamId: team.id},
+                    });
+                }
+            }
+
             phaseStates.push({
                 parsedTeam,
                 team,
@@ -450,11 +483,17 @@ export async function syncTeamRoster(
                     }
                 }
 
+                if (parsedPlayer.positionInvalid) {
+                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] ${parsedPlayer.username} has an unrecognized position — must be OH, OP, MB, S, or L`});
+                    rowsErrored++;
+                }
+
                 const addResult = await addPlayerToTeam(supabase, {
                     playerId: upsertResult.value.id,
                     teamId: team.id,
                     seasonId: config.season_id,
                     role: parsedPlayer.role,
+                    position: parsedPlayer.position,
                 });
                 if (!addResult.ok) {
                     logger.error({playerId: upsertResult.value.id, teamId: team.id, error: addResult.error}, "Failed to add player to team");

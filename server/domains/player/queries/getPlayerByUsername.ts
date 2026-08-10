@@ -1,6 +1,7 @@
 import {Err, Ok, Result} from "@/shared/types/result";
 import {DBClient} from "@/shared/types/db";
 import {PlayerWithCurrentTeam} from "../types";
+import {PositionCode} from "@/shared/volleyball/positions";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import { isSeasonActive } from "../../season/helpers/isSeasonActive";
@@ -26,6 +27,7 @@ export async function getPlayerByUsername(
             .from("player_team_seasons")
             .select(`
                 team_id,
+                position,
                 team:teams!team_id(name, logo_url, logo_bg_removed, brick_color),
                 season:seasons!season_id(name, slug, league_type, end_date, region:regions!region_id(code, name)),
                 left_at
@@ -67,7 +69,11 @@ export async function getPlayerByUsername(
             region_name: teamRow.season?.region?.name ?? "",
         } : null;
 
-        return Ok({...player, current_team});
+        const current_position = ((rows ?? [])
+            .map(r => (r as {position: string | null}).position)
+            .find(pos => pos != null) ?? null) as PositionCode | null;
+
+        return Ok({...player, current_team, current_position});
     } catch (error) {
         logger.error({error, username: p.username}, "Unexpected error in getPlayerByUsername");
         return Err(serializeError(error));

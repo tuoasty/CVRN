@@ -13,6 +13,7 @@ export async function getPlayerTeamHistory(
             .from("player_team_seasons")
             .select(`
                 role,
+                position,
                 joined_at,
                 left_at,
                 team:teams!team_id(id, name, slug, logo_url, logo_bg_removed, brick_color, deleted_at),
@@ -43,6 +44,7 @@ export async function getPlayerTeamHistory(
                 region_code: season?.region?.code ?? "",
                 league_type: season?.league_type ?? "main",
                 role: r.role as PlayerTeamHistoryEntry["role"],
+                position: (r.position ?? null) as PlayerTeamHistoryEntry["position"],
                 joined_at: r.joined_at,
                 left_at: r.left_at ?? null,
                 season_end_date: season?.end_date ?? null,

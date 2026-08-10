@@ -251,13 +251,48 @@ describe('parseTeamsSheet', () => {
 
   it('disbanded result has nameCleared:false', () => {
     const rows = makeRows(2)
-    setCell(rows, 0, 3, 'DISBANDED')  
-    setCell(rows, 0, 7, 'TeamB')      
+    setCell(rows, 0, 3, 'DISBANDED')
+    setCell(rows, 0, 7, 'TeamB')
 
     const result = parseTeamsSheet(rows, 1, 18, 4)
 
     const d = result.find(r => r.disbanded)
     expect(d).toBeDefined()
     expect(d!.nameCleared).toBe(false)
+  })
+
+  it('reads a valid position from col+3 and uppercases it', () => {
+    const rows = makeRows(2)
+    setCell(rows, 0, 3, 'PosTeam')
+    setCell(rows, 1, 3, 'PlayerOne')
+    setCell(rows, 1, 4, 'oh')
+
+    const player = parseTeamsSheet(rows, 1, 18, 4)[0].players[0]
+
+    expect(player.position).toBe('OH')
+    expect(player.positionInvalid).toBe(false)
+  })
+
+  it('treats a blank position cell as null, not invalid', () => {
+    const rows = makeRows(2)
+    setCell(rows, 0, 3, 'PosTeam')
+    setCell(rows, 1, 3, 'PlayerOne')
+
+    const player = parseTeamsSheet(rows, 1, 18, 4)[0].players[0]
+
+    expect(player.position).toBeNull()
+    expect(player.positionInvalid).toBe(false)
+  })
+
+  it('flags an unrecognized position value as invalid with null position', () => {
+    const rows = makeRows(2)
+    setCell(rows, 0, 3, 'PosTeam')
+    setCell(rows, 1, 3, 'PlayerOne')
+    setCell(rows, 1, 4, 'QB')
+
+    const player = parseTeamsSheet(rows, 1, 18, 4)[0].players[0]
+
+    expect(player.position).toBeNull()
+    expect(player.positionInvalid).toBe(true)
   })
 })

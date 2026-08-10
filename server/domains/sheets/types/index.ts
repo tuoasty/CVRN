@@ -1,4 +1,5 @@
 import { PlayerMatchStats } from "@/shared/types/db"
+import { PositionCode } from "@/shared/volleyball/positions"
 
 export type SheetType = 'qualifier' | 'playoff' | 'teams'
 export type SyncStatus = 'success' | 'warning' | 'partial' | 'failed'
@@ -10,6 +11,7 @@ export type SyncChangeType =
     | 'player_add'
     | 'player_remove'
     | 'role_change'
+    | 'position_change'
     | 'match_result'
 
 export interface SyncChange {
@@ -39,6 +41,8 @@ export interface ParsedRosterEntry {
     role: PlayerRole
     username: string
     rowNumber: number
+    position: PositionCode | null
+    positionInvalid: boolean
 }
 
 export interface ParsedMatchResult {
