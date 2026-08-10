@@ -1,3 +1,5 @@
+import {PositionCode} from "@/shared/volleyball/positions";
+
 export interface RobloxUserIdInput {
     robloxUserId: string;
 }
@@ -21,6 +23,14 @@ export interface AddPlayerToTeamInput {
     playerId: string;
     teamId: string;
     seasonId: string;
+    position?: PositionCode | null;
+}
+
+export interface SetPlayerPositionInput {
+    playerId: string;
+    teamId: string;
+    seasonId: string;
+    position: PositionCode | null;
 }
 
 export interface PlayerCurrentTeamInput {
@@ -70,6 +80,7 @@ export interface PlayerWithRole {
     last_synced_at: string | null;
     created_at: string;
     role: "captain" | "vice_captain" | "court_captain" | "player";
+    current_position: PositionCode | null;
 }
 
 import {Player, PlayerSeasonStatRow} from "@/shared/types/db";
@@ -85,6 +96,7 @@ export interface PlayerWithCurrentTeam extends Player {
         region_code: string;
         region_name: string;
     } | null;
+    current_position: PositionCode | null;
 }
 
 export interface PlayerSeasonStat extends PlayerSeasonStatRow {
@@ -168,6 +180,7 @@ export interface PlayerTeamHistoryEntry {
     season_slug: string;
     league_type: "main" | "side";
     role: "captain" | "vice_captain" | "court_captain" | "player";
+    position: PositionCode | null;
     joined_at: string;
     left_at: string | null;
     season_end_date: string | null;

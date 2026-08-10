@@ -1,6 +1,7 @@
 import {Err, Ok, Result} from "@/shared/types/result";
 import {DBClient, Player} from "@/shared/types/db";
 import {TeamPlayersInput, PlayerRole, PlayerWithRole} from "../types";
+import {PositionCode} from "@/shared/volleyball/positions";
 import {serializeError} from "@/server/utils/serializeableError";
 import {findAllTeamPlayers} from "@/server/db/players.repo";
 import {logger} from "@/server/utils/logger";
@@ -20,7 +21,11 @@ export async function getTeamPlayers(
 
         const withRoles: PlayerWithRole[] = records.map(record => {
             const role: PlayerRole = (record.role as PlayerRole) || 'player';
-            return {...(record.player as Player), role};
+            return {
+                ...(record.player as Player),
+                role,
+                current_position: (record.position ?? null) as PositionCode | null,
+            };
         });
 
         return Ok(withRoles);

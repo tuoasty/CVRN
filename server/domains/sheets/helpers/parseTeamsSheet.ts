@@ -1,5 +1,6 @@
 import {ParsedRosterEntry, ParsedTeamResult, PlayerRole} from "@/server/domains/sheets/types";
 import {normalizeTeamName} from "@/server/domains/team/helpers/normalizeTeamName";
+import {isPositionCode, PositionCode} from "@/shared/volleyball/positions";
 import { logger } from "@/server/utils/logger";
 
 const TEAMS_PER_ROW = 5;
@@ -9,6 +10,13 @@ const ROLE_MAP: Record<string, PlayerRole> = {
     VC: 'vice_captain',
     CC: 'court_captain',
 };
+
+function parsePosition(cell: string | undefined): {position: PositionCode | null; positionInvalid: boolean} {
+    const raw = cell?.trim().toUpperCase() ?? '';
+    if (!raw) return {position: null, positionInvalid: false};
+    if (isPositionCode(raw)) return {position: raw, positionInvalid: false};
+    return {position: null, positionInvalid: true};
+}
 
 export function parseTeamsSheet(
     rows: string[][],
@@ -51,10 +59,13 @@ export function parseTeamsSheet(
                     const username = playerRow[col + 2]?.trim();
                     if (!username) continue;
                     const roleRaw = playerRow[col + 1]?.trim() ?? '';
+                    const {position, positionInvalid} = parsePosition(playerRow[col + 3]);
                     emptyPlayers.push({
                         role: ROLE_MAP[roleRaw] ?? 'player',
                         username,
                         rowNumber: playerRowIdx + 1,
+                        position,
+                        positionInvalid,
                     });
                 }
                 if (emptyPlayers.length > 0) {
@@ -85,10 +96,13 @@ export function parseTeamsSheet(
                 if (!username) continue;
 
                 const roleRaw = playerRow[col + 1]?.trim() ?? '';
+                const {position, positionInvalid} = parsePosition(playerRow[col + 3]);
                 players.push({
                     role: ROLE_MAP[roleRaw] ?? 'player',
                     username,
                     rowNumber: playerRowIdx + 1,
+                    position,
+                    positionInvalid,
                 });
             }
 

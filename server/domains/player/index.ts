@@ -35,6 +35,7 @@ export type {
     PlayerRole,
     PlayerWithRole,
     SetPlayerRoleInput,
+    SetPlayerPositionInput,
     TransferCaptainInput,
     PlayerWithCurrentTeam,
     PlayerSeasonStat,
