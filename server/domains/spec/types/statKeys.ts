@@ -46,6 +46,8 @@ export const SPEC_STAT_KEYS: SpecStatKeyMeta[] = [
     {key: "serve_receives_total", label: "Serve receives",    short: "SR",     group: "Receive", format: "count"},
     {key: "digs_total",          label: "Digs",               short: "DIG",    group: "Receive", format: "count"},
     {key: "digs_per_set",        label: "Digs / set",         short: "DIG/S",  group: "Receive", format: "per_set"},
+    {key: "dives_total",         label: "Dives",              short: "DIV",    group: "Receive", format: "count"},
+    {key: "dives_per_set",       label: "Dives / set",        short: "DIV/S",  group: "Receive", format: "per_set"},
     {key: "rec_eff",             label: "Receive efficiency", short: "REC%",   group: "Receive", format: "pct"},
 
     {key: "aces_total",          label: "Aces",               short: "ACE",    group: "Serving", format: "count"},
