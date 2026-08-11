@@ -9,7 +9,7 @@ export type PlacementTier =
     | "third"
     | "outside";
 
-export const UPPER_FINALIST_BONUS = 0.15;
+export const UPPER_FINALIST_BONUS = 0.25;
 export const OUTSIDE_PENALTY = -0.1;
 
 export const FIVE_STAR_THIRD_PENALTY = -0.05;

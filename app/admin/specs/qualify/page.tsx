@@ -377,13 +377,13 @@ export default function AdminSpecQualifyPage() {
 
                                         <div className="text-xs text-muted-foreground border-t border-border pt-3">
                                             <p>
-                                                Placement: upper final +15% · final 0% ·{' '}
+                                                Placement: upper final +25% · final 0% ·{' '}
                                                 {stars === 5 ? '3rd −5%' : '3rd 0%'} · rest −10%
                                             </p>
                                             {!hasUpperBand && (
                                                 <p className="mt-1">
                                                     No upper-bracket finalist this season — single-elim playoffs, or
-                                                    the final is not seeded yet. Nobody receives +15%.
+                                                    the final is not seeded yet. Nobody receives +25%.
                                                 </p>
                                             )}
                                         </div>

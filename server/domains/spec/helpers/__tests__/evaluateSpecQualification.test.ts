@@ -154,8 +154,8 @@ describe('evaluateSpecQualification', () => {
                 {stars: 5, tierByTeamId: tiers}
             )
             expect(rows[0].placementTier).toBe('upper_finalist')
-            expect(rows[0].placementBonus).toBe(0.15)
-            expect(rows[0].checks[0].adjustedValue).toBeCloseTo(115)
+            expect(rows[0].placementBonus).toBe(0.25)
+            expect(rows[0].checks[0].adjustedValue).toBeCloseTo(125)
             expect(rows[0].qualified).toBe(true)
         })
 
@@ -226,7 +226,7 @@ describe('evaluateSpecQualification', () => {
                 0,
                 {stars: 5, tierByTeamId: tiers}
             )
-            expect(rows[0].placementBonus).toBe(0.15)
+            expect(rows[0].placementBonus).toBe(0.25)
             expect(rows[0].checks[0].adjustedValue).toBe(9)
             expect(rows[0].qualified).toBe(false)
         })
@@ -260,7 +260,7 @@ describe('evaluateSpecQualification', () => {
             0,
             {stars: 5, tierByTeamId: tiers}
         )
-        expect(rows[0].placementBonus).toBe(0.15)
+        expect(rows[0].placementBonus).toBe(0.25)
         expect(rows[0].checks[0].adjustedValue).toBe(10)
         expect(rows[0].qualified).toBe(true)
     })
