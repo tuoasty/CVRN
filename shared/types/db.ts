@@ -71,3 +71,6 @@ export type Spec =
 
 export type SpecRequirement =
     Database["public"]["Tables"]["spec_requirements"]["Row"];
+
+export type PublicSpecSnapshotRow =
+    Database["public"]["Tables"]["public_spec_snapshot"]["Row"];

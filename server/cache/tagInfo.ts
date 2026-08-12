@@ -65,6 +65,13 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         readCount: 2,
         affects: "Season leaderboard, all-time leaderboard, spec calibration",
     },
+    [CACHE_TAGS.specs]: {
+        label: "Specs",
+        description:
+            "The published public spec-requirements snapshot (masked difficulty tiers). Regenerated on Publish.",
+        readCount: 1,
+        affects: "Spec requirements page",
+    },
 };
 
 export const CACHE_TAG_ORDER: CacheTag[] = [
@@ -77,4 +84,5 @@ export const CACHE_TAG_ORDER: CacheTag[] = [
     CACHE_TAGS.seasons,
     CACHE_TAGS.regions,
     CACHE_TAGS.media,
+    CACHE_TAGS.specs,
 ];

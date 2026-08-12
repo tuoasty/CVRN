@@ -298,11 +298,12 @@ Three fixed widths, chosen by content density rather than by page type: `.page-n
 - **Do** use fixed rem type sizes and let responsive behavior be structural — collapse the sidebar, stack the columns, make the table scroll.
 - **Do** hold body text to Ink and metadata to Quiet Ink. `0.75rem` is the floor for anything a user must actually read.
 - **Do** keep transitions at 150–250ms on `color`, `box-shadow`, `opacity`, and `transform` — and pair every one with a `prefers-reduced-motion` alternative.
-- **Do** ship skeletons matching the real layout for loading, and empty states that name what will appear here and how it gets there.
+- **Do** ship skeletons matching the real layout for loading, and empty states that name what will appear here and how it gets there — as centered Quiet Ink text in the space the content would fill, never boxed.
 
 ### Don't:
 - **Don't** use `background-clip: text` with a gradient. `app/(public)/home/HomePage.tsx:196` currently does this on the "Season Standings" heading. Gradient text is decorative, never meaningful — use weight and size.
 - **Don't** use `border-left` or `border-right` above 1px as a colored accent stripe. `app/(public)/home/HomePage.tsx:186` currently does this on the empty state. Use a full border, a background tint, or nothing.
+- **Don't** wrap an empty, zero, loading-failed, or not-found message in a `.panel` or any bordered box. A box with one line of gray text in it is a gratuitous container — it draws a frame around nothing. Render the message as centered Quiet Ink text in the region the real content would occupy (e.g. `flex items-center justify-center` at the grid's min-height). A box earns its border only when it holds structured content.
 - **Don't** ship the **generic SaaS admin template**: untouched shadcn defaults, `rounded-2xl` containers, purple gradient cards, hero-metric tiles. `rounded-xl` on a container is this look arriving one class at a time.
 - **Don't** ship the **hobby-project dashboard**: mismatched spacing, half-styled surfaces, default components dropped in unmodified. This is the failure mode CVRN exists to disprove.
 - **Don't** reach for **esports and gaming tropes** — neon accents, angular clip-path panels, RGB glows, aggressive italics, condensed display faces on scores. The obvious reflex for a gaming league and the wrong one for this brand.
