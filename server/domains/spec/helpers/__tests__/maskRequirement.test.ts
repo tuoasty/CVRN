@@ -81,6 +81,6 @@ describe("tierForRequirement", () => {
 describe("TIER_WORD", () => {
     it("labels the active tier scheme monotonically", () => {
         expect(TIER_WORD[TIER_COUNT]).toBe("Very High");
-        expect(TIER_WORD[1]).toBe(TIER_COUNT === 3 ? "Moderate" : "Fair");
+        expect(TIER_WORD[1]).toBe("Fair");
     });
 });

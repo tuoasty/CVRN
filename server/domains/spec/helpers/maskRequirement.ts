@@ -12,14 +12,14 @@ export const TIER_COUNT = 4;
 
 export const MIN_STAT_SAMPLE = 4;
 
-const TIER_WORDS_BY_COUNT: Record<number, Record<number, string>> = {
-    3: {1: "Moderate", 2: "High", 3: "Very High"},
-    4: {1: "Fair", 2: "Moderate", 3: "High", 4: "Very High"},
+export const TIER_WORD: Record<number, string> = {
+    1: "Fair",
+    2: "Moderate",
+    3: "High",
+    4: "Very High",
 };
 
-export const TIER_WORD: Record<number, string> = TIER_WORDS_BY_COUNT[TIER_COUNT];
-
-export const MODERATE_TIER: SpecDifficultyTier = (TIER_COUNT === 3 ? 1 : 2) as SpecDifficultyTier;
+export const MODERATE_TIER: SpecDifficultyTier = 2;
 
 export function ntileTier(
     value: number,
