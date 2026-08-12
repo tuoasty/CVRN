@@ -40,6 +40,7 @@ import {
 } from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
+import {getPublicSpecSnapshot} from "@/server/domains/spec";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS} from "./tags";
 
@@ -184,6 +185,12 @@ export const getCachedAllSeasonRows = unstable_cache(
         tags: [CACHE_TAGS.stats],
         revalidate: STATS_REVALIDATE_SECONDS,
     },
+);
+
+export const getCachedPublicSpecSnapshot = unstable_cache(
+    async () => unwrap(await getPublicSpecSnapshot(createPublicClient()), "getCachedPublicSpecSnapshot"),
+    ["public:spec-snapshot"],
+    {tags: [CACHE_TAGS.specs], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedLeaderboardIdentity = unstable_cache(

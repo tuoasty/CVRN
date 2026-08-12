@@ -71,3 +71,10 @@ export {
 export type {SpecStatFormat, SpecStatKeyMeta} from "./statKeys";
 export {SPEC_POSITIONS, positionLabel, formatHeight, parseHeight, parseHeightString} from "../helpers/positions";
 export type {SpecPosition} from "../helpers/positions";
+export type {
+    SpecDifficultyTier,
+    PublicRequirement,
+    PublicParticipation,
+    PublicSpec,
+    SpecSnapshotPayload,
+} from "./publicSnapshot";

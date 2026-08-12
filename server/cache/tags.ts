@@ -9,6 +9,7 @@ export const CACHE_TAGS = {
     playoffs: "playoffs",
     media: "media",
     stats: "stats",
+    specs: "specs",
 } as const;
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];

@@ -1,13 +1,16 @@
 "use server";
 
 import {revalidatePath} from "next/cache";
+import {CACHE_TAGS} from "@/server/cache/tags";
+import {revalidatePublicData} from "@/server/cache/revalidate";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {getCachedPlayerLeaderboard, getCachedLeaderboardIdentity} from "@/server/cache/publicReads";
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
 import {requireRoles} from "@/server/domains/auth";
 import {getSeasonFinalsSlots} from "@/server/domains/season";
-import {getSpecs, saveSpec, removeSpec, SaveSpecSchema} from "@/server/domains/spec";
+import {getSpecs, saveSpec, removeSpec, SaveSpecSchema, generateSpecSnapshot} from "@/server/domains/spec";
+import {deleteSpecSnapshot} from "@/server/db/specSnapshot.repo";
 import {placementTiersFromSlots} from "@/server/domains/spec/helpers/placementBonus";
 
 const SPEC_ROLES = ["admin", "super_admin", "spec_manager"] as const;
@@ -45,6 +48,32 @@ export async function deleteSpecAction(id: string) {
 
     const result = await removeSpec(supabase, id);
     if (result.ok) revalidatePath("/admin/specs");
+    return result;
+}
+
+export async function generateSpecSnapshotAction() {
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await generateSpecSnapshot(supabase);
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/spec-requirements");
+    }
+    return result;
+}
+
+export async function deleteSpecSnapshotAction() {
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await deleteSpecSnapshot(supabase);
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/spec-requirements");
+    }
     return result;
 }
 

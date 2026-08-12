@@ -2,13 +2,15 @@
 
 import {useState} from 'react';
 import Link from 'next/link';
-import {Award, Plus, SlidersHorizontal} from 'lucide-react';
+import {Award, Plus, SlidersHorizontal, Upload, EyeOff} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
 import PositionRail from '@/app/features/spec/PositionRail';
 import SpecCard from '@/app/features/spec/SpecCard';
 import SpecEditPane from '@/app/features/spec/SpecEditPane';
 import {useSpecs} from '@/app/hooks/useSpecs';
 import {SpecPosition, positionLabel} from '@/server/domains/spec/types';
+import {generateSpecSnapshotAction, deleteSpecSnapshotAction} from '@/app/actions/spec.actions';
+import {toast} from '@/app/utils/toast';
 
 export default function AdminSpecsPage() {
     const {specs, isLoading, error} = useSpecs();
@@ -16,6 +18,8 @@ export default function AdminSpecsPage() {
     const [active, setActive] = useState<SpecPosition | 'ALL'>('ALL');
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
+    const [publishing, setPublishing] = useState(false);
+    const [unpublishing, setUnpublishing] = useState(false);
 
     const visibleSpecs = active === 'ALL' ? specs : specs.filter(s => s.position === active);
     const selectedSpec = specs.find(s => s.id === selectedId) ?? null;
@@ -37,6 +41,41 @@ export default function AdminSpecsPage() {
     const handleDeleted = () => {
         setSelectedId(null);
         setCreating(false);
+    };
+
+    const handlePublish = async () => {
+        setPublishing(true);
+        try {
+            const result = await generateSpecSnapshotAction();
+            if (!result.ok) {
+                toast.error('Failed to publish', result.error.message);
+                return;
+            }
+            toast.success(
+                'Requirements published',
+                `${result.value.specCount} specs · ${result.value.statCount} stats ranked`,
+            );
+        } catch {
+            toast.error('Something went wrong');
+        } finally {
+            setPublishing(false);
+        }
+    };
+
+    const handleUnpublish = async () => {
+        setUnpublishing(true);
+        try {
+            const result = await deleteSpecSnapshotAction();
+            if (!result.ok) {
+                toast.error('Failed to unpublish', result.error.message);
+                return;
+            }
+            toast.success('Requirements unpublished', 'The public page is now empty');
+        } catch {
+            toast.error('Something went wrong');
+        } finally {
+            setUnpublishing(false);
+        }
     };
 
     return (
@@ -62,6 +101,24 @@ export default function AdminSpecsPage() {
                                 <SlidersHorizontal className="h-4 w-4" />
                                 Calibrate
                             </Link>
+                        </Button>
+                        <Button
+                            onClick={handlePublish}
+                            disabled={publishing}
+                            variant="outline"
+                            className="rounded-sm gap-1"
+                        >
+                            <Upload className="h-4 w-4" />
+                            {publishing ? 'Publishing…' : 'Publish'}
+                        </Button>
+                        <Button
+                            onClick={handleUnpublish}
+                            disabled={unpublishing}
+                            variant="ghost"
+                            className="rounded-sm gap-1 text-muted-foreground"
+                        >
+                            <EyeOff className="h-4 w-4" />
+                            {unpublishing ? 'Unpublishing…' : 'Unpublish'}
                         </Button>
                     </div>
                 </div>
