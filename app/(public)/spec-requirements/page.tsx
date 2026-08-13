@@ -2,6 +2,7 @@ import type {Metadata} from "next";
 import {getCachedPublicSpecSnapshot} from "@/server/cache/publicReads";
 import {isPositionCode, positionLabel} from "@/shared/volleyball/positions";
 import PositionTabs from "./PositionTabs";
+import PlacementBonuses from "./PlacementBonuses";
 import SpecRequirementCard from "./SpecRequirementCard";
 
 export const metadata: Metadata = {
@@ -32,10 +33,15 @@ export default async function SpecRequirementsPage({
                 </div>
             ) : (
                 <>
+                    <PlacementBonuses />
                     <PositionTabs active={pos} />
                     <SpecGrid snapshot={snapshot} pos={pos} />
                 </>
             )}
+
+            <footer className="mt-16 border-t border-border/60 pt-4 text-xs text-muted-foreground">
+                Spec requirements by toast &amp; Rixuz
+            </footer>
         </div>
     );
 }
