@@ -48,14 +48,81 @@ const TZ_ABBREV_OFFSETS: Record<string, number> = {
     PST: -8, PDT: -7,
 };
 
-const NAMED_TZ = /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*([A-Za-z]{3})$/i;
+const NAMED_TZ = /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*([A-Za-z]{2,4})$/i;
+
+const IANA_ZONE_LABELS: Record<string, string> = {
+    UK: 'Europe/London',
+    GMT: 'Europe/London',
+    BST: 'Europe/London',
+};
+
+function monthIndex(name: string): number {
+    const d = new Date(`${name} 1, 2000`);
+    return isNaN(d.getTime()) ? -1 : d.getMonth();
+}
+
+function to24Hour(time: string): { hour: number; minute: number } | null {
+    const m = time.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m) return null;
+    const [, hh, mm, meridiem] = m;
+    const h = parseInt(hh, 10);
+    if (h < 1 || h > 12) return null;
+    const minute = parseInt(mm, 10);
+    if (minute > 59) return null;
+    const isPM = meridiem.toUpperCase() === 'PM';
+    const hour = isPM ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
+    return { hour, minute };
+}
+
+function zoneOffsetMinutes(timeZone: string, at: Date): number {
+    const formatted = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        timeZoneName: 'longOffset',
+    }).format(at);
+    const m = formatted.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/i);
+    if (!m) return 0;
+    const sign = m[1] === '-' ? -1 : 1;
+    const hours = parseInt(m[2], 10);
+    const minutes = m[3] ? parseInt(m[3], 10) : 0;
+    return sign * (hours * 60 + minutes);
+}
+
+function wallClockToIso(
+    timeZone: string,
+    year: number,
+    monthIdx: number,
+    day: number,
+    hour: number,
+    minute: number,
+): string | null {
+    const guess = Date.UTC(year, monthIdx, day, hour, minute, 0);
+    if (isNaN(guess)) return null;
+    const offset = zoneOffsetMinutes(timeZone, new Date(guess));
+    const utc = guess - offset * 60000;
+    const date = new Date(utc);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString();
+}
 
 function parseNamedTzCell(value: string, year: number): ParsedSchedule | null {
     const namedMatch = value.match(NAMED_TZ);
     if (!namedMatch) return null;
 
     const [, month, day, time, abbrev] = namedMatch;
-    const offsetNum = TZ_ABBREV_OFFSETS[abbrev.toUpperCase()];
+    const upper = abbrev.toUpperCase();
+
+    const zone = IANA_ZONE_LABELS[upper];
+    if (zone) {
+        const monthIdx = monthIndex(month);
+        if (monthIdx < 0) return null;
+        const parsedTime = to24Hour(time);
+        if (!parsedTime) return null;
+        const iso = wallClockToIso(zone, year, monthIdx, parseInt(day, 10), parsedTime.hour, parsedTime.minute);
+        if (!iso) return null;
+        return { iso };
+    }
+
+    const offsetNum = TZ_ABBREV_OFFSETS[upper];
     if (offsetNum === undefined) return null;
 
     const normalizedTime = time.replace(/\s*(AM|PM)$/i, ' $1');
