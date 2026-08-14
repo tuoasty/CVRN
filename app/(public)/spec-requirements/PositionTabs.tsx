@@ -4,10 +4,10 @@ import {cn} from "@/lib/utils";
 
 const SHORT: Record<string, string> = {
     OH: "Outside",
-    OP: "Opposite",
+    OPP: "Opposite",
     MB: "Middle",
-    S: "Setter",
-    L: "Libero",
+    SET: "Setter",
+    LIB: "Libero",
 };
 
 export default function PositionTabs({active}: {active: string}) {

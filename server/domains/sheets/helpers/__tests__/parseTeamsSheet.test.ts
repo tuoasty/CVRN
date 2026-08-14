@@ -273,6 +273,29 @@ describe('parseTeamsSheet', () => {
     expect(player.positionInvalid).toBe(false)
   })
 
+  it('normalizes legacy position codes to canonical (S -> SET, L -> LIB, OP -> OPP)', () => {
+    const cases: [string, string][] = [
+      ['s', 'SET'],
+      ['set', 'SET'],
+      ['l', 'LIB'],
+      ['lib', 'LIB'],
+      ['op', 'OPP'],
+      ['opp', 'OPP'],
+    ]
+
+    for (const [input, expected] of cases) {
+      const rows = makeRows(2)
+      setCell(rows, 0, 3, 'PosTeam')
+      setCell(rows, 1, 3, 'PlayerOne')
+      setCell(rows, 1, 4, input)
+
+      const player = parseTeamsSheet(rows, 1, 18, 4)[0].players[0]
+
+      expect(player.position).toBe(expected)
+      expect(player.positionInvalid).toBe(false)
+    }
+  })
+
   it('treats a blank position cell as null, not invalid', () => {
     const rows = makeRows(2)
     setCell(rows, 0, 3, 'PosTeam')

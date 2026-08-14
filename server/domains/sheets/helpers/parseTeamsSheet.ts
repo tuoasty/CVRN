@@ -1,6 +1,6 @@
 import {ParsedRosterEntry, ParsedTeamResult, PlayerRole} from "@/server/domains/sheets/types";
 import {normalizeTeamName} from "@/server/domains/team/helpers/normalizeTeamName";
-import {isPositionCode, PositionCode} from "@/shared/volleyball/positions";
+import {normalizePositionInput, PositionCode} from "@/shared/volleyball/positions";
 import { logger } from "@/server/utils/logger";
 
 const TEAMS_PER_ROW = 5;
@@ -12,9 +12,10 @@ const ROLE_MAP: Record<string, PlayerRole> = {
 };
 
 function parsePosition(cell: string | undefined): {position: PositionCode | null; positionInvalid: boolean} {
-    const raw = cell?.trim().toUpperCase() ?? '';
+    const raw = cell?.trim() ?? '';
     if (!raw) return {position: null, positionInvalid: false};
-    if (isPositionCode(raw)) return {position: raw, positionInvalid: false};
+    const normalized = normalizePositionInput(raw);
+    if (normalized) return {position: normalized, positionInvalid: false};
     return {position: null, positionInvalid: true};
 }
 

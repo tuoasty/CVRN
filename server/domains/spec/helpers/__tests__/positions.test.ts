@@ -3,11 +3,11 @@ import {SPEC_POSITIONS, positionLabel, formatHeight, parseHeight, parseHeightStr
 
 describe("positions helper", () => {
     it("exposes the five positions in a fixed order", () => {
-        expect(SPEC_POSITIONS.map(p => p.code)).toEqual(["OH", "OP", "MB", "S", "L"]);
+        expect(SPEC_POSITIONS.map(p => p.code)).toEqual(["OH", "OPP", "MB", "SET", "LIB"]);
     });
 
     it("labels a known code and echoes an unknown one", () => {
-        expect(positionLabel("S")).toBe("Setter");
+        expect(positionLabel("SET")).toBe("Setter");
         expect(positionLabel("XX")).toBe("XX");
     });
 
