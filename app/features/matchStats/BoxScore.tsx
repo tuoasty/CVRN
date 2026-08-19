@@ -26,6 +26,7 @@ type Props = {
     selectedTeam: Team | null;
     detailed: boolean;
     showSetsPlayed: boolean;
+    positionsByPlayer?: Map<string, string[]>;
 };
 
 const isHex = (color: string | null | undefined): color is string => {
@@ -94,7 +95,7 @@ function useDragScroll() {
     }, []);
 }
 
-export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detailed, showSetsPlayed}: Props) {
+export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detailed, showSetsPlayed, positionsByPlayer}: Props) {
     const columns = buildColumns(detailed, showSetsPlayed);
     const tableRef = useDragScroll();
 
@@ -181,6 +182,7 @@ export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detail
                                     row={row}
                                     columns={columns}
                                     leaders={leaders}
+                                    positions={row.player_id ? positionsByPlayer?.get(row.player_id) : undefined}
                                 />
                             ))
                         )}
@@ -231,15 +233,17 @@ function PlayerStatRow({
     row,
     columns,
     leaders,
+    positions,
 }: {
     row: StatRow;
     columns: StatColumn[];
     leaders: Set<string>;
+    positions?: string[];
 }) {
     return (
         <TableRow className="group/row hover:bg-muted/30">
             <TableCell className="sticky left-0 z-[1] bg-background group-hover/row:bg-muted transition-colors border-r border-border/30">
-                <PlayerCell row={row} />
+                <PlayerCell row={row} positions={positions} />
             </TableCell>
             {columns.map((col, i) => {
                 const isLeader = leaders.has(`${row.player_id}:${col.key}`);
@@ -306,9 +310,15 @@ function TeamTotalRow({
     );
 }
 
-function PlayerCell({row}: {row: StatRow}) {
+function PlayerCell({row, positions}: {row: StatRow; positions?: string[]}) {
     const hasBothNames = !!row.display_name && !!row.username && row.display_name !== row.username;
     const href = buildPublicPlayerHref(row.username);
+    const positionList =
+        positions && positions.length > 0
+            ? positions
+            : "position" in row && row.position
+              ? [row.position]
+              : [];
 
     const content = (
         <div className="flex items-center gap-2 min-w-0">
@@ -324,7 +334,7 @@ function PlayerCell({row}: {row: StatRow}) {
                     />
                 )}
             </div>
-            <div className="flex flex-col min-w-0 leading-tight">
+            <div className="flex flex-col min-w-0 leading-tight flex-1">
                 <span className="text-sm font-medium truncate">
                     {row.display_name || row.username || "Unknown"}
                 </span>
@@ -332,6 +342,11 @@ function PlayerCell({row}: {row: StatRow}) {
                     <span className="text-[11px] text-muted-foreground truncate">@{row.username}</span>
                 )}
             </div>
+            {positionList.length > 0 && (
+                <span className="shrink-0 pl-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground tabular-nums">
+                    {positionList.join(" / ")}
+                </span>
+            )}
         </div>
     );
 

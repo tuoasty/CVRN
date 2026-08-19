@@ -86,7 +86,7 @@ const SERVICE_SCORE: StatColumn = {
     description: "Service score: aces − service errors",
     format: "count",
     accessor: r => r.service_score ?? null,
-    aggregator: rows => sumKey(rows, "aces") - sumKey(rows, "service_errors"),
+    aggregator: rows => sumKey(rows, "total_aces") - sumKey(rows, "service_errors"),
 };
 
 const POINTS: StatColumn = {
@@ -97,7 +97,7 @@ const POINTS: StatColumn = {
     format: "count",
     accessor: r => r.points ?? null,
     aggregator: rows =>
-        sumKey(rows, "total_kills") + sumKey(rows, "kill_blocks") + sumKey(rows, "aces"),
+        sumKey(rows, "total_kills") + sumKey(rows, "kill_blocks") + sumKey(rows, "total_aces"),
 };
 
 const SETS_PLAYED: StatColumn = {
@@ -127,7 +127,7 @@ const CONTRIBUTIONS: StatColumn = {
         sumKey(rows, "assists") +
         sumKey(rows, "total_blocks") +
         sumKey(rows, "total_receives") +
-        sumKey(rows, "aces") -
+        sumKey(rows, "total_aces") -
         sumKey(rows, "total_errors"),
 };
 
@@ -142,7 +142,7 @@ export const DEFAULT_COLUMNS: StatColumn[] = [
     countCol("total_blocks", "B", "Blocks", "Total blocks"),
     KB_PCT,
     countCol("total_receives", "REC", "Receive", "Total receives"),
-    countCol("aces", "ACE", "Serving", "Service aces"),
+    countCol("total_aces", "ACE", "Serving", "Service aces"),
     SERVICE_SCORE,
     CONTRIBUTIONS,
 ];
@@ -168,13 +168,15 @@ export const DETAILED_COLUMNS: StatColumn[] = [
     countCol("total_blocks", "B", "Blocks", "Total blocks"),
     KB_PCT,
 
-    countCol("serve_receives", "SR", "Receive", "Serve receives"),
     countCol("digs", "DIG", "Receive", "Digs"),
     countCol("block_follows", "BF", "Receive", "Block follows / Block covers"),
     countCol("dives", "DIV", "Receive", "Dives"),
     countCol("total_receives", "REC", "Receive", "Total receives"),
+    countCol("receive_errors", "RE", "Receive", "Receiving errors"),
 
-    countCol("aces", "ACE", "Serving", "Service aces"),
+    countCol("total_aces", "ACE", "Serving", "Service aces"),
+    countCol("jump_serve_aces", "JS", "Serving", "Jump serve aces"),
+    countCol("float_aces", "FL", "Serving", "Float serve aces"),
     countCol("service_errors", "SRE", "Serving", "Service errors"),
     SERVICE_SCORE,
 

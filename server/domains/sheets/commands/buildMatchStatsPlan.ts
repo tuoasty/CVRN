@@ -1,6 +1,6 @@
 import {DBClient, MatchSheetConfig} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
-import {readSheetRange} from "@/server/utils/googleSheets";
+import {readSheetRange, listSheetTitles} from "@/server/utils/googleSheets";
 import {findMatchById} from "@/server/db/matches.repo";
 import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 import {findTeamNameHistoryByTeamIds} from "@/server/db/teamNameHistory.repo";
@@ -14,12 +14,14 @@ import {parseMatchSet} from "../helpers/parseMatchSet";
 import {resolveTeamNames} from "../helpers/resolveTeamNames";
 import {teamNameKey} from "@/server/domains/team/helpers/normalizeTeamName";
 import {StatCounts, SyncError} from "../types";
+import {PositionCode} from "@/shared/volleyball/positions";
 
 export type PlayerMatchStatsInsert = {
     match_id: string;
     player_id: string;
     team_id: string;
     set_number: number;
+    position: PositionCode | null;
 } & StatCounts;
 
 export interface MatchStatsPlan {
@@ -101,10 +103,11 @@ export async function buildMatchStatsPlan(
 
     type AccumulatedLine = {
         username: string;
-        sectionKey: string;      
+        sectionKey: string;
         setNumber: number;
         rowNumber: number;
         counts: StatCounts;
+        position: PositionCode | null;
     };
     type SectionMeta = {
         key: string;
@@ -118,9 +121,14 @@ export async function buildMatchStatsPlan(
     const errors: SyncError[] = [];
     const skippedPlayers: string[] = [];
 
+    const sheetTitles = await listSheetTitles(config.sheet_id).catch(() => [] as string[]);
+    const normalizeTab = (s: string) => s.replace(/[^a-z0-9]/gi, "").toUpperCase();
+    const titleBySetKey = new Map(sheetTitles.map(t => [normalizeTab(t), t]));
+    const resolveSetTab = (n: number) => titleBySetKey.get(`SET${n}`) ?? `SET ${n}`;
+
     const tabReads = await Promise.all(
         Array.from({length: N}, (_, i) => {
-            const tabName = `SET ${i + 1}`;
+            const tabName = resolveSetTab(i + 1);
             const setNumber = i + 1;
             return readSheetRange(config.sheet_id, tabName)
                 .then(raw => ({
@@ -371,6 +379,7 @@ export async function buildMatchStatsPlan(
             player_id: playerId,
             team_id: teamId,
             set_number: line.setNumber,
+            position: line.position,
             ...line.counts,
         });
     }

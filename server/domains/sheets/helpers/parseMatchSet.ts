@@ -1,13 +1,15 @@
 import { ParsedSection, StatCounts, SyncError } from "../types";
 import { buildHeaderMap, normalizeHeader } from "./statHeaders";
 import { parsePlayerMatchStat } from "./parsePlayerMatchStat";
+import { normalizePositionInput } from "@/shared/volleyball/positions";
 
-const TEAM_COL = 0; 
+const TEAM_COL = 0;
+const POS_COL = TEAM_COL + 1;
 
 const DATA_END_LABEL = "team totals";
 const SKIP_LABELS = new Set(["players", "score:"]);
 
-const PLACEHOLDER_PLAYER_PATTERN = /^player\s+([1-9]|1[0-8])$/i;
+const PLACEHOLDER_PLAYER_PATTERN = /^player\s*([1-9]|1[0-8])$/i;
 
 function hasAnyStatValue(
   row: string[],
@@ -75,11 +77,13 @@ export function parseMatchSet(
       continue;
     }
 
+    const posRaw = (row[POS_COL] ?? "").trim();
     current.lines.push({
       username: label,
       rowNumber: r + 1,
       setNumber,
       counts: result.counts,
+      position: posRaw ? (normalizePositionInput(posRaw) ?? null) : null,
     });
   }
 

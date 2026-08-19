@@ -129,12 +129,14 @@ describe('parseMatchSet — section boundaries', () => {
     expect(usernames(sections[0])).toEqual(['budi', 'rafi'])
   })
 
-  it('skips unfilled roster placeholders', () => {
+  it('skips unfilled roster placeholders with or without a space', () => {
     const { sections, errors } = parseMatchSet([
       HEADER,
       label('Garuda'),
       player('budi'),
       player('Player 7'),
+      player('PLAYER8'),
+      player('player18'),
     ], 1)
 
     expect(errors).toHaveLength(0)
@@ -204,5 +206,54 @@ describe('parseMatchSet — stat lines', () => {
     expect(line.counts.ape_kills).toBe(0)
     expect(line.counts.ape_attempts).toBe(1)
     expect(line.counts.misc_errors).toBe(17)
+  })
+})
+
+describe('parseMatchSet — retired Aces column', () => {
+  const NO_ACES = STAT_COLS.filter(c => c !== 'Aces')
+  const HEADER_NO_ACES = ['Players', ...NO_ACES]
+  const playerNoAces = (name: string) => [name, ...NO_ACES.map((_, i) => String(i))]
+
+  it('syncs a sheet with no Aces column, defaulting aces to 0', () => {
+    const { sections, errors } = parseMatchSet([
+      HEADER_NO_ACES,
+      ['Garuda', ...NO_ACES.map(() => '')],
+      playerNoAces('budi'),
+    ], 1)
+
+    expect(errors).toHaveLength(0)
+    expect(sections[0].lines[0].counts.aces).toBe(0)
+  })
+})
+
+describe('parseMatchSet — POS column', () => {
+  const HEADER_POS = ['Players', 'POS', ...STAT_COLS]
+  const playerPos = (name: string, pos: string) =>
+    [name, pos, ...STAT_COLS.map((_, i) => String(i))]
+  const labelPos = (name: string) => [name, '', ...STAT_COLS.map(() => '')]
+
+  it('reads the normalized position from the column beside PLAYERS', () => {
+    const { sections, errors } = parseMatchSet([
+      HEADER_POS,
+      labelPos('Garuda'),
+      playerPos('budi', 'OH'),
+      playerPos('rafi', 'S'),
+    ], 1)
+
+    expect(errors).toHaveLength(0)
+    expect(sections[0].lines[0].position).toBe('OH')
+    expect(sections[0].lines[1].position).toBe('SET')
+  })
+
+  it('leaves position null when the POS cell is blank or unrecognized', () => {
+    const { sections } = parseMatchSet([
+      HEADER_POS,
+      labelPos('Garuda'),
+      playerPos('budi', ''),
+      playerPos('rafi', 'xyz'),
+    ], 1)
+
+    expect(sections[0].lines[0].position).toBeNull()
+    expect(sections[0].lines[1].position).toBeNull()
   })
 })

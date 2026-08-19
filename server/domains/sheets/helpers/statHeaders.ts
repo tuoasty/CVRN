@@ -20,16 +20,28 @@ export const STAT_HEADERS: Record<string, keyof StatCounts> = {
   "setting errors": "setting_errors",
   "kill blocks": "kill_blocks",
   "block touches": "block_touches",
-  "serve receives": "serve_receives",
   "digs": "digs",
   "block follows": "block_follows",
   "dives": "dives",
   "aces": "aces",
+  "jump serve aces": "jump_serve_aces",
+  "jump aces": "jump_serve_aces",
+  "float aces": "float_aces",
+  "float serve aces": "float_aces",
   "service errors": "service_errors",
   "misc errors": "misc_errors",
+  "receiving errors": "receive_errors",
+  "receive errors": "receive_errors",
 };
 
-export const STAT_KEYS = Object.values(STAT_HEADERS);
+export const STAT_KEYS = Array.from(new Set(Object.values(STAT_HEADERS)));
+
+export const OPTIONAL_STAT_KEYS = new Set<keyof StatCounts>([
+  "aces",
+  "jump_serve_aces",
+  "float_aces",
+  "receive_errors",
+]);
 
 export function buildHeaderMap(rows: string[][]): {
   headerRowIdx: number;
@@ -48,6 +60,6 @@ export function buildHeaderMap(rows: string[][]): {
   }
 
   if (best.idx === -1) return null;
-  const missing = STAT_KEYS.filter(k => !best.map.has(k));
+  const missing = STAT_KEYS.filter(k => !best.map.has(k) && !OPTIONAL_STAT_KEYS.has(k));
   return { headerRowIdx: best.idx, colMap: best.map, missing };
 }

@@ -44,6 +44,19 @@ export async function readSheetRange(
     return response.data.values || [];
 }
 
+export async function listSheetTitles(sheetId: string): Promise<string[]> {
+    const sheets = getGoogleSheetsClient();
+
+    const response = await sheets.spreadsheets.get({
+        spreadsheetId: sheetId,
+        fields: 'sheets.properties.title',
+    });
+
+    return (response.data.sheets ?? [])
+        .map(s => s.properties?.title ?? '')
+        .filter(Boolean);
+}
+
 type SheetColor = { red?: number; green?: number; blue?: number };
 
 function colorToHex(color: SheetColor): string {
