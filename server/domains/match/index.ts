@@ -5,6 +5,7 @@ export {getMatchSets} from "./queries/getMatchSets";
 export {getWeekSchedule} from "./queries/getWeekSchedule";
 export {getPlayoffSchedule} from "./queries/getPlayoffSchedule";
 export {getAvailablePlayoffRounds} from "./queries/getAvailablePlayoffRounds";
+export {getCompletedPlayoffRounds} from "./queries/getCompletedPlayoffRounds";
 export {getDefaultWeekForSeason} from "./queries/getDefaultWeekForSeason";
 export {getPlayoffRoundCounts} from "./queries/getPlayoffRoundCounts";
 export {getWeekMatchCounts} from "./queries/getWeekMatchCounts";

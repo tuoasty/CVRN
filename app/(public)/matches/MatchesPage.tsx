@@ -34,7 +34,6 @@ type Props = {
     effectiveWeek: number;
     effectiveRound: PlayoffRound;
     sortedRounds: PlayoffRound[];
-    roundCounts: { round: string; count: number }[];
     weekCounts: { week: number; total: number; completed: number }[];
     schedule: MatchWithDetails[];
     teams: TeamWithRegion[];
@@ -48,7 +47,6 @@ export default function MatchesPage({
     effectiveWeek,
     effectiveRound,
     sortedRounds,
-    roundCounts,
     weekCounts,
     schedule,
     teams,
@@ -81,12 +79,6 @@ export default function MatchesPage({
 
     const teamsMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
 
-    const roundCountMap = useMemo(() => {
-        const m = new Map<string, number>();
-        for (const { round, count } of roundCounts) m.set(round, count);
-        return m;
-    }, [roundCounts]);
-
     const availableWeeks = useMemo(
         () => weekCounts.map(w => w.week).sort((a, b) => a - b),
         [weekCounts]
@@ -97,11 +89,13 @@ export default function MatchesPage({
     function setTab(tab: "season" | "playoffs") {
         const params = new URLSearchParams(searchParams.toString());
         if (tab === "season") {
-            params.delete("tab");
+            params.set("tab", "season");
             params.delete("round");
+            if (!params.get("week")) params.set("week", String(effectiveWeek));
         } else {
             params.set("tab", "playoffs");
             params.delete("week");
+            if (!params.get("round")) params.set("round", effectiveRound);
         }
         setPending({ tab });
         startTransition(() => router.replace(`${matchesBase}?${params.toString()}`));
@@ -109,16 +103,18 @@ export default function MatchesPage({
 
     function setWeek(week: number) {
         const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", "season");
         params.set("week", week.toString());
-        params.delete("tab");
+        params.delete("round");
         setPending({ week, tab: "season" });
         startTransition(() => router.replace(`${matchesBase}?${params.toString()}`));
     }
 
     function setRound(round: string) {
         const params = new URLSearchParams(searchParams.toString());
-        params.set("round", round);
         params.set("tab", "playoffs");
+        params.set("round", round);
+        params.delete("week");
         setPending({ round: round as PlayoffRound, tab: "playoffs" });
         startTransition(() => router.replace(`${matchesBase}?${params.toString()}`));
     }
@@ -152,7 +148,6 @@ export default function MatchesPage({
                         <PlayoffStepper
                             rounds={sortedRounds}
                             effectiveRound={displayRound}
-                            roundCountMap={roundCountMap}
                             onRoundChange={setRound}
                         />
                     )}

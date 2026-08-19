@@ -503,18 +503,6 @@ export async function findDefaultWeekForSeason(
     seasonId: string
 ): Promise<Result<number>> {
 
-    const { data: completed, error: completedErr } = await supabase
-        .from("matches")
-        .select("week")
-        .eq("season_id", seasonId)
-        .eq("status", "completed")
-        .not("week", "is", null)
-        .order("week", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-    if (completedErr) return Err(serializeError(completedErr, "DB_ERROR"));
-    if (completed?.week != null) return Ok(completed.week);
-
     const { data: upcoming, error: upcomingErr } = await supabase
         .from("matches")
         .select("week")
