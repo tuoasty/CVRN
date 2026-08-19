@@ -68,13 +68,12 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
                 },
                 redirect: "manual",
                 });
-                logger.info({res}, "oEmbed Result")
-                logger.info({status:res.status, location:res.headers.get("location"), server:res.headers.get("server")}, "oEmbed fetch info")
+                logger.debug({status:res.status, location:res.headers.get("location"), server:res.headers.get("server")}, "oEmbed fetch info")
                 if (res.ok) {
                     const ct = res.headers.get('content-type') ?? ''
                     if (ct.includes('application/json') || ct.includes('text/javascript')) {
                         const data = await res.json()
-                        logger.info({ postId, data }, 'oEmbed data') 
+                        logger.debug({ postId, data }, 'oEmbed data')
                         if (data.thumbnail_url) imageUrl    = data.thumbnail_url
                         if (data.title)         title       = data.title
                         if (data.author_name)   description = data.author_name

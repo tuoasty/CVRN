@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import MatchesPage from "@/app/(public)/matches/MatchesPage";
 import {
     getCachedRegionByCode,
@@ -9,7 +9,7 @@ import {
     getCachedPlayoffSchedule,
     getCachedDefaultWeekForSeason,
     getCachedAvailablePlayoffRounds,
-    getCachedPlayoffRoundCounts,
+    getCachedCompletedPlayoffRounds,
     getCachedWeekMatchCounts,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
@@ -35,15 +35,18 @@ export default async function Page({ params, searchParams }: PageProps) {
     );
     if (!seasonRecord) notFound();
 
-    const activeTab = tab === "playoffs" ? "playoffs" : "season";
     const hasPlayoffs = !!seasonRecord.playoff_started;
+    const activeTab =
+        tab === "playoffs" ? "playoffs"
+        : tab === "season" ? "season"
+        : hasPlayoffs ? "playoffs" : "season";
 
-    const [standings, allTeams, weekCounts, availableRounds, roundCounts] = await Promise.all([
+    const [standings, allTeams, weekCounts, availableRounds, completedRounds] = await Promise.all([
         getCachedStandings(seasonRecord.id, regionRecord.id),
         getCachedTeamsWithRegionsIncludingInactive(),
         getCachedWeekMatchCounts(seasonRecord.id),
         hasPlayoffs ? getCachedAvailablePlayoffRounds(seasonRecord.id) : Promise.resolve([]),
-        hasPlayoffs ? getCachedPlayoffRoundCounts(seasonRecord.id) : Promise.resolve([]),
+        hasPlayoffs ? getCachedCompletedPlayoffRounds(seasonRecord.id) : Promise.resolve([]),
     ]);
 
     const parsedWeek = weekParam ? parseInt(weekParam, 10) : NaN;
@@ -57,9 +60,25 @@ export default async function Page({ params, searchParams }: PageProps) {
     }
 
     const sortedRounds = sortRounds(availableRounds.filter(isPlayoffRound));
+    const sortedCompletedRounds = sortRounds(completedRounds.filter(isPlayoffRound));
+    const latestCompletedRound = sortedCompletedRounds[sortedCompletedRounds.length - 1];
     const roundParam: PlayoffRound | null = isPlayoffRound(rawRound) ? rawRound : null;
     const effectiveRound: PlayoffRound =
-        roundParam && sortedRounds.includes(roundParam) ? roundParam : sortedRounds[0] ?? "play_in";
+        roundParam && sortedRounds.includes(roundParam)
+            ? roundParam
+            : latestCompletedRound ?? sortedRounds[0] ?? "play_in";
+
+    if (!tab) {
+        const canonical = new URLSearchParams();
+        if (hasPlayoffs) {
+            canonical.set("tab", "playoffs");
+            canonical.set("round", effectiveRound);
+        } else {
+            canonical.set("tab", "season");
+            canonical.set("week", String(effectiveWeek));
+        }
+        redirect(`/${region}/${season}/matches?${canonical.toString()}`);
+    }
 
     let schedule: MatchWithDetails[] = [];
     if (activeTab === "season") {
@@ -82,7 +101,6 @@ export default async function Page({ params, searchParams }: PageProps) {
             effectiveWeek={effectiveWeek}
             effectiveRound={effectiveRound}
             sortedRounds={sortedRounds}
-            roundCounts={roundCounts}
             weekCounts={weekCounts}
             schedule={schedule}
             teams={allTeams.filter((t) => neededTeamIds.has(t.id))}

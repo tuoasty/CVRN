@@ -6,6 +6,7 @@ import {
     RemovePlayerFromTeamInput,
     SetPlayerRoleInput,
     SetPlayerPositionInput,
+    SetPlayerHeightInput,
     PlayerRole
 } from "@/server/domains/player";
 import type {PlayerSearchHit} from "@/server/domains/player/types";
@@ -126,6 +127,7 @@ export async function addPlayerToTeam(supabase: DBClient, p: AddPlayerToTeamInpu
             joined_at: new Date().toISOString(),
             ...(p.role && {role: p.role}),
             ...(p.position != null && {position: p.position}),
+            ...(p.height != null && {height: p.height}),
         })
         .select()
         .single();
@@ -574,6 +576,20 @@ export async function setPlayerPosition(supabase: DBClient, p: SetPlayerPosition
     const {data, error} = await supabase
         .from("player_team_seasons")
         .update({position: p.position})
+        .eq("player_id", p.playerId)
+        .eq("team_id", p.teamId)
+        .eq("season_id", p.seasonId)
+        .is("left_at", null)
+        .select()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
+export async function setPlayerHeight(supabase: DBClient, p: SetPlayerHeightInput): Promise<Result<PlayerTeamSeason>> {
+    const {data, error} = await supabase
+        .from("player_team_seasons")
+        .update({height: p.height})
         .eq("player_id", p.playerId)
         .eq("team_id", p.teamId)
         .eq("season_id", p.seasonId)

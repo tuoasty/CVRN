@@ -4,8 +4,17 @@ import { revalidatePublicData } from "@/server/cache/revalidate";
 import { CACHE_TAGS } from "@/server/cache/tags";
 import { logger } from "@/server/utils/logger";
 import type { DBClient, Player } from "@/shared/types/db";
+import { timingSafeEqual } from "crypto";
 
 const log = logger.child({ module: "cron/sync-players" });
+
+function isValidCronSecret(auth: string | null): boolean {
+    const secret = process.env.CRON_SECRET;
+    if (!secret || !auth) return false;
+    const provided = Buffer.from(auth);
+    const expected = Buffer.from(`Bearer ${secret}`);
+    return provided.length === expected.length && timingSafeEqual(provided, expected);
+}
 
 const ROBLOX_BATCH_SIZE = 100;
 
@@ -15,7 +24,7 @@ const DEFAULT_LIMIT = 400;
 
 export async function GET(req: Request) {
     const auth = req.headers.get("authorization");
-    if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!isValidCronSecret(auth)) {
         log.warn("Cron request rejected: invalid or missing CRON_SECRET");
         return new Response("Unauthorized", { status: 401 });
     }

@@ -309,3 +309,17 @@ export async function findPlayoffRoundCountsBySeason(
     }
     return Ok(Object.entries(counts).map(([round, count]) => ({ round, count })));
 }
+
+export async function findCompletedPlayoffRoundsBySeason(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<string[]>> {
+    const { data, error } = await supabase
+        .from("playoff_brackets")
+        .select("round, matches!inner(status)")
+        .eq("season_id", seasonId)
+        .eq("matches.status", "completed");
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    const rounds = Array.from(new Set((data ?? []).map((r) => r.round as string)));
+    return Ok(rounds);
+}

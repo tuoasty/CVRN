@@ -33,6 +33,7 @@ import {
     getWeekSchedule,
     getPlayoffSchedule,
     getAvailablePlayoffRounds,
+    getCompletedPlayoffRounds,
     getDefaultWeekForSeason,
     getPlayoffRoundCounts,
     getWeekMatchCounts,
@@ -297,6 +298,16 @@ export const getCachedAvailablePlayoffRounds = unstable_cache(
             "getCachedAvailablePlayoffRounds",
         ),
     ["public:available-playoff-rounds"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedCompletedPlayoffRounds = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(
+            await getCompletedPlayoffRounds(createPublicClient(), seasonId),
+            "getCachedCompletedPlayoffRounds",
+        ),
+    ["public:completed-playoff-rounds"],
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 

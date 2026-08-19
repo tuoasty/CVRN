@@ -4,12 +4,21 @@ import { syncSheet } from "@/server/domains/sheets/commands/syncSheet";
 import { revalidatePublicData, SHEET_SYNC_TAGS } from "@/server/cache/revalidate";
 import { logger } from "@/server/utils/logger";
 import type { DBClient } from "@/shared/types/db";
+import { timingSafeEqual } from "crypto";
 
 const log = logger.child({ module: "cron/sync-sheets" });
 
+function isValidCronSecret(auth: string | null): boolean {
+    const secret = process.env.CRON_SECRET;
+    if (!secret || !auth) return false;
+    const provided = Buffer.from(auth);
+    const expected = Buffer.from(`Bearer ${secret}`);
+    return provided.length === expected.length && timingSafeEqual(provided, expected);
+}
+
 export async function GET(req: Request) {
     const auth = req.headers.get("authorization");
-    if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!isValidCronSecret(auth)) {
         log.warn("Cron request rejected: invalid or missing CRON_SECRET");
         return new Response("Unauthorized", { status: 401 });
     }

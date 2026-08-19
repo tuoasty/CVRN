@@ -42,6 +42,7 @@ const CHANGE_LABELS: Record<string, string> = {
     player_add: 'Added',
     player_remove: 'Removed',
     role_change: 'Role',
+    height_change: 'Height',
     match_result: 'Match',
 };
 
@@ -53,6 +54,7 @@ function describeChange(c: SyncChange): string {
         case 'player_add': return String(c.after.username ?? c.entityId);
         case 'player_remove': return String(c.before.username ?? c.entityId);
         case 'role_change': return `${c.before.role} → ${c.after.role}`;
+        case 'height_change': return `${String(c.before.height ?? '—')} → ${String(c.after.height ?? '—')}`;
         default: return JSON.stringify(c.after);
     }
 }

@@ -127,7 +127,7 @@ export function WeekSelector({ effectiveWeek, weeks, onWeekChange }: WeekSelecto
 interface PlayoffStepperProps {
     rounds: string[];
     effectiveRound: string;
-    roundCountMap: Map<string, number>;
+    roundCountMap?: Map<string, number>;
     onRoundChange: (round: string) => void;
 }
 
@@ -181,11 +181,11 @@ export function PlayoffStepper({ rounds, effectiveRound, roundCountMap, onRoundC
             </Popover>
 
             {}
-            <div className="hidden sm:flex min-h-[52px] overflow-x-auto gap-0 scrollbar-hide border border-border rounded-sm">
+            <div className="hidden sm:flex min-h-[36px] overflow-x-auto gap-0 scrollbar-hide border border-border rounded-sm">
                 {rounds.map((round, idx) => {
                     const isCompleted = idx < activeIdx;
                     const isActive = round === effectiveRound;
-                    const count = roundCountMap.get(round);
+                    const count = roundCountMap?.get(round);
                     return (
                         <button
                             key={round}
@@ -200,12 +200,14 @@ export function PlayoffStepper({ rounds, effectiveRound, roundCountMap, onRoundC
                             )}
                         >
                             <span>{roundLabelShort(round)}</span>
-                            <span className={cn(
-                                "text-[10px] font-normal mt-0.5",
-                                count === undefined ? "invisible" : isActive ? "text-primary/60" : "text-muted-foreground/50"
-                            )}>
-                                {count !== undefined ? `${count} match${count !== 1 ? "es" : ""}` : "0 matches"}
-                            </span>
+                            {roundCountMap && (
+                                <span className={cn(
+                                    "text-[10px] font-normal mt-0.5",
+                                    count === undefined ? "invisible" : isActive ? "text-primary/60" : "text-muted-foreground/50"
+                                )}>
+                                    {count !== undefined ? `${count} match${count !== 1 ? "es" : ""}` : "0 matches"}
+                                </span>
+                            )}
                         </button>
                     );
                 })}
