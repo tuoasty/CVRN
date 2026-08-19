@@ -147,12 +147,12 @@ function SeasonStatRow({row, columns, teamLogo}: {row: PlayerSeasonStat; columns
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{row.region_code}</span>
                     <span>{row.season_name}</span>
                     {teamLogo?.logo_url && (
-                        <div className="relative w-4 h-4 shrink-0">
+                        <div className="relative w-5 h-5 shrink-0 ml-auto">
                             <Image
                                 src={teamLogo.logo_url}
                                 alt=""
                                 fill
-                                sizes="16px"
+                                sizes="20px"
                                 className={cn("object-contain", getLogoClassName(teamLogo.logo_bg_removed))}
                                 unoptimized
                             />

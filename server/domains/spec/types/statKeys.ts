@@ -43,7 +43,6 @@ export const SPEC_STAT_KEYS: SpecStatKeyMeta[] = [
 
     {key: "receives_total",      label: "Receives",           short: "REC",    group: "Receive", format: "count"},
     {key: "receives_per_set",    label: "Receives / set",     short: "REC/S",  group: "Receive", format: "per_set"},
-    {key: "serve_receives_total", label: "Serve receives",    short: "SR",     group: "Receive", format: "count"},
     {key: "digs_total",          label: "Digs",               short: "DIG",    group: "Receive", format: "count"},
     {key: "digs_per_set",        label: "Digs / set",         short: "DIG/S",  group: "Receive", format: "per_set"},
     {key: "dives_total",         label: "Dives",              short: "DIV",    group: "Receive", format: "count"},
@@ -52,6 +51,10 @@ export const SPEC_STAT_KEYS: SpecStatKeyMeta[] = [
 
     {key: "aces_total",          label: "Aces",               short: "ACE",    group: "Serving", format: "count"},
     {key: "aces_per_set",        label: "Aces / set",         short: "ACE/S",  group: "Serving", format: "per_set"},
+    {key: "jump_serve_aces_total", label: "Jump serve aces",  short: "JS",     group: "Serving", format: "count"},
+    {key: "jump_serve_aces_per_set", label: "Jump serve aces / set", short: "JS/S", group: "Serving", format: "per_set"},
+    {key: "float_aces_total",    label: "Float serve aces",   short: "FL",     group: "Serving", format: "count"},
+    {key: "float_aces_per_set",  label: "Float serve aces / set", short: "FL/S", group: "Serving", format: "per_set"},
     {key: "service_score",       label: "Service score",      short: "SRV+",   group: "Serving", format: "count"},
 
     {key: "errors_total",        label: "Total errors",       short: "ERR",    group: "Errors",  format: "count", lowerIsBetter: true},

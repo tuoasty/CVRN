@@ -1,7 +1,8 @@
 "use client";
 
-import {useState, useLayoutEffect} from "react";
+import {useState, useLayoutEffect, useMemo} from "react";
 import {MatchDetail} from "@/server/domains/match";
+import {POSITIONS} from "@/shared/volleyball/positions";
 import {Tabs, TabsList, TabsTrigger, TabsContent} from "@/app/components/ui/tabs";
 import BoxScore from "@/app/features/matchStats/BoxScore";
 import MatchHeader from "@/app/features/matchStats/MatchHeader";
@@ -26,6 +27,25 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
 
     const setCount = sets.length;
     const selectedTeam = view === "home-only" ? homeTeam : awayTeam;
+
+    const positionsByPlayer = useMemo(() => {
+        const rank = new Map(POSITIONS.map((p, i) => [p.code as string, i]));
+        const byPlayer = new Map<string, Set<string>>();
+        for (const s of statSets) {
+            if (!s.position || !s.player_id) continue;
+            const set = byPlayer.get(s.player_id) ?? new Set<string>();
+            set.add(s.position);
+            byPlayer.set(s.player_id, set);
+        }
+        const out = new Map<string, string[]>();
+        for (const [playerId, set] of byPlayer) {
+            out.set(
+                playerId,
+                [...set].sort((a, b) => (rank.get(a) ?? 99) - (rank.get(b) ?? 99)),
+            );
+        }
+        return out;
+    }, [statSets]);
 
     const isPlayable = match.status === "completed" && !match.is_forfeit;
 
@@ -75,6 +95,7 @@ export default function MatchDetailContent({detail, regionCode, seasonSlug}: Pro
                             selectedTeam={selectedTeam}
                             detailed={detailed}
                             showSetsPlayed
+                            positionsByPlayer={positionsByPlayer}
                         />
                     </TabsContent>
                     {Array.from({length: setCount}, (_, i) => i + 1).map(n => (

@@ -123,6 +123,30 @@ describe("aggregateCareerRows", () => {
         expect(career.seasons_played).toBe(2);
     });
 
+    it("sums the split ace totals and derives their per-set rates", () => {
+        const [career] = aggregateCareerRows([
+            row({
+                season_slug: "s1",
+                season_start_date: "2025-01-01",
+                sets_played: 10,
+                jump_serve_aces_total: 4,
+                float_aces_total: 2,
+            }),
+            row({
+                season_slug: "s2",
+                season_start_date: "2025-06-01",
+                sets_played: 10,
+                jump_serve_aces_total: 6,
+                float_aces_total: 8,
+            }),
+        ]);
+
+        expect(career.jump_serve_aces_total).toBe(10);
+        expect(career.float_aces_total).toBe(10);
+        expect(career.jump_serve_aces_per_set).toBeCloseTo(0.5, 2);
+        expect(career.float_aces_per_set).toBeCloseTo(0.5, 2);
+    });
+
     it("never merges regions, even for the same player", () => {
         const career = aggregateCareerRows([
             row({season_slug: "s1", season_start_date: "2025-01-01", region_id: "na", region_code: "NA", sets_played: 10, aces_total: 5}),

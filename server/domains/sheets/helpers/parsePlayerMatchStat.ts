@@ -1,5 +1,5 @@
 import { StatCounts } from "../types";
-import { STAT_KEYS } from "./statHeaders";
+import { STAT_KEYS, OPTIONAL_STAT_KEYS } from "./statHeaders";
 
 export type ParsePlayerStatResult =
   | { ok: true; counts: StatCounts }
@@ -14,6 +14,10 @@ export function parsePlayerMatchStat(
   for (const key of STAT_KEYS) {
     const colIdx = colMap.get(key);
     if (colIdx === undefined) {
+      if (OPTIONAL_STAT_KEYS.has(key)) {
+        counts[key] = 0;
+        continue;
+      }
       return { ok: false, error: `missing column for "${key}"` };
     }
 

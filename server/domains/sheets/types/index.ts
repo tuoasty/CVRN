@@ -89,7 +89,8 @@ export interface ParsedStatLine {
     username: string;
     setNumber: number;
     counts: StatCounts;
-    rowNumber: number
+    rowNumber: number;
+    position: PositionCode | null;
 }
 
 export interface ParsedSection {
@@ -99,4 +100,4 @@ export interface ParsedSection {
 }
 
 export type StatCounts = Omit<PlayerMatchStats,
-      "id" | "match_id" | "player_id" | "team_id" | "set_number" | "created_at" | "receive_errors">;
+      "id" | "match_id" | "player_id" | "team_id" | "set_number" | "created_at" | "serve_receives" | "position">;

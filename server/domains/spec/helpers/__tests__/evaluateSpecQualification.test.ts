@@ -123,6 +123,27 @@ describe('evaluateSpecQualification', () => {
         expect(rows[0].qualified).toBe(true)
     })
 
+    it('recognizes the split ace stat keys as known requirements', () => {
+        const {rows, unknownStatKeys} = evaluateSpecQualification(
+            [player('server', {jump_serve_aces_total: 8, float_aces_total: 3})],
+            [main('jump_serve_aces_total', 5), main('float_aces_total', 2)],
+            0
+        )
+        expect(unknownStatKeys).toEqual([])
+        expect(rows[0].mainPassed).toBe(2)
+        expect(rows[0].qualified).toBe(true)
+    })
+
+    it('treats the retired serve_receives_total as an unknown stat key', () => {
+        const {rows, unknownStatKeys} = evaluateSpecQualification(
+            [player('anyone', {points_total: 999})],
+            [main('serve_receives_total', 1)],
+            0
+        )
+        expect(unknownStatKeys).toEqual(['serve_receives_total'])
+        expect(rows[0].qualified).toBe(false)
+    })
+
     describe('placement bonus', () => {
         const onTeam = (username: string, teamId: string, stats: Record<string, number>) => ({
             ...player(username, stats),
