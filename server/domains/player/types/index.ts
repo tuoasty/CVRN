@@ -24,6 +24,7 @@ export interface AddPlayerToTeamInput {
     teamId: string;
     seasonId: string;
     position?: PositionCode | null;
+    height?: string | null;
 }
 
 export interface SetPlayerPositionInput {
@@ -31,6 +32,13 @@ export interface SetPlayerPositionInput {
     teamId: string;
     seasonId: string;
     position: PositionCode | null;
+}
+
+export interface SetPlayerHeightInput {
+    playerId: string;
+    teamId: string;
+    seasonId: string;
+    height: string | null;
 }
 
 export interface PlayerCurrentTeamInput {

@@ -12,6 +12,7 @@ export type SyncChangeType =
     | 'player_remove'
     | 'role_change'
     | 'position_change'
+    | 'height_change'
     | 'match_result'
 
 export interface SyncChange {
@@ -43,6 +44,7 @@ export interface ParsedRosterEntry {
     rowNumber: number
     position: PositionCode | null
     positionInvalid: boolean
+    height: string | null
 }
 
 export interface ParsedMatchResult {

@@ -18,6 +18,7 @@ import {
     bulkRemovePlayersFromTeam,
     setPlayerRole,
     setPlayerPosition,
+    setPlayerHeight,
     upsertPlayer,
     findPlayerByRole,
 } from "@/server/db/players.repo";
@@ -425,6 +426,32 @@ export async function syncTeamRoster(
                 }
             }
 
+            for (const [uname, parsedPlayer] of parsedByUsername) {
+                const existing = currentByUsername.get(uname);
+                if (!existing) continue;
+
+                if ((existing.height ?? null) === parsedPlayer.height) continue;
+
+                const heightResult = await setPlayerHeight(supabase, {
+                    playerId: existing.player_id,
+                    teamId: team.id,
+                    seasonId: config.season_id,
+                    height: parsedPlayer.height,
+                });
+                if (!heightResult.ok) {
+                    logger.error({playerId: existing.player_id, error: heightResult.error}, "Failed to update height");
+                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] Failed to update height for ${parsedPlayer.username}`});
+                    rowsErrored++;
+                } else {
+                    changes.push({
+                        type: 'height_change',
+                        entityId: existing.player_id,
+                        before: {height: existing.height ?? null, teamId: team.id},
+                        after: {height: parsedPlayer.height, teamId: team.id},
+                    });
+                }
+            }
+
             phaseStates.push({
                 parsedTeam,
                 team,
@@ -494,6 +521,7 @@ export async function syncTeamRoster(
                     seasonId: config.season_id,
                     role: parsedPlayer.role,
                     position: parsedPlayer.position,
+                    height: parsedPlayer.height,
                 });
                 if (!addResult.ok) {
                     logger.error({playerId: upsertResult.value.id, teamId: team.id, error: addResult.error}, "Failed to add player to team");

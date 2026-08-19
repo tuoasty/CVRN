@@ -19,6 +19,11 @@ function parsePosition(cell: string | undefined): {position: PositionCode | null
     return {position: null, positionInvalid: true};
 }
 
+function parseHeight(cell: string | undefined): string | null {
+    const raw = cell?.trim() ?? '';
+    return raw || null;
+}
+
 export function parseTeamsSheet(
     rows: string[][],
     headerRow: number,
@@ -61,12 +66,14 @@ export function parseTeamsSheet(
                     if (!username) continue;
                     const roleRaw = playerRow[col + 1]?.trim() ?? '';
                     const {position, positionInvalid} = parsePosition(playerRow[col + 3]);
+                    const height = parseHeight(playerRow[col + 4]);
                     emptyPlayers.push({
                         role: ROLE_MAP[roleRaw] ?? 'player',
                         username,
                         rowNumber: playerRowIdx + 1,
                         position,
                         positionInvalid,
+                        height,
                     });
                 }
                 if (emptyPlayers.length > 0) {
@@ -98,12 +105,14 @@ export function parseTeamsSheet(
 
                 const roleRaw = playerRow[col + 1]?.trim() ?? '';
                 const {position, positionInvalid} = parsePosition(playerRow[col + 3]);
+                const height = parseHeight(playerRow[col + 4]);
                 players.push({
                     role: ROLE_MAP[roleRaw] ?? 'player',
                     username,
                     rowNumber: playerRowIdx + 1,
                     position,
                     positionInvalid,
+                    height,
                 });
             }
 

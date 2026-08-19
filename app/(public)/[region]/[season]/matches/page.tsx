@@ -35,8 +35,11 @@ export default async function Page({ params, searchParams }: PageProps) {
     );
     if (!seasonRecord) notFound();
 
-    const activeTab = tab === "playoffs" ? "playoffs" : "season";
     const hasPlayoffs = !!seasonRecord.playoff_started;
+    const activeTab =
+        tab === "playoffs" ? "playoffs"
+        : tab === "season" ? "season"
+        : hasPlayoffs ? "playoffs" : "season";
 
     const [standings, allTeams, weekCounts, availableRounds, roundCounts] = await Promise.all([
         getCachedStandings(seasonRecord.id, regionRecord.id),

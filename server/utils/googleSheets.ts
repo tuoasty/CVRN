@@ -1,5 +1,11 @@
 import { google } from 'googleapis';
 
+export function extractSheetId(input: string): string {
+    const trimmed = input.trim();
+    const match = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    return match ? match[1] : trimmed;
+}
+
 export function getGoogleSheetsClient() {
     const credentials = process.env.GOOGLE_SHEETS_CREDENTIALS;
 

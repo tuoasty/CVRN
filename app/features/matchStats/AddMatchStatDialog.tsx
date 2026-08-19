@@ -32,7 +32,7 @@ export default function AddMatchStatDialog({match, teamName, onOpenChange, onSuc
         e.preventDefault();
         if (!match) return;
         if (!sheetId.trim()) {
-            toast.error('Sheet ID is required');
+            toast.error('Sheet URL or ID is required');
             return;
         }
         setSaving(true);
@@ -69,17 +69,17 @@ export default function AddMatchStatDialog({match, teamName, onOpenChange, onSuc
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="stat-sheet-id">Sheet ID</Label>
+                            <Label htmlFor="stat-sheet-id">Sheet URL or ID</Label>
                             <Input
                                 id="stat-sheet-id"
                                 value={sheetId}
                                 onChange={e => setSheetId(e.target.value)}
                                 disabled={saving}
                                 className="rounded-sm font-mono text-sm"
-                                placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+                                placeholder="https://docs.google.com/spreadsheets/d/…"
                                 autoFocus
                             />
-                            <p className="text-xs text-muted-foreground">The ID from the stats Google Sheet URL.</p>
+                            <p className="text-xs text-muted-foreground">Paste the full Google Sheet link or just the ID.</p>
                         </div>
                         <div className="flex gap-3 pt-1">
                             <Button type="submit" disabled={saving} className="rounded-sm">
