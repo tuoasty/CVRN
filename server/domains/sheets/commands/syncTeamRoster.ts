@@ -399,7 +399,7 @@ export async function syncTeamRoster(
                 if (!existing) continue;
 
                 if (parsedPlayer.positionInvalid) {
-                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] ${parsedPlayer.username} has an unrecognized position — must be OH, OPP, MB, SET, or LIB`});
+                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] ${parsedPlayer.username} has an unrecognized position — must be OUT, OPP, MID, SET, or LIB`});
                     rowsErrored++;
                     continue;
                 }
@@ -511,7 +511,7 @@ export async function syncTeamRoster(
                 }
 
                 if (parsedPlayer.positionInvalid) {
-                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] ${parsedPlayer.username} has an unrecognized position — must be OH, OPP, MB, SET, or LIB`});
+                    errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] ${parsedPlayer.username} has an unrecognized position — must be OUT, OPP, MID, SET, or LIB`});
                     rowsErrored++;
                 }
 

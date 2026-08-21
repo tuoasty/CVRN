@@ -1,9 +1,9 @@
-export type PositionCode = "OH" | "OPP" | "MB" | "SET" | "LIB";
+export type PositionCode = "OUT" | "OPP" | "MID" | "SET" | "LIB";
 
 export const POSITIONS: ReadonlyArray<{code: PositionCode; label: string}> = [
-    {code: "OH", label: "Outside Hitter"},
+    {code: "OUT", label: "Outside Hitter"},
     {code: "OPP", label: "Opposite"},
-    {code: "MB", label: "Middle Blocker"},
+    {code: "MID", label: "Middle Blocker"},
     {code: "SET", label: "Setter"},
     {code: "LIB", label: "Libero"},
 ];
@@ -11,10 +11,12 @@ export const POSITIONS: ReadonlyArray<{code: PositionCode; label: string}> = [
 const LABEL_BY_CODE = new Map<string, string>(POSITIONS.map(p => [p.code, p.label]));
 
 const INPUT_ALIASES: Record<string, PositionCode> = {
-    OH: "OH",
+    OUT: "OUT",
+    OH: "OUT",
     OP: "OPP",
     OPP: "OPP",
-    MB: "MB",
+    MID: "MID",
+    MB: "MID",
     S: "SET",
     SET: "SET",
     L: "LIB",
@@ -24,7 +26,7 @@ const INPUT_ALIASES: Record<string, PositionCode> = {
 export const positionLabel = (code: string): string => LABEL_BY_CODE.get(code) ?? code;
 
 export const isPositionCode = (v: string): v is PositionCode =>
-    v === "OH" || v === "OPP" || v === "MB" || v === "SET" || v === "LIB";
+    v === "OUT" || v === "OPP" || v === "MID" || v === "SET" || v === "LIB";
 
 export const normalizePositionInput = (v: string): PositionCode | null =>
     INPUT_ALIASES[v.trim().toUpperCase()] ?? null;

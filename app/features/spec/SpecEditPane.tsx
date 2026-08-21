@@ -49,7 +49,7 @@ interface Props {
 export default function SpecEditPane({spec, mode, onSaved, onDeleted}: Props) {
     const [name, setName] = useState('');
     const [stars, setStars] = useState(5);
-    const [position, setPosition] = useState<SpecPosition>('OH');
+    const [position, setPosition] = useState<SpecPosition>('OUT');
     const [heightStr, setHeightStr] = useState('6\'7"');
     const [secondaryRequired, setSecondaryRequired] = useState(3);
     const [rows, setRows] = useState<DraftThreshold[]>([]);
@@ -61,7 +61,7 @@ export default function SpecEditPane({spec, mode, onSaved, onDeleted}: Props) {
         if (mode === 'create' || !spec) {
             setName('');
             setStars(5);
-            setPosition('OH');
+            setPosition('OUT');
             setHeightStr('6\'7"');
             setSecondaryRequired(3);
             setRows([]);

@@ -265,16 +265,20 @@ describe('parseTeamsSheet', () => {
     const rows = makeRows(2)
     setCell(rows, 0, 3, 'PosTeam')
     setCell(rows, 1, 3, 'PlayerOne')
-    setCell(rows, 1, 4, 'oh')
+    setCell(rows, 1, 4, 'out')
 
     const player = parseTeamsSheet(rows, 1, 18, 4)[0].players[0]
 
-    expect(player.position).toBe('OH')
+    expect(player.position).toBe('OUT')
     expect(player.positionInvalid).toBe(false)
   })
 
-  it('normalizes legacy position codes to canonical (S -> SET, L -> LIB, OP -> OPP)', () => {
+  it('normalizes legacy position codes to canonical (OH -> OUT, MB -> MID, S -> SET, L -> LIB, OP -> OPP)', () => {
     const cases: [string, string][] = [
+      ['oh', 'OUT'],
+      ['out', 'OUT'],
+      ['mb', 'MID'],
+      ['mid', 'MID'],
       ['s', 'SET'],
       ['set', 'SET'],
       ['l', 'LIB'],

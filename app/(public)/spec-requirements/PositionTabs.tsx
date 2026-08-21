@@ -3,9 +3,9 @@ import {SPEC_POSITIONS} from "@/server/domains/spec/types";
 import {cn} from "@/lib/utils";
 
 const SHORT: Record<string, string> = {
-    OH: "Outside",
+    OUT: "Outside",
     OPP: "Opposite",
-    MB: "Middle",
+    MID: "Middle",
     SET: "Setter",
     LIB: "Libero",
 };

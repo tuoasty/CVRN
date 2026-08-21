@@ -241,7 +241,7 @@ describe('parseMatchSet — POS column', () => {
     ], 1)
 
     expect(errors).toHaveLength(0)
-    expect(sections[0].lines[0].position).toBe('OH')
+    expect(sections[0].lines[0].position).toBe('OUT')
     expect(sections[0].lines[1].position).toBe('SET')
   })
 

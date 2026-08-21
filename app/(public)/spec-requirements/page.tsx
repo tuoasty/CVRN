@@ -17,7 +17,7 @@ export default async function SpecRequirementsPage({
 }) {
     const sp = await searchParams;
     const raw = (sp.pos ?? "oh").toUpperCase();
-    const pos = isPositionCode(raw) ? raw : "OH";
+    const pos = isPositionCode(raw) ? raw : "OUT";
 
     const snapshot = await getCachedPublicSpecSnapshot();
 
