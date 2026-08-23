@@ -42,7 +42,8 @@ export async function findMatchStatTotals(
         .select("*")
         .eq("match_id", matchId)
         .order("team_id", {ascending: true})
-        .order("contributions", {ascending: false, nullsFirst: false});
+        .order("contributions", {ascending: false, nullsFirst: false})
+        .order("sets_played", {ascending: false, nullsFirst: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
 }
