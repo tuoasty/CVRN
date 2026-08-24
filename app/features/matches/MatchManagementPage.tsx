@@ -8,6 +8,7 @@ import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
 import {
     useAvailablePlayoffRounds,
+    useCompletedPlayoffRounds,
     useDefaultWeekForSeason,
     usePlayoffRoundCounts,
     useWeekMatchCounts,
@@ -60,15 +61,21 @@ export default function MatchManagementPage() {
     const effectiveWeek = weekOverride ?? defaultWeek ?? 1;
 
     const { rounds: availableRounds } = useAvailablePlayoffRounds(hasPlayoffs ? selectedSeasonId : null);
+    const { rounds: completedRounds } = useCompletedPlayoffRounds(hasPlayoffs ? selectedSeasonId : null);
     const { roundCounts } = usePlayoffRoundCounts(hasPlayoffs ? selectedSeasonId : null);
     const sortedRounds = useMemo(
         () => sortRounds(availableRounds.filter(isPlayoffRound)),
         [availableRounds]
     );
+    const sortedCompletedRounds = useMemo(
+        () => sortRounds(completedRounds.filter(isPlayoffRound)),
+        [completedRounds]
+    );
+    const latestCompletedRound = sortedCompletedRounds[sortedCompletedRounds.length - 1];
     const effectiveRound: PlayoffRound =
         roundOverride && sortedRounds.includes(roundOverride)
             ? roundOverride
-            : sortedRounds[0] ?? "play_in";
+            : latestCompletedRound ?? sortedRounds[0] ?? "play_in";
 
     const roundCountMap = useMemo(() => {
         const m = new Map<string, number>();
