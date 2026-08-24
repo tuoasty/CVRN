@@ -58,9 +58,16 @@ export default function PlayerDetailPage({detail}: Props) {
     const achievements = awards.filter(a => PODIUM_CATEGORIES.has(a.category));
     const individualAwards = awards.filter(a => !PODIUM_CATEGORIES.has(a.category) && a.category !== "staff_team");
 
-    const teamLogoBySeasonId = new Map(
-        teamHistory.map(e => [e.season_id, {logo_url: e.team_logo_url, logo_bg_removed: e.team_logo_bg_removed}])
-    );
+    const teamLogoBySeasonId = new Map<string, {logo_url: string | null; logo_bg_removed: boolean}>();
+    const lockedActiveSeasons = new Set<string>();
+    for (const e of teamHistory) {
+        if (lockedActiveSeasons.has(e.season_id)) continue;
+        const isActive = e.left_at == null;
+        if (isActive || !teamLogoBySeasonId.has(e.season_id)) {
+            teamLogoBySeasonId.set(e.season_id, {logo_url: e.team_logo_url, logo_bg_removed: e.team_logo_bg_removed});
+            if (isActive) lockedActiveSeasons.add(e.season_id);
+        }
+    }
 
     return (
         <div className="max-w-[1440px] mx-auto px-4 py-6 space-y-8">
