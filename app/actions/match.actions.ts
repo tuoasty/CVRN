@@ -23,7 +23,6 @@ import {
     deleteMatchService,
     getAllMatches,
     getAvailablePlayoffRounds,
-    getCompletedPlayoffRounds,
     getAvailableTeamsForWeek,
     getDefaultWeekForSeason,
     getPlayoffRoundCounts,
@@ -125,13 +124,6 @@ export async function getAvailablePlayoffRoundsAction(seasonId: string) {
     if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return getAvailablePlayoffRounds(supabase, parsed.data);
-}
-
-export async function getCompletedPlayoffRoundsAction(seasonId: string) {
-    const parsed = z.uuid().safeParse(seasonId);
-    if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
-    const supabase = await createServerSupabase();
-    return getCompletedPlayoffRounds(supabase, parsed.data);
 }
 
 export async function deleteMatchAction(matchId: string) {

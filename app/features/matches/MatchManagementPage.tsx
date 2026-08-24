@@ -8,7 +8,6 @@ import { useSeasons } from "@/app/hooks/useSeasons";
 import { useRegions } from "@/app/hooks/useRegions";
 import {
     useAvailablePlayoffRounds,
-    useCompletedPlayoffRounds,
     useDefaultWeekForSeason,
     usePlayoffRoundCounts,
     useWeekMatchCounts,
@@ -27,13 +26,6 @@ export default function MatchManagementPage() {
     const { selectedSeasonId } = useAdminContextStore();
 
     const adminReady = useAdminReady();
-    const { seasons } = useSeasons();
-    const { regions } = useRegions();
-
-    const seasonIdValue = selectedSeasonId ?? "";
-    const season = seasons.find(s => s.id === selectedSeasonId);
-    const hasPlayoffs = !!season?.playoff_started;
-
     const [matchType, setMatchType] = useState<"season" | "playoffs">("season");
     const [activeTab, setActiveTab] = useState("schedule");
 
@@ -42,8 +34,15 @@ export default function MatchManagementPage() {
     useEffect(() => {
         setWeekOverride(null);
         setRoundOverride(null);
-        setMatchType(hasPlayoffs ? "playoffs" : "season");
-    }, [selectedSeasonId, hasPlayoffs]);
+        setMatchType("season");
+    }, [selectedSeasonId]);
+
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
+
+    const seasonIdValue = selectedSeasonId ?? "";
+    const season = seasons.find(s => s.id === selectedSeasonId);
+    const hasPlayoffs = !!season?.playoff_started;
 
     const regionCode = useMemo(() => {
         if (!season || regions.length === 0) return "";
@@ -61,21 +60,15 @@ export default function MatchManagementPage() {
     const effectiveWeek = weekOverride ?? defaultWeek ?? 1;
 
     const { rounds: availableRounds } = useAvailablePlayoffRounds(hasPlayoffs ? selectedSeasonId : null);
-    const { rounds: completedRounds } = useCompletedPlayoffRounds(hasPlayoffs ? selectedSeasonId : null);
     const { roundCounts } = usePlayoffRoundCounts(hasPlayoffs ? selectedSeasonId : null);
     const sortedRounds = useMemo(
         () => sortRounds(availableRounds.filter(isPlayoffRound)),
         [availableRounds]
     );
-    const sortedCompletedRounds = useMemo(
-        () => sortRounds(completedRounds.filter(isPlayoffRound)),
-        [completedRounds]
-    );
-    const latestCompletedRound = sortedCompletedRounds[sortedCompletedRounds.length - 1];
     const effectiveRound: PlayoffRound =
         roundOverride && sortedRounds.includes(roundOverride)
             ? roundOverride
-            : latestCompletedRound ?? sortedRounds[0] ?? "play_in";
+            : sortedRounds[0] ?? "play_in";
 
     const roundCountMap = useMemo(() => {
         const m = new Map<string, number>();

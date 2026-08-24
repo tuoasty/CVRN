@@ -5,7 +5,6 @@ import {
     deleteMatchAction,
     getAllMatchesAction,
     getAvailablePlayoffRoundsAction,
-    getCompletedPlayoffRoundsAction,
     getAvailableTeamsForWeekAction,
     getDefaultWeekForSeasonAction,
     getPlayoffRoundCountsAction,
@@ -60,12 +59,6 @@ async function fetchPlayoffSchedule([, seasonId, round]: [string, string, Playof
 
 async function fetchAvailablePlayoffRounds([, seasonId]: [string, string]): Promise<string[]> {
     const result = await getAvailablePlayoffRoundsAction(seasonId);
-    if (!result.ok) throw new Error(result.error.message);
-    return result.value;
-}
-
-async function fetchCompletedPlayoffRounds([, seasonId]: [string, string]): Promise<string[]> {
-    const result = await getCompletedPlayoffRoundsAction(seasonId);
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
 }
@@ -147,15 +140,6 @@ export function usePlayoffSchedule(seasonId: string | null, round: PlayoffRound 
 export function useAvailablePlayoffRounds(seasonId: string | null) {
     const key = seasonId ? ['playoffRounds', seasonId] as const : null;
     const { data, error, isLoading, mutate } = useSWR(key, fetchAvailablePlayoffRounds as BareFetcher<string[]>, {
-        dedupingInterval: MATCHES_TTL,
-        revalidateOnFocus: false,
-    });
-    return { rounds: (data as string[] | undefined) ?? [], isLoading, error: error?.message ?? null, mutate };
-}
-
-export function useCompletedPlayoffRounds(seasonId: string | null) {
-    const key = seasonId ? ['completedPlayoffRounds', seasonId] as const : null;
-    const { data, error, isLoading, mutate } = useSWR(key, fetchCompletedPlayoffRounds as BareFetcher<string[]>, {
         dedupingInterval: MATCHES_TTL,
         revalidateOnFocus: false,
     });
