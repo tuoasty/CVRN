@@ -27,6 +27,13 @@ export default function MatchManagementPage() {
     const { selectedSeasonId } = useAdminContextStore();
 
     const adminReady = useAdminReady();
+    const { seasons } = useSeasons();
+    const { regions } = useRegions();
+
+    const seasonIdValue = selectedSeasonId ?? "";
+    const season = seasons.find(s => s.id === selectedSeasonId);
+    const hasPlayoffs = !!season?.playoff_started;
+
     const [matchType, setMatchType] = useState<"season" | "playoffs">("season");
     const [activeTab, setActiveTab] = useState("schedule");
 
@@ -35,15 +42,8 @@ export default function MatchManagementPage() {
     useEffect(() => {
         setWeekOverride(null);
         setRoundOverride(null);
-        setMatchType("season");
-    }, [selectedSeasonId]);
-
-    const { seasons } = useSeasons();
-    const { regions } = useRegions();
-
-    const seasonIdValue = selectedSeasonId ?? "";
-    const season = seasons.find(s => s.id === selectedSeasonId);
-    const hasPlayoffs = !!season?.playoff_started;
+        setMatchType(hasPlayoffs ? "playoffs" : "season");
+    }, [selectedSeasonId, hasPlayoffs]);
 
     const regionCode = useMemo(() => {
         if (!season || regions.length === 0) return "";
