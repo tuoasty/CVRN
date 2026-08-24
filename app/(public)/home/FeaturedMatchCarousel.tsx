@@ -27,7 +27,7 @@ export type FeaturedMatchSlide = {
 export type FeaturedAwardSlide = {
     kind: "totw" | "potw";
     gfx: MediaPost;
-    subjectName: string;
+    subjectName: string | null;
     subjectAvatarUrl?: string | null;
     subjectSubtext?: string | null;
     weekLabel?: string | null;
@@ -111,7 +111,7 @@ export default function FeaturedMatchCarousel({
 
     const ariaLabel = shown.kind === "match"
         ? `${shown.homeTeam?.name ?? "TBD"} vs ${shown.awayTeam?.name ?? "TBD"}`
-        : shown.subjectName;
+        : (shown.subjectName ?? (shown.kind === "totw" ? "Team of the Week" : "Player of the Week"));
 
     return (
         <div
@@ -261,13 +261,13 @@ function AwardChrome({ slide }: { slide: FeaturedAwardSlide }) {
                     {slide.subjectAvatarUrl && (
                         isPotw ? (
                             <div className="relative w-11 h-11 shrink-0 overflow-hidden">
-                                <AvatarImage src={slide.subjectAvatarUrl} alt={slide.subjectName} sizes="44px" />
+                                <AvatarImage src={slide.subjectAvatarUrl} alt={slide.subjectName ?? heading} sizes="44px" />
                             </div>
                         ) : (
                             <div className="relative w-11 h-11 shrink-0">
                                 <Image
                                     src={slide.subjectAvatarUrl}
-                                    alt={slide.subjectName}
+                                    alt={slide.subjectName ?? heading}
                                     fill
                                     sizes="44px"
                                     className={cn("object-contain", LOGO_SHADOW)}
@@ -275,16 +275,18 @@ function AwardChrome({ slide }: { slide: FeaturedAwardSlide }) {
                             </div>
                         )
                     )}
-                    <div className="min-w-0">
-                        <span className="block text-lg font-bold text-white truncate">
-                            {slide.subjectName}
-                        </span>
-                        {slide.subjectSubtext && (
-                            <span className="hidden sm:block text-xs text-white/60 truncate">
-                                {slide.subjectSubtext}
+                    {slide.subjectName && (
+                        <div className="min-w-0">
+                            <span className="block text-lg font-bold text-white truncate">
+                                {slide.subjectName}
                             </span>
-                        )}
-                    </div>
+                            {slide.subjectSubtext && (
+                                <span className="hidden sm:block text-xs text-white/60 truncate">
+                                    {slide.subjectSubtext}
+                                </span>
+                            )}
+                        </div>
+                    )}
                     {slide.weekLabel && (
                         <span className="hidden sm:block shrink-0 ml-auto text-xs text-white/75 truncate max-w-[220px]">
                             {slide.weekLabel}

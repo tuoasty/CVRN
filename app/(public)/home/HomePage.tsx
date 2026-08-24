@@ -112,12 +112,12 @@ export default function HomePage({
         ? {
               kind: "potw",
               gfx: potwPost,
-              subjectName: potwPlayer?.display_name || potwPlayer?.username || "Player of the Week",
+              subjectName: potwPlayer ? (potwPlayer.display_name || potwPlayer.username) : null,
               subjectAvatarUrl: potwPlayer?.avatar_url,
               subjectSubtext: potwPlayer?.username ? `@${potwPlayer.username}` : null,
               weekLabel: potwPost.description,
               authorName: authorNameFor(potwPost),
-              href: buildPublicPlayerHref(potwPlayer?.username),
+              href: potwPlayer ? buildPublicPlayerHref(potwPlayer.username) : null,
           }
         : null;
 

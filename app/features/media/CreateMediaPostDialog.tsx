@@ -106,7 +106,6 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
         if (isImageType && !imageFile) { toast.error('Image is required'); return }
         if ((type === 'totw' || type === 'potw') && !seasonId) { toast.error('Select a season in the admin bar first'); return }
         if (type === 'totw' && !teamId) { toast.error('Select a team'); return }
-        if (type === 'potw' && !playerId) { toast.error('Select a player'); return }
 
         setLoading(true)
         try {
@@ -204,7 +203,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
 
                             {type === 'potw' && (
                                 <div className="space-y-1">
-                                    <Label>Player</Label>
+                                    <Label>Player <span className="text-muted-foreground text-xs">(optional)</span></Label>
                                     <Select value={playerId} onValueChange={(v) => {
                                         setPlayerId(v)
                                         const p = players.find(x => x.id === v)
