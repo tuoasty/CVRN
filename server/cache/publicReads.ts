@@ -24,11 +24,12 @@ import {
     getAllTeamsWithRegions,
 } from "@/server/domains/team";
 import {getStandings} from "@/server/domains/standing";
+import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 import {getPlayoffBracketBySeasonId} from "@/server/domains/playoff";
 import type {PlayoffRound} from "@/server/domains/playoff";
 import {
-    getUpcomingWeekMatches,
-    getRecentWeekMatches,
+    getUpcomingMatches,
+    getRecentMatches,
     getMatchDetail,
     getWeekSchedule,
     getPlayoffSchedule,
@@ -215,18 +216,23 @@ export const getCachedPlayoffBrackets = unstable_cache(
 );
 
 export const getCachedUpcomingMatches = unstable_cache(
-    async (seasonId: string) =>
-        unwrap(
-            await getUpcomingWeekMatches(createPublicClient(), seasonId),
-            "getCachedUpcomingMatches",
-        ),
+    async (seasonId: string) => {
+        const client = createPublicClient();
+        const teams = unwrap(await findTeamsBySeasonId(client, seasonId), "getCachedUpcomingMatches");
+        const limit = Math.max(1, Math.floor(teams.length / 2));
+        return unwrap(await getUpcomingMatches(client, seasonId, limit), "getCachedUpcomingMatches");
+    },
     ["public:upcoming-matches"],
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedRecentMatches = unstable_cache(
-    async (seasonId: string) =>
-        unwrap(await getRecentWeekMatches(createPublicClient(), seasonId), "getCachedRecentMatches"),
+    async (seasonId: string) => {
+        const client = createPublicClient();
+        const teams = unwrap(await findTeamsBySeasonId(client, seasonId), "getCachedRecentMatches");
+        const limit = Math.max(1, Math.floor(teams.length / 2));
+        return unwrap(await getRecentMatches(client, seasonId, limit), "getCachedRecentMatches");
+    },
     ["public:recent-matches"],
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
