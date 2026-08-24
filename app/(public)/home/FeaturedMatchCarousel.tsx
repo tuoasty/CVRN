@@ -297,17 +297,8 @@ function AwardChrome({ slide }: { slide: FeaturedAwardSlide }) {
                         </span>
                     )}
                 </div>
-                {/* {slide.authorName && <AuthorCredit name={slide.authorName} />} */}
             </div>
         </>
-    );
-}
-
-function AuthorCredit({ name }: { name: string }) {
-    return (
-        <span className="absolute left-1/2 bottom-1 -translate-x-1/2 text-center text-xs uppercase tracking-wider text-white/45 truncate max-w-[60%]">
-            by {name}
-        </span>
     );
 }
 

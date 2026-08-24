@@ -2,7 +2,7 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {DBClient} from "@/shared/types/db";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {findUpcomingMatches, findUpcomingWeekMatches} from "@/server/db/matches.repo";
+import {findUpcomingMatches} from "@/server/db/matches.repo";
 import {MatchWithDetails, MatchWithDetailsRow} from "../types";
 import {toMatchWithDetails} from "../helpers/toMatchWithDetails";
 
@@ -20,23 +20,6 @@ export async function getUpcomingMatches(
         return Ok((result.value as unknown as MatchWithDetailsRow[]).map(toMatchWithDetails));
     } catch (error) {
         logger.error({ error }, "Unexpected error fetching upcoming matches");
-        return Err(serializeError(error));
-    }
-}
-
-export async function getUpcomingWeekMatches(
-    supabase: DBClient,
-    seasonId: string
-): Promise<Result<MatchWithDetails[]>> {
-    try {
-        const result = await findUpcomingWeekMatches(supabase, seasonId);
-        if (!result.ok) {
-            logger.error({ seasonId, error: result.error }, "Failed to fetch upcoming week matches");
-            return result;
-        }
-        return Ok((result.value as unknown as MatchWithDetailsRow[]).map(toMatchWithDetails));
-    } catch (error) {
-        logger.error({ error }, "Unexpected error fetching upcoming week matches");
         return Err(serializeError(error));
     }
 }
