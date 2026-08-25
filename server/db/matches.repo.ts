@@ -324,9 +324,10 @@ export async function findUpcomingMatches(
             playoff_brackets (round)
         `)
         .eq("season_id", seasonId)
-        .in("status", ["scheduled", "pending"])
-        .not("scheduled_at", "is", null)
-        .order("scheduled_at", {ascending: true})
+        .or("status.eq.scheduled,and(status.eq.pending,home_team_id.not.is.null,away_team_id.not.is.null)")
+        .order("scheduled_at", {ascending: true, nullsFirst: false})
+        .order("week", {ascending: true, nullsFirst: false})
+        .order("created_at", {ascending: true})
         .limit(limit);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as MatchWithDetails[]);
