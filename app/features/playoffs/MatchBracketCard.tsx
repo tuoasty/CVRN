@@ -21,15 +21,76 @@ type MatchBracketCardProps = {
     href?: string | null;
 };
 
+function TeamRow({
+    seed,
+    team,
+    source,
+    won,
+    dim,
+    score,
+    showScore,
+    divider,
+}: {
+    seed: number | null;
+    team?: TeamWithRegion;
+    source?: string;
+    won: boolean;
+    dim: boolean;
+    score: number;
+    showScore: boolean;
+    divider: boolean;
+}) {
+    return (
+        <div
+            className={cn(
+                "grid grid-cols-[1rem_2rem_1fr_auto] items-center gap-2.5 px-3 py-2.5 transition-opacity",
+                divider && "border-t border-border",
+                dim && "opacity-40"
+            )}
+        >
+            <span className="text-xs font-semibold text-muted-foreground text-right">
+                {seed ?? ""}
+            </span>
+            {team ? (
+                <>
+                    <div className="relative w-8 h-8">
+                        {team.logo_url && (
+                            <Image
+                                src={team.logo_url}
+                                alt={team.name}
+                                fill
+                                sizes="32px"
+                                className={getLogoClassName(team.logo_bg_removed)}
+                            />
+                        )}
+                    </div>
+                    <span className={cn("text-sm truncate min-w-0", won ? "font-bold" : "font-semibold")}>
+                        {team.name}
+                    </span>
+                </>
+            ) : (
+                <span className="col-span-2 text-sm truncate min-w-0 font-medium italic text-muted-foreground">
+                    {source || "TBD"}
+                </span>
+            )}
+            {showScore && (
+                <span className={cn("font-mono text-base tabular-nums text-right", won && "font-bold")}>
+                    {score}
+                </span>
+            )}
+        </div>
+    );
+}
+
 export function MatchBracketCard({
-                                     bracket,
-                                     match,
-                                     homeTeam,
-                                     awayTeam,
-                                     homeSource,
-                                     awaySource,
-                                     href,
-                                 }: MatchBracketCardProps) {
+    bracket,
+    match,
+    homeTeam,
+    awayTeam,
+    homeSource,
+    awaySource,
+    href,
+}: MatchBracketCardProps) {
     const isCompleted = match.status === "completed";
     const homeWon = isCompleted && (match.home_sets_won || 0) > (match.away_sets_won || 0);
     const awayWon = isCompleted && (match.away_sets_won || 0) > (match.home_sets_won || 0);
@@ -39,20 +100,20 @@ export function MatchBracketCard({
             return {
                 label: "Completed",
                 className: "bg-green-600/15 text-green-600 border-green-600/30",
-                icon: <Trophy className="h-3 w-3" />
+                icon: <Trophy className="h-3 w-3" />,
             };
         }
         if (match.status === "scheduled") {
             return {
                 label: "Scheduled",
                 className: "bg-blue-600/15 text-blue-600 border-blue-600/30",
-                icon: <Calendar className="h-3 w-3" />
+                icon: <Calendar className="h-3 w-3" />,
             };
         }
         return {
             label: "Pending",
             className: "bg-amber-600/15 text-amber-600 border-amber-600/30",
-            icon: <AlertCircle className="h-3 w-3" />
+            icon: <AlertCircle className="h-3 w-3" />,
         };
     };
 
@@ -60,115 +121,53 @@ export function MatchBracketCard({
 
     const inner = (
         <>
-            <div className="bg-muted/40 px-3 py-2 flex items-center justify-between gap-2 border-b border-border">
-                <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center h-5 px-1.5 rounded-sm text-[10px] font-bold tabular-nums tracking-wide text-white bg-blue-600">
+            <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border bg-muted">
+                <div className="flex items-baseline gap-2">
+                    <span className="font-mono text-xs font-bold tracking-wide text-foreground">
                         {match.match_code}
                     </span>
                     <span className="text-xs font-medium text-muted-foreground">
                         BO{match.best_of}
                     </span>
                 </div>
-                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-semibold uppercase tracking-wider flex items-center gap-1", statusConfig.className)}>
+                <Badge
+                    variant="outline"
+                    className={cn(
+                        "text-[10px] h-5 px-2 font-semibold uppercase tracking-wider flex items-center gap-1",
+                        statusConfig.className
+                    )}
+                >
                     {statusConfig.icon}
                     {statusConfig.label}
                 </Badge>
             </div>
-            <div className={cn(
-                "px-3 py-2.5 border-b transition-all",
-                homeWon && "bg-gradient-to-r from-primary/20 to-primary/5 border-l-4 border-l-primary",
-                !homeWon && !awayWon && "border-border"
-            )}>
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 flex-1">
-                        {bracket.seed_home && (
-                            <div className="flex items-center justify-center w-6 h-6 rounded-sm bg-muted/50 border border-border shrink-0">
-                                <span className="text-xs font-bold text-muted-foreground">
-                                    {bracket.seed_home}
-                                </span>
-                            </div>
-                        )}
-                        {homeTeam?.logo_url && (
-                            <div className="relative w-6 h-6 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
-                                <Image
-                                    src={homeTeam.logo_url}
-                                    alt={homeTeam.name}
-                                    fill
-                                    sizes="24px"
-                                    className={getLogoClassName(homeTeam.logo_bg_removed)}
-                                />
-                            </div>
-                        )}
-                        <span className={cn(
-                            "text-sm font-semibold",
-                            homeWon && "text-primary",
-                            !homeTeam && "text-muted-foreground italic"
-                        )}>
-                            {homeTeam?.name || homeSource || "TBD"}
-                        </span>
-                    </div>
-                    {isCompleted && (
-                        <div className={cn(
-                            "flex items-center justify-center min-w-[28px] h-7 px-2 rounded-sm font-bold text-sm tabular-nums",
-                            homeWon ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
-                        )}>
-                            {match.home_sets_won || 0}
-                        </div>
-                    )}
-                </div>
-            </div>
 
-            <div className={cn(
-                "px-3 py-2.5 transition-all",
-                awayWon && "bg-gradient-to-r from-primary/20 to-primary/5 border-l-4 border-l-primary",
-                !homeWon && !awayWon && "border-border"
-            )}>
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                        {bracket.seed_away && (
-                            <div className="flex items-center justify-center w-6 h-6 rounded-sm bg-muted/50 border border-border shrink-0">
-                                <span className="text-xs font-bold text-muted-foreground">
-                                    {bracket.seed_away}
-                                </span>
-                            </div>
-                        )}
-                        {awayTeam?.logo_url && (
-                            <div className="relative w-6 h-6 shrink-0 rounded-sm border border-border/50 overflow-hidden bg-muted/40">
-                                <Image
-                                    src={awayTeam.logo_url}
-                                    alt={awayTeam.name}
-                                    fill
-                                    sizes="24px"
-                                    className={getLogoClassName(awayTeam.logo_bg_removed)}
-                                />
-                            </div>
-                        )}
-                        <span className={cn(
-                            "text-sm font-semibold",
-                            awayWon && "text-primary",
-                            !awayTeam && "text-muted-foreground italic"
-                        )}>
-                            {awayTeam?.name || awaySource || "TBD"}
-                        </span>
-                    </div>
-                    {isCompleted && (
-                        <div className={cn(
-                            "flex items-center justify-center min-w-[28px] h-7 px-2 rounded-sm font-bold text-sm tabular-nums",
-                            awayWon ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
-                        )}>
-                            {match.away_sets_won || 0}
-                        </div>
-                    )}
-                </div>
-            </div>
-
+            <TeamRow
+                seed={bracket.seed_home}
+                team={homeTeam}
+                source={homeSource}
+                won={homeWon}
+                dim={awayWon}
+                score={match.home_sets_won || 0}
+                showScore={isCompleted}
+                divider={false}
+            />
+            <TeamRow
+                seed={bracket.seed_away}
+                team={awayTeam}
+                source={awaySource}
+                won={awayWon}
+                dim={homeWon}
+                score={match.away_sets_won || 0}
+                showScore={isCompleted}
+                divider
+            />
         </>
     );
 
     const baseClass = cn(
-        "border-2 bg-card rounded-sm overflow-hidden transition-all duration-200 shadow-sm block",
-        isCompleted ? "border-primary/40 shadow-primary/10" : "border-border hover:border-primary/30",
-        "hover:shadow-lg hover:-translate-y-0.5"
+        "block bg-card border border-muted-foreground/30 rounded-sm overflow-hidden transition-all duration-200",
+        href && "hover:border-primary/40 hover:shadow-sm hover:-translate-y-px"
     );
 
     return href ? (
@@ -176,8 +175,6 @@ export function MatchBracketCard({
             {inner}
         </Link>
     ) : (
-        <div className={baseClass}>
-            {inner}
-        </div>
+        <div className={baseClass}>{inner}</div>
     );
 }

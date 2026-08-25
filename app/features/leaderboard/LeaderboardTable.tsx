@@ -40,6 +40,19 @@ function compareRows(a: LeaderboardDisplayRow, b: LeaderboardDisplayRow, key: So
     return desc ? bv - av : av - bv;
 }
 
+const RANK_TIEBREAKERS: SortKey[] = ["points_total", "points_per_set", "hit_eff"];
+
+function rankCompare(a: LeaderboardDisplayRow, b: LeaderboardDisplayRow, key: SortKey, desc: boolean): number {
+    const primary = compareRows(a, b, key, desc);
+    if (primary !== 0) return primary;
+    for (const tb of RANK_TIEBREAKERS) {
+        if (tb === key) continue;
+        const broken = compareRows(a, b, tb, true);
+        if (broken !== 0) return broken;
+    }
+    return 0;
+}
+
 const rowKey = (row: LeaderboardDisplayRow) => `${row.player_id}-${row.season_id ?? row.region_code}`;
 
 const PAGE_SIZE = 50;
@@ -76,7 +89,7 @@ export default function LeaderboardTable({
         const desc = filters.order === "desc";
         const all = [...rows].sort(
             (a, b) =>
-                compareRows(a, b, filters.sort, desc) ||
+                rankCompare(a, b, filters.sort, desc) ||
                 (b.sets_played ?? 0) - (a.sets_played ?? 0) ||
                 a.username.localeCompare(b.username)
         );
@@ -89,19 +102,22 @@ export default function LeaderboardTable({
     }, [rows, filters.sort, filters.order, isRatioSort]);
 
     const visible = useMemo(() => {
-        let previousValue: number | null | undefined;
+        const desc = filters.order === "desc";
+        let previousRow: LeaderboardDisplayRow | null = null;
         let previousRank = 0;
 
         return qualified
             .map((row, i) => {
-                const value = row[filters.sort] as number | null;
-                const rank = i > 0 && value === previousValue ? previousRank : i + 1;
-                previousValue = value;
+                const rank =
+                    previousRow && rankCompare(row, previousRow, filters.sort, desc) === 0
+                        ? previousRank
+                        : i + 1;
+                previousRow = row;
                 previousRank = rank;
                 return {row, rank};
             })
             .filter(({row}) => matchesPlayerQuery(row, filters.q));
-    }, [qualified, filters.sort, filters.q]);
+    }, [qualified, filters.sort, filters.order, filters.q]);
 
     const visibleUnqualified = useMemo(
         () => unqualified.filter(row => matchesPlayerQuery(row, filters.q)),
