@@ -13,6 +13,8 @@ export type SortOrder = "asc" | "desc";
 export const REGION_ORDER = ["AS", "EU", "NA", "SA"] as const;
 export const REGION_ALL = "all";
 
+export type DateRange = {from: string | null; to: string | null};
+
 export type LeaderboardFilters = {
     view: StatView;
     sort: SortKey;
@@ -21,6 +23,8 @@ export type LeaderboardFilters = {
     region: string;
 
     seasons: string[];
+
+    range: DateRange;
 
     q: string;
 };
@@ -43,6 +47,7 @@ const DEFAULT_FILTERS: LeaderboardFilters = {
     order: "desc",
     region: REGION_ALL,
     seasons: [],
+    range: {from: null, to: null},
     q: "",
 };
 
@@ -82,5 +87,9 @@ export function useLeaderboardFilters() {
         setFilters(f => ({...f, seasons: []}));
     }, []);
 
-    return {filters, setView, setSort, setRegion, setQuery, toggleSeason, clearSeasons};
+    const setRange = useCallback((range: DateRange) => {
+        setFilters(f => ({...f, range}));
+    }, []);
+
+    return {filters, setView, setSort, setRegion, setQuery, toggleSeason, clearSeasons, setRange};
 }

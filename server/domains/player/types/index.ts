@@ -212,6 +212,7 @@ export type {
     SetPlayerRoleInput,
     TransferCaptainInput,
     PlayerLeaderboardInput,
+    RangedLeaderboardInput,
 } from "./schemas";
 
 export {
@@ -225,4 +226,5 @@ export {
     SetPlayerRoleSchema,
     TransferCaptainSchema,
     PlayerLeaderboardSchema,
+    RangedLeaderboardSchema,
 } from "./schemas";

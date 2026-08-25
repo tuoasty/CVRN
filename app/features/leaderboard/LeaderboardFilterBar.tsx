@@ -1,17 +1,17 @@
 "use client";
 
 import {useEffect, useState} from "react";
-import {Check, ChevronDown, Search, X} from "lucide-react";
+import {Calendar as CalendarIcon, Check, ChevronDown, Search, X} from "lucide-react";
+import {format, startOfDay, addDays, subDays, isSameDay} from "date-fns";
+import type {DateRange as CalendarRange} from "react-day-picker";
 import {cn} from "@/lib/utils";
 import {Popover, PopoverContent, PopoverTrigger} from "@/app/components/ui/popover";
+import {Calendar} from "@/app/components/ui/calendar";
 import {useDebouncedValue} from "@/app/hooks/useDebouncedValue";
+import type {DateRange} from "./useLeaderboardFilters";
 import type {SeasonCohort} from "./seasonCohorts";
 import StatViewSelector from "@/app/features/player/StatViewSelector";
-import {
-    MIN_SETS_FOR_RATE,
-    STAT_VIEW_COLUMNS,
-    StatView,
-} from "@/app/features/player/playerStatColumnMeta";
+import {StatView} from "@/app/features/player/playerStatColumnMeta";
 import {REGION_ALL, REGION_ORDER} from "./useLeaderboardFilters";
 
 type Props = {
@@ -31,6 +31,9 @@ type Props = {
     selectedSeasons?: string[];
     onToggleSeason?: (slug: string) => void;
     onClearSeasons?: () => void;
+
+    range?: DateRange;
+    onRangeChange?: (range: DateRange) => void;
 };
 
 export default function LeaderboardFilterBar({
@@ -46,6 +49,8 @@ export default function LeaderboardFilterBar({
     selectedSeasons,
     onToggleSeason,
     onClearSeasons,
+    range,
+    onRangeChange,
 }: Props) {
     const showRegions = region !== undefined && onRegionChange !== undefined;
     const showSeasons =
@@ -53,36 +58,39 @@ export default function LeaderboardFilterBar({
         selectedSeasons !== undefined &&
         onToggleSeason !== undefined &&
         onClearSeasons !== undefined;
+    const showRange = range !== undefined && onRangeChange !== undefined;
     const narrowed = shownCount !== totalCount;
 
     return (
         <div className="space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <StatViewSelector value={view} onChange={onViewChange} />
+                <div className="flex items-center gap-2 flex-wrap">
+                    <StatViewSelector value={view} onChange={onViewChange} />
+                    {showRange && <DateRangeFilter range={range} onChange={onRangeChange} />}
+                </div>
                 <PlayerSearchInput value={query} onChange={onQueryChange} />
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                    {showRegions && <RegionFilter value={region} onChange={onRegionChange} />}
-                    {showSeasons && (
-                        <SeasonFilter
-                            cohorts={cohorts}
-                            selected={selectedSeasons}
-                            onToggle={onToggleSeason}
-                            onClear={onClearSeasons}
-                        />
-                    )}
-                </div>
-                <div className="flex items-center gap-4">
+            {(showRegions || showSeasons) && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {showRegions && <RegionFilter value={region} onChange={onRegionChange} />}
+                        {showSeasons && (
+                            <SeasonFilter
+                                cohorts={cohorts}
+                                selected={selectedSeasons}
+                                onToggle={onToggleSeason}
+                                onClear={onClearSeasons}
+                            />
+                        )}
+                    </div>
                     <span className="text-xs text-muted-foreground tabular-nums">
                         {narrowed
                             ? `Showing ${shownCount} of ${totalCount} players`
                             : `${totalCount} ${totalCount === 1 ? "player" : "players"}`}
                     </span>
-                    <ColumnGlossary view={view} />
                 </div>
-            </div>
+            )}
         </div>
     );
 }
@@ -248,39 +256,95 @@ function SeasonFilter({
     );
 }
 
-function ColumnGlossary({view}: {view: StatView}) {
-    const columns = STAT_VIEW_COLUMNS[view];
+function DateRangeFilter({
+    range,
+    onChange,
+}: {
+    range: DateRange;
+    onChange: (range: DateRange) => void;
+}) {
+    const active = Boolean(range.from && range.to);
+
+    const [open, setOpen] = useState(false);
+    const [draft, setDraft] = useState<CalendarRange | undefined>(undefined);
+
+    useEffect(() => {
+        if (open) setDraft(undefined);
+    }, [open]);
+
+    function handleSelect(next: CalendarRange | undefined) {
+        const hadFrom = Boolean(draft?.from);
+        setDraft(next);
+        if (hadFrom && next?.from && next?.to) {
+            onChange({
+                from: startOfDay(next.from).toISOString(),
+                to: startOfDay(addDays(next.to, 1)).toISOString(),
+            });
+            setOpen(false);
+        }
+    }
+
+    function clear() {
+        setDraft(undefined);
+        onChange({from: null, to: null});
+    }
+
+    const hint = !draft?.from
+        ? "Select the first day"
+        : draft.to && !isSameDay(draft.from, draft.to)
+            ? `${format(draft.from, "MMM d")} – ${format(draft.to, "MMM d")}`
+            : "Select the last day";
+
+    const label = active
+        ? `${format(new Date(range.from!), "MMM d")} – ${format(subDays(new Date(range.to!), 1), "MMM d")}`
+        : "All dates";
 
     return (
-        <details className="group relative">
-            <summary
-                className={cn(
-                    "list-none cursor-pointer text-xs text-muted-foreground hover:text-foreground",
-                    "rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                    "[&::-webkit-details-marker]:hidden",
-                )}
-            >
-                What do these mean?
-            </summary>
-            <div className="absolute right-0 z-30 mt-2 w-80 max-h-96 overflow-y-auto panel border border-border shadow-md p-3">
-                <dl className="space-y-2">
-                    {columns.map(col => (
-                        <div key={col.key as string} className="flex gap-3 text-xs">
-                            <dt className="font-mono font-semibold w-14 shrink-0 text-foreground">
-                                {col.label}
-                            </dt>
-                            <dd className="text-muted-foreground">
-                                {col.description}
-                                {col.format === "pct" && (
-                                    <span className="block mt-0.5">
-                                        Ranks players with {MIN_SETS_FOR_RATE}+ sets played.
-                                    </span>
-                                )}
-                            </dd>
-                        </div>
-                    ))}
-                </dl>
-            </div>
-        </details>
+        <div className="flex items-center gap-1">
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger
+                    className={cn(
+                        "inline-flex items-center gap-1.5 h-9 px-3 rounded-sm border border-border text-xs font-semibold transition-colors",
+                        "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                        active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted/50 text-muted-foreground hover:text-foreground",
+                    )}
+                >
+                    <CalendarIcon className="h-3.5 w-3.5" aria-hidden />
+                    {label}
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-auto rounded-sm p-0">
+                    <Calendar
+                        mode="range"
+                        selected={draft}
+                        onSelect={handleSelect}
+                        numberOfMonths={1}
+                        defaultMonth={range.from ? new Date(range.from) : undefined}
+                    />
+                    <div className="flex items-center justify-between gap-3 border-t border-border px-3 py-2">
+                        <span className="text-xs text-muted-foreground tabular-nums">{hint}</span>
+                        <button
+                            type="button"
+                            onClick={clear}
+                            disabled={!draft?.from}
+                            className="text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:hover:text-muted-foreground rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                </PopoverContent>
+            </Popover>
+            {active && (
+                <button
+                    type="button"
+                    onClick={clear}
+                    aria-label="Clear date range"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                    <X className="h-4 w-4" />
+                </button>
+            )}
+        </div>
     );
 }

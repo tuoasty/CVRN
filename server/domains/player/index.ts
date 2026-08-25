@@ -15,6 +15,7 @@ export {lazySyncPlayer} from "./helpers/lazySyncPlayer";
 export {getPlayerByUsername} from "./queries/getPlayerByUsername";
 export {getPlayerSeasonStats} from "./queries/getPlayerSeasonStats";
 export {getLeaderboardStatRows} from "./queries/getLeaderboardStatRows";
+export {getRangedLeaderboardStatRows} from "./queries/getRangedLeaderboardStatRows";
 export {getLeaderboardIdentity} from "./queries/getLeaderboardIdentity";
 export {getPlayerAwards} from "./queries/getPlayerAwards";
 export {getPlayerTeamHistory} from "./queries/getPlayerTeamHistory";
@@ -46,6 +47,7 @@ export type {
     LeaderboardIdentity,
     LeaderboardDisplayRow,
     PlayerLeaderboardInput,
+    RangedLeaderboardInput,
     PlayerAward,
     PlayerTeamHistoryEntry,
     PlayerDetail,
@@ -61,4 +63,5 @@ export {
     SetPlayerRoleSchema,
     TransferCaptainSchema,
     PlayerLeaderboardSchema,
+    RangedLeaderboardSchema,
 } from "./types";

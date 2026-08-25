@@ -10,11 +10,8 @@ export async function getPlayerSeasonStats(
 ): Promise<Result<PlayerSeasonStat[]>> {
     try {
         const {data, error} = await supabase
-            .from("v_player_season_stats")
-            .select(`
-                *,
-                season:seasons!season_id(name, slug, region:regions!region_id(code))
-            `)
+            .from("v_player_leaderboard")
+            .select("*")
             .eq("player_id", p.playerId)
             .order("season_id", {ascending: false});
 
@@ -23,15 +20,12 @@ export async function getPlayerSeasonStats(
             return Err(serializeError(error, "DB_ERROR"));
         }
 
-        const rows: PlayerSeasonStat[] = (data ?? []).filter((r): r is typeof r & {season_id: string} => r.season_id !== null).map(r => {
-            const season = r.season as {name: string; slug: string; region: {code: string}} | null;
-            return {
-                ...r,
-                season_name: season?.name ?? "",
-                season_slug: season?.slug ?? "",
-                region_code: season?.region?.code ?? "",
-            };
-        });
+        const rows: PlayerSeasonStat[] = (data ?? []).filter((r): r is typeof r & {season_id: string} => r.season_id !== null).map(r => ({
+            ...r,
+            season_name: r.season_name ?? "",
+            season_slug: r.season_slug ?? "",
+            region_code: r.region_code ?? "",
+        } as PlayerSeasonStat));
 
         rows.sort((a, b) => b.season_name.localeCompare(a.season_name));
 

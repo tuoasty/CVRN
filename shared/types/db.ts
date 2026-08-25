@@ -63,6 +63,9 @@ export type DBClient = SupabaseClient<Database>;
 export type PlayerSeasonStatRow =
     Database["public"]["Views"]["v_player_season_stats"]["Row"];
 
+export type RangedSeasonStatRow =
+    Database["public"]["Functions"]["get_player_season_stats_ranged"]["Returns"][number];
+
 export type PlayerLeaderboardViewRow =
     Database["public"]["Views"]["v_player_leaderboard"]["Row"];
 
