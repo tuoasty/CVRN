@@ -61,6 +61,8 @@ export default function FeaturedMatchCarousel({
     const [hovering, setHovering] = useState(false);
     const [noAnim, setNoAnim] = useState(false);
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lockRef = useRef(false);
+    const lockTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const realIndex = many ? (((pos - 1) % N) + N) % N : 0;
 
@@ -97,6 +99,8 @@ export default function FeaturedMatchCarousel({
         return () => cancelAnimationFrame(raf);
     }, [noAnim]);
 
+    useEffect(() => () => { if (lockTimer.current) clearTimeout(lockTimer.current); }, []);
+
     if (N === 0) return null;
 
     const extended = many ? [slides[N - 1], ...slides, slides[0]] : slides;
@@ -105,8 +109,11 @@ export default function FeaturedMatchCarousel({
     const regionTimezone = regionCode ? getRegionTimezone(regionCode) : undefined;
 
     const step = (delta: number) => {
+        if (lockRef.current) return;
+        lockRef.current = true;
         setAutoPlay(false);
-        setPos(p => p + delta);
+        setPos(p => Math.min(N + 1, Math.max(0, p + delta)));
+        lockTimer.current = setTimeout(() => { lockRef.current = false; }, SLIDE_MS);
     };
 
     const ariaLabel = shown.kind === "match"
