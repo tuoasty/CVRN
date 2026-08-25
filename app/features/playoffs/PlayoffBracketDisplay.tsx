@@ -408,7 +408,7 @@ export function PlayoffBracketDisplay({
                     width: MATCH_WIDTH,
                 }}
             >
-                <div className="mb-6 pb-3 border-b-2 border-primary/20">
+                <div className="mb-6 pb-3 border-b-2 border-border">
                     <h3 className="text-base font-bold uppercase tracking-wider text-foreground">
                         {round.label}
                     </h3>
@@ -467,7 +467,7 @@ export function PlayoffBracketDisplay({
 
     if (upperRounds.length === 0 && lowerRounds.length === 0 && !thirdPlaceMatch) {
         return (
-            <div className="panel p-12 border-l-4 border-l-muted">
+            <div className="panel p-12">
                 <p className="text-sm text-muted-foreground text-center">
                     No playoff bracket data available
                 </p>
@@ -479,8 +479,8 @@ export function PlayoffBracketDisplay({
         <div
             ref={containerRef}
             className={cn(
-                "relative panel overflow-hidden border-l-4 border-l-primary/30 rounded-sm",
-                isFullscreen && "rounded-none border-l-0 bg-background"
+                "relative panel overflow-hidden rounded-sm",
+                isFullscreen && "rounded-none bg-background"
             )}
         >
             <Button
@@ -498,7 +498,7 @@ export function PlayoffBracketDisplay({
                 onMouseDown={handleDragStart}
                 onClickCapture={handleClickCapture}
                 className={cn(
-                    "overflow-x-auto",
+                    "overflow-x-auto bg-muted/30",
                     isFullscreen ? "overflow-y-auto" : "overflow-y-hidden",
                     isDragging ? "cursor-grabbing select-none" : "cursor-grab"
                 )}
@@ -527,30 +527,30 @@ export function PlayoffBracketDisplay({
                                         y1={line.y1}
                                         x2={line.x2}
                                         y2={line.y2}
-                                        stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                                        strokeWidth={line.isCompleted ? 3 : 2}
-                                        strokeDasharray={line.isCompleted ? "0" : "5,5"}
-                                        strokeOpacity={line.isCompleted ? 0.8 : 1}
+                                        stroke="hsl(var(--muted-foreground))"
+                                        strokeWidth={line.isCompleted ? 2.5 : 1.5}
+                                        strokeDasharray={line.isCompleted ? "0" : "4,4"}
+                                        strokeOpacity={line.isCompleted ? 0.55 : 0.4}
                                     />
                                     <line
                                         x1={line.x2}
                                         y1={line.y2}
                                         x2={line.x3}
                                         y2={line.y3}
-                                        stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                                        strokeWidth={line.isCompleted ? 3 : 2}
-                                        strokeDasharray={line.isCompleted ? "0" : "5,5"}
-                                        strokeOpacity={line.isCompleted ? 0.8 : 1}
+                                        stroke="hsl(var(--muted-foreground))"
+                                        strokeWidth={line.isCompleted ? 2.5 : 1.5}
+                                        strokeDasharray={line.isCompleted ? "0" : "4,4"}
+                                        strokeOpacity={line.isCompleted ? 0.55 : 0.4}
                                     />
                                     <line
                                         x1={line.x3}
                                         y1={line.y3}
                                         x2={line.x4}
                                         y2={line.y4}
-                                        stroke={line.isCompleted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                                        strokeWidth={line.isCompleted ? 3 : 2}
-                                        strokeDasharray={line.isCompleted ? "0" : "5,5"}
-                                        strokeOpacity={line.isCompleted ? 0.8 : 1}
+                                        stroke="hsl(var(--muted-foreground))"
+                                        strokeWidth={line.isCompleted ? 2.5 : 1.5}
+                                        strokeDasharray={line.isCompleted ? "0" : "4,4"}
+                                        strokeOpacity={line.isCompleted ? 0.55 : 0.4}
                                     />
                                 </g>
                             ))}
@@ -560,7 +560,7 @@ export function PlayoffBracketDisplay({
 
                         {lowerBandTop != null && (
                             <div
-                                className="absolute border-t border-dashed border-primary/20"
+                                className="absolute border-t border-dashed border-border"
                                 style={{left: 0, top: lowerBandTop - BAND_GAP / 2, width: totalWidth}}
                             />
                         )}
