@@ -2,7 +2,8 @@
 
 import {useMemo} from "react";
 import Link from "next/link";
-import {ArrowRight, Trophy} from "lucide-react";
+import {ArrowRight, Loader2, Trophy} from "lucide-react";
+import {format} from "date-fns";
 import {PublicPageHeader} from "@/app/components/public/PublicPageHeader";
 import LeaderboardFilterBar from "@/app/features/leaderboard/LeaderboardFilterBar";
 import LeaderboardTable from "@/app/features/leaderboard/LeaderboardTable";
@@ -10,6 +11,7 @@ import {
     matchesPlayerQuery,
     useLeaderboardFilters,
 } from "@/app/features/leaderboard/useLeaderboardFilters";
+import {useRangedLeaderboard} from "@/app/hooks/useRangedLeaderboard";
 import type {PlayerLeaderboardRow} from "@/server/domains/player";
 import type {SeasonWithPlayoffConfig} from "@/server/domains/season";
 import type {Region} from "@/shared/types/db";
@@ -21,19 +23,34 @@ type Props = {
 };
 
 export default function SeasonLeaderboardPage({rows, season, region}: Props) {
-    const {filters, setView, setSort, setQuery} = useLeaderboardFilters();
+    const {filters, setView, setSort, setQuery, setRange} = useLeaderboardFilters();
+
+    const {rows: rangedRows, isLoading: rangedLoading, active: rangeActive} =
+        useRangedLeaderboard(season.id, region.id, filters.range);
+
+    const activeRows = useMemo(
+        () => (rangeActive ? (rangedRows ?? []) : rows),
+        [rangeActive, rangedRows, rows]
+    );
 
     const shownCount = useMemo(
-        () => rows.filter(r => matchesPlayerQuery(r, filters.q)).length,
-        [rows, filters.q]
+        () => activeRows.filter(r => matchesPlayerQuery(r, filters.q)).length,
+        [activeRows, filters.q]
     );
+
+    const rangeLabel =
+        rangeActive && filters.range.from && filters.range.to
+            ? `${format(new Date(filters.range.from), "MMM d")} – ${format(new Date(new Date(filters.range.to).getTime() - 1), "MMM d")}`
+            : null;
+
+    const subtitle = `${region.code.toUpperCase()} · ${season.name}${rangeLabel ? ` · ${rangeLabel}` : ""}`;
 
     return (
         <div className="page-bleed py-6 space-y-6">
             <PublicPageHeader
                 icon={Trophy}
                 title="Leaderboard"
-                subtitle={`${region.code.toUpperCase()} · ${season.name}`}
+                subtitle={subtitle}
                 actions={
 
                     <Link
@@ -51,17 +68,30 @@ export default function SeasonLeaderboardPage({rows, season, region}: Props) {
                 query={filters.q}
                 onViewChange={setView}
                 onQueryChange={setQuery}
-                totalCount={rows.length}
+                totalCount={activeRows.length}
                 shownCount={shownCount}
+                range={filters.range}
+                onRangeChange={setRange}
             />
 
-            <LeaderboardTable
-                rows={rows}
-                filters={filters}
-                onSort={setSort}
-                onClearSearch={() => setQuery("")}
-                emptyMessage="No player stats recorded for this season yet."
-            />
+            <div className="relative">
+                {rangeActive && rangedLoading && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-label="Loading" />
+                    </div>
+                )}
+                <LeaderboardTable
+                    rows={activeRows}
+                    filters={filters}
+                    onSort={setSort}
+                    onClearSearch={() => setQuery("")}
+                    emptyMessage={
+                        rangeActive
+                            ? "No player stats in the selected dates."
+                            : "No player stats recorded for this season yet."
+                    }
+                />
+            </div>
         </div>
     );
 }

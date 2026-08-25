@@ -62,3 +62,11 @@ export const PlayerLeaderboardSchema = z.object({
     seasonId: z.uuid().optional(),
 })
 export type PlayerLeaderboardInput = z.infer<typeof PlayerLeaderboardSchema>
+
+export const RangedLeaderboardSchema = z.object({
+    seasonId: z.uuid(),
+    regionId: z.uuid(),
+    from: z.string().min(1),
+    to: z.string().min(1),
+})
+export type RangedLeaderboardInput = z.infer<typeof RangedLeaderboardSchema>

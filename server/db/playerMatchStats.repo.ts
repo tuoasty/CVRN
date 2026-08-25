@@ -3,6 +3,7 @@ import {
     PlayerLeaderboardViewRow,
     PlayerMatchStatSet,
     PlayerMatchStatTotal,
+    RangedSeasonStatRow,
 } from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
@@ -59,6 +60,19 @@ export async function findPlayerLeaderboard(
     const {data, error} = await query.order("points_total", {ascending: false, nullsFirst: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
+}
+
+export async function findRangedPlayerLeaderboard(
+    supabase: DBClient,
+    p: {seasonId: string; from: string; to: string}
+): Promise<Result<RangedSeasonStatRow[]>> {
+    const {data, error} = await supabase.rpc("get_player_season_stats_ranged", {
+        p_season_id: p.seasonId,
+        p_from: p.from,
+        p_to: p.to,
+    });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as RangedSeasonStatRow[]);
 }
 
 export async function replaceMatchStats(
