@@ -9,10 +9,8 @@ const STAFF = [
     { name: "DivKenma", role: "Co-Owner"},
     { name: "curse", role: "Co-Owner" },
     { name: "sonny", role: "AS Commissioner" },
-    { name: "Hunter", role: "NA Commissioner" },
+    { name: "Hunter", role: "NA/SA Commissioner" },
     { name: "tee", role: "EU Commissioner" },
-    { name: "thor", role: "SA Commissioner" },
-
 ];
 
 export default function PublicFooter() {
