@@ -95,7 +95,13 @@ export default function PublicMatchCard({
     const homePts = (match.home_team_points ?? 0) + (standingMethod === "points" ? (match.home_team_bonus ?? 0) : 0);
     const awayPts = (match.away_team_points ?? 0) + (standingMethod === "points" ? (match.away_team_bonus ?? 0) : 0);
     const matchNumber = parseMatchNumber(match.match_code);
-    const matchLabel = labelOverride ?? (matchNumber != null ? `Match ${matchNumber}` : "Match");
+    const matchLabel =
+        labelOverride ??
+        (match.match_type === "playoffs"
+            ? (match.match_code ?? "Match")
+            : matchNumber != null
+                ? `Match ${matchNumber}`
+                : "Match");
     const statusConfig = getStatusConfig(match.status);
     const regionTimezone = regionCode ? getRegionTimezone(regionCode) : undefined;
 
