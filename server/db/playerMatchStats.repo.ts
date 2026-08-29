@@ -51,11 +51,12 @@ export async function findMatchStatTotals(
 
 export async function findPlayerLeaderboard(
     supabase: DBClient,
-    p: {regionCode?: string; seasonId?: string}
+    p: {regionCode?: string; seasonId?: string; teamId?: string}
 ): Promise<Result<PlayerLeaderboardViewRow[]>> {
     let query = supabase.from("v_player_leaderboard").select("*");
     if (p.regionCode) query = query.ilike("region_code", p.regionCode);
     if (p.seasonId) query = query.eq("season_id", p.seasonId);
+    if (p.teamId) query = query.eq("team_id", p.teamId);
 
     const {data, error} = await query.order("points_total", {ascending: false, nullsFirst: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));

@@ -12,6 +12,7 @@ export {getWeekMatchCounts} from "./queries/getWeekMatchCounts";
 export {getPlayoffMatchesBySeason} from "./queries/getPlayoffMatchesBySeason";
 export {getUpcomingMatches} from "./queries/getUpcomingMatches";
 export {getRecentMatches} from "./queries/getRecentMatches";
+export {getTeamMatches} from "./queries/getTeamMatches";
 export {getMatchDetail, getMatchDetailById} from "./queries/getMatchDetail";
 export type {MatchDetail} from "./queries/getMatchDetail";
 export type {TeamRosters, RosterPlayer} from "./queries/getTeamRosters";

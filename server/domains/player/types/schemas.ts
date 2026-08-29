@@ -60,6 +60,7 @@ export type TransferCaptainInput = z.infer<typeof TransferCaptainSchema>
 export const PlayerLeaderboardSchema = z.object({
     regionCode: z.string().min(1).max(16).optional(),
     seasonId: z.uuid().optional(),
+    teamId: z.uuid().optional(),
 })
 export type PlayerLeaderboardInput = z.infer<typeof PlayerLeaderboardSchema>
 
