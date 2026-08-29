@@ -317,17 +317,14 @@ export default function PublicTeamDetailPage({
                 <TeamStatsSection rows={statRows} />
             </div>
 
-            <div className="space-y-3">
-                <h3 className="text-sm uppercase tracking-wide text-muted-foreground">Match History</h3>
-                <TeamMatchHistory
-                    matches={matches}
-                    teams={matchTeams}
-                    teamId={teamData.id}
-                    regionCode={regionCode}
-                    seasonSlug={seasonSlug}
-                    standingMethod={standingMethod}
-                />
-            </div>
+            <TeamMatchHistory
+                matches={matches}
+                teams={matchTeams}
+                teamId={teamData.id}
+                regionCode={regionCode}
+                seasonSlug={seasonSlug}
+                standingMethod={standingMethod}
+            />
         </div>
     );
 }
