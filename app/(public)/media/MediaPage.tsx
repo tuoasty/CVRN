@@ -69,14 +69,15 @@ function MediaCard({ post, authorName, onVideoClick, onGfxClick }: {
     onGfxClick: (post: MediaPost) => void
 }) {
     const isVideo = post.type === 'video' || post.type === 'recap'
+    const isImage = post.type === 'gfx' || post.type === 'totw' || post.type === 'potw'
     const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
 
     function handleClick() {
         if (isVideo && post.video_url) onVideoClick(post.video_url)
-        else if (post.type === 'gfx' && post.image_url) onGfxClick(post)
+        else if (isImage && post.image_url) onGfxClick(post)
     }
 
-    const isClickable = (isVideo && !!post.video_url) || (post.type === 'gfx' && !!post.image_url)
+    const isClickable = (isVideo && !!post.video_url) || (isImage && !!post.image_url)
 
     return (
         <div
