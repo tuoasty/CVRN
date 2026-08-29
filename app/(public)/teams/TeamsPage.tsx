@@ -20,18 +20,15 @@ export default function TeamsPage({ season, region, teams }: Props) {
                 <PublicPageHeader icon={Users} title="Teams" subtitle={subtitle} />
 
                 {teams.length === 0 ? (
-                    <div className="panel p-16 bg-gradient-to-br from-muted/30 to-transparent">
-                        <div className="text-center space-y-3">
-                            <Users className="h-12 w-12 text-muted-foreground/40 mx-auto" />
-                            <p className="text-sm text-muted-foreground font-medium">
-                                No teams found for this season
-                            </p>
-                        </div>
+                    <div className="flex min-h-[208px] items-center justify-center">
+                        <p className="text-sm text-muted-foreground">
+                            No teams found for this season
+                        </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                         {teams.map((team, index) => (
-                            <PublicTeamCard key={team.id} team={team} isPriority={index < 3} />
+                            <PublicTeamCard key={team.id} team={team} isPriority={index < 4} />
                         ))}
                     </div>
                 )}

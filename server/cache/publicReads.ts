@@ -16,13 +16,16 @@ import {
     getPlayersByIds,
     getLeaderboardStatRows,
     getLeaderboardIdentity,
+    getTeamLeaderboard,
 } from "@/server/domains/player";
 import type {PlayerDetail} from "@/server/domains/player";
 import {
     getTeamWithRegionAndPlayers,
     getTeamNameHistory,
     getAllTeamsWithRegions,
+    getTeamsByIds,
 } from "@/server/domains/team";
+import type {TeamWithRegion} from "@/server/domains/team";
 import {getStandings} from "@/server/domains/standing";
 import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 import {getPlayoffBracketBySeasonId} from "@/server/domains/playoff";
@@ -39,7 +42,9 @@ import {
     getPlayoffRoundCounts,
     getWeekMatchCounts,
     getPlayoffMatchesBySeason,
+    getTeamMatches,
 } from "@/server/domains/match";
+import type {MatchWithDetails} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublicSpecSnapshot} from "@/server/domains/spec";
@@ -177,6 +182,48 @@ export const getCachedPlayerLeaderboard = unstable_cache(
         tags: [CACHE_TAGS.stats],
         revalidate: STATS_REVALIDATE_SECONDS,
     },
+);
+
+export const getCachedTeamLeaderboard = unstable_cache(
+    async (teamId: string, seasonId: string) =>
+        unwrap(
+            await getTeamLeaderboard(createPublicClient(), {teamId, seasonId}),
+            "getCachedTeamLeaderboard",
+        ),
+    ["public:team-leaderboard"],
+    {
+        tags: [CACHE_TAGS.stats],
+        revalidate: STATS_REVALIDATE_SECONDS,
+    },
+);
+
+export type TeamMatchHistoryResult = {
+    matches: MatchWithDetails[];
+    teams: Record<string, TeamWithRegion>;
+};
+
+export const getCachedTeamMatches = unstable_cache(
+    async (teamId: string, seasonId: string): Promise<TeamMatchHistoryResult> => {
+        const client = createPublicClient();
+        const matches = unwrap(
+            await getTeamMatches(client, {teamId, seasonId}),
+            "getCachedTeamMatches",
+        );
+        const ids = [
+            ...new Set(
+                matches.flatMap(m =>
+                    [m.match.home_team_id, m.match.away_team_id].filter(
+                        (x): x is string => !!x,
+                    ),
+                ),
+            ),
+        ];
+        const teamList = unwrap(await getTeamsByIds(client, ids), "getCachedTeamMatches.teams");
+        const teams = Object.fromEntries(teamList.map(t => [t.id, t]));
+        return {matches, teams};
+    },
+    ["public:team-matches"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedAllSeasonRows = unstable_cache(

@@ -26,6 +26,8 @@ interface PublicMatchCardProps {
     awayRecord?: TeamRecord;
     isPriority?: boolean;
     standingMethod?: StandingMethod;
+    labelOverride?: string;
+    minimalMeta?: boolean;
 }
 
 const getStatusConfig = (status: string) => {
@@ -84,6 +86,8 @@ export default function PublicMatchCard({
     awayRecord,
     isPriority,
     standingMethod = "lvr",
+    labelOverride,
+    minimalMeta = false,
 }: PublicMatchCardProps) {
     const { match, sets } = matchDetails;
     const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
@@ -91,7 +95,13 @@ export default function PublicMatchCard({
     const homePts = (match.home_team_points ?? 0) + (standingMethod === "points" ? (match.home_team_bonus ?? 0) : 0);
     const awayPts = (match.away_team_points ?? 0) + (standingMethod === "points" ? (match.away_team_bonus ?? 0) : 0);
     const matchNumber = parseMatchNumber(match.match_code);
-    const matchLabel = matchNumber != null ? `Match ${matchNumber}` : "Match";
+    const matchLabel =
+        labelOverride ??
+        (match.match_type === "playoffs"
+            ? (match.match_code ?? "Match")
+            : matchNumber != null
+                ? `Match ${matchNumber}`
+                : "Match");
     const statusConfig = getStatusConfig(match.status);
     const regionTimezone = regionCode ? getRegionTimezone(regionCode) : undefined;
 
@@ -187,7 +197,7 @@ export default function PublicMatchCard({
                 {}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
                     <div className="flex items-center gap-1.5">
-                        {match.is_forfeit ? (
+                        {!minimalMeta && (match.is_forfeit ? (
                             <Badge
                                 variant="outline"
                                 className="rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider bg-red-600/10 text-red-600 border-red-600/20"
@@ -204,18 +214,20 @@ export default function PublicMatchCard({
                             >
                                 {statusConfig.label}
                             </Badge>
+                        ))}
+                        {!minimalMeta && (
+                            <Badge
+                                variant="outline"
+                                className={cn(
+                                    "rounded-sm text-[10px] h-5 px-2",
+                                    match.match_type === "playoffs"
+                                        ? "bg-purple-600/10 text-purple-600 border-purple-600/20"
+                                        : ""
+                                )}
+                            >
+                                BO{match.best_of}
+                            </Badge>
                         )}
-                        <Badge
-                            variant="outline"
-                            className={cn(
-                                "rounded-sm text-[10px] h-5 px-2",
-                                match.match_type === "playoffs"
-                                    ? "bg-purple-600/10 text-purple-600 border-purple-600/20"
-                                    : ""
-                            )}
-                        >
-                            BO{match.best_of}
-                        </Badge>
                     </div>
 
                     {isCompleted &&
@@ -261,25 +273,29 @@ export default function PublicMatchCard({
             </div>
 
             {}
-            <div className="hidden lg:grid grid-cols-[190px_minmax(0,1fr)_72px_minmax(0,1fr)_230px_100px] items-center gap-4">
+            <div className="hidden lg:grid grid-cols-[220px_minmax(0,1fr)_72px_minmax(0,1fr)_230px_100px] items-center gap-4">
                 {}
                 <div className="flex flex-col gap-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">
                             {matchLabel}
                         </span>
-                        {match.is_forfeit ? (
-                            <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider bg-red-600/10 text-red-600 border-red-600/20">
-                                Forfeit
-                            </Badge>
-                        ) : (
-                            <Badge variant="outline" className={cn("rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider", statusConfig.className)}>
-                                {statusConfig.label}
-                            </Badge>
+                        {!minimalMeta && (
+                            <>
+                                {match.is_forfeit ? (
+                                    <Badge variant="outline" className="shrink-0 rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider bg-red-600/10 text-red-600 border-red-600/20">
+                                        Forfeit
+                                    </Badge>
+                                ) : (
+                                    <Badge variant="outline" className={cn("shrink-0 rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider", statusConfig.className)}>
+                                        {statusConfig.label}
+                                    </Badge>
+                                )}
+                                <Badge variant="outline" className="shrink-0 rounded-sm text-[10px] h-5 px-2">
+                                    BO{match.best_of}
+                                </Badge>
+                            </>
                         )}
-                        <Badge variant="outline" className="rounded-sm text-[10px] h-5 px-2">
-                            BO{match.best_of}
-                        </Badge>
                     </div>
                     <span className="text-xs text-muted-foreground">{timeDisplay}</span>
                 </div>

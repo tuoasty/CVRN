@@ -5,9 +5,13 @@ import BackButton from "@/app/components/public/BackButton";
 import { buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
 import { cn } from "@/lib/utils";
 import { getLogoClassName } from "@/app/lib/logoClass";
-import { PlayerWithRole } from "@/server/domains/player";
+import { PlayerWithRole, PlayerLeaderboardRow } from "@/server/domains/player";
 import { TeamWithRegion, TeamNameHistoryEntry } from "@/server/domains/team";
+import { MatchWithDetails } from "@/server/domains/match";
+import { StandingMethod } from "@/shared/types/standing";
 import { positionLabel } from "@/shared/volleyball/positions";
+import TeamStatsSection from "./TeamStatsSection";
+import TeamMatchHistory from "./TeamMatchHistory";
 
 const LEADERSHIP_CONFIG = {
     captain:       { label: "Captain",       from: "#9e6bff", to: "#9fc1ff", textColor: "#ffffff" },
@@ -163,9 +167,25 @@ type Props = {
     team: TeamWithRegion;
     players: PlayerWithRole[];
     history: TeamNameHistoryEntry[];
+    statRows: PlayerLeaderboardRow[];
+    matches: MatchWithDetails[];
+    matchTeams: Record<string, TeamWithRegion>;
+    regionCode: string;
+    seasonSlug: string;
+    standingMethod: StandingMethod;
 };
 
-export default function PublicTeamDetailPage({ team: teamData, players, history }: Props) {
+export default function PublicTeamDetailPage({
+    team: teamData,
+    players,
+    history,
+    statRows,
+    matches,
+    matchTeams,
+    regionCode,
+    seasonSlug,
+    standingMethod,
+}: Props) {
     const regionName = teamData.seasons?.regions?.name || "Unknown Region";
     const regionCodeDisplay = teamData.seasons?.regions?.code?.toUpperCase() || "??";
     const seasonName = teamData.seasons?.name || "Unknown Season";
@@ -291,6 +311,20 @@ export default function PublicTeamDetailPage({ team: teamData, players, history 
                     ))}
                 </div>
             </div>
+
+            <div className="space-y-3">
+                <h3 className="text-sm uppercase tracking-wide text-muted-foreground">Season Stats</h3>
+                <TeamStatsSection rows={statRows} />
+            </div>
+
+            <TeamMatchHistory
+                matches={matches}
+                teams={matchTeams}
+                teamId={teamData.id}
+                regionCode={regionCode}
+                seasonSlug={seasonSlug}
+                standingMethod={standingMethod}
+            />
         </div>
     );
 }

@@ -15,6 +15,7 @@ export {lazySyncPlayer} from "./helpers/lazySyncPlayer";
 export {getPlayerByUsername} from "./queries/getPlayerByUsername";
 export {getPlayerSeasonStats} from "./queries/getPlayerSeasonStats";
 export {getLeaderboardStatRows} from "./queries/getLeaderboardStatRows";
+export {getTeamLeaderboard} from "./queries/getTeamLeaderboard";
 export {getRangedLeaderboardStatRows} from "./queries/getRangedLeaderboardStatRows";
 export {getLeaderboardIdentity} from "./queries/getLeaderboardIdentity";
 export {getPlayerAwards} from "./queries/getPlayerAwards";

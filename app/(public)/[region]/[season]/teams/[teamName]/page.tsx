@@ -5,8 +5,11 @@ import {
     getCachedSeasonBySlugAndRegion,
     getCachedTeamWithPlayers,
     getCachedTeamNameHistory,
+    getCachedTeamLeaderboard,
+    getCachedTeamMatches,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
+import type { StandingMethod } from "@/shared/types/standing";
 
 type PageProps = {
     params: Promise<{
@@ -36,13 +39,23 @@ export default async function TeamPage({ params }: PageProps) {
     const teamData = await getCachedTeamWithPlayers(teamSlug, seasonRecord.id);
     if (!teamData) notFound();
 
-    const history = await getCachedTeamNameHistory(teamData.team.id);
+    const [history, statRows, matchHistory] = await Promise.all([
+        getCachedTeamNameHistory(teamData.team.id),
+        getCachedTeamLeaderboard(teamData.team.id, seasonRecord.id),
+        getCachedTeamMatches(teamData.team.id, seasonRecord.id),
+    ]);
 
     return (
         <PublicTeamDetailPage
             team={teamData.team}
             players={teamData.players}
             history={history}
+            statRows={statRows}
+            matches={matchHistory.matches}
+            matchTeams={matchHistory.teams}
+            regionCode={regionCode}
+            seasonSlug={seasonSlug}
+            standingMethod={regionRecord.standing_method as StandingMethod}
         />
     );
 }

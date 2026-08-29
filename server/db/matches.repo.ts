@@ -1,7 +1,7 @@
 import {DBClient, Match, MatchSet, Player} from "@/shared/types/db";
 import {InsertMatchDto} from "@/server/domains/match";
 import {Err, Ok, Result} from "@/shared/types/result";
-import {serializeError} from "@/server/utils/serializeableError";
+import {createError, serializeError} from "@/server/utils/serializeableError";
 
 type MatchOfficialJoin = {
     official_type: string;
@@ -362,6 +362,46 @@ export async function findRecentMatches(
         .eq("status", "completed")
         .order("scheduled_at", {ascending: false, nullsFirst: false})
         .limit(limit);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as MatchWithDetails[]);
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function findMatchesByTeam(
+    supabase: DBClient,
+    teamId: string,
+    seasonId: string
+): Promise<Result<MatchWithDetails[]>> {
+    if (!UUID_RE.test(teamId)) {
+        return Err(createError("Invalid teamId", "VALIDATION_ERROR"));
+    }
+
+    const {data, error} = await supabase
+        .from("matches")
+        .select(`
+            *,
+            match_sets (
+                set_number,
+                home_score,
+                away_score
+            ),
+            match_officials (
+                official_type,
+                players (
+                    id,
+                    username,
+                    display_name,
+                    avatar_url
+                )
+            ),
+            playoff_brackets (round)
+        `)
+        .eq("season_id", seasonId)
+        .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
+        .order("scheduled_at", {ascending: false, nullsFirst: false})
+        .order("week", {ascending: false, nullsFirst: false})
+        .order("created_at", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as MatchWithDetails[]);
 }
