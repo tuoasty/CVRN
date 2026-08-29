@@ -1,35 +1,24 @@
 "use client";
 
-import { useMemo } from "react";
-import LeaderboardFilterBar from "@/app/features/leaderboard/LeaderboardFilterBar";
 import LeaderboardTable from "@/app/features/leaderboard/LeaderboardTable";
-import { matchesPlayerQuery, useLeaderboardFilters } from "@/app/features/leaderboard/useLeaderboardFilters";
+import { useLeaderboardFilters } from "@/app/features/leaderboard/useLeaderboardFilters";
+import StatViewSelector from "@/app/features/player/StatViewSelector";
 import type { PlayerLeaderboardRow } from "@/server/domains/player";
 
 export default function TeamStatsSection({ rows }: { rows: PlayerLeaderboardRow[] }) {
-    const { filters, setView, setSort, setQuery } = useLeaderboardFilters();
-
-    const shownCount = useMemo(
-        () => rows.filter(r => matchesPlayerQuery(r, filters.q)).length,
-        [rows, filters.q],
-    );
+    const { filters, setView, setSort } = useLeaderboardFilters();
 
     return (
         <div className="space-y-3">
-            <LeaderboardFilterBar
-                view={filters.view}
-                query={filters.q}
-                onViewChange={setView}
-                onQueryChange={setQuery}
-                totalCount={rows.length}
-                shownCount={shownCount}
-            />
+            <StatViewSelector value={filters.view} onChange={setView} />
             <LeaderboardTable
                 rows={rows}
                 filters={filters}
                 onSort={setSort}
-                onClearSearch={() => setQuery("")}
+                onClearSearch={() => {}}
                 emptyMessage="No player stats recorded for this team yet."
+                flow
+                showTeam={false}
             />
         </div>
     );

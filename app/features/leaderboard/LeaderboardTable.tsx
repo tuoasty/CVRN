@@ -28,7 +28,9 @@ type Props = {
     onClearSearch: () => void;
 
     showRegion?: boolean;
+    showTeam?: boolean;
     emptyMessage?: string;
+    flow?: boolean;
 };
 
 function compareRows(a: LeaderboardDisplayRow, b: LeaderboardDisplayRow, key: SortKey, desc: boolean): number {
@@ -77,7 +79,9 @@ export default function LeaderboardTable({
     onSort,
     onClearSearch,
     showRegion = false,
+    showTeam = true,
     emptyMessage = "No player stats recorded yet.",
+    flow = false,
 }: Props) {
     const columns = STAT_VIEW_COLUMNS[filters.view];
     const groups = groupPlayerColumns(columns);
@@ -145,7 +149,7 @@ export default function LeaderboardTable({
         Math.max(0, windowEnd - visible.length),
     );
 
-    const totalColumnCount = 3 + (showRegion ? 1 : 0) + columns.length + 1;
+    const totalColumnCount = 2 + (showTeam ? 1 : 0) + (showRegion ? 1 : 0) + columns.length + 1;
 
     if (rows.length === 0) {
         return <p className="text-sm text-muted-foreground py-8 text-center">{emptyMessage}</p>;
@@ -177,23 +181,23 @@ export default function LeaderboardTable({
             <div
                 className={cn(
                     "border border-border rounded-sm",
-                    "[&>[data-slot=table-container]]:max-h-[calc(100vh-18rem)]",
-                    "[&>[data-slot=table-container]]:min-h-[20rem]",
-                    "[&>[data-slot=table-container]]:overflow-auto",
+                    !flow && "[&>[data-slot=table-container]]:max-h-[calc(100vh-18rem)]",
+                    !flow && "[&>[data-slot=table-container]]:min-h-[20rem]",
+                    !flow && "[&>[data-slot=table-container]]:overflow-auto",
                 )}
             >
                 <Table className="table-fixed border-collapse">
                     <colgroup>
                         <col className={RANK_W} />
                         <col className={PLAYER_W} />
-                        <col className={TEAM_W} />
+                        {showTeam && <col className={TEAM_W} />}
                         {showRegion && <col className={REGION_W} />}
                         {columns.map(col => (
                             <col key={col.key as string} className={playerColWidthClass(col.format)} />
                         ))}
                         <col />
                     </colgroup>
-                    <TableHeader className={cn("h-7 sticky top-0 bg-background", Z_HEAD)}>
+                    <TableHeader className={cn("h-7 bg-background", !flow && "sticky top-0", Z_HEAD)}>
                         <TableRow className="border-b-0 hover:bg-transparent">
                             <TableHead
                                 rowSpan={2}
@@ -217,16 +221,18 @@ export default function LeaderboardTable({
                             >
                                 Player
                             </TableHead>
-                            <TableHead
-                                rowSpan={2}
-                                className={cn(
-                                    "text-left align-bottom px-2 border-r border-border/30 text-xs font-semibold uppercase tracking-wider",
-                                    HEAD_BG,
-                                    HEAD_RULE,
-                                )}
-                            >
-                                Team
-                            </TableHead>
+                            {showTeam && (
+                                <TableHead
+                                    rowSpan={2}
+                                    className={cn(
+                                        "text-left align-bottom px-2 border-r border-border/30 text-xs font-semibold uppercase tracking-wider",
+                                        HEAD_BG,
+                                        HEAD_RULE,
+                                    )}
+                                >
+                                    Team
+                                </TableHead>
+                            )}
                             {showRegion && (
                                 <TableHead
                                     rowSpan={2}
@@ -320,6 +326,7 @@ export default function LeaderboardTable({
                                 columns={columns}
                                 sortKey={filters.sort}
                                 showRegion={showRegion}
+                                showTeam={showTeam}
                             />
                         ))}
 
@@ -348,6 +355,7 @@ export default function LeaderboardTable({
                                         columns={columns}
                                         sortKey={filters.sort}
                                 showRegion={showRegion}
+                                showTeam={showTeam}
                                     />
                                 ))}
                             </>
@@ -407,6 +415,7 @@ function LeaderboardRow({
     columns,
     sortKey,
     showRegion,
+    showTeam,
 }: {
     row: LeaderboardDisplayRow;
 
@@ -414,6 +423,7 @@ function LeaderboardRow({
     columns: PlayerStatColumn[];
     sortKey: SortKey;
     showRegion: boolean;
+    showTeam: boolean;
 }) {
     const teamHref = buildPublicTeamHref({
         regionCode: row.region_code,
@@ -472,18 +482,20 @@ function LeaderboardRow({
                 </div>
             </TableCell>
 
-            <TableCell className="py-0 px-2 align-middle border-r border-border/30">
-                {row.team_name ? (
-                    <TeamCell
-                        href={teamHref}
-                        name={row.team_name}
-                        logoUrl={row.team_logo_url}
-                        bgRemoved={row.team_logo_bg_removed ?? false}
-                    />
-                ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                )}
-            </TableCell>
+            {showTeam && (
+                <TableCell className="py-0 px-2 align-middle border-r border-border/30">
+                    {row.team_name ? (
+                        <TeamCell
+                            href={teamHref}
+                            name={row.team_name}
+                            logoUrl={row.team_logo_url}
+                            bgRemoved={row.team_logo_bg_removed ?? false}
+                        />
+                    ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                </TableCell>
+            )}
 
             {showRegion && (
                 <TableCell className="py-0 px-2 align-middle border-r border-border/30">

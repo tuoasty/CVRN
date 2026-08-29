@@ -1,6 +1,7 @@
 import { CalendarDays } from "lucide-react";
 import PublicMatchCard from "@/app/(public)/matches/PublicMatchCard";
 import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
+import { getMatchTypeLabel } from "@/app/utils/matchLabel";
 import type { MatchWithDetails } from "@/server/domains/match";
 import type { TeamWithRegion } from "@/server/domains/team";
 import type { StandingMethod } from "@/shared/types/standing";
@@ -48,15 +49,21 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
         );
     }
 
+    const ordered = [...matches].sort(
+        (a, b) =>
+            (a.match.status === "pending" ? 0 : 1) - (b.match.status === "pending" ? 0 : 1),
+    );
+
     return (
         <div className="space-y-3">
-            {matches.map((md, index) => {
+            {ordered.map((md, index) => {
                 const original = md.match;
                 const originalHome = original.home_team_id ? teams[original.home_team_id] : undefined;
                 const originalAway = original.away_team_id ? teams[original.away_team_id] : undefined;
                 const oriented = orientForTeam(md, teamId);
                 const homeTeam = oriented.match.home_team_id ? teams[oriented.match.home_team_id] : undefined;
                 const awayTeam = oriented.match.away_team_id ? teams[oriented.match.away_team_id] : undefined;
+                const label = getMatchTypeLabel(original.match_type, original.week, md.playoff_round ?? null);
                 return (
                     <PublicMatchCard
                         key={original.id}
@@ -73,6 +80,8 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                         })}
                         isPriority={index < 2}
                         standingMethod={standingMethod}
+                        labelOverride={label}
+                        minimalMeta
                     />
                 );
             })}
