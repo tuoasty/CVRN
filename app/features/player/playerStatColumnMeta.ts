@@ -61,6 +61,8 @@ export const STAT_VIEW_COLUMNS: Record<StatView, PlayerStatColumn[]> = {
         ...SEASON_COLUMNS,
         ct("kills_total",          "K",    "Spiking", "Kills (season total)"),
         ps("kills_per_set",        "K/S",  "Spiking", "Kills per set"),
+        ct("kill_attempts_total",  "HA",   "Spiking", "Hitting attempts (season total)"),
+        ps("kill_attempts_per_set", "HA/S", "Spiking", "Hitting attempts per set"),
         ct("spiking_errors_total", "HE",   "Spiking", "Hitting errors (season total)"),
         ps("spiking_errors_per_set", "HE/S", "Spiking", "Hitting errors per set"),
         {key: "hit_eff",           label: "HIT%", group: "Spiking", description: "Hitting efficiency: (kills − errors) / attempts", format: "pct"},
