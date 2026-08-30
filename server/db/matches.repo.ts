@@ -187,6 +187,17 @@ export async function rpcVoidMatch(
     return Ok(data);
 }
 
+export async function rpcReadvancePlayoffMatch(
+    supabase: DBClient,
+    matchId: string
+): Promise<Result<Match>> {
+    const {data, error} = await supabase.rpc("readvance_playoff_match", {
+        p_match_id: matchId,
+    });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
 export async function rpcReapplyMatchResult(
     supabase: DBClient,
     params: {

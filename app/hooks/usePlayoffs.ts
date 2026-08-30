@@ -6,6 +6,7 @@ import {
     getPlayoffBracketBySeasonIdAction,
     getAllPlayoffConfigsAction,
     resetPlayoffBracketsAction,
+    readvancePlayoffMatchAction,
 } from '@/app/actions/playoff.actions';
 import { GeneratePlayoffBracketInput, Incoming } from '@/server/domains/playoff';
 import { Ok, Result } from '@/shared/types/result';
@@ -88,6 +89,13 @@ export async function generateBracket(input: GeneratePlayoffBracketInput): Promi
 
 export async function resetBrackets(seasonId: string): Promise<Result<true, SerializableError>> {
     const result = await resetPlayoffBracketsAction(seasonId);
+    if (!result.ok) return result;
+    await globalMutate(['brackets', seasonId]);
+    return Ok(true);
+}
+
+export async function readvancePlayoffMatch(matchId: string, seasonId: string): Promise<Result<true, SerializableError>> {
+    const result = await readvancePlayoffMatchAction(matchId);
     if (!result.ok) return result;
     await globalMutate(['brackets', seasonId]);
     return Ok(true);

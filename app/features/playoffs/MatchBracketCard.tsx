@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PlayoffBracket, Match } from "@/shared/types/db";
 import { TeamWithRegion } from "@/server/domains/team";
 import { Badge } from "@/app/components/ui/badge";
-import { Calendar, Trophy, AlertCircle } from "lucide-react";
+import { Calendar, Trophy, AlertCircle, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { getLogoClassName } from "@/app/lib/logoClass";
@@ -19,6 +19,8 @@ type MatchBracketCardProps = {
     awaySource?: string | undefined;
     regionCode?: string;
     href?: string | null;
+    canReadvance?: boolean;
+    onReadvance?: () => void;
 };
 
 function TeamRow({
@@ -90,6 +92,8 @@ export function MatchBracketCard({
     homeSource,
     awaySource,
     href,
+    canReadvance,
+    onReadvance,
 }: MatchBracketCardProps) {
     const isCompleted = match.status === "completed";
     const homeWon = isCompleted && (match.home_sets_won || 0) > (match.away_sets_won || 0);
@@ -170,11 +174,33 @@ export function MatchBracketCard({
         href && "hover:border-primary/40 hover:shadow-sm hover:-translate-y-px"
     );
 
-    return href ? (
+    const card = href ? (
         <Link href={href} prefetch={false} className={cn(baseClass, "cursor-pointer")}>
             {inner}
         </Link>
     ) : (
         <div className={baseClass}>{inner}</div>
+    );
+
+    if (!canReadvance || !onReadvance) return card;
+
+    return (
+        <div className="relative">
+            {card}
+            <button
+                type="button"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onReadvance();
+                }}
+                title="Re-advance winner into the next bracket"
+                aria-label="Re-advance winner into the next bracket"
+                className="absolute -top-2 -right-2 z-20 flex h-7 w-7 items-center justify-center rounded-sm border border-primary/40 bg-background text-primary shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+                <RotateCw className="h-3.5 w-3.5" />
+            </button>
+        </div>
     );
 }

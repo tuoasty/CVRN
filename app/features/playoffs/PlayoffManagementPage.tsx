@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { usePlayoffBrackets, usePlayoffConfigs, generateBracket, resetBrackets } from "@/app/hooks/usePlayoffs";
+import { usePlayoffBrackets, usePlayoffConfigs, generateBracket, resetBrackets, readvancePlayoffMatch } from "@/app/hooks/usePlayoffs";
 import { useAllMatches } from "@/app/hooks/useMatches";
 import { useTeams } from "@/app/hooks/useTeams";
 import { useSeasons } from "@/app/hooks/useSeasons";
@@ -36,6 +36,7 @@ export default function PlayoffManagementPage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSeedDialogOpen, setIsSeedDialogOpen] = useState(false);
     const [customSeedOrder, setCustomSeedOrder] = useState<string[] | null>(null);
+    const [readvanceMatchId, setReadvanceMatchId] = useState<string | null>(null);
 
     const { seasons: allSeasons } = useSeasons();
     const { configs } = usePlayoffConfigs();
@@ -105,6 +106,25 @@ export default function PlayoffManagementPage() {
 
         toast.success("Playoff brackets reset successfully");
         setIsResetDialogOpen(false);
+        await Promise.all([mutate("seasons"), mutate("matches")]);
+        setIsProcessing(false);
+    };
+
+    const handleConfirmReadvance = async () => {
+        if (!readvanceMatchId || !seasonIdValue) return;
+
+        setIsProcessing(true);
+        const result = await readvancePlayoffMatch(readvanceMatchId, seasonIdValue);
+
+        if (!result.ok) {
+            clientLogger.error("PlayoffManagementPage", "Re-advance match failed", { matchId: readvanceMatchId, error: result.error });
+            toast.error(errorCodeToUserMessage(result.error.code), result.error.message);
+            setIsProcessing(false);
+            return;
+        }
+
+        toast.success("Winner re-advanced into the next bracket");
+        setReadvanceMatchId(null);
         await Promise.all([mutate("seasons"), mutate("matches")]);
         setIsProcessing(false);
     };
@@ -234,7 +254,7 @@ export default function PlayoffManagementPage() {
                         </div>
                     </div>
                 ) : seasonIdValue && brackets.length > 0 ? (
-                    <PlayoffBracketDisplay brackets={brackets} incomingMap={incomingMap} teams={teams} matches={matches} linkContext="admin" />
+                    <PlayoffBracketDisplay brackets={brackets} incomingMap={incomingMap} teams={teams} matches={matches} linkContext="admin" isSuperAdmin={isSuperAdmin} onReadvanceMatch={setReadvanceMatchId} />
                 ) : seasonIdValue && !isProcessing ? (
                     <div className="panel p-12 border-l-4 border-l-muted">
                         <p className="text-sm text-muted-foreground text-center">
@@ -252,6 +272,39 @@ export default function PlayoffManagementPage() {
                     </div>
                 ) : null}
             </div>
+
+            <AlertDialog
+                open={readvanceMatchId !== null}
+                onOpenChange={(open) => { if (!open) setReadvanceMatchId(null); }}
+            >
+                <AlertDialogContent className="rounded-sm">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Re-advance this match?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Re-runs advancement for this completed match, slotting its winner (and loser, for
+                            double-elimination) into the next bracket. Only the destination slot fed by this match is
+                            filled — the opposing team already in the next bracket is left untouched. Use this to
+                            recover a bracket that a sync failed to advance.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-sm" disabled={isProcessing}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmReadvance}
+                            className="rounded-sm bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
+                            {isProcessing ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Re-advancing...
+                                </>
+                            ) : (
+                                "Re-advance"
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {seasonIdValue && totalTeams > 0 && (
                 <SeedChooserDialog

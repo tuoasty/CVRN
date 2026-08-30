@@ -16,7 +16,8 @@ import {
 import {
     getPlayoffBracketBySeasonId,
     getAllPlayoffConfigs,
-    resetPlayoffBracketsService
+    resetPlayoffBracketsService,
+    readvancePlayoffMatchService
 } from "@/server/domains/playoff";
 
 export async function generatePlayoffBracketAction(input: unknown) {
@@ -47,6 +48,17 @@ export async function resetPlayoffBracketsAction(seasonId: string) {
     const guard = await requireSuperAdmin(supabase);
     if (!guard.ok) return guard;
     const result = await resetPlayoffBracketsService(supabase, parsed.data);
+    if (result.ok) revalidatePublicData(PLAYOFF_TAGS);
+    return result;
+}
+
+export async function readvancePlayoffMatchAction(matchId: string) {
+    const parsed = z.uuid().safeParse(matchId);
+    if (!parsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const guard = await requireSuperAdmin(supabase);
+    if (!guard.ok) return guard;
+    const result = await readvancePlayoffMatchService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(PLAYOFF_TAGS);
     return result;
 }

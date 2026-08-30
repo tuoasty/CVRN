@@ -2,6 +2,7 @@ export {getPlayoffBracketBySeasonId} from "./queries/getPlayoffBracketBySeasonId
 export {getAllPlayoffConfigs} from "./queries/getAllPlayoffConfigs";
 export {buildPlayoffBracket} from "./commands/buildPlayoffBracket";
 export {resetPlayoffBracketsService} from "./commands/resetPlayoffBrackets";
+export {readvancePlayoffMatchService} from "./commands/readvancePlayoffMatch";
 export {templates} from "./helpers/playoffTemplates";
 export {getTemplateMatchOrder} from "./helpers/getTemplateMatchOrder";
 export type {

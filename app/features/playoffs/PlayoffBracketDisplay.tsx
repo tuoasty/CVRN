@@ -22,6 +22,8 @@ type PlayoffBracketDisplayProps = {
     regionCode?: string;
     seasonSlug?: string;
     linkContext?: "public" | "admin";
+    isSuperAdmin?: boolean;
+    onReadvanceMatch?: (matchId: string) => void;
 };
 
 type RoundType =
@@ -208,6 +210,8 @@ export function PlayoffBracketDisplay({
     regionCode,
     seasonSlug,
     linkContext = "public",
+    isSuperAdmin = false,
+    onReadvanceMatch,
 }: PlayoffBracketDisplayProps) {
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -342,6 +346,15 @@ export function PlayoffBracketDisplay({
         });
     }, [linkContext, regionCode, seasonSlug]);
 
+    const canReadvanceMatch = useCallback((match: Match): boolean =>
+        linkContext === "admin"
+        && isSuperAdmin
+        && !!onReadvanceMatch
+        && match.status === "completed"
+        && !!match.home_team_id
+        && !!match.away_team_id,
+    [linkContext, isSuperAdmin, onReadvanceMatch]);
+
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     const toggleFullscreen = useCallback(() => {
@@ -449,6 +462,8 @@ export function PlayoffBracketDisplay({
                             awaySource={slotLabel(incomingMap.get(bracket.id)?.away)}
                             regionCode={regionCode}
                             href={buildHref(bracket.match, homeTeam?.name, awayTeam?.name)}
+                            canReadvance={canReadvanceMatch(bracket.match)}
+                            onReadvance={onReadvanceMatch ? () => onReadvanceMatch(bracket.match.id) : undefined}
                         />
                         {bracket.match.match_code === "BR" && (
                             <div className="mt-1 text-center text-[10px] italic text-muted-foreground/70">
@@ -599,6 +614,8 @@ export function PlayoffBracketDisplay({
                                             awaySource={slotLabel(incomingMap.get(thirdPlaceMatch.id)?.away)}
                                             regionCode={regionCode}
                                             href={buildHref(thirdPlaceMatch.match, tpHome?.name, tpAway?.name)}
+                                            canReadvance={canReadvanceMatch(thirdPlaceMatch.match)}
+                                            onReadvance={onReadvanceMatch ? () => onReadvanceMatch(thirdPlaceMatch.match.id) : undefined}
                                         />
                                     );
                                 })()}
