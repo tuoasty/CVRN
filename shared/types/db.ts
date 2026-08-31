@@ -10,6 +10,9 @@ export type Team =
 export type Player =
     Database["public"]["Tables"]["players"]["Row"];
 
+export type Article =
+    Database["public"]["Tables"]["articles"]["Row"];
+
 export type Region =
     Database["public"]["Tables"]["regions"]["Row"];
 

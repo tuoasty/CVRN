@@ -47,6 +47,7 @@ import {
 import type {MatchWithDetails} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
+import {getPublishedArticles} from "@/server/domains/article";
 import {getPublicSpecSnapshot} from "@/server/domains/spec";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS} from "./tags";
@@ -308,6 +309,13 @@ export const getCachedAllMediaPosts = unstable_cache(
     async () => unwrap(await getAllMediaPosts(createPublicClient(), {}), "getCachedAllMediaPosts"),
     ["public:media-posts"],
     {tags: [CACHE_TAGS.media], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedPublishedArticles = unstable_cache(
+    async (seasonId?: string) =>
+        unwrap(await getPublishedArticles(createPublicClient(), seasonId), "getCachedPublishedArticles"),
+    ["public:articles"],
+    {tags: [CACHE_TAGS.articles, CACHE_TAGS.media, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedTeamNameHistory = unstable_cache(

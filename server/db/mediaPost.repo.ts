@@ -163,3 +163,51 @@ export async function deleteMediaPostById(supabase: DBClient, id: string): Promi
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok(null)
 }
+
+export async function findMediaPostByArticleId(supabase: DBClient, articleId: string): Promise<Result<MediaPost | null>> {
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .eq('article_id', articleId)
+        .eq('type', 'news')
+        .maybeSingle()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as unknown as MediaPost | null)
+}
+
+export async function findNewsPostsByArticleIds(supabase: DBClient, articleIds: string[]): Promise<Result<MediaPost[]>> {
+    if (articleIds.length === 0) return Ok([])
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .eq('type', 'news')
+        .in('article_id', articleIds)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []) as unknown as MediaPost[])
+}
+
+export async function findGfxByMatchIds(supabase: DBClient, matchIds: string[]): Promise<Result<MediaPost[]>> {
+    if (matchIds.length === 0) return Ok([])
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .eq('type', 'gfx')
+        .in('match_id', matchIds)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []) as unknown as MediaPost[])
+}
+
+export async function updateMediaPostFields(
+    supabase: DBClient,
+    id: string,
+    fields: { title?: string; image_url?: string | null; author_id?: string | null; match_id?: string | null; season_id?: string | null; published_at?: string | null },
+): Promise<Result<MediaPost>> {
+    const { data, error } = await supabase
+        .from('media_posts')
+        .update({ ...fields, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as unknown as MediaPost)
+}
