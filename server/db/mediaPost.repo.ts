@@ -200,7 +200,7 @@ export async function findGfxByMatchIds(supabase: DBClient, matchIds: string[]):
 export async function updateMediaPostFields(
     supabase: DBClient,
     id: string,
-    fields: { title?: string; image_url?: string | null; author_id?: string | null; match_id?: string | null; season_id?: string | null; published_at?: string | null },
+    fields: { title?: string; image_url?: string | null; author_id?: string | null; match_id?: string | null; season_id?: string | null; published_at?: string },
 ): Promise<Result<MediaPost>> {
     const { data, error } = await supabase
         .from('media_posts')
