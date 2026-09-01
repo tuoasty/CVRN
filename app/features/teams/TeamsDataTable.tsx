@@ -142,8 +142,8 @@ export default function TeamsDataTable() {
                                                                 />
                                                             </div>
                                                         ) : (
-                                                            <div className="w-8 h-8 flex items-center justify-center rounded-sm border border-dashed border-amber-500/60 bg-amber-500/10 group-hover:border-primary/50 transition-colors" title="Upload logo">
-                                                                <ImageOff className="h-3.5 w-3.5 text-amber-500/70" />
+                                                            <div className="w-8 h-8 flex items-center justify-center rounded-sm border border-dashed border-secondary/60 bg-secondary/10 group-hover:border-primary/50 transition-colors" title="Upload logo">
+                                                                <ImageOff className="h-3.5 w-3.5 text-secondary/70" />
                                                             </div>
                                                         )}
                                                     </button>

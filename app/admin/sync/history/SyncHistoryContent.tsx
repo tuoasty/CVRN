@@ -283,7 +283,7 @@ export default function SyncHistoryContent({ canRevert }: SyncHistoryContentProp
                                 Sync Log — {selectedLog && new Date(selectedLog.synced_at).toLocaleString()}
                             </DialogTitle>
                             <Button variant="outline" size="sm" onClick={handleCopySummary} className="shrink-0">
-                                {copied ? <Check className="w-3.5 h-3.5 mr-1.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+                                {copied ? <Check className="w-3.5 h-3.5 mr-1.5 text-success" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
                                 {copied ? 'Copied' : 'Copy summary'}
                             </Button>
                         </div>

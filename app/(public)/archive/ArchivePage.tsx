@@ -10,9 +10,9 @@ import {ArchiveSeason} from "@/server/domains/season";
 import {Skeleton} from "@/app/components/ui/skeleton";
 
 const PLACE_META = {
-    1: {label: "Champion",  color: "text-yellow-500", Icon: Trophy},
-    2: {label: "Runner-Up", color: "text-slate-400",  Icon: Medal},
-    3: {label: "3rd Place", color: "text-amber-700",  Icon: Medal},
+    1: {label: "Champion",  color: "text-secondary", Icon: Trophy},
+    2: {label: "Runner-Up", color: "text-muted-foreground",  Icon: Medal},
+    3: {label: "3rd Place", color: "text-muted-foreground",  Icon: Medal},
 } as const;
 
 function TeamLogo({

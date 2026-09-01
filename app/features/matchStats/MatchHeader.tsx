@@ -27,11 +27,11 @@ const ROUND_LABELS: Record<string, string> = {
 const getStatusConfig = (status: string): {label: string; className: string} => {
     switch (status) {
         case "pending":
-            return {label: "Pending", className: "bg-amber-600/10 text-amber-600 border-amber-600/20"};
+            return {label: "Pending", className: "bg-secondary/10 text-secondary border-secondary/20"};
         case "scheduled":
-            return {label: "Scheduled", className: "bg-blue-600/10 text-blue-600 border-blue-600/20"};
+            return {label: "Scheduled", className: "bg-primary/10 text-primary border-primary/20"};
         case "completed":
-            return {label: "Completed", className: "bg-green-600/10 text-green-600 border-green-600/20"};
+            return {label: "Completed", className: "bg-success/10 text-success border-success/20"};
         default:
             return {label: status, className: ""};
     }
@@ -116,7 +116,7 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
                         {match.match_type === "playoffs" && (
                             <Badge
                                 variant="outline"
-                                className="rounded-sm text-[10px] h-5 px-2 bg-purple-600/10 text-purple-600 border-purple-600/20"
+                                className="rounded-sm text-[10px] h-5 px-2 bg-muted text-foreground border-border font-semibold"
                             >
                                 Playoff
                             </Badge>
@@ -250,8 +250,8 @@ export default function MatchHeader({detail, regionCode, seasonSlug, standingMet
 function TeamLogo({team, sizes}: {team: Team | null; sizes: string}) {
     if (team?.is_bye) {
         return (
-            <div className="w-full h-full bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
-                <span className="text-sm text-orange-600 font-bold">BYE</span>
+            <div className="w-full h-full bg-muted border border-border flex items-center justify-center">
+                <span className="text-sm text-muted-foreground font-bold">BYE</span>
             </div>
         );
     }
@@ -452,7 +452,7 @@ function MatchMarginChip({magnitude, unit}: {magnitude: number; unit: MarginUnit
         <div className="flex items-center justify-center pt-1">
             <Badge
                 variant="outline"
-                className="h-5 px-2 text-[11px] font-semibold tabular-nums bg-green-600/10 text-green-600 border-green-600/20"
+                className="h-5 px-2 text-[11px] font-semibold tabular-nums bg-success/10 text-success border-success/20"
             >
                 ±{magnitude.toFixed(1)} {unit}
             </Badge>
@@ -464,7 +464,7 @@ function MarginBadge({value, unit}: {value: number; unit: MarginUnit}) {
     const tone = unit === "pts"
         ? "bg-primary/10 text-primary border-primary/20"
         : value >= 0
-            ? "bg-green-600/10 text-green-600 border-green-600/20"
+            ? "bg-success/10 text-success border-success/20"
             : "bg-red-600/10 text-red-600 border-red-600/20";
 
     return (

@@ -31,8 +31,8 @@ function orientForTeam(md: MatchWithDetails, teamId: string): MatchWithDetails {
     };
 }
 
-const WIN_TEXT = "text-green-700 dark:text-green-400";
-const LOSS_TEXT = "text-red-600 dark:text-red-400";
+const WIN_TEXT = "text-success";
+const LOSS_TEXT = "text-destructive";
 const COLS = "56px minmax(120px,1fr) 96px minmax(140px,1.4fr) 72px 14px";
 const LABEL = "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
 
@@ -170,7 +170,7 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                                         <div className="flex items-center gap-2">
                                             <span className={cn(
                                                 "inline-flex items-center justify-center w-5 h-5 rounded-sm text-xs font-bold border",
-                                                won ? cn("bg-green-600/10 border-green-600/30", WIN_TEXT) : cn("bg-red-600/10 border-red-600/30", LOSS_TEXT),
+                                                won ? cn("bg-success/10 border-success/30", WIN_TEXT) : cn("bg-destructive/10 border-destructive/30", LOSS_TEXT),
                                             )}>
                                                 {won ? "W" : "L"}
                                             </span>

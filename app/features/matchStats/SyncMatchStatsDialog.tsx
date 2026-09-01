@@ -216,8 +216,8 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
 
                                 {}
                                 {skipped.length > 0 && (
-                                    <div className="panel p-3 border border-amber-500/40 bg-amber-500/5 max-h-60 overflow-y-auto">
-                                        <p className="text-xs uppercase tracking-wider text-amber-600 dark:text-amber-500 mb-1 font-medium">
+                                    <div className="panel p-3 border border-secondary/40 bg-secondary/5 max-h-60 overflow-y-auto">
+                                        <p className="text-xs uppercase tracking-wider text-secondary mb-1 font-medium">
                                             Unresolved ({skipped.length} player{skipped.length === 1 ? '' : 's'})
                                         </p>
                                         <p className="text-xs text-muted-foreground mb-3">
@@ -291,7 +291,7 @@ export default function SyncMatchStatsDialog({match, teamName, onOpenChange}: Pr
                                     variant="outline"
                                     onClick={() => handleSave(true)}
                                     disabled={saving}
-                                    className="rounded-sm border-amber-500/50 text-amber-600 hover:bg-amber-500/10 dark:text-amber-500"
+                                    className="rounded-sm border-secondary/50 text-secondary hover:bg-secondary/10"
                                 >
                                     Sync anyway (skip {skipped.length} player{skipped.length === 1 ? '' : 's'})
                                 </Button>

@@ -1,5 +1,5 @@
 import type {Metadata} from "next";
-import {Geist} from "next/font/google";
+import {IBM_Plex_Sans, IBM_Plex_Mono} from "next/font/google";
 import {ThemeProvider} from "next-themes";
 import "./globals.css";
 import {Toaster} from "@/app/components/ui/sonner";
@@ -44,10 +44,18 @@ export const viewport = {
     initialScale: 1,
 }
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
+const plexSans = IBM_Plex_Sans({
+    variable: "--font-sans",
     display: "swap",
     subsets: ["latin"],
+    weight: ["400", "500", "600", "700"],
+});
+
+const plexMono = IBM_Plex_Mono({
+    variable: "--font-mono",
+    display: "swap",
+    subsets: ["latin"],
+    weight: ["400", "500", "600"],
     preload: false,
 });
 
@@ -58,7 +66,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-        <body className={`${geistSans.variable} ${geistSans.className} antialiased`}>
+        <body className={`${plexSans.variable} ${plexMono.variable} ${plexSans.className} antialiased`}>
         <ThemeProvider
             attribute="class"
             defaultTheme="dark"

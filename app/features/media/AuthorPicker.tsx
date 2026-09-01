@@ -143,7 +143,7 @@ export default function AuthorPicker({ value, onChange }: AuthorPickerProps) {
                     {robloxResults.map(u => (
                         <div
                             key={`rbx-${u.id}`}
-                            className="panel p-2 flex items-center justify-between bg-blue-500/5 rounded-sm"
+                            className="panel p-2 flex items-center justify-between bg-primary/5 rounded-sm"
                         >
                             <div className="flex items-center gap-2 min-w-0">
                                 <div className="relative w-8 h-8 rounded-sm overflow-hidden border border-border shrink-0">
@@ -174,7 +174,7 @@ export default function AuthorPicker({ value, onChange }: AuthorPickerProps) {
                     {dbSuggestions.map(p => (
                         <div
                             key={`db-${p.id}`}
-                            className="panel p-2 flex items-center justify-between bg-amber-500/5 rounded-sm"
+                            className="panel p-2 flex items-center justify-between bg-secondary/5 rounded-sm"
                         >
                             <div className="flex items-center gap-2 min-w-0">
                                 <div className="relative w-8 h-8 rounded-sm overflow-hidden border border-border shrink-0">

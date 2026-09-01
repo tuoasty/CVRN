@@ -44,8 +44,8 @@ export default function PlayoffsPage({ brackets, matches, teams }: Props) {
                                         variant="outline"
                                         className={`rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider ${
                                             isCompleted
-                                                ? "bg-green-600/10 text-green-600 border-green-600/20"
-                                                : "bg-blue-600/10 text-blue-600 border-blue-600/20"
+                                                ? "bg-success/10 text-success border-success/20"
+                                                : "bg-primary/10 text-primary border-primary/20"
                                         }`}
                                     >
                                         {isCompleted ? "Completed" : "In Progress"}

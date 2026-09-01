@@ -10,15 +10,15 @@ import {buildPublicPlayerHref} from "@/app/utils/matchDetailHref";
 const ROLE_BADGE: Record<string, {label: string; className: string}> = {
     captain: {
         label: "C",
-        className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+        className: "bg-muted text-foreground border-border",
     },
     vice_captain: {
         label: "VC",
-        className: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+        className: "bg-muted text-muted-foreground border-border",
     },
     court_captain: {
         label: "CC",
-        className: "bg-violet-500/10 text-violet-500 border-violet-500/20",
+        className: "bg-muted text-muted-foreground border-border",
     },
 };
 

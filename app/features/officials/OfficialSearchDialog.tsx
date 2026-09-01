@@ -247,7 +247,7 @@ export default function OfficialSearchDialog({
                             {robloxResults.map((user) => (
                                 <div
                                     key={`roblox-${user.id}`}
-                                    className="panel p-3 flex items-center justify-between border-l-4 border-l-blue-500/50 bg-blue-500/5"
+                                    className="panel p-3 flex items-center justify-between border-primary/40 bg-primary/5"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="relative w-10 h-10 rounded-sm overflow-hidden border border-border shrink-0">
@@ -281,7 +281,7 @@ export default function OfficialSearchDialog({
                             {dbSuggestions.map((official) => (
                                 <div
                                     key={`db-${official.id}`}
-                                    className="panel p-3 flex items-center justify-between border-l-4 border-l-amber-500/50 bg-amber-500/5"
+                                    className="panel p-3 flex items-center justify-between border-secondary/40 bg-secondary/5"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="relative w-10 h-10 rounded-sm overflow-hidden border border-border shrink-0">

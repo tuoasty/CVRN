@@ -102,7 +102,7 @@ export default function AdminArticlesPage() {
                         {filtered.map(a => (
                             <div key={a.id} className={cn(
                                 'flex items-center gap-3 p-3 rounded-sm border transition-colors',
-                                a.published_at ? 'border-border bg-card hover:bg-muted/30' : 'border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10',
+                                a.published_at ? 'border-border bg-card hover:bg-muted/30' : 'border-secondary/20 bg-secondary/5 hover:bg-secondary/10',
                             )}>
                                 {a.thumbnail_url ? (
                                     <div className="relative w-12 h-12 flex-shrink-0 rounded-sm border border-border overflow-hidden">
@@ -122,7 +122,7 @@ export default function AdminArticlesPage() {
                                     </p>
                                 </div>
                                 <Badge variant="outline" className={cn('rounded-sm text-xs uppercase',
-                                    a.published_at ? 'text-muted-foreground' : 'text-amber-500 border-amber-500/40')}>
+                                    a.published_at ? 'text-muted-foreground' : 'text-secondary border-secondary/40')}>
                                     {a.published_at ? 'Published' : 'Draft'}
                                 </Badge>
                                 <Button

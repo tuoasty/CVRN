@@ -592,8 +592,8 @@ export function PlayoffBracketDisplay({
                                     width: MATCH_WIDTH,
                                 }}
                             >
-                                <div className="mb-3 pb-2 border-b-2 border-amber-500/30">
-                                    <h3 className="text-sm font-bold uppercase tracking-wider text-amber-600">
+                                <div className="mb-3 pb-2 border-b border-secondary/30">
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-secondary">
                                         {ROUND_LABELS.third_place}
                                     </h3>
                                 </div>

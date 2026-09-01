@@ -2,56 +2,58 @@
 name: CVRN
 description: The league's permanent record — dense, square-cornered, broadcast-serious.
 colors:
-  action-blue: "#3B82F6"
+  action-blue: "#2D55E6"
   action-blue-ink: "#FFFFFF"
-  location-yellow: "#FACC15"
-  location-yellow-ink: "#0F0F10"
+  location-yellow: "#E8992C"
+  location-yellow-ink: "#1A1206"
   destructive-red: "#EF4444"
+  success-green: "#42B87C"
+  success-green-ink: "#FFFFFF"
   page-light: "#FAFAFA"
-  page-dark: "#0E0E10"
+  page-dark: "#0A0A0A"
   surface-light: "#FFFFFF"
-  surface-dark: "#161618"
-  ink-light: "#0F0F10"
-  ink-dark: "#F4F4F5"
-  recessed-light: "#F4F4F5"
-  recessed-dark: "#27272A"
-  quiet-ink-light: "#71717A"
-  quiet-ink-dark: "#A1A1AA"
-  rule-light: "#E4E4E7"
-  rule-dark: "#27272A"
+  surface-dark: "#141414"
+  ink-light: "#0F0F0F"
+  ink-dark: "#F5F5F5"
+  recessed-light: "#F5F5F5"
+  recessed-dark: "#1F1F1F"
+  quiet-ink-light: "#666666"
+  quiet-ink-dark: "#999999"
+  rule-light: "#E5E5E5"
+  rule-dark: "#2B2B2B"
 typography:
   headline:
-    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1.5rem"
     fontWeight: 600
     lineHeight: 2rem
     letterSpacing: "-0.025em"
   title:
-    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.75rem
     letterSpacing: "-0.025em"
   subtitle:
-    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1.125rem"
     fontWeight: 500
     lineHeight: 1.75rem
     letterSpacing: "normal"
   body:
-    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.25rem
     letterSpacing: "normal"
   label:
-    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 600
     lineHeight: 1rem
     letterSpacing: "0.05em"
   data:
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace"
+    fontFamily: "IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace"
     fontSize: "0.75rem"
     fontWeight: 400
     lineHeight: 1rem
@@ -151,20 +153,20 @@ What this system rejects is decoration standing in for authority. It does not us
 **Key Characteristics:**
 - Square corners on every data surface — `.panel` resolves to a literal `0px` radius
 - Flat by default; borders and tonal fills carry all in-page depth
-- One type family (Geist) for everything except numbers, which are always monospaced
+- One type family (IBM Plex Sans) for everything except numbers, which use its sibling IBM Plex Mono
 - Two accents with fixed jobs: blue acts, yellow locates
 - Dense by design — 12px vertical cell padding, `0.875rem` body, `0.75rem` labels
 - Desktop-first; density expands upward rather than collapsing downward
 
 ## 2. Colors
 
-A near-achromatic zinc field with exactly two accents, each carrying one job and no decorative use whatsoever.
+A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber accents plus a green success token, each carrying one job and no decorative use whatsoever.
 
 ### Primary
-- **Action Blue** (`#3B82F6`, `hsl(217 91% 60%)`): Every actionable and stateful thing. Primary buttons, links, focus rings, the active sort column in a stat table, status dots, the top-loading progress bar. If it can be clicked or it reports live state, it is this blue. Identical in light and dark — the one token that does not shift between themes.
+- **Action Blue** (cobalt `#2D55E6`, `hsl(227 79% 54%)` dark / `hsl(227 74% 47%)` light): Every actionable and stateful thing. Primary buttons, links, focus rings, the active sort column in a stat table, status dots, the top-loading progress bar. If it can be clicked or it reports live state, it is this cobalt.
 
 ### Secondary
-- **Location Yellow** (`#FACC15`, `hsl(48 96% 53%)`): Position, not action. Its only structural use is the active navigation item, where it sits behind near-black text. This is the system's single most distinctive decision and it must not erode: yellow answers "where am I," never "what can I do."
+- **Location Yellow** (broadcast amber `#E8992C`, `hsl(35 80% 54%)`): Position, not action. Its only structural use is the active navigation item, where it sits behind near-black text. This is the system's single most distinctive decision and it must not erode: yellow answers "where am I," never "what can I do."
 
 ### Tertiary
 - **Destructive Red** (`#EF4444`, `hsl(0 84% 60%)`): Irreversible actions and error surfaces only. Voiding a match, deleting a team, a failed sync row. Never a warning, never an accent.
@@ -183,12 +185,12 @@ A near-achromatic zinc field with exactly two accents, each carrying one job and
 
 **The No-Third-Accent Rule.** Anything that is not an action, a location, or a destructive operation is drawn from the neutral ramp. New categorical colors are prohibited. If a data category needs distinguishing, use position, weight, or rule lines before reaching for hue.
 
-**The Inherited-Default Rule.** The current palette is Tailwind's stock zinc ramp with blue-500, yellow-400, and red-500 accents. That is a stated fact, not an endorsement. Any deliberate move away from it must change *all* of the accents together — a single re-tinted primary against stock zinc neutrals reads as a half-finished theme, which is worse than the default.
+**The Coordinated-Palette Rule.** The palette is a deliberate move off the stock shadcn defaults: a true-neutral (hue-agnostic) black/gray ramp — not Tailwind zinc — under a cobalt action accent (`#2D55E6`), a broadcast-amber location accent (`#E8992C`), and a green success token (`#42B87C`) for win/synced state. The neutrals carry no hue tint. Any future accent change must move *all* of them together — a single re-tinted primary against the others reads as a half-finished theme.
 
 ## 3. Typography
 
-**Body Font:** Geist (with `ui-sans-serif`, `system-ui`, sans-serif fallback), loaded via `next/font` with `display: swap`
-**Label/Mono Font:** the platform monospace stack (`ui-monospace`, `SFMono-Regular`, `Menlo`)
+**Body Font:** IBM Plex Sans (with `ui-sans-serif`, `system-ui`, sans-serif fallback), loaded via `next/font` with `display: swap`; `font-size-adjust: 0.54` on the body matches its x-height to the fixed rem scale
+**Label/Mono Font:** IBM Plex Mono (with the platform monospace stack as fallback) — the matched sibling to Plex Sans
 
 **Character:** One neutral geometric sans doing every job, with the monospace stack reserved exclusively for figures. The pairing has no personality contrast by design — the type is a delivery mechanism for data, and the visual interest lives in alignment and rule lines rather than in letterforms. There is no display face and no fluid sizing anywhere in the system.
 
@@ -202,7 +204,7 @@ A near-achromatic zinc field with exactly two accents, each carrying one job and
 
 ### Named Rules
 
-**The One Family Rule.** Geist carries headings, buttons, labels, body, and navigation. The monospace stack is the only second face, and it appears only on numbers. Introducing a display face — a serif for headings, a condensed sans for scores — is prohibited; it is the fastest available route to the esports look this brand rejects.
+**The One Family Rule.** IBM Plex Sans carries headings, buttons, labels, body, and navigation; its matched sibling IBM Plex Mono is the only second face, and it appears only on numbers. `font-size-adjust: 0.54` on the body compensates for Plex's smaller x-height so apparent sizes match the fixed rem scale. Introducing a third face — a serif for headings, a condensed sans for scores — is prohibited; it is the fastest available route to the esports look this brand rejects.
 
 **The Tabular Figures Rule.** Any number that appears in a column gets `font-mono tabular-nums`. Non-negotiable. Proportional digits in a stat table cause the column to shimmer as values change and destroy the scannability that justifies the density in the first place.
 

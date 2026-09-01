@@ -62,16 +62,16 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
         </div>
     ) : (
         <div className="flex flex-col items-center justify-center py-6 px-6">
-            <Trophy className="h-10 w-10 text-yellow-500/30 mb-2" />
+            <Trophy className="h-10 w-10 text-secondary/30 mb-2" />
             <p className="text-sm text-muted-foreground">Champion not yet set</p>
         </div>
     );
 
     return (
-        <div className="panel border-l-4 border-l-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent h-[376px]">
+        <div className="panel bg-secondary/5 h-[376px]">
             {}
-            <div className="flex items-center justify-between px-6 pt-3 pb-3 border-b-2 border-yellow-500/20">
-                <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+            <div className="flex items-center justify-between px-6 pt-3 pb-3 border-b border-secondary/20">
+                <div className="flex items-center gap-2 text-secondary">
                     <Trophy className="h-4 w-4" />
                     <h3 className="text-sm font-bold uppercase tracking-wider">Season Champion</h3>
                 </div>
@@ -89,11 +89,11 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
 
             {}
             {(runnerUp || third) && (
-                <div className="grid grid-cols-2 gap-px border-t border-yellow-500/20">
+                <div className="grid grid-cols-2 gap-px border-t border-secondary/20">
                     {runnerUp ? (
                         runnerUpHref ? (
-                            <Link href={runnerUpHref} prefetch={false} className="flex flex-col items-center gap-2 py-4 px-4 bg-slate-400/5 hover:opacity-90 transition-opacity">
-                                <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-300">
+                            <Link href={runnerUpHref} prefetch={false} className="flex flex-col items-center gap-2 py-4 px-4 bg-muted/50 hover:opacity-90 transition-opacity">
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
                                     <Medal className="h-3 w-3" />
                                     <span className="text-[10px] font-semibold uppercase tracking-wider">Runner-Up</span>
                                 </div>
@@ -101,8 +101,8 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
                                 <span className="text-xs font-semibold text-center leading-tight">{runnerUp.teams.name}</span>
                             </Link>
                         ) : (
-                            <div className="flex flex-col items-center gap-2 py-4 px-4 bg-slate-400/5">
-                                <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-300">
+                            <div className="flex flex-col items-center gap-2 py-4 px-4 bg-muted/50">
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
                                     <Medal className="h-3 w-3" />
                                     <span className="text-[10px] font-semibold uppercase tracking-wider">Runner-Up</span>
                                 </div>
@@ -114,8 +114,8 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
 
                     {third ? (
                         thirdHref ? (
-                            <Link href={thirdHref} prefetch={false} className="flex flex-col items-center gap-2 py-4 px-4 bg-amber-500/5 border-l border-yellow-500/20 hover:opacity-90 transition-opacity">
-                                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                            <Link href={thirdHref} prefetch={false} className="flex flex-col items-center gap-2 py-4 px-4 bg-muted/50 border-l border-border hover:opacity-90 transition-opacity">
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
                                     <Medal className="h-3 w-3" />
                                     <span className="text-[10px] font-semibold uppercase tracking-wider">3rd Place</span>
                                 </div>
@@ -123,8 +123,8 @@ export default function SeasonChampionCard({ podium, seasonName, regionCode, sea
                                 <span className="text-xs font-semibold text-center leading-tight">{third.teams.name}</span>
                             </Link>
                         ) : (
-                            <div className="flex flex-col items-center gap-2 py-4 px-4 bg-amber-500/5 border-l border-yellow-500/20">
-                                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                            <div className="flex flex-col items-center gap-2 py-4 px-4 bg-muted/50 border-l border-border">
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
                                     <Medal className="h-3 w-3" />
                                     <span className="text-[10px] font-semibold uppercase tracking-wider">3rd Place</span>
                                 </div>

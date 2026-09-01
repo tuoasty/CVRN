@@ -103,20 +103,20 @@ export function MatchBracketCard({
         if (match.status === "completed") {
             return {
                 label: "Completed",
-                className: "bg-green-600/15 text-green-600 border-green-600/30",
+                className: "bg-success/15 text-success border-success/30",
                 icon: <Trophy className="h-3 w-3" />,
             };
         }
         if (match.status === "scheduled") {
             return {
                 label: "Scheduled",
-                className: "bg-blue-600/15 text-blue-600 border-blue-600/30",
+                className: "bg-primary/15 text-primary border-primary/30",
                 icon: <Calendar className="h-3 w-3" />,
             };
         }
         return {
             label: "Pending",
-            className: "bg-amber-600/15 text-amber-600 border-amber-600/30",
+            className: "bg-secondary/15 text-secondary border-secondary/30",
             icon: <AlertCircle className="h-3 w-3" />,
         };
     };
