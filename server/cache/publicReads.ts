@@ -34,6 +34,7 @@ import {
     getUpcomingMatches,
     getRecentMatches,
     getMatchDetail,
+    getMatchDetailById,
     getWeekSchedule,
     getPlayoffSchedule,
     getAvailablePlayoffRounds,
@@ -292,6 +293,19 @@ export const getCachedMatchDetail = unstable_cache(
             "getCachedMatchDetail",
         ),
     ["public:match-detail"],
+    {
+        tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.media],
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+    },
+);
+
+export const getCachedMatchDetailById = unstable_cache(
+    async (matchId: string) =>
+        unwrapNullable(
+            await getMatchDetailById(createPublicClient(), matchId),
+            "getCachedMatchDetailById",
+        ),
+    ["public:match-detail-by-id"],
     {
         tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.media],
         revalidate: PUBLIC_REVALIDATE_SECONDS,

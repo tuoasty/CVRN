@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
 import { Button } from '@/app/components/ui/button'
-import { Input } from '@/app/components/ui/input'
+import ImageDropzone from '@/app/features/media/ImageDropzone'
 import { Label } from '@/app/components/ui/label'
 import { createArticleAction } from '@/app/actions/article.actions'
 import { mutateArticles } from '@/app/hooks/useArticles'
@@ -36,7 +36,6 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
     const [match, setMatch] = useState<MatchSelection | null>(null)
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
-    const [isDragging, setIsDragging] = useState(false)
     const [compressing, setCompressing] = useState(false)
     const [publish, setPublish] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -53,7 +52,6 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
         setMatch(null)
         setImageFile(null)
         setPreview(null)
-        setIsDragging(false)
         setCompressing(false)
         setPublish(false)
         setLoading(false)
@@ -77,18 +75,6 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
         } finally {
             setCompressing(false)
         }
-    }
-
-    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0]
-        if (file) acceptFile(file)
-    }
-
-    function handleDrop(e: React.DragEvent) {
-        e.preventDefault()
-        setIsDragging(false)
-        const file = e.dataTransfer.files[0]
-        if (file) acceptFile(file)
     }
 
     function handlePaste(e: React.ClipboardEvent) {
@@ -173,31 +159,12 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
                         coverSlot={
                             <div className="space-y-1">
                                 <Label>Cover image <span className="text-muted-foreground text-xs">(optional — shows in the media feed)</span></Label>
-                                <div
-                                    className={cn(
-                                        'border-2 border-dashed rounded-sm p-4 text-center transition-colors',
-                                        isDragging ? 'border-primary bg-primary/10' : 'border-muted-foreground/25',
-                                    )}
-                                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
-                                    onDragLeave={(e) => { e.preventDefault(); setIsDragging(false) }}
-                                    onDrop={handleDrop}
-                                    onPaste={handlePaste}
-                                    tabIndex={0}
-                                >
-                                    {preview ? (
-                                        <div className="space-y-3">
-                                            <img src={preview} alt="preview" className="max-h-48 mx-auto rounded-sm object-contain" />
-                                            <Button type="button" variant="outline" size="sm" className="rounded-sm" onClick={() => { setImageFile(null); setPreview(null) }}>
-                                                Remove
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            <p className="text-sm text-muted-foreground">{compressing ? 'Processing image...' : 'Drag & drop, paste, or click to upload'}</p>
-                                            <Input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleFileChange} className="rounded-sm" />
-                                        </div>
-                                    )}
-                                </div>
+                                <ImageDropzone
+                                    preview={preview}
+                                    compressing={compressing}
+                                    onFile={acceptFile}
+                                    onClear={() => { setImageFile(null); setPreview(null) }}
+                                />
                             </div>
                         }
                     />

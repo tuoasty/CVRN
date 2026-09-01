@@ -14,6 +14,7 @@ import { toast } from '@/app/utils/toast'
 import { clientLogger } from '@/app/utils/clientLogger'
 import { compressImage } from '@/app/utils/imageCompression'
 import AuthorPicker, { type AuthorSelection } from '@/app/features/media/AuthorPicker'
+import ImageDropzone from '@/app/features/media/ImageDropzone'
 import type { MatchMediaSlot as Slot, MediaPost } from '@/server/domains/media'
 
 const SLOT_LABELS: Record<Slot, string> = { gfx: 'GFX', video: 'VOD' }
@@ -167,7 +168,6 @@ function CreateForSlot({ slot, label, matchId, onChanged, defaultTitle }: { slot
     const [author, setAuthor] = useState<AuthorSelection | null>(null)
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
-    const [isDragging, setIsDragging] = useState(false)
     const [compressing, setCompressing] = useState(false)
     const [loading, setLoading] = useState(false)
 
@@ -183,15 +183,6 @@ function CreateForSlot({ slot, label, matchId, onChanged, defaultTitle }: { slot
             toast.error('Failed to process image')
         } finally {
             setCompressing(false)
-        }
-    }
-
-    function handlePaste(e: React.ClipboardEvent) {
-        for (let i = 0; i < e.clipboardData.items.length; i++) {
-            if (e.clipboardData.items[i].type.startsWith('image/')) {
-                const file = e.clipboardData.items[i].getAsFile()
-                if (file) { acceptFile(file); break }
-            }
         }
     }
 
@@ -232,49 +223,14 @@ function CreateForSlot({ slot, label, matchId, onChanged, defaultTitle }: { slot
             </div>
 
             {slot === 'gfx' ? (
-                <div
-                    className={`border-2 border-dashed rounded-sm p-4 text-center transition-colors ${
-                        isDragging ? 'border-primary bg-primary/10' : 'border-muted-foreground/25'
-                    }`}
-                    onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
-                    onDragLeave={e => { e.preventDefault(); setIsDragging(false) }}
-                    onDrop={e => {
-                        e.preventDefault()
-                        setIsDragging(false)
-                        const file = e.dataTransfer.files[0]
-                        if (file) acceptFile(file)
-                    }}
-                    onPaste={handlePaste}
-                    tabIndex={0}
-                >
-                    {preview ? (
-                        <div className="space-y-3">
-                            {}
-                            <img src={preview} alt="preview" className="max-h-40 mx-auto rounded-sm object-contain" />
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="rounded-sm"
-                                onClick={() => { setImageFile(null); setPreview(null) }}
-                            >
-                                Change
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            <p className="text-sm text-muted-foreground">
-                                {compressing ? 'Processing image...' : 'Drag & drop, paste, or click to upload'}
-                            </p>
-                            <Input
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp,image/gif"
-                                onChange={e => { const f = e.target.files?.[0]; if (f) acceptFile(f) }}
-                                className="rounded-sm"
-                            />
-                        </div>
-                    )}
-                </div>
+                <ImageDropzone
+                    preview={preview}
+                    compressing={compressing}
+                    onFile={acceptFile}
+                    onClear={() => { setImageFile(null); setPreview(null) }}
+                    clearLabel="Change"
+                    previewMaxHeight="max-h-40"
+                />
             ) : (
                 <div className="space-y-1">
                     <Label htmlFor={`${slot}-url`}>YouTube / Twitch URL</Label>

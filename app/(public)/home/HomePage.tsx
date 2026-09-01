@@ -8,7 +8,8 @@ import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
 import FeaturedMatchCarousel, { type FeaturedSlide, type FeaturedAwardSlide, type FeaturedMatchSlide } from "@/app/(public)/home/FeaturedMatchCarousel";
 import SeasonChampionCard from "@/app/(public)/home/SeasonChampionCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
-import ArticleCard from "@/app/(public)/articles/ArticleCard";
+import Link from "next/link";
+import ArticleList from "@/app/(public)/articles/ArticleList";
 import { MatchWithDetails } from "@/server/domains/match";
 import { computeMatchLabels } from "@/app/utils/matchLabel";
 import { buildPublicMatchHref, buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
@@ -299,19 +300,23 @@ export default function HomePage({
 
                         <div className="space-y-3">
                             <div className="border-t border-border pt-4">
-                                <h3 className="text-base font-bold uppercase tracking-wider text-foreground mb-4">
-                                    Latest News
-                                </h3>
+                                <div className="mb-4 flex items-baseline justify-between">
+                                    <h3 className="text-base font-bold uppercase tracking-wider text-foreground">
+                                        Latest News
+                                    </h3>
+                                    {articles.length > 0 && (
+                                        <Link
+                                            href={`/${regionCode}/${seasonSlug}/media?tab=articles`}
+                                            className="text-xs font-medium text-primary hover:underline"
+                                        >
+                                            View all →
+                                        </Link>
+                                    )}
+                                </div>
                                 {articles.length === 0 ? (
-                                    <div className="panel p-6 text-center">
-                                        <p className="text-sm text-muted-foreground">No articles yet.</p>
-                                    </div>
+                                    <p className="py-8 text-center text-sm text-muted-foreground">No articles yet.</p>
                                 ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {articles.slice(0, 4).map((a) => (
-                                            <ArticleCard key={a.id} article={a} />
-                                        ))}
-                                    </div>
+                                    <ArticleList articles={articles.slice(0, 2)} />
                                 )}
                             </div>
                         </div>

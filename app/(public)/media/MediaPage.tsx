@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Image as ImageIcon, Play, Pin, Search, X, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -10,7 +11,7 @@ import { Button } from '@/app/components/ui/button'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
-import ArticleCard from '@/app/(public)/articles/ArticleCard'
+import ArticleList from '@/app/(public)/articles/ArticleList'
 import { buildArticleHref } from '@/app/utils/matchDetailHref'
 import { usePlayersByIds } from '@/app/hooks/usePlayers'
 import { cn } from '@/lib/utils'
@@ -201,7 +202,11 @@ type Props = {
 }
 
 export default function MediaFeedPage({ posts: allPosts, articles: allArticles = [] }: Props) {
-    const [filter, setFilter] = useState<TabKey>('all')
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const pathname = usePathname()
+    const tabParam = searchParams.get('tab')
+    const filter: TabKey = tabParam && tabParam in TAB_LABELS ? (tabParam as TabKey) : 'all'
     const [page, setPage]         = useState(1)
     const [clipsPage, setClipsPage] = useState(1)
     const [search, setSearch]     = useState('')
@@ -276,9 +281,12 @@ export default function MediaFeedPage({ posts: allPosts, articles: allArticles =
     }, [allPosts, clipsPage])
 
     const handleFilter = useCallback((f: TabKey) => {
-        setFilter(f)
-        setPage(1)
-    }, [])
+        const params = new URLSearchParams(searchParams.toString())
+        if (f === 'all') params.delete('tab')
+        else params.set('tab', f)
+        const qs = params.toString()
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    }, [router, pathname, searchParams])
 
     return (
         <div className="page-wide py-6 space-y-6">
@@ -355,12 +363,10 @@ export default function MediaFeedPage({ posts: allPosts, articles: allArticles =
                         </p>
                     </div>
                 ) : (
-                    <>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                            {articleItems.map(a => <ArticleCard key={a.id} article={a} />)}
-                        </div>
+                    <div className="space-y-4">
+                        <ArticleList articles={articleItems} columns={2} />
                         <Pagination page={page} totalPages={articlesTotalPages} onPage={setPage} />
-                    </>
+                    </div>
                 )
             )}
 

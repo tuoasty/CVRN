@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
 import { Button } from '@/app/components/ui/button'
-import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { getArticleBySlugAction, updateArticleAction } from '@/app/actions/article.actions'
 import { mutateArticles } from '@/app/hooks/useArticles'
@@ -17,6 +16,7 @@ import { useTeamsBySeason } from '@/app/hooks/useTeams'
 import { type AuthorSelection } from '@/app/features/media/AuthorPicker'
 import { type MatchSelection } from '@/app/features/articles/MatchPicker'
 import ArticleFormFields from '@/app/features/articles/ArticleFormFields'
+import ImageDropzone from '@/app/features/media/ImageDropzone'
 import SlugFields from '@/app/features/articles/SlugFields'
 import { useSlugField } from '@/app/features/articles/useSlugField'
 import SeasonSelect from '@/app/features/articles/SeasonSelect'
@@ -108,11 +108,6 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
         }
     }
 
-    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0]
-        if (file) acceptFile(file)
-    }
-
     async function handleSubmit() {
         if (!article) return
         if (!title.trim()) { toast.error('Title is required'); return }
@@ -197,28 +192,27 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                                             <div className="relative w-full h-40 rounded-sm overflow-hidden border border-border">
                                                 <Image src={existingCover} alt="cover" fill sizes="600px" className="object-contain" />
                                             </div>
-                                            <div className="flex gap-2">
-                                                <Input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleFileChange} className="rounded-sm" />
-                                                <Button type="button" variant="outline" size="sm" className="rounded-sm text-destructive" onClick={() => setRemoveCover(true)}>
-                                                    Remove
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ) : preview ? (
-                                        <div className="panel p-3 rounded-sm space-y-3 text-center">
-                                            <img src={preview} alt="preview" className="max-h-48 mx-auto rounded-sm object-contain" />
-                                            <Button type="button" variant="outline" size="sm" className="rounded-sm" onClick={() => { setImageFile(null); setPreview(null) }}>
-                                                Change
+                                            <ImageDropzone preview={null} compressing={compressing} onFile={acceptFile} onClear={() => {}} />
+                                            <Button type="button" variant="outline" size="sm" className="rounded-sm text-destructive" onClick={() => setRemoveCover(true)}>
+                                                Remove cover
                                             </Button>
                                         </div>
                                     ) : (
-                                        <div className="panel p-3 rounded-sm space-y-2">
-                                            <p className="text-sm text-muted-foreground">{compressing ? 'Processing image...' : removeCover ? 'Cover will be removed on save.' : 'No cover. Upload one to show this article in the media feed.'}</p>
-                                            <Input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleFileChange} className="rounded-sm" />
+                                        <div className="space-y-2">
+                                            <ImageDropzone
+                                                preview={preview}
+                                                compressing={compressing}
+                                                onFile={acceptFile}
+                                                onClear={() => { setImageFile(null); setPreview(null) }}
+                                                clearLabel="Change"
+                                            />
                                             {removeCover && (
-                                                <Button type="button" variant="ghost" size="sm" className="rounded-sm" onClick={() => setRemoveCover(false)}>
-                                                    Keep existing cover
-                                                </Button>
+                                                <div className="panel p-3 rounded-sm space-y-2 text-sm text-muted-foreground">
+                                                    <p>Cover will be removed on save.</p>
+                                                    <Button type="button" variant="ghost" size="sm" className="rounded-sm" onClick={() => setRemoveCover(false)}>
+                                                        Keep existing cover
+                                                    </Button>
+                                                </div>
                                             )}
                                         </div>
                                     )}
