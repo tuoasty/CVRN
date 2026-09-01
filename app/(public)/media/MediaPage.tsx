@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Image as ImageIcon, Play, Pin, Search, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { PublicPageHeader } from "@/app/components/public/PublicPageHeader"
 import { Badge } from '@/app/components/ui/badge'
@@ -9,9 +10,14 @@ import { Button } from '@/app/components/ui/button'
 import VideoEmbedDialog from '@/app/features/media/VideoEmbedDialog'
 import GFXImageDialog from '@/app/features/media/GFXImageDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
+import ArticleCard from '@/app/(public)/articles/ArticleCard'
+import { buildArticleHref } from '@/app/utils/matchDetailHref'
 import { usePlayersByIds } from '@/app/hooks/usePlayers'
 import { cn } from '@/lib/utils'
 import type { MediaFilterType, MediaPost } from '@/server/domains/media'
+import type { ArticleListItem } from '@/server/domains/article'
+
+type TabKey = MediaFilterType | 'articles'
 
 const TYPE_COLORS: Record<string, string> = {
     gfx:   'bg-violet-500/20 text-violet-400 border-violet-500/30',
@@ -21,11 +27,12 @@ const TYPE_COLORS: Record<string, string> = {
     clip:  'bg-pink-500/20 text-pink-400 border-pink-500/30',
 }
 
-const TAB_LABELS: Record<MediaFilterType, string> = {
-    all:    'All',
-    videos: 'Videos',
-    gfx:    'GFX',
-    clips:  'Clips',
+const TAB_LABELS: Record<TabKey, string> = {
+    all:      'All',
+    articles: 'Articles',
+    videos:   'Videos',
+    gfx:      'GFX',
+    clips:    'Clips',
 }
 
 function ClipCard({ post, compact = false }: { post: MediaPost; compact?: boolean }) {
@@ -190,10 +197,11 @@ function matchesSearch(post: MediaPost, q: string): boolean {
 type Props = {
 
     posts: MediaPost[]
+    articles?: ArticleListItem[]
 }
 
-export default function MediaFeedPage({ posts: allPosts }: Props) {
-    const [filter, setFilter] = useState<MediaFilterType>('all')
+export default function MediaFeedPage({ posts: allPosts, articles: allArticles = [] }: Props) {
+    const [filter, setFilter] = useState<TabKey>('all')
     const [page, setPage]         = useState(1)
     const [clipsPage, setClipsPage] = useState(1)
     const [search, setSearch]     = useState('')
@@ -226,9 +234,16 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
     }, [filter, clipsEverVisited])
 
     const isOnClips = filter === 'clips'
+    const isOnArticles = filter === 'articles'
+
+    const articlesById = useMemo(() => {
+        const map = new Map<string, ArticleListItem>()
+        for (const a of allArticles) map.set(a.id, a)
+        return map
+    }, [allArticles])
 
     const { posts, totalPages } = useMemo(() => {
-        const types = FILTER_TYPES[isOnClips ? 'all' : filter]
+        const types = FILTER_TYPES[isOnClips || isOnArticles ? 'all' : (filter as MediaFilterType)]
         const matched = allPosts.filter(
             p => types.includes(p.type) && matchesSearch(p, debouncedSearch),
         )
@@ -237,7 +252,19 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
             posts: matched.slice(from, from + PAGE_SIZE),
             totalPages: Math.ceil(matched.length / PAGE_SIZE),
         }
-    }, [allPosts, filter, isOnClips, debouncedSearch, page])
+    }, [allPosts, filter, isOnClips, isOnArticles, debouncedSearch, page])
+
+    const { articleItems, articlesTotalPages } = useMemo(() => {
+        const q = debouncedSearch.trim().toLowerCase()
+        const matched = allArticles.filter(a =>
+            !q || a.title.toLowerCase().includes(q) || a.snippet.toLowerCase().includes(q)
+        )
+        const from = (page - 1) * PAGE_SIZE
+        return {
+            articleItems: matched.slice(from, from + PAGE_SIZE),
+            articlesTotalPages: Math.ceil(matched.length / PAGE_SIZE),
+        }
+    }, [allArticles, debouncedSearch, page])
 
     const { clipsPosts, clipsTotalPages } = useMemo(() => {
         const matched = allPosts.filter(p => FILTER_TYPES.clips.includes(p.type))
@@ -248,7 +275,7 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
         }
     }, [allPosts, clipsPage])
 
-    const handleFilter = useCallback((f: MediaFilterType) => {
+    const handleFilter = useCallback((f: TabKey) => {
         setFilter(f)
         setPage(1)
     }, [])
@@ -264,7 +291,7 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
             {}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <div className="flex gap-1.5">
-                    {(Object.keys(TAB_LABELS) as MediaFilterType[]).map(f => (
+                    {(Object.keys(TAB_LABELS) as TabKey[]).map(f => (
                         <button
                             key={f}
                             onClick={() => handleFilter(f)}
@@ -319,7 +346,26 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
             )}
 
             {}
-            {!isOnClips && (
+            {isOnArticles && (
+                articleItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                        <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
+                        <p className="text-sm text-muted-foreground">
+                            {debouncedSearch ? 'No results found.' : 'No articles yet.'}
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                            {articleItems.map(a => <ArticleCard key={a.id} article={a} />)}
+                        </div>
+                        <Pagination page={page} totalPages={articlesTotalPages} onPage={setPage} />
+                    </>
+                )
+            )}
+
+            {}
+            {!isOnClips && !isOnArticles && (
                 posts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 space-y-3">
                         <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
@@ -330,9 +376,17 @@ export default function MediaFeedPage({ posts: allPosts }: Props) {
                 ) : (
                     <>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                            {posts.map(post => (
-                                <MediaCard key={post.id} post={post} authorName={post.author_id ? authorNameById.get(post.author_id) ?? null : null} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
-                            ))}
+                            {posts.map(post => {
+                                const article = post.type === 'news' && post.article_id ? articlesById.get(post.article_id) : null
+                                const authorName = post.author_id ? authorNameById.get(post.author_id) ?? null : null
+                                return article ? (
+                                    <Link key={post.id} href={buildArticleHref(article)}>
+                                        <MediaCard post={post} authorName={authorName} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
+                                    </Link>
+                                ) : (
+                                    <MediaCard key={post.id} post={post} authorName={authorName} onVideoClick={setVideoUrl} onGfxClick={setGfxPost} />
+                                )
+                            })}
                         </div>
                         <Pagination page={page} totalPages={totalPages} onPage={setPage} />
                     </>

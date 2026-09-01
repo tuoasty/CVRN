@@ -8,33 +8,32 @@ import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
 import FeaturedMatchCarousel, { type FeaturedSlide, type FeaturedAwardSlide, type FeaturedMatchSlide } from "@/app/(public)/home/FeaturedMatchCarousel";
 import SeasonChampionCard from "@/app/(public)/home/SeasonChampionCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
-import StandingsPreview from "@/app/(public)/home/StandingsPreview";
-import { StandingMethod } from "@/shared/types/standing";
+import ArticleCard from "@/app/(public)/articles/ArticleCard";
 import { MatchWithDetails } from "@/server/domains/match";
 import { computeMatchLabels } from "@/app/utils/matchLabel";
 import { buildPublicMatchHref, buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
 import { usePlayersByIds } from "@/app/hooks/usePlayers";
 import type { TeamWithRegion } from "@/server/domains/team";
-import type { StandingWithInfo } from "@/server/domains/standing";
 import type { SeasonPodiumEntryWithTeam } from "@/server/domains/season";
 import type { MediaPost } from "@/server/domains/media";
+import type { ArticleListItem } from "@/server/domains/article";
 
 type Props = {
     teams: TeamWithRegion[];
     upcomingMatches: MatchWithDetails[];
     recentMatches: MatchWithDetails[];
-    standings: StandingWithInfo[];
     podium: SeasonPodiumEntryWithTeam[];
     mediaPosts: MediaPost[];
+    articles: ArticleListItem[];
 };
 
 export default function HomePage({
     teams,
     upcomingMatches,
     recentMatches,
-    standings,
     podium,
     mediaPosts,
+    articles,
 }: Props) {
     const { season, region } = useSeasonContext();
 
@@ -301,15 +300,19 @@ export default function HomePage({
                         <div className="space-y-3">
                             <div className="border-t border-border pt-4">
                                 <h3 className="text-base font-bold uppercase tracking-wider text-foreground mb-4">
-                                    Season Standings
+                                    Latest News
                                 </h3>
-                                <StandingsPreview
-                                    standings={standings}
-                                    qualifiedTeams={season.playoff_configs?.qualified_teams}
-                                    regionCode={regionCode}
-                                    seasonSlug={seasonSlug}
-                                    standingMethod={region.standing_method as StandingMethod}
-                                />
+                                {articles.length === 0 ? (
+                                    <div className="panel p-6 text-center">
+                                        <p className="text-sm text-muted-foreground">No articles yet.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {articles.slice(0, 4).map((a) => (
+                                            <ArticleCard key={a.id} article={a} />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </section>

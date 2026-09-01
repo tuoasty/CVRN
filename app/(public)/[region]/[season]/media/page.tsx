@@ -4,6 +4,7 @@ import {
     getCachedRegionByCode,
     getCachedSeasonBySlugAndRegion,
     getCachedAllMediaPosts,
+    getCachedPublishedArticles,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 
@@ -23,7 +24,10 @@ export default async function Page({ params }: PageProps) {
     );
     if (!seasonRecord) notFound();
 
-    const posts = await getCachedAllMediaPosts();
+    const [posts, articles] = await Promise.all([
+        getCachedAllMediaPosts(),
+        getCachedPublishedArticles(),
+    ]);
 
-    return <MediaPage posts={posts} />;
+    return <MediaPage posts={posts} articles={articles} />;
 }

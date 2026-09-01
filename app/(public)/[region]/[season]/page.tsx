@@ -6,9 +6,9 @@ import {
     getCachedTeamsWithRegionsIncludingInactive,
     getCachedUpcomingMatches,
     getCachedRecentMatches,
-    getCachedStandings,
     getCachedSeasonPodium,
     getCachedAllMediaPosts,
+    getCachedPublishedArticles,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 
@@ -32,13 +32,13 @@ export default async function Page({ params }: PageProps) {
         ? new Date(seasonRecord.end_date) < new Date()
         : false;
 
-    const [teams, standings, podium, mediaPosts] = await Promise.all([
+    const [teams, podium, mediaPosts, articles] = await Promise.all([
         getCachedTeamsWithRegionsIncludingInactive(),
-        getCachedStandings(seasonRecord.id, regionRecord.id),
         isSeasonCompleted
             ? getCachedSeasonPodium(seasonRecord.id)
             : Promise.resolve([]),
         getCachedAllMediaPosts(),
+        getCachedPublishedArticles(),
     ]);
 
     const [upcomingMatches, recentMatches] = await Promise.all([
@@ -51,9 +51,9 @@ export default async function Page({ params }: PageProps) {
             teams={teams}
             upcomingMatches={upcomingMatches}
             recentMatches={recentMatches}
-            standings={standings}
             podium={podium}
             mediaPosts={mediaPosts}
+            articles={articles}
         />
     );
 }
