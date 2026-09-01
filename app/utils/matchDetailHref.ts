@@ -46,3 +46,8 @@ export function buildPublicPlayerHref(username: string | null | undefined): stri
     if (!username) return null;
     return `/players/${encodeURIComponent(username.toLowerCase())}`;
 }
+
+export function buildArticleHref(a: {slug: string; published_at: string | null; created_at: string}): string {
+    const date = (a.published_at ?? a.created_at).slice(0, 10);
+    return `/articles/${date}/${encodeURIComponent(a.slug)}`;
+}

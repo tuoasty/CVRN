@@ -12,11 +12,13 @@ import { mutateAllMedia } from '@/app/hooks/useMediaPosts'
 import { toast } from '@/app/utils/toast'
 import { clientLogger } from '@/app/utils/clientLogger'
 import { compressImage } from '@/app/utils/imageCompression'
-import { cn } from '@/lib/utils'
 import { useAllMatches } from '@/app/hooks/useMatches'
 import { useTeamsBySeason } from '@/app/hooks/useTeams'
-import AuthorPicker, { type AuthorSelection } from '@/app/features/media/AuthorPicker'
-import MatchPicker, { type MatchSelection } from '@/app/features/articles/MatchPicker'
+import { type AuthorSelection } from '@/app/features/media/AuthorPicker'
+import { type MatchSelection } from '@/app/features/articles/MatchPicker'
+import ArticleFormFields from '@/app/features/articles/ArticleFormFields'
+import SlugFields from '@/app/features/articles/SlugFields'
+import { useSlugField } from '@/app/features/articles/useSlugField'
 import SeasonSelect from '@/app/features/articles/SeasonSelect'
 import type { ArticleListItem } from '@/server/domains/article'
 
@@ -31,6 +33,8 @@ const PENDING_LABEL = '(linked match)'
 export default function EditArticleDialog({ article, open, onOpenChange }: EditArticleDialogProps) {
     const [title, setTitle] = useState('')
     const [body, setBody] = useState('')
+    const slugField = useSlugField()
+    const { setInitialSlug } = slugField
     const [author, setAuthor] = useState<AuthorSelection | null>(null)
     const [match, setMatch] = useState<MatchSelection | null>(null)
     const [seasonId, setSeasonId] = useState<string | null>(null)
@@ -66,6 +70,7 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                 const d = res.value
                 setTitle(d.title)
                 setBody(d.body)
+                setInitialSlug(d.slug)
                 setSeasonId(d.season_id)
                 setAuthor(d.author ? { id: d.author.id, label: d.author.display_name || d.author.username, avatarUrl: d.author.avatar_url } : null)
                 setMatch(d.match_id ? { id: d.match_id, label: PENDING_LABEL } : null)
@@ -76,7 +81,7 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
             })
             .finally(() => { if (!cancelled) setFetching(false) })
         return () => { cancelled = true }
-    }, [open, article, onOpenChange])
+    }, [open, article, onOpenChange, setInitialSlug])
 
     useEffect(() => {
         if (!match || match.label !== PENDING_LABEL) return
@@ -119,6 +124,7 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
             formData.set('articleId', article.id)
             formData.set('title', title.trim())
             formData.set('body', body)
+            if (slugField.slug.trim()) formData.set('slug', slugField.canonicalSlug)
             formData.set('authorId', author ? author.id : '')
             formData.set('matchId', match ? match.id : '')
             formData.set('seasonId', seasonId ?? '')
@@ -162,27 +168,28 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                     </div>
                 ) : (
                     <div className="flex flex-col flex-1 min-h-0">
-                        <div className="grid lg:grid-cols-[1fr_380px] flex-1 min-h-0">
-                            <div className="flex flex-col min-h-0 p-6 gap-4 border-r border-border">
-                                <div className="space-y-1">
-                                    <Label htmlFor="edit-title">Title</Label>
-                                    <Input id="edit-title" value={title} onChange={e => setTitle(e.target.value)} className="rounded-sm text-lg" />
-                                </div>
-                                <div className="flex flex-col flex-1 min-h-0 space-y-1">
-                                    <Label htmlFor="edit-body">Body <span className="text-muted-foreground text-xs">(Discord markdown)</span></Label>
-                                    <textarea
-                                        id="edit-body"
-                                        value={body}
-                                        onChange={e => setBody(e.target.value)}
-                                        className="flex-1 min-h-0 w-full resize-none rounded-sm border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col min-h-0 overflow-y-auto p-6 gap-5">
-                                <AuthorPicker value={author} onChange={setAuthor} />
-                                <MatchPicker seasonId={seasonId} value={match} onChange={setMatch} />
-
+                        <ArticleFormFields
+                            idPrefix="edit"
+                            title={title}
+                            onTitleChange={setTitle}
+                            body={body}
+                            onBodyChange={setBody}
+                            author={author}
+                            onAuthorChange={setAuthor}
+                            seasonId={seasonId}
+                            match={match}
+                            onMatchChange={setMatch}
+                            topSlot={
+                                <SlugFields
+                                    idPrefix="edit"
+                                    shortName={slugField.shortName}
+                                    slug={slugField.slug}
+                                    canonicalSlug={slugField.canonicalSlug}
+                                    onShortNameChange={slugField.setShortName}
+                                    onSlugChange={slugField.setSlug}
+                                />
+                            }
+                            coverSlot={
                                 <div className="space-y-1">
                                     <Label>Cover image <span className="text-muted-foreground text-xs">(optional)</span></Label>
                                     {showExistingCover ? (
@@ -216,8 +223,8 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                        </div>
+                            }
+                        />
 
                         <div className="flex justify-end gap-2 px-6 py-3 border-t border-border">
                             <Button type="button" variant="ghost" size="sm" className="rounded-sm" onClick={() => onOpenChange(false)} disabled={loading}>

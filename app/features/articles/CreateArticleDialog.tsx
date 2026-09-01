@@ -13,8 +13,11 @@ import { clientLogger } from '@/app/utils/clientLogger'
 import { compressImage } from '@/app/utils/imageCompression'
 import { useAdminContextStore } from '@/app/stores/adminContextStore'
 import { cn } from '@/lib/utils'
-import AuthorPicker, { type AuthorSelection } from '@/app/features/media/AuthorPicker'
-import MatchPicker, { type MatchSelection } from '@/app/features/articles/MatchPicker'
+import { type AuthorSelection } from '@/app/features/media/AuthorPicker'
+import { type MatchSelection } from '@/app/features/articles/MatchPicker'
+import ArticleFormFields from '@/app/features/articles/ArticleFormFields'
+import SlugFields from '@/app/features/articles/SlugFields'
+import { useSlugField } from '@/app/features/articles/useSlugField'
 import SeasonSelect from '@/app/features/articles/SeasonSelect'
 
 interface CreateArticleDialogProps {
@@ -27,6 +30,7 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
 
     const [title, setTitle] = useState('')
     const [body, setBody] = useState('')
+    const slugField = useSlugField()
     const [seasonId, setSeasonId] = useState<string | null>(null)
     const [author, setAuthor] = useState<AuthorSelection | null>(null)
     const [match, setMatch] = useState<MatchSelection | null>(null)
@@ -44,6 +48,7 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
     function reset() {
         setTitle('')
         setBody('')
+        slugField.reset()
         setAuthor(null)
         setMatch(null)
         setImageFile(null)
@@ -108,6 +113,7 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
             const formData = new FormData()
             formData.set('title', title.trim())
             formData.set('body', body)
+            if (slugField.slug.trim()) formData.set('slug', slugField.canonicalSlug)
             if (author) formData.set('authorId', author.id)
             if (match) formData.set('matchId', match.id)
             if (seasonId) formData.set('seasonId', seasonId)
@@ -142,29 +148,29 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
                 </DialogHeader>
 
                 <div className="flex flex-col flex-1 min-h-0">
-                    <div className="grid lg:grid-cols-[1fr_380px] flex-1 min-h-0">
-                        <div className="flex flex-col min-h-0 p-6 gap-4 border-r border-border">
-                            <div className="space-y-1">
-                                <Label htmlFor="title">Title</Label>
-                                <Input id="title" value={title} onChange={e => setTitle(e.target.value)} className="rounded-sm text-lg" />
-                            </div>
-                            <div className="flex flex-col flex-1 min-h-0 space-y-1">
-                                <Label htmlFor="body">Body <span className="text-muted-foreground text-xs">(Discord markdown)</span></Label>
-                                <textarea
-                                    id="body"
-                                    value={body}
-                                    onChange={e => setBody(e.target.value)}
-                                    onPaste={handlePaste}
-                                    className="flex-1 min-h-0 w-full resize-none rounded-sm border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                    placeholder="Paste the article body here. **bold**, *italic*, # headers, > quotes, lists, `code`."
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col min-h-0 overflow-y-auto p-6 gap-5">
-                            <AuthorPicker value={author} onChange={setAuthor} />
-                            <MatchPicker seasonId={seasonId} value={match} onChange={handleMatchChange} />
-
+                    <ArticleFormFields
+                        idPrefix="create"
+                        title={title}
+                        onTitleChange={setTitle}
+                        body={body}
+                        onBodyChange={setBody}
+                        onBodyPaste={handlePaste}
+                        author={author}
+                        onAuthorChange={setAuthor}
+                        seasonId={seasonId}
+                        match={match}
+                        onMatchChange={handleMatchChange}
+                        topSlot={
+                            <SlugFields
+                                idPrefix="create"
+                                shortName={slugField.shortName}
+                                slug={slugField.slug}
+                                canonicalSlug={slugField.canonicalSlug}
+                                onShortNameChange={slugField.setShortName}
+                                onSlugChange={slugField.setSlug}
+                            />
+                        }
+                        coverSlot={
                             <div className="space-y-1">
                                 <Label>Cover image <span className="text-muted-foreground text-xs">(optional — shows in the media feed)</span></Label>
                                 <div
@@ -193,8 +199,8 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
                                     )}
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        }
+                    />
 
                     <div className="flex items-center justify-between px-6 py-3 border-t border-border">
                         <div className="inline-flex rounded-sm border border-border overflow-hidden">

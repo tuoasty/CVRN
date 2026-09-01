@@ -1,22 +1,12 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
+import { Search, X } from "lucide-react"
 import { Label } from "@/app/components/ui/label"
 import { Button } from "@/app/components/ui/button"
 import { cn } from "@/lib/utils"
-import { MatchTypeTabs, WeekSelector, PlayoffStepper } from "@/app/features/matches/ScheduleSelectors"
-import {
-    useWeekSchedule,
-    usePlayoffSchedule,
-    useDefaultWeekForSeason,
-    useWeekMatchCounts,
-    useAvailablePlayoffRounds,
-    usePlayoffRoundCounts,
-} from "@/app/hooks/useMatches"
-import { useSeasons } from "@/app/hooks/useSeasons"
+import { useAllMatches } from "@/app/hooks/useMatches"
 import { useTeamsBySeason } from "@/app/hooks/useTeams"
-import { isPlayoffRound, sortRounds, roundLabelShort } from "@/app/utils/playoffRounds"
-import { PlayoffRound } from "@/server/domains/playoff"
 
 export interface MatchSelection {
     id: string
@@ -30,60 +20,43 @@ interface MatchPickerProps {
 }
 
 export default function MatchPicker({ seasonId, value, onChange }: MatchPickerProps) {
-    const { seasons } = useSeasons()
-    const season = seasons.find(s => s.id === seasonId)
-    const hasPlayoffs = !!season?.playoff_started
-
-    const [matchType, setMatchType] = useState<"season" | "playoffs">("season")
-    const [weekOverride, setWeekOverride] = useState<number | null>(null)
-    const [roundOverride, setRoundOverride] = useState<PlayoffRound | null>(null)
-
-    useEffect(() => {
-        setWeekOverride(null)
-        setRoundOverride(null)
-        setMatchType(hasPlayoffs ? "playoffs" : "season")
-    }, [seasonId, hasPlayoffs])
-
-    const { defaultWeek } = useDefaultWeekForSeason(seasonId && !weekOverride ? seasonId : null)
-    const { weekCounts } = useWeekMatchCounts(seasonId)
-    const availableWeeks = useMemo(() => weekCounts.map(w => w.week).sort((a, b) => a - b), [weekCounts])
-    const effectiveWeek = weekOverride ?? defaultWeek ?? 1
-
-    const { rounds: availableRounds } = useAvailablePlayoffRounds(hasPlayoffs ? seasonId : null)
-    const { roundCounts } = usePlayoffRoundCounts(hasPlayoffs ? seasonId : null)
-    const sortedRounds = useMemo(() => sortRounds(availableRounds.filter(isPlayoffRound)), [availableRounds])
-    const effectiveRound: PlayoffRound =
-        roundOverride && sortedRounds.includes(roundOverride) ? roundOverride : sortedRounds[0] ?? "play_in"
-
-    const roundCountMap = useMemo(() => {
-        const m = new Map<string, number>()
-        for (const { round, count } of roundCounts) m.set(round, count)
-        return m
-    }, [roundCounts])
-
-    const { schedule: weekSchedule } = useWeekSchedule(
-        matchType === "season" && seasonId ? seasonId : null,
-        matchType === "season" ? effectiveWeek : null,
-    )
-    const { schedule: playoffSchedule } = usePlayoffSchedule(
-        matchType === "playoffs" && seasonId ? seasonId : null,
-        matchType === "playoffs" ? effectiveRound : null,
-    )
-    const schedule = matchType === "season" ? weekSchedule : playoffSchedule
-
+    const { matches } = useAllMatches()
     const { teams } = useTeamsBySeason(seasonId)
+    const [query, setQuery] = useState("")
+
     const teamName = useMemo(() => {
         const map = new Map<string, string>()
         for (const t of teams) map.set(t.id, t.name)
         return map
     }, [teams])
 
-    function nameFor(id: string | null): string {
-        return id ? teamName.get(id) ?? "TBD" : "TBD"
-    }
+    const options = useMemo(() => {
+        if (!seasonId) return []
+        return matches
+            .filter(m => m.season_id === seasonId && m.home_team_id && m.away_team_id)
+            .map(m => ({
+                id: m.id,
+                home: teamName.get(m.home_team_id as string) ?? null,
+                away: teamName.get(m.away_team_id as string) ?? null,
+                code: m.match_code,
+                scheduledAt: m.scheduled_at,
+            }))
+            .filter(o => o.home && o.away)
+            .sort((a, b) => (b.scheduledAt ?? "").localeCompare(a.scheduledAt ?? ""))
+    }, [matches, seasonId, teamName])
 
-    function labelFor(homeId: string | null, awayId: string | null, code: string | null): string {
-        return `${nameFor(homeId)} vs ${nameFor(awayId)}${code ? ` · ${code}` : ""}`
+    const filtered = useMemo(() => {
+        const q = query.trim().toLowerCase()
+        if (!q) return options
+        return options.filter(o =>
+            (o.home ?? "").toLowerCase().includes(q) ||
+            (o.away ?? "").toLowerCase().includes(q) ||
+            (o.code ?? "").toLowerCase().includes(q)
+        )
+    }, [options, query])
+
+    function select(o: (typeof options)[number]) {
+        onChange({ id: o.id, label: `${o.home} vs ${o.away}${o.code ? ` · ${o.code}` : ""}` })
     }
 
     return (
@@ -103,46 +76,52 @@ export default function MatchPicker({ seasonId, value, onChange }: MatchPickerPr
                 <p className="text-xs text-muted-foreground">Select a season to link a match.</p>
             ) : (
                 <>
-                    <MatchTypeTabs activeTab={matchType} playoffsEnabled={hasPlayoffs} onTabChange={setMatchType} />
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                            type="text"
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                            placeholder="Search by team or match code..."
+                            className="w-full h-9 pl-8 pr-8 text-sm rounded-sm border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                        {query && (
+                            <button
+                                type="button"
+                                onClick={() => setQuery("")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                    </div>
 
-                    {matchType === "season" ? (
-                        availableWeeks.length > 0 && (
-                            <WeekSelector effectiveWeek={effectiveWeek} weeks={availableWeeks} onWeekChange={setWeekOverride} />
-                        )
-                    ) : (
-                        sortedRounds.length > 0 && (
-                            <PlayoffStepper
-                                rounds={sortedRounds}
-                                effectiveRound={effectiveRound}
-                                roundCountMap={roundCountMap}
-                                onRoundChange={r => setRoundOverride(r as PlayoffRound)}
-                            />
-                        )
-                    )}
-
-                    <div className="space-y-1 max-h-64 overflow-y-auto">
-                        {schedule.length === 0 ? (
-                            <p className="text-xs text-muted-foreground px-1 py-3 text-center">No matches here.</p>
+                    <div className="space-y-1 max-h-72 overflow-y-auto">
+                        {filtered.length === 0 ? (
+                            <p className="text-xs text-muted-foreground px-1 py-3 text-center">
+                                {options.length === 0 ? "No matches with both teams set yet." : "No matches found."}
+                            </p>
                         ) : (
-                            schedule.map(({ match, playoff_round }) => {
-                                const label = labelFor(match.home_team_id, match.away_team_id, match.match_code)
-                                const selected = value?.id === match.id
+                            filtered.map(o => {
+                                const selected = value?.id === o.id
                                 return (
                                     <button
-                                        key={match.id}
+                                        key={o.id}
                                         type="button"
-                                        onClick={() => onChange({ id: match.id, label })}
+                                        onClick={() => select(o)}
                                         className={cn(
-                                            "w-full text-left panel p-2 rounded-sm transition-colors flex items-center justify-between gap-2",
+                                            "w-full text-left panel p-2 rounded-sm transition-colors flex items-center justify-between gap-3",
                                             selected ? "bg-primary/15 border-primary/30" : "hover:bg-muted/40",
                                         )}
                                     >
-                                        <span className="text-sm truncate">
-                                            {nameFor(match.home_team_id)} <span className="text-muted-foreground">vs</span> {nameFor(match.away_team_id)}
+                                        <span className="text-sm truncate min-w-0">
+                                            <span className="font-medium">{o.home}</span>
+                                            <span className="text-muted-foreground"> vs </span>
+                                            <span className="font-medium">{o.away}</span>
                                         </span>
-                                        <span className="text-[10px] font-mono uppercase text-muted-foreground shrink-0">
-                                            {matchType === "playoffs" && playoff_round ? roundLabelShort(playoff_round) : match.match_code ?? ""}
-                                        </span>
+                                        {o.code && (
+                                            <span className="text-xs font-mono uppercase text-muted-foreground shrink-0">{o.code}</span>
+                                        )}
                                     </button>
                                 )
                             })

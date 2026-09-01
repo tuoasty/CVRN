@@ -13,6 +13,7 @@ export interface InsertArticleDto {
 export interface UpdateArticleFields {
     title?: string
     body?: string
+    slug?: string
     author_id?: string | null
     match_id?: string | null
     season_id?: string | null
@@ -57,6 +58,7 @@ export interface ArticleDetail {
 export interface CreateArticleInput {
     title: string
     body: string
+    slug?: string | null
     authorId?: string | null
     matchId?: string | null
     seasonId?: string | null
@@ -69,6 +71,7 @@ export interface UpdateArticleInput {
     articleId: string
     title?: string
     body?: string
+    slug?: string | null
     authorId?: string | null
     matchId?: string | null
     seasonId?: string | null

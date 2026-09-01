@@ -11,7 +11,8 @@ import {
     updateMediaPostFields,
     deleteMediaPostById,
 } from '@/server/db/mediaPost.repo'
-import { findArticleById, updateArticle as updateArticleRow } from '@/server/db/article.repo'
+import { findArticleById, updateArticle as updateArticleRow, findArticleSlugExists } from '@/server/db/article.repo'
+import { slugify } from '../helpers/slugify'
 import { UpdateArticleInput, UpdateArticleFields } from '../types'
 
 export async function updateArticle(supabase: DBClient, p: UpdateArticleInput): Promise<Result<Article>> {
@@ -23,6 +24,15 @@ export async function updateArticle(supabase: DBClient, p: UpdateArticleInput): 
         const fields: UpdateArticleFields = {}
         if (p.title !== undefined)    fields.title = p.title
         if (p.body !== undefined)     fields.body = p.body
+        if (p.slug) {
+            const desired = slugify(p.slug)
+            if (desired && desired !== lookup.value.slug) {
+                const exists = await findArticleSlugExists(supabase, desired)
+                if (!exists.ok) return exists
+                if (exists.value) return Err({ message: 'That slug is already in use. Choose another.', code: 'VALIDATION_ERROR' })
+                fields.slug = desired
+            }
+        }
         if (p.authorId !== undefined) fields.author_id = p.authorId
         if (p.matchId !== undefined)  fields.match_id = p.matchId
         if (p.seasonId !== undefined) fields.season_id = p.seasonId

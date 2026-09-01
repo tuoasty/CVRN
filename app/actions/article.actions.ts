@@ -29,6 +29,7 @@ export async function createArticleAction(formData: FormData): Promise<Result<Ar
     const parsed = CreateArticleFormSchema.safeParse({
         title:     formData.get('title'),
         body:      formData.get('body'),
+        slug:      formData.get('slug') || undefined,
         authorId:  formData.get('authorId') || undefined,
         matchId:   formData.get('matchId') || undefined,
         seasonId:  formData.get('seasonId') || undefined,
@@ -45,6 +46,7 @@ export async function createArticleAction(formData: FormData): Promise<Result<Ar
     const result = await createArticle(supabase, {
         title:     parsed.data.title,
         body:      parsed.data.body,
+        slug:      parsed.data.slug || null,
         authorId:  parsed.data.authorId || null,
         matchId:   parsed.data.matchId || null,
         seasonId:  parsed.data.seasonId || null,
@@ -61,6 +63,7 @@ export async function updateArticleAction(formData: FormData): Promise<Result<Ar
         articleId:   formData.get('articleId'),
         title:       formData.get('title') || undefined,
         body:        formData.get('body') || undefined,
+        slug:        formData.get('slug') || undefined,
         authorId:    formData.has('authorId') ? (formData.get('authorId') || null) : undefined,
         matchId:     formData.has('matchId') ? (formData.get('matchId') || null) : undefined,
         seasonId:    formData.has('seasonId') ? (formData.get('seasonId') || null) : undefined,
@@ -78,6 +81,7 @@ export async function updateArticleAction(formData: FormData): Promise<Result<Ar
         articleId:   parsed.data.articleId,
         title:       parsed.data.title,
         body:        parsed.data.body,
+        slug:        parsed.data.slug || null,
         authorId:    parsed.data.authorId,
         matchId:     parsed.data.matchId,
         seasonId:    parsed.data.seasonId,

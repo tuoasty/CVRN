@@ -6,8 +6,8 @@ import { logger } from '@/server/utils/logger'
 import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
 import { uploadFile, deleteFile } from '@/server/storage/storage.service'
 import { insertMediaPost } from '@/server/db/mediaPost.repo'
-import { insertArticle, deleteArticleById } from '@/server/db/article.repo'
-import { generateUniqueSlug } from '../helpers/slugify'
+import { insertArticle, deleteArticleById, findArticleSlugExists } from '@/server/db/article.repo'
+import { generateUniqueSlug, slugify } from '../helpers/slugify'
 import { CreateArticleInput } from '../types'
 
 export async function createArticle(supabase: DBClient, p: CreateArticleInput): Promise<Result<Article>> {
@@ -18,7 +18,15 @@ export async function createArticle(supabase: DBClient, p: CreateArticleInput): 
     let success = false
 
     try {
-        const slug = await generateUniqueSlug(supabase, p.title)
+        let slug: string
+        if (p.slug && p.slug.trim()) {
+            slug = slugify(p.slug)
+            const exists = await findArticleSlugExists(supabase, slug)
+            if (!exists.ok) return exists
+            if (exists.value) return Err({ message: 'That slug is already in use. Choose another.', code: 'VALIDATION_ERROR' })
+        } else {
+            slug = await generateUniqueSlug(supabase, p.title)
+        }
         const publishedAt = p.published ? new Date().toISOString() : null
 
         const inserted = await insertArticle(supabase, {
