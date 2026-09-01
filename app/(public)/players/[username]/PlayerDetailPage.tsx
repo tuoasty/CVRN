@@ -19,14 +19,14 @@ const ROLE_LABELS: Record<string, string> = {
 const PODIUM_CATEGORIES = new Set(["champion_roster", "runner_up", "third_place"]);
 
 const ACHIEVEMENT_ROW: Record<string, {row: string; hover: string}> = {
-    champion_roster: {row: "bg-yellow-500/5", hover: "hover:bg-yellow-500/10"},
-    runner_up:       {row: "bg-slate-500/5",  hover: "hover:bg-slate-400/10"},
-    third_place:     {row: "bg-amber-600/5",  hover: "hover:bg-amber-600/10"},
+    champion_roster: {row: "bg-secondary/5", hover: "hover:bg-secondary/10"},
+    runner_up:       {row: "bg-muted/50",    hover: "hover:bg-muted"},
+    third_place:     {row: "bg-muted/50",    hover: "hover:bg-muted"},
 };
 
 const AWARD_CATEGORY_STYLE: Record<string, {dot: string; text: string}> = {
-    individual_winners: {dot: "bg-yellow-400", text: "text-yellow-500 dark:text-yellow-400"},
-    first_team:         {dot: "bg-blue-400",   text: "text-blue-500 dark:text-blue-400"},
+    individual_winners: {dot: "bg-secondary", text: "text-secondary"},
+    first_team:         {dot: "bg-primary",   text: "text-primary"},
 };
 
 function formatDate(isoString: string | null): string {
@@ -36,9 +36,9 @@ function formatDate(isoString: string | null): string {
 }
 
 function placeLabel(category: string): {text: string; className: string} {
-    if (category === "champion_roster") return {text: "1st", className: "font-bold text-yellow-500"};
-    if (category === "runner_up") return {text: "2nd", className: "font-bold text-slate-400"};
-    if (category === "third_place") return {text: "3rd", className: "font-bold text-amber-600"};
+    if (category === "champion_roster") return {text: "1st", className: "font-bold text-secondary"};
+    if (category === "runner_up") return {text: "2nd", className: "font-bold text-muted-foreground"};
+    if (category === "third_place") return {text: "3rd", className: "font-bold text-muted-foreground"};
     return {text: "—", className: "text-muted-foreground"};
 }
 

@@ -223,7 +223,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
                     {robloxResults.map((user) => (
                         <div
                             key={`roblox-${user.id.toString()}`}
-                            className="panel p-4 flex items-center gap-4 border-l-4 border-l-blue-500/50 bg-blue-500/5"
+                            className="panel p-4 flex items-center gap-4 border-primary/40 bg-primary/5"
                         >
                             <div className="relative w-16 h-16 rounded-sm overflow-hidden border border-border shrink-0">
                                 <AvatarImage src={user.avatarUrl} alt={user.name} sizes="64px" />
@@ -261,7 +261,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
                         return (
                             <div
                                 key={`db-${player.id}`}
-                                className="panel p-4 flex items-center gap-4 border-l-4 border-l-amber-500/50 bg-amber-500/5"
+                                className="panel p-4 flex items-center gap-4 border-secondary/40 bg-secondary/5"
                             >
                                 <div className="relative w-16 h-16 rounded-sm overflow-hidden border border-border shrink-0">
                                     <AvatarImage src={player.avatar_url} alt={player.username || "Player"} sizes="64px" />
@@ -274,7 +274,7 @@ export default function AddPlayerToTeam({ teamId, seasonId, onSuccess }: Props) 
                                         @{player.username}
                                     </div>
                                     {isInTeam && player.current_team_name && (
-                                        <div className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                                        <div className="text-xs text-secondary mt-1 flex items-center gap-1">
                                             <span>Currently in</span>
                                             <span className="font-semibold">{player.current_team_name}</span>
                                         </div>

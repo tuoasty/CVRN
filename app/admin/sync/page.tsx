@@ -486,7 +486,7 @@ export default function AdminSyncPage() {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="rounded-sm text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                                                            className="rounded-sm text-secondary hover:bg-secondary/10"
                                                             onClick={() => { setResetTarget(cfg); setResetWipeData(true); setResetClearLogs(false); }}
                                                             title="Reset config data"
                                                         >
@@ -779,7 +779,7 @@ export default function AdminSyncPage() {
             <Dialog open={!!resetTarget} onOpenChange={(open) => { if (!open) setResetTarget(null); }}>
                 <DialogContent className="w-[calc(100%-2rem)] !max-w-md rounded-sm" aria-describedby={undefined}>
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-orange-500">
+                        <DialogTitle className="flex items-center gap-2 text-secondary">
                             <RotateCcw className="h-4 w-4" />
                             Reset — {resetTarget?.tab_name}
                         </DialogTitle>
@@ -850,7 +850,7 @@ export default function AdminSyncPage() {
                                 {syncResultDialog?.result.rowsErrored ? 'Sync completed with errors' : 'Sync complete'} — {syncResultDialog?.config.tab_name}
                             </DialogTitle>
                             <Button variant="outline" size="sm" onClick={handleCopySyncResult} className="shrink-0">
-                                {syncResultCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+                                {syncResultCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-success" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
                                 {syncResultCopied ? 'Copied' : 'Copy summary'}
                             </Button>
                         </div>

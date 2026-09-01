@@ -18,6 +18,7 @@ const FLAT_ITEMS: NavItem[] = [
     { href: "/admin/teams",     label: "Teams" },
     { href: "/admin/matches",   label: "Matches" },
     { href: "/admin/media",     label: "Media" },
+    { href: "/admin/articles",  label: "Articles" },
 ];
 
 const DROPDOWN_GROUPS: { label: string; items: NavItem[] }[] = [

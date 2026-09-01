@@ -33,11 +33,11 @@ interface PublicMatchCardProps {
 const getStatusConfig = (status: string) => {
     switch (status) {
         case "pending":
-            return { label: "Pending", className: "bg-amber-600/10 text-amber-600 border-amber-600/20" };
+            return { label: "Pending", className: "bg-secondary/10 text-secondary border-secondary/20" };
         case "scheduled":
-            return { label: "Scheduled", className: "bg-blue-600/10 text-blue-600 border-blue-600/20" };
+            return { label: "Scheduled", className: "bg-primary/10 text-primary border-primary/20" };
         case "completed":
-            return { label: "Completed", className: "bg-green-600/10 text-green-600 border-green-600/20" };
+            return { label: "Completed", className: "bg-success/10 text-success border-success/20" };
         default:
             return { label: "Unknown", className: "" };
     }
@@ -58,8 +58,8 @@ function TeamLogo({
         </div>
     );
     if (team.is_bye) return (
-        <div className={cn(sizeClass, "rounded-sm bg-orange-600/10 border border-orange-600/20 flex items-center justify-center")}>
-            <span className="text-sm text-orange-600 font-bold">BYE</span>
+        <div className={cn(sizeClass, "rounded-sm bg-muted border border-border flex items-center justify-center")}>
+            <span className="text-sm text-muted-foreground font-bold">BYE</span>
         </div>
     );
     if (team.logo_url) return (
@@ -221,7 +221,7 @@ export default function PublicMatchCard({
                                 className={cn(
                                     "rounded-sm text-[10px] h-5 px-2",
                                     match.match_type === "playoffs"
-                                        ? "bg-purple-600/10 text-purple-600 border-purple-600/20"
+                                        ? "bg-muted text-foreground border-border font-semibold"
                                         : ""
                                 )}
                             >
@@ -249,18 +249,18 @@ export default function PublicMatchCard({
                                 match.away_team_lvr !== undefined && (
                                     match.is_forfeit ? (
                                         <span className="text-[10px] font-semibold tabular-nums">
-                                            <span className="text-green-500">
+                                            <span className="text-success">
                                                 {(homeWon ? match.home_team_lvr : match.away_team_lvr) >= 0 ? "+" : ""}
                                                 {(homeWon ? match.home_team_lvr : match.away_team_lvr).toFixed(1)}
                                             </span>
                                             <span className="text-border mx-1">/</span>
-                                            <span className="text-red-500">
+                                            <span className="text-destructive">
                                                 {(homeWon ? match.away_team_lvr : match.home_team_lvr).toFixed(1)}
                                             </span>
                                             <span className="text-muted-foreground/60 ml-1">LVR</span>
                                         </span>
                                     ) : (
-                                        <span className="text-[10px] font-semibold text-green-500 tabular-nums">
+                                        <span className="text-[10px] font-semibold text-success tabular-nums">
                                             ±{Math.abs(match.home_team_lvr).toFixed(1)} LVR
                                         </span>
                                     )
@@ -379,7 +379,7 @@ export default function PublicMatchCard({
                             </Badge>
                         ))
                         : (match.home_team_lvr != null && match.away_team_lvr != null && (
-                            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-green-600/10 text-green-600 border-green-600/20">
+                            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-sm bg-success/10 text-success border-success/20">
                                 ±{Math.abs(homeWon ? match.home_team_lvr : match.away_team_lvr).toFixed(1)} LVR
                             </Badge>
                         ))

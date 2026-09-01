@@ -21,7 +21,7 @@ export default function PositionTabs({active}: {active: string}) {
                     className={cn(
                         "flex h-[38px] items-center border-r border-border px-[18px] text-sm font-medium last:border-r-0",
                         active === p.code
-                            ? "bg-yellow-400 font-semibold text-neutral-950"
+                            ? "bg-secondary font-semibold text-secondary-foreground"
                             : "bg-card text-muted-foreground hover:text-foreground",
                     )}
                 >

@@ -34,6 +34,7 @@ import {
     getUpcomingMatches,
     getRecentMatches,
     getMatchDetail,
+    getMatchDetailById,
     getWeekSchedule,
     getPlayoffSchedule,
     getAvailablePlayoffRounds,
@@ -47,6 +48,7 @@ import {
 import type {MatchWithDetails} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
+import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
 import {getPublicSpecSnapshot} from "@/server/domains/spec";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS} from "./tags";
@@ -297,6 +299,19 @@ export const getCachedMatchDetail = unstable_cache(
     },
 );
 
+export const getCachedMatchDetailById = unstable_cache(
+    async (matchId: string) =>
+        unwrapNullable(
+            await getMatchDetailById(createPublicClient(), matchId),
+            "getCachedMatchDetailById",
+        ),
+    ["public:match-detail-by-id"],
+    {
+        tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.media],
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+    },
+);
+
 export const getCachedSeasonPodium = unstable_cache(
     async (seasonId: string) =>
         unwrap(await getSeasonPodium(createPublicClient(), seasonId), "getCachedSeasonPodium"),
@@ -308,6 +323,20 @@ export const getCachedAllMediaPosts = unstable_cache(
     async () => unwrap(await getAllMediaPosts(createPublicClient(), {}), "getCachedAllMediaPosts"),
     ["public:media-posts"],
     {tags: [CACHE_TAGS.media], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedPublishedArticles = unstable_cache(
+    async (seasonId?: string) =>
+        unwrap(await getPublishedArticles(createPublicClient(), seasonId), "getCachedPublishedArticles"),
+    ["public:articles"],
+    {tags: [CACHE_TAGS.articles, CACHE_TAGS.media, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedArticleBySlug = unstable_cache(
+    async (slug: string) =>
+        unwrap(await getArticleBySlug(createPublicClient(), slug), "getCachedArticleBySlug"),
+    ["public:article-by-slug"],
+    {tags: [CACHE_TAGS.articles, CACHE_TAGS.media, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedTeamNameHistory = unstable_cache(

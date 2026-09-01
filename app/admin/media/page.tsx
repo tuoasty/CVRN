@@ -104,7 +104,7 @@ export default function AdminMediaPage() {
                             <div key={post.id} className={cn(
                                 'flex items-center gap-3 p-3 rounded-sm border transition-colors',
                                 post.is_pinned
-                                    ? 'border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/15'
+                                    ? 'border-primary/20 bg-primary/10 hover:bg-primary/15'
                                     : 'border-border bg-card hover:bg-muted/30',
                             )}>
                                 {post.image_url && post.type !== 'clip' && (
@@ -125,19 +125,19 @@ export default function AdminMediaPage() {
                                     {post.type}
                                 </Badge>
                                 {post.video_url && post.type !== 'clip' && (
-                                    <a href={post.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline">
+                                    <a href={post.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
                                         Link
                                     </a>
                                 )}
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className={cn('h-8 w-8 rounded-sm', post.is_pinned ? 'text-blue-400 hover:bg-blue-500/10' : 'text-muted-foreground hover:bg-muted')}
+                                    className={cn('h-8 w-8 rounded-sm', post.is_pinned ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground hover:bg-muted')}
                                     disabled={pinning === post.id}
                                     onClick={() => handleTogglePin(post.id)}
                                     title={post.is_pinned ? 'Unpin post' : 'Pin post'}
                                 >
-                                    <Pin className={cn('h-4 w-4', post.is_pinned && 'fill-blue-400')} />
+                                    <Pin className={cn('h-4 w-4', post.is_pinned && 'fill-primary')} />
                                 </Button>
                                 <Button
                                     variant="ghost"

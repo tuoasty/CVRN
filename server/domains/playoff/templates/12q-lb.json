@@ -56,8 +56,8 @@
     {
       "round": "losers_quarterfinal",
       "matches": [
-        { "code": "LQF1", "best_of": 5, "home": { "type": "match", "code": "SF1", "result": "loser" }, "away": { "type": "match", "code": "LB6", "result": "winner" } },
-        { "code": "LQF2", "best_of": 5, "home": { "type": "match", "code": "SF2", "result": "loser" }, "away": { "type": "match", "code": "LB5", "result": "winner" } }
+        { "code": "LQF2", "best_of": 5, "home": { "type": "match", "code": "SF1", "result": "loser" }, "away": { "type": "match", "code": "LB6", "result": "winner" } },
+        { "code": "LQF1", "best_of": 5, "home": { "type": "match", "code": "SF2", "result": "loser" }, "away": { "type": "match", "code": "LB5", "result": "winner" } }
       ]
     },
     {

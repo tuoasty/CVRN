@@ -153,13 +153,13 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
 
     const getRankBadge = (rank: number) => {
         if (rank === 1) {
-            return <span className="text-lg font-bold text-amber-500 tabular-nums">{rank}</span>;
+            return <span className="text-lg font-bold text-secondary tabular-nums">{rank}</span>;
         }
         if (rank === 2) {
-            return <span className="text-lg font-bold text-slate-400 tabular-nums">{rank}</span>;
+            return <span className="text-lg font-bold text-muted-foreground tabular-nums">{rank}</span>;
         }
         if (rank === 3) {
-            return <span className="text-lg font-bold text-orange-500 tabular-nums">{rank}</span>;
+            return <span className="text-lg font-bold text-muted-foreground tabular-nums">{rank}</span>;
         }
         return <span className="text-lg font-bold text-foreground tabular-nums">{rank}</span>;
     };

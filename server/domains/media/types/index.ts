@@ -14,6 +14,7 @@ export interface MediaPost {
     team_id: string | null
     player_id: string | null
     season_id: string | null
+    article_id: string | null
     published_at: string
     is_pinned: boolean
     pinned_at: string | null
@@ -34,6 +35,7 @@ export interface InsertMediaPostDto {
     team_id?: string | null
     player_id?: string | null
     season_id?: string | null
+    article_id?: string | null
     created_by: string
 }
 

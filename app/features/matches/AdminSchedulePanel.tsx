@@ -34,19 +34,19 @@ const getStatusConfig = (status: string) => {
             return {
                 label: 'Pending',
                 variant: 'secondary' as const,
-                className: 'bg-amber-600/10 text-amber-600 border-amber-600/20'
+                className: 'bg-secondary/10 text-secondary border-secondary/20'
             };
         case 'scheduled':
             return {
                 label: 'Scheduled',
                 variant: 'default' as const,
-                className: 'bg-blue-600/10 text-blue-600 border-blue-600/20'
+                className: 'bg-primary/10 text-primary border-primary/20'
             };
         case 'completed':
             return {
                 label: 'Completed',
                 variant: 'default' as const,
-                className: 'bg-green-600/10 text-green-600 border-green-600/20'
+                className: 'bg-success/10 text-success border-success/20'
             };
         default:
             return { label: 'Unknown', variant: 'secondary' as const };
@@ -168,7 +168,7 @@ export default function AdminSchedulePanel({ seasonId, week, round, matchType, r
                                     BO{match.best_of}
                                 </Badge>
                                 {match.match_type === "playoffs" && (
-                                    <Badge variant="outline" className="rounded-sm text-[10px] h-4 px-1.5 bg-purple-600/10 text-purple-600 border-purple-600/20">
+                                    <Badge variant="outline" className="rounded-sm text-[10px] h-4 px-1.5 bg-muted text-foreground border-border font-semibold">
                                         Playoff
                                     </Badge>
                                 )}
@@ -284,8 +284,8 @@ function TeamSide({ team, won, align }: { team?: TeamWithRegion; won: boolean; a
         <div className={`flex items-center gap-2 min-w-0 ${align === "end" ? "flex-row-reverse" : ""}`}>
             <div className="relative w-10 h-10 shrink-0">
                 {team?.is_bye ? (
-                    <div className="w-full h-full rounded-sm bg-orange-600/10 border border-orange-600/20 flex items-center justify-center">
-                        <span className="text-[10px] text-orange-600 font-bold">BYE</span>
+                    <div className="w-full h-full rounded-sm bg-muted border border-border flex items-center justify-center">
+                        <span className="text-[10px] text-muted-foreground font-bold">BYE</span>
                     </div>
                 ) : team?.logo_url ? (
                     <Image src={team.logo_url} alt={team.name} fill sizes="40px" className="object-contain" />

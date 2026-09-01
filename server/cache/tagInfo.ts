@@ -58,6 +58,12 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         readCount: 2,
         affects: "Media page, home sidebar, match detail",
     },
+    [CACHE_TAGS.articles]: {
+        label: "Articles",
+        description: "News articles and their cover posts.",
+        readCount: 1,
+        affects: "Media page articles tab, article detail, home",
+    },
     [CACHE_TAGS.stats]: {
         label: "Stats",
         description:
@@ -84,5 +90,6 @@ export const CACHE_TAG_ORDER: CacheTag[] = [
     CACHE_TAGS.seasons,
     CACHE_TAGS.regions,
     CACHE_TAGS.media,
+    CACHE_TAGS.articles,
     CACHE_TAGS.specs,
 ];

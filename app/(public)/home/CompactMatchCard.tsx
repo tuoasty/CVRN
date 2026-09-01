@@ -23,17 +23,17 @@ const getStatusConfig = (status: string) => {
         case 'pending':
             return {
                 label: 'Pending',
-                className: 'bg-amber-600/10 text-amber-600 border-amber-600/20'
+                className: 'bg-secondary/10 text-secondary border-secondary/20'
             };
         case 'scheduled':
             return {
                 label: 'Scheduled',
-                className: 'bg-blue-600/10 text-blue-600 border-blue-600/20'
+                className: 'bg-primary/10 text-primary border-primary/20'
             };
         case 'completed':
             return {
                 label: 'Completed',
-                className: 'bg-green-600/10 text-green-600 border-green-600/20'
+                className: 'bg-success/10 text-success border-success/20'
             };
         default:
             return { label: 'Unknown', className: '' };
@@ -66,7 +66,7 @@ export default function CompactMatchCard({
                 <Badge className={`rounded-sm text-[9px] h-4 px-1.5 font-semibold uppercase tracking-wider ${statusConfig.className}`}>
                     {statusConfig.label}
                 </Badge>
-                <span className={`text-[9px] font-semibold uppercase tracking-wider ${match.match_type === "playoffs" ? "text-purple-500" : "text-muted-foreground"}`}>
+                <span className={`text-[9px] font-semibold uppercase tracking-wider ${match.match_type === "playoffs" ? "text-foreground" : "text-muted-foreground"}`}>
                     {matchLabel}
                 </span>
             </div>

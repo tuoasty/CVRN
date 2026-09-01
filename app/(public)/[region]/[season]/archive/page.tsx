@@ -24,8 +24,8 @@ function TeamLogoSmall({ name, logoUrl, size = 28, priority = false }: { name: s
 function ChampionCard({ entry, priority = false, regionCode, seasonSlug }: { entry: SeasonDetail["season_podium"][number]; priority?: boolean; regionCode: string; seasonSlug: string }) {
     const href = buildPublicTeamHref({ regionCode, seasonSlug, teamSlug: entry.teams.slug });
     const inner = (
-        <div className="panel p-6 flex flex-col items-center gap-3 bg-yellow-500/5 border border-yellow-500/20 group-hover:border-primary/40 transition-colors">
-            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+        <div className="panel p-6 flex flex-col items-center gap-3 bg-secondary/5 border border-secondary/20 group-hover:border-primary/40 transition-colors">
+            <div className="flex items-center gap-2 text-secondary">
                 <Trophy className="h-4 w-4" />
                 <span className="text-[20px] uppercase tracking-[0.2em] font-semibold">Champion</span>
             </div>
@@ -41,8 +41,8 @@ function PlacementCard({ entry, regionCode, seasonSlug }: { entry: SeasonDetail[
     const place = entry.place as 2 | 3;
     const isSecond = place === 2;
     const label = isSecond ? "Runner-Up" : "3rd Place";
-    const borderClass = isSecond ? "border-slate-400/20 bg-slate-400/5" : "border-amber-500/20 bg-amber-500/5";
-    const accentClass = isSecond ? "text-slate-500 dark:text-slate-300" : "text-amber-600 dark:text-amber-400";
+    const borderClass = isSecond ? "border-border bg-muted/50" : "border-border bg-muted/50";
+    const accentClass = isSecond ? "text-muted-foreground" : "text-muted-foreground";
     const href = buildPublicTeamHref({ regionCode, seasonSlug, teamSlug: entry.teams.slug });
     const inner = (
         <div className={`panel p-4 flex flex-col items-center gap-2 border ${borderClass} group-hover:border-primary/40 transition-colors`}>
@@ -115,10 +115,10 @@ function IndividualAwardCard({ award, index, seasonId }: { award: SeasonDetail["
     );
 
     const inner = (
-        <div className="panel overflow-hidden bg-yellow-500/[0.04] dark:bg-yellow-500/[0.06] border-yellow-500/25 hover:border-primary/40 transition-colors">
+        <div className="panel overflow-hidden bg-secondary/[0.04] dark:bg-secondary/[0.06] border-secondary/25 hover:border-primary/40 transition-colors">
             <div className="sm:hidden">
-                <div className="px-5 py-2.5 border-b border-yellow-500/20 bg-yellow-500/[0.04]">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-yellow-500/80 font-semibold text-center">{award_name}</p>
+                <div className="px-5 py-2.5 border-b border-secondary/20 bg-secondary/[0.04]">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-secondary/80 font-semibold text-center">{award_name}</p>
                 </div>
                 <div className="flex h-40">
                     <div className={`w-1/2 relative shrink-0 overflow-hidden ${reversed ? "order-2" : "order-1"}`}>
@@ -149,7 +149,7 @@ function IndividualAwardCard({ award, index, seasonId }: { award: SeasonDetail["
             <div className="hidden sm:flex h-64">
                 {reversed ? teamBlock : avatarBlock}
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-5 text-center">
-                    <p className="text-xs uppercase tracking-[0.18em] text-yellow-500/80 font-semibold">{award_name}</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-secondary/80 font-semibold">{award_name}</p>
                     <p className="text-xl font-bold text-foreground leading-tight">{players.display_name ?? players.username}</p>
                     <p className="text-xs text-muted-foreground/70">@{players.username}</p>
                     {team && <p className="text-[11px] font-semibold mt-1 tracking-wide" style={{ color: team.brick_color ?? undefined }}>{team.name}</p>}
@@ -169,8 +169,8 @@ function FirstTeamCard({ award, seasonId }: { award: SeasonDetail["season_awards
     const playerHref = buildPublicPlayerHref(players.username);
     const inner = (
         <div className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity">
-            <p className="text-[10px] uppercase tracking-wide text-amber-500 dark:text-yellow-400 font-semibold text-center line-clamp-2 min-h-[24px]">{award_name}</p>
-            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-yellow-500/10 dark:bg-yellow-500/5 border border-yellow-500/10 dark:border-yellow-500/5">
+            <p className="text-[10px] uppercase tracking-wide text-secondary font-semibold text-center line-clamp-2 min-h-[24px]">{award_name}</p>
+            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-secondary/10 dark:bg-secondary/5 border border-secondary/10 dark:border-secondary/5">
                 {full_avatar_url ? (
                     <Image src={full_avatar_url} alt={players.username ?? "Player"} fill className="object-cover object-top" sizes="14vw" unoptimized />
                 ) : (
@@ -195,10 +195,10 @@ function FirstTeamMobileCard({ award, seasonId }: { award: SeasonDetail["season_
     const team = getAwardTeam(award, seasonId);
     const playerHref = buildPublicPlayerHref(players.username);
     const inner = (
-        <div className="flex overflow-hidden rounded-sm border border-yellow-500/20 bg-yellow-500/5 h-28 hover:border-primary/40 transition-colors">
+        <div className="flex overflow-hidden rounded-sm border border-secondary/20 bg-secondary/5 h-28 hover:border-primary/40 transition-colors">
             <div className="flex-1 min-w-0 flex flex-col justify-between p-4">
                 <div className="flex flex-col gap-0.5 min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-amber-500 font-semibold truncate">{award_name}</p>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-secondary font-semibold truncate">{award_name}</p>
                     <p className="text-sm font-bold leading-tight line-clamp-1">{players.display_name ?? players.username}</p>
                     <p className="text-[10px] text-muted-foreground/70 break-all">@{players.username}</p>
                 </div>
@@ -236,7 +236,7 @@ function FirstTeamSection({ awards, seasonId }: { awards: SeasonDetail["season_a
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Award className="h-3 w-3" /> First Team
             </p>
-            <div className="rounded-sm border border-yellow-500/25 bg-yellow-500/[0.03] p-4">
+            <div className="rounded-sm border border-secondary/25 bg-secondary/[0.03] p-4">
                 <div className="hidden sm:grid grid-cols-7 gap-4">
                     {slots.map((award, i) =>
                         award ? <FirstTeamCard key={award.id} award={award} seasonId={seasonId} /> : <div key={i} className="aspect-[3/4] rounded-sm bg-muted/20" />
@@ -256,7 +256,7 @@ function StaffTeamCard({ award }: { award: SeasonDetail["season_awards"][number]
     const { full_avatar_url, players } = award;
     return (
         <div className="flex flex-col items-center gap-2">
-            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-yellow-500/10 dark:bg-yellow-500/5 border border-yellow-500/10 dark:border-yellow-500/5">
+            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-secondary/10 dark:bg-secondary/5 border border-secondary/10 dark:border-secondary/5">
                 {full_avatar_url ? (
                     <Image src={full_avatar_url} alt={players.username ?? "Player"} fill className="object-cover object-top" sizes="15vw" unoptimized />
                 ) : (
@@ -280,7 +280,7 @@ function StaffTeamSection({ awards }: { awards: SeasonDetail["season_awards"] })
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                 <Award className="h-3 w-3" /> Staff Team
             </p>
-            <div className="rounded-sm border border-yellow-500/25 bg-yellow-500/[0.03] p-4 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
+            <div className="rounded-sm border border-secondary/25 bg-secondary/[0.03] p-4 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
                 {awards.map(award => <StaffTeamCard key={award.id} award={award} />)}
             </div>
         </div>
@@ -309,7 +309,7 @@ function ChampionRosterCard({ award }: { award: RosterEntry }) {
             <div className="flex flex-col items-center gap-0.5 w-full">
                 <p className="text-xs font-semibold text-center leading-tight truncate w-full">{players.display_name ?? players.username}</p>
                 <p className="text-[10px] text-muted-foreground text-center break-all w-full">@{players.username}</p>
-                {roleLabel && <p className="text-[9px] uppercase tracking-wider text-yellow-500/80 font-bold text-center">{roleLabel}</p>}
+                {roleLabel && <p className="text-[9px] uppercase tracking-wider text-secondary/80 font-bold text-center">{roleLabel}</p>}
             </div>
         </div>
     );
@@ -337,7 +337,7 @@ function ChampionRosterMobileCard({ award, index }: { award: RosterEntry; index:
         <div className={`flex-1 flex flex-col justify-center gap-0.5 min-w-0 px-2 ${isRight ? "items-start" : "items-end"}`}>
             <p className={`text-xs font-semibold leading-tight line-clamp-2 break-all ${isRight ? "text-left" : "text-right"}`}>{players.display_name ?? players.username}</p>
             <p className={`text-[10px] text-muted-foreground break-all w-full ${isRight ? "text-left" : "text-right"}`}>@{players.username}</p>
-            {roleLabel && <p className={`text-[9px] uppercase tracking-wider text-yellow-500/80 font-bold w-full ${isRight ? "text-left" : "text-right"}`}>{roleLabel}</p>}
+            {roleLabel && <p className={`text-[9px] uppercase tracking-wider text-secondary/80 font-bold w-full ${isRight ? "text-left" : "text-right"}`}>{roleLabel}</p>}
         </div>
     );
     const inner = (
