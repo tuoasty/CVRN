@@ -6,15 +6,15 @@ import { MediaPost } from '../types'
 type PinBucket = 'gfx' | 'video' | 'clip'
 
 const BUCKET_LIMITS: Record<PinBucket, number> = {
-    gfx:   1,
+    gfx:   3,
     video: 2,
-    clip:  1,
+    clip:  0,
 }
 
 const BUCKET_MESSAGES: Record<PinBucket, string> = {
-    gfx:   'Only 1 GFX post can be pinned at a time.',
+    gfx:   'Only 3 GFX posts can be pinned at a time.',
     video: 'Only 2 video posts can be pinned at a time.',
-    clip:  'Only 1 clip can be pinned at a time.',
+    clip:  'Clips are discontinued and can no longer be pinned.',
 }
 
 function toBucket(postType: string): PinBucket | null {

@@ -9,15 +9,37 @@ import GFXImageDialog from '@/app/features/media/GFXImageDialog'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import type { MediaPost } from '@/server/domains/media'
 
+function GfxCard({ post, onOpen }: { post: MediaPost; onOpen: (p: MediaPost) => void }) {
+    return (
+        <div
+            className="flex flex-col border border-border rounded-sm overflow-hidden cursor-pointer"
+            onClick={() => post.image_url && onOpen(post)}
+        >
+            <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+                {post.image_url && (
+                    <Image src={post.image_url} alt={post.title} fill className="object-cover" sizes="240px" />
+                )}
+            </div>
+            <div className="px-2 py-1.5 flex-shrink-0">
+                <p className="text-xs font-semibold truncate">{post.title}</p>
+                {post.description && (
+                    <p className="text-[10px] text-muted-foreground truncate">{post.description}</p>
+                )}
+            </div>
+        </div>
+    )
+}
+
 export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
 
-    const pinned = posts.filter(p => p.is_pinned)
-    const gfx    = pinned.find(p => p.type === 'gfx') ?? null
-    const videos = pinned.filter(p => p.type === 'video').slice(0, 2)
-    const clip   = pinned.find(p => p.type === 'clip') ?? null
-    const hasAny = !!gfx || videos.length > 0 || !!clip
+    const pinned  = posts.filter(p => p.is_pinned)
+    const gfx     = pinned.filter(p => p.type === 'gfx')
+    const gfxTop  = gfx[0] ?? null
+    const gfxRest = gfx.slice(1, 3)
+    const videos  = pinned.filter(p => p.type === 'video').slice(0, 2)
+    const hasAny  = gfx.length > 0 || videos.length > 0
 
     if (!hasAny) {
         return (
@@ -34,27 +56,8 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     return (
         <>
             <div className="panel p-3 space-y-3">
-                {}
-                {gfx && (
-                    <div
-                        className="flex flex-col border border-border rounded-sm overflow-hidden cursor-pointer"
-                        onClick={() => gfx.image_url && setGfxPost(gfx)}
-                    >
-                        <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
-                            {gfx.image_url && (
-                                <Image src={gfx.image_url} alt={gfx.title} fill className="object-cover" sizes="240px" />
-                            )}
-                        </div>
-                        <div className="px-2 py-1.5 flex-shrink-0">
-                            <p className="text-xs font-semibold truncate">{gfx.title}</p>
-                            {gfx.description && (
-                                <p className="text-[10px] text-muted-foreground truncate">{gfx.description}</p>
-                            )}
-                        </div>
-                    </div>
-                )}
+                {gfxTop && <GfxCard post={gfxTop} onOpen={setGfxPost} />}
 
-                {}
                 {videos.map(post => {
                     const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
                     return (
@@ -82,16 +85,9 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
                     )
                 })}
 
-                {}
-                {clip && (
-                    <iframe
-                        src={`https://www.tiktok.com/embed/v3/${clip.video_url}`}
-                        className="block border-0 rounded-sm w-full"
-                        style={{ aspectRatio: '9/16' }}
-                        allowFullScreen
-                        allow="encrypted-media"
-                    />
-                )}
+                {gfxRest.map(post => (
+                    <GfxCard key={post.id} post={post} onOpen={setGfxPost} />
+                ))}
 
                 <Link href="/media" className="flex items-center justify-center gap-1 text-xs text-primary font-medium hover:underline pt-1">
                     View all <ArrowRight className="h-3 w-3" />
