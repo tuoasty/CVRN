@@ -45,7 +45,7 @@ export interface SeasonPodiumEntryWithTeam {
     id: string;
     season_id: string;
     team_id: string;
-    place: 1 | 2 | 3;
+    place: number;
     is_override: boolean;
     notes: string | null;
     created_at: string;

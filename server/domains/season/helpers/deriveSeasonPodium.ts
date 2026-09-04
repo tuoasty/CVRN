@@ -4,7 +4,7 @@ import {logger} from "@/server/utils/logger";
 export async function deriveSeasonPodiumFromPlayoffs(
     supabase: DBClient,
     seasonId: string
-): Promise<{place: 1 | 2 | 3; teamId: string}[]> {
+): Promise<{place: number; teamId: string}[]> {
     const {data: finalBracket} = await supabase
         .from("playoff_brackets")
         .select("match_id")
@@ -24,7 +24,7 @@ export async function deriveSeasonPodiumFromPlayoffs(
     if (finalMatch.home_sets_won == null || finalMatch.away_sets_won == null) return [];
 
     const homeWins = finalMatch.home_sets_won > finalMatch.away_sets_won;
-    const podium: {place: 1 | 2 | 3; teamId: string}[] = [
+    const podium: {place: number; teamId: string}[] = [
         {place: 1, teamId: homeWins ? finalMatch.home_team_id : finalMatch.away_team_id},
         {place: 2, teamId: homeWins ? finalMatch.away_team_id : finalMatch.home_team_id},
     ];
@@ -49,38 +49,33 @@ export async function deriveSeasonPodiumFromPlayoffs(
             podium.push({
                 place: 3,
                 teamId: thirdHomeWins ? thirdMatch.home_team_id : thirdMatch.away_team_id,
+            }, {
+                place: 4,
+                teamId: thirdHomeWins ? thirdMatch.away_team_id : thirdMatch.home_team_id,
             });
         }
-    } else {
-        const {data: semis} = await supabase
-            .from("playoff_brackets")
-            .select("match_id")
-            .eq("season_id", seasonId)
-            .eq("round", "semifinal");
+    } 
+    //deleted the semifinals exception, doesn't exist afaik, also inherently wrong
 
-        for (const sf of semis ?? []) {
-            if (!sf.match_id) continue;
-            const {data: sfMatch} = await supabase
-                .from("matches")
-                .select("home_team_id, away_team_id, home_sets_won, away_sets_won")
-                .eq("id", sf.match_id)
-                .maybeSingle();
+    const {data: quarters} = await supabase
+        .from("playoff_brackets")
+        .select("match_id")
+        .eq("season_id", seasonId)
+        .eq("round", "quarterfinal");
 
-            if (!sfMatch?.home_team_id || !sfMatch?.away_team_id) continue;
-            if (sfMatch.home_sets_won == null || sfMatch.away_sets_won == null) continue;
+    for (const qf of quarters ?? []) {
+        if(!qf.match_id) continue;
+        const {data: qfMatch} = await supabase
+            .from("matches")
+            .select("home_team_id, away_team_id, home_sets_won, away_sets_won")
+            .eq("id", qf.match_id)
+            .maybeSingle()
+        
+        if(!qfMatch?.home_team_id || !qfMatch.away_team_id) continue;
+        if (qfMatch.home_sets_won == null || qfMatch.away_sets_won == null) continue;
 
-            const sfHomeWins = sfMatch.home_sets_won > sfMatch.away_sets_won;
-            const loser = sfHomeWins ? sfMatch.away_team_id : sfMatch.home_team_id;
-
-            if (!podium.some(p => p.teamId === loser)) {
-                podium.push({place: 3, teamId: loser});
-                break;
-            }
-        }
-
-        if (!podium.find(p => p.place === 3)) {
-            logger.warn({seasonId}, "Could not determine 3rd place from semifinal losers");
-        }
+        const qfHomeWins = qfMatch.home_sets_won > qfMatch.away_sets_won;
+        podium.push({place: 5, teamId: qfHomeWins ? qfMatch.away_team_id : qfMatch.home_team_id})
     }
 
     return podium;
@@ -89,7 +84,7 @@ export async function deriveSeasonPodiumFromPlayoffs(
 async function deriveDoubleElimPodium(
     supabase: DBClient,
     seasonId: string
-): Promise<{place: 1 | 2 | 3; teamId: string}[]> {
+): Promise<{place: number; teamId: string}[]> {
     const {data: gfBracket} = await supabase
         .from("playoff_brackets")
         .select("match_id")
@@ -110,7 +105,7 @@ async function deriveDoubleElimPodium(
 
     const gfHomeWins = gfMatch.home_sets_won > gfMatch.away_sets_won;
 
-    let podium: {place: 1 | 2 | 3; teamId: string}[];
+    let podium: {place: number; teamId: string}[];
 
     if (gfHomeWins) {
         podium = [
@@ -167,6 +162,54 @@ async function deriveDoubleElimPodium(
         } else {
             logger.warn({seasonId}, "Could not determine 3rd place from losers final");
         }
+    }
+
+    
+    const {data: lsfBracket} = await supabase
+        .from("playoff_brackets")
+        .select("match_id")
+        .eq("season_id", seasonId)
+        .eq("round", "losers_semifinal")
+        .maybeSingle();
+
+    if (lsfBracket?.match_id) {
+        const {data: lsfMatch} = await supabase
+            .from("matches")
+            .select("home_team_id, away_team_id, home_sets_won, away_sets_won")
+            .eq("id", lsfBracket.match_id)
+            .maybeSingle();
+
+        if (lsfMatch?.home_team_id && lsfMatch?.away_team_id &&
+            lsfMatch.home_sets_won != null && lsfMatch.away_sets_won != null) {
+            const lsfHomeWins = lsfMatch.home_sets_won > lsfMatch.away_sets_won;
+            podium.push({
+                place: 4,
+                teamId: lsfHomeWins ? lsfMatch.away_team_id : lsfMatch.home_team_id,
+            });
+        } else {
+            logger.warn({seasonId}, "Could not determine 4th place from losers semifinal");
+        }
+    }
+
+    const {data: lqfs} = await supabase
+        .from("playoff_brackets")
+        .select("match_id")
+        .eq("season_id", seasonId)
+        .eq("round", "losers_quarterfinal");
+
+    for (const qf of lqfs ?? []) {
+        if(!qf.match_id) continue;
+        const {data: qfMatch} = await supabase
+            .from("matches")
+            .select("home_team_id, away_team_id, home_sets_won, away_sets_won")
+            .eq("id", qf.match_id)
+            .maybeSingle()
+        
+        if(!qfMatch?.home_team_id || !qfMatch.away_team_id) continue;
+        if (qfMatch.home_sets_won == null || qfMatch.away_sets_won == null) continue;
+
+        const qfHomeWins = qfMatch.home_sets_won > qfMatch.away_sets_won;
+        podium.push({place: 5, teamId: qfHomeWins ? qfMatch.away_team_id : qfMatch.home_team_id})
     }
 
     return podium;

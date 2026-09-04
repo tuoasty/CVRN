@@ -22,7 +22,7 @@ export async function findSeasonPodium(
 
 export async function upsertSeasonPodiumSlot(
     supabase: DBClient,
-    p: {seasonId: string; place: 1 | 2 | 3; teamId: string; isOverride: boolean; notes?: string | null}
+    p: {seasonId: string; place: number; teamId: string; isOverride: boolean; notes?: string | null}
 ): Promise<Result<SeasonPodiumRow>> {
     const {data, error} = await supabase
         .from("season_podium")
@@ -35,7 +35,7 @@ export async function upsertSeasonPodiumSlot(
                 notes: p.notes ?? null,
                 updated_at: new Date().toISOString(),
             },
-            {onConflict: "season_id,place"}
+            {onConflict: "season_id,team_id"}
         )
         .select()
         .single();
@@ -46,13 +46,13 @@ export async function upsertSeasonPodiumSlot(
 export async function deleteSeasonPodiumSlot(
     supabase: DBClient,
     seasonId: string,
-    place: 1 | 2 | 3
+    teamId: string
 ): Promise<Result<true>> {
     const {error} = await supabase
         .from("season_podium")
         .delete()
         .eq("season_id", seasonId)
-        .eq("place", place);
+        .eq("team_id", teamId);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);
 }
