@@ -31,12 +31,14 @@ import {searchPlayersInDatabaseAction} from "@/app/actions/player.actions";
 import {useTeamsBySeason} from "@/app/hooks/useTeams";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
+import {formatPlacement, ordinalSuffix} from "@/app/utils/placement";
 
-const PLACE_META = {
-    1: {label: "Champion",  color: "text-secondary", Icon: Trophy},
-    2: {label: "Runner-Up", color: "text-muted-foreground",  Icon: Medal},
-    3: {label: "3rd Place", color: "text-muted-foreground",  Icon: Medal},
-} as const;
+function placeMeta(place: number, groupSize: number): {label: string; color: string; Icon: typeof Trophy} {
+    if (place === 1) return {label: "Champion", color: "text-secondary", Icon: Trophy};
+    if (place === 2) return {label: "Runner-Up", color: "text-muted-foreground", Icon: Medal};
+    if (place === 3) return {label: "3rd Place", color: "text-muted-foreground", Icon: Medal};
+    return {label: `${formatPlacement(place, groupSize)} Place`, color: "text-muted-foreground", Icon: Award};
+}
 
 const CATEGORY_LABELS: Record<AwardCategory, string> = {
     individual_winners: "Individual Awards",
@@ -46,55 +48,6 @@ const CATEGORY_LABELS: Record<AwardCategory, string> = {
 };
 
 const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "first_team", "staff_team", "champion_roster"];
-
-function PodiumSlot({place, slot, seasonTeams, saving, onSave, onDelete}: {
-    place: 1 | 2 | 3;
-    slot: SeasonPodiumEntryWithTeam | undefined;
-    seasonTeams: {id: string; name: string}[];
-    saving: number | null;
-    onSave: (place: 1 | 2 | 3, teamId: string) => void;
-    onDelete: (place: 1 | 2 | 3) => void;
-}) {
-    const {label, color, Icon} = PLACE_META[place];
-    const [selectedTeamId, setSelectedTeamId] = useState(slot?.team_id ?? "");
-    useEffect(() => { setSelectedTeamId(slot?.team_id ?? ""); }, [slot?.team_id]);
-
-    return (
-        <div className="panel p-3 flex items-center gap-3">
-            <div className={`flex items-center gap-1.5 w-28 shrink-0 ${color}`}>
-                <Icon className="h-4 w-4" />
-                <span className="text-sm font-medium">{label}</span>
-            </div>
-            <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={saving === place}>
-                <SelectTrigger className="rounded-sm flex-1 text-sm h-8">
-                    <SelectValue placeholder="Select team..." />
-                </SelectTrigger>
-                <SelectContent>
-                    {seasonTeams.map(t => (
-                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            {slot && (
-                <Badge variant={slot.is_override ? "default" : "secondary"} className="rounded-sm text-xs shrink-0">
-                    {slot.is_override ? "Override" : "Auto"}
-                </Badge>
-            )}
-            <Button size="sm" className="rounded-sm h-8 text-xs shrink-0"
-                onClick={() => onSave(place, selectedTeamId)}
-                disabled={!selectedTeamId || saving === place}
-            >Save</Button>
-            {slot && (
-                <Button size="sm" variant="ghost"
-                    className="rounded-sm h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                    onClick={() => onDelete(place)} disabled={saving === place}
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-            )}
-        </div>
-    );
-}
 
 function PlayerSearchInput({seasonId, onSelect}: {seasonId: string; onSelect: (player: PlayerWithTeamInfo) => void}) {
     const [query, setQuery] = useState("");
@@ -235,8 +188,10 @@ export default function SeasonResultsPage() {
     const [loading, setLoading] = useState(true);
     const [deriving, setDeriving] = useState(false);
     const [fetchingRoster, setFetchingRoster] = useState(false);
-    const [saving, setSaving] = useState<number | null>(null);
+    const [saving, setSaving] = useState<string | null>(null);
     const [deletingAward, setDeletingAward] = useState<string | null>(null);
+    const [addPlace, setAddPlace] = useState<number>(1);
+    const [addTeamId, setAddTeamId] = useState<string>("");
 
     const [newAwardName, setNewAwardName] = useState("");
     const [newCategory, setNewCategory] = useState<AwardCategory>("individual_winners");
@@ -289,22 +244,23 @@ export default function SeasonResultsPage() {
         }
     };
 
-    const handleSaveSlot = async (place: 1 | 2 | 3, teamId: string) => {
-        if (!teamId) return;
-        setSaving(place);
+    const handleAddPlacement = async () => {
+        if (!addTeamId) return;
+        setSaving("add");
         try {
-            const result = await upsertSeasonPodiumSlotAction({seasonId, place, teamId, isOverride: true});
-            if (!result.ok) { toast.error("Failed to save slot", result.error.message); return; }
-            toast.success(`${PLACE_META[place].label} saved`);
+            const result = await upsertSeasonPodiumSlotAction({seasonId, place: addPlace, teamId: addTeamId, isOverride: true});
+            if (!result.ok) { toast.error("Failed to save placement", result.error.message); return; }
+            toast.success(`${ordinalSuffix(addPlace)} placement saved`);
+            setAddTeamId("");
             await load();
         } finally { setSaving(null); }
     };
 
-    const handleDeleteSlot = async (place: 1 | 2 | 3) => {
-        setSaving(place);
+    const handleDeletePlacement = async (teamId: string) => {
+        setSaving(teamId);
         try {
-            const result = await deleteSeasonPodiumSlotAction({seasonId, place});
-            if (!result.ok) { toast.error("Failed to clear slot", result.error.message); return; }
+            const result = await deleteSeasonPodiumSlotAction({seasonId, teamId});
+            if (!result.ok) { toast.error("Failed to remove placement", result.error.message); return; }
             await load();
         } finally { setSaving(null); }
     };
@@ -426,7 +382,7 @@ export default function SeasonResultsPage() {
                 {}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Podium</h2>
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Final Placements</h2>
                         {season?.end_date && (
                             <Button variant="outline" size="sm" className="rounded-sm gap-2 text-xs"
                                 onClick={handleDerive} disabled={deriving || loading}
@@ -438,15 +394,60 @@ export default function SeasonResultsPage() {
                     </div>
                     {loading
                         ? <p className="text-sm text-muted-foreground">Loading...</p>
-                        : ([1, 2, 3] as const).map(place => (
-                            <PodiumSlot key={place} place={place}
-                                slot={podium.find(p => p.place === place)}
-                                seasonTeams={seasonTeams}
-                                saving={saving}
-                                onSave={handleSaveSlot}
-                                onDelete={handleDeleteSlot}
-                            />
-                        ))
+                        : (
+                            <>
+                                {podium.length === 0 && (
+                                    <p className="text-sm text-muted-foreground">No placements yet. Auto-derive from playoffs or add manually below.</p>
+                                )}
+                                {[...podium].sort((a, b) => a.place - b.place).map(entry => {
+                                    const groupSize = podium.filter(p => p.place === entry.place).length;
+                                    const {label, color, Icon} = placeMeta(entry.place, groupSize);
+                                    return (
+                                        <div key={entry.id} className="panel p-3 flex items-center gap-3">
+                                            <div className={`flex items-center gap-1.5 w-28 shrink-0 ${color}`}>
+                                                <Icon className="h-4 w-4" />
+                                                <span className="text-sm font-medium">{label}</span>
+                                            </div>
+                                            <span className="flex-1 text-sm font-medium truncate">{entry.teams.name}</span>
+                                            <Badge variant={entry.is_override ? "default" : "secondary"} className="rounded-sm text-xs shrink-0">
+                                                {entry.is_override ? "Override" : "Auto"}
+                                            </Badge>
+                                            <Button size="sm" variant="ghost"
+                                                className="rounded-sm h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                                                onClick={() => handleDeletePlacement(entry.team_id)} disabled={saving === entry.team_id}
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
+                                    );
+                                })}
+                                <div className="panel p-3 flex items-center gap-2 flex-wrap">
+                                    <Select value={String(addPlace)} onValueChange={v => setAddPlace(Number(v))}>
+                                        <SelectTrigger className="rounded-sm w-32 text-sm h-8"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {[1, 2, 3, 4, 5, 6, 7, 8].map(p => (
+                                                <SelectItem key={p} value={String(p)}>{ordinalSuffix(p)} Place</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Select value={addTeamId} onValueChange={setAddTeamId}>
+                                        <SelectTrigger className="rounded-sm flex-1 min-w-48 text-sm h-8">
+                                            <SelectValue placeholder="Select team..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {seasonTeams.map(t => (
+                                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Button size="sm" className="rounded-sm h-8 text-xs gap-1.5"
+                                        onClick={handleAddPlacement} disabled={!addTeamId || saving === "add"}
+                                    >
+                                        <Plus className="h-3.5 w-3.5" /> Add
+                                    </Button>
+                                </div>
+                            </>
+                        )
                     }
                 </div>
 

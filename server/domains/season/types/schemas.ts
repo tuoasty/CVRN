@@ -40,7 +40,7 @@ export type UpdateSeasonSchemaInput = z.infer<typeof UpdateSeasonSchema>
 
 export const UpsertSeasonPodiumSlotSchema = z.object({
     seasonId: z.uuid(),
-    place: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    place: z.number().int().min(1).max(8),
     teamId: z.uuid(),
     isOverride: z.boolean().default(false),
     notes: z.string().nullable().optional(),
@@ -49,7 +49,7 @@ export type UpsertSeasonPodiumSlotInput = z.infer<typeof UpsertSeasonPodiumSlotS
 
 export const DeleteSeasonPodiumSlotSchema = z.object({
     seasonId: z.uuid(),
-    place: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    teamId: z.uuid(),
 })
 export type DeleteSeasonPodiumSlotInput = z.infer<typeof DeleteSeasonPodiumSlotSchema>
 

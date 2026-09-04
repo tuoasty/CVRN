@@ -75,7 +75,7 @@ function PodiumEntry({entry}: {entry: ArchiveSeason["season_podium"][number]}) {
 }
 
 function SeasonCard({season, regionName, regionCode, contextSeasonSlug}: {season: ArchiveSeason; regionName: string; regionCode: string; contextSeasonSlug: string}) {
-    const sorted = [...season.season_podium].sort((a, b) => a.place - b.place);
+    const sorted = [...season.season_podium].filter(e => e.place <= 3).sort((a, b) => a.place - b.place);
     const fmt = (d: string | null) =>
         d ? new Date(d).toLocaleDateString("en-US", {month: "short", year: "numeric"}) : "?";
 

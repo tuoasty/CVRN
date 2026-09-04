@@ -10,7 +10,7 @@ export async function deleteSeasonPodiumSlot(
     p: DeleteSeasonPodiumSlotInput
 ): Promise<Result<true>> {
     try {
-        const result = await repoDelete(supabase, p.seasonId, p.place);
+        const result = await repoDelete(supabase, p.seasonId, p.teamId);
         if (!result.ok) {
             logger.error({input: p, error: result.error}, "Failed to delete podium slot");
             return result;

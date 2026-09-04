@@ -172,6 +172,8 @@ export interface PlayerAward {
     awarded_at: string | null;
     team_logo_url: string | null;
     team_logo_bg_removed: boolean;
+    place?: number;
+    place_end?: number;
 }
 
 export interface PlayerTeamHistoryEntry {
