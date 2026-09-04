@@ -59,12 +59,12 @@ export async function getPlayerAwards(
             }
         }
 
-        const allTeamIds = Array.from(new Set(
-            (teamSeasonsRes.data ?? []).map(r => r.team_id)
+        const seasonIds = Array.from(new Set(
+            (teamSeasonsRes.data ?? []).map(r => r.season_id)
         ));
 
         let podiumAwards: PlayerAward[] = [];
-        if (allTeamIds.length > 0) {
+        if (seasonIds.length > 0) {
             const {data: podiumData} = await supabase
                 .from("season_podium")
                 .select(`
@@ -75,18 +75,28 @@ export async function getPlayerAwards(
                     season:seasons!season_id(name, slug, end_date, region:regions!region_id(code)),
                     team:teams!team_id(name, slug, logo_url, logo_bg_removed, deleted_at)
                 `)
-                .in("team_id", allTeamIds)
-                .in("place", [2, 3]);
+                .in("season_id", seasonIds)
+                .gte("place", 2);
+
+            const groupCount = new Map<string, number>();
+            for (const r of podiumData ?? []) {
+                const key = `${r.season_id}::${r.place}`;
+                groupCount.set(key, (groupCount.get(key) ?? 0) + 1);
+            }
 
             podiumAwards = (podiumData ?? [])
                 .filter(r => playerTeamPairs.has(`${r.season_id}::${r.team_id}`))
                 .map(r => {
                     const season = r.season as {name: string; slug: string; end_date: string | null; region: {code: string}} | null;
                     const team = r.team as {name: string; slug: string; logo_url: string | null; logo_bg_removed: boolean; deleted_at: string | null} | null;
+                    const groupSize = groupCount.get(`${r.season_id}::${r.place}`) ?? 1;
+                    const placeEnd = r.place + groupSize - 1;
+                    const category = r.place === 2 ? "runner_up" : r.place === 3 ? "third_place" : "placement";
+                    const awardName = r.place === 2 ? "Runner Up" : r.place === 3 ? "Third Place" : "Placement";
                     return {
                         id: r.id,
-                        award_name: r.place === 2 ? "Runner Up" : "Third Place",
-                        category: r.place === 2 ? "runner_up" : "third_place",
+                        award_name: awardName,
+                        category,
                         season_id: r.season_id,
                         season_name: season?.name ?? "",
                         season_slug: season?.slug ?? "",
@@ -97,6 +107,8 @@ export async function getPlayerAwards(
                         awarded_at: season?.end_date ?? null,
                         team_logo_url: team?.logo_url ?? null,
                         team_logo_bg_removed: team?.logo_bg_removed ?? false,
+                        place: r.place,
+                        place_end: placeEnd,
                     };
                 });
         }

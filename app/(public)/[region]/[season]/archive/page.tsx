@@ -59,7 +59,7 @@ function PlacementCard({ entry, regionCode, seasonSlug }: { entry: SeasonDetail[
 }
 
 function PodiumSection({ entries, regionCode, seasonSlug }: { entries: SeasonDetail["season_podium"]; regionCode: string; seasonSlug: string }) {
-    const sorted = [...entries].sort((a, b) => a.place - b.place);
+    const sorted = [...entries].filter(e => e.place <= 3).sort((a, b) => a.place - b.place);
     const champion = sorted.find(e => e.place === 1);
     const rest = sorted.filter(e => e.place !== 1);
     return (

@@ -146,6 +146,7 @@ export async function findSeasonHistoryBySlugAndRegion(
         `)
         .eq("slug", slug)
         .eq("region_id", regionId)
+        .lte("season_podium.place", 3)
         .order("created_at", {
             referencedTable: "season_awards",
             ascending: true,
@@ -168,6 +169,7 @@ export async function findArchiveSeasons(
             season_podium(place, is_override, notes, teams(id, name, slug, logo_url)),
             season_awards(id, award_name, category, awarded_at, players(id, username))
         `)
+        .lte("season_podium.place", 3)
         .order("start_date", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);

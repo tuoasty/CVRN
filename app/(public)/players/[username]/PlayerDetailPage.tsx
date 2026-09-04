@@ -9,6 +9,7 @@ import {positionLabel} from "@/shared/volleyball/positions";
 import PlayerSeasonStatsTable from "@/app/features/player/PlayerSeasonStatsTable";
 import BackButton from "@/app/components/public/BackButton";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
+import {formatPlacement} from "@/app/utils/placement";
 
 const ROLE_LABELS: Record<string, string> = {
     captain: "Captain",
@@ -16,12 +17,13 @@ const ROLE_LABELS: Record<string, string> = {
     court_captain: "Court Captain",
 };
 
-const PODIUM_CATEGORIES = new Set(["champion_roster", "runner_up", "third_place"]);
+const PODIUM_CATEGORIES = new Set(["champion_roster", "runner_up", "third_place", "placement"]);
 
 const ACHIEVEMENT_ROW: Record<string, {row: string; hover: string}> = {
     champion_roster: {row: "bg-secondary/5", hover: "hover:bg-secondary/10"},
     runner_up:       {row: "bg-muted/50",    hover: "hover:bg-muted"},
     third_place:     {row: "bg-muted/50",    hover: "hover:bg-muted"},
+    placement:       {row: "bg-muted/50",    hover: "hover:bg-muted"},
 };
 
 const AWARD_CATEGORY_STYLE: Record<string, {dot: string; text: string}> = {
@@ -35,10 +37,12 @@ function formatDate(isoString: string | null): string {
     return d.toLocaleDateString("en-US", {year: "numeric", month: "short", day: "numeric"});
 }
 
-function placeLabel(category: string): {text: string; className: string} {
-    if (category === "champion_roster") return {text: "1st", className: "font-bold text-secondary"};
-    if (category === "runner_up") return {text: "2nd", className: "font-bold text-muted-foreground"};
-    if (category === "third_place") return {text: "3rd", className: "font-bold text-muted-foreground"};
+function placeLabel(award: PlayerAward): {text: string; className: string} {
+    if (award.category === "champion_roster") return {text: "1st", className: "font-bold text-secondary"};
+    if (award.place != null) {
+        const groupSize = (award.place_end ?? award.place) - award.place + 1;
+        return {text: formatPlacement(award.place, groupSize), className: "font-bold text-muted-foreground"};
+    }
     return {text: "—", className: "text-muted-foreground"};
 }
 
@@ -328,7 +332,7 @@ function TeamLogoLink({award}: {award: PlayerAward}) {
 }
 
 function AchievementRow({award}: {award: PlayerAward}) {
-    const place = placeLabel(award.category);
+    const place = placeLabel(award);
     const rowStyle = ACHIEVEMENT_ROW[award.category] ?? {row: "", hover: "hover:bg-muted/20"};
     return (
         <tr className={cn("transition-colors", rowStyle.row, rowStyle.hover)}>
@@ -364,7 +368,7 @@ function AwardRow({award}: {award: PlayerAward}) {
 }
 
 function AchievementCard({award}: {award: PlayerAward}) {
-    const place = placeLabel(award.category);
+    const place = placeLabel(award);
     const rowStyle = ACHIEVEMENT_ROW[award.category] ?? {row: "", hover: "hover:bg-muted/20"};
     return (
         <div className={cn("flex items-center gap-3 px-4 py-3 transition-colors", rowStyle.row, rowStyle.hover)}>
