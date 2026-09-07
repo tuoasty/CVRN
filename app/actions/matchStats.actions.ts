@@ -2,6 +2,7 @@
 
 import {revalidatePath} from "next/cache";
 import {revalidatePublicData} from "@/server/cache/revalidate";
+import {bumpCacheVersion} from "@/server/cache/version";
 import {CACHE_TAGS} from "@/server/cache/tags";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
@@ -80,5 +81,6 @@ export async function publishStatsAction() {
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
 
     revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.stats, CACHE_TAGS.players]);
+    await bumpCacheVersion(supabase, [CACHE_TAGS.stats]);
     return Ok(true);
 }

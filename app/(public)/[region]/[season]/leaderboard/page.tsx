@@ -7,6 +7,8 @@ import {
     getCachedPlayerLeaderboard,
     getCachedLeaderboardIdentity,
 } from "@/server/cache/publicReads";
+import {getCacheVersion} from "@/server/cache/version";
+import {CACHE_TAGS} from "@/server/cache/tags";
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 
@@ -26,9 +28,10 @@ export default async function Page({ params }: PageProps) {
     );
     if (!seasonRecord) notFound();
 
-    const [statRows, identity] = await Promise.all([
+    const [statRows, identity, statsVersion] = await Promise.all([
         getCachedPlayerLeaderboard(seasonRecord.id),
         getCachedLeaderboardIdentity(),
+        getCacheVersion(CACHE_TAGS.stats),
     ]);
 
     return (
@@ -37,6 +40,7 @@ export default async function Page({ params }: PageProps) {
                 rows={joinLeaderboardIdentity(statRows, identity)}
                 season={seasonRecord}
                 region={regionRecord}
+                statsVersion={statsVersion}
             />
         </Suspense>
     );
