@@ -17,6 +17,7 @@ export {getPlayerSeasonStats} from "./queries/getPlayerSeasonStats";
 export {getLeaderboardStatRows} from "./queries/getLeaderboardStatRows";
 export {getTeamLeaderboard} from "./queries/getTeamLeaderboard";
 export {getRangedLeaderboardStatRows} from "./queries/getRangedLeaderboardStatRows";
+export {getPositionLeaderboardStatRows} from "./queries/getPositionLeaderboardStatRows";
 export {getLeaderboardIdentity} from "./queries/getLeaderboardIdentity";
 export {getPlayerAwards} from "./queries/getPlayerAwards";
 export {getPlayerTeamHistory} from "./queries/getPlayerTeamHistory";

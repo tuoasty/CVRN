@@ -50,13 +50,16 @@ export async function deleteSpec(id: string) {
 }
 
 type SpecLeaderboardData = {
-    players: PlayerLeaderboardRow[];
+    matchedPlayers: PlayerLeaderboardRow[];
+    fallbackPlayers: PlayerLeaderboardRow[];
     placeByTeamId: Record<string, number>;
     upperFinalistTeamId: string | null;
 };
 
-async function fetchSpecLeaderboard([, seasonId]: [string, string]): Promise<SpecLeaderboardData> {
-    const result = await getSpecLeaderboardAction(seasonId);
+async function fetchSpecLeaderboard(
+    [, seasonId, position]: [string, string, string]
+): Promise<SpecLeaderboardData> {
+    const result = await getSpecLeaderboardAction(seasonId, position || null);
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
 }
@@ -102,8 +105,8 @@ export function useSpecBonus(regionId: string | null) {
     };
 }
 
-export function useSpecLeaderboard(seasonId: string | null) {
-    const key = seasonId ? (['specLeaderboard', seasonId] as const) : null;
+export function useSpecLeaderboard(seasonId: string | null, position: string | null) {
+    const key = seasonId ? (['specLeaderboard', seasonId, position ?? ''] as const) : null;
     const {data, error, isLoading} = useSWR(
         key,
         fetchSpecLeaderboard as BareFetcher<SpecLeaderboardData>,
@@ -111,7 +114,8 @@ export function useSpecLeaderboard(seasonId: string | null) {
     );
     const value = data as SpecLeaderboardData | undefined;
     return {
-        rows: value?.players ?? [],
+        matchedRows: value?.matchedPlayers ?? [],
+        fallbackRows: value?.fallbackPlayers ?? [],
         placeByTeamId: value?.placeByTeamId ?? {},
         upperFinalistTeamId: value?.upperFinalistTeamId ?? null,
         isLoading,

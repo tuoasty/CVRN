@@ -277,17 +277,6 @@ describe('evaluateSpecQualification', () => {
             expect(perSet.passed).toBe(false)
         })
 
-        it('never scales participation stats', () => {
-            const {rows} = evaluateSpecQualification(
-                [onTeam('runnerUp', 'upper', {sets_played: 9})],
-                [main('sets_played', 10)],
-                0,
-                opts
-            )
-            expect(rows[0].placementBonus).toBeCloseTo(0.325)
-            expect(rows[0].checks[0].adjustedValue).toBe(9)
-            expect(rows[0].qualified).toBe(false)
-        })
     })
 
     it('passes a lower-is-better stat at or under the cap', () => {
@@ -334,5 +323,31 @@ describe('evaluateSpecQualification', () => {
             0
         )
         expect(rows.map(r => r.username)).toEqual(['clears', 'missesOne', 'missesTwo'])
+    })
+
+    it('ranks a player close on every requirement above one who clears more but is far on the rest', () => {
+        const reqs = [main('points_total', 100), main('kills_total', 100), main('aces_total', 100)]
+        const {rows} = evaluateSpecQualification(
+            [
+                player('spiky', {points_total: 100, kills_total: 20, aces_total: 20}),
+                player('consistent', {points_total: 95, kills_total: 95, aces_total: 95}),
+            ],
+            reqs,
+            0
+        )
+        expect(rows.map(r => r.username)).toEqual(['consistent', 'spiky'])
+    })
+
+    it('measures secondary proximity by the Nth-best requirement', () => {
+        const reqs = [secondary('kills_total', 100), secondary('aces_total', 100)]
+        const {rows} = evaluateSpecQualification(
+            [
+                player('nearOne', {kills_total: 90, aces_total: 0}),
+                player('farBoth', {kills_total: 40, aces_total: 40}),
+            ],
+            reqs,
+            1
+        )
+        expect(rows.map(r => r.username)).toEqual(['nearOne', 'farBoth'])
     })
 })

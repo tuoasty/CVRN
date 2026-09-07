@@ -49,13 +49,6 @@ export default function AdminSpecQualifyPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId);
     const regionId = useAdminContextStore(s => s.selectedRegionId);
     const {specs} = useSpecs();
-    const {
-        rows: players,
-        placeByTeamId,
-        upperFinalistTeamId,
-        isLoading: playersLoading,
-        error,
-    } = useSpecLeaderboard(seasonId);
 
     const {
         config: savedBonus,
@@ -83,6 +76,15 @@ export default function AdminSpecQualifyPage() {
     const [pendingSpec, setPendingSpec] = useState<SpecWithRequirements | null>(null);
 
     const selectedSpec = specs.find(s => s.id === specId) ?? null;
+
+    const {
+        matchedRows,
+        fallbackRows,
+        placeByTeamId,
+        upperFinalistTeamId,
+        isLoading: playersLoading,
+        error,
+    } = useSpecLeaderboard(seasonId, selectedSpec?.position ?? null);
 
     const placeMap = useMemo(() => new Map(Object.entries(placeByTeamId)), [placeByTeamId]);
     const placeGroupSize = useMemo(() => {
@@ -130,15 +132,26 @@ export default function AdminSpecQualifyPage() {
         [thresholds]
     );
 
-    const evaluation = useMemo(
+    const matchedEval = useMemo(
         () =>
             evaluateSpecQualification(
-                players,
+                matchedRows,
                 thresholds.filter(t => t.statKey).map(({tier, statKey, minValue}) => ({tier, statKey, minValue})),
                 secondaryRequired,
                 {bonusConfig: activeBonus, placeByTeamId: placeMap, upperFinalistTeamId}
             ),
-        [players, thresholds, secondaryRequired, placeMap, upperFinalistTeamId, activeBonus]
+        [matchedRows, thresholds, secondaryRequired, placeMap, upperFinalistTeamId, activeBonus]
+    );
+
+    const fallbackEval = useMemo(
+        () =>
+            evaluateSpecQualification(
+                fallbackRows,
+                thresholds.filter(t => t.statKey).map(({tier, statKey, minValue}) => ({tier, statKey, minValue})),
+                secondaryRequired,
+                {bonusConfig: activeBonus, placeByTeamId: placeMap, upperFinalistTeamId}
+            ),
+        [fallbackRows, thresholds, secondaryRequired, placeMap, upperFinalistTeamId, activeBonus]
     );
 
     const passCounts = useMemo(() => {
@@ -146,7 +159,7 @@ export default function AdminSpecQualifyPage() {
         for (const t of thresholds) {
             if (!t.statKey) continue;
             const solo = evaluateSpecQualification(
-                players,
+                matchedRows,
                 [{tier: 'main', statKey: t.statKey, minValue: t.minValue}],
                 0,
                 {bonusConfig: activeBonus, placeByTeamId: placeMap, upperFinalistTeamId}
@@ -154,10 +167,10 @@ export default function AdminSpecQualifyPage() {
             counts.set(t.rowId, solo.rows.filter(r => r.qualified).length);
         }
         return counts;
-    }, [players, thresholds, placeMap, upperFinalistTeamId, activeBonus]);
+    }, [matchedRows, thresholds, placeMap, upperFinalistTeamId, activeBonus]);
 
     const statKeys = thresholds.filter(t => t.statKey).map(t => t.statKey);
-    const qualifiedCount = evaluation.rows.filter(r => r.qualified).length;
+    const qualifiedCount = matchedEval.rows.filter(r => r.qualified).length;
 
     const thresholdByKey = useMemo(() => {
         const m = new Map<string, {minValue: number; format: string; lowerIsBetter: boolean}>();
@@ -333,14 +346,14 @@ export default function AdminSpecQualifyPage() {
                                 <span className="font-mono tabular-nums text-lg font-semibold text-primary">
                                     {qualifiedCount}
                                 </span>{' '}
-                                of {evaluation.rows.length} qualify
+                                of {matchedEval.rows.length} qualify
                             </div>
                         </div>
 
-                        {evaluation.unknownStatKeys.length > 0 && (
+                        {matchedEval.unknownStatKeys.length > 0 && (
                             <p className="text-xs text-destructive mb-3">
-                                Unrecognised stat{evaluation.unknownStatKeys.length === 1 ? '' : 's'}:{' '}
-                                <span className="font-mono">{evaluation.unknownStatKeys.join(', ')}</span>. Nobody
+                                Unrecognised stat{matchedEval.unknownStatKeys.length === 1 ? '' : 's'}:{' '}
+                                <span className="font-mono">{matchedEval.unknownStatKeys.join(', ')}</span>. Nobody
                                 qualifies until these are fixed.
                             </p>
                         )}
@@ -398,7 +411,7 @@ export default function AdminSpecQualifyPage() {
                                                 rows={mainRows}
                                                 takenKeys={takenKeys}
                                                 passCounts={passCounts}
-                                                totalPlayers={players.length}
+                                                totalPlayers={matchedRows.length}
                                                 onChange={updateRow}
                                                 onRemove={removeRow}
                                                 onAdd={addRow}
@@ -434,7 +447,7 @@ export default function AdminSpecQualifyPage() {
                                                 rows={secondaryRows}
                                                 takenKeys={takenKeys}
                                                 passCounts={passCounts}
-                                                totalPlayers={players.length}
+                                                totalPlayers={matchedRows.length}
                                                 onChange={updateRow}
                                                 onRemove={removeRow}
                                                 onAdd={addRow}
@@ -471,11 +484,18 @@ export default function AdminSpecQualifyPage() {
                             </div>
 
                             <div className="overflow-auto">
-                                {playersLoading ? (
+                                {!selectedSpec ? (
+                                    <div className="p-6 text-center text-sm text-muted-foreground">
+                                        Select a spec to evaluate players against its requirements.
+                                    </div>
+                                ) : playersLoading ? (
                                     <div className="p-6 text-center text-muted-foreground">Loading season stats…</div>
                                 ) : (
                                     <SpecQualificationTable
-                                        rows={evaluation.rows}
+                                        rows={matchedEval.rows}
+                                        fallbackRows={fallbackEval.rows}
+                                        matchedLabel={`Played ${selectedSpec.position}`}
+                                        fallbackLabel="All players · season totals"
                                         statKeys={statKeys}
                                         thresholdByKey={thresholdByKey}
                                         placeGroupSize={placeGroupSize}

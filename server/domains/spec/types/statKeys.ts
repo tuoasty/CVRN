@@ -14,8 +14,6 @@ export type SpecStatKeyMeta = {
 };
 
 export const SPEC_STAT_KEYS: SpecStatKeyMeta[] = [
-    {key: "sets_played",         label: "Sets played",        short: "SP",     group: "Season",  format: "count"},
-    {key: "matches_played",      label: "Matches played",     short: "MP",     group: "Season",  format: "count"},
     {key: "points_total",        label: "Points",             short: "PTS",    group: "Season",  format: "count"},
     {key: "points_per_set",      label: "Points / set",       short: "PTS/S",  group: "Season",  format: "per_set"},
 
