@@ -393,10 +393,16 @@ export default function AdminSpecQualifyPage() {
                                                 Placement bonus (defaults): upper final +25% stacks · 1st +10% ·
                                                 2nd +7.5% · 3rd +5% · 4th +2.5% · 5th–8th 0% · outside −10%
                                             </p>
-                                            {!hasPodium && (
+                                            {!hasPodium && !hasUpperBand && (
                                                 <p>
-                                                    No podium derived for this season — placement bonuses are
+                                                    No podium or seeded final yet — placement bonuses are
                                                     inactive; everyone is treated as outside.
+                                                </p>
+                                            )}
+                                            {!hasPodium && hasUpperBand && (
+                                                <p>
+                                                    No podium yet, but the upper-bracket finalist is seeded — they
+                                                    receive the full +25% band; everyone else is outside.
                                                 </p>
                                             )}
                                             {hasPodium && !hasUpperBand && (

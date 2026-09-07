@@ -1,6 +1,6 @@
 import {PlayerLeaderboardRow} from "@/server/domains/player";
 import {SpecQualificationRow, SpecRequirementCheck, SpecTier} from "../types";
-import {isSpecStatKey, isLowerIsBetterStatKey, isEfficiencyStatKey, PARTICIPATION_STAT_KEYS} from "../types/statKeys";
+import {isSpecStatKey, isLowerIsBetterStatKey, isTotalStatKey, PARTICIPATION_STAT_KEYS} from "../types/statKeys";
 import {PlacementBonusConfig, resolvePlacementBonus} from "./placementBonus";
 
 export type EvaluableRequirement = {
@@ -94,7 +94,8 @@ function check(
     const value = typeof raw === "number" ? raw : null;
 
     const lower = isLowerIsBetterStatKey(r.statKey);
-    const scaled = PARTICIPATION_STAT_KEYS.has(r.statKey) || lower || isEfficiencyStatKey(r.statKey) ? 0 : bonus;
+    const scalable = isTotalStatKey(r.statKey) && !PARTICIPATION_STAT_KEYS.has(r.statKey) && !lower;
+    const scaled = scalable ? bonus : 0;
     const adjusted = value === null ? null : value * (1 + scaled);
 
     return {

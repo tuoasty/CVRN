@@ -17,10 +17,8 @@ export function resolvePlacementBonus(
     place: number | null,
     isUpperFinalist: boolean
 ): number {
-    const base =
-        place !== null && place >= 1 && place <= PLACEMENT_LADDER_SIZE
-            ? (cfg.ladder[place - 1] ?? 0)
-            : cfg.outside;
+    const placed = place !== null && place >= 1 && place <= PLACEMENT_LADDER_SIZE;
+    const base = placed ? (cfg.ladder[place - 1] ?? 0) : isUpperFinalist ? 0 : cfg.outside;
     return base + (isUpperFinalist ? cfg.upperFinalist : 0);
 }
 

@@ -230,6 +230,20 @@ describe('evaluateSpecQualification', () => {
             expect(rows[0].qualified).toBe(false)
         })
 
+        it('gives the upper finalist the full band, never the outside penalty, before a podium exists', () => {
+            const {rows} = evaluateSpecQualification(
+                [onTeam('runnerUp', 'upper', {points_total: 100})],
+                [main('points_total', 120)],
+                0,
+                {bonusConfig: cfg, placeByTeamId: new Map(), upperFinalistTeamId: 'upper'}
+            )
+            expect(rows[0].place).toBeNull()
+            expect(rows[0].isUpperFinalist).toBe(true)
+            expect(rows[0].placementBonus).toBeCloseTo(0.25)
+            expect(rows[0].checks[0].adjustedValue).toBeCloseTo(125)
+            expect(rows[0].qualified).toBe(true)
+        })
+
         it('gives no upper band when the season has no upper finalist', () => {
             const singleElim = new Map<string, number>([
                 ['finalistA', 1],
@@ -246,6 +260,21 @@ describe('evaluateSpecQualification', () => {
             )
             expect(rows.every(r => !r.isUpperFinalist)).toBe(true)
             expect(rows.map(r => r.placementBonus).sort()).toEqual([0.075, 0.1])
+        })
+
+        it('never scales a per-set stat, only totals', () => {
+            const {rows} = evaluateSpecQualification(
+                [onTeam('runnerUp', 'upper', {kills_total: 100, kills_per_set: 10})],
+                [main('kills_total', 120), main('kills_per_set', 12)],
+                0,
+                opts
+            )
+            const total = rows[0].checks.find(c => c.statKey === 'kills_total')!
+            const perSet = rows[0].checks.find(c => c.statKey === 'kills_per_set')!
+            expect(total.adjustedValue).toBeCloseTo(132.5)
+            expect(total.passed).toBe(true)
+            expect(perSet.adjustedValue).toBe(10)
+            expect(perSet.passed).toBe(false)
         })
 
         it('never scales participation stats', () => {

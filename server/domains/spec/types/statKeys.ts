@@ -74,6 +74,8 @@ export const isLowerIsBetterStatKey = (key: string): boolean => BY_KEY.get(key)?
 
 export const isEfficiencyStatKey = (key: string): boolean => BY_KEY.get(key)?.format === "pct";
 
+export const isTotalStatKey = (key: string): boolean => BY_KEY.get(key)?.format === "count";
+
 export const PARTICIPATION_STAT_KEYS: ReadonlySet<string> = new Set([
     "sets_played",
     "matches_played",
