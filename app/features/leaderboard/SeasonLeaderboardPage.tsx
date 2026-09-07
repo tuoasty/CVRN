@@ -12,6 +12,8 @@ import {
     useLeaderboardFilters,
 } from "@/app/features/leaderboard/useLeaderboardFilters";
 import {useRangedLeaderboard} from "@/app/hooks/useRangedLeaderboard";
+import {useDataFreshness} from "@/app/hooks/useDataFreshness";
+import FreshnessBanner from "@/app/components/public/FreshnessBanner";
 import type {PlayerLeaderboardRow} from "@/server/domains/player";
 import type {SeasonWithPlayoffConfig} from "@/server/domains/season";
 import type {Region} from "@/shared/types/db";
@@ -20,10 +22,12 @@ type Props = {
     rows: PlayerLeaderboardRow[];
     season: SeasonWithPlayoffConfig;
     region: Region;
+    statsVersion: number;
 };
 
-export default function SeasonLeaderboardPage({rows, season, region}: Props) {
+export default function SeasonLeaderboardPage({rows, season, region, statsVersion}: Props) {
     const {filters, setView, setSort, setQuery, setRange} = useLeaderboardFilters();
+    const {stale, refresh} = useDataFreshness({tag: "stats", baseline: statsVersion});
 
     const {rows: rangedRows, isLoading: rangedLoading, active: rangeActive} =
         useRangedLeaderboard(season.id, region.id, filters.range);
@@ -61,6 +65,12 @@ export default function SeasonLeaderboardPage({rows, season, region}: Props) {
                         <ArrowRight className="h-4 w-4" aria-hidden />
                     </Link>
                 }
+            />
+
+            <FreshnessBanner
+                stale={stale}
+                onRefresh={refresh}
+                message="Updated stats have been published."
             />
 
             <LeaderboardFilterBar

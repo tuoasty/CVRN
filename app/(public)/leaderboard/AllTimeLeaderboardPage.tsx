@@ -14,16 +14,20 @@ import {
     useLeaderboardFilters,
 } from "@/app/features/leaderboard/useLeaderboardFilters";
 import {useLastSeasonContext} from "@/app/hooks/useLastSeasonContext";
+import {useDataFreshness} from "@/app/hooks/useDataFreshness";
+import FreshnessBanner from "@/app/components/public/FreshnessBanner";
 import type {PlayerLeaderboardRow} from "@/server/domains/player";
 
 type Props = {
 
     rows: PlayerLeaderboardRow[];
+    statsVersion: number;
 };
 
-export default function AllTimeLeaderboardPage({rows}: Props) {
+export default function AllTimeLeaderboardPage({rows, statsVersion}: Props) {
     const {filters, setView, setSort, setRegion, setQuery, toggleSeason, clearSeasons} =
         useLeaderboardFilters();
+    const {stale, refresh} = useDataFreshness({tag: "stats", baseline: statsVersion});
 
     const lastContext = useLastSeasonContext();
 
@@ -85,6 +89,12 @@ export default function AllTimeLeaderboardPage({rows}: Props) {
                         Season board
                     </Link>
                 }
+            />
+
+            <FreshnessBanner
+                stale={stale}
+                onRefresh={refresh}
+                message="Updated stats have been published."
             />
 
             <LeaderboardFilterBar
