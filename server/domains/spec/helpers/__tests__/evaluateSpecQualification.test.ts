@@ -1,7 +1,13 @@
 import {describe, it, expect} from 'vitest'
 import {PlayerLeaderboardRow} from '@/server/domains/player'
 import {evaluateSpecQualification, EvaluableRequirement} from '../evaluateSpecQualification'
-import type {PlacementTier} from '../placementBonus'
+import type {PlacementBonusConfig} from '../placementBonus'
+
+const cfg: PlacementBonusConfig = {
+    upperFinalist: 0.25,
+    ladder: [0.1, 0.075, 0.05, 0.025, 0, 0, 0, 0],
+    outside: -0.1,
+}
 
 function player(username: string, stats: Partial<Record<string, number | null>> = {}): PlayerLeaderboardRow {
     return {
@@ -150,84 +156,85 @@ describe('evaluateSpecQualification', () => {
             team_id: teamId,
         })
 
-        const tiers = new Map<string, PlacementTier>([
-            ['upper', 'upper_finalist'],
-            ['lower', 'finalist'],
-            ['third', 'third'],
+        // Double-elim: 'lower' won the grand final (1st), 'upper' lost it (2nd, upper finalist), 'third' 3rd.
+        const placeByTeamId = new Map<string, number>([
+            ['lower', 1],
+            ['upper', 2],
+            ['third', 3],
         ])
+        const opts = {bonusConfig: cfg, placeByTeamId, upperFinalistTeamId: 'upper'}
 
-        it('is not applied when no star tier is given', () => {
+        it('is not applied when no bonus config is given', () => {
             const {rows} = evaluateSpecQualification(
                 [onTeam('a', 'upper', {points_total: 100})],
                 [main('points_total', 110)],
                 0,
-                {tierByTeamId: tiers}
+                {placeByTeamId, upperFinalistTeamId: 'upper'}
             )
             expect(rows[0].placementBonus).toBe(0)
             expect(rows[0].qualified).toBe(false)
         })
 
-        it('lifts the upper-bracket finalist over a bar they miss on raw stats', () => {
+        it('stacks the upper-final band on top of the finish ladder', () => {
             const {rows} = evaluateSpecQualification(
                 [onTeam('runnerUp', 'upper', {points_total: 100})],
                 [main('points_total', 110)],
                 0,
-                {stars: 5, tierByTeamId: tiers}
+                opts
             )
-            expect(rows[0].placementTier).toBe('upper_finalist')
-            expect(rows[0].placementBonus).toBe(0.25)
-            expect(rows[0].checks[0].adjustedValue).toBeCloseTo(125)
+            expect(rows[0].place).toBe(2)
+            expect(rows[0].isUpperFinalist).toBe(true)
+            expect(rows[0].placementBonus).toBeCloseTo(0.325)
+            expect(rows[0].checks[0].adjustedValue).toBeCloseTo(132.5)
             expect(rows[0].qualified).toBe(true)
         })
 
-        it('gives the grand-final away team nothing, even as champion', () => {
-            for (const stars of [3, 4, 5]) {
-                const {rows} = evaluateSpecQualification(
-                    [onTeam('champ', 'lower', {points_total: 100})],
-                    [main('points_total', 101)],
-                    0,
-                    {stars, tierByTeamId: tiers}
-                )
-                expect(rows[0].placementTier).toBe('finalist')
-                expect(rows[0].placementBonus).toBe(0)
-                expect(rows[0].qualified).toBe(false)
-            }
+        it('gives the lower-bracket champion the 1st-place ladder only, no upper band', () => {
+            const {rows} = evaluateSpecQualification(
+                [onTeam('champ', 'lower', {points_total: 100})],
+                [main('points_total', 110)],
+                0,
+                opts
+            )
+            expect(rows[0].place).toBe(1)
+            expect(rows[0].isUpperFinalist).toBe(false)
+            expect(rows[0].placementBonus).toBeCloseTo(0.1)
+            expect(rows[0].checks[0].adjustedValue).toBeCloseTo(110)
+            expect(rows[0].qualified).toBe(true)
         })
 
-        it('penalises 3rd place at 5-star but not at 4- or 3-star', () => {
-            const bronze = () => [onTeam('bronze', 'third', {points_total: 100})]
-            const reqs = [main('points_total', 100)]
-
-            const five = evaluateSpecQualification(bronze(), reqs, 0, {stars: 5, tierByTeamId: tiers})
-            expect(five.rows[0].placementBonus).toBe(-0.05)
-            expect(five.rows[0].qualified).toBe(false)
-
-            for (const stars of [4, 3]) {
-                const lower = evaluateSpecQualification(bronze(), reqs, 0, {stars, tierByTeamId: tiers})
-                expect(lower.rows[0].placementBonus).toBe(0)
-                expect(lower.rows[0].qualified).toBe(true)
-            }
+        it('applies the ladder rung for a mid placement', () => {
+            const {rows} = evaluateSpecQualification(
+                [onTeam('bronze', 'third', {points_total: 100})],
+                [main('points_total', 105)],
+                0,
+                opts
+            )
+            expect(rows[0].place).toBe(3)
+            expect(rows[0].placementBonus).toBeCloseTo(0.05)
+            expect(rows[0].checks[0].adjustedValue).toBeCloseTo(105)
+            expect(rows[0].qualified).toBe(true)
         })
 
-        it('penalises a player whose team reached no finals slot', () => {
+        it('penalises a player whose team is outside the podium', () => {
             const {rows} = evaluateSpecQualification(
                 [onTeam('nobody', 'eliminated-early', {points_total: 100})],
                 [main('points_total', 95)],
                 0,
-                {stars: 5, tierByTeamId: tiers}
+                opts
             )
-            expect(rows[0].placementTier).toBe('outside')
-            expect(rows[0].placementBonus).toBe(-0.1)
+            expect(rows[0].place).toBeNull()
+            expect(rows[0].isUpperFinalist).toBe(false)
+            expect(rows[0].placementBonus).toBeCloseTo(-0.1)
             expect(rows[0].checks[0].adjustedValue).toBeCloseTo(90)
             expect(rows[0].qualified).toBe(false)
         })
 
-        it('gives no top band when the season has no upper finalist', () => {
-            const singleElim = new Map<string, PlacementTier>([
-                ['finalistA', 'finalist'],
-                ['finalistB', 'finalist'],
+        it('gives no upper band when the season has no upper finalist', () => {
+            const singleElim = new Map<string, number>([
+                ['finalistA', 1],
+                ['finalistB', 2],
             ])
-
             const {rows} = evaluateSpecQualification(
                 [
                     onTeam('a', 'finalistA', {points_total: 100}),
@@ -235,9 +242,10 @@ describe('evaluateSpecQualification', () => {
                 ],
                 [main('points_total', 100)],
                 0,
-                {stars: 5, tierByTeamId: singleElim}
+                {bonusConfig: cfg, placeByTeamId: singleElim, upperFinalistTeamId: null}
             )
-            expect(rows.every(r => r.placementBonus === 0)).toBe(true)
+            expect(rows.every(r => !r.isUpperFinalist)).toBe(true)
+            expect(rows.map(r => r.placementBonus).sort()).toEqual([0.075, 0.1])
         })
 
         it('never scales participation stats', () => {
@@ -245,9 +253,9 @@ describe('evaluateSpecQualification', () => {
                 [onTeam('runnerUp', 'upper', {sets_played: 9})],
                 [main('sets_played', 10)],
                 0,
-                {stars: 5, tierByTeamId: tiers}
+                opts
             )
-            expect(rows[0].placementBonus).toBe(0.25)
+            expect(rows[0].placementBonus).toBeCloseTo(0.325)
             expect(rows[0].checks[0].adjustedValue).toBe(9)
             expect(rows[0].qualified).toBe(false)
         })
@@ -274,14 +282,13 @@ describe('evaluateSpecQualification', () => {
     })
 
     it('never scales a lower-is-better stat by placement bonus', () => {
-        const tiers = new Map<string, PlacementTier>([['upper', 'upper_finalist']])
         const {rows} = evaluateSpecQualification(
             [{...player('star', {errors_total: 10}), team_id: 'upper'}],
             [main('errors_total', 10)],
             0,
-            {stars: 5, tierByTeamId: tiers}
+            {bonusConfig: cfg, placeByTeamId: new Map([['upper', 1]]), upperFinalistTeamId: 'upper'}
         )
-        expect(rows[0].placementBonus).toBe(0.25)
+        expect(rows[0].placementBonus).toBeCloseTo(0.35)
         expect(rows[0].checks[0].adjustedValue).toBe(10)
         expect(rows[0].qualified).toBe(true)
     })

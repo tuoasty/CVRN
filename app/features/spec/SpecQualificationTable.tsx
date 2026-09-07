@@ -13,15 +13,14 @@ import {
     specStatMeta,
     specStatShort,
 } from '@/server/domains/spec/types';
-import {
-    formatPlacementBonus,
-    PLACEMENT_TIER_LABEL,
-} from '@/server/domains/spec/helpers/placementBonus';
+import {formatPlacementBonus} from '@/server/domains/spec/helpers/placementBonus';
+import {formatPlacement} from '@/app/utils/placement';
 
 interface Props {
     rows: SpecQualificationRow[];
     statKeys: string[];
     thresholdByKey: Map<string, {minValue: number; format: string; lowerIsBetter: boolean}>;
+    placeGroupSize: Map<number, number>;
 }
 
 const FROZEN: Record<'num' | 'player' | 'team', CSSProperties> = {
@@ -36,7 +35,7 @@ const COL_STAT: CSSProperties = {minWidth: 58};
 
 const HEAD = 'bg-muted text-muted-foreground';
 
-export default function SpecQualificationTable({rows, statKeys, thresholdByKey}: Props) {
+export default function SpecQualificationTable({rows, statKeys, thresholdByKey, placeGroupSize}: Props) {
     if (rows.length === 0) {
         return (
             <div className="p-6 text-center text-sm text-muted-foreground">
@@ -75,7 +74,7 @@ export default function SpecQualificationTable({rows, statKeys, thresholdByKey}:
                     <th style={FROZEN.num} className={cn(HEAD, 'sticky top-6 z-30 px-1.5 py-1 text-right font-semibold')}>#</th>
                     <th style={FROZEN.player} className={cn(HEAD, 'sticky top-6 z-30 px-1.5 py-1 text-left font-semibold')}>Player</th>
                     <th style={FROZEN.team} className={cn(HEAD, 'sticky top-6 z-30 px-1.5 py-1 text-left font-semibold')}>Team</th>
-                    <th style={COL_SLOT} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold border-l border-border')}>Slot·Bon</th>
+                    <th style={COL_SLOT} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold border-l border-border')}>Place·Bon</th>
                     <th style={COL_MS} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold border-l border-border')}>Main</th>
                     <th style={COL_MS} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold')}>Sec</th>
                     {statKeys.map((key, i) => {
@@ -131,8 +130,16 @@ export default function SpecQualificationTable({rows, statKeys, thresholdByKey}:
                             </td>
 
                             <td style={COL_SLOT} className={cn('px-1.5 py-1 text-center border-l border-b border-border whitespace-nowrap leading-tight', cellBg(q, false))}>
-                                <div className={cn(row.placementTier === 'outside' && 'text-muted-foreground')}>
-                                    {PLACEMENT_TIER_LABEL[row.placementTier]}
+                                <div className={cn('flex items-center justify-center gap-1', row.place === null && 'text-muted-foreground')}>
+                                    <span>{row.place !== null ? formatPlacement(row.place, placeGroupSize.get(row.place) ?? 1) : '—'}</span>
+                                    {row.isUpperFinalist && (
+                                        <span
+                                            title="Upper-bracket finalist"
+                                            className="rounded-sm bg-primary/10 px-1 font-semibold text-primary"
+                                        >
+                                            UF
+                                        </span>
+                                    )}
                                 </div>
                                 <div
                                     className={cn(

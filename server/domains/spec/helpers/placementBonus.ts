@@ -1,47 +1,27 @@
-
-import type {SeasonFinalsSlots} from "@/server/domains/season/queries/getSeasonFinalsSlots";
-
-export type PlacementTier =
-
-    | "upper_finalist"
-
-    | "finalist"
-    | "third"
-    | "outside";
-
-export const UPPER_FINALIST_BONUS = 0.25;
-export const OUTSIDE_PENALTY = -0.1;
-
-export const FIVE_STAR_THIRD_PENALTY = -0.05;
-
-export function placementBonus(tier: PlacementTier, stars: number): number {
-    switch (tier) {
-        case "upper_finalist":
-            return UPPER_FINALIST_BONUS;
-        case "finalist":
-            return 0;
-        case "third":
-            return stars === 5 ? FIVE_STAR_THIRD_PENALTY : 0;
-        case "outside":
-            return OUTSIDE_PENALTY;
-    }
+export interface PlacementBonusConfig {
+    upperFinalist: number;
+    ladder: number[];
+    outside: number;
 }
 
-export const PLACEMENT_TIER_LABEL: Record<PlacementTier, string> = {
-    upper_finalist: "Upper final",
-    finalist: "Final",
-    third: "3rd",
-    outside: "—",
+export const PLACEMENT_LADDER_SIZE = 8;
+
+export const DEFAULT_PLACEMENT_BONUS: PlacementBonusConfig = {
+    upperFinalist: 0.25,
+    ladder: [0.1, 0.075, 0.05, 0.025, 0, 0, 0, 0],
+    outside: -0.1,
 };
 
-export function placementTiersFromSlots(slots: SeasonFinalsSlots): Record<string, PlacementTier> {
-    const tiers: Record<string, PlacementTier> = {};
-
-    if (slots.upperFinalistTeamId) tiers[slots.upperFinalistTeamId] = "upper_finalist";
-    for (const teamId of slots.finalistTeamIds) tiers[teamId] = "finalist";
-    if (slots.thirdTeamId) tiers[slots.thirdTeamId] = "third";
-
-    return tiers;
+export function resolvePlacementBonus(
+    cfg: PlacementBonusConfig,
+    place: number | null,
+    isUpperFinalist: boolean
+): number {
+    const base =
+        place !== null && place >= 1 && place <= PLACEMENT_LADDER_SIZE
+            ? (cfg.ladder[place - 1] ?? 0)
+            : cfg.outside;
+    return base + (isUpperFinalist ? cfg.upperFinalist : 0);
 }
 
 export function formatPlacementBonus(bonus: number): string {

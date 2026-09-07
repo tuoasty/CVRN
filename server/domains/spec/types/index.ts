@@ -1,5 +1,4 @@
 import {Spec, SpecRequirement} from "@/shared/types/db";
-import type {PlacementTier} from "../helpers/placementBonus";
 
 export type SpecTier = "main" | "secondary";
 
@@ -28,7 +27,8 @@ export interface SpecQualificationRow {
     teamLogoUrl: string | null;
     teamLogoBgRemoved: boolean | null;
 
-    placementTier: PlacementTier;
+    place: number | null;
+    isUpperFinalist: boolean;
 
     placementBonus: number;
     qualified: boolean;
@@ -48,12 +48,12 @@ export interface SpecQualification {
     unknownStatKeys: string[];
 }
 
-export type {PlacementTier} from "../helpers/placementBonus";
+export type {PlacementBonusConfig} from "../helpers/placementBonus";
 export {
-    placementBonus,
-    placementTiersFromSlots,
+    DEFAULT_PLACEMENT_BONUS,
+    PLACEMENT_LADDER_SIZE,
+    resolvePlacementBonus,
     formatPlacementBonus,
-    PLACEMENT_TIER_LABEL,
 } from "../helpers/placementBonus";
 
 export type {SaveSpecInput, SpecRequirementInput, SpecQualificationInput} from "./schemas";

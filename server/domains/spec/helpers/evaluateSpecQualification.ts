@@ -1,7 +1,7 @@
 import {PlayerLeaderboardRow} from "@/server/domains/player";
 import {SpecQualificationRow, SpecRequirementCheck, SpecTier} from "../types";
 import {isSpecStatKey, isLowerIsBetterStatKey, isEfficiencyStatKey, PARTICIPATION_STAT_KEYS} from "../types/statKeys";
-import {placementBonus, PlacementTier} from "./placementBonus";
+import {PlacementBonusConfig, resolvePlacementBonus} from "./placementBonus";
 
 export type EvaluableRequirement = {
     tier: SpecTier;
@@ -10,10 +10,9 @@ export type EvaluableRequirement = {
 };
 
 export type EvaluateOptions = {
-
-    stars?: number;
-
-    tierByTeamId?: Map<string, PlacementTier>;
+    bonusConfig?: PlacementBonusConfig;
+    placeByTeamId?: Map<string, number>;
+    upperFinalistTeamId?: string | null;
 };
 
 export type SpecEvaluation = {
@@ -34,13 +33,15 @@ export function evaluateSpecQualification(
     const main = known.filter(r => r.tier === "main");
     const secondary = known.filter(r => r.tier === "secondary");
 
-    const applyPlacement = options.stars !== undefined;
+    const applyPlacement = options.bonusConfig !== undefined;
 
     const rows = players.map<SpecQualificationRow>(player => {
-        const placementTier: PlacementTier = player.team_id
-            ? (options.tierByTeamId?.get(player.team_id) ?? "outside")
-            : "outside";
-        const bonus = applyPlacement ? placementBonus(placementTier, options.stars as number) : 0;
+        const place = player.team_id ? (options.placeByTeamId?.get(player.team_id) ?? null) : null;
+        const isUpperFinalist =
+            player.team_id !== null && player.team_id === options.upperFinalistTeamId;
+        const bonus = applyPlacement
+            ? resolvePlacementBonus(options.bonusConfig as PlacementBonusConfig, place, isUpperFinalist)
+            : 0;
 
         const checks = known.map(r => check(player, r, bonus));
 
@@ -56,7 +57,8 @@ export function evaluateSpecQualification(
             teamSlug: player.team_slug,
             teamLogoUrl: player.team_logo_url,
             teamLogoBgRemoved: player.team_logo_bg_removed,
-            placementTier,
+            place,
+            isUpperFinalist,
             placementBonus: bonus,
 
             qualified:

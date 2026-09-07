@@ -8,10 +8,9 @@ import {createServerSupabase} from "@/server/supabase/server";
 import {getCachedPlayerLeaderboard, getCachedLeaderboardIdentity} from "@/server/cache/publicReads";
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
 import {requireRoles} from "@/server/domains/auth";
-import {getSeasonFinalsSlots} from "@/server/domains/season";
+import {getSeasonFinalsSlots, getSeasonPodium} from "@/server/domains/season";
 import {getSpecs, saveSpec, removeSpec, SaveSpecSchema, generateSpecSnapshot} from "@/server/domains/spec";
 import {deleteSpecSnapshot} from "@/server/db/specSnapshot.repo";
-import {placementTiersFromSlots} from "@/server/domains/spec/helpers/placementBonus";
 
 const SPEC_ROLES = ["admin", "super_admin", "spec_manager"] as const;
 
@@ -84,15 +83,22 @@ export async function getSpecLeaderboardAction(seasonId: string) {
 
     try {
 
-        const [statRows, identity, slots] = await Promise.all([
+        const [statRows, identity, slots, podium] = await Promise.all([
             getCachedPlayerLeaderboard(seasonId),
             getCachedLeaderboardIdentity(),
             getSeasonFinalsSlots(supabase, seasonId),
+            getSeasonPodium(supabase, seasonId),
         ]);
+
+        const placeByTeamId: Record<string, number> = {};
+        if (podium.ok) {
+            for (const entry of podium.value) placeByTeamId[entry.team_id] = entry.place;
+        }
 
         return Ok({
             players: joinLeaderboardIdentity(statRows, identity),
-            placementTiers: slots.ok ? placementTiersFromSlots(slots.value) : {},
+            placeByTeamId,
+            upperFinalistTeamId: slots.ok ? slots.value.upperFinalistTeamId : null,
         });
     } catch (err) {
         return Err({

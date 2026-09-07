@@ -35,6 +35,7 @@ import {
     SpecPosition,
     SpecRequirementInput,
     SpecWithRequirements,
+    DEFAULT_PLACEMENT_BONUS,
     specStatMeta,
     isLowerIsBetterStatKey,
 } from '@/server/domains/spec/types';
@@ -46,7 +47,13 @@ const newRowId = () => Math.random().toString(36).slice(2);
 export default function AdminSpecQualifyPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId);
     const {specs} = useSpecs();
-    const {rows: players, placementTiers, isLoading: playersLoading, error} = useSpecLeaderboard(seasonId);
+    const {
+        rows: players,
+        placeByTeamId,
+        upperFinalistTeamId,
+        isLoading: playersLoading,
+        error,
+    } = useSpecLeaderboard(seasonId);
 
     const [specId, setSpecId] = useState<string>('');
     const [thresholds, setThresholds] = useState<DraftThreshold[]>([]);
@@ -61,8 +68,14 @@ export default function AdminSpecQualifyPage() {
 
     const selectedSpec = specs.find(s => s.id === specId) ?? null;
 
-    const tierByTeamId = useMemo(() => new Map(Object.entries(placementTiers)), [placementTiers]);
-    const hasUpperBand = Object.values(placementTiers).includes('upper_finalist');
+    const placeMap = useMemo(() => new Map(Object.entries(placeByTeamId)), [placeByTeamId]);
+    const placeGroupSize = useMemo(() => {
+        const m = new Map<number, number>();
+        for (const place of Object.values(placeByTeamId)) m.set(place, (m.get(place) ?? 0) + 1);
+        return m;
+    }, [placeByTeamId]);
+    const hasPodium = Object.keys(placeByTeamId).length > 0;
+    const hasUpperBand = upperFinalistTeamId !== null;
 
     const loadSpec = (spec: SpecWithRequirements) => {
         setSpecId(spec.id);
@@ -117,9 +130,9 @@ export default function AdminSpecQualifyPage() {
                 players,
                 thresholds.filter(t => t.statKey).map(({tier, statKey, minValue}) => ({tier, statKey, minValue})),
                 secondaryRequired,
-                {stars, tierByTeamId}
+                {bonusConfig: DEFAULT_PLACEMENT_BONUS, placeByTeamId: placeMap, upperFinalistTeamId}
             ),
-        [players, thresholds, secondaryRequired, stars, tierByTeamId]
+        [players, thresholds, secondaryRequired, placeMap, upperFinalistTeamId]
     );
 
     const passCounts = useMemo(() => {
@@ -130,12 +143,12 @@ export default function AdminSpecQualifyPage() {
                 players,
                 [{tier: 'main', statKey: t.statKey, minValue: t.minValue}],
                 0,
-                {stars, tierByTeamId}
+                {bonusConfig: DEFAULT_PLACEMENT_BONUS, placeByTeamId: placeMap, upperFinalistTeamId}
             );
             counts.set(t.rowId, solo.rows.filter(r => r.qualified).length);
         }
         return counts;
-    }, [players, thresholds, stars, tierByTeamId]);
+    }, [players, thresholds, placeMap, upperFinalistTeamId]);
 
     const statKeys = thresholds.filter(t => t.statKey).map(t => t.statKey);
     const qualifiedCount = evaluation.rows.filter(r => r.qualified).length;
@@ -375,15 +388,21 @@ export default function AdminSpecQualifyPage() {
                                             />
                                         </div>
 
-                                        <div className="text-xs text-muted-foreground border-t border-border pt-3">
+                                        <div className="text-xs text-muted-foreground border-t border-border pt-3 space-y-1">
                                             <p>
-                                                Placement: upper final +25% · final 0% ·{' '}
-                                                {stars === 5 ? '3rd −5%' : '3rd 0%'} · rest −10%
+                                                Placement bonus (defaults): upper final +25% stacks · 1st +10% ·
+                                                2nd +7.5% · 3rd +5% · 4th +2.5% · 5th–8th 0% · outside −10%
                                             </p>
-                                            {!hasUpperBand && (
-                                                <p className="mt-1">
-                                                    No upper-bracket finalist this season — single-elim playoffs, or
-                                                    the final is not seeded yet. Nobody receives +25%.
+                                            {!hasPodium && (
+                                                <p>
+                                                    No podium derived for this season — placement bonuses are
+                                                    inactive; everyone is treated as outside.
+                                                </p>
+                                            )}
+                                            {hasPodium && !hasUpperBand && (
+                                                <p>
+                                                    No upper-bracket finalist this season (single-elim, or the final
+                                                    is not seeded yet). Nobody receives the +25% upper-final band.
                                                 </p>
                                             )}
                                         </div>
@@ -403,6 +422,7 @@ export default function AdminSpecQualifyPage() {
                                         rows={evaluation.rows}
                                         statKeys={statKeys}
                                         thresholdByKey={thresholdByKey}
+                                        placeGroupSize={placeGroupSize}
                                     />
                                 )}
                             </div>

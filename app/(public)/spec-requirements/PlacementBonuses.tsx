@@ -1,14 +1,15 @@
 import {
-    UPPER_FINALIST_BONUS,
-    FIVE_STAR_THIRD_PENALTY,
-    OUTSIDE_PENALTY,
+    DEFAULT_PLACEMENT_BONUS,
     formatPlacementBonus,
 } from "@/server/domains/spec/helpers/placementBonus";
+import {formatPlacement} from "@/app/utils/placement";
 
-const ROWS: {label: string; note?: string; bonus: number}[] = [
-    {label: "Upper-bracket finalist", bonus: UPPER_FINALIST_BONUS},
-    {label: "3rd place", note: "5★ specs only", bonus: FIVE_STAR_THIRD_PENALTY},
-    {label: "Outside the top 3", bonus: OUTSIDE_PENALTY},
+const ROWS: {label: string; bonus: number}[] = [
+    {label: "Upper-bracket finalist", bonus: DEFAULT_PLACEMENT_BONUS.upperFinalist},
+    ...DEFAULT_PLACEMENT_BONUS.ladder
+        .map((bonus, i) => ({label: formatPlacement(i + 1, 1), bonus}))
+        .filter(row => row.bonus !== 0),
+    {label: "Outside the top 8", bonus: DEFAULT_PLACEMENT_BONUS.outside},
 ];
 
 export default function PlacementBonuses() {
@@ -21,7 +22,6 @@ export default function PlacementBonuses() {
                 <div key={row.label} className="flex items-center gap-1.5">
                     {i > 0 && <span className="text-border">·</span>}
                     <span className="text-foreground">{row.label}</span>
-                    {row.note && <span className="text-muted-foreground">({row.note})</span>}
                     <span className="font-mono font-medium tabular-nums text-foreground">
                         {formatPlacementBonus(row.bonus)}
                     </span>
