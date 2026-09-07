@@ -6,12 +6,22 @@ import {revalidatePublicData} from "@/server/cache/revalidate";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {getCachedPlayerLeaderboard, getCachedLeaderboardIdentity} from "@/server/cache/publicReads";
+import {getPositionLeaderboardStatRows, LeaderboardStatRow} from "@/server/domains/player";
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
 import {requireRoles} from "@/server/domains/auth";
-import {getSeasonFinalsSlots} from "@/server/domains/season";
-import {getSpecs, saveSpec, removeSpec, SaveSpecSchema, generateSpecSnapshot} from "@/server/domains/spec";
+import {getSeasonFinalsSlots, getSeasonPodium} from "@/server/domains/season";
+import {
+    getSpecs,
+    saveSpec,
+    removeSpec,
+    SaveSpecSchema,
+    generateSpecSnapshot,
+    getPlacementBonus,
+    savePlacementBonus,
+    resetPlacementBonus,
+    SavePlacementBonusSchema,
+} from "@/server/domains/spec";
 import {deleteSpecSnapshot} from "@/server/db/specSnapshot.repo";
-import {placementTiersFromSlots} from "@/server/domains/spec/helpers/placementBonus";
 
 const SPEC_ROLES = ["admin", "super_admin", "spec_manager"] as const;
 
@@ -77,22 +87,76 @@ export async function deleteSpecSnapshotAction() {
     return result;
 }
 
-export async function getSpecLeaderboardAction(seasonId: string) {
+export async function getPlacementBonusAction(regionId: string) {
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return getPlacementBonus(supabase, regionId);
+}
+
+export async function savePlacementBonusAction(data: unknown) {
+    const parsed = SavePlacementBonusSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return savePlacementBonus(supabase, parsed.data);
+}
+
+export async function resetPlacementBonusAction(regionId: string) {
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return resetPlacementBonus(supabase, regionId);
+}
+
+export async function getSpecLeaderboardAction(seasonId: string, position: string | null) {
     const supabase = await createServerSupabase();
     const guard = await requireRoles(supabase, SPEC_ROLES);
     if (!guard.ok) return guard;
 
     try {
-
-        const [statRows, identity, slots] = await Promise.all([
+        const [fallbackRows, identity, slots, podium, scoped] = await Promise.all([
             getCachedPlayerLeaderboard(seasonId),
             getCachedLeaderboardIdentity(),
             getSeasonFinalsSlots(supabase, seasonId),
+            getSeasonPodium(supabase, seasonId),
+            position
+                ? getPositionLeaderboardStatRows(supabase, {seasonId, position})
+                : Promise.resolve(Ok([])),
         ]);
 
+        const placeByTeamId: Record<string, number> = {};
+        if (podium.ok) {
+            for (const entry of podium.value) placeByTeamId[entry.team_id] = entry.place;
+        }
+
+        const teamRegionByPlayer = new Map<string, {team_id: string | null; region_id: string}>();
+        for (const row of fallbackRows) {
+            teamRegionByPlayer.set(row.player_id, {team_id: row.team_id, region_id: row.region_id});
+        }
+
+        const scopedRows = scoped.ok ? scoped.value : [];
+        const matchedStatRows = scopedRows.flatMap(row => {
+            const tr = teamRegionByPlayer.get(row.player_id);
+            if (!tr) return [];
+            return [{...row, region_id: tr.region_id, team_id: tr.team_id} as unknown as LeaderboardStatRow];
+        });
+
         return Ok({
-            players: joinLeaderboardIdentity(statRows, identity),
-            placementTiers: slots.ok ? placementTiersFromSlots(slots.value) : {},
+            matchedPlayers: joinLeaderboardIdentity(matchedStatRows, identity),
+            fallbackPlayers: joinLeaderboardIdentity(fallbackRows, identity),
+            placeByTeamId,
+            upperFinalistTeamId: slots.ok ? slots.value.upperFinalistTeamId : null,
         });
     } catch (err) {
         return Err({

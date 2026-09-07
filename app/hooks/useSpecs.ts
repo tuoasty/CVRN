@@ -4,8 +4,11 @@ import {
     saveSpecAction,
     deleteSpecAction,
     getSpecLeaderboardAction,
+    getPlacementBonusAction,
+    savePlacementBonusAction,
+    resetPlacementBonusAction,
 } from '@/app/actions/spec.actions';
-import {PlacementTier, SaveSpecInput, SpecWithRequirements} from '@/server/domains/spec/types';
+import {PlacementBonusConfig, SaveSpecInput, SpecWithRequirements} from '@/server/domains/spec/types';
 import {PlayerLeaderboardRow} from '@/server/domains/player';
 
 const TTL = 2 * 60 * 1000;
@@ -47,18 +50,63 @@ export async function deleteSpec(id: string) {
 }
 
 type SpecLeaderboardData = {
-    players: PlayerLeaderboardRow[];
-    placementTiers: Record<string, PlacementTier>;
+    matchedPlayers: PlayerLeaderboardRow[];
+    fallbackPlayers: PlayerLeaderboardRow[];
+    placeByTeamId: Record<string, number>;
+    upperFinalistTeamId: string | null;
 };
 
-async function fetchSpecLeaderboard([, seasonId]: [string, string]): Promise<SpecLeaderboardData> {
-    const result = await getSpecLeaderboardAction(seasonId);
+async function fetchSpecLeaderboard(
+    [, seasonId, position]: [string, string, string]
+): Promise<SpecLeaderboardData> {
+    const result = await getSpecLeaderboardAction(seasonId, position || null);
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
 }
 
-export function useSpecLeaderboard(seasonId: string | null) {
-    const key = seasonId ? (['specLeaderboard', seasonId] as const) : null;
+type SpecBonusData = {config: PlacementBonusConfig; isCustom: boolean};
+
+async function fetchSpecBonus([, regionId]: [string, string]): Promise<SpecBonusData> {
+    const result = await getPlacementBonusAction(regionId);
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+export function useSpecBonus(regionId: string | null) {
+    const key = regionId ? (['specBonus', regionId] as const) : null;
+    const {data, error, isLoading, mutate} = useSWR(
+        key,
+        fetchSpecBonus as BareFetcher<SpecBonusData>,
+        {dedupingInterval: TTL, revalidateOnFocus: false}
+    );
+    const value = data as SpecBonusData | undefined;
+
+    const save = async (config: PlacementBonusConfig) => {
+        if (!regionId) return {ok: false as const, error: {message: 'No region selected', code: 'VALIDATION_ERROR' as const}};
+        const result = await savePlacementBonusAction({regionId, config});
+        if (result.ok) await mutate({config: result.value, isCustom: true}, {revalidate: false});
+        return result;
+    };
+
+    const reset = async () => {
+        if (!regionId) return {ok: false as const, error: {message: 'No region selected', code: 'VALIDATION_ERROR' as const}};
+        const result = await resetPlacementBonusAction(regionId);
+        if (result.ok) await mutate(undefined, {revalidate: true});
+        return result;
+    };
+
+    return {
+        config: value?.config ?? null,
+        isCustom: value?.isCustom ?? false,
+        isLoading,
+        error: error?.message ?? null,
+        save,
+        reset,
+    };
+}
+
+export function useSpecLeaderboard(seasonId: string | null, position: string | null) {
+    const key = seasonId ? (['specLeaderboard', seasonId, position ?? ''] as const) : null;
     const {data, error, isLoading} = useSWR(
         key,
         fetchSpecLeaderboard as BareFetcher<SpecLeaderboardData>,
@@ -66,8 +114,10 @@ export function useSpecLeaderboard(seasonId: string | null) {
     );
     const value = data as SpecLeaderboardData | undefined;
     return {
-        rows: value?.players ?? [],
-        placementTiers: value?.placementTiers ?? {},
+        matchedRows: value?.matchedPlayers ?? [],
+        fallbackRows: value?.fallbackPlayers ?? [],
+        placeByTeamId: value?.placeByTeamId ?? {},
+        upperFinalistTeamId: value?.upperFinalistTeamId ?? null,
         isLoading,
         error: error?.message ?? null,
     };

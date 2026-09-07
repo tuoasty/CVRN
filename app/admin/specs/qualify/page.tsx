@@ -1,6 +1,6 @@
 'use client';
 
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import Link from 'next/link';
 import {ArrowLeft, Save, SlidersHorizontal} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
@@ -24,17 +24,19 @@ import {
     AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
-import {useSpecs, useSpecLeaderboard, saveSpec} from '@/app/hooks/useSpecs';
+import {useSpecs, useSpecLeaderboard, useSpecBonus, saveSpec} from '@/app/hooks/useSpecs';
 import SpecThresholdEditor, {DraftThreshold} from '@/app/features/spec/SpecThresholdEditor';
+import PlacementBonusEditor from '@/app/features/spec/PlacementBonusEditor';
 import SpecQualificationTable from '@/app/features/spec/SpecQualificationTable';
-import SpecPicker from '@/app/features/spec/SpecPicker';
-import SpecListSidebar from '@/app/features/spec/SpecListSidebar';
+import SpecSelector from '@/app/features/spec/SpecSelector';
 import {evaluateSpecQualification} from '@/server/domains/spec/helpers/evaluateSpecQualification';
 import {
     SpecTier,
     SpecPosition,
     SpecRequirementInput,
     SpecWithRequirements,
+    PlacementBonusConfig,
+    DEFAULT_PLACEMENT_BONUS,
     specStatMeta,
     isLowerIsBetterStatKey,
 } from '@/server/domains/spec/types';
@@ -45,8 +47,24 @@ const newRowId = () => Math.random().toString(36).slice(2);
 
 export default function AdminSpecQualifyPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId);
+    const regionId = useAdminContextStore(s => s.selectedRegionId);
     const {specs} = useSpecs();
-    const {rows: players, placementTiers, isLoading: playersLoading, error} = useSpecLeaderboard(seasonId);
+
+    const {
+        config: savedBonus,
+        isCustom: bonusIsCustom,
+        save: saveBonus,
+        reset: resetBonus,
+    } = useSpecBonus(regionId);
+    const [bonusDraft, setBonusDraft] = useState<PlacementBonusConfig | null>(null);
+    const [bonusSaving, setBonusSaving] = useState(false);
+    useEffect(() => {
+        setBonusDraft(savedBonus);
+    }, [savedBonus]);
+    const activeBonus = bonusDraft ?? savedBonus ?? DEFAULT_PLACEMENT_BONUS;
+    const bonusDirty =
+        bonusDraft !== null &&
+        JSON.stringify(bonusDraft) !== JSON.stringify(savedBonus ?? DEFAULT_PLACEMENT_BONUS);
 
     const [specId, setSpecId] = useState<string>('');
     const [thresholds, setThresholds] = useState<DraftThreshold[]>([]);
@@ -55,14 +73,27 @@ export default function AdminSpecQualifyPage() {
     const [dirty, setDirty] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    const [pickerOpen, setPickerOpen] = useState(true);
-    const [query, setQuery] = useState('');
     const [pendingSpec, setPendingSpec] = useState<SpecWithRequirements | null>(null);
 
     const selectedSpec = specs.find(s => s.id === specId) ?? null;
 
-    const tierByTeamId = useMemo(() => new Map(Object.entries(placementTiers)), [placementTiers]);
-    const hasUpperBand = Object.values(placementTiers).includes('upper_finalist');
+    const {
+        matchedRows,
+        fallbackRows,
+        placeByTeamId,
+        upperFinalistTeamId,
+        isLoading: playersLoading,
+        error,
+    } = useSpecLeaderboard(seasonId, selectedSpec?.position ?? null);
+
+    const placeMap = useMemo(() => new Map(Object.entries(placeByTeamId)), [placeByTeamId]);
+    const placeGroupSize = useMemo(() => {
+        const m = new Map<number, number>();
+        for (const place of Object.values(placeByTeamId)) m.set(place, (m.get(place) ?? 0) + 1);
+        return m;
+    }, [placeByTeamId]);
+    const hasPodium = Object.keys(placeByTeamId).length > 0;
+    const hasUpperBand = upperFinalistTeamId !== null;
 
     const loadSpec = (spec: SpecWithRequirements) => {
         setSpecId(spec.id);
@@ -79,28 +110,18 @@ export default function AdminSpecQualifyPage() {
         setDirty(false);
     };
 
-    const closePicker = () => {
-        setPickerOpen(false);
-        setQuery('');
-    };
-
     const handlePick = (spec: SpecWithRequirements) => {
-        if (spec.id === specId) {
-            closePicker();
-            return;
-        }
+        if (spec.id === specId) return;
         if (dirty && specId) {
             setPendingSpec(spec);
             return;
         }
         loadSpec(spec);
-        closePicker();
     };
 
     const confirmDiscard = () => {
         if (pendingSpec) loadSpec(pendingSpec);
         setPendingSpec(null);
-        closePicker();
     };
 
     const mainRows = thresholds.filter(t => t.tier === 'main');
@@ -111,15 +132,26 @@ export default function AdminSpecQualifyPage() {
         [thresholds]
     );
 
-    const evaluation = useMemo(
+    const matchedEval = useMemo(
         () =>
             evaluateSpecQualification(
-                players,
+                matchedRows,
                 thresholds.filter(t => t.statKey).map(({tier, statKey, minValue}) => ({tier, statKey, minValue})),
                 secondaryRequired,
-                {stars, tierByTeamId}
+                {bonusConfig: activeBonus, placeByTeamId: placeMap, upperFinalistTeamId}
             ),
-        [players, thresholds, secondaryRequired, stars, tierByTeamId]
+        [matchedRows, thresholds, secondaryRequired, placeMap, upperFinalistTeamId, activeBonus]
+    );
+
+    const fallbackEval = useMemo(
+        () =>
+            evaluateSpecQualification(
+                fallbackRows,
+                thresholds.filter(t => t.statKey).map(({tier, statKey, minValue}) => ({tier, statKey, minValue})),
+                secondaryRequired,
+                {bonusConfig: activeBonus, placeByTeamId: placeMap, upperFinalistTeamId}
+            ),
+        [fallbackRows, thresholds, secondaryRequired, placeMap, upperFinalistTeamId, activeBonus]
     );
 
     const passCounts = useMemo(() => {
@@ -127,18 +159,18 @@ export default function AdminSpecQualifyPage() {
         for (const t of thresholds) {
             if (!t.statKey) continue;
             const solo = evaluateSpecQualification(
-                players,
+                matchedRows,
                 [{tier: 'main', statKey: t.statKey, minValue: t.minValue}],
                 0,
-                {stars, tierByTeamId}
+                {bonusConfig: activeBonus, placeByTeamId: placeMap, upperFinalistTeamId}
             );
             counts.set(t.rowId, solo.rows.filter(r => r.qualified).length);
         }
         return counts;
-    }, [players, thresholds, stars, tierByTeamId]);
+    }, [matchedRows, thresholds, placeMap, upperFinalistTeamId, activeBonus]);
 
     const statKeys = thresholds.filter(t => t.statKey).map(t => t.statKey);
-    const qualifiedCount = evaluation.rows.filter(r => r.qualified).length;
+    const qualifiedCount = matchedEval.rows.filter(r => r.qualified).length;
 
     const thresholdByKey = useMemo(() => {
         const m = new Map<string, {minValue: number; format: string; lowerIsBetter: boolean}>();
@@ -214,6 +246,36 @@ export default function AdminSpecQualifyPage() {
         }
     };
 
+    const handleBonusSave = async () => {
+        if (!bonusDraft) return;
+        setBonusSaving(true);
+        try {
+            const result = await saveBonus(bonusDraft);
+            if (!result.ok) {
+                toast.error('Failed to save bonuses', result.error.message);
+                return;
+            }
+            toast.success('Placement bonuses saved');
+        } finally {
+            setBonusSaving(false);
+        }
+    };
+
+    const handleBonusReset = async () => {
+        setBonusSaving(true);
+        try {
+            const result = await resetBonus();
+            if (!result.ok) {
+                toast.error('Failed to reset bonuses', result.error.message);
+                return;
+            }
+            setBonusDraft(DEFAULT_PLACEMENT_BONUS);
+            toast.success('Placement bonuses reset to defaults');
+        } finally {
+            setBonusSaving(false);
+        }
+    };
+
     return (
         <div className="w-full px-3 sm:px-4 py-6">
             <div className="admin-section">
@@ -261,45 +323,62 @@ export default function AdminSpecQualifyPage() {
                 {seasonId && !error && (
                     <>
                         <div className="flex items-center gap-3 mt-6 mb-3 flex-wrap">
-                            <SpecPicker
-                                current={selectedSpec}
-                                open={pickerOpen}
-                                query={query}
-                                onQueryChange={setQuery}
-                                onToggle={setPickerOpen}
-                            />
-                            {selectedSpec && dirty && (
-                                <span className="text-xs text-muted-foreground">
-                                    edited · differs from saved {selectedSpec.name}
-                                </span>
-                            )}
+                            <div className="flex items-center gap-2 text-sm">
+                                <span className="text-muted-foreground">Selected:</span>
+                                {selectedSpec ? (
+                                    <>
+                                        <span className="font-semibold">{selectedSpec.name}</span>
+                                        <span className="rounded-full border border-border px-1.5 text-xs font-semibold">
+                                            {selectedSpec.position}
+                                        </span>
+                                        <span className="font-mono tabular-nums text-xs text-primary">
+                                            {selectedSpec.stars}★
+                                        </span>
+                                        {dirty && (
+                                            <span className="text-xs text-muted-foreground">· unsaved edits</span>
+                                        )}
+                                    </>
+                                ) : (
+                                    <span className="text-muted-foreground">none</span>
+                                )}
+                            </div>
                             <div className="ml-auto text-sm text-muted-foreground">
                                 <span className="font-mono tabular-nums text-lg font-semibold text-primary">
                                     {qualifiedCount}
                                 </span>{' '}
-                                of {evaluation.rows.length} qualify
+                                of {matchedEval.rows.length} qualify
                             </div>
                         </div>
 
-                        {evaluation.unknownStatKeys.length > 0 && (
+                        {matchedEval.unknownStatKeys.length > 0 && (
                             <p className="text-xs text-destructive mb-3">
-                                Unrecognised stat{evaluation.unknownStatKeys.length === 1 ? '' : 's'}:{' '}
-                                <span className="font-mono">{evaluation.unknownStatKeys.join(', ')}</span>. Nobody
+                                Unrecognised stat{matchedEval.unknownStatKeys.length === 1 ? '' : 's'}:{' '}
+                                <span className="font-mono">{matchedEval.unknownStatKeys.join(', ')}</span>. Nobody
                                 qualifies until these are fixed.
                             </p>
                         )}
 
                         <div className="grid grid-cols-[266px_1fr] border border-border rounded-sm overflow-hidden min-h-[520px]">
                             <div className="border-r border-border bg-muted/20 overflow-y-auto">
-                                {pickerOpen ? (
-                                    <SpecListSidebar
+                                <div className="p-3 space-y-4">
+                                    <SpecSelector
                                         specs={specs}
-                                        query={query}
                                         activeId={specId || null}
                                         onPick={handlePick}
                                     />
-                                ) : selectedSpec ? (
-                                    <div className="p-3 space-y-4">
+                                    <PlacementBonusEditor
+                                        value={activeBonus}
+                                        isCustom={bonusIsCustom}
+                                        dirty={bonusDirty}
+                                        saving={bonusSaving}
+                                        disabled={!regionId}
+                                        onChange={setBonusDraft}
+                                        onSave={handleBonusSave}
+                                        onReset={handleBonusReset}
+                                    />
+
+                                    {selectedSpec ? (
+                                        <>
                                         <div className="flex items-center justify-between gap-2">
                                             <Label htmlFor="qualify-stars">Star tier</Label>
                                             <Select
@@ -332,7 +411,7 @@ export default function AdminSpecQualifyPage() {
                                                 rows={mainRows}
                                                 takenKeys={takenKeys}
                                                 passCounts={passCounts}
-                                                totalPlayers={players.length}
+                                                totalPlayers={matchedRows.length}
                                                 onChange={updateRow}
                                                 onRemove={removeRow}
                                                 onAdd={addRow}
@@ -368,41 +447,58 @@ export default function AdminSpecQualifyPage() {
                                                 rows={secondaryRows}
                                                 takenKeys={takenKeys}
                                                 passCounts={passCounts}
-                                                totalPlayers={players.length}
+                                                totalPlayers={matchedRows.length}
                                                 onChange={updateRow}
                                                 onRemove={removeRow}
                                                 onAdd={addRow}
                                             />
                                         </div>
 
-                                        <div className="text-xs text-muted-foreground border-t border-border pt-3">
-                                            <p>
-                                                Placement: upper final +25% · final 0% ·{' '}
-                                                {stars === 5 ? '3rd −5%' : '3rd 0%'} · rest −10%
-                                            </p>
-                                            {!hasUpperBand && (
-                                                <p className="mt-1">
-                                                    No upper-bracket finalist this season — single-elim playoffs, or
-                                                    the final is not seeded yet. Nobody receives +25%.
+                                        <div className="text-xs text-muted-foreground border-t border-border pt-3 space-y-1">
+                                            {!hasPodium && !hasUpperBand && (
+                                                <p>
+                                                    No podium or seeded final yet — placement bonuses are
+                                                    inactive; everyone is treated as outside.
+                                                </p>
+                                            )}
+                                            {!hasPodium && hasUpperBand && (
+                                                <p>
+                                                    No podium yet, but the upper-bracket finalist is seeded — they
+                                                    receive the full +25% band; everyone else is outside.
+                                                </p>
+                                            )}
+                                            {hasPodium && !hasUpperBand && (
+                                                <p>
+                                                    No upper-bracket finalist this season (single-elim, or the final
+                                                    is not seeded yet). Nobody receives the +25% upper-final band.
                                                 </p>
                                             )}
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="p-6 text-center text-sm text-muted-foreground">
-                                        Pick a spec to calibrate.
-                                    </div>
-                                )}
+                                        </>
+                                    ) : (
+                                        <p className="border-t border-border pt-3 text-center text-sm text-muted-foreground">
+                                            Pick a spec above to calibrate its requirements.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="overflow-auto">
-                                {playersLoading ? (
+                                {!selectedSpec ? (
+                                    <div className="p-6 text-center text-sm text-muted-foreground">
+                                        Select a spec to evaluate players against its requirements.
+                                    </div>
+                                ) : playersLoading ? (
                                     <div className="p-6 text-center text-muted-foreground">Loading season stats…</div>
                                 ) : (
                                     <SpecQualificationTable
-                                        rows={evaluation.rows}
+                                        rows={matchedEval.rows}
+                                        fallbackRows={fallbackEval.rows}
+                                        matchedLabel={`Played ${selectedSpec.position}`}
+                                        fallbackLabel="All players · season totals"
                                         statKeys={statKeys}
                                         thresholdByKey={thresholdByKey}
+                                        placeGroupSize={placeGroupSize}
                                     />
                                 )}
                             </div>

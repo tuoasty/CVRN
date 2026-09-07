@@ -14,8 +14,6 @@ export type SpecStatKeyMeta = {
 };
 
 export const SPEC_STAT_KEYS: SpecStatKeyMeta[] = [
-    {key: "sets_played",         label: "Sets played",        short: "SP",     group: "Season",  format: "count"},
-    {key: "matches_played",      label: "Matches played",     short: "MP",     group: "Season",  format: "count"},
     {key: "points_total",        label: "Points",             short: "PTS",    group: "Season",  format: "count"},
     {key: "points_per_set",      label: "Points / set",       short: "PTS/S",  group: "Season",  format: "per_set"},
 
@@ -73,6 +71,8 @@ export const specStatShort = (key: string): string => BY_KEY.get(key)?.short ?? 
 export const isLowerIsBetterStatKey = (key: string): boolean => BY_KEY.get(key)?.lowerIsBetter === true;
 
 export const isEfficiencyStatKey = (key: string): boolean => BY_KEY.get(key)?.format === "pct";
+
+export const isTotalStatKey = (key: string): boolean => BY_KEY.get(key)?.format === "count";
 
 export const PARTICIPATION_STAT_KEYS: ReadonlySet<string> = new Set([
     "sets_played",

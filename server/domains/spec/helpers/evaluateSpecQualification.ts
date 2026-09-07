@@ -1,7 +1,7 @@
 import {PlayerLeaderboardRow} from "@/server/domains/player";
 import {SpecQualificationRow, SpecRequirementCheck, SpecTier} from "../types";
-import {isSpecStatKey, isLowerIsBetterStatKey, isEfficiencyStatKey, PARTICIPATION_STAT_KEYS} from "../types/statKeys";
-import {placementBonus, PlacementTier} from "./placementBonus";
+import {isSpecStatKey, isLowerIsBetterStatKey, isTotalStatKey, PARTICIPATION_STAT_KEYS} from "../types/statKeys";
+import {PlacementBonusConfig, resolvePlacementBonus} from "./placementBonus";
 
 export type EvaluableRequirement = {
     tier: SpecTier;
@@ -10,10 +10,9 @@ export type EvaluableRequirement = {
 };
 
 export type EvaluateOptions = {
-
-    stars?: number;
-
-    tierByTeamId?: Map<string, PlacementTier>;
+    bonusConfig?: PlacementBonusConfig;
+    placeByTeamId?: Map<string, number>;
+    upperFinalistTeamId?: string | null;
 };
 
 export type SpecEvaluation = {
@@ -34,13 +33,15 @@ export function evaluateSpecQualification(
     const main = known.filter(r => r.tier === "main");
     const secondary = known.filter(r => r.tier === "secondary");
 
-    const applyPlacement = options.stars !== undefined;
+    const applyPlacement = options.bonusConfig !== undefined;
 
     const rows = players.map<SpecQualificationRow>(player => {
-        const placementTier: PlacementTier = player.team_id
-            ? (options.tierByTeamId?.get(player.team_id) ?? "outside")
-            : "outside";
-        const bonus = applyPlacement ? placementBonus(placementTier, options.stars as number) : 0;
+        const place = player.team_id ? (options.placeByTeamId?.get(player.team_id) ?? null) : null;
+        const isUpperFinalist =
+            player.team_id !== null && player.team_id === options.upperFinalistTeamId;
+        const bonus = applyPlacement
+            ? resolvePlacementBonus(options.bonusConfig as PlacementBonusConfig, place, isUpperFinalist)
+            : 0;
 
         const checks = known.map(r => check(player, r, bonus));
 
@@ -56,7 +57,8 @@ export function evaluateSpecQualification(
             teamSlug: player.team_slug,
             teamLogoUrl: player.team_logo_url,
             teamLogoBgRemoved: player.team_logo_bg_removed,
-            placementTier,
+            place,
+            isUpperFinalist,
             placementBonus: bonus,
 
             qualified:
@@ -72,10 +74,15 @@ export function evaluateSpecQualification(
         };
     });
 
+    const proximity = new Map<string, {bottleneck: number; mean: number}>();
+    for (const row of rows) proximity.set(row.playerId, qualificationProximity(row));
+
     rows.sort((a, b) => {
         if (a.qualified !== b.qualified) return a.qualified ? -1 : 1;
-        const shortfall = requirementShortfall(a) - requirementShortfall(b);
-        if (shortfall !== 0) return shortfall;
+        const pa = proximity.get(a.playerId)!;
+        const pb = proximity.get(b.playerId)!;
+        if (pb.bottleneck !== pa.bottleneck) return pb.bottleneck - pa.bottleneck;
+        if (pb.mean !== pa.mean) return pb.mean - pa.mean;
         return a.username.localeCompare(b.username);
     });
 
@@ -92,7 +99,8 @@ function check(
     const value = typeof raw === "number" ? raw : null;
 
     const lower = isLowerIsBetterStatKey(r.statKey);
-    const scaled = PARTICIPATION_STAT_KEYS.has(r.statKey) || lower || isEfficiencyStatKey(r.statKey) ? 0 : bonus;
+    const scalable = isTotalStatKey(r.statKey) && !PARTICIPATION_STAT_KEYS.has(r.statKey) && !lower;
+    const scaled = scalable ? bonus : 0;
     const adjusted = value === null ? null : value * (1 + scaled);
 
     return {
@@ -105,8 +113,27 @@ function check(
     };
 }
 
-function requirementShortfall(row: SpecQualificationRow): number {
-    const mainShort = row.mainTotal - row.mainPassed;
-    const secondaryShort = Math.max(0, row.secondaryRequired - row.secondaryPassed);
-    return mainShort + secondaryShort;
+function checkRatio(c: SpecRequirementCheck): number {
+    if (c.adjustedValue === null) return 0;
+    const lower = isLowerIsBetterStatKey(c.statKey);
+    if (lower) {
+        if (c.adjustedValue <= c.minValue) return 1;
+        if (c.adjustedValue <= 0 || c.minValue <= 0) return 0;
+        return Math.min(c.minValue / c.adjustedValue, 1);
+    }
+    if (c.minValue <= 0) return 1;
+    return Math.max(0, Math.min(c.adjustedValue / c.minValue, 1));
+}
+
+function qualificationProximity(row: SpecQualificationRow): {bottleneck: number; mean: number} {
+    const mainRatios = row.checks.filter(c => c.tier === "main").map(checkRatio);
+    const secRatios = row.checks.filter(c => c.tier === "secondary").map(checkRatio).sort((a, b) => b - a);
+
+    const mainBottleneck = mainRatios.length ? Math.min(...mainRatios) : 1;
+    const secondaryScore = row.secondaryRequired <= 0 ? 1 : (secRatios[row.secondaryRequired - 1] ?? 0);
+    const bottleneck = Math.min(mainBottleneck, secondaryScore);
+
+    const all = [...mainRatios, ...secRatios];
+    const mean = all.length ? all.reduce((s, r) => s + r, 0) / all.length : 1;
+    return {bottleneck, mean};
 }

@@ -76,6 +76,18 @@ export async function findRangedPlayerLeaderboard(
     return Ok((data ?? []) as RangedSeasonStatRow[]);
 }
 
+export async function findPlayerLeaderboardByPosition(
+    supabase: DBClient,
+    p: {seasonId: string; position: string}
+): Promise<Result<RangedSeasonStatRow[]>> {
+    const {data, error} = await supabase.rpc("get_player_season_stats_scoped", {
+        p_season_id: p.seasonId,
+        p_position: p.position,
+    });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as RangedSeasonStatRow[]);
+}
+
 export async function replaceMatchStats(
     supabase: DBClient,
     matchId: string,
