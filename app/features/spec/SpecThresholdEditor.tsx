@@ -3,7 +3,6 @@
 import {Plus, Trash2} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import {Button} from '@/app/components/ui/button';
-import {Input} from '@/app/components/ui/input';
 import SpecStatCombobox from '@/app/features/spec/SpecStatCombobox';
 import {SpecTier, isLowerIsBetterStatKey} from '@/server/domains/spec/types';
 
@@ -46,28 +45,29 @@ export default function SpecThresholdEditor({
             {rows.map(row => {
                 const passing = passCounts.get(row.rowId) ?? 0;
                 const op = isLowerIsBetterStatKey(row.statKey) ? '≤' : '≥';
+                const pct = showPass ? Math.round((passing / totalPlayers) * 100) : 0;
                 return (
-                    <div key={row.rowId} className={cn(showPass && 'space-y-1')}>
-                        <div
-                            className={cn(
-                                'grid gap-2 items-center',
-                                showPass ? 'grid-cols-[minmax(0,1fr)_4.5rem_2rem]' : 'grid-cols-[6fr_3fr_1fr]'
-                            )}
-                        >
-                            <SpecStatCombobox
-                                value={row.statKey}
-                                onChange={v => onChange(row.rowId, {statKey: v})}
-                                takenKeys={takenKeys}
-                            />
+                    <div key={row.rowId} className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                            <div className="flex-1 min-w-0">
+                                <SpecStatCombobox
+                                    value={row.statKey}
+                                    onChange={v => onChange(row.rowId, {statKey: v})}
+                                    takenKeys={takenKeys}
+                                />
+                            </div>
 
-                            <div className="flex items-center gap-1 min-w-0">
-                                <span className="text-muted-foreground text-sm shrink-0">{op}</span>
-                                <Input
+                            <div className="flex h-9 w-[5.25rem] shrink-0 items-center overflow-hidden rounded-md border border-input bg-transparent focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40">
+                                <span className="select-none border-r border-input px-1.5 text-sm text-muted-foreground">
+                                    {op}
+                                </span>
+                                <input
                                     type="number"
                                     step="any"
                                     value={String(row.minValue)}
                                     onChange={e => onChange(row.rowId, {minValue: Number(e.target.value)})}
-                                    className="rounded-sm w-full min-w-0 font-mono tabular-nums text-sm"
+                                    className="w-full min-w-0 bg-transparent px-1.5 text-right font-mono tabular-nums text-sm outline-none"
+                                    aria-label="Threshold"
                                 />
                             </div>
 
@@ -75,7 +75,7 @@ export default function SpecThresholdEditor({
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 justify-self-end"
+                                className="h-9 w-9 shrink-0 rounded-md p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                 onClick={() => onRemove(row.rowId)}
                                 aria-label="Remove requirement"
                             >
@@ -84,9 +84,17 @@ export default function SpecThresholdEditor({
                         </div>
 
                         {showPass && row.statKey && (
-                            <p className="text-xs font-mono tabular-nums text-muted-foreground/70 pl-1">
-                                {passing}/{totalPlayers} clear this
-                            </p>
+                            <div className="flex items-center gap-2 pl-0.5">
+                                <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                                    <div
+                                        className={cn('h-full', pct === 0 ? 'bg-transparent' : 'bg-primary/50')}
+                                        style={{width: `${pct}%`}}
+                                    />
+                                </div>
+                                <span className="shrink-0 font-mono tabular-nums text-xs text-muted-foreground">
+                                    {passing}/{totalPlayers}
+                                </span>
+                            </div>
                         )}
                     </div>
                 );

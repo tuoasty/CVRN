@@ -56,8 +56,8 @@ export {
     formatPlacementBonus,
 } from "../helpers/placementBonus";
 
-export type {SaveSpecInput, SpecRequirementInput, SpecQualificationInput} from "./schemas";
-export {SaveSpecSchema, SpecRequirementSchema, SpecQualificationSchema} from "./schemas";
+export type {SaveSpecInput, SpecRequirementInput, SpecQualificationInput, SavePlacementBonusInput} from "./schemas";
+export {SaveSpecSchema, SpecRequirementSchema, SpecQualificationSchema, SavePlacementBonusSchema, PlacementBonusConfigSchema} from "./schemas";
 export {
     SPEC_STAT_KEYS,
     PARTICIPATION_STAT_KEYS,

@@ -4,8 +4,11 @@ import {
     saveSpecAction,
     deleteSpecAction,
     getSpecLeaderboardAction,
+    getPlacementBonusAction,
+    savePlacementBonusAction,
+    resetPlacementBonusAction,
 } from '@/app/actions/spec.actions';
-import {SaveSpecInput, SpecWithRequirements} from '@/server/domains/spec/types';
+import {PlacementBonusConfig, SaveSpecInput, SpecWithRequirements} from '@/server/domains/spec/types';
 import {PlayerLeaderboardRow} from '@/server/domains/player';
 
 const TTL = 2 * 60 * 1000;
@@ -56,6 +59,47 @@ async function fetchSpecLeaderboard([, seasonId]: [string, string]): Promise<Spe
     const result = await getSpecLeaderboardAction(seasonId);
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
+}
+
+type SpecBonusData = {config: PlacementBonusConfig; isCustom: boolean};
+
+async function fetchSpecBonus([, regionId]: [string, string]): Promise<SpecBonusData> {
+    const result = await getPlacementBonusAction(regionId);
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+export function useSpecBonus(regionId: string | null) {
+    const key = regionId ? (['specBonus', regionId] as const) : null;
+    const {data, error, isLoading, mutate} = useSWR(
+        key,
+        fetchSpecBonus as BareFetcher<SpecBonusData>,
+        {dedupingInterval: TTL, revalidateOnFocus: false}
+    );
+    const value = data as SpecBonusData | undefined;
+
+    const save = async (config: PlacementBonusConfig) => {
+        if (!regionId) return {ok: false as const, error: {message: 'No region selected', code: 'VALIDATION_ERROR' as const}};
+        const result = await savePlacementBonusAction({regionId, config});
+        if (result.ok) await mutate({config: result.value, isCustom: true}, {revalidate: false});
+        return result;
+    };
+
+    const reset = async () => {
+        if (!regionId) return {ok: false as const, error: {message: 'No region selected', code: 'VALIDATION_ERROR' as const}};
+        const result = await resetPlacementBonusAction(regionId);
+        if (result.ok) await mutate(undefined, {revalidate: true});
+        return result;
+    };
+
+    return {
+        config: value?.config ?? null,
+        isCustom: value?.isCustom ?? false,
+        isLoading,
+        error: error?.message ?? null,
+        save,
+        reset,
+    };
 }
 
 export function useSpecLeaderboard(seasonId: string | null) {

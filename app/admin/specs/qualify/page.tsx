@@ -1,6 +1,6 @@
 'use client';
 
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import Link from 'next/link';
 import {ArrowLeft, Save, SlidersHorizontal} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
@@ -24,17 +24,18 @@ import {
     AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
-import {useSpecs, useSpecLeaderboard, saveSpec} from '@/app/hooks/useSpecs';
+import {useSpecs, useSpecLeaderboard, useSpecBonus, saveSpec} from '@/app/hooks/useSpecs';
 import SpecThresholdEditor, {DraftThreshold} from '@/app/features/spec/SpecThresholdEditor';
+import PlacementBonusEditor from '@/app/features/spec/PlacementBonusEditor';
 import SpecQualificationTable from '@/app/features/spec/SpecQualificationTable';
-import SpecPicker from '@/app/features/spec/SpecPicker';
-import SpecListSidebar from '@/app/features/spec/SpecListSidebar';
+import SpecSelector from '@/app/features/spec/SpecSelector';
 import {evaluateSpecQualification} from '@/server/domains/spec/helpers/evaluateSpecQualification';
 import {
     SpecTier,
     SpecPosition,
     SpecRequirementInput,
     SpecWithRequirements,
+    PlacementBonusConfig,
     DEFAULT_PLACEMENT_BONUS,
     specStatMeta,
     isLowerIsBetterStatKey,
@@ -46,6 +47,7 @@ const newRowId = () => Math.random().toString(36).slice(2);
 
 export default function AdminSpecQualifyPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId);
+    const regionId = useAdminContextStore(s => s.selectedRegionId);
     const {specs} = useSpecs();
     const {
         rows: players,
@@ -55,6 +57,22 @@ export default function AdminSpecQualifyPage() {
         error,
     } = useSpecLeaderboard(seasonId);
 
+    const {
+        config: savedBonus,
+        isCustom: bonusIsCustom,
+        save: saveBonus,
+        reset: resetBonus,
+    } = useSpecBonus(regionId);
+    const [bonusDraft, setBonusDraft] = useState<PlacementBonusConfig | null>(null);
+    const [bonusSaving, setBonusSaving] = useState(false);
+    useEffect(() => {
+        setBonusDraft(savedBonus);
+    }, [savedBonus]);
+    const activeBonus = bonusDraft ?? savedBonus ?? DEFAULT_PLACEMENT_BONUS;
+    const bonusDirty =
+        bonusDraft !== null &&
+        JSON.stringify(bonusDraft) !== JSON.stringify(savedBonus ?? DEFAULT_PLACEMENT_BONUS);
+
     const [specId, setSpecId] = useState<string>('');
     const [thresholds, setThresholds] = useState<DraftThreshold[]>([]);
     const [secondaryRequired, setSecondaryRequired] = useState(0);
@@ -62,8 +80,6 @@ export default function AdminSpecQualifyPage() {
     const [dirty, setDirty] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    const [pickerOpen, setPickerOpen] = useState(true);
-    const [query, setQuery] = useState('');
     const [pendingSpec, setPendingSpec] = useState<SpecWithRequirements | null>(null);
 
     const selectedSpec = specs.find(s => s.id === specId) ?? null;
@@ -92,28 +108,18 @@ export default function AdminSpecQualifyPage() {
         setDirty(false);
     };
 
-    const closePicker = () => {
-        setPickerOpen(false);
-        setQuery('');
-    };
-
     const handlePick = (spec: SpecWithRequirements) => {
-        if (spec.id === specId) {
-            closePicker();
-            return;
-        }
+        if (spec.id === specId) return;
         if (dirty && specId) {
             setPendingSpec(spec);
             return;
         }
         loadSpec(spec);
-        closePicker();
     };
 
     const confirmDiscard = () => {
         if (pendingSpec) loadSpec(pendingSpec);
         setPendingSpec(null);
-        closePicker();
     };
 
     const mainRows = thresholds.filter(t => t.tier === 'main');
@@ -130,9 +136,9 @@ export default function AdminSpecQualifyPage() {
                 players,
                 thresholds.filter(t => t.statKey).map(({tier, statKey, minValue}) => ({tier, statKey, minValue})),
                 secondaryRequired,
-                {bonusConfig: DEFAULT_PLACEMENT_BONUS, placeByTeamId: placeMap, upperFinalistTeamId}
+                {bonusConfig: activeBonus, placeByTeamId: placeMap, upperFinalistTeamId}
             ),
-        [players, thresholds, secondaryRequired, placeMap, upperFinalistTeamId]
+        [players, thresholds, secondaryRequired, placeMap, upperFinalistTeamId, activeBonus]
     );
 
     const passCounts = useMemo(() => {
@@ -143,12 +149,12 @@ export default function AdminSpecQualifyPage() {
                 players,
                 [{tier: 'main', statKey: t.statKey, minValue: t.minValue}],
                 0,
-                {bonusConfig: DEFAULT_PLACEMENT_BONUS, placeByTeamId: placeMap, upperFinalistTeamId}
+                {bonusConfig: activeBonus, placeByTeamId: placeMap, upperFinalistTeamId}
             );
             counts.set(t.rowId, solo.rows.filter(r => r.qualified).length);
         }
         return counts;
-    }, [players, thresholds, placeMap, upperFinalistTeamId]);
+    }, [players, thresholds, placeMap, upperFinalistTeamId, activeBonus]);
 
     const statKeys = thresholds.filter(t => t.statKey).map(t => t.statKey);
     const qualifiedCount = evaluation.rows.filter(r => r.qualified).length;
@@ -227,6 +233,36 @@ export default function AdminSpecQualifyPage() {
         }
     };
 
+    const handleBonusSave = async () => {
+        if (!bonusDraft) return;
+        setBonusSaving(true);
+        try {
+            const result = await saveBonus(bonusDraft);
+            if (!result.ok) {
+                toast.error('Failed to save bonuses', result.error.message);
+                return;
+            }
+            toast.success('Placement bonuses saved');
+        } finally {
+            setBonusSaving(false);
+        }
+    };
+
+    const handleBonusReset = async () => {
+        setBonusSaving(true);
+        try {
+            const result = await resetBonus();
+            if (!result.ok) {
+                toast.error('Failed to reset bonuses', result.error.message);
+                return;
+            }
+            setBonusDraft(DEFAULT_PLACEMENT_BONUS);
+            toast.success('Placement bonuses reset to defaults');
+        } finally {
+            setBonusSaving(false);
+        }
+    };
+
     return (
         <div className="w-full px-3 sm:px-4 py-6">
             <div className="admin-section">
@@ -274,18 +310,25 @@ export default function AdminSpecQualifyPage() {
                 {seasonId && !error && (
                     <>
                         <div className="flex items-center gap-3 mt-6 mb-3 flex-wrap">
-                            <SpecPicker
-                                current={selectedSpec}
-                                open={pickerOpen}
-                                query={query}
-                                onQueryChange={setQuery}
-                                onToggle={setPickerOpen}
-                            />
-                            {selectedSpec && dirty && (
-                                <span className="text-xs text-muted-foreground">
-                                    edited · differs from saved {selectedSpec.name}
-                                </span>
-                            )}
+                            <div className="flex items-center gap-2 text-sm">
+                                <span className="text-muted-foreground">Selected:</span>
+                                {selectedSpec ? (
+                                    <>
+                                        <span className="font-semibold">{selectedSpec.name}</span>
+                                        <span className="rounded-full border border-border px-1.5 text-xs font-semibold">
+                                            {selectedSpec.position}
+                                        </span>
+                                        <span className="font-mono tabular-nums text-xs text-primary">
+                                            {selectedSpec.stars}★
+                                        </span>
+                                        {dirty && (
+                                            <span className="text-xs text-muted-foreground">· unsaved edits</span>
+                                        )}
+                                    </>
+                                ) : (
+                                    <span className="text-muted-foreground">none</span>
+                                )}
+                            </div>
                             <div className="ml-auto text-sm text-muted-foreground">
                                 <span className="font-mono tabular-nums text-lg font-semibold text-primary">
                                     {qualifiedCount}
@@ -304,15 +347,25 @@ export default function AdminSpecQualifyPage() {
 
                         <div className="grid grid-cols-[266px_1fr] border border-border rounded-sm overflow-hidden min-h-[520px]">
                             <div className="border-r border-border bg-muted/20 overflow-y-auto">
-                                {pickerOpen ? (
-                                    <SpecListSidebar
+                                <div className="p-3 space-y-4">
+                                    <SpecSelector
                                         specs={specs}
-                                        query={query}
                                         activeId={specId || null}
                                         onPick={handlePick}
                                     />
-                                ) : selectedSpec ? (
-                                    <div className="p-3 space-y-4">
+                                    <PlacementBonusEditor
+                                        value={activeBonus}
+                                        isCustom={bonusIsCustom}
+                                        dirty={bonusDirty}
+                                        saving={bonusSaving}
+                                        disabled={!regionId}
+                                        onChange={setBonusDraft}
+                                        onSave={handleBonusSave}
+                                        onReset={handleBonusReset}
+                                    />
+
+                                    {selectedSpec ? (
+                                        <>
                                         <div className="flex items-center justify-between gap-2">
                                             <Label htmlFor="qualify-stars">Star tier</Label>
                                             <Select
@@ -389,10 +442,6 @@ export default function AdminSpecQualifyPage() {
                                         </div>
 
                                         <div className="text-xs text-muted-foreground border-t border-border pt-3 space-y-1">
-                                            <p>
-                                                Placement bonus (defaults): upper final +25% stacks · 1st +10% ·
-                                                2nd +7.5% · 3rd +5% · 4th +2.5% · 5th–8th 0% · outside −10%
-                                            </p>
                                             {!hasPodium && !hasUpperBand && (
                                                 <p>
                                                     No podium or seeded final yet — placement bonuses are
@@ -412,12 +461,13 @@ export default function AdminSpecQualifyPage() {
                                                 </p>
                                             )}
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="p-6 text-center text-sm text-muted-foreground">
-                                        Pick a spec to calibrate.
-                                    </div>
-                                )}
+                                        </>
+                                    ) : (
+                                        <p className="border-t border-border pt-3 text-center text-sm text-muted-foreground">
+                                            Pick a spec above to calibrate its requirements.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="overflow-auto">

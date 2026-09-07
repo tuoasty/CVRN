@@ -35,6 +35,20 @@ export const SpecQualificationSchema = z.object({
     seasonId: z.string().uuid(),
 });
 
+const bonusValue = z.number().finite().min(-1).max(3);
+
+export const PlacementBonusConfigSchema = z.object({
+    upperFinalist: bonusValue,
+    ladder: z.array(bonusValue).length(8),
+    outside: bonusValue,
+});
+
+export const SavePlacementBonusSchema = z.object({
+    regionId: z.string().uuid(),
+    config: PlacementBonusConfigSchema,
+});
+
 export type SpecRequirementInput = z.infer<typeof SpecRequirementSchema>;
 export type SaveSpecInput = z.infer<typeof SaveSpecSchema>;
 export type SpecQualificationInput = z.infer<typeof SpecQualificationSchema>;
+export type SavePlacementBonusInput = z.infer<typeof SavePlacementBonusSchema>;

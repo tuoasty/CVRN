@@ -9,7 +9,17 @@ import {getCachedPlayerLeaderboard, getCachedLeaderboardIdentity} from "@/server
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
 import {requireRoles} from "@/server/domains/auth";
 import {getSeasonFinalsSlots, getSeasonPodium} from "@/server/domains/season";
-import {getSpecs, saveSpec, removeSpec, SaveSpecSchema, generateSpecSnapshot} from "@/server/domains/spec";
+import {
+    getSpecs,
+    saveSpec,
+    removeSpec,
+    SaveSpecSchema,
+    generateSpecSnapshot,
+    getPlacementBonus,
+    savePlacementBonus,
+    resetPlacementBonus,
+    SavePlacementBonusSchema,
+} from "@/server/domains/spec";
 import {deleteSpecSnapshot} from "@/server/db/specSnapshot.repo";
 
 const SPEC_ROLES = ["admin", "super_admin", "spec_manager"] as const;
@@ -74,6 +84,38 @@ export async function deleteSpecSnapshotAction() {
         revalidatePath("/spec-requirements");
     }
     return result;
+}
+
+export async function getPlacementBonusAction(regionId: string) {
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return getPlacementBonus(supabase, regionId);
+}
+
+export async function savePlacementBonusAction(data: unknown) {
+    const parsed = SavePlacementBonusSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return savePlacementBonus(supabase, parsed.data);
+}
+
+export async function resetPlacementBonusAction(regionId: string) {
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return resetPlacementBonus(supabase, regionId);
 }
 
 export async function getSpecLeaderboardAction(seasonId: string) {
