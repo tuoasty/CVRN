@@ -100,3 +100,12 @@ export async function replaceMatchStats(
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);
 }
+
+export async function clearMatchStats(supabase: DBClient, matchId: string): Promise<Result<true>> {
+    const {error} = await supabase.rpc("replace_match_player_stats", {
+        p_match_id: matchId,
+        p_rows: [],
+    });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}

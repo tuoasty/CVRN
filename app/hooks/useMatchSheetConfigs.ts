@@ -3,6 +3,7 @@ import {
     getSeasonPlayoffMatchesAction,
     saveMatchSheetConfigAction,
     deleteMatchSheetConfigAction,
+    clearMatchStatsAction,
     previewMatchStatsAction,
     syncMatchStatsAction,
     publishStatsAction,
@@ -39,6 +40,12 @@ export async function saveMatchSheetConfig(input: SaveMatchSheetConfigInput) {
 
 export async function deleteMatchSheetConfig(id: string) {
     const result = await deleteMatchSheetConfigAction(id);
+    if (result.ok) await revalidateSeasonPlayoffMatches();
+    return result;
+}
+
+export async function clearMatchStats(matchId: string) {
+    const result = await clearMatchStatsAction(matchId);
     if (result.ok) await revalidateSeasonPlayoffMatches();
     return result;
 }

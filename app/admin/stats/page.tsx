@@ -2,7 +2,7 @@
 
 import {useMemo, useState} from 'react';
 import Link from 'next/link';
-import {BarChart3, ExternalLink, Plus, RefreshCw, Trash2} from 'lucide-react';
+import {BarChart3, Eraser, ExternalLink, Plus, RefreshCw, Trash2} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
 import {Badge} from '@/app/components/ui/badge';
 import {
@@ -16,7 +16,7 @@ import {
     AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
-import {useSeasonPlayoffMatches, deleteMatchSheetConfig, publishStats} from '@/app/hooks/useMatchSheetConfigs';
+import {useSeasonPlayoffMatches, deleteMatchSheetConfig, clearMatchStats, publishStats} from '@/app/hooks/useMatchSheetConfigs';
 import {useTeamsBySeason} from '@/app/hooks/useTeams';
 import {PlayoffMatchStatRow} from '@/server/domains/matchStats';
 import {toast} from '@/app/utils/toast';
@@ -39,6 +39,8 @@ export default function AdminStatsPage() {
     const [syncTarget, setSyncTarget] = useState<PlayoffMatchStatRow | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<PlayoffMatchStatRow | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [clearTarget, setClearTarget] = useState<PlayoffMatchStatRow | null>(null);
+    const [clearing, setClearing] = useState(false);
     const [publishing, setPublishing] = useState(false);
 
     const handlePublish = async () => {
@@ -62,6 +64,25 @@ export default function AdminStatsPage() {
         const map = new Map(teams.map(t => [t.id, t.name]));
         return (id: string | null) => (id ? (map.get(id) ?? 'TBD') : 'TBD');
     }, [teams]);
+
+    const handleClear = async () => {
+        if (!clearTarget?.matchId) return;
+        setClearing(true);
+        try {
+            const result = await clearMatchStats(clearTarget.matchId);
+            if (!result.ok) {
+                toast.error('Failed to clear', result.error.message);
+                return;
+            }
+            toast.success('Match stats cleared');
+            setClearTarget(null);
+        } catch (err) {
+            clientLogger.error('AdminStatsPage', 'Exception clearing match stats', {err});
+            toast.error('Something went wrong');
+        } finally {
+            setClearing(false);
+        }
+    };
 
     const handleDelete = async () => {
         if (!deleteTarget?.configId) return;
@@ -211,6 +232,17 @@ export default function AdminStatsPage() {
                                                             <RefreshCw className="h-3 w-3" />
                                                             {m.synced ? 'Re-sync' : 'Sync'}
                                                         </Button>
+                                                        {m.synced && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                onClick={() => setClearTarget(m)}
+                                                                title="Clear tracked stats"
+                                                            >
+                                                                <Eraser className="h-3 w-3" />
+                                                            </Button>
+                                                        )}
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
@@ -255,6 +287,29 @@ export default function AdminStatsPage() {
                 teamName={teamName}
                 onOpenChange={(open) => { if (!open) setSyncTarget(null); }}
             />
+
+            <AlertDialog open={!!clearTarget} onOpenChange={(open) => { if (!open) setClearTarget(null); }}>
+                <AlertDialogContent className="rounded-sm">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Clear Match Stats</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Delete every tracked box score for{' '}
+                            <strong>{clearTarget?.matchCode ?? clearTarget?.round ?? 'this match'}</strong>?
+                            {' '}This wipes all sets. The stats sheet stays attached, so you can re-sync afterward.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-sm" disabled={clearing}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="rounded-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={handleClear}
+                            disabled={clearing}
+                        >
+                            {clearing ? 'Clearing...' : 'Clear stats'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
                 <AlertDialogContent className="rounded-sm">

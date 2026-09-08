@@ -11,6 +11,7 @@ import {
     deleteMatchSheetConfig,
     findMatchSheetConfigById,
 } from "@/server/db/matchSheetConfig.repo";
+import {clearMatchStats} from "@/server/db/playerMatchStats.repo";
 import {getSeasonPlayoffMatches} from "@/server/domains/matchStats/queries/getSeasonPlayoffMatches";
 import {SaveMatchSheetConfigSchema} from "@/server/domains/matchStats/types";
 import {buildMatchStatsPlan, PlayerOverrides} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
@@ -43,6 +44,18 @@ export async function deleteMatchSheetConfigAction(id: string) {
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
     const result = await deleteMatchSheetConfig(supabase, id);
     if (result.ok) revalidatePath('/admin/stats');
+    return result;
+}
+
+export async function clearMatchStatsAction(matchId: string) {
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const result = await clearMatchStats(supabase, matchId);
+    if (result.ok) {
+        revalidatePath('/admin/stats');
+        revalidatePublicData([CACHE_TAGS.matches]);
+    }
     return result;
 }
 
