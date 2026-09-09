@@ -101,36 +101,38 @@ export default function ArticleImagesManager({ items, onChange, insertToken }: P
             {items.length > 0 && (
                 <div className="space-y-2">
                     {items.map(item => (
-                        <div key={item.handle} className="flex items-center gap-3 p-2 rounded-sm border border-border bg-card">
-                            <div className="relative w-14 h-9 flex-shrink-0 rounded-sm border border-border overflow-hidden bg-muted">
+                        <div key={item.handle} className="flex items-start gap-3 p-2 rounded-sm border border-border bg-card">
+                            <div className="relative w-16 h-11 flex-shrink-0 rounded-sm border border-border overflow-hidden bg-muted">
                                 {item.previewUrl && (
                                     <img src={item.previewUrl} alt={item.handle} className="absolute inset-0 h-full w-full object-cover" />
                                 )}
                             </div>
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 space-y-2">
                                 <div className="flex items-center gap-1.5">
-                                    <Badge variant={item.handle === 'cover' ? 'default' : 'secondary'} className="rounded-sm text-xs px-1.5 py-0 uppercase">
+                                    <Badge variant={item.handle === 'cover' ? 'default' : 'secondary'} className="rounded-sm text-xs px-1.5 py-0 uppercase shrink-0">
                                         {item.handle}
                                     </Badge>
                                     <span className="text-xs text-muted-foreground truncate">{item.label}</span>
                                 </div>
+                                <div className="flex items-center gap-2">
+                                    <Select value={item.placement} onValueChange={v => setPlacement(item.handle, v as ImagePlacement)}>
+                                        <SelectTrigger className="h-8 w-28 rounded-sm text-xs">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="left">Left</SelectItem>
+                                            <SelectItem value="center">Center</SelectItem>
+                                            <SelectItem value="right">Right</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Button type="button" variant="outline" size="sm" className="h-8 rounded-sm gap-1 px-2" onClick={() => insertToken(tokenForHandle(item.handle))}>
+                                        <Code className="h-3.5 w-3.5" /> Token
+                                    </Button>
+                                    <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-sm text-destructive ml-auto" onClick={() => remove(item.handle)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
-                            <Select value={item.placement} onValueChange={v => setPlacement(item.handle, v as ImagePlacement)}>
-                                <SelectTrigger className="h-8 w-24 rounded-sm text-xs">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="left">Left</SelectItem>
-                                    <SelectItem value="center">Center</SelectItem>
-                                    <SelectItem value="right">Right</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Button type="button" variant="outline" size="sm" className="h-8 rounded-sm gap-1 px-2" onClick={() => insertToken(tokenForHandle(item.handle))}>
-                                <Code className="h-3.5 w-3.5" /> Token
-                            </Button>
-                            <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-sm text-destructive" onClick={() => remove(item.handle)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
                         </div>
                     ))}
                 </div>

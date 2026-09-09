@@ -57,7 +57,7 @@ export default function ArticleFormFields({
     }
 
     return (
-        <div className="grid lg:grid-cols-[1fr_380px] flex-1 min-h-0">
+        <div className="grid lg:grid-cols-[1fr_480px] flex-1 min-h-0">
             <div className="flex flex-col min-h-0 p-6 gap-4 border-r border-border">
                 <div className="space-y-1">
                     <Label htmlFor={`${idPrefix}-title`}>Title</Label>
