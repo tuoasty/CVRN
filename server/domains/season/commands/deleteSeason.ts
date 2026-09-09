@@ -3,6 +3,10 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findSeasonById, deleteSeasonById} from "@/server/db/seasons.repo";
+import {findSeasonAwardBucketPathsBySeason} from "@/server/db/seasonHistory.repo";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
+import {BUCKETS} from "@/server/storage/storage.paths";
+import {deleteFile} from "@/server/storage/storage.service";
 import {SeasonIdInput} from "../types";
 
 export async function deleteSeason(
@@ -21,6 +25,19 @@ export async function deleteSeason(
                 message: "Season does not exist",
                 code: "NOT_FOUND"
             });
+        }
+
+        const paths = await findSeasonAwardBucketPathsBySeason(supabase, p.seasonId);
+        if (paths.ok) {
+            const admin = getSupabaseAdmin();
+            for (const path of paths.value) {
+                const fileResult = await deleteFile(admin, {bucket: BUCKETS.PUBLIC, path});
+                if (!fileResult.ok) {
+                    logger.error({seasonId: p.seasonId, path, error: fileResult.error}, "Failed to delete season award avatar file");
+                }
+            }
+        } else {
+            logger.error({seasonId: p.seasonId, error: paths.error}, "Failed to look up season award avatar paths");
         }
 
         const deleteResult = await deleteSeasonById(supabase, p.seasonId);

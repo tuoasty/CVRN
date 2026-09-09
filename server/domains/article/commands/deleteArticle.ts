@@ -4,7 +4,7 @@ import { serializeError } from '@/server/utils/serializeableError'
 import { logger } from '@/server/utils/logger'
 import { BUCKETS, extractStoragePath } from '@/server/storage/storage.paths'
 import { deleteFile } from '@/server/storage/storage.service'
-import { findMediaPostByArticleId } from '@/server/db/mediaPost.repo'
+import { findMediaPostsByArticleId } from '@/server/db/mediaPost.repo'
 import { findArticleById, deleteArticleById } from '@/server/db/article.repo'
 import { DeleteArticleInput } from '../types'
 
@@ -14,13 +14,18 @@ export async function deleteArticle(supabase: DBClient, p: DeleteArticleInput): 
         if (!lookup.ok) return lookup
         if (!lookup.value) return Err({ message: 'Article not found', code: 'NOT_FOUND' })
 
-        const newsLookup = await findMediaPostByArticleId(supabase, p.articleId)
-        if (newsLookup.ok && newsLookup.value?.image_url) {
-            const path = extractStoragePath(newsLookup.value.image_url, BUCKETS.MEDIA)
-            const delFile = await deleteFile(supabase, { bucket: BUCKETS.MEDIA, path })
-            if (!delFile.ok) {
-                logger.warn({ articleId: p.articleId, path, error: delFile.error }, 'Failed to delete article cover file; proceeding with DB delete')
+        const ownedRes = await findMediaPostsByArticleId(supabase, p.articleId)
+        if (ownedRes.ok) {
+            for (const post of ownedRes.value) {
+                if (!post.image_url) continue
+                const path = extractStoragePath(post.image_url, BUCKETS.MEDIA)
+                const delFile = await deleteFile(supabase, { bucket: BUCKETS.MEDIA, path })
+                if (!delFile.ok) {
+                    logger.warn({ articleId: p.articleId, path, error: delFile.error }, 'Failed to delete owned article image file; proceeding with DB delete')
+                }
             }
+        } else {
+            logger.warn({ articleId: p.articleId, error: ownedRes.error }, 'Failed to look up owned article images; proceeding with DB delete')
         }
 
         const delRow = await deleteArticleById(supabase, p.articleId)

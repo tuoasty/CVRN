@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
 import { Button } from '@/app/components/ui/button'
 import { Label } from '@/app/components/ui/label'
@@ -10,13 +9,12 @@ import { mutateArticles } from '@/app/hooks/useArticles'
 import { mutateAllMedia } from '@/app/hooks/useMediaPosts'
 import { toast } from '@/app/utils/toast'
 import { clientLogger } from '@/app/utils/clientLogger'
-import { compressImage } from '@/app/utils/imageCompression'
 import { useAllMatches } from '@/app/hooks/useMatches'
 import { useTeamsBySeason } from '@/app/hooks/useTeams'
 import { type AuthorSelection } from '@/app/features/media/AuthorPicker'
 import { type MatchSelection } from '@/app/features/articles/MatchPicker'
 import ArticleFormFields from '@/app/features/articles/ArticleFormFields'
-import ImageDropzone from '@/app/features/media/ImageDropzone'
+import ArticleImagesManager, { type ArticleImageItem, appendImagesToFormData } from '@/app/features/articles/ArticleImagesManager'
 import SlugFields from '@/app/features/articles/SlugFields'
 import { useSlugField } from '@/app/features/articles/useSlugField'
 import SeasonSelect from '@/app/features/articles/SeasonSelect'
@@ -38,11 +36,7 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
     const [author, setAuthor] = useState<AuthorSelection | null>(null)
     const [match, setMatch] = useState<MatchSelection | null>(null)
     const [seasonId, setSeasonId] = useState<string | null>(null)
-    const [existingCover, setExistingCover] = useState<string | null>(null)
-    const [removeCover, setRemoveCover] = useState(false)
-    const [imageFile, setImageFile] = useState<File | null>(null)
-    const [preview, setPreview] = useState<string | null>(null)
-    const [compressing, setCompressing] = useState(false)
+    const [images, setImages] = useState<ArticleImageItem[]>([])
     const [fetching, setFetching] = useState(false)
     const [loading, setLoading] = useState(false)
     const loadedSlugRef = useRef<string | null>(null)
@@ -74,10 +68,15 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                 setSeasonId(d.season_id)
                 setAuthor(d.author ? { id: d.author.id, label: d.author.display_name || d.author.username, avatarUrl: d.author.avatar_url } : null)
                 setMatch(d.match_id ? { id: d.match_id, label: PENDING_LABEL } : null)
-                setExistingCover(d.cover_url)
-                setRemoveCover(false)
-                setImageFile(null)
-                setPreview(null)
+                setImages(d.images.map(im => ({
+                    handle:      im.handle,
+                    placement:   im.placement,
+                    origin:      'existing' as const,
+                    mediaPostId: im.mediaPostId,
+                    file:        null,
+                    previewUrl:  im.url,
+                    label:       im.handle === 'cover' ? 'Cover (existing)' : 'Existing',
+                })))
             })
             .finally(() => { if (!cancelled) setFetching(false) })
         return () => { cancelled = true }
@@ -91,22 +90,6 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
         const away = m.away_team_id ? teamName.get(m.away_team_id) ?? 'TBD' : 'TBD'
         setMatch({ id: m.id, label: `${home} vs ${away}${m.match_code ? ` · ${m.match_code}` : ''}` })
     }, [matches, teamName, match])
-
-    async function acceptFile(file: File) {
-        if (!file.type.startsWith('image/')) return
-        setCompressing(true)
-        try {
-            const compressed = await compressImage(file, { maxDimension: 1920 })
-            setImageFile(compressed)
-            setPreview(URL.createObjectURL(compressed))
-            setRemoveCover(false)
-        } catch (err) {
-            clientLogger.error('EditArticleDialog', 'Image compression failed', { err })
-            toast.error('Failed to process image')
-        } finally {
-            setCompressing(false)
-        }
-    }
 
     async function handleSubmit() {
         if (!article) return
@@ -123,8 +106,7 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
             formData.set('authorId', author ? author.id : '')
             formData.set('matchId', match ? match.id : '')
             formData.set('seasonId', seasonId ?? '')
-            if (imageFile) formData.set('imageFile', imageFile)
-            if (removeCover && !imageFile) formData.set('removeCover', 'true')
+            appendImagesToFormData(formData, images)
 
             const result = await updateArticleAction(formData)
             if (!result.ok) {
@@ -141,8 +123,6 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
             setLoading(false)
         }
     }
-
-    const showExistingCover = existingCover && !removeCover && !preview
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -184,47 +164,16 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                                     onSlugChange={slugField.setSlug}
                                 />
                             }
-                            coverSlot={
-                                <div className="space-y-1">
-                                    <Label>Cover image <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                                    {showExistingCover ? (
-                                        <div className="panel p-3 rounded-sm space-y-3">
-                                            <div className="relative w-full h-40 rounded-sm overflow-hidden border border-border">
-                                                <Image src={existingCover} alt="cover" fill sizes="600px" className="object-contain" />
-                                            </div>
-                                            <ImageDropzone preview={null} compressing={compressing} onFile={acceptFile} onClear={() => {}} />
-                                            <Button type="button" variant="outline" size="sm" className="rounded-sm text-destructive" onClick={() => setRemoveCover(true)}>
-                                                Remove cover
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            <ImageDropzone
-                                                preview={preview}
-                                                compressing={compressing}
-                                                onFile={acceptFile}
-                                                onClear={() => { setImageFile(null); setPreview(null) }}
-                                                clearLabel="Change"
-                                            />
-                                            {removeCover && (
-                                                <div className="panel p-3 rounded-sm space-y-2 text-sm text-muted-foreground">
-                                                    <p>Cover will be removed on save.</p>
-                                                    <Button type="button" variant="ghost" size="sm" className="rounded-sm" onClick={() => setRemoveCover(false)}>
-                                                        Keep existing cover
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            }
+                            imagesSlot={insert => (
+                                <ArticleImagesManager items={images} onChange={setImages} insertToken={insert} />
+                            )}
                         />
 
                         <div className="flex justify-end gap-2 px-6 py-3 border-t border-border">
                             <Button type="button" variant="ghost" size="sm" className="rounded-sm" onClick={() => onOpenChange(false)} disabled={loading}>
                                 Cancel
                             </Button>
-                            <Button type="button" onClick={handleSubmit} size="sm" className="rounded-sm" disabled={loading || compressing}>
+                            <Button type="button" onClick={handleSubmit} size="sm" className="rounded-sm" disabled={loading}>
                                 {loading ? 'Saving...' : 'Save Changes'}
                             </Button>
                         </div>

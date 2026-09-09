@@ -6,7 +6,11 @@ import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
-import { createMediaPostAction } from '@/app/actions/media.actions'
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/app/components/ui/alert-dialog'
+import { createMediaPostAction, deleteMediaPostAction } from '@/app/actions/media.actions'
 import { assignMediaToMatch, mutateAllMedia, useAllMediaPosts } from '@/app/hooks/useMediaPosts'
 import { errorCodeToUserMessage } from '@/app/lib/errorMessages'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
@@ -39,6 +43,8 @@ export default function MatchMediaSlotPanel({ slot, matchId, current, onChanged,
 
 function FilledSlot({ label, post, onChanged }: { label: string; post: MediaPost; onChanged: () => void }) {
     const [removing, setRemoving] = useState(false)
+    const [deleting, setDeleting] = useState(false)
+    const [confirmDelete, setConfirmDelete] = useState(false)
     const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
 
     async function handleRemove() {
@@ -52,6 +58,22 @@ function FilledSlot({ label, post, onChanged }: { label: string; post: MediaPost
             setRemoving(false)
         }
     }
+
+    async function handleDelete() {
+        setDeleting(true)
+        try {
+            const result = await deleteMediaPostAction({ postId: post.id })
+            if (!result.ok) { toast.error(errorCodeToUserMessage(result.error.code)); return }
+            toast.success(`${label} deleted`)
+            await mutateAllMedia()
+            setConfirmDelete(false)
+            onChanged()
+        } finally {
+            setDeleting(false)
+        }
+    }
+
+    const busy = removing || deleting
 
     return (
         <div className="space-y-2">
@@ -68,10 +90,39 @@ function FilledSlot({ label, post, onChanged }: { label: string; post: MediaPost
                         {new Date(post.published_at).toLocaleDateString()}
                     </p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-sm" disabled={removing} onClick={handleRemove}>
-                    {removing ? 'Removing...' : 'Remove'}
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                    <Button variant="outline" size="sm" className="rounded-sm" disabled={busy} onClick={handleRemove}>
+                        {removing ? 'Removing...' : 'Remove'}
+                    </Button>
+                    <Button variant="destructive" size="sm" className="rounded-sm" disabled={busy} onClick={() => setConfirmDelete(true)}>
+                        Delete
+                    </Button>
+                </div>
             </div>
+            <p className="text-xs text-muted-foreground">
+                Remove unlinks the post but keeps it in the media feed. Delete removes the post and its image for good.
+            </p>
+
+            <AlertDialog open={confirmDelete} onOpenChange={open => !open && setConfirmDelete(false)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this {label}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This permanently deletes the post and its uploaded image. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-sm" disabled={deleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="rounded-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={deleting}
+                            onClick={e => { e.preventDefault(); handleDelete() }}
+                        >
+                            {deleting ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

@@ -3,7 +3,7 @@
 import { revalidatePublicData } from "@/server/cache/revalidate";
 import { CACHE_TAGS } from "@/server/cache/tags";
 
-import { Err, Result } from '@/shared/types/result'
+import { Err, Ok, Result } from '@/shared/types/result'
 import { Article } from '@/shared/types/db'
 import { createServerSupabase } from '@/server/supabase/server'
 import {
@@ -16,14 +16,39 @@ import {
     getArticleBySlug,
     ArticleListItem,
     ArticleDetail,
+    ArticleImageInput,
     CreateArticleFormSchema,
     UpdateArticleFormSchema,
+    ArticleImagesMetaSchema,
     ArticleIdSchema,
     SetArticlePublishedSchema,
 } from '@/server/domains/article'
 import { requireAdmin } from '@/server/domains/auth'
 
 const ARTICLE_TAGS = [CACHE_TAGS.articles, CACHE_TAGS.media]
+
+function parseArticleImages(formData: FormData): Result<ArticleImageInput[]> {
+    const raw = formData.get('imagesMeta')
+    let metaJson: unknown = []
+    if (typeof raw === 'string' && raw.trim()) {
+        try {
+            metaJson = JSON.parse(raw)
+        } catch {
+            return Err({ message: 'Invalid images metadata', code: 'VALIDATION_ERROR' })
+        }
+    }
+    const parsed = ArticleImagesMetaSchema.safeParse(metaJson)
+    if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
+
+    const images: ArticleImageInput[] = parsed.data.map(m => {
+        if (m.kind === 'upload') {
+            const file = formData.get(`file_${m.handle}`) as File | null
+            return { handle: m.handle, placement: m.placement, kind: 'upload' as const, file: file && file.size > 0 ? file : null }
+        }
+        return { handle: m.handle, placement: m.placement, kind: 'link' as const, mediaPostId: m.mediaPostId ?? null }
+    })
+    return Ok(images)
+}
 
 export async function createArticleAction(formData: FormData): Promise<Result<Article>> {
     const parsed = CreateArticleFormSchema.safeParse({
@@ -41,7 +66,8 @@ export async function createArticleAction(formData: FormData): Promise<Result<Ar
     const guard = await requireAdmin(supabase)
     if (!guard.ok) return guard
 
-    const imageFile = formData.get('imageFile') as File | null
+    const images = parseArticleImages(formData)
+    if (!images.ok) return images
 
     const result = await createArticle(supabase, {
         title:     parsed.data.title,
@@ -51,7 +77,7 @@ export async function createArticleAction(formData: FormData): Promise<Result<Ar
         matchId:   parsed.data.matchId || null,
         seasonId:  parsed.data.seasonId || null,
         published: parsed.data.published,
-        imageFile: imageFile && imageFile.size > 0 ? imageFile : null,
+        images:    images.value,
         userId:    guard.value,
     })
     if (result.ok) revalidatePublicData(ARTICLE_TAGS)
@@ -67,7 +93,6 @@ export async function updateArticleAction(formData: FormData): Promise<Result<Ar
         authorId:    formData.has('authorId') ? (formData.get('authorId') || null) : undefined,
         matchId:     formData.has('matchId') ? (formData.get('matchId') || null) : undefined,
         seasonId:    formData.has('seasonId') ? (formData.get('seasonId') || null) : undefined,
-        removeCover: formData.get('removeCover') === 'true',
     })
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
@@ -75,7 +100,8 @@ export async function updateArticleAction(formData: FormData): Promise<Result<Ar
     const guard = await requireAdmin(supabase)
     if (!guard.ok) return guard
 
-    const imageFile = formData.get('imageFile') as File | null
+    const images = parseArticleImages(formData)
+    if (!images.ok) return images
 
     const result = await updateArticle(supabase, {
         articleId:   parsed.data.articleId,
@@ -85,8 +111,7 @@ export async function updateArticleAction(formData: FormData): Promise<Result<Ar
         authorId:    parsed.data.authorId,
         matchId:     parsed.data.matchId,
         seasonId:    parsed.data.seasonId,
-        removeCover: parsed.data.removeCover,
-        imageFile:   imageFile && imageFile.size > 0 ? imageFile : null,
+        images:      images.value,
         userId:      guard.value,
     })
     if (result.ok) revalidatePublicData(ARTICLE_TAGS)

@@ -3,11 +3,8 @@
 import React, { useRef } from 'react'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
-import { Button } from '@/app/components/ui/button'
 import AuthorPicker, { type AuthorSelection } from '@/app/features/media/AuthorPicker'
 import MatchPicker, { type MatchSelection } from '@/app/features/articles/MatchPicker'
-
-const COVER_TOKEN = '[cover]'
 
 interface ArticleFormFieldsProps {
     idPrefix: string
@@ -22,7 +19,7 @@ interface ArticleFormFieldsProps {
     match: MatchSelection | null
     onMatchChange: (v: MatchSelection | null) => void
     topSlot?: React.ReactNode
-    coverSlot: React.ReactNode
+    imagesSlot: (insertToken: (text: string) => void) => React.ReactNode
 }
 
 export default function ArticleFormFields({
@@ -38,13 +35,12 @@ export default function ArticleFormFields({
     match,
     onMatchChange,
     topSlot,
-    coverSlot,
+    imagesSlot,
 }: ArticleFormFieldsProps) {
     const bodyRef = useRef<HTMLTextAreaElement>(null)
-    const hasCoverToken = body.includes(COVER_TOKEN)
 
-    function insertCover() {
-        const marker = `\n${COVER_TOKEN}\n`
+    function insertAtCursor(text: string) {
+        const marker = `\n${text}\n`
         const el = bodyRef.current
         if (!el) {
             onBodyChange(`${body}${marker}`)
@@ -70,9 +66,6 @@ export default function ArticleFormFields({
                 <div className="flex flex-col flex-1 min-h-0 space-y-1">
                     <div className="flex items-center justify-between gap-2">
                         <Label htmlFor={`${idPrefix}-body`}>Body <span className="text-muted-foreground text-xs">(Discord markdown)</span></Label>
-                        <Button type="button" variant="outline" size="sm" className="h-7 rounded-sm" onClick={insertCover} disabled={hasCoverToken}>
-                            {hasCoverToken ? 'Cover placed' : 'Insert cover here'}
-                        </Button>
                     </div>
                     <textarea
                         ref={bodyRef}
@@ -84,7 +77,7 @@ export default function ArticleFormFields({
                         placeholder="Paste the article body here. **bold**, *italic*, # headers, > quotes, lists, `code`."
                     />
                     <p className="text-xs text-muted-foreground">
-                        The cover renders where <code className="font-mono">[cover]</code> sits in the text. No marker → it leads the article.
+                        Place images with tokens like <code className="font-mono">[cover]</code> or <code className="font-mono">[image:a]</code>. Add <code className="font-mono">:left</code>, <code className="font-mono">:center</code>, or <code className="font-mono">:right</code> to override placement inline.
                     </p>
                 </div>
             </div>
@@ -93,7 +86,7 @@ export default function ArticleFormFields({
                 {topSlot}
                 <AuthorPicker value={author} onChange={onAuthorChange} />
                 <MatchPicker seasonId={seasonId} value={match} onChange={onMatchChange} />
-                {coverSlot}
+                {imagesSlot(insertAtCursor)}
             </div>
         </div>
     )

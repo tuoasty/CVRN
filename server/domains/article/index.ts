@@ -14,11 +14,15 @@ export type {
     ArticleAuthor,
     ArticleListItem,
     ArticleDetail,
+    ArticleImageRef,
+    ArticleImageInput,
+    ImagePlacement,
     CreateArticleInput,
     UpdateArticleInput,
     DeleteArticleInput,
     CreateArticleFormInput,
     UpdateArticleFormInput,
+    ArticleImageMetaInput,
     ArticleIdInput,
     SetArticlePublishedInput,
 } from './types'
@@ -26,6 +30,7 @@ export type {
 export {
     CreateArticleFormSchema,
     UpdateArticleFormSchema,
+    ArticleImagesMetaSchema,
     ArticleIdSchema,
     SetArticlePublishedSchema,
 } from './types'

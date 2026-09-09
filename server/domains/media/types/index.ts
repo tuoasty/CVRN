@@ -1,4 +1,4 @@
-export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap' | 'clip' | 'totw' | 'potw'
+export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap' | 'clip' | 'totw' | 'potw' | 'article'
 
 export type MatchMediaSlot = Extract<MediaPostType, 'gfx' | 'video'>
 

@@ -20,6 +20,23 @@ export interface UpdateArticleFields {
     published_at?: string | null
 }
 
+export type ImagePlacement = 'left' | 'center' | 'right'
+
+export interface ArticleImageInput {
+    handle: string
+    placement: ImagePlacement
+    kind: 'upload' | 'link'
+    mediaPostId?: string | null
+    file?: File | null
+}
+
+export interface ArticleImageRef {
+    handle: string
+    placement: ImagePlacement
+    url: string | null
+    mediaPostId: string
+}
+
 export interface ArticleAuthor {
     id: string
     username: string
@@ -48,6 +65,7 @@ export interface ArticleDetail {
     match_id: string | null
     season_id: string | null
     cover_url: string | null
+    images: ArticleImageRef[]
     match_gfx_url: string | null
     match_vod_url: string | null
     published_at: string | null
@@ -63,7 +81,7 @@ export interface CreateArticleInput {
     matchId?: string | null
     seasonId?: string | null
     published: boolean
-    imageFile?: File | null
+    images: ArticleImageInput[]
     userId: string
 }
 
@@ -75,8 +93,7 @@ export interface UpdateArticleInput {
     authorId?: string | null
     matchId?: string | null
     seasonId?: string | null
-    removeCover: boolean
-    imageFile?: File | null
+    images: ArticleImageInput[]
     userId: string
 }
 
@@ -87,6 +104,7 @@ export interface DeleteArticleInput {
 export type {
     CreateArticleFormInput,
     UpdateArticleFormInput,
+    ArticleImageMetaInput,
     ArticleIdInput,
     SetArticlePublishedInput,
 } from './schemas'
@@ -94,6 +112,7 @@ export type {
 export {
     CreateArticleFormSchema,
     UpdateArticleFormSchema,
+    ArticleImagesMetaSchema,
     ArticleIdSchema,
     SetArticlePublishedSchema,
 } from './schemas'

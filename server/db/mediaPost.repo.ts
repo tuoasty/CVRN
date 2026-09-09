@@ -175,6 +175,15 @@ export async function findMediaPostByArticleId(supabase: DBClient, articleId: st
     return Ok(data as unknown as MediaPost | null)
 }
 
+export async function findMediaPostsByArticleId(supabase: DBClient, articleId: string): Promise<Result<MediaPost[]>> {
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .eq('article_id', articleId)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []) as unknown as MediaPost[])
+}
+
 export async function findNewsPostsByArticleIds(supabase: DBClient, articleIds: string[]): Promise<Result<MediaPost[]>> {
     if (articleIds.length === 0) return Ok([])
     const { data, error } = await supabase

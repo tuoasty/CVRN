@@ -115,6 +115,47 @@ export async function deleteSeasonAwardsByCategory(
     return Ok(true);
 }
 
+export async function findSeasonAwardBucketPath(
+    supabase: DBClient,
+    awardId: string
+): Promise<Result<string | null>> {
+    const {data, error} = await supabase
+        .from("season_awards")
+        .select("avatar_bucket_path")
+        .eq("id", awardId)
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data?.avatar_bucket_path ?? null);
+}
+
+export async function findSeasonAwardBucketPathsByCategory(
+    supabase: DBClient,
+    seasonId: string,
+    category: Database["public"]["Enums"]["award_category"]
+): Promise<Result<string[]>> {
+    const {data, error} = await supabase
+        .from("season_awards")
+        .select("avatar_bucket_path")
+        .eq("season_id", seasonId)
+        .eq("category", category)
+        .not("avatar_bucket_path", "is", null);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(r => r.avatar_bucket_path as string));
+}
+
+export async function findSeasonAwardBucketPathsBySeason(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<string[]>> {
+    const {data, error} = await supabase
+        .from("season_awards")
+        .select("avatar_bucket_path")
+        .eq("season_id", seasonId)
+        .not("avatar_bucket_path", "is", null);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(r => r.avatar_bucket_path as string));
+}
+
 export async function findSeasonHistoryBySlugAndRegion(
     supabase: DBClient,
     slug: string,
