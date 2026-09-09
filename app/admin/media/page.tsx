@@ -30,7 +30,8 @@ export default function AdminMediaPage() {
     const [editTarget, setEditTarget] = useState<MediaPost | null>(null)
     const [filterType, setFilterType] = useState<FilterType>('all')
 
-    const filtered = filterType === 'all' ? posts : posts.filter(p => p.type === filterType)
+    const visible = posts.filter(p => p.type !== 'article')
+    const filtered = filterType === 'all' ? visible : visible.filter(p => p.type === filterType)
 
     async function handleTogglePin(id: string) {
         setPinning(id)

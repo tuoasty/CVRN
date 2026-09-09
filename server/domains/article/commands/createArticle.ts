@@ -6,14 +6,14 @@ import { logger } from '@/server/utils/logger'
 import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
 import { uploadFile, deleteFile } from '@/server/storage/storage.service'
 import { insertMediaPost } from '@/server/db/mediaPost.repo'
+import { insertArticleMedia } from '@/server/db/articleMedia.repo'
 import { insertArticle, deleteArticleById, findArticleSlugExists } from '@/server/db/article.repo'
 import { generateUniqueSlug, slugify } from '../helpers/slugify'
 import { CreateArticleInput } from '../types'
 
 export async function createArticle(supabase: DBClient, p: CreateArticleInput): Promise<Result<Article>> {
     const articleId = randomUUID()
-    const newsPostId = randomUUID()
-    let uploadedPath: string | null = null
+    const uploadedPaths: string[] = []
     let articleInserted = false
     let success = false
 
@@ -46,39 +46,51 @@ export async function createArticle(supabase: DBClient, p: CreateArticleInput): 
         }
         articleInserted = true
 
-        if (p.imageFile && p.imageFile.size > 0) {
-            const ext = p.imageFile.name.split('.').pop() ?? 'jpg'
-            const path = STORAGE_PATHS.mediaPost(newsPostId, ext)
+        for (let idx = 0; idx < p.images.length; idx++) {
+            const img = p.images[idx]
 
-            const uploadRes = await uploadFile(supabase, {
-                bucket: BUCKETS.MEDIA,
-                path,
-                file: p.imageFile,
-                contentType: p.imageFile.type,
-                upsert: false,
-                compress: false,
-                userId: p.userId,
-            })
-            if (!uploadRes.ok) {
-                logger.error({ articleId, error: uploadRes.error }, 'Failed to upload article cover')
-                return Err({ message: 'Failed to upload cover image', code: 'INTEGRATION_ERROR' })
-            }
-            uploadedPath = path
+            if (img.kind === 'upload' && img.file && img.file.size > 0) {
+                const newPostId = randomUUID()
+                const ext = img.file.name.split('.').pop() ?? 'jpg'
+                const path = STORAGE_PATHS.mediaPost(newPostId, ext)
 
-            const newsRes = await insertMediaPost(supabase, {
-                id:         newsPostId,
-                type:       'news',
-                title:      p.title,
-                image_url:  uploadRes.value.url,
-                author_id:  p.authorId ?? null,
-                match_id:   p.matchId ?? null,
-                season_id:  p.seasonId ?? null,
-                article_id: articleId,
-                created_by: p.userId,
-            })
-            if (!newsRes.ok) {
-                logger.error({ articleId, error: newsRes.error }, 'Failed to insert article news post')
-                return newsRes
+                const uploadRes = await uploadFile(supabase, {
+                    bucket: BUCKETS.MEDIA,
+                    path,
+                    file: img.file,
+                    contentType: img.file.type,
+                    upsert: false,
+                    compress: false,
+                    userId: p.userId,
+                })
+                if (!uploadRes.ok) {
+                    logger.error({ articleId, error: uploadRes.error }, 'Failed to upload article image')
+                    return Err({ message: 'Failed to upload image', code: 'INTEGRATION_ERROR' })
+                }
+                uploadedPaths.push(path)
+
+                const ins = await insertMediaPost(supabase, {
+                    id:         newPostId,
+                    type:       'article',
+                    title:      p.title,
+                    image_url:  uploadRes.value.url,
+                    author_id:  p.authorId ?? null,
+                    match_id:   p.matchId ?? null,
+                    season_id:  p.seasonId ?? null,
+                    article_id: articleId,
+                    created_by: p.userId,
+                })
+                if (!ins.ok) return ins
+
+                const link = await insertArticleMedia(supabase, {
+                    articleId, mediaPostId: newPostId, handle: img.handle, placement: img.placement, sortOrder: idx,
+                })
+                if (!link.ok) return link
+            } else if (img.kind === 'link' && img.mediaPostId) {
+                const link = await insertArticleMedia(supabase, {
+                    articleId, mediaPostId: img.mediaPostId, handle: img.handle, placement: img.placement, sortOrder: idx,
+                })
+                if (!link.ok) return link
             }
         }
 
@@ -88,7 +100,7 @@ export async function createArticle(supabase: DBClient, p: CreateArticleInput): 
         return Err(serializeError(error))
     } finally {
         if (!success) {
-            if (uploadedPath) await deleteFile(supabase, { bucket: BUCKETS.MEDIA, path: uploadedPath })
+            for (const path of uploadedPaths) await deleteFile(supabase, { bucket: BUCKETS.MEDIA, path })
             if (articleInserted) await deleteArticleById(supabase, articleId)
         }
     }

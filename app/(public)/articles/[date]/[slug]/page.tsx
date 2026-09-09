@@ -131,7 +131,7 @@ export default async function ArticlePage({ params }: Props) {
 
                 {strip}
 
-                <ArticleBody body={article.body} coverUrl={article.cover_url} />
+                <ArticleBody body={article.body} images={article.images} hasMatchHero={!!article.match_gfx_url} />
             </article>
             </div>
         </div>

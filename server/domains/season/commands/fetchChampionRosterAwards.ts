@@ -2,9 +2,12 @@ import {DBClient} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {findSeasonPodium, insertSeasonAward, deleteSeasonAwardsByCategory} from "@/server/db/seasonHistory.repo";
+import {findSeasonPodium, insertSeasonAward, deleteSeasonAwardsByCategory, findSeasonAwardBucketPathsByCategory} from "@/server/db/seasonHistory.repo";
 import {findAllTeamPlayers} from "@/server/db/players.repo";
 import {getRobloxFullAvatarsById} from "@/server/roblox/users";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
+import {BUCKETS} from "@/server/storage/storage.paths";
+import {deleteFile} from "@/server/storage/storage.service";
 import {storeAwardAvatar} from "./storeAwardAvatar";
 
 export async function fetchChampionRosterAwards(
@@ -45,6 +48,19 @@ export async function fetchChampionRosterAwards(
             }
         } else {
             logger.error({seasonId, error: avatarResult.error}, "fetchChampionRosterAwards: avatar fetch failed");
+        }
+
+        const oldPaths = await findSeasonAwardBucketPathsByCategory(supabase, seasonId, "champion_roster");
+        if (oldPaths.ok) {
+            const admin = getSupabaseAdmin();
+            for (const path of oldPaths.value) {
+                const fileResult = await deleteFile(admin, {bucket: BUCKETS.PUBLIC, path});
+                if (!fileResult.ok) {
+                    logger.error({seasonId, path, error: fileResult.error}, "fetchChampionRosterAwards: failed to delete old avatar file");
+                }
+            }
+        } else {
+            logger.error({seasonId, error: oldPaths.error}, "fetchChampionRosterAwards: failed to look up old avatar paths");
         }
 
         const deleteResult = await deleteSeasonAwardsByCategory(supabase, seasonId, "champion_roster");

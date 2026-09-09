@@ -3,8 +3,9 @@ import { DBClient } from '@/shared/types/db'
 import { serializeError } from '@/server/utils/serializeableError'
 import { findPlayersByIds } from '@/server/db/players.repo'
 import { findArticleBySlug } from '@/server/db/article.repo'
-import { findMediaPostByArticleId, findAllMediaPosts } from '@/server/db/mediaPost.repo'
-import { ArticleDetail, ArticleAuthor } from '../types'
+import { findAllMediaPosts } from '@/server/db/mediaPost.repo'
+import { findArticleMediaByArticleId } from '@/server/db/articleMedia.repo'
+import { ArticleDetail, ArticleAuthor, ArticleImageRef } from '../types'
 
 export async function getArticleBySlug(supabase: DBClient, slug: string): Promise<Result<ArticleDetail | null>> {
     try {
@@ -22,8 +23,11 @@ export async function getArticleBySlug(supabase: DBClient, slug: string): Promis
             }
         }
 
-        const news = await findMediaPostByArticleId(supabase, article.id)
-        const coverUrl = news.ok ? news.value?.image_url ?? null : null
+        const mediaRes = await findArticleMediaByArticleId(supabase, article.id)
+        const images: ArticleImageRef[] = mediaRes.ok
+            ? mediaRes.value.map(m => ({ handle: m.handle, placement: m.placement, url: m.image_url, mediaPostId: m.media_post_id }))
+            : []
+        const coverUrl = images.find(i => i.handle === 'cover')?.url ?? images[0]?.url ?? null
 
         let matchGfxUrl: string | null = null
         let matchVodUrl: string | null = null
@@ -44,6 +48,7 @@ export async function getArticleBySlug(supabase: DBClient, slug: string): Promis
             match_id:      article.match_id,
             season_id:     article.season_id,
             cover_url:     coverUrl,
+            images,
             match_gfx_url: matchGfxUrl,
             match_vod_url: matchVodUrl,
             published_at:  article.published_at,

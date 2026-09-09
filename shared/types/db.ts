@@ -13,6 +13,9 @@ export type Player =
 export type Article =
     Database["public"]["Tables"]["articles"]["Row"];
 
+export type ArticleMedia =
+    Database["public"]["Tables"]["article_media"]["Row"];
+
 export type Region =
     Database["public"]["Tables"]["regions"]["Row"];
 
