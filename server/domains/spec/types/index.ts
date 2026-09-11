@@ -48,6 +48,18 @@ export interface SpecQualification {
     unknownStatKeys: string[];
 }
 
+export interface SpecWinnerWithRefs {
+    id: string;
+    season_id: string;
+    spec_id: string;
+    player_id: string;
+    stars_awarded: number;
+    created_at: string;
+    updated_at: string;
+    spec: {id: string; name: string; stars: number; position: string};
+    player: {id: string; username: string; display_name: string | null; avatar_url: string | null};
+}
+
 export type {PlacementBonusConfig} from "../helpers/placementBonus";
 export {
     DEFAULT_PLACEMENT_BONUS,
@@ -56,8 +68,8 @@ export {
     formatPlacementBonus,
 } from "../helpers/placementBonus";
 
-export type {SaveSpecInput, SpecRequirementInput, SpecQualificationInput, SavePlacementBonusInput} from "./schemas";
-export {SaveSpecSchema, SpecRequirementSchema, SpecQualificationSchema, SavePlacementBonusSchema, PlacementBonusConfigSchema} from "./schemas";
+export type {SaveSpecInput, SpecRequirementInput, SpecQualificationInput, SavePlacementBonusInput, AwardSpecWinnerInput, DeleteSpecWinnerInput} from "./schemas";
+export {SaveSpecSchema, SpecRequirementSchema, SpecQualificationSchema, SavePlacementBonusSchema, PlacementBonusConfigSchema, AwardSpecWinnerSchema, DeleteSpecWinnerSchema} from "./schemas";
 export {
     SPEC_STAT_KEYS,
     PARTICIPATION_STAT_KEYS,

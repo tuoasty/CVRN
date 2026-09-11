@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {getLogoClassName} from "@/app/lib/logoClass";
 import {cn} from "@/lib/utils";
-import {PlayerDetail, PlayerAward, PlayerTeamHistoryEntry} from "@/server/domains/player";
+import {PlayerDetail, PlayerAward, PlayerSpecEntry, PlayerTeamHistoryEntry} from "@/server/domains/player";
 import {positionLabel} from "@/shared/volleyball/positions";
 import PlayerSeasonStatsTable from "@/app/features/player/PlayerSeasonStatsTable";
 import BackButton from "@/app/components/public/BackButton";
@@ -56,7 +56,7 @@ type Props = {
 };
 
 export default function PlayerDetailPage({detail}: Props) {
-    const {player, seasonStats, awards, teamHistory} = detail;
+    const {player, seasonStats, awards, specs, activeSpec, teamHistory} = detail;
     const team = player.current_team;
 
     const achievements = awards.filter(a => PODIUM_CATEGORIES.has(a.category));
@@ -117,6 +117,7 @@ export default function PlayerDetailPage({detail}: Props) {
                             {player.username && (
                                 <p className="text-xs text-muted-foreground mt-1">@{player.username}</p>
                             )}
+                            {activeSpec && <ActiveSpecLine spec={activeSpec} />}
                         </div>
                     </div>
                     {player.avatar_url && (
@@ -177,6 +178,7 @@ export default function PlayerDetailPage({detail}: Props) {
                         {player.username && (
                             <p className="text-sm text-muted-foreground mt-2">@{player.username}</p>
                         )}
+                        {activeSpec && <ActiveSpecLine spec={activeSpec} />}
                     </div>
                 </div>
 
@@ -191,7 +193,7 @@ export default function PlayerDetailPage({detail}: Props) {
             <PlayerSeasonStatsTable rows={seasonStats} teamLogoBySeasonId={teamLogoBySeasonId} />
 
             {(() => {
-                const hasSideContent = achievements.length > 0 || individualAwards.length > 0;
+                const hasSideContent = achievements.length > 0 || individualAwards.length > 0 || specs.length > 0;
 
                 if (!hasSideContent) {
                     return teamHistory.length > 0 ? (
@@ -218,16 +220,22 @@ export default function PlayerDetailPage({detail}: Props) {
                                 </AwardSection>
                             )}
 
-                            {individualAwards.length > 0 && (
+                            {(individualAwards.length > 0 || specs.length > 0) && (
                                 <AwardSection title="Awards">
                                     <div className="sm:hidden divide-y divide-border">
                                         {individualAwards.map(a => (
                                             <AwardCard key={a.id} award={a} />
                                         ))}
+                                        {specs.map(s => (
+                                            <SpecAwardCard key={s.id} spec={s} />
+                                        ))}
                                     </div>
                                     <DesktopAwardTable valueHeader="Award">
                                         {individualAwards.map(a => (
                                             <AwardRow key={a.id} award={a} />
+                                        ))}
+                                        {specs.map(s => (
+                                            <SpecAwardRow key={s.id} spec={s} />
                                         ))}
                                     </DesktopAwardTable>
                                 </AwardSection>
@@ -295,7 +303,64 @@ function TeamHistorySection({teamHistory, layout}: {teamHistory: PlayerTeamHisto
     );
 }
 
-function TeamLogoLink({award}: {award: PlayerAward}) {
+type TeamLogoRef = {
+    team_disbanded: boolean;
+    region_code: string;
+    season_slug: string;
+    team_slug: string | null;
+    team_name: string | null;
+    team_logo_url: string | null;
+    team_logo_bg_removed: boolean;
+};
+
+function ActiveSpecLine({spec}: {spec: PlayerSpecEntry}) {
+    return (
+        <p className="mt-1.5 text-xs sm:text-sm font-bold uppercase tracking-wide">
+            {spec.spec_name}
+            <span className="text-secondary font-mono ml-1.5 tabular-nums">{spec.stars}★</span>
+            {spec.dropped && (
+                <span className="italic font-normal normal-case text-muted-foreground ml-1.5">dropped</span>
+            )}
+        </p>
+    );
+}
+
+function SpecAwardRow({spec}: {spec: PlayerSpecEntry}) {
+    return (
+        <tr className="hover:bg-muted/20 transition-colors">
+            <td className="px-4 py-3 text-muted-foreground tabular-nums">{formatDate(spec.awarded_at)}</td>
+            <td className="px-4 py-3 text-muted-foreground">{spec.region_code} · {spec.season_name}</td>
+            <td className="px-4 py-3">
+                <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium truncate">{spec.spec_name}</span>
+                    <span className="font-mono text-secondary text-xs tabular-nums shrink-0">{spec.stars}★</span>
+                    {spec.position && <span className="text-xs uppercase tracking-wide text-muted-foreground shrink-0">{spec.position}</span>}
+                    {spec.dropped && <span className="italic text-xs text-muted-foreground shrink-0">dropped</span>}
+                </div>
+            </td>
+            <td className="px-4 py-3"><TeamLogoLink award={spec} /></td>
+        </tr>
+    );
+}
+
+function SpecAwardCard({spec}: {spec: PlayerSpecEntry}) {
+    return (
+        <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-medium truncate">{spec.spec_name}</span>
+                    <span className="font-mono text-secondary text-xs tabular-nums shrink-0">{spec.stars}★</span>
+                    {spec.dropped && <span className="italic text-xs text-muted-foreground shrink-0">dropped</span>}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{spec.region_code} · {spec.season_name}</p>
+                <p className="text-xs text-muted-foreground tabular-nums">{formatDate(spec.awarded_at)}</p>
+            </div>
+            <TeamLogoLink award={spec} />
+        </div>
+    );
+}
+
+function TeamLogoLink({award}: {award: TeamLogoRef}) {
     const href = !award.team_disbanded ? buildPublicTeamHref({
         regionCode: award.region_code,
         seasonSlug: award.season_slug,

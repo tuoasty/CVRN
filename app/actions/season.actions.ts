@@ -8,8 +8,10 @@ import {
     getSeasonPodium, getSeasonAwards, getArchive, getSeasonHistoryDetail,
     upsertSeasonPodiumSlot, deleteSeasonPodiumSlot, deriveAndSaveSeasonPodium,
     upsertSeasonAward, deleteSeasonAward, storeAwardAvatar, fetchChampionRosterAwards,
+    batchUpsertSeasonAwards, updateSeasonAward, reorderSeasonAwards,
     UpsertSeasonPodiumSlotSchema, DeleteSeasonPodiumSlotSchema,
     DeriveSeasonPodiumSchema, UpsertSeasonAwardSchema, DeleteSeasonAwardSchema,
+    BatchUpsertSeasonAwardsSchema, UpdateSeasonAwardSchema, ReorderSeasonAwardsSchema,
 } from "@/server/domains/season";
 import {getRobloxFullAvatarsById} from "@/server/roblox/users";
 import {requireSuperAdmin} from "@/server/domains/auth";
@@ -148,6 +150,39 @@ export async function deleteSeasonAwardAction(input: unknown) {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
     const result = await deleteSeasonAward(supabase, parsed.data);
+    if (result.ok) revalidatePath('/admin/seasons');
+    return result;
+}
+
+export async function batchUpsertSeasonAwardsAction(input: unknown) {
+    const parsed = BatchUpsertSeasonAwardsSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    const result = await batchUpsertSeasonAwards(supabase, parsed.data, user.id);
+    if (result.ok) revalidatePath('/admin/seasons');
+    return result;
+}
+
+export async function updateSeasonAwardAction(input: unknown) {
+    const parsed = UpdateSeasonAwardSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    const result = await updateSeasonAward(supabase, parsed.data);
+    if (result.ok) revalidatePath('/admin/seasons');
+    return result;
+}
+
+export async function reorderSeasonAwardsAction(input: unknown) {
+    const parsed = ReorderSeasonAwardsSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    const result = await reorderSeasonAwards(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
     return result;
 }

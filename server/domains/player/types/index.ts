@@ -79,6 +79,14 @@ export interface PlayerSearchHit {
     } | null;
 }
 
+export interface RosterSpec {
+    name: string;
+    position: string;
+    stars: number;
+    starsAwarded: number;
+    dropped: boolean;
+}
+
 export interface PlayerWithRole {
     id: string;
     roblox_user_id: string;
@@ -89,6 +97,7 @@ export interface PlayerWithRole {
     created_at: string;
     role: "captain" | "vice_captain" | "court_captain" | "player";
     current_position: PositionCode | null;
+    spec: RosterSpec | null;
 }
 
 import {Player, PlayerSeasonStatRow} from "@/shared/types/db";
@@ -96,6 +105,7 @@ import {Player, PlayerSeasonStatRow} from "@/shared/types/db";
 export interface PlayerWithCurrentTeam extends Player {
     current_team: {
         team_id: string;
+        season_id: string;
         team_name: string;
         team_logo_url: string | null;
         team_logo_bg_removed: boolean;
@@ -196,10 +206,31 @@ export interface PlayerTeamHistoryEntry {
     season_end_date: string | null;
 }
 
+export interface PlayerSpecEntry {
+    id: string;
+    spec_name: string;
+    position: string;
+    stars: number;
+    stars_awarded: number;
+    dropped: boolean;
+    season_id: string;
+    season_name: string;
+    season_slug: string;
+    region_code: string;
+    awarded_at: string | null;
+    team_name: string | null;
+    team_slug: string | null;
+    team_disbanded: boolean;
+    team_logo_url: string | null;
+    team_logo_bg_removed: boolean;
+}
+
 export interface PlayerDetail {
     player: PlayerWithCurrentTeam;
     seasonStats: PlayerSeasonStat[];
     awards: PlayerAward[];
+    specs: PlayerSpecEntry[];
+    activeSpec: PlayerSpecEntry | null;
     teamHistory: PlayerTeamHistoryEntry[];
 }
 

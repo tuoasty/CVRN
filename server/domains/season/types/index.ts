@@ -67,6 +67,7 @@ export interface SeasonAwardEntryWithPlayer {
     awarded_at: string;
     created_by: string | null;
     created_at: string;
+    sort_order: number;
     full_avatar_url: string | null;
     avatar_bucket_path: string | null;
     players: {
@@ -128,6 +129,12 @@ export interface SeasonDetail {
             }>;
         };
     }>;
+    spec_winners: Array<{
+        id: string;
+        stars_awarded: number;
+        specs: { id: string; name: string; position: string; stars: number } | null;
+        players: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null;
+    }>;
 }
 
 export type {
@@ -140,6 +147,9 @@ export type {
     DeriveSeasonPodiumInput,
     UpsertSeasonAwardInput,
     DeleteSeasonAwardInput,
+    BatchUpsertSeasonAwardsInput,
+    UpdateSeasonAwardInput,
+    ReorderSeasonAwardsInput,
     AwardCategory,
 } from "./schemas";
 
@@ -153,5 +163,8 @@ export {
     DeriveSeasonPodiumSchema,
     UpsertSeasonAwardSchema,
     DeleteSeasonAwardSchema,
+    BatchUpsertSeasonAwardsSchema,
+    UpdateSeasonAwardSchema,
+    ReorderSeasonAwardsSchema,
     AwardCategoryEnum,
 } from "./schemas";

@@ -74,3 +74,27 @@ export const DeleteSeasonAwardSchema = z.object({
     awardId: z.uuid(),
 })
 export type DeleteSeasonAwardInput = z.infer<typeof DeleteSeasonAwardSchema>
+
+export const BatchUpsertSeasonAwardsSchema = z.object({
+    seasonId: z.uuid(),
+    awards: z.array(z.object({
+        playerId: z.uuid(),
+        awardName: z.string().min(1, "Award name is required"),
+        category: AwardCategoryEnum,
+    })).min(1, "Add at least one award"),
+})
+export type BatchUpsertSeasonAwardsInput = z.infer<typeof BatchUpsertSeasonAwardsSchema>
+
+export const UpdateSeasonAwardSchema = z.object({
+    awardId: z.uuid(),
+    awardName: z.string().min(1, "Award name is required"),
+})
+export type UpdateSeasonAwardInput = z.infer<typeof UpdateSeasonAwardSchema>
+
+export const ReorderSeasonAwardsSchema = z.object({
+    updates: z.array(z.object({
+        id: z.uuid(),
+        sortOrder: z.number().int().min(0),
+    })).min(1),
+})
+export type ReorderSeasonAwardsInput = z.infer<typeof ReorderSeasonAwardsSchema>

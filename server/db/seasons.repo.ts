@@ -39,6 +39,33 @@ export async function findAllSeasons(supabase: DBClient): Promise<Result<SeasonW
     return Ok(sorted as SeasonWithPlayoffConfig[]);
 }
 
+export async function findHeldSpecSeasonId(
+    supabase: DBClient,
+    currentSeasonId: string
+): Promise<Result<string | null>> {
+    const {data: current, error: currentError} = await supabase
+        .from("seasons")
+        .select("start_date, region_id")
+        .eq("id", currentSeasonId)
+        .maybeSingle();
+    if (currentError) return Err(serializeError(currentError, "DB_ERROR"));
+    if (!current) return Ok(null);
+
+    const {data, error} = await supabase
+        .from("seasons")
+        .select("id")
+        .eq("region_id", current.region_id)
+        .eq("league_type", "main")
+        .lt("start_date", current.start_date)
+        .not("end_date", "is", null)
+        .lt("end_date", new Date().toISOString())
+        .order("start_date", {ascending: false})
+        .limit(1)
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data?.id ?? null);
+}
+
 export async function findSeasonById(supabase: DBClient, seasonId: string): Promise<Result<Season | null>> {
     const {data, error} = await supabase
         .from("seasons")

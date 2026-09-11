@@ -5,7 +5,7 @@ import BackButton from "@/app/components/public/BackButton";
 import { buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
 import { cn } from "@/lib/utils";
 import { getLogoClassName } from "@/app/lib/logoClass";
-import { PlayerWithRole, PlayerLeaderboardRow } from "@/server/domains/player";
+import { PlayerWithRole, PlayerLeaderboardRow, RosterSpec } from "@/server/domains/player";
 import { TeamWithRegion, TeamNameHistoryEntry } from "@/server/domains/team";
 import { MatchWithDetails } from "@/server/domains/match";
 import { StandingMethod } from "@/shared/types/standing";
@@ -20,6 +20,33 @@ const LEADERSHIP_CONFIG = {
 };
 
 const TEXT_SHADOW = "0 1px 4px rgba(0,0,0,0.95)";
+
+function RosterSpecLine({ spec, dark }: { spec: RosterSpec; dark: boolean }) {
+    const empty = Math.max(0, spec.stars - spec.starsAwarded);
+    return (
+        <div className="mt-1 flex items-center justify-between gap-1.5">
+            <span
+                className={cn(
+                    "text-[7px] font-semibold uppercase tracking-wide truncate min-w-0",
+                    dark
+                        ? spec.dropped ? "text-white/45" : "text-white/90"
+                        : spec.dropped ? "text-muted-foreground/60" : "text-foreground/80"
+                )}
+                style={dark ? { textShadow: TEXT_SHADOW } : undefined}
+                title={spec.name}
+            >
+                {spec.name}
+            </span>
+            <span
+                className="font-mono text-[7px] leading-none shrink-0 whitespace-nowrap tabular-nums"
+                style={dark ? { textShadow: TEXT_SHADOW } : undefined}
+            >
+                <span className="text-secondary">{"★".repeat(spec.starsAwarded)}</span>
+                <span className={dark ? "text-white/30" : "text-muted-foreground/30"}>{"★".repeat(empty)}</span>
+            </span>
+        </div>
+    );
+}
 
 function PublicLeadershipCard({
     role,
@@ -69,6 +96,7 @@ function PublicLeadershipCard({
                                     </span>
                                 )}
                             </div>
+                            {player.spec && <RosterSpecLine spec={player.spec} dark />}
                         </div>
                     </>
                 ) : (
@@ -120,6 +148,7 @@ function PublicPlayerCard({
                 <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold truncate leading-tight">{player.display_name || player.username}</p>
                     <p className="text-xs text-muted-foreground truncate">@{player.username}</p>
+                    {player.spec && <RosterSpecLine spec={player.spec} dark={false} />}
                 </div>
                 {player.current_position && (
                     <span title={positionLabel(player.current_position)} className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{player.current_position}</span>
@@ -147,6 +176,7 @@ function PublicPlayerCard({
                                 </span>
                             )}
                         </div>
+                        {player.spec && <RosterSpecLine spec={player.spec} dark />}
                     </div>
                 </div>
                 {teamColor && <div className="h-[3px]" style={{ backgroundColor: teamColor }} />}
