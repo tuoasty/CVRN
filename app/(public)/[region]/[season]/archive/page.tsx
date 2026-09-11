@@ -371,6 +371,51 @@ function ChampionRosterSection({ awards }: { awards: SeasonDetail["season_awards
     );
 }
 
+function SpecWinnersSection({ winners }: { winners: SeasonDetail["spec_winners"] }) {
+    if (winners.length === 0) return null;
+    const sorted = [...winners].sort((a, b) => b.stars_awarded - a.stars_awarded);
+    return (
+        <div className="space-y-3">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Star className="h-3 w-3" /> Spec Winners
+            </p>
+            <div className="rounded-sm border border-border bg-muted/20 divide-y divide-border">
+                {sorted.map(w => {
+                    const player = w.players;
+                    const href = player ? buildPublicPlayerHref(player.username) : null;
+                    const row = (
+                        <div className="flex items-center gap-3 p-3">
+                            <div className="relative w-9 h-9 rounded-sm overflow-hidden bg-muted/30 shrink-0">
+                                {player?.avatar_url ? (
+                                    <Image src={player.avatar_url} alt={player.username} fill className="object-cover object-top" sizes="36px" unoptimized />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <span className="text-[10px] font-bold text-muted-foreground">{(player?.username ?? "?").slice(0, 2).toUpperCase()}</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold leading-tight truncate">{w.specs?.name ?? "—"}</p>
+                                <p className="text-[10px] text-muted-foreground truncate">
+                                    {player ? (player.display_name ?? player.username) : "—"}
+                                    {w.specs?.position ? ` · ${w.specs.position}` : ""}
+                                </p>
+                            </div>
+                            <span className="text-sm font-semibold tabular-nums text-secondary shrink-0">{w.stars_awarded}★</span>
+                        </div>
+                    );
+                    if (!href) return <div key={w.id}>{row}</div>;
+                    return (
+                        <Link key={w.id} href={href} prefetch={false} className="block hover:bg-muted/40 transition-colors">
+                            {row}
+                        </Link>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 function SeasonDetailSkeleton() {
     return (
         <div className="space-y-6">
@@ -415,7 +460,7 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
     const firstTeamAwards = season.season_awards.filter(a => a.category === "first_team");
     const staffTeamAwards = season.season_awards.filter(a => a.category === "staff_team");
     const hasPodium = season.season_podium.length > 0;
-    const hasContent = hasPodium || championRoster.length > 0 || individualAwards.length > 0 || firstTeamAwards.length > 0;
+    const hasContent = hasPodium || championRoster.length > 0 || individualAwards.length > 0 || firstTeamAwards.length > 0 || season.spec_winners.length > 0;
 
     return (
         <>
@@ -443,6 +488,7 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
             )}
             {firstTeamAwards.length > 0 && <FirstTeamSection awards={firstTeamAwards} seasonId={season.id} />}
             {staffTeamAwards.length > 0 && <StaffTeamSection awards={staffTeamAwards} />}
+            {season.spec_winners.length > 0 && <SpecWinnersSection winners={season.spec_winners} />}
             {!hasContent && (
                 <div className="panel p-6 text-center">
                     <p className="text-muted-foreground text-sm">Results not yet recorded.</p>
