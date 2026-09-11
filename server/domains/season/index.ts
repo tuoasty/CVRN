@@ -21,6 +21,9 @@ export {upsertSeasonAward} from "./commands/upsertSeasonAward";
 export {deleteSeasonAward} from "./commands/deleteSeasonAward";
 export {storeAwardAvatar} from "./commands/storeAwardAvatar";
 export {fetchChampionRosterAwards} from "./commands/fetchChampionRosterAwards";
+export {batchUpsertSeasonAwards} from "./commands/batchUpsertSeasonAwards";
+export {updateSeasonAward} from "./commands/updateSeasonAward";
+export {reorderSeasonAwards} from "./commands/reorderSeasonAwards";
 export type {
     SeasonPodiumEntryWithTeam,
     SeasonAwardEntryWithPlayer,
@@ -31,6 +34,9 @@ export type {
     DeriveSeasonPodiumInput,
     UpsertSeasonAwardInput,
     DeleteSeasonAwardInput,
+    BatchUpsertSeasonAwardsInput,
+    UpdateSeasonAwardInput,
+    ReorderSeasonAwardsInput,
     AwardCategory,
 } from "./types";
 export {
@@ -39,5 +45,8 @@ export {
     DeriveSeasonPodiumSchema,
     UpsertSeasonAwardSchema,
     DeleteSeasonAwardSchema,
+    BatchUpsertSeasonAwardsSchema,
+    UpdateSeasonAwardSchema,
+    ReorderSeasonAwardsSchema,
     AwardCategoryEnum,
 } from "./types";

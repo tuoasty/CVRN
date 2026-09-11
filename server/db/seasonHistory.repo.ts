@@ -63,11 +63,67 @@ export async function findSeasonAwards(
 ): Promise<Result<SeasonAwardRow[]>> {
     const {data, error} = await supabase
         .from("season_awards")
-        .select("id, season_id, player_id, award_name, category, awarded_at, created_by, created_at, full_avatar_url, avatar_bucket_path, players(id, username)")
+        .select("id, season_id, player_id, award_name, category, awarded_at, created_by, created_at, sort_order, full_avatar_url, avatar_bucket_path, players(id, username)")
         .eq("season_id", seasonId)
-        .order("awarded_at");
+        .order("sort_order");
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as SeasonAwardRow[]);
+}
+
+export async function insertSeasonAwards(
+    supabase: DBClient,
+    seasonId: string,
+    rows: {playerId: string; awardName: string; category: string; createdBy: string}[]
+): Promise<Result<SeasonAwardRow[]>> {
+    const {data: maxRow, error: maxError} = await supabase
+        .from("season_awards")
+        .select("sort_order")
+        .eq("season_id", seasonId)
+        .order("sort_order", {ascending: false})
+        .limit(1)
+        .maybeSingle();
+    if (maxError) return Err(serializeError(maxError, "DB_ERROR"));
+
+    const base = (maxRow?.sort_order ?? -1) + 1;
+    const payload = rows.map((r, i) => ({
+        season_id: seasonId,
+        player_id: r.playerId,
+        award_name: r.awardName,
+        category: r.category as "individual_winners" | "first_team" | "staff_team",
+        created_by: r.createdBy,
+        sort_order: base + i,
+    }));
+
+    const {data, error} = await supabase.from("season_awards").insert(payload).select();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as SeasonAwardRow[]);
+}
+
+export async function updateSeasonAwardName(
+    supabase: DBClient,
+    awardId: string,
+    awardName: string
+): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("season_awards")
+        .update({award_name: awardName})
+        .eq("id", awardId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
+export async function updateSeasonAwardOrders(
+    supabase: DBClient,
+    updates: {id: string; sortOrder: number}[]
+): Promise<Result<true>> {
+    for (const u of updates) {
+        const {error} = await supabase
+            .from("season_awards")
+            .update({sort_order: u.sortOrder})
+            .eq("id", u.id);
+        if (error) return Err(serializeError(error, "DB_ERROR"));
+    }
+    return Ok(true);
 }
 
 export async function insertSeasonAward(
@@ -194,7 +250,7 @@ export async function findSeasonHistoryBySlugAndRegion(
         .eq("slug", slug)
         .eq("region_id", regionId)
         .lte("season_podium.place", 3)
-        .order("created_at", {
+        .order("sort_order", {
             referencedTable: "season_awards",
             ascending: true,
         })
@@ -214,9 +270,10 @@ export async function findArchiveSeasons(
         .select(`
             id, name, slug, region_id, start_date, end_date,
             season_podium(place, is_override, notes, teams(id, name, slug, logo_url)),
-            season_awards(id, award_name, category, awarded_at, players(id, username))
+            season_awards(id, award_name, category, awarded_at, sort_order, players(id, username))
         `)
         .lte("season_podium.place", 3)
+        .order("sort_order", {referencedTable: "season_awards", ascending: true})
         .order("start_date", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
