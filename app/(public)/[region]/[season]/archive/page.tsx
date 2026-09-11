@@ -1,8 +1,8 @@
-import { Suspense } from "react";
+import { Suspense, Fragment } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Trophy, Medal, Award, ChevronLeft, Users, Star } from "lucide-react";
+import { Trophy, ChevronLeft } from "lucide-react";
 import { getCachedSeasonHistoryDetail, getCachedRegions } from "@/server/cache/publicReads";
 import { SeasonDetail } from "@/server/domains/season";
 import { Skeleton } from "@/app/components/ui/skeleton";
@@ -11,7 +11,7 @@ import { buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDet
 function TeamLogoSmall({ name, logoUrl, size = 28, priority = false }: { name: string; logoUrl: string | null; size?: number; priority?: boolean }) {
     if (logoUrl) {
         return (
-            <Image src={logoUrl} alt={name} width={size} height={size} style={{ width: size, height: size }} className="rounded-sm object-contain" priority={priority} />
+            <Image src={logoUrl} alt={name} width={size} height={size} style={{ width: size, height: size }} className="rounded-sm object-contain shrink-0" priority={priority} />
         );
     }
     return (
@@ -21,397 +21,223 @@ function TeamLogoSmall({ name, logoUrl, size = 28, priority = false }: { name: s
     );
 }
 
-function ChampionCard({ entry, priority = false, regionCode, seasonSlug }: { entry: SeasonDetail["season_podium"][number]; priority?: boolean; regionCode: string; seasonSlug: string }) {
-    const href = buildPublicTeamHref({ regionCode, seasonSlug, teamSlug: entry.teams.slug });
-    const inner = (
-        <div className="panel p-6 flex flex-col items-center gap-3 bg-secondary/5 border border-secondary/20 group-hover:border-primary/40 transition-colors">
-            <div className="flex items-center gap-2 text-secondary">
-                <Trophy className="h-4 w-4" />
-                <span className="text-[20px] uppercase tracking-[0.2em] font-semibold">Champion</span>
-            </div>
-            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={144} priority={priority} />
-            <p className="text-xl font-bold text-center">{entry.teams.name}</p>
-        </div>
-    );
-    if (!href) return inner;
-    return <Link href={href} prefetch={false} className="block group">{inner}</Link>;
-}
-
-function PlacementCard({ entry, regionCode, seasonSlug }: { entry: SeasonDetail["season_podium"][number]; regionCode: string; seasonSlug: string }) {
-    const place = entry.place as 2 | 3;
-    const isSecond = place === 2;
-    const label = isSecond ? "Runner-Up" : "3rd Place";
-    const borderClass = isSecond ? "border-border bg-muted/50" : "border-border bg-muted/50";
-    const accentClass = isSecond ? "text-muted-foreground" : "text-muted-foreground";
-    const href = buildPublicTeamHref({ regionCode, seasonSlug, teamSlug: entry.teams.slug });
-    const inner = (
-        <div className={`panel p-4 flex flex-col items-center gap-2 border ${borderClass} group-hover:border-primary/40 transition-colors`}>
-            <div className={`flex items-center gap-1.5 ${accentClass}`}>
-                <Medal className="h-3.5 w-3.5" />
-                <span className="text-[15px] uppercase tracking-[0.15em] font-semibold">{label}</span>
-            </div>
-            <TeamLogoSmall name={entry.teams.name} logoUrl={entry.teams.logo_url} size={108} />
-            <p className="text-sm font-semibold text-center leading-tight">{entry.teams.name}</p>
-        </div>
-    );
-    if (!href) return inner;
-    return <Link href={href} prefetch={false} className="block group">{inner}</Link>;
-}
-
-function PodiumSection({ entries, regionCode, seasonSlug }: { entries: SeasonDetail["season_podium"]; regionCode: string; seasonSlug: string }) {
-    const sorted = [...entries].filter(e => e.place <= 3).sort((a, b) => a.place - b.place);
-    const champion = sorted.find(e => e.place === 1);
-    const rest = sorted.filter(e => e.place !== 1);
-    return (
-        <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Trophy className="h-3 w-3" /> Podium
-            </p>
-            <div className="space-y-2">
-                {champion && <ChampionCard entry={champion} priority regionCode={regionCode} seasonSlug={seasonSlug} />}
-                {rest.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2">
-                        {rest.map(e => <PlacementCard key={e.place} entry={e} regionCode={regionCode} seasonSlug={seasonSlug} />)}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}
-
 function getAwardTeam(award: SeasonDetail["season_awards"][number], seasonId: string) {
     const pts = award.players.player_team_seasons?.find(p => p.season_id === seasonId);
     return pts?.teams ?? null;
 }
 
-function IndividualAwardCard({ award, index, seasonId }: { award: SeasonDetail["season_awards"][number]; index: number; seasonId: string }) {
-    const { award_name, full_avatar_url, players } = award;
-    const team = getAwardTeam(award, seasonId);
-    const reversed = index % 2 === 1;
-    const playerHref = buildPublicPlayerHref(players.username);
-
-    const avatarBlock = (
-        <div className="w-[20%] shrink-0 relative overflow-hidden">
-            {full_avatar_url ? (
-                <Image src={full_avatar_url} alt={players.username ?? "Player"} fill className="object-cover object-top" sizes="20vw" unoptimized />
-            ) : (
-                <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary">{(players.username ?? "?").slice(0, 2).toUpperCase()}</span>
-                </div>
-            )}
+function SectionLabel({ children }: { children: React.ReactNode }) {
+    return (
+        <div className="flex items-baseline gap-2 border-b border-border pb-1.5 mb-3.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</span>
         </div>
     );
+}
 
-    const teamBlock = (
-        <div className="w-[20%] shrink-0 relative overflow-hidden">
-            {team?.logo_url ? (
-                <Image src={team.logo_url} alt={team.name} fill className="object-contain p-4" sizes="20vw" />
+function AvatarTile({ url, name, className }: { url: string | null; name: string; className?: string }) {
+    return (
+        <div className={`relative overflow-hidden ${url ? "" : "bg-muted"} ${className ?? ""}`}>
+            {url ? (
+                <Image src={url} alt={name} fill className="object-cover object-top" sizes="15vw" unoptimized />
             ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-xl font-bold text-muted-foreground/40">{team?.name.slice(0, 2).toUpperCase() ?? "—"}</span>
+                    <span className="text-sm font-bold text-muted-foreground">{name.slice(0, 2).toUpperCase()}</span>
                 </div>
             )}
         </div>
     );
-
-    const inner = (
-        <div className="panel overflow-hidden bg-secondary/[0.04] dark:bg-secondary/[0.06] border-secondary/25 hover:border-primary/40 transition-colors">
-            <div className="sm:hidden">
-                <div className="px-5 py-2.5 border-b border-secondary/20 bg-secondary/[0.04]">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-secondary/80 font-semibold text-center">{award_name}</p>
-                </div>
-                <div className="flex h-40">
-                    <div className={`w-1/2 relative shrink-0 overflow-hidden ${reversed ? "order-2" : "order-1"}`}>
-                        {full_avatar_url ? (
-                            <Image src={full_avatar_url} alt={players.username ?? "Player"} fill className="object-cover object-top" sizes="50vw" unoptimized />
-                        ) : (
-                            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                                <span className="text-3xl font-bold text-primary">{(players.username ?? "?").slice(0, 2).toUpperCase()}</span>
-                            </div>
-                        )}
-                    </div>
-                    <div className={`w-1/2 flex flex-col justify-center gap-1.5 p-4 min-w-0 ${reversed ? "order-1" : "order-2"}`}>
-                        <p className="text-sm font-bold leading-tight line-clamp-2">{players.display_name ?? players.username}</p>
-                        <p className="text-[10px] text-muted-foreground/70 break-all">@{players.username}</p>
-                        {team && (
-                            <div className="flex items-center gap-1.5 mt-1">
-                                {team.logo_url && (
-                                    <div className="relative w-3 h-3 shrink-0">
-                                        <Image src={team.logo_url} alt={team.name} fill className="object-contain" sizes="16px" />
-                                    </div>
-                                )}
-                                <p className="text-[10px] font-semibold tracking-wide truncate" style={{ color: team.brick_color ?? undefined }}>{team.name}</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-            <div className="hidden sm:flex h-64">
-                {reversed ? teamBlock : avatarBlock}
-                <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-5 text-center">
-                    <p className="text-xs uppercase tracking-[0.18em] text-secondary/80 font-semibold">{award_name}</p>
-                    <p className="text-xl font-bold text-foreground leading-tight">{players.display_name ?? players.username}</p>
-                    <p className="text-xs text-muted-foreground/70">@{players.username}</p>
-                    {team && <p className="text-[11px] font-semibold mt-1 tracking-wide" style={{ color: team.brick_color ?? undefined }}>{team.name}</p>}
-                </div>
-                {reversed ? avatarBlock : teamBlock}
-            </div>
-        </div>
-    );
-
-    if (!playerHref) return inner;
-    return <Link href={playerHref} prefetch={false} className="block">{inner}</Link>;
 }
 
-function FirstTeamCard({ award, seasonId }: { award: SeasonDetail["season_awards"][number]; seasonId: string }) {
-    const { award_name, full_avatar_url, players } = award;
-    const team = getAwardTeam(award, seasonId);
-    const playerHref = buildPublicPlayerHref(players.username);
-    const inner = (
-        <div className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity">
-            <p className="text-[10px] uppercase tracking-wide text-secondary font-semibold text-center line-clamp-2 min-h-[24px]">{award_name}</p>
-            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-secondary/10 dark:bg-secondary/5 border border-secondary/10 dark:border-secondary/5">
-                {full_avatar_url ? (
-                    <Image src={full_avatar_url} alt={players.username ?? "Player"} fill className="object-cover object-top" sizes="14vw" unoptimized />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary">{(players.username ?? "?").slice(0, 2).toUpperCase()}</span>
+function ChampionMasthead({ podium, regionCode, seasonSlug }: { podium: SeasonDetail["season_podium"]; regionCode: string; seasonSlug: string }) {
+    const sorted = [...podium].filter(e => e.place <= 3).sort((a, b) => a.place - b.place);
+    const champion = sorted.find(e => e.place === 1);
+    const runners = sorted.filter(e => e.place !== 1);
+    if (!champion) return null;
+    const champHref = buildPublicTeamHref({ regionCode, seasonSlug, teamSlug: champion.teams.slug });
+    const name = <span className="text-2xl font-bold tracking-tight leading-none">{champion.teams.name}</span>;
+    return (
+        <div className="border-t-2 border-foreground border-b border-border pt-3.5 pb-4">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <Trophy className="h-3.5 w-3.5 text-secondary" /> Champion
+            </div>
+            <div className="flex items-center gap-3.5 mt-2.5 flex-wrap">
+                <TeamLogoSmall name={champion.teams.name} logoUrl={champion.teams.logo_url} size={48} priority />
+                {champHref ? <Link href={champHref} prefetch={false} className="hover:text-primary transition-colors">{name}</Link> : name}
+                {runners.length > 0 && (
+                    <div className="ml-auto flex flex-col gap-1.5 items-end">
+                        {runners.map(r => {
+                            const href = buildPublicTeamHref({ regionCode, seasonSlug, teamSlug: r.teams.slug });
+                            const line = (
+                                <div className="flex items-center gap-2 justify-end text-xs text-muted-foreground">
+                                    <span>{r.place === 2 ? "Runner-up" : "3rd place"} <span className="text-foreground font-semibold">{r.teams.name}</span></span>
+                                    <TeamLogoSmall name={r.teams.name} logoUrl={r.teams.logo_url} size={22} />
+                                </div>
+                            );
+                            return href
+                                ? <Link key={r.place} href={href} prefetch={false} className="hover:opacity-80 transition-opacity">{line}</Link>
+                                : <div key={r.place}>{line}</div>;
+                        })}
                     </div>
                 )}
             </div>
-            <div className="flex flex-col items-center gap-0.5 w-full">
-                <p className="text-xs font-semibold text-center leading-tight truncate w-full">{players.display_name ?? players.username}</p>
-                <p className="text-[10px] text-muted-foreground text-center break-all w-full">@{players.username}</p>
-                {team && <p className="text-[10px] font-semibold mt-1 tracking-wide" style={{ color: team.brick_color ?? undefined }}>{team.name}</p>}
-            </div>
         </div>
     );
-    if (!playerHref) return inner;
-    return <Link href={playerHref} prefetch={false}>{inner}</Link>;
 }
 
-function FirstTeamMobileCard({ award, seasonId }: { award: SeasonDetail["season_awards"][number]; seasonId: string }) {
+function AwardCard({ award, seasonId }: { award: SeasonDetail["season_awards"][number]; seasonId: string }) {
     const { award_name, full_avatar_url, players } = award;
     const team = getAwardTeam(award, seasonId);
     const playerHref = buildPublicPlayerHref(players.username);
     const inner = (
-        <div className="flex overflow-hidden rounded-sm border border-secondary/20 bg-secondary/5 h-28 hover:border-primary/40 transition-colors">
-            <div className="flex-1 min-w-0 flex flex-col justify-between p-4">
-                <div className="flex flex-col gap-0.5 min-w-0">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-secondary font-semibold truncate">{award_name}</p>
-                    <p className="text-sm font-bold leading-tight line-clamp-1">{players.display_name ?? players.username}</p>
-                    <p className="text-[10px] text-muted-foreground/70 break-all">@{players.username}</p>
-                </div>
+        <div className="border border-border h-full flex flex-col hover:border-primary/40 transition-colors">
+            <div className="bg-muted/50 border-b border-border px-2 h-[52px] flex items-center justify-center overflow-hidden">
+                <p className="text-sm font-bold uppercase tracking-wide text-center leading-tight break-words">{award_name}</p>
+            </div>
+            <AvatarTile url={full_avatar_url} name={players.username ?? "?"} className="aspect-[4/5]" />
+            <div className="px-2 py-2 text-center">
+                <p className="text-sm font-semibold leading-tight truncate">{players.display_name ?? players.username}</p>
+                <p className="text-[10px] text-muted-foreground truncate">@{players.username}</p>
                 {team && (
-                    <div className="flex items-center gap-1.5">
-                        {team.logo_url && (
-                            <div className="relative w-4 h-4 shrink-0">
-                                <Image src={team.logo_url} alt={team.name} fill className="object-contain" sizes="16px" />
-                            </div>
-                        )}
-                        <p className="text-[10px] font-semibold tracking-wide truncate" style={{ color: team.brick_color ?? undefined }}>{team.name}</p>
-                    </div>
-                )}
-            </div>
-            <div className="relative w-20 shrink-0 overflow-hidden">
-                {full_avatar_url ? (
-                    <Image src={full_avatar_url} alt={players.username ?? "Player"} fill className="object-cover object-top" sizes="80px" unoptimized />
-                ) : (
-                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-lg font-bold text-primary">{(players.username ?? "?").slice(0, 2).toUpperCase()}</span>
+                    <div className="flex items-center justify-center gap-1.5 mt-1">
+                        <TeamLogoSmall name={team.name} logoUrl={team.logo_url} size={12} />
+                        <span className="text-[10px] text-muted-foreground truncate">{team.name}</span>
                     </div>
                 )}
             </div>
         </div>
     );
     if (!playerHref) return inner;
-    return <Link href={playerHref} prefetch={false} className="block">{inner}</Link>;
+    return <Link href={playerHref} prefetch={false} className="block h-full">{inner}</Link>;
 }
 
-function FirstTeamSection({ awards, seasonId }: { awards: SeasonDetail["season_awards"]; seasonId: string }) {
-    if (awards.length === 0) return null;
-    const slots = Array.from({ length: 7 }, (_, i) => awards[i] ?? null);
-    return (
-        <div className="space-y-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Award className="h-3 w-3" /> First Team
-            </p>
-            <div className="rounded-sm border border-secondary/25 bg-secondary/[0.03] p-4">
-                <div className="hidden sm:grid grid-cols-7 gap-4">
-                    {slots.map((award, i) =>
-                        award ? <FirstTeamCard key={award.id} award={award} seasonId={seasonId} /> : <div key={i} className="aspect-[3/4] rounded-sm bg-muted/20" />
-                    )}
-                </div>
-                <div className="sm:hidden space-y-2">
-                    {slots.map((award, i) =>
-                        award ? <FirstTeamMobileCard key={award.id} award={award} seasonId={seasonId} /> : <div key={i} className="h-28 rounded-sm bg-muted/20" />
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function StaffTeamCard({ award }: { award: SeasonDetail["season_awards"][number] }) {
-    const { full_avatar_url, players } = award;
-    return (
-        <div className="flex flex-col items-center gap-2">
-            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-secondary/10 dark:bg-secondary/5 border border-secondary/10 dark:border-secondary/5">
+function FirstTeamRow({ award, seasonId }: { award: SeasonDetail["season_awards"][number]; seasonId: string }) {
+    const { award_name, full_avatar_url, players } = award;
+    const team = getAwardTeam(award, seasonId);
+    const href = buildPublicPlayerHref(players.username);
+    const inner = (
+        <div className="flex items-stretch h-16 overflow-hidden border border-border hover:border-primary/40 transition-colors">
+            <div className="relative w-14 shrink-0 overflow-hidden">
                 {full_avatar_url ? (
-                    <Image src={full_avatar_url} alt={players.username ?? "Player"} fill className="object-cover object-top" sizes="15vw" unoptimized />
+                    <Image src={full_avatar_url} alt={players.username ?? "Player"} fill className="object-cover object-top" sizes="56px" unoptimized />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary">{(players.username ?? "?").slice(0, 2).toUpperCase()}</span>
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <span className="text-sm font-bold text-muted-foreground">{(players.username ?? "?").slice(0, 2).toUpperCase()}</span>
                     </div>
                 )}
             </div>
-            <div className="flex flex-col items-center gap-0.5 w-full">
-                <p className="text-xs font-semibold text-center leading-tight truncate w-full">{players.display_name ?? players.username}</p>
-                <p className="text-[10px] text-muted-foreground text-center break-all w-full">@{players.username}</p>
+            <div className="flex-1 min-w-0 flex flex-col justify-center px-3">
+                <p className="text-sm font-semibold leading-tight truncate">{players.display_name ?? players.username}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                    <span className="font-semibold uppercase text-foreground/70">{award_name}</span>{team ? ` · ${team.name}` : ""}
+                </p>
             </div>
         </div>
     );
+    if (!href) return inner;
+    return <Link href={href} prefetch={false} className="block">{inner}</Link>;
 }
 
-function StaffTeamSection({ awards }: { awards: SeasonDetail["season_awards"] }) {
-    if (awards.length === 0) return null;
+function FirstTeamList({ awards, seasonId }: { awards: SeasonDetail["season_awards"]; seasonId: string }) {
     return (
-        <div className="space-y-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Award className="h-3 w-3" /> Staff Team
-            </p>
-            <div className="rounded-sm border border-secondary/25 bg-secondary/[0.03] p-4 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
-                {awards.map(award => <StaffTeamCard key={award.id} award={award} />)}
-            </div>
+        <div className="space-y-2">
+            {awards.map(a => <FirstTeamRow key={a.id} award={a} seasonId={seasonId} />)}
         </div>
     );
 }
 
-type RosterEntry = SeasonDetail["season_awards"][number];
+function StaffTable({ awards }: { awards: SeasonDetail["season_awards"] }) {
+    return (
+        <div className="panel overflow-x-auto">
+            <table className="table-dense text-sm w-full">
+                <thead>
+                    <tr><th className="text-left">Role</th><th className="text-left">Person</th></tr>
+                </thead>
+                <tbody>
+                    {awards.map(a => {
+                        const href = buildPublicPlayerHref(a.players.username);
+                        const name = a.players.display_name ?? a.players.username;
+                        return (
+                            <tr key={a.id}>
+                                <td className="text-muted-foreground">{a.award_name}</td>
+                                <td>{href ? <Link href={href} prefetch={false} className="hover:text-primary transition-colors truncate">{name}</Link> : name}</td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+function SpecWinnersTable({ winners }: { winners: SeasonDetail["spec_winners"] }) {
+    const shown = [...winners].filter(w => w.stars_awarded > 0).sort((a, b) => b.stars_awarded - a.stars_awarded);
+    if (shown.length === 0) return null;
+    const tiers: Array<[number, SeasonDetail["spec_winners"]]> = [];
+    for (const w of shown) {
+        const last = tiers[tiers.length - 1];
+        if (last && last[0] === w.stars_awarded) last[1].push(w);
+        else tiers.push([w.stars_awarded, [w]]);
+    }
+    return (
+        <div className="panel overflow-x-auto">
+            <table className="table-dense text-sm w-full">
+                <thead>
+                    <tr><th className="text-left">Spec</th><th className="text-left">Player</th><th className="text-right w-20">Stars</th></tr>
+                </thead>
+                <tbody>
+                    {tiers.map(([tier, list]) => (
+                        <Fragment key={tier}>
+                            <tr className="bg-muted/50">
+                                <td colSpan={3} className="py-1.5">
+                                    <span className="font-mono tabular-nums text-secondary">{"★".repeat(tier)}</span>
+                                    <span className="text-xs uppercase tracking-wider text-muted-foreground ml-2">{tier}-star</span>
+                                </td>
+                            </tr>
+                            {list.map(w => {
+                                const player = w.players;
+                                const href = player ? buildPublicPlayerHref(player.username) : null;
+                                const who = player ? (player.display_name ?? player.username) : "—";
+                                return (
+                                    <tr key={w.id}>
+                                        <td className="font-medium">{w.specs?.name ?? "—"}{w.specs?.position ? <span className="text-muted-foreground"> · {w.specs.position}</span> : ""}</td>
+                                        <td className="text-muted-foreground">{href ? <Link href={href} prefetch={false} className="hover:text-primary transition-colors">{who}</Link> : who}</td>
+                                        <td className="text-right font-mono tabular-nums text-secondary whitespace-nowrap">
+                                            {"★".repeat(w.stars_awarded)}<span className="text-muted-foreground/40">{"★".repeat(5 - w.stars_awarded)}</span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </Fragment>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
 const ROSTER_ROLE_RANK: Record<string, number> = { captain: 0, vice_captain: 1, court_captain: 2 };
 const ROSTER_ROLE_LABEL: Record<string, string> = { captain: "C", vice_captain: "VC", court_captain: "CC" };
 
-function ChampionRosterCard({ award }: { award: RosterEntry }) {
+function RosterCard({ award }: { award: SeasonDetail["season_awards"][number] }) {
     const { award_name, full_avatar_url, players } = award;
     const roleLabel = ROSTER_ROLE_LABEL[award_name];
-    const playerHref = buildPublicPlayerHref(players.username);
+    const href = buildPublicPlayerHref(players.username);
     const inner = (
-        <div className="flex flex-col items-center gap-1.5 hover:opacity-80 transition-opacity">
-            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-muted/30">
-                {full_avatar_url ? (
-                    <Image src={full_avatar_url} alt={award_name} fill className="object-cover object-top" sizes="10vw" unoptimized />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-xs font-bold text-muted-foreground">{players.username.slice(0, 2).toUpperCase()}</span>
-                    </div>
-                )}
-            </div>
-            <div className="flex flex-col items-center gap-0.5 w-full">
-                <p className="text-xs font-semibold text-center leading-tight truncate w-full">{players.display_name ?? players.username}</p>
-                <p className="text-[10px] text-muted-foreground text-center break-all w-full">@{players.username}</p>
-                {roleLabel && <p className="text-[9px] uppercase tracking-wider text-secondary/80 font-bold text-center">{roleLabel}</p>}
-            </div>
+        <div className="group">
+            <AvatarTile url={full_avatar_url} name={players.username ?? "?"} className="aspect-[3/4] group-hover:opacity-90 transition-opacity" />
+            <p className="text-xs font-semibold text-center leading-tight truncate mt-1.5">{players.display_name ?? players.username}</p>
+            {roleLabel && <p className="text-xs uppercase tracking-wider text-muted-foreground text-center font-semibold">{roleLabel}</p>}
         </div>
     );
-    if (!playerHref) return inner;
-    return <Link href={playerHref} prefetch={false}>{inner}</Link>;
+    if (!href) return inner;
+    return <Link href={href} prefetch={false}>{inner}</Link>;
 }
 
-function ChampionRosterMobileCard({ award, index }: { award: RosterEntry; index: number }) {
-    const { award_name, full_avatar_url, players } = award;
-    const isRight = index % 2 === 1;
-    const playerHref = buildPublicPlayerHref(players.username);
-    const roleLabel = ROSTER_ROLE_LABEL[award_name];
-    const avatarEl = (
-        <div className="relative w-[52%] shrink-0 self-stretch rounded-sm overflow-hidden bg-muted/30 min-h-[112px]">
-            {full_avatar_url ? (
-                <Image src={full_avatar_url} alt={award_name} fill className="object-cover object-top" sizes="29vw" unoptimized />
-            ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-sm font-bold text-muted-foreground">{players.username.slice(0, 2).toUpperCase()}</span>
-                </div>
-            )}
-        </div>
-    );
-    const textEl = (
-        <div className={`flex-1 flex flex-col justify-center gap-0.5 min-w-0 px-2 ${isRight ? "items-start" : "items-end"}`}>
-            <p className={`text-xs font-semibold leading-tight line-clamp-2 break-all ${isRight ? "text-left" : "text-right"}`}>{players.display_name ?? players.username}</p>
-            <p className={`text-[10px] text-muted-foreground break-all w-full ${isRight ? "text-left" : "text-right"}`}>@{players.username}</p>
-            {roleLabel && <p className={`text-[9px] uppercase tracking-wider text-secondary/80 font-bold w-full ${isRight ? "text-left" : "text-right"}`}>{roleLabel}</p>}
-        </div>
-    );
-    const inner = (
-        <div className="flex items-stretch min-h-[112px] hover:opacity-80 transition-opacity">
-            {isRight ? avatarEl : textEl}
-            {isRight ? textEl : avatarEl}
-        </div>
-    );
-    if (!playerHref) return inner;
-    return <Link href={playerHref} prefetch={false} className="block">{inner}</Link>;
-}
-
-function ChampionRosterSection({ awards }: { awards: SeasonDetail["season_awards"] }) {
-    if (awards.length === 0) return null;
+function ChampionRosterBand({ awards }: { awards: SeasonDetail["season_awards"] }) {
     const sorted = [...awards].sort((a, b) => (ROSTER_ROLE_RANK[a.award_name] ?? 3) - (ROSTER_ROLE_RANK[b.award_name] ?? 3));
-    const cols = Math.ceil(sorted.length / 2);
     return (
-        <div className="space-y-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Users className="h-3 w-3" /> Champion Roster
-            </p>
-            <div className="rounded-sm border border-border bg-muted/20 p-4">
-                <div className="hidden sm:grid gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-                    {sorted.map(a => <ChampionRosterCard key={a.id} award={a} />)}
-                </div>
-                <div className="sm:hidden grid grid-cols-2 gap-2">
-                    {sorted.map((a, i) => <ChampionRosterMobileCard key={a.id} award={a} index={i} />)}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function SpecWinnersSection({ winners }: { winners: SeasonDetail["spec_winners"] }) {
-    if (winners.length === 0) return null;
-    const sorted = [...winners].sort((a, b) => b.stars_awarded - a.stars_awarded);
-    return (
-        <div className="space-y-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Star className="h-3 w-3" /> Spec Winners
-            </p>
-            <div className="rounded-sm border border-border bg-muted/20 divide-y divide-border">
-                {sorted.map(w => {
-                    const player = w.players;
-                    const href = player ? buildPublicPlayerHref(player.username) : null;
-                    const row = (
-                        <div className="flex items-center gap-3 p-3">
-                            <div className="relative w-9 h-9 rounded-sm overflow-hidden bg-muted/30 shrink-0">
-                                {player?.avatar_url ? (
-                                    <Image src={player.avatar_url} alt={player.username} fill className="object-cover object-top" sizes="36px" unoptimized />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                        <span className="text-[10px] font-bold text-muted-foreground">{(player?.username ?? "?").slice(0, 2).toUpperCase()}</span>
-                                    </div>
-                                )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold leading-tight truncate">{w.specs?.name ?? "—"}</p>
-                                <p className="text-[10px] text-muted-foreground truncate">
-                                    {player ? (player.display_name ?? player.username) : "—"}
-                                    {w.specs?.position ? ` · ${w.specs.position}` : ""}
-                                </p>
-                            </div>
-                            <span className="text-sm font-semibold tabular-nums text-secondary shrink-0">{w.stars_awarded}★</span>
-                        </div>
-                    );
-                    if (!href) return <div key={w.id}>{row}</div>;
-                    return (
-                        <Link key={w.id} href={href} prefetch={false} className="block hover:bg-muted/40 transition-colors">
-                            {row}
-                        </Link>
-                    );
-                })}
-            </div>
+        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">
+            {sorted.map(a => <RosterCard key={a.id} award={a} />)}
         </div>
     );
 }
@@ -419,28 +245,25 @@ function SpecWinnersSection({ winners }: { winners: SeasonDetail["spec_winners"]
 function SeasonDetailSkeleton() {
     return (
         <div className="space-y-6">
-            <div className="space-y-1.5">
+            <div className="flex items-baseline justify-between">
                 <Skeleton className="h-8 w-56" />
                 <Skeleton className="h-3.5 w-36" />
             </div>
-            <div className="space-y-2">
-                <Skeleton className="h-2.5 w-12 rounded-sm" />
-                <Skeleton className="h-64 w-full rounded-sm" />
-                <div className="grid grid-cols-2 gap-2">
-                    <Skeleton className="h-44 rounded-sm" />
-                    <Skeleton className="h-44 rounded-sm" />
+            <Skeleton className="h-16 w-full rounded-sm" />
+            <div className="grid grid-cols-1 lg:grid-cols-[1.12fr_.88fr] gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="aspect-[4/5] rounded-sm" />)}
                 </div>
-            </div>
-            <div className="space-y-3">
-                <Skeleton className="h-2.5 w-28 rounded-sm" />
-                <Skeleton className="h-52 w-full rounded-sm" />
+                <div className="space-y-6">
+                    <Skeleton className="h-40 w-full rounded-sm" />
+                    <Skeleton className="h-32 w-full rounded-sm" />
+                </div>
             </div>
         </div>
     );
 }
 
 async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: string; regionCode: string; seasonSlug: string }) {
-
     const [season, regions] = await Promise.all([
         getCachedSeasonHistoryDetail(slug, regionCode),
         getCachedRegions(),
@@ -451,46 +274,79 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
     const matchedRegion = regions.find(r => r.code.toLowerCase() === regionCode.toLowerCase());
     if (!matchedRegion || matchedRegion.id !== season.region_id) notFound();
 
-    const championRoster = season.season_awards.filter(a => a.category === "champion_roster");
     const regionName = matchedRegion.name;
     const fmt = (d: string | null) =>
         d ? new Date(d).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "?";
 
-    const individualAwards = season.season_awards.filter(a => a.category === "individual_winners");
-    const firstTeamAwards = season.season_awards.filter(a => a.category === "first_team");
-    const staffTeamAwards = season.season_awards.filter(a => a.category === "staff_team");
-    const hasPodium = season.season_podium.length > 0;
-    const hasContent = hasPodium || championRoster.length > 0 || individualAwards.length > 0 || firstTeamAwards.length > 0 || season.spec_winners.length > 0;
+    const podium = season.season_podium ?? [];
+    const awards = season.season_awards ?? [];
+    const specWinners = season.spec_winners ?? [];
+
+    const individualAwards = awards.filter(a => a.category === "individual_winners");
+    const firstTeamAwards = awards.filter(a => a.category === "first_team");
+    const staffTeamAwards = awards.filter(a => a.category === "staff_team");
+    const championRoster = awards.filter(a => a.category === "champion_roster");
+    const specShown = specWinners.filter(w => w.stars_awarded > 0);
+
+    const hasPodium = podium.length > 0;
+    const hasColumns = individualAwards.length > 0 || firstTeamAwards.length > 0 || staffTeamAwards.length > 0 || specShown.length > 0;
+    const hasContent = hasPodium || hasColumns || championRoster.length > 0;
 
     return (
         <>
-            <div>
-                <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">
-                    {season.name}
-                </h1>
-                <p className="text-xs text-muted-foreground mt-1">
+            <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">{season.name}</h1>
+                <p className="text-xs text-muted-foreground">
                     {regionName} · {fmt(season.start_date)}{season.end_date ? ` – ${fmt(season.end_date)}` : ""}
                 </p>
             </div>
-            {hasPodium && <PodiumSection entries={season.season_podium} regionCode={regionCode} seasonSlug={seasonSlug} />}
-            {championRoster.length > 0 && <ChampionRosterSection awards={championRoster} />}
-            {individualAwards.length > 0 && (
-                <div className="space-y-3">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                        <Award className="h-3 w-3" /> Individual Awards
-                    </p>
-                    <div className="flex flex-col gap-2">
-                        {individualAwards.map((award, i) => (
-                            <IndividualAwardCard key={award.id} award={award} index={i} seasonId={season.id} />
-                        ))}
+
+            {hasPodium && <ChampionMasthead podium={podium} regionCode={regionCode} seasonSlug={seasonSlug} />}
+
+            {hasColumns && (
+                <div className="grid grid-cols-1 lg:grid-cols-[1.12fr_.88fr] gap-8">
+                    <div>
+                        {individualAwards.length > 0 && (
+                            <>
+                                <SectionLabel>Individual Awards</SectionLabel>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    {individualAwards.map(a => <AwardCard key={a.id} award={a} seasonId={season.id} />)}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    <div className="space-y-6">
+                        {specShown.length > 0 && (
+                            <div>
+                                <SectionLabel>Spec Winners</SectionLabel>
+                                <SpecWinnersTable winners={specWinners} />
+                            </div>
+                        )}
+                        {firstTeamAwards.length > 0 && (
+                            <div>
+                                <SectionLabel>First Team</SectionLabel>
+                                <FirstTeamList awards={firstTeamAwards} seasonId={season.id} />
+                            </div>
+                        )}
+                        {staffTeamAwards.length > 0 && (
+                            <div>
+                                <SectionLabel>Staff Team</SectionLabel>
+                                <StaffTable awards={staffTeamAwards} />
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
-            {firstTeamAwards.length > 0 && <FirstTeamSection awards={firstTeamAwards} seasonId={season.id} />}
-            {staffTeamAwards.length > 0 && <StaffTeamSection awards={staffTeamAwards} />}
-            {season.spec_winners.length > 0 && <SpecWinnersSection winners={season.spec_winners} />}
+
+            {championRoster.length > 0 && (
+                <div>
+                    <SectionLabel>Champion Roster</SectionLabel>
+                    <ChampionRosterBand awards={championRoster} />
+                </div>
+            )}
+
             {!hasContent && (
-                <div className="panel p-6 text-center">
+                <div className="flex items-center justify-center min-h-40">
                     <p className="text-muted-foreground text-sm">Results not yet recorded.</p>
                 </div>
             )}

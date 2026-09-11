@@ -58,8 +58,6 @@ const CATEGORY_LABELS: Record<AwardCategory, string> = {
 
 const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "first_team", "staff_team", "champion_roster"];
 
-const SPEC_STAR_OPTIONS = [5, 4, 3, 2, 1, 0];
-
 function PlayerSearchInput({seasonId, onSelect}: {seasonId: string; onSelect: (player: PlayerWithTeamInfo) => void}) {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<PlayerWithTeamInfo[]>([]);
@@ -120,6 +118,79 @@ function PlayerSearchInput({seasonId, onSelect}: {seasonId: string; onSelect: (p
                         </button>
                     ))}
                 </div>
+            )}
+        </div>
+    );
+}
+
+function SpecSearchInput({specs, selectedSpec, onSelect}: {specs: SpecWithRequirements[]; selectedSpec: SpecWithRequirements | null; onSelect: (spec: SpecWithRequirements) => void}) {
+    const [query, setQuery] = useState("");
+    const [open, setOpen] = useState(false);
+    const q = query.trim().toLowerCase();
+    const results = (q
+        ? specs.filter(s => s.name.toLowerCase().includes(q) || s.position.toLowerCase().includes(q))
+        : specs
+    ).slice(0, 8);
+
+    const handleSelect = (spec: SpecWithRequirements) => {
+        onSelect(spec);
+        setQuery(spec.name);
+        setOpen(false);
+    };
+
+    return (
+        <div className="relative flex-1 min-w-72">
+            <Label className="text-xs">Spec</Label>
+            <div className="relative mt-1">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                    className="rounded-sm h-8 text-sm pl-7"
+                    placeholder={selectedSpec ? `${selectedSpec.name} · ${selectedSpec.position}` : "Search specs..."}
+                    value={query}
+                    onChange={e => { setQuery(e.target.value); setOpen(true); }}
+                    onFocus={() => setOpen(true)}
+                    onBlur={() => setTimeout(() => setOpen(false), 150)}
+                />
+            </div>
+            {open && results.length > 0 && (
+                <div className="absolute z-50 top-full mt-1 w-full rounded-sm border border-border bg-popover shadow-md max-h-64 overflow-y-auto">
+                    {results.map(s => (
+                        <button
+                            key={s.id}
+                            type="button"
+                            className="w-full text-left px-3 py-1.5 text-sm hover:bg-accent flex items-center justify-between gap-3"
+                            onClick={() => handleSelect(s)}
+                        >
+                            <span className="font-medium truncate">{s.name}</span>
+                            <span className="flex items-center gap-2 shrink-0 text-xs">
+                                <span className="text-secondary font-mono tabular-nums">{s.stars}★</span>
+                                <span className="text-muted-foreground">{s.position}</span>
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function StarRow({value, max, onChange, disabled}: {value: number; max?: number; onChange: (n: number) => void; disabled?: boolean}) {
+    return (
+        <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map(n => (
+                <button
+                    key={n}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onChange(value === n ? 0 : n)}
+                    className="text-lg leading-none disabled:opacity-40 disabled:cursor-not-allowed"
+                    title={`${n} star${n === 1 ? "" : "s"}`}
+                >
+                    <span className={n <= value ? "text-secondary" : "text-muted-foreground/40"}>★</span>
+                </button>
+            ))}
+            {typeof max === "number" && (
+                <span className="text-xs text-muted-foreground ml-1 font-mono tabular-nums">{value} of {max}</span>
             )}
         </div>
     );
@@ -251,6 +322,7 @@ export default function SeasonResultsPage() {
     const [savingSpec, setSavingSpec] = useState(false);
     const [deletingSpecWinner, setDeletingSpecWinner] = useState<string | null>(null);
     const [updatingSpecWinner, setUpdatingSpecWinner] = useState<string | null>(null);
+    const [specFormKey, setSpecFormKey] = useState(0);
 
     const {teams: seasonTeams} = useTeamsBySeason(seasonId);
 
@@ -471,6 +543,7 @@ export default function SeasonResultsPage() {
             setSelectedSpecId("");
             setSpecPlayer(null);
             setSpecStars(0);
+            setSpecFormKey(k => k + 1);
         } finally { setSavingSpec(false); }
     };
 
@@ -538,7 +611,6 @@ export default function SeasonResultsPage() {
                     </div>
                 </div>
 
-                {}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Final Placements</h2>
@@ -558,28 +630,34 @@ export default function SeasonResultsPage() {
                                 {podium.length === 0 && (
                                     <p className="text-sm text-muted-foreground">No placements yet. Auto-derive from playoffs or add manually below.</p>
                                 )}
-                                {[...podium].sort((a, b) => a.place - b.place).map(entry => {
-                                    const groupSize = podium.filter(p => p.place === entry.place).length;
-                                    const {label, color, Icon} = placeMeta(entry.place, groupSize);
-                                    return (
-                                        <div key={entry.id} className="panel p-3 flex items-center gap-3">
-                                            <div className={`flex items-center gap-1.5 w-28 shrink-0 ${color}`}>
-                                                <Icon className="h-4 w-4" />
-                                                <span className="text-sm font-medium">{label}</span>
-                                            </div>
-                                            <span className="flex-1 text-sm font-medium truncate">{entry.teams.name}</span>
-                                            <Badge variant={entry.is_override ? "default" : "secondary"} className="rounded-sm text-xs shrink-0">
-                                                {entry.is_override ? "Override" : "Auto"}
-                                            </Badge>
-                                            <Button size="sm" variant="ghost"
-                                                className="rounded-sm h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                                                onClick={() => handleDeletePlacement(entry.team_id)} disabled={saving === entry.team_id}
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </div>
-                                    );
-                                })}
+                                {podium.length > 0 && (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        {[...podium].sort((a, b) => a.place - b.place).map(entry => {
+                                            const groupSize = podium.filter(p => p.place === entry.place).length;
+                                            const {label, color, Icon} = placeMeta(entry.place, groupSize);
+                                            return (
+                                                <div key={entry.id} className="panel p-3 flex flex-col gap-2">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className={`flex items-center gap-1.5 min-w-0 ${color}`}>
+                                                            <Icon className="h-4 w-4 shrink-0" />
+                                                            <span className="text-xs font-semibold uppercase tracking-wide truncate">{label}</span>
+                                                        </div>
+                                                        <Button size="sm" variant="ghost"
+                                                            className="rounded-sm h-6 w-6 p-0 -mr-1 -mt-1 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                                                            onClick={() => handleDeletePlacement(entry.team_id)} disabled={saving === entry.team_id}
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                    <div className="text-sm font-semibold truncate">{entry.teams.name}</div>
+                                                    <Badge variant={entry.is_override ? "default" : "secondary"} className="rounded-sm text-[10px] w-fit">
+                                                        {entry.is_override ? "Override" : "Auto"}
+                                                    </Badge>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                                 <div className="panel p-3 flex items-center gap-2 flex-wrap">
                                     <Select value={String(addPlace)} onValueChange={v => setAddPlace(Number(v))}>
                                         <SelectTrigger className="rounded-sm w-32 text-sm h-8"><SelectValue /></SelectTrigger>
@@ -590,7 +668,7 @@ export default function SeasonResultsPage() {
                                         </SelectContent>
                                     </Select>
                                     <Select value={addTeamId} onValueChange={setAddTeamId}>
-                                        <SelectTrigger className="rounded-sm flex-1 min-w-48 text-sm h-8">
+                                        <SelectTrigger className="rounded-sm w-64 text-sm h-8">
                                             <SelectValue placeholder="Select team..." />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -610,7 +688,81 @@ export default function SeasonResultsPage() {
                     }
                 </div>
 
-                {}
+                <div className="space-y-4 pt-4 border-t border-border">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <Star className="h-4 w-4" /> Spec Winners
+                        </h2>
+                    </div>
+
+                    <div className="panel p-3 space-y-2">
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Award Spec</p>
+                        <div className="flex gap-2 flex-wrap items-end">
+                            <SpecSearchInput key={`spec-${specFormKey}`} specs={specs} selectedSpec={selectedSpec} onSelect={s => handleSelectSpec(s.id)} />
+                            <PlayerSearchInput key={`player-${specFormKey}`} seasonId={seasonId} onSelect={setSpecPlayer} />
+                            <div className="space-y-1">
+                                <Label className="text-xs">Stars</Label>
+                                <div className="h-8 flex items-center">
+                                    <StarRow value={specStars} max={selectedSpec?.stars} onChange={setSpecStars} disabled={!selectedSpec} />
+                                </div>
+                            </div>
+                            <Button size="sm" className="rounded-sm h-8 gap-1.5"
+                                onClick={handleAwardSpec}
+                                disabled={savingSpec || !selectedSpecId || !specPlayer}
+                            >
+                                {savingSpec ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                                Award
+                            </Button>
+                        </div>
+                        {specPlayer && (
+                            <p className="text-xs text-muted-foreground">
+                                Selected: <span className="font-medium text-foreground">{specPlayer.display_name ?? specPlayer.username}</span>
+                                {` · @${specPlayer.username}`}
+                                {specPlayer.season_team_name ? ` · ${specPlayer.season_team_name}` : " · no team this season"}
+                            </p>
+                        )}
+                    </div>
+
+                    {specWinners.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No spec winners yet.</p>
+                    ) : (
+                        <div className="panel overflow-x-auto">
+                            <table className="table-dense text-sm w-full">
+                                <thead>
+                                    <tr>
+                                        <th className="text-left">Spec</th>
+                                        <th className="text-left">Position</th>
+                                        <th className="text-left">Stars</th>
+                                        <th className="text-left">Player</th>
+                                        <th className="w-8"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {specWinners.map(w => (
+                                        <tr key={w.id}>
+                                            <td className="font-medium">{w.spec.name}</td>
+                                            <td className="text-muted-foreground">{w.spec.position}</td>
+                                            <td>
+                                                <StarRow value={w.stars_awarded} max={w.spec.stars} onChange={n => handleUpdateSpecStars(w, n)} disabled={updatingSpecWinner === w.id} />
+                                            </td>
+                                            <td className="text-muted-foreground">{w.player.username}</td>
+                                            <td>
+                                                <Button variant="ghost" size="sm"
+                                                    className="rounded-sm h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                    onClick={() => handleDeleteSpecWinner(w.id)}
+                                                    disabled={deletingSpecWinner === w.id}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
                 <div className="space-y-4 pt-4 border-t border-border">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -846,126 +998,6 @@ export default function SeasonResultsPage() {
                         </div>
                     )}
 
-                </div>
-
-                <div className="space-y-4 pt-4 border-t border-border">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                            <Star className="h-4 w-4" /> Spec Winners
-                        </h2>
-                    </div>
-
-                    <div className="panel p-3 space-y-2">
-                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Award Spec</p>
-                        <div className="flex gap-2 flex-wrap items-end">
-                            <div className="min-w-56 space-y-1">
-                                <Label className="text-xs">Spec</Label>
-                                <Select value={selectedSpecId} onValueChange={handleSelectSpec}>
-                                    <SelectTrigger className="rounded-sm h-8 text-sm">
-                                        <SelectValue placeholder="Select a spec" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {specs.map(s => (
-                                            <SelectItem key={s.id} value={s.id}>
-                                                {s.name} · {s.stars}★ · {s.position}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <PlayerSearchInput seasonId={seasonId} onSelect={setSpecPlayer} />
-                            <div className="w-24 space-y-1">
-                                <Label className="text-xs">Stars</Label>
-                                <Select
-                                    value={specStars ? String(specStars) : ""}
-                                    onValueChange={v => setSpecStars(Number(v))}
-                                    disabled={!selectedSpec}
-                                >
-                                    <SelectTrigger className="rounded-sm h-8 text-sm">
-                                        <SelectValue placeholder="★" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {SPEC_STAR_OPTIONS.map(n => (
-                                            <SelectItem key={n} value={String(n)}>{n}★</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <Button size="sm" className="rounded-sm h-8 gap-1.5"
-                                onClick={handleAwardSpec}
-                                disabled={savingSpec || !selectedSpecId || !specPlayer}
-                            >
-                                {savingSpec ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-                                Award
-                            </Button>
-                        </div>
-                        {specPlayer && (
-                            <p className="text-xs text-muted-foreground">
-                                Selected: <span className="font-medium text-foreground">{specPlayer.display_name ?? specPlayer.username}</span>
-                                {` · @${specPlayer.username}`}
-                                {specPlayer.season_team_name ? ` · ${specPlayer.season_team_name}` : " · no team this season"}
-                            </p>
-                        )}
-                    </div>
-
-                    {specWinners.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No spec winners yet.</p>
-                    ) : (
-                        <div className="panel overflow-x-auto">
-                            <table className="table-dense text-sm w-full">
-                                <thead>
-                                    <tr>
-                                        <th className="text-left">Spec</th>
-                                        <th className="text-left">Position</th>
-                                        <th className="text-left">Stars</th>
-                                        <th className="text-left">Player</th>
-                                        <th className="w-8"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {specWinners.map(w => (
-                                        <tr key={w.id}>
-                                            <td className="font-medium">{w.spec.name}</td>
-                                            <td className="text-muted-foreground">{w.spec.position}</td>
-                                            <td>
-                                                <div className="flex items-center gap-1.5">
-                                                    <Select
-                                                        value={String(w.stars_awarded)}
-                                                        onValueChange={v => handleUpdateSpecStars(w, Number(v))}
-                                                        disabled={updatingSpecWinner === w.id}
-                                                    >
-                                                        <SelectTrigger className="rounded-sm h-7 w-16 text-sm tabular-nums">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {SPEC_STAR_OPTIONS.map(n => (
-                                                                <SelectItem key={n} value={String(n)}>{n}★</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    {w.stars_awarded < w.spec.stars && (
-                                                        <span className="text-xs text-muted-foreground">
-                                                            of {w.spec.stars}★
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="text-muted-foreground">{w.player.username}</td>
-                                            <td>
-                                                <Button variant="ghost" size="sm"
-                                                    className="rounded-sm h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                    onClick={() => handleDeleteSpecWinner(w.id)}
-                                                    disabled={deletingSpecWinner === w.id}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
                 </div>
             </div>
 
