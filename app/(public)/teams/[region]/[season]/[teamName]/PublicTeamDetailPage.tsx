@@ -27,7 +27,7 @@ function RosterSpecLine({ spec, dark }: { spec: RosterSpec; dark: boolean }) {
         <div className="mt-1 flex items-center justify-between gap-1.5">
             <span
                 className={cn(
-                    "text-[9px] font-semibold uppercase tracking-wide truncate min-w-0",
+                    "text-[7px] font-semibold uppercase tracking-wide truncate min-w-0",
                     dark
                         ? spec.dropped ? "text-white/45" : "text-white/90"
                         : spec.dropped ? "text-muted-foreground/60" : "text-foreground/80"
@@ -38,7 +38,7 @@ function RosterSpecLine({ spec, dark }: { spec: RosterSpec; dark: boolean }) {
                 {spec.name}
             </span>
             <span
-                className="font-mono text-[9px] leading-none shrink-0 whitespace-nowrap tabular-nums"
+                className="font-mono text-[7px] leading-none shrink-0 whitespace-nowrap tabular-nums"
                 style={dark ? { textShadow: TEXT_SHADOW } : undefined}
             >
                 <span className="text-secondary">{"★".repeat(spec.starsAwarded)}</span>

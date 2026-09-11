@@ -23,9 +23,11 @@ import {
     getPlayerByUsername,
     getPlayerSeasonStats,
     getPlayerAwards,
+    getPlayerSpecs,
     getPlayerTeamHistory,
 } from "@/server/domains/player";
 import type {PlayerDetail} from "@/server/domains/player";
+import {findHeldSpecSeasonId} from "@/server/db/seasons.repo";
 import {createServerSupabase} from "@/server/supabase/server";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {
@@ -154,20 +156,34 @@ export async function getPlayerDetailAction(username: string): Promise<Result<Pl
 
     const player = playerResult.value;
 
-    const [statsResult, awardsResult, historyResult] = await Promise.all([
+    const [statsResult, awardsResult, specsResult, historyResult] = await Promise.all([
         getPlayerSeasonStats(supabase, {playerId: player.id}),
         getPlayerAwards(supabase, {playerId: player.id}),
+        getPlayerSpecs(supabase, {playerId: player.id}),
         getPlayerTeamHistory(supabase, {playerId: player.id}),
     ]);
 
     if (!statsResult.ok) return statsResult;
     if (!awardsResult.ok) return awardsResult;
+    if (!specsResult.ok) return specsResult;
     if (!historyResult.ok) return historyResult;
+
+    let activeSpec: PlayerDetail["activeSpec"] = null;
+    const currentSeasonId = player.current_team?.season_id;
+    if (currentSeasonId) {
+        const heldRes = await findHeldSpecSeasonId(supabase, currentSeasonId);
+        const heldSeasonId = heldRes.ok ? heldRes.value : null;
+        if (heldSeasonId) {
+            activeSpec = specsResult.value.find(s => s.season_id === heldSeasonId) ?? null;
+        }
+    }
 
     return Ok({
         player,
         seasonStats: statsResult.value,
         awards: awardsResult.value,
+        specs: specsResult.value,
+        activeSpec,
         teamHistory: historyResult.value,
     });
 }

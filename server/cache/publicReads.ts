@@ -12,12 +12,14 @@ import {
     getPlayerByUsername,
     getPlayerSeasonStats,
     getPlayerAwards,
+    getPlayerSpecs,
     getPlayerTeamHistory,
     getPlayersByIds,
     getLeaderboardStatRows,
     getLeaderboardIdentity,
     getTeamLeaderboard,
 } from "@/server/domains/player";
+import {findHeldSpecSeasonId} from "@/server/db/seasons.repo";
 import type {PlayerDetail} from "@/server/domains/player";
 import {
     getTeamWithRegionAndPlayers,
@@ -119,16 +121,31 @@ export const getCachedPlayerDetail = unstable_cache(
         );
         if (!player) return null;
 
-        const [stats, awards, teamHistory] = await Promise.all([
+        const [stats, awards, specs, teamHistory] = await Promise.all([
             getPlayerSeasonStats(supabase, {playerId: player.id}),
             getPlayerAwards(supabase, {playerId: player.id}),
+            getPlayerSpecs(supabase, {playerId: player.id}),
             getPlayerTeamHistory(supabase, {playerId: player.id}),
         ]);
+
+        const specList = unwrap(specs, "getCachedPlayerDetail.specs");
+
+        let activeSpec: PlayerDetail["activeSpec"] = null;
+        const currentSeasonId = player.current_team?.season_id;
+        if (currentSeasonId) {
+            const heldRes = await findHeldSpecSeasonId(supabase, currentSeasonId);
+            const heldSeasonId = heldRes.ok ? heldRes.value : null;
+            if (heldSeasonId) {
+                activeSpec = specList.find(s => s.season_id === heldSeasonId) ?? null;
+            }
+        }
 
         return {
             player,
             seasonStats: unwrap(stats, "getCachedPlayerDetail.seasonStats"),
             awards: unwrap(awards, "getCachedPlayerDetail.awards"),
+            specs: specList,
+            activeSpec,
             teamHistory: unwrap(teamHistory, "getCachedPlayerDetail.teamHistory"),
         };
     },

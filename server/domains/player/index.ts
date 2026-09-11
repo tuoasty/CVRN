@@ -20,6 +20,7 @@ export {getRangedLeaderboardStatRows} from "./queries/getRangedLeaderboardStatRo
 export {getPositionLeaderboardStatRows} from "./queries/getPositionLeaderboardStatRows";
 export {getLeaderboardIdentity} from "./queries/getLeaderboardIdentity";
 export {getPlayerAwards} from "./queries/getPlayerAwards";
+export {getPlayerSpecs} from "./queries/getPlayerSpecs";
 export {getPlayerTeamHistory} from "./queries/getPlayerTeamHistory";
 export type {
     RobloxUserIdInput,
@@ -37,6 +38,8 @@ export type {
     AddExistingPlayerToTeamInput,
     PlayerRole,
     PlayerWithRole,
+    RosterSpec,
+    PlayerSpecEntry,
     SetPlayerRoleInput,
     SetPlayerPositionInput,
     SetPlayerHeightInput,

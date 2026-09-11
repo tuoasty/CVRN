@@ -29,7 +29,7 @@ export async function getPlayerByUsername(
                 team_id,
                 position,
                 team:teams!team_id(name, logo_url, logo_bg_removed, brick_color),
-                season:seasons!season_id(name, slug, league_type, end_date, region:regions!region_id(code, name)),
+                season:seasons!season_id(id, name, slug, league_type, end_date, region:regions!region_id(code, name)),
                 left_at
             `)
             .eq("player_id", player.id)
@@ -37,8 +37,8 @@ export async function getPlayerByUsername(
 
         const teamCandidates = (rows ?? []).map(r => {
             const team = r.team as {name: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null} | null;
-            const season = r.season as { name: string; slug:string; league_type:string; end_date: string | null;
-                region: {code: string; name:string} 
+            const season = r.season as { id: string; name: string; slug:string; league_type:string; end_date: string | null;
+                region: {code: string; name:string}
             } | null;
             const left_at = r.left_at as string | null;
             return {
@@ -60,6 +60,7 @@ export async function getPlayerByUsername(
 
         const current_team = teamRow ? {
             team_id: teamRow.team_id,
+            season_id: teamRow.season?.id ?? "",
             team_name: teamRow.team?.name ?? "",
             team_logo_url: teamRow.team?.logo_url ?? null,
             team_logo_bg_removed: teamRow.team?.logo_bg_removed ?? false,
