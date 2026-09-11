@@ -83,3 +83,6 @@ export type SpecRequirement =
 
 export type PublicSpecSnapshotRow =
     Database["public"]["Tables"]["public_spec_snapshot"]["Row"];
+
+export type SpecWinner =
+    Database["public"]["Tables"]["spec_winners"]["Row"];

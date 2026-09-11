@@ -4,7 +4,7 @@ import React, {useState, useEffect, useCallback, useRef} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {useParams} from "next/navigation";
-import {Trophy, Medal, Award, Plus, Trash2, RefreshCw, Search, ImageIcon, ChevronLeft} from "lucide-react";
+import {Trophy, Medal, Award, Plus, Trash2, RefreshCw, Search, ImageIcon, ChevronLeft, Star} from "lucide-react";
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter} from "@/app/components/ui/dialog";
 import {Button} from "@/app/components/ui/button";
 import {Badge} from "@/app/components/ui/badge";
@@ -13,6 +13,7 @@ import {Label} from "@/app/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/app/components/ui/select";
 import {SeasonPodiumEntryWithTeam, SeasonAwardEntryWithPlayer, AwardCategory} from "@/server/domains/season";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
+import {SpecWithRequirements, SpecWinnerWithRefs} from "@/server/domains/spec";
 import {Season} from "@/shared/types/db";
 import {
     getSeasonByIdAction,
@@ -28,6 +29,12 @@ import {
     fetchChampionRosterAwardsAction,
 } from "@/app/actions/season.actions";
 import {searchPlayersInDatabaseAction} from "@/app/actions/player.actions";
+import {
+    getSpecsAction,
+    getSpecWinnersAction,
+    awardSpecWinnerAction,
+    deleteSpecWinnerAction,
+} from "@/app/actions/spec.actions";
 import {useTeamsBySeason} from "@/app/hooks/useTeams";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
@@ -48,6 +55,8 @@ const CATEGORY_LABELS: Record<AwardCategory, string> = {
 };
 
 const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "first_team", "staff_team", "champion_roster"];
+
+const SPEC_STAR_OPTIONS = [5, 4, 3, 2, 1, 0];
 
 function PlayerSearchInput({seasonId, onSelect}: {seasonId: string; onSelect: (player: PlayerWithTeamInfo) => void}) {
     const [query, setQuery] = useState("");
@@ -206,19 +215,32 @@ export default function SeasonResultsPage() {
     } | null>(null);
     const [confirming, setConfirming] = useState(false);
 
+    const [specs, setSpecs] = useState<SpecWithRequirements[]>([]);
+    const [specWinners, setSpecWinners] = useState<SpecWinnerWithRefs[]>([]);
+    const [selectedSpecId, setSelectedSpecId] = useState<string>("");
+    const [specPlayer, setSpecPlayer] = useState<PlayerWithTeamInfo | null>(null);
+    const [specStars, setSpecStars] = useState<number>(0);
+    const [savingSpec, setSavingSpec] = useState(false);
+    const [deletingSpecWinner, setDeletingSpecWinner] = useState<string | null>(null);
+    const [updatingSpecWinner, setUpdatingSpecWinner] = useState<string | null>(null);
+
     const {teams: seasonTeams} = useTeamsBySeason(seasonId);
 
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const [sRes, pRes, aRes] = await Promise.all([
+            const [sRes, pRes, aRes, specRes, winRes] = await Promise.all([
                 getSeasonByIdAction({seasonId}),
                 getSeasonPodiumAction({seasonId}),
                 getSeasonAwardsAction({seasonId}),
+                getSpecsAction(),
+                getSpecWinnersAction(seasonId),
             ]);
             if (sRes.ok) setSeason(sRes.value);
             if (pRes.ok) setPodium(pRes.value);
             if (aRes.ok) setAwards(aRes.value);
+            if (specRes.ok) setSpecs(specRes.value);
+            if (winRes.ok) setSpecWinners(winRes.value);
         } finally {
             setLoading(false);
         }
@@ -343,6 +365,64 @@ export default function SeasonResultsPage() {
             if (!result.ok) { toast.error("Failed to delete award", result.error.message); return; }
             await load();
         } finally { setDeletingAward(null); }
+    };
+
+    const selectedSpec = specs.find(s => s.id === selectedSpecId) ?? null;
+
+    const handleSelectSpec = (specId: string) => {
+        setSelectedSpecId(specId);
+        const spec = specs.find(s => s.id === specId);
+        setSpecStars(spec ? spec.stars : 0);
+    };
+
+    const handleAwardSpec = async () => {
+        if (!selectedSpecId || !specPlayer) return;
+        setSavingSpec(true);
+        try {
+            const result = await awardSpecWinnerAction({
+                seasonId,
+                specId: selectedSpecId,
+                playerId: specPlayer.id,
+                starsAwarded: specStars,
+            });
+            if (!result.ok) { toast.error("Failed to award spec", result.error.message); return; }
+            setSpecWinners(prev => [
+                result.value,
+                ...prev.filter(w => w.spec_id !== result.value.spec_id),
+            ].sort((a, b) => b.stars_awarded - a.stars_awarded));
+            toast.success("Spec winner saved");
+            setSelectedSpecId("");
+            setSpecPlayer(null);
+            setSpecStars(0);
+        } finally { setSavingSpec(false); }
+    };
+
+    const handleUpdateSpecStars = async (w: SpecWinnerWithRefs, stars: number) => {
+        if (stars === w.stars_awarded) return;
+        setUpdatingSpecWinner(w.id);
+        try {
+            const result = await awardSpecWinnerAction({
+                seasonId,
+                specId: w.spec_id,
+                playerId: w.player_id,
+                starsAwarded: stars,
+            });
+            if (!result.ok) { toast.error("Failed to update stars", result.error.message); return; }
+            setSpecWinners(prev =>
+                prev
+                    .map(x => (x.id === result.value.id ? result.value : x))
+                    .sort((a, b) => b.stars_awarded - a.stars_awarded)
+            );
+        } finally { setUpdatingSpecWinner(null); }
+    };
+
+    const handleDeleteSpecWinner = async (id: string) => {
+        setDeletingSpecWinner(id);
+        try {
+            const result = await deleteSpecWinnerAction({id});
+            if (!result.ok) { toast.error("Failed to remove spec winner", result.error.message); return; }
+            setSpecWinners(prev => prev.filter(w => w.id !== id));
+        } finally { setDeletingSpecWinner(null); }
     };
 
     const ROSTER_ROLE_RANK: Record<string, number> = {captain: 0, vice_captain: 1, court_captain: 2};
@@ -620,6 +700,126 @@ export default function SeasonResultsPage() {
                         </div>
                     )}
 
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-border">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <Star className="h-4 w-4" /> Spec Winners
+                        </h2>
+                    </div>
+
+                    <div className="panel p-3 space-y-2">
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Award Spec</p>
+                        <div className="flex gap-2 flex-wrap items-end">
+                            <div className="min-w-56 space-y-1">
+                                <Label className="text-xs">Spec</Label>
+                                <Select value={selectedSpecId} onValueChange={handleSelectSpec}>
+                                    <SelectTrigger className="rounded-sm h-8 text-sm">
+                                        <SelectValue placeholder="Select a spec" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {specs.map(s => (
+                                            <SelectItem key={s.id} value={s.id}>
+                                                {s.name} · {s.stars}★ · {s.position}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <PlayerSearchInput seasonId={seasonId} onSelect={setSpecPlayer} />
+                            <div className="w-24 space-y-1">
+                                <Label className="text-xs">Stars</Label>
+                                <Select
+                                    value={specStars ? String(specStars) : ""}
+                                    onValueChange={v => setSpecStars(Number(v))}
+                                    disabled={!selectedSpec}
+                                >
+                                    <SelectTrigger className="rounded-sm h-8 text-sm">
+                                        <SelectValue placeholder="★" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {SPEC_STAR_OPTIONS.map(n => (
+                                            <SelectItem key={n} value={String(n)}>{n}★</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Button size="sm" className="rounded-sm h-8 gap-1.5"
+                                onClick={handleAwardSpec}
+                                disabled={savingSpec || !selectedSpecId || !specPlayer}
+                            >
+                                {savingSpec ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                                Award
+                            </Button>
+                        </div>
+                        {specPlayer && (
+                            <p className="text-xs text-muted-foreground">
+                                Selected: <span className="font-medium text-foreground">{specPlayer.display_name ?? specPlayer.username}</span>
+                                {` · @${specPlayer.username}`}
+                                {specPlayer.season_team_name ? ` · ${specPlayer.season_team_name}` : " · no team this season"}
+                            </p>
+                        )}
+                    </div>
+
+                    {specWinners.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No spec winners yet.</p>
+                    ) : (
+                        <div className="panel overflow-x-auto">
+                            <table className="table-dense text-sm w-full">
+                                <thead>
+                                    <tr>
+                                        <th className="text-left">Spec</th>
+                                        <th className="text-left">Position</th>
+                                        <th className="text-left">Stars</th>
+                                        <th className="text-left">Player</th>
+                                        <th className="w-8"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {specWinners.map(w => (
+                                        <tr key={w.id}>
+                                            <td className="font-medium">{w.spec.name}</td>
+                                            <td className="text-muted-foreground">{w.spec.position}</td>
+                                            <td>
+                                                <div className="flex items-center gap-1.5">
+                                                    <Select
+                                                        value={String(w.stars_awarded)}
+                                                        onValueChange={v => handleUpdateSpecStars(w, Number(v))}
+                                                        disabled={updatingSpecWinner === w.id}
+                                                    >
+                                                        <SelectTrigger className="rounded-sm h-7 w-16 text-sm tabular-nums">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {SPEC_STAR_OPTIONS.map(n => (
+                                                                <SelectItem key={n} value={String(n)}>{n}★</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {w.stars_awarded < w.spec.stars && (
+                                                        <span className="text-xs text-muted-foreground">
+                                                            of {w.spec.stars}★
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="text-muted-foreground">{w.player.username}</td>
+                                            <td>
+                                                <Button variant="ghost" size="sm"
+                                                    className="rounded-sm h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                    onClick={() => handleDeleteSpecWinner(w.id)}
+                                                    disabled={deletingSpecWinner === w.id}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </div>
 

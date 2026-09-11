@@ -128,6 +128,12 @@ export interface SeasonDetail {
             }>;
         };
     }>;
+    spec_winners: Array<{
+        id: string;
+        stars_awarded: number;
+        specs: { id: string; name: string; position: string; stars: number } | null;
+        players: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null;
+    }>;
 }
 
 export type {

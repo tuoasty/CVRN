@@ -20,6 +20,11 @@ import {
     savePlacementBonus,
     resetPlacementBonus,
     SavePlacementBonusSchema,
+    getSpecWinners,
+    awardSpecWinner,
+    deleteSpecWinner,
+    AwardSpecWinnerSchema,
+    DeleteSpecWinnerSchema,
 } from "@/server/domains/spec";
 import {deleteSpecSnapshot} from "@/server/db/specSnapshot.repo";
 
@@ -117,6 +122,50 @@ export async function resetPlacementBonusAction(regionId: string) {
     if (!guard.ok) return guard;
 
     return resetPlacementBonus(supabase, regionId);
+}
+
+export async function getSpecWinnersAction(seasonId: string) {
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return getSpecWinners(supabase, seasonId);
+}
+
+export async function awardSpecWinnerAction(data: unknown) {
+    const parsed = AwardSpecWinnerSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await awardSpecWinner(supabase, parsed.data);
+    if (result.ok) revalidatePath("/admin/seasons");
+    return result;
+}
+
+export async function deleteSpecWinnerAction(data: unknown) {
+    const parsed = DeleteSpecWinnerSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await deleteSpecWinner(supabase, parsed.data.id);
+    if (result.ok) revalidatePath("/admin/seasons");
+    return result;
 }
 
 export async function getSpecLeaderboardAction(seasonId: string, position: string | null) {

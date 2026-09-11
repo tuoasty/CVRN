@@ -183,6 +183,12 @@ export async function findSeasonHistoryBySlugAndRegion(
                         teams(id, name, logo_url, brick_color)
                     )
                 )
+            ),
+            spec_winners(
+                id,
+                stars_awarded,
+                specs(id, name, position, stars),
+                players(id, username, display_name, avatar_url)
             )
         `)
         .eq("slug", slug)
