@@ -1,4 +1,4 @@
-import { Suspense, Fragment } from "react";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -169,50 +169,61 @@ function StaffTable({ awards }: { awards: SeasonDetail["season_awards"] }) {
     );
 }
 
-function SpecWinnersTable({ winners }: { winners: SeasonDetail["spec_winners"] }) {
-    const shown = [...winners].filter(w => w.stars_awarded > 0).sort((a, b) => b.stars_awarded - a.stars_awarded);
+function SpecWinnersSection({ winners }: { winners: SeasonDetail["spec_winners"] }) {
+    const shown = winners.filter(w => w.specs);
     if (shown.length === 0) return null;
-    const tiers: Array<[number, SeasonDetail["spec_winners"]]> = [];
-    for (const w of shown) {
-        const last = tiers[tiers.length - 1];
-        if (last && last[0] === w.stars_awarded) last[1].push(w);
-        else tiers.push([w.stars_awarded, [w]]);
-    }
+    const tiers = [5, 4, 3]
+        .map(tier => ({
+            tier,
+            list: shown
+                .filter(w => (w.specs?.stars ?? 0) === tier)
+                .sort((a, b) => {
+                    const aDrop = a.stars_awarded < (a.specs?.stars ?? 0) ? 1 : 0;
+                    const bDrop = b.stars_awarded < (b.specs?.stars ?? 0) ? 1 : 0;
+                    if (aDrop !== bDrop) return aDrop - bDrop;
+                    return (a.specs?.name ?? "").localeCompare(b.specs?.name ?? "");
+                }),
+        }))
+        .filter(t => t.list.length > 0);
+
     return (
-        <div className="panel overflow-x-auto">
-            <table className="table-dense text-sm w-full">
-                <thead>
-                    <tr><th className="text-left">Spec</th><th className="text-left">Player</th><th className="text-right w-20">Stars</th></tr>
-                </thead>
-                <tbody>
-                    {tiers.map(([tier, list]) => (
-                        <Fragment key={tier}>
-                            <tr className="bg-muted/50">
-                                <td colSpan={3} className="py-1.5">
-                                    <span className="font-mono tabular-nums text-secondary">{"★".repeat(tier)}</span>
-                                    <span className="text-xs uppercase tracking-wider text-muted-foreground ml-2">{tier}-star</span>
-                                </td>
-                            </tr>
-                            {list.map(w => {
-                                const player = w.players;
-                                const href = player ? buildPublicPlayerHref(player.username) : null;
-                                const who = player ? (player.display_name ?? player.username) : "—";
-                                return (
-                                    <tr key={w.id}>
-                                        <td className="font-medium">{w.specs?.name ?? "—"}{w.specs?.position ? <span className="text-muted-foreground"> · {w.specs.position}</span> : ""}</td>
-                                        <td className="text-muted-foreground">{href ? <Link href={href} prefetch={false} className="hover:text-primary transition-colors">{who}</Link> : who}</td>
-                                        <td className="text-right font-mono tabular-nums text-secondary whitespace-nowrap">
-                                            {"★".repeat(w.stars_awarded)}<span className="text-muted-foreground/40">{"★".repeat(5 - w.stars_awarded)}</span>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </Fragment>
-                    ))}
-                </tbody>
-            </table>
+        <div>
+            {tiers.map(({ tier, list }, i) => (
+                <div key={tier} className={i > 0 ? "mt-3.5" : ""}>
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono tabular-nums text-secondary text-sm tracking-[0.15em] leading-none">{"★".repeat(tier)}</span>
+                        <span className="flex-1 h-px bg-border" />
+                    </div>
+                    {list.map(w => <SpecWinnerRow key={w.id} winner={w} />)}
+                </div>
+            ))}
         </div>
     );
+}
+
+function SpecWinnerRow({ winner }: { winner: SeasonDetail["spec_winners"][number] }) {
+    const spec = winner.specs;
+    const player = winner.players;
+    const dropped = spec ? winner.stars_awarded < spec.stars : false;
+    const href = player ? buildPublicPlayerHref(player.username) : null;
+    const inner = (
+        <div className="flex items-center gap-2.5 py-1.5 border-b border-border last:border-0">
+            <AvatarTile url={player?.avatar_url ?? null} name={player?.username ?? "?"} className="w-8 h-8 shrink-0 rounded-sm" />
+            <div className="min-w-0 flex-1">
+                <span className="text-sm font-semibold">{spec?.name ?? "—"}</span>
+                {spec?.position && <span className="text-[10px] uppercase tracking-wider text-muted-foreground ml-1.5">{spec.position}</span>}
+                {dropped && <span className="italic text-[10px] text-muted-foreground ml-1.5">dropped</span>}
+            </div>
+            {player && (
+                <div className="text-right min-w-0 shrink">
+                    <p className="text-sm font-medium leading-tight truncate">{player.display_name ?? player.username}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">@{player.username}</p>
+                </div>
+            )}
+        </div>
+    );
+    if (!href) return inner;
+    return <Link href={href} prefetch={false} className="block hover:bg-muted/30 transition-colors">{inner}</Link>;
 }
 
 const ROSTER_ROLE_RANK: Record<string, number> = { captain: 0, vice_captain: 1, court_captain: 2 };
@@ -235,8 +246,12 @@ function RosterCard({ award }: { award: SeasonDetail["season_awards"][number] })
 
 function ChampionRosterBand({ awards }: { awards: SeasonDetail["season_awards"] }) {
     const sorted = [...awards].sort((a, b) => (ROSTER_ROLE_RANK[a.award_name] ?? 3) - (ROSTER_ROLE_RANK[b.award_name] ?? 3));
+    const cols = Math.max(1, Math.ceil(sorted.length / 2));
     return (
-        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">
+        <div
+            className="grid grid-cols-4 sm:grid-cols-6 gap-3 lg:[grid-template-columns:repeat(var(--roster-cols),minmax(0,1fr))]"
+            style={{ "--roster-cols": cols } as React.CSSProperties}
+        >
             {sorted.map(a => <RosterCard key={a.id} award={a} />)}
         </div>
     );
@@ -286,7 +301,7 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
     const firstTeamAwards = awards.filter(a => a.category === "first_team");
     const staffTeamAwards = awards.filter(a => a.category === "staff_team");
     const championRoster = awards.filter(a => a.category === "champion_roster");
-    const specShown = specWinners.filter(w => w.stars_awarded > 0);
+    const specShown = specWinners.filter(w => w.specs);
 
     const hasPodium = podium.length > 0;
     const hasColumns = individualAwards.length > 0 || firstTeamAwards.length > 0 || staffTeamAwards.length > 0 || specShown.length > 0;
@@ -304,37 +319,33 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
             {hasPodium && <ChampionMasthead podium={podium} regionCode={regionCode} seasonSlug={seasonSlug} />}
 
             {hasColumns && (
-                <div className="grid grid-cols-1 lg:grid-cols-[1.12fr_.88fr] gap-8">
-                    <div>
-                        {individualAwards.length > 0 && (
-                            <>
-                                <SectionLabel>Individual Awards</SectionLabel>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    {individualAwards.map(a => <AwardCard key={a.id} award={a} seasonId={season.id} />)}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                    <div className="space-y-6">
-                        {specShown.length > 0 && (
-                            <div>
-                                <SectionLabel>Spec Winners</SectionLabel>
-                                <SpecWinnersTable winners={specWinners} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-7 items-start">
+                    {individualAwards.length > 0 && (
+                        <section>
+                            <SectionLabel>Individual Awards</SectionLabel>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {individualAwards.map(a => <AwardCard key={a.id} award={a} seasonId={season.id} />)}
                             </div>
-                        )}
-                        {firstTeamAwards.length > 0 && (
-                            <div>
-                                <SectionLabel>First Team</SectionLabel>
-                                <FirstTeamList awards={firstTeamAwards} seasonId={season.id} />
-                            </div>
-                        )}
-                        {staffTeamAwards.length > 0 && (
-                            <div>
-                                <SectionLabel>Staff Team</SectionLabel>
-                                <StaffTable awards={staffTeamAwards} />
-                            </div>
-                        )}
-                    </div>
+                        </section>
+                    )}
+                    {specShown.length > 0 && (
+                        <section>
+                            <SectionLabel>Spec Winners</SectionLabel>
+                            <SpecWinnersSection winners={specWinners} />
+                        </section>
+                    )}
+                    {firstTeamAwards.length > 0 && (
+                        <section>
+                            <SectionLabel>First Team</SectionLabel>
+                            <FirstTeamList awards={firstTeamAwards} seasonId={season.id} />
+                        </section>
+                    )}
+                    {staffTeamAwards.length > 0 && (
+                        <section>
+                            <SectionLabel>Staff Team</SectionLabel>
+                            <StaffTable awards={staffTeamAwards} />
+                        </section>
+                    )}
                 </div>
             )}
 
