@@ -79,6 +79,14 @@ export interface PlayerSearchHit {
     } | null;
 }
 
+export interface RosterSpec {
+    name: string;
+    position: string;
+    stars: number;
+    starsAwarded: number;
+    dropped: boolean;
+}
+
 export interface PlayerWithRole {
     id: string;
     roblox_user_id: string;
@@ -89,6 +97,7 @@ export interface PlayerWithRole {
     created_at: string;
     role: "captain" | "vice_captain" | "court_captain" | "player";
     current_position: PositionCode | null;
+    spec: RosterSpec | null;
 }
 
 import {Player, PlayerSeasonStatRow} from "@/shared/types/db";

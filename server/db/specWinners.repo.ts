@@ -21,6 +21,27 @@ export async function findSpecWinnersBySeason(
     return Ok((data ?? []) as unknown as SpecWinnerWithRefs[]);
 }
 
+export interface RosterSpecRow {
+    player_id: string;
+    stars_awarded: number;
+    spec: {name: string; position: string; stars: number} | null;
+}
+
+export async function findSpecWinnersBySeasonAndPlayers(
+    supabase: DBClient,
+    seasonId: string,
+    playerIds: string[]
+): Promise<Result<RosterSpecRow[]>> {
+    if (playerIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("spec_winners")
+        .select("player_id, stars_awarded, spec:specs(name, position, stars)")
+        .eq("season_id", seasonId)
+        .in("player_id", playerIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as RosterSpecRow[]);
+}
+
 export async function upsertSpecWinner(
     supabase: DBClient,
     p: {seasonId: string; specId: string; playerId: string; starsAwarded: number}
