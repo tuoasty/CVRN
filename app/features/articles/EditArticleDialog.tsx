@@ -15,6 +15,8 @@ import { type AuthorSelection } from '@/app/features/media/AuthorPicker'
 import { type MatchSelection } from '@/app/features/articles/MatchPicker'
 import ArticleFormFields from '@/app/features/articles/ArticleFormFields'
 import ArticleImagesManager, { type ArticleImageItem, appendImagesToFormData } from '@/app/features/articles/ArticleImagesManager'
+import ArticlePreview from '@/app/features/articles/ArticlePreview'
+import ArticleEditorModeToggle, { type EditorMode } from '@/app/features/articles/ArticleEditorModeToggle'
 import SlugFields from '@/app/features/articles/SlugFields'
 import { useSlugField } from '@/app/features/articles/useSlugField'
 import SeasonSelect from '@/app/features/articles/SeasonSelect'
@@ -39,6 +41,7 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
     const [images, setImages] = useState<ArticleImageItem[]>([])
     const [fetching, setFetching] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [mode, setMode] = useState<EditorMode>('edit')
     const loadedSlugRef = useRef<string | null>(null)
 
     const { matches } = useAllMatches()
@@ -51,7 +54,7 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
     }, [teams])
 
     useEffect(() => {
-        if (!open) { loadedSlugRef.current = null; return }
+        if (!open) { loadedSlugRef.current = null; setMode('edit'); return }
         if (!article) return
         if (loadedSlugRef.current === article.slug) return
         loadedSlugRef.current = article.slug
@@ -70,7 +73,6 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                 setMatch(d.match_id ? { id: d.match_id, label: PENDING_LABEL } : null)
                 setImages(d.images.map(im => ({
                     handle:      im.handle,
-                    placement:   im.placement,
                     origin:      'existing' as const,
                     mediaPostId: im.mediaPostId,
                     file:        null,
@@ -130,9 +132,12 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                 <DialogHeader className="px-6 py-4 pr-14 border-b border-border flex-row items-center justify-between space-y-0 gap-4">
                     <DialogTitle>Edit Article</DialogTitle>
                     {!fetching && (
-                        <div className="flex items-center gap-2">
-                            <Label className="text-xs text-muted-foreground whitespace-nowrap">Season</Label>
-                            <SeasonSelect value={seasonId} onChange={setSeasonId} />
+                        <div className="flex items-center gap-3">
+                            <ArticleEditorModeToggle mode={mode} onChange={setMode} />
+                            <div className="flex items-center gap-2">
+                                <Label className="text-xs text-muted-foreground whitespace-nowrap">Season</Label>
+                                <SeasonSelect value={seasonId} onChange={setSeasonId} />
+                            </div>
                         </div>
                     )}
                 </DialogHeader>
@@ -143,31 +148,37 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                     </div>
                 ) : (
                     <div className="flex flex-col flex-1 min-h-0">
-                        <ArticleFormFields
-                            idPrefix="edit"
-                            title={title}
-                            onTitleChange={setTitle}
-                            body={body}
-                            onBodyChange={setBody}
-                            author={author}
-                            onAuthorChange={setAuthor}
-                            seasonId={seasonId}
-                            match={match}
-                            onMatchChange={setMatch}
-                            topSlot={
-                                <SlugFields
-                                    idPrefix="edit"
-                                    shortName={slugField.shortName}
-                                    slug={slugField.slug}
-                                    canonicalSlug={slugField.canonicalSlug}
-                                    onShortNameChange={slugField.setShortName}
-                                    onSlugChange={slugField.setSlug}
-                                />
-                            }
-                            imagesSlot={insert => (
-                                <ArticleImagesManager items={images} onChange={setImages} insertToken={insert} />
-                            )}
-                        />
+                        {mode === 'edit' ? (
+                            <ArticleFormFields
+                                idPrefix="edit"
+                                title={title}
+                                onTitleChange={setTitle}
+                                body={body}
+                                onBodyChange={setBody}
+                                author={author}
+                                onAuthorChange={setAuthor}
+                                seasonId={seasonId}
+                                match={match}
+                                onMatchChange={setMatch}
+                                topSlot={
+                                    <SlugFields
+                                        idPrefix="edit"
+                                        shortName={slugField.shortName}
+                                        slug={slugField.slug}
+                                        canonicalSlug={slugField.canonicalSlug}
+                                        onShortNameChange={slugField.setShortName}
+                                        onSlugChange={slugField.setSlug}
+                                    />
+                                }
+                                imagesSlot={insert => (
+                                    <ArticleImagesManager items={images} onChange={setImages} insertToken={insert} />
+                                )}
+                            />
+                        ) : (
+                            <div className="flex-1 min-h-0 overflow-y-auto p-6">
+                                <ArticlePreview title={title} body={body} author={author} seasonId={seasonId} images={images} />
+                            </div>
+                        )}
 
                         <div className="flex justify-end gap-2 px-6 py-3 border-t border-border">
                             <Button type="button" variant="ghost" size="sm" className="rounded-sm" onClick={() => onOpenChange(false)} disabled={loading}>

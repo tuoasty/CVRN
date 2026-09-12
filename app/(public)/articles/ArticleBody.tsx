@@ -1,6 +1,5 @@
 "use client"
 
-import Image from 'next/image'
 import type { Components } from 'react-markdown'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -9,19 +8,19 @@ import rehypeSanitize from 'rehype-sanitize'
 import { cn } from '@/lib/utils'
 
 type Placement = 'left' | 'center' | 'right'
+type Width = 25 | 50 | 75
 
 interface ArticleImageRef {
     handle: string
-    placement: Placement
     url: string | null
     mediaPostId: string
 }
 
-const TOKEN_RE = /\[(cover|image:[a-z0-9]+)(?::(left|center|right))?\]/gi
+const TOKEN_RE = /\[(cover|image:[a-z0-9]+)((?::(?:left|center|right|25|50|75)){0,2})\]/gi
 
 type Segment =
     | { type: 'text'; text: string }
-    | { type: 'image'; handle: string; placement?: Placement }
+    | { type: 'image'; handle: string; placement?: Placement; width?: Width }
 
 function tokenize(body: string): Segment[] {
     const segments: Segment[] = []
@@ -32,7 +31,13 @@ function tokenize(body: string): Segment[] {
         if (m.index > last) segments.push({ type: 'text', text: body.slice(last, m.index) })
         const inner = m[1].toLowerCase()
         const handle = inner === 'cover' ? 'cover' : inner.slice('image:'.length)
-        segments.push({ type: 'image', handle, placement: (m[2]?.toLowerCase() as Placement | undefined) })
+        let placement: Placement | undefined
+        let width: Width | undefined
+        for (const part of (m[2] ?? '').toLowerCase().split(':')) {
+            if (part === 'left' || part === 'center' || part === 'right') placement = part
+            else if (part === '25' || part === '50' || part === '75') width = Number(part) as Width
+        }
+        segments.push({ type: 'image', handle, placement, width })
         last = m.index + m[0].length
     }
     if (last < body.length) segments.push({ type: 'text', text: body.slice(last) })
@@ -75,26 +80,24 @@ function Prose({ children }: { children: string }) {
     )
 }
 
-function ArticleImage({ url, placement }: { url: string; placement: Placement }) {
+function ArticleImage({ url, placement, width }: { url: string; placement: Placement; width?: Width }) {
     if (placement === 'center') {
         return (
             <figure className="clear-both my-8">
-                <div className="relative aspect-video w-full overflow-hidden rounded-sm border border-border bg-muted">
-                    <Image src={url} alt="" fill sizes="(max-width: 720px) 100vw, 680px" className="object-cover" unoptimized />
-                </div>
+                <img src={url} alt="" loading="lazy" className="w-full h-auto rounded-sm border border-border" />
             </figure>
         )
     }
+    const widthClass = width === 25 ? 'w-1/4' : width === 75 ? 'w-3/4' : 'w-1/2'
     return (
         <figure
             className={cn(
-                'my-2 w-1/2 max-w-[320px]',
+                'my-2',
+                widthClass,
                 placement === 'left' ? 'float-left mr-5 mb-3' : 'float-right ml-5 mb-3',
             )}
         >
-            <div className="relative aspect-video w-full overflow-hidden rounded-sm border border-border bg-muted">
-                <Image src={url} alt="" fill sizes="320px" className="object-cover" unoptimized />
-            </div>
+            <img src={url} alt="" loading="lazy" className="w-full h-auto rounded-sm border border-border" />
         </figure>
     )
 }
@@ -113,7 +116,7 @@ export default function ArticleBody({ body, images, hasMatchHero }: { body: stri
                 if (seg.type === 'text') return <Prose key={i}>{seg.text}</Prose>
                 const img = byHandle.get(seg.handle)
                 if (!img?.url) return null
-                return <ArticleImage key={i} url={img.url} placement={seg.placement ?? img.placement} />
+                return <ArticleImage key={i} url={img.url} placement={seg.placement ?? 'center'} width={seg.width} />
             })}
             <div className="clear-both" />
         </div>

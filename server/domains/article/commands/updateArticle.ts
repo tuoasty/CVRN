@@ -53,8 +53,8 @@ export async function updateArticle(supabase: DBClient, p: UpdateArticleInput): 
 
             const ex = existing.get(img.handle)
             if (ex) {
-                if (ex.placement !== img.placement || ex.sort_order !== idx) {
-                    const upd = await updateArticleMedia(supabase, ex.id, { placement: img.placement, sort_order: idx })
+                if (ex.sort_order !== idx) {
+                    const upd = await updateArticleMedia(supabase, ex.id, { sort_order: idx })
                     if (!upd.ok) return upd
                 }
                 continue
@@ -96,7 +96,7 @@ export async function updateArticle(supabase: DBClient, p: UpdateArticleInput): 
                 }
 
                 const link = await insertArticleMedia(supabase, {
-                    articleId: article.id, mediaPostId: newPostId, handle: img.handle, placement: img.placement, sortOrder: idx,
+                    articleId: article.id, mediaPostId: newPostId, handle: img.handle, sortOrder: idx,
                 })
                 if (!link.ok) {
                     await deleteFile(supabase, { bucket: BUCKETS.MEDIA, path })
@@ -105,7 +105,7 @@ export async function updateArticle(supabase: DBClient, p: UpdateArticleInput): 
                 }
             } else if (img.kind === 'link' && img.mediaPostId) {
                 const link = await insertArticleMedia(supabase, {
-                    articleId: article.id, mediaPostId: img.mediaPostId, handle: img.handle, placement: img.placement, sortOrder: idx,
+                    articleId: article.id, mediaPostId: img.mediaPostId, handle: img.handle, sortOrder: idx,
                 })
                 if (!link.ok) return link
             }

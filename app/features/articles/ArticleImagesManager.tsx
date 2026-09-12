@@ -8,18 +8,15 @@ import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { Badge } from '@/app/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import ImageDropzone from '@/app/features/media/ImageDropzone'
 import { useAllMediaPosts } from '@/app/hooks/useMediaPosts'
 import { resolveMediaThumbnail } from '@/app/features/media/mediaUtils'
 import { compressImage } from '@/app/utils/imageCompression'
 import { clientLogger } from '@/app/utils/clientLogger'
 import { toast } from '@/app/utils/toast'
-import type { ImagePlacement } from '@/server/domains/article'
 
 export interface ArticleImageItem {
     handle: string
-    placement: ImagePlacement
     origin: 'existing' | 'upload' | 'link'
     mediaPostId: string | null
     file: File | null
@@ -44,7 +41,6 @@ export function tokenForHandle(handle: string): string {
 export function appendImagesToFormData(formData: FormData, items: ArticleImageItem[]) {
     const meta = items.map(i => ({
         handle:      i.handle,
-        placement:   i.placement,
         kind:        i.origin === 'upload' ? 'upload' : 'link',
         mediaPostId: i.origin === 'upload' ? undefined : i.mediaPostId,
     }))
@@ -71,7 +67,6 @@ export default function ArticleImagesManager({ items, onChange, insertToken }: P
             const handle = nextImageHandle(items)
             onChange([...items, {
                 handle,
-                placement:   'center',
                 origin:      'upload',
                 mediaPostId: null,
                 file:        compressed,
@@ -84,10 +79,6 @@ export default function ArticleImagesManager({ items, onChange, insertToken }: P
         } finally {
             setCompressing(false)
         }
-    }
-
-    function setPlacement(handle: string, placement: ImagePlacement) {
-        onChange(items.map(i => i.handle === handle ? { ...i, placement } : i))
     }
 
     function remove(handle: string) {
@@ -115,16 +106,6 @@ export default function ArticleImagesManager({ items, onChange, insertToken }: P
                                     <span className="text-xs text-muted-foreground truncate">{item.label}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Select value={item.placement} onValueChange={v => setPlacement(item.handle, v as ImagePlacement)}>
-                                        <SelectTrigger className="h-8 w-28 rounded-sm text-xs">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="left">Left</SelectItem>
-                                            <SelectItem value="center">Center</SelectItem>
-                                            <SelectItem value="right">Right</SelectItem>
-                                        </SelectContent>
-                                    </Select>
                                     <Button type="button" variant="outline" size="sm" className="h-8 rounded-sm gap-1 px-2" onClick={() => insertToken(tokenForHandle(item.handle))}>
                                         <Code className="h-3.5 w-3.5" /> Token
                                     </Button>
@@ -157,7 +138,6 @@ export default function ArticleImagesManager({ items, onChange, insertToken }: P
                         const handle = nextImageHandle(items)
                         onChange([...items, {
                             handle,
-                            placement:   'center',
                             origin:      'link',
                             mediaPostId: post.id,
                             file:        null,
@@ -168,9 +148,14 @@ export default function ArticleImagesManager({ items, onChange, insertToken }: P
                 </TabsContent>
             </Tabs>
 
-            <p className="text-xs text-muted-foreground">
-                First image is the cover (thumbnail + fallback hero). Click <span className="font-mono">Token</span> to drop an image into the body where your cursor sits. Match GFX always leads as the hero.
-            </p>
+            <div className="space-y-1 text-xs text-muted-foreground">
+                <p>
+                    First image is the cover (thumbnail + fallback hero). Click <span className="font-mono">Token</span> to drop an image into the body where your cursor sits. Match GFX always leads as the hero.
+                </p>
+                <p>
+                    A bare token like <span className="font-mono">[image:a]</span> renders full-width. Add <span className="font-mono">:left</span> or <span className="font-mono">:right</span> to float it with text wrapping beside, and <span className="font-mono">:25</span>/<span className="font-mono">:50</span>/<span className="font-mono">:75</span> to size a float (e.g. <span className="font-mono">[image:a:left:50]</span>). Images are never cropped.
+                </p>
+            </div>
         </div>
     )
 }

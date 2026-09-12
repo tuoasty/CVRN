@@ -43,9 +43,9 @@ function parseArticleImages(formData: FormData): Result<ArticleImageInput[]> {
     const images: ArticleImageInput[] = parsed.data.map(m => {
         if (m.kind === 'upload') {
             const file = formData.get(`file_${m.handle}`) as File | null
-            return { handle: m.handle, placement: m.placement, kind: 'upload' as const, file: file && file.size > 0 ? file : null }
+            return { handle: m.handle, kind: 'upload' as const, file: file && file.size > 0 ? file : null }
         }
-        return { handle: m.handle, placement: m.placement, kind: 'link' as const, mediaPostId: m.mediaPostId ?? null }
+        return { handle: m.handle, kind: 'link' as const, mediaPostId: m.mediaPostId ?? null }
     })
     return Ok(images)
 }

@@ -16,7 +16,6 @@ export type {
     ArticleDetail,
     ArticleImageRef,
     ArticleImageInput,
-    ImagePlacement,
     CreateArticleInput,
     UpdateArticleInput,
     DeleteArticleInput,

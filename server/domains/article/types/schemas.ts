@@ -22,11 +22,8 @@ export const UpdateArticleFormSchema = z.object({
 })
 export type UpdateArticleFormInput = z.infer<typeof UpdateArticleFormSchema>
 
-export const ImagePlacementSchema = z.enum(['left', 'center', 'right'])
-
 export const ArticleImageMetaSchema = z.object({
     handle:      z.string().min(1).max(20).regex(/^[a-z0-9]+$/, 'Invalid image handle'),
-    placement:   ImagePlacementSchema,
     kind:        z.enum(['upload', 'link']),
     mediaPostId: z.string().uuid().nullable().optional(),
 })

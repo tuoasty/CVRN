@@ -77,7 +77,7 @@ export default function ArticleFormFields({
                         placeholder="Paste the article body here. **bold**, *italic*, # headers, > quotes, lists, `code`."
                     />
                     <p className="text-xs text-muted-foreground">
-                        Place images with tokens like <code className="font-mono">[cover]</code> or <code className="font-mono">[image:a]</code>. Add <code className="font-mono">:left</code>, <code className="font-mono">:center</code>, or <code className="font-mono">:right</code> to override placement inline.
+                        Place images with tokens like <code className="font-mono">[cover]</code> or <code className="font-mono">[image:a]</code> (full-width). Add <code className="font-mono">:left</code>/<code className="font-mono">:right</code> to float, plus <code className="font-mono">:25</code>/<code className="font-mono">:50</code>/<code className="font-mono">:75</code> to size a float.
                     </p>
                 </div>
             </div>

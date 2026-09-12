@@ -20,11 +20,8 @@ export interface UpdateArticleFields {
     published_at?: string | null
 }
 
-export type ImagePlacement = 'left' | 'center' | 'right'
-
 export interface ArticleImageInput {
     handle: string
-    placement: ImagePlacement
     kind: 'upload' | 'link'
     mediaPostId?: string | null
     file?: File | null
@@ -32,7 +29,6 @@ export interface ArticleImageInput {
 
 export interface ArticleImageRef {
     handle: string
-    placement: ImagePlacement
     url: string | null
     mediaPostId: string
 }

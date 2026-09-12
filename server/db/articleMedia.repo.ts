@@ -5,7 +5,6 @@ import { serializeError } from '@/server/utils/serializeableError'
 export interface ArticleMediaJoined {
     id: string
     handle: string
-    placement: 'left' | 'center' | 'right'
     sort_order: number
     media_post_id: string
     image_url: string | null
@@ -16,7 +15,6 @@ export interface ArticleMediaJoined {
 interface RawJoinRow {
     id: string
     handle: string
-    placement: 'left' | 'center' | 'right'
     sort_order: number
     media_post_id: string
     media_posts: { id: string; image_url: string | null; type: string; article_id: string | null } | null
@@ -26,7 +24,6 @@ function mapJoinRow(r: RawJoinRow): ArticleMediaJoined {
     return {
         id:               r.id,
         handle:           r.handle,
-        placement:        r.placement,
         sort_order:       r.sort_order,
         media_post_id:    r.media_post_id,
         image_url:        r.media_posts?.image_url ?? null,
@@ -35,11 +32,11 @@ function mapJoinRow(r: RawJoinRow): ArticleMediaJoined {
     }
 }
 
-const JOIN_SELECT = 'id, handle, placement, sort_order, media_post_id, media_posts(id, image_url, type, article_id)'
+const JOIN_SELECT = 'id, handle, sort_order, media_post_id, media_posts(id, image_url, type, article_id)'
 
 export async function insertArticleMedia(
     supabase: DBClient,
-    p: { articleId: string; mediaPostId: string; handle: string; placement: string; sortOrder: number },
+    p: { articleId: string; mediaPostId: string; handle: string; sortOrder: number },
 ): Promise<Result<null>> {
     const { error } = await supabase
         .from('article_media')
@@ -47,7 +44,7 @@ export async function insertArticleMedia(
             article_id:    p.articleId,
             media_post_id: p.mediaPostId,
             handle:        p.handle,
-            placement:     p.placement,
+            placement:     'center',
             sort_order:    p.sortOrder,
         })
     if (error) return Err(serializeError(error, 'DB_ERROR'))
@@ -89,7 +86,7 @@ export async function findArticleCoversByArticleIds(
 export async function updateArticleMedia(
     supabase: DBClient,
     id: string,
-    fields: { placement?: string; sort_order?: number },
+    fields: { sort_order?: number },
 ): Promise<Result<null>> {
     const { error } = await supabase
         .from('article_media')

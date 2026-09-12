@@ -25,7 +25,7 @@ export async function getArticleBySlug(supabase: DBClient, slug: string): Promis
 
         const mediaRes = await findArticleMediaByArticleId(supabase, article.id)
         const images: ArticleImageRef[] = mediaRes.ok
-            ? mediaRes.value.map(m => ({ handle: m.handle, placement: m.placement, url: m.image_url, mediaPostId: m.media_post_id }))
+            ? mediaRes.value.map(m => ({ handle: m.handle, url: m.image_url, mediaPostId: m.media_post_id }))
             : []
         const coverUrl = images.find(i => i.handle === 'cover')?.url ?? images[0]?.url ?? null
 

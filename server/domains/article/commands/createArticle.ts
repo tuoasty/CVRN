@@ -83,12 +83,12 @@ export async function createArticle(supabase: DBClient, p: CreateArticleInput): 
                 if (!ins.ok) return ins
 
                 const link = await insertArticleMedia(supabase, {
-                    articleId, mediaPostId: newPostId, handle: img.handle, placement: img.placement, sortOrder: idx,
+                    articleId, mediaPostId: newPostId, handle: img.handle, sortOrder: idx,
                 })
                 if (!link.ok) return link
             } else if (img.kind === 'link' && img.mediaPostId) {
                 const link = await insertArticleMedia(supabase, {
-                    articleId, mediaPostId: img.mediaPostId, handle: img.handle, placement: img.placement, sortOrder: idx,
+                    articleId, mediaPostId: img.mediaPostId, handle: img.handle, sortOrder: idx,
                 })
                 if (!link.ok) return link
             }
