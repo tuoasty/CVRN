@@ -37,10 +37,17 @@ export const SpecQualificationSchema = z.object({
 
 const bonusValue = z.number().finite().min(-1).max(3);
 
+export const BonusScopeSchema = z.object({
+    count: z.boolean(),
+    per_set: z.boolean(),
+    pct: z.boolean(),
+});
+
 export const PlacementBonusConfigSchema = z.object({
     upperFinalist: bonusValue,
     ladder: z.array(bonusValue).length(8),
     outside: bonusValue,
+    scope: BonusScopeSchema,
 });
 
 export const SavePlacementBonusSchema = z.object({

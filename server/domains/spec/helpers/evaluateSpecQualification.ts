@@ -1,7 +1,7 @@
 import {PlayerLeaderboardRow} from "@/server/domains/player";
 import {SpecQualificationRow, SpecRequirementCheck, SpecTier} from "../types";
-import {isSpecStatKey, isLowerIsBetterStatKey, isTotalStatKey, PARTICIPATION_STAT_KEYS} from "../types/statKeys";
-import {PlacementBonusConfig, resolvePlacementBonus} from "./placementBonus";
+import {isSpecStatKey, isLowerIsBetterStatKey, specStatMeta, PARTICIPATION_STAT_KEYS} from "../types/statKeys";
+import {BonusScope, DEFAULT_BONUS_SCOPE, PlacementBonusConfig, resolvePlacementBonus} from "./placementBonus";
 
 export type EvaluableRequirement = {
     tier: SpecTier;
@@ -34,6 +34,7 @@ export function evaluateSpecQualification(
     const secondary = known.filter(r => r.tier === "secondary");
 
     const applyPlacement = options.bonusConfig !== undefined;
+    const scope = options.bonusConfig?.scope ?? DEFAULT_BONUS_SCOPE;
 
     const rows = players.map<SpecQualificationRow>(player => {
         const place = player.team_id ? (options.placeByTeamId?.get(player.team_id) ?? null) : null;
@@ -43,7 +44,7 @@ export function evaluateSpecQualification(
             ? resolvePlacementBonus(options.bonusConfig as PlacementBonusConfig, place, isUpperFinalist)
             : 0;
 
-        const checks = known.map(r => check(player, r, bonus));
+        const checks = known.map(r => check(player, r, bonus, scope));
 
         const mainPassed = checks.filter(c => c.tier === "main" && c.passed).length;
         const secondaryPassed = checks.filter(c => c.tier === "secondary" && c.passed).length;
@@ -92,14 +93,16 @@ export function evaluateSpecQualification(
 function check(
     player: PlayerLeaderboardRow,
     r: EvaluableRequirement,
-    bonus: number
+    bonus: number,
+    scope: BonusScope
 ): SpecRequirementCheck {
     const raw = player[r.statKey as keyof PlayerLeaderboardRow];
 
     const value = typeof raw === "number" ? raw : null;
 
     const lower = isLowerIsBetterStatKey(r.statKey);
-    const scalable = isTotalStatKey(r.statKey) && !PARTICIPATION_STAT_KEYS.has(r.statKey) && !lower;
+    const format = specStatMeta(r.statKey)?.format ?? "count";
+    const scalable = scope[format] && !PARTICIPATION_STAT_KEYS.has(r.statKey) && !lower;
     const scaled = scalable ? bonus : 0;
     const adjusted = value === null ? null : value * (1 + scaled);
 

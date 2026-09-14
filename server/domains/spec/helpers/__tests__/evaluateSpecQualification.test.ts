@@ -7,6 +7,7 @@ const cfg: PlacementBonusConfig = {
     upperFinalist: 0.25,
     ladder: [0.1, 0.075, 0.05, 0.025, 0, 0, 0, 0],
     outside: -0.1,
+    scope: {count: true, per_set: false, pct: false},
 }
 
 function player(username: string, stats: Partial<Record<string, number | null>> = {}): PlayerLeaderboardRow {
@@ -275,6 +276,42 @@ describe('evaluateSpecQualification', () => {
             expect(total.passed).toBe(true)
             expect(perSet.adjustedValue).toBe(10)
             expect(perSet.passed).toBe(false)
+        })
+
+        it('scales a per-set stat when scope.per_set is enabled', () => {
+            const {rows} = evaluateSpecQualification(
+                [onTeam('runnerUp', 'upper', {kills_per_set: 10})],
+                [main('kills_per_set', 13)],
+                0,
+                {...opts, bonusConfig: {...cfg, scope: {count: false, per_set: true, pct: false}}}
+            )
+            const perSet = rows[0].checks.find(c => c.statKey === 'kills_per_set')!
+            expect(perSet.adjustedValue).toBeCloseTo(13.25)
+            expect(perSet.passed).toBe(true)
+        })
+
+        it('scales a percentage stat when scope.pct is enabled, and can exceed 1', () => {
+            const {rows} = evaluateSpecQualification(
+                [onTeam('runnerUp', 'upper', {hit_eff: 0.8})],
+                [main('hit_eff', 1)],
+                0,
+                {...opts, bonusConfig: {...cfg, scope: {count: false, per_set: false, pct: true}}}
+            )
+            const eff = rows[0].checks.find(c => c.statKey === 'hit_eff')!
+            expect(eff.adjustedValue).toBeCloseTo(1.06)
+            expect(eff.passed).toBe(true)
+        })
+
+        it('leaves a total unscaled when scope.count is disabled', () => {
+            const {rows} = evaluateSpecQualification(
+                [onTeam('runnerUp', 'upper', {kills_total: 100})],
+                [main('kills_total', 110)],
+                0,
+                {...opts, bonusConfig: {...cfg, scope: {count: false, per_set: false, pct: false}}}
+            )
+            const total = rows[0].checks.find(c => c.statKey === 'kills_total')!
+            expect(total.adjustedValue).toBe(100)
+            expect(total.passed).toBe(false)
         })
 
     })

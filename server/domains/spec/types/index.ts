@@ -60,9 +60,10 @@ export interface SpecWinnerWithRefs {
     player: {id: string; username: string; display_name: string | null; avatar_url: string | null};
 }
 
-export type {PlacementBonusConfig} from "../helpers/placementBonus";
+export type {PlacementBonusConfig, BonusScope} from "../helpers/placementBonus";
 export {
     DEFAULT_PLACEMENT_BONUS,
+    DEFAULT_BONUS_SCOPE,
     PLACEMENT_LADDER_SIZE,
     resolvePlacementBonus,
     formatPlacementBonus,

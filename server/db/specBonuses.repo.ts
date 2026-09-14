@@ -9,7 +9,7 @@ export async function getSpecBonus(
 ): Promise<Result<PlacementBonusConfig | null>> {
     const {data, error} = await supabase
         .from("spec_bonuses")
-        .select("upper_finalist, ladder, outside")
+        .select("upper_finalist, ladder, outside, scope_count, scope_per_set, scope_pct")
         .eq("region_id", regionId)
         .maybeSingle();
     if (error) return Err(serializeError(error, "DB_ERROR"));
@@ -18,6 +18,11 @@ export async function getSpecBonus(
         upperFinalist: data.upper_finalist,
         ladder: data.ladder,
         outside: data.outside,
+        scope: {
+            count: data.scope_count,
+            per_set: data.scope_per_set,
+            pct: data.scope_pct,
+        },
     });
 }
 
@@ -31,6 +36,9 @@ export async function upsertSpecBonus(
         upper_finalist: cfg.upperFinalist,
         ladder: cfg.ladder,
         outside: cfg.outside,
+        scope_count: cfg.scope.count,
+        scope_per_set: cfg.scope.per_set,
+        scope_pct: cfg.scope.pct,
         updated_at: new Date().toISOString(),
     });
     if (error) return Err(serializeError(error, "DB_ERROR"));

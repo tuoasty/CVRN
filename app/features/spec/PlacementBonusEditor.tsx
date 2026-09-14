@@ -3,7 +3,7 @@
 import {RotateCcw, Save} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import {Button} from '@/app/components/ui/button';
-import {PlacementBonusConfig, PLACEMENT_LADDER_SIZE} from '@/server/domains/spec/types';
+import {BonusScope, PlacementBonusConfig, PLACEMENT_LADDER_SIZE} from '@/server/domains/spec/types';
 import {formatPlacement} from '@/app/utils/placement';
 
 const EDITABLE_RUNGS = 6;
@@ -62,6 +62,44 @@ function PctField({
     );
 }
 
+function ScopeToggle({
+    label,
+    checked,
+    onChange,
+    disabled,
+}: {
+    label: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    disabled: boolean;
+}) {
+    return (
+        <label
+            className={cn(
+                'flex items-center gap-1.5 rounded-sm border px-2 py-1.5 select-none transition-colors',
+                disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+                checked ? 'border-primary/50 bg-primary/10' : 'border-border bg-background'
+            )}
+        >
+            <input
+                type="checkbox"
+                checked={checked}
+                disabled={disabled}
+                onChange={e => onChange(e.target.checked)}
+                className="h-3.5 w-3.5 shrink-0 rounded-sm accent-primary"
+            />
+            <span
+                className={cn(
+                    'truncate text-xs font-medium',
+                    checked ? 'text-primary' : 'text-muted-foreground'
+                )}
+            >
+                {label}
+            </span>
+        </label>
+    );
+}
+
 export default function PlacementBonusEditor({
     value,
     isCustom,
@@ -76,6 +114,10 @@ export default function PlacementBonusEditor({
         const ladder = value.ladder.slice(0, PLACEMENT_LADDER_SIZE);
         ladder[i] = fraction;
         onChange({...value, ladder});
+    };
+
+    const setScope = (key: keyof BonusScope, checked: boolean) => {
+        onChange({...value, scope: {...value.scope, [key]: checked}});
     };
 
     return (
@@ -121,7 +163,36 @@ export default function PlacementBonusEditor({
                         disabled={disabled}
                     />
                     <p className="mt-1.5 text-xs leading-tight text-muted-foreground/70">
-                        7th–8th are fixed at 0%. Bonuses scale season totals only, never per-set or %.
+                        7th–8th are fixed at 0%. Bonuses scale the stat types selected below.
+                    </p>
+                </div>
+
+                <div className="border-t border-border pt-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Apply to
+                    </span>
+                    <div className="mt-2 grid grid-cols-3 gap-1.5">
+                        <ScopeToggle
+                            label="Total"
+                            checked={value.scope.count}
+                            onChange={c => setScope('count', c)}
+                            disabled={disabled}
+                        />
+                        <ScopeToggle
+                            label="Per set"
+                            checked={value.scope.per_set}
+                            onChange={c => setScope('per_set', c)}
+                            disabled={disabled}
+                        />
+                        <ScopeToggle
+                            label="%"
+                            checked={value.scope.pct}
+                            onChange={c => setScope('pct', c)}
+                            disabled={disabled}
+                        />
+                    </div>
+                    <p className="mt-1.5 text-xs leading-tight text-muted-foreground/70">
+                        Errors are never scaled. % can exceed 100% when boosted.
                     </p>
                 </div>
 
