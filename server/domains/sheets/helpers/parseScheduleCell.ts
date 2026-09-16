@@ -46,6 +46,7 @@ const TZ_ABBREV_OFFSETS: Record<string, number> = {
     CST: -6, CDT: -5,
     MST: -7, MDT: -6,
     PST: -8, PDT: -7,
+    BRT: -3,
 };
 
 const NAMED_TZ = /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*([A-Za-z]{2,4})$/i;
