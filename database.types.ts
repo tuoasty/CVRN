@@ -2171,7 +2171,7 @@ export type Database = {
         }
       }
       get_player_raw_stat_totals: {
-        Args: { p_roblox_user_id: number; p_season_number?: number }
+        Args: { p_roblox_user_id: string; p_season_number?: number }
         Returns: {
           ape_attempts: number
           ape_kills: number
