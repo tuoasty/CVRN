@@ -282,6 +282,97 @@ export interface PlayerRawStatsResponse {
     };
 }
 
+export interface PlayerStatRanksRow {
+    points_per_set_rank: number | null;
+    kills_per_set_rank: number | null;
+    hit_pct_rank: number | null;
+    assists_per_set_rank: number | null;
+    set_pct_rank: number | null;
+    blocks_per_set_rank: number | null;
+    kb_pct_rank: number | null;
+    receives_per_set_rank: number | null;
+    rec_pct_rank: number | null;
+    aces_per_set_rank: number | null;
+}
+
+export interface PlayerStatsResponse {
+    roblox_user_id: string;
+    sets_played: number;
+    points_per_set_rank: number | null;
+    spiking: {
+        ape_kills: number;
+        ape_attempts: number;
+        delay_kills: number;
+        quick_kills: number;
+        wipes_tools: number;
+        kill_attempts: number;
+        spiking_errors: number;
+        kills_per_set_rank: number | null;
+        hit_pct_rank: number | null;
+    };
+    setting: {
+        assists: number;
+        setting_errors: number;
+        assists_per_set_rank: number | null;
+        set_pct_rank: number | null;
+    };
+    blocking: {
+        kill_blocks: number;
+        block_touches: number;
+        blocks_per_set_rank: number | null;
+        kb_pct_rank: number | null;
+    };
+    receiving: {
+        receives: number;
+        digs: number;
+        block_follows: number;
+        dives: number;
+        receive_errors: number;
+        receives_per_set_rank: number | null;
+        rec_pct_rank: number | null;
+    };
+    serving: {
+        jump_serve_aces: number;
+        float_aces: number;
+        service_errors: number;
+        aces_per_set_rank: number | null;
+    };
+}
+
+export interface PlayerAchievement {
+    season_id: string;
+    season_name: string;
+    season_slug: string;
+    place: number;
+    place_end: number;
+    team_id: string;
+    team_name: string;
+    team_slug: string;
+    is_captain: boolean;
+}
+
+export interface PlayerDetailAward {
+    award_name: string;
+    category: string;
+    season_id: string;
+    season_name: string;
+}
+
+export interface PlayerDetailSpecAward {
+    name: string;
+    position: string;
+    stars: number;
+    season_id: string;
+    season_name: string;
+}
+
+export interface PlayerDetailApiResponse {
+    achievements: PlayerAchievement[];
+    awards: PlayerDetailAward[];
+    spec_awards: PlayerDetailSpecAward[];
+    stats: PlayerStatsResponse;
+}
+
 interface StatSummaryTriplet {
     min: number;
     max: number;

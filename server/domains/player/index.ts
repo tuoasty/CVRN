@@ -25,6 +25,8 @@ export {getPlayerTeamHistory} from "./queries/getPlayerTeamHistory";
 export {getPlayerByRobloxUserId} from "./queries/getPlayerByRobloxUserId";
 export {getPlayerRawStatsBySeasonNumber} from "./queries/getPlayerRawStatsBySeasonNumber";
 export {getRawStatSummaryBySeasonNumber} from "./queries/getRawStatSummaryBySeasonNumber";
+export {getPlayerAchievements} from "./queries/getPlayerAchievements";
+export {getPlayerDetailByRobloxUserId} from "./queries/getPlayerDetailByRobloxUserId";
 export type {
     RobloxUserIdInput,
     SavePlayerInput,
@@ -61,6 +63,12 @@ export type {
     PlayerDetail,
     PlayerRawStatTotalsRow,
     PlayerRawStatsResponse,
+    PlayerStatRanksRow,
+    PlayerStatsResponse,
+    PlayerAchievement,
+    PlayerDetailAward,
+    PlayerDetailSpecAward,
+    PlayerDetailApiResponse,
     RawStatSummaryRow,
     RawStatSummaryResponse,
     RobloxIdParamInput,

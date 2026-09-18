@@ -117,7 +117,7 @@ export async function GET(req: Request) {
     }
 
     if (changed > 0) {
-        revalidatePublicData([CACHE_TAGS.players, CACHE_TAGS.teams]);
+        revalidatePublicData([CACHE_TAGS.players, CACHE_TAGS.teams, CACHE_TAGS.rawStats]);
     } else {
         log.info("No public-facing player fields changed; skipping revalidation");
     }

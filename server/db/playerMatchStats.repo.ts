@@ -8,7 +8,7 @@ import {
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {PlayerMatchStatsInsert} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
-import {PlayerRawStatTotalsRow, RawStatSummaryRow} from "@/server/domains/player/types";
+import {PlayerRawStatTotalsRow, RawStatSummaryRow, PlayerStatRanksRow} from "@/server/domains/player/types";
 
 export async function findMatchIdsWithStats(supabase: DBClient, matchIds: string[]): Promise<Result<string[]>> {
     if (matchIds.length === 0) return Ok([]);
@@ -101,6 +101,20 @@ export async function findPlayerRawStatTotals(
         .single();
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data as PlayerRawStatTotalsRow);
+}
+
+export async function findPlayerStatRanks(
+    supabase: DBClient,
+    p: {robloxUserId: string; seasonNumber: number | null}
+): Promise<Result<PlayerStatRanksRow>> {
+    const {data, error} = await supabase
+        .rpc("get_player_stat_ranks", {
+            p_roblox_user_id: p.robloxUserId,
+            p_season_number: p.seasonNumber ?? undefined,
+        })
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data as PlayerStatRanksRow);
 }
 
 export async function findRawStatSummary(

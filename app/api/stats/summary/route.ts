@@ -1,8 +1,9 @@
 import {createPublicClient} from "@/server/supabase/server-public";
 import {isValidRobloxApiSecret} from "@/server/utils/apiAuth";
 import {toApiResponse} from "@/server/utils/apiResponse";
-import {SeasonQuerySchema, getRawStatSummaryBySeasonNumber} from "@/server/domains/player";
+import {SeasonQuerySchema} from "@/server/domains/player";
 import {resolveSeasonNumber} from "@/server/domains/season";
+import {getCachedRawStatSummary} from "@/server/cache/publicReads";
 
 export async function GET(req: Request) {
     if (!isValidRobloxApiSecret(req.headers.get("authorization"))) {
@@ -24,6 +25,6 @@ export async function GET(req: Request) {
         seasonNumber = resolved.value;
     }
 
-    const result = await getRawStatSummaryBySeasonNumber(supabase, seasonNumber);
+    const result = await getCachedRawStatSummary(seasonNumber);
     return toApiResponse(result);
 }

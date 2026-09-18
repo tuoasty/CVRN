@@ -1,8 +1,9 @@
 import {createPublicClient} from "@/server/supabase/server-public";
 import {isValidRobloxApiSecret} from "@/server/utils/apiAuth";
 import {toApiResponse} from "@/server/utils/apiResponse";
-import {RobloxIdParamSchema, SeasonQuerySchema, getPlayerRawStatsBySeasonNumber} from "@/server/domains/player";
+import {RobloxIdParamSchema, SeasonQuerySchema} from "@/server/domains/player";
 import {resolveSeasonNumber} from "@/server/domains/season";
+import {getCachedPlayerDetailByRobloxId} from "@/server/cache/publicReads";
 
 export async function GET(req: Request, {params}: {params: Promise<{robloxId: string}>}) {
     if (!isValidRobloxApiSecret(req.headers.get("authorization"))) {
@@ -26,9 +27,6 @@ export async function GET(req: Request, {params}: {params: Promise<{robloxId: st
         seasonNumber = resolved.value;
     }
 
-    const result = await getPlayerRawStatsBySeasonNumber(supabase, {
-        robloxUserId: parsedId.data.robloxId,
-        seasonNumber,
-    });
+    const result = await getCachedPlayerDetailByRobloxId(parsedId.data.robloxId, seasonNumber);
     return toApiResponse(result);
 }

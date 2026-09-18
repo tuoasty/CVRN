@@ -18,6 +18,8 @@ import {
     getLeaderboardStatRows,
     getLeaderboardIdentity,
     getTeamLeaderboard,
+    getPlayerDetailByRobloxUserId,
+    getRawStatSummaryBySeasonNumber,
 } from "@/server/domains/player";
 import {findHeldSpecSeasonId} from "@/server/db/seasons.repo";
 import type {PlayerDetail} from "@/server/domains/player";
@@ -53,7 +55,7 @@ import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
 import {getPublicSpecSnapshot} from "@/server/domains/spec";
 import {Result} from "@/shared/types/result";
-import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS} from "./tags";
+import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS, RAW_STATS_REVALIDATE_SECONDS} from "./tags";
 
 function unwrap<T>(result: Result<T, {message: string}>, label: string): T {
     if (!result.ok) {
@@ -453,6 +455,20 @@ export const getCachedPlayersByIds = unstable_cache(
 export function playerIdsCacheKey(ids: string[]): string {
     return [...new Set(ids)].sort().join(",");
 }
+
+export const getCachedPlayerDetailByRobloxId = unstable_cache(
+    async (robloxUserId: string, seasonNumber: number | null) =>
+        getPlayerDetailByRobloxUserId(createPublicClient(), {robloxUserId, seasonNumber}),
+    ["public:player-detail-by-roblox-id"],
+    {tags: [CACHE_TAGS.rawStats], revalidate: RAW_STATS_REVALIDATE_SECONDS},
+);
+
+export const getCachedRawStatSummary = unstable_cache(
+    async (seasonNumber: number | null) =>
+        getRawStatSummaryBySeasonNumber(createPublicClient(), seasonNumber),
+    ["public:raw-stat-summary"],
+    {tags: [CACHE_TAGS.rawStats], revalidate: RAW_STATS_REVALIDATE_SECONDS},
+);
 
 export const getCachedSeasonBySlugAndRegion = unstable_cache(
     async (slug: string, regionId: string) =>

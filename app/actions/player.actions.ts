@@ -3,7 +3,7 @@
 import {revalidatePublicData} from "@/server/cache/revalidate";
 import {CACHE_TAGS} from "@/server/cache/tags";
 
-const ROSTER_TAGS = [CACHE_TAGS.players, CACHE_TAGS.teams];
+const ROSTER_TAGS = [CACHE_TAGS.players, CACHE_TAGS.teams, CACHE_TAGS.rawStats];
 
 import {z} from "zod"
 import {

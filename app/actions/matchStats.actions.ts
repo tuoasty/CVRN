@@ -54,7 +54,7 @@ export async function clearMatchStatsAction(matchId: string) {
     const result = await clearMatchStats(supabase, matchId);
     if (result.ok) {
         revalidatePath('/admin/stats');
-        revalidatePublicData([CACHE_TAGS.matches]);
+        revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.rawStats]);
     }
     return result;
 }
@@ -83,7 +83,7 @@ export async function syncMatchStatsAction(
     if (result.ok) {
         revalidatePath('/admin/stats');
 
-        revalidatePublicData([CACHE_TAGS.matches]);
+        revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.rawStats]);
     }
     return result;
 }
@@ -93,7 +93,7 @@ export async function publishStatsAction() {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
 
-    revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.stats, CACHE_TAGS.players]);
+    revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.stats, CACHE_TAGS.players, CACHE_TAGS.rawStats]);
     await bumpCacheVersion(supabase, [CACHE_TAGS.stats]);
     return Ok(true);
 }

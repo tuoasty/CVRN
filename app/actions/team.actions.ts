@@ -96,7 +96,7 @@ export async function deleteTeamAction(input: unknown): Promise<Result<void>> {
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     const result = await deleteTeam(supabase, parsed.data);
-    if (result.ok) revalidatePublicData([CACHE_TAGS.teams, CACHE_TAGS.players]);
+    if (result.ok) revalidatePublicData([CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.rawStats]);
     return result;
 }
 

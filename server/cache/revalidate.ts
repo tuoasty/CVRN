@@ -16,4 +16,5 @@ export const SHEET_SYNC_TAGS: CacheTag[] = [
     CACHE_TAGS.matches,
     CACHE_TAGS.standings,
     CACHE_TAGS.playoffs,
+    CACHE_TAGS.rawStats,
 ];

@@ -78,6 +78,13 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         readCount: 1,
         affects: "Spec requirements page",
     },
+    [CACHE_TAGS.rawStats]: {
+        label: "Raw Stats",
+        description:
+            "Raw (unpublished) per-player box-score totals and percentile ranks read directly off player_match_stats, independent of the Publish gate on the Stats tag. Held for 15 minutes.",
+        readCount: 2,
+        affects: "Player detail API, stats summary API",
+    },
 };
 
 export const CACHE_TAG_ORDER: CacheTag[] = [
@@ -92,4 +99,5 @@ export const CACHE_TAG_ORDER: CacheTag[] = [
     CACHE_TAGS.media,
     CACHE_TAGS.articles,
     CACHE_TAGS.specs,
+    CACHE_TAGS.rawStats,
 ];
