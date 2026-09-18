@@ -288,6 +288,12 @@ interface StatSummaryTriplet {
     mean: number;
 }
 
+interface QualifiedStatSummaryTriplet {
+    min: number | null;
+    max: number | null;
+    mean: number | null;
+}
+
 export interface RawStatSummaryRow {
     sets_played_min: number; sets_played_max: number; sets_played_mean: number;
     ape_kills_min: number; ape_kills_max: number; ape_kills_mean: number;
@@ -309,10 +315,22 @@ export interface RawStatSummaryRow {
     jump_serve_aces_min: number; jump_serve_aces_max: number; jump_serve_aces_mean: number;
     float_aces_min: number; float_aces_max: number; float_aces_mean: number;
     service_errors_min: number; service_errors_max: number; service_errors_mean: number;
+
+    points_per_set_min: number | null; points_per_set_max: number | null; points_per_set_mean: number | null;
+    kills_per_set_min: number | null; kills_per_set_max: number | null; kills_per_set_mean: number | null;
+    hit_pct_min: number | null; hit_pct_max: number | null; hit_pct_mean: number | null;
+    assists_per_set_min: number | null; assists_per_set_max: number | null; assists_per_set_mean: number | null;
+    set_pct_min: number | null; set_pct_max: number | null; set_pct_mean: number | null;
+    blocks_per_set_min: number | null; blocks_per_set_max: number | null; blocks_per_set_mean: number | null;
+    kb_pct_min: number | null; kb_pct_max: number | null; kb_pct_mean: number | null;
+    receives_per_set_min: number | null; receives_per_set_max: number | null; receives_per_set_mean: number | null;
+    rec_pct_min: number | null; rec_pct_max: number | null; rec_pct_mean: number | null;
+    aces_per_set_min: number | null; aces_per_set_max: number | null; aces_per_set_mean: number | null;
 }
 
 export interface RawStatSummaryResponse {
     sets_played: StatSummaryTriplet;
+    points_per_set: QualifiedStatSummaryTriplet;
     spiking: {
         ape_kills: StatSummaryTriplet;
         ape_attempts: StatSummaryTriplet;
@@ -321,14 +339,20 @@ export interface RawStatSummaryResponse {
         wipes_tools: StatSummaryTriplet;
         kill_attempts: StatSummaryTriplet;
         spiking_errors: StatSummaryTriplet;
+        kills_per_set: QualifiedStatSummaryTriplet;
+        hit_pct: QualifiedStatSummaryTriplet;
     };
     setting: {
         assists: StatSummaryTriplet;
         setting_errors: StatSummaryTriplet;
+        assists_per_set: QualifiedStatSummaryTriplet;
+        set_pct: QualifiedStatSummaryTriplet;
     };
     blocking: {
         kill_blocks: StatSummaryTriplet;
         block_touches: StatSummaryTriplet;
+        blocks_per_set: QualifiedStatSummaryTriplet;
+        kb_pct: QualifiedStatSummaryTriplet;
     };
     receiving: {
         receives: StatSummaryTriplet;
@@ -336,11 +360,14 @@ export interface RawStatSummaryResponse {
         block_follows: StatSummaryTriplet;
         dives: StatSummaryTriplet;
         receive_errors: StatSummaryTriplet;
+        receives_per_set: QualifiedStatSummaryTriplet;
+        rec_pct: QualifiedStatSummaryTriplet;
     };
     serving: {
         jump_serve_aces: StatSummaryTriplet;
         float_aces: StatSummaryTriplet;
         service_errors: StatSummaryTriplet;
+        aces_per_set: QualifiedStatSummaryTriplet;
     };
 }
 

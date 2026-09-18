@@ -2333,6 +2333,9 @@ export type Database = {
       get_raw_stat_summary: {
         Args: { p_season_number?: number }
         Returns: {
+          aces_per_set_max: number
+          aces_per_set_mean: number
+          aces_per_set_min: number
           ape_attempts_max: number
           ape_attempts_mean: number
           ape_attempts_min: number
@@ -2342,12 +2345,18 @@ export type Database = {
           assists_max: number
           assists_mean: number
           assists_min: number
+          assists_per_set_max: number
+          assists_per_set_mean: number
+          assists_per_set_min: number
           block_follows_max: number
           block_follows_mean: number
           block_follows_min: number
           block_touches_max: number
           block_touches_mean: number
           block_touches_min: number
+          blocks_per_set_max: number
+          blocks_per_set_mean: number
+          blocks_per_set_min: number
           delay_kills_max: number
           delay_kills_mean: number
           delay_kills_min: number
@@ -2360,27 +2369,48 @@ export type Database = {
           float_aces_max: number
           float_aces_mean: number
           float_aces_min: number
+          hit_pct_max: number
+          hit_pct_mean: number
+          hit_pct_min: number
           jump_serve_aces_max: number
           jump_serve_aces_mean: number
           jump_serve_aces_min: number
+          kb_pct_max: number
+          kb_pct_mean: number
+          kb_pct_min: number
           kill_attempts_max: number
           kill_attempts_mean: number
           kill_attempts_min: number
           kill_blocks_max: number
           kill_blocks_mean: number
           kill_blocks_min: number
+          kills_per_set_max: number
+          kills_per_set_mean: number
+          kills_per_set_min: number
+          points_per_set_max: number
+          points_per_set_mean: number
+          points_per_set_min: number
           quick_kills_max: number
           quick_kills_mean: number
           quick_kills_min: number
+          rec_pct_max: number
+          rec_pct_mean: number
+          rec_pct_min: number
           receive_errors_max: number
           receive_errors_mean: number
           receive_errors_min: number
           receives_max: number
           receives_mean: number
           receives_min: number
+          receives_per_set_max: number
+          receives_per_set_mean: number
+          receives_per_set_min: number
           service_errors_max: number
           service_errors_mean: number
           service_errors_min: number
+          set_pct_max: number
+          set_pct_mean: number
+          set_pct_min: number
           sets_played_max: number
           sets_played_mean: number
           sets_played_min: number
