@@ -101,6 +101,15 @@ export interface ArchiveSeason {
     }>;
 }
 
+export interface ChampionArchiveEntry {
+    captain: string | null;
+    vice_capt: string | null;
+    court_cap: string | null;
+    members: string[];
+}
+
+export type ChampionArchiveResponse = Record<string, ChampionArchiveEntry>;
+
 export interface SeasonDetail {
     id: string;
     name: string;
@@ -154,6 +163,7 @@ export type {
     UpdateSeasonAwardInput,
     ReorderSeasonAwardsInput,
     AwardCategory,
+    SeasonNumberQueryInput,
 } from "./schemas";
 
 export {
@@ -170,4 +180,5 @@ export {
     UpdateSeasonAwardSchema,
     ReorderSeasonAwardsSchema,
     AwardCategoryEnum,
+    SeasonNumberQuerySchema,
 } from "./schemas";

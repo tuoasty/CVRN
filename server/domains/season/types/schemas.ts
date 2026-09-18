@@ -12,6 +12,11 @@ export const SeasonSlugRegionSchema = z.object({
 export type SeasonSlugRegionInput = z.infer<typeof SeasonSlugRegionSchema>
 export const LeagueTypeEnum = z.enum(['main', 'side']);
 
+export const SeasonNumberQuerySchema = z.object({
+    season: z.union([z.literal("current"), z.coerce.number().int().min(1)]),
+})
+export type SeasonNumberQueryInput = z.infer<typeof SeasonNumberQuerySchema>
+
 export const CreateSeasonSchema = z.object({
     name: z.string().min(1, "Name is required"),
     regionId: z.uuid("Invalid region"),

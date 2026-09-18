@@ -3,11 +3,12 @@ export {getSeasonById} from "./queries/getSeasonById";
 export {getSeasonsByRegion} from "./queries/getSeasonsByRegion";
 export {getSeasonBySlugAndRegion} from "./queries/getSeasonBySlugAndRegion";
 export {resolveSeasonNumber} from "./queries/resolveSeasonNumber";
+export {getChampionArchivesBySeasonNumber} from "./queries/getChampionArchivesBySeasonNumber";
 export {createSeason} from "./commands/createSeason";
 export {updateSeason} from "./commands/updateSeason";
 export {deleteSeason} from "./commands/deleteSeason";
-export type {CreateSeasonInput, UpdateSeasonInput, InsertSeasonDto, SeasonIdInput, SeasonSlugRegionInput, SeasonWithPlayoffConfig, CreateSeasonSchemaInput, UpdateSeasonSchemaInput} from "./types";
-export {SeasonIdSchema, SeasonSlugRegionSchema, CreateSeasonSchema, UpdateSeasonSchema} from "./types";
+export type {CreateSeasonInput, UpdateSeasonInput, InsertSeasonDto, SeasonIdInput, SeasonSlugRegionInput, SeasonWithPlayoffConfig, CreateSeasonSchemaInput, UpdateSeasonSchemaInput, SeasonNumberQueryInput, ChampionArchiveEntry, ChampionArchiveResponse} from "./types";
+export {SeasonIdSchema, SeasonSlugRegionSchema, CreateSeasonSchema, UpdateSeasonSchema, SeasonNumberQuerySchema} from "./types";
 
 export {getSeasonPodium} from "./queries/getSeasonPodium";
 export {getSeasonFinalsSlots} from "./queries/getSeasonFinalsSlots";

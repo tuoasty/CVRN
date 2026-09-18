@@ -126,6 +126,21 @@ export async function deleteSeasonById(supabase: DBClient, seasonId: string): Pr
     return Ok(true);
 }
 
+export async function findSeasonsBySeasonNumber(
+    supabase: DBClient,
+    seasonNumber: number
+): Promise<Result<Array<Season & {region_code: string}>>> {
+    const {data, error} = await supabase
+        .from("seasons")
+        .select("*, regions!inner(code)")
+        .eq("season_number", seasonNumber);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(r => ({
+        ...r,
+        region_code: (r.regions as {code: string}).code,
+    })));
+}
+
 export async function findSeasonBySlugAndRegion(
     supabase: DBClient,
     slug: string,
