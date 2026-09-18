@@ -108,7 +108,7 @@ export async function findRawStatSummary(
     seasonNumber: number | null
 ): Promise<Result<RawStatSummaryRow>> {
     const {data, error} = await supabase
-        .rpc("get_raw_stat_summary", {p_season_number: seasonNumber})
+        .rpc("get_raw_stat_summary", {p_season_number: seasonNumber ?? undefined})
         .single();
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data as RawStatSummaryRow);
