@@ -91,7 +91,7 @@ export async function findPlayerLeaderboardByPosition(
 
 export async function findPlayerRawStatTotals(
     supabase: DBClient,
-    p: {robloxUserId: string; seasonNumber: number || null}
+    p: {robloxUserId: string; seasonNumber: number | null}
 ): Promise<Result<PlayerRawStatTotalsRow>> {
     const {data, error} = await supabase
         .rpc("get_player_raw_stat_totals", {
