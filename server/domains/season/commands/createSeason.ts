@@ -22,6 +22,7 @@ export async function createSeason(
             endDate: p.endDate ?? null,
             leagueType: p.leagueType ?? "main",
             slug: p.slug,
+            seasonNumber: p.seasonNumber,
             theme: p.theme ?? null,
             playoffConfigId: p.playoffConfigId ?? null
         });

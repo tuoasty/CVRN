@@ -17,6 +17,7 @@ export async function updateSeason(
             maxPlayers: p.maxPlayers ?? undefined,
             leagueType: p.leagueType,
             slug: p.slug,
+            seasonNumber: p.seasonNumber,
             theme: p.theme,
             playoffConfigId: p.playoffConfigId
         });

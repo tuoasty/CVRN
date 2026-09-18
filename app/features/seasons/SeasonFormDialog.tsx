@@ -33,6 +33,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
     const [name, setName] = useState(season?.name ?? "");
     const [playoffConfigId, setPlayoffConfigId] = useState(season?.playoff_config_id ?? "");
     const [slug, setSlug] = useState(season?.slug ?? "");
+    const [seasonNumber, setSeasonNumber] = useState(String(season?.season_number ?? ""));
     const [maxPlayers, setMaxPlayers] = useState(String(season?.max_players ?? 18));
     const [regionId, setRegionId] = useState(season?.region_id ?? "");
     const [startDate, setStartDate] = useState(season?.start_date ?? "");
@@ -45,6 +46,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
         if (!open) return;
         setName(season?.name ?? "");
         setSlug(season?.slug ?? "");
+        setSeasonNumber(String(season?.season_number ?? ""));
         setRegionId(season?.region_id ?? "");
         setMaxPlayers(String(season?.max_players ?? 18));
         setStartDate(season?.start_date ?? "");
@@ -67,8 +69,8 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim() || !slug.trim() || !regionId || !startDate) {
-            toast.error("Name, slug, region, and start date are required");
+        if (!name.trim() || !slug.trim() || !regionId || !startDate || !seasonNumber.trim()) {
+            toast.error("Name, slug, region, start date, and season number are required");
             return;
         }
         setLoading(true);
@@ -78,6 +80,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                     seasonId: season!.id,
                     name: name.trim(),
                     slug: slug.trim(),
+                    seasonNumber: seasonNumber,
                     startDate,
                     maxPlayers: maxPlayers,
                     leagueType: leagueType,
@@ -87,6 +90,7 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                 : await createSeasonAction({
                     name: name.trim(),
                     slug: slug.trim(),
+                    seasonNumber: seasonNumber,
                     regionId,
                     maxPlayers: maxPlayers,
                     startDate,
@@ -142,6 +146,20 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
                             placeholder="asia-s1"
                         />
                         <p className="text-xs text-muted-foreground">Used in URLs. Auto-generated from name.</p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="season-number">Season Number</Label>
+                        <Input
+                            id="season-number"
+                            type="text"
+                            inputMode="numeric"
+                            value={seasonNumber}
+                            onChange={(e) => setSeasonNumber(e.target.value)}
+                            disabled={loading}
+                            className="rounded-sm"
+                            placeholder="1"
+                        />
+                        <p className="text-xs text-muted-foreground">Cross-region season key used by the Roblox game API.</p>
                     </div>
                     <div className="space-y-2">
                         <Label>Region</Label>
