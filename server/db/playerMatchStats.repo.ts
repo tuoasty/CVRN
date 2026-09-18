@@ -8,6 +8,7 @@ import {
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {PlayerMatchStatsInsert} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
+import {PlayerRawStatTotalsRow, RawStatSummaryRow} from "@/server/domains/player/types";
 
 export async function findMatchIdsWithStats(supabase: DBClient, matchIds: string[]): Promise<Result<string[]>> {
     if (matchIds.length === 0) return Ok([]);
@@ -86,6 +87,31 @@ export async function findPlayerLeaderboardByPosition(
     });
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as RangedSeasonStatRow[]);
+}
+
+export async function findPlayerRawStatTotals(
+    supabase: DBClient,
+    p: {robloxUserId: string; seasonNumber: number | null}
+): Promise<Result<PlayerRawStatTotalsRow>> {
+    const {data, error} = await supabase
+        .rpc("get_player_raw_stat_totals", {
+            p_roblox_user_id: p.robloxUserId,
+            p_season_number: p.seasonNumber,
+        })
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data as PlayerRawStatTotalsRow);
+}
+
+export async function findRawStatSummary(
+    supabase: DBClient,
+    seasonNumber: number | null
+): Promise<Result<RawStatSummaryRow>> {
+    const {data, error} = await supabase
+        .rpc("get_raw_stat_summary", {p_season_number: seasonNumber})
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data as RawStatSummaryRow);
 }
 
 export async function replaceMatchStats(

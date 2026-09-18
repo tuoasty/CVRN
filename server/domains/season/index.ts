@@ -2,6 +2,7 @@ export {getAllSeasons} from "./queries/getAllSeasons";
 export {getSeasonById} from "./queries/getSeasonById";
 export {getSeasonsByRegion} from "./queries/getSeasonsByRegion";
 export {getSeasonBySlugAndRegion} from "./queries/getSeasonBySlugAndRegion";
+export {resolveSeasonNumber} from "./queries/resolveSeasonNumber";
 export {createSeason} from "./commands/createSeason";
 export {updateSeason} from "./commands/updateSeason";
 export {deleteSeason} from "./commands/deleteSeason";

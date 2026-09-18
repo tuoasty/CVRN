@@ -71,3 +71,15 @@ export const RangedLeaderboardSchema = z.object({
     to: z.string().min(1),
 })
 export type RangedLeaderboardInput = z.infer<typeof RangedLeaderboardSchema>
+
+export const RobloxIdParamSchema = z.object({
+    robloxId: z.string().regex(/^\d+$/, "Invalid Roblox user id"),
+})
+export type RobloxIdParamInput = z.infer<typeof RobloxIdParamSchema>
+
+export const SeasonQuerySchema = z.union([
+    z.literal("all"),
+    z.literal("current"),
+    z.coerce.number().int().min(1),
+])
+export type SeasonQueryInput = z.infer<typeof SeasonQuerySchema>

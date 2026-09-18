@@ -225,6 +225,125 @@ export interface PlayerSpecEntry {
     team_logo_bg_removed: boolean;
 }
 
+export interface PlayerRawStatTotalsRow {
+    sets_played: number;
+    ape_kills: number;
+    ape_attempts: number;
+    delay_kills: number;
+    quick_kills: number;
+    wipes_tools: number;
+    kill_attempts: number;
+    spiking_errors: number;
+    assists: number;
+    setting_errors: number;
+    kill_blocks: number;
+    block_touches: number;
+    digs: number;
+    block_follows: number;
+    dives: number;
+    receive_errors: number;
+    receives: number;
+    jump_serve_aces: number;
+    float_aces: number;
+    service_errors: number;
+}
+
+export interface PlayerRawStatsResponse {
+    roblox_user_id: string;
+    sets_played: number;
+    spiking: {
+        ape_kills: number;
+        ape_attempts: number;
+        delay_kills: number;
+        quick_kills: number;
+        wipes_tools: number;
+        kill_attempts: number;
+        spiking_errors: number;
+    };
+    setting: {
+        assists: number;
+        setting_errors: number;
+    };
+    blocking: {
+        kill_blocks: number;
+        block_touches: number;
+    };
+    receiving: {
+        receives: number;
+        digs: number;
+        block_follows: number;
+        dives: number;
+        receive_errors: number;
+    };
+    serving: {
+        jump_serve_aces: number;
+        float_aces: number;
+        service_errors: number;
+    };
+}
+
+interface StatSummaryTriplet {
+    min: number;
+    max: number;
+    mean: number;
+}
+
+export interface RawStatSummaryRow {
+    sets_played_min: number; sets_played_max: number; sets_played_mean: number;
+    ape_kills_min: number; ape_kills_max: number; ape_kills_mean: number;
+    ape_attempts_min: number; ape_attempts_max: number; ape_attempts_mean: number;
+    delay_kills_min: number; delay_kills_max: number; delay_kills_mean: number;
+    quick_kills_min: number; quick_kills_max: number; quick_kills_mean: number;
+    wipes_tools_min: number; wipes_tools_max: number; wipes_tools_mean: number;
+    kill_attempts_min: number; kill_attempts_max: number; kill_attempts_mean: number;
+    spiking_errors_min: number; spiking_errors_max: number; spiking_errors_mean: number;
+    assists_min: number; assists_max: number; assists_mean: number;
+    setting_errors_min: number; setting_errors_max: number; setting_errors_mean: number;
+    kill_blocks_min: number; kill_blocks_max: number; kill_blocks_mean: number;
+    block_touches_min: number; block_touches_max: number; block_touches_mean: number;
+    receives_min: number; receives_max: number; receives_mean: number;
+    digs_min: number; digs_max: number; digs_mean: number;
+    block_follows_min: number; block_follows_max: number; block_follows_mean: number;
+    dives_min: number; dives_max: number; dives_mean: number;
+    receive_errors_min: number; receive_errors_max: number; receive_errors_mean: number;
+    jump_serve_aces_min: number; jump_serve_aces_max: number; jump_serve_aces_mean: number;
+    float_aces_min: number; float_aces_max: number; float_aces_mean: number;
+    service_errors_min: number; service_errors_max: number; service_errors_mean: number;
+}
+
+export interface RawStatSummaryResponse {
+    sets_played: StatSummaryTriplet;
+    spiking: {
+        ape_kills: StatSummaryTriplet;
+        ape_attempts: StatSummaryTriplet;
+        delay_kills: StatSummaryTriplet;
+        quick_kills: StatSummaryTriplet;
+        wipes_tools: StatSummaryTriplet;
+        kill_attempts: StatSummaryTriplet;
+        spiking_errors: StatSummaryTriplet;
+    };
+    setting: {
+        assists: StatSummaryTriplet;
+        setting_errors: StatSummaryTriplet;
+    };
+    blocking: {
+        kill_blocks: StatSummaryTriplet;
+        block_touches: StatSummaryTriplet;
+    };
+    receiving: {
+        receives: StatSummaryTriplet;
+        digs: StatSummaryTriplet;
+        block_follows: StatSummaryTriplet;
+        dives: StatSummaryTriplet;
+        receive_errors: StatSummaryTriplet;
+    };
+    serving: {
+        jump_serve_aces: StatSummaryTriplet;
+        float_aces: StatSummaryTriplet;
+        service_errors: StatSummaryTriplet;
+    };
+}
+
 export interface PlayerDetail {
     player: PlayerWithCurrentTeam;
     seasonStats: PlayerSeasonStat[];
@@ -246,6 +365,8 @@ export type {
     TransferCaptainInput,
     PlayerLeaderboardInput,
     RangedLeaderboardInput,
+    RobloxIdParamInput,
+    SeasonQueryInput,
 } from "./schemas";
 
 export {
@@ -260,4 +381,6 @@ export {
     TransferCaptainSchema,
     PlayerLeaderboardSchema,
     RangedLeaderboardSchema,
+    RobloxIdParamSchema,
+    SeasonQuerySchema,
 } from "./schemas";

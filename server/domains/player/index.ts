@@ -22,6 +22,9 @@ export {getLeaderboardIdentity} from "./queries/getLeaderboardIdentity";
 export {getPlayerAwards} from "./queries/getPlayerAwards";
 export {getPlayerSpecs} from "./queries/getPlayerSpecs";
 export {getPlayerTeamHistory} from "./queries/getPlayerTeamHistory";
+export {getPlayerByRobloxUserId} from "./queries/getPlayerByRobloxUserId";
+export {getPlayerRawStatsBySeasonNumber} from "./queries/getPlayerRawStatsBySeasonNumber";
+export {getRawStatSummaryBySeasonNumber} from "./queries/getRawStatSummaryBySeasonNumber";
 export type {
     RobloxUserIdInput,
     SavePlayerInput,
@@ -56,6 +59,12 @@ export type {
     PlayerAward,
     PlayerTeamHistoryEntry,
     PlayerDetail,
+    PlayerRawStatTotalsRow,
+    PlayerRawStatsResponse,
+    RawStatSummaryRow,
+    RawStatSummaryResponse,
+    RobloxIdParamInput,
+    SeasonQueryInput,
 } from "./types";
 export {
     PlayerRoleSchema,
@@ -69,4 +78,6 @@ export {
     TransferCaptainSchema,
     PlayerLeaderboardSchema,
     RangedLeaderboardSchema,
+    RobloxIdParamSchema,
+    SeasonQuerySchema,
 } from "./types";
