@@ -95,7 +95,7 @@ export async function findPlayerRawStatTotals(
 ): Promise<Result<PlayerRawStatTotalsRow>> {
     const {data, error} = await supabase
         .rpc("get_player_raw_stat_totals", {
-            p_roblox_user_id: p.robloxUserId,
+            p_roblox_user_id: String(p.robloxUserId),
             p_season_number: p.seasonNumber,
         })
         .single();
