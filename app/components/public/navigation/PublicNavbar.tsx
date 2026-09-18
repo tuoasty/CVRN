@@ -15,6 +15,7 @@ import {
 } from "@/app/components/ui/sheet";
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import PublicNavItems from "@/app/components/public/navigation/PublicNavItems";
+import NavbarLogo from "@/app/components/public/navigation/NavbarLogo";
 import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import UserButton from "@/app/components/ui/UserButton";
 
@@ -32,10 +33,8 @@ export default function PublicNavbar() {
                 {}
                 <div className="hidden lg:flex items-center justify-between py-3">
                     <div className="flex items-center gap-8">
-                        <Link href="/">
-                            <h1 className="text-lg font-semibold tracking-tight">
-                                CVRN
-                            </h1>
+                        <Link href="/" aria-label="CVRN home">
+                            <NavbarLogo />
                         </Link>
                         <PublicNavItems />
                     </div>
@@ -51,10 +50,8 @@ export default function PublicNavbar() {
 
                 {}
                 <div className="lg:hidden flex items-center justify-between py-2.5">
-                    <Link href="/">
-                        <h1 className="text-lg font-semibold tracking-tight">
-                            CVRN
-                        </h1>
+                    <Link href="/" aria-label="CVRN home">
+                        <NavbarLogo />
                     </Link>
 
                     <div className="flex items-center gap-2">
