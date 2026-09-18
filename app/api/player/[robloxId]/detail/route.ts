@@ -18,10 +18,9 @@ export async function GET(req: Request, {params}: {params: Promise<{robloxId: st
         return Response.json({error: "Invalid request", code: "VALIDATION_ERROR"}, {status: 400});
     }
 
-    const supabase = createPublicClient();
-
     let seasonNumber: number | null = null;
     if (parsedSeason.data !== "all") {
+        const supabase = createPublicClient();
         const resolved = await resolveSeasonNumber(supabase, parsedSeason.data);
         if (!resolved.ok) return toApiResponse(resolved);
         seasonNumber = resolved.value;

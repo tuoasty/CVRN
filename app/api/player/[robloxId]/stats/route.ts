@@ -1,0 +1,32 @@
+import {createPublicClient} from "@/server/supabase/server-public";
+import {isValidRobloxApiSecret} from "@/server/utils/apiAuth";
+import {toApiResponse} from "@/server/utils/apiResponse";
+import {RobloxIdParamSchema, SeasonQuerySchema} from "@/server/domains/player";
+import {resolveSeasonNumber} from "@/server/domains/season";
+import {getCachedPlayerStatsByRobloxId} from "@/server/cache/publicReads";
+
+export async function GET(req: Request, {params}: {params: Promise<{robloxId: string}>}) {
+    if (!isValidRobloxApiSecret(req.headers.get("authorization"))) {
+        return new Response("Unauthorized", {status: 401});
+    }
+
+    const {robloxId} = await params;
+    const seasonParam = new URL(req.url).searchParams.get("season");
+    const parsedId = RobloxIdParamSchema.safeParse({robloxId});
+    const parsedSeason = SeasonQuerySchema.safeParse(seasonParam);
+    if (!parsedId.success || !parsedSeason.success) {
+        return Response.json({error: "Invalid request", code: "VALIDATION_ERROR"}, {status: 400});
+    }
+
+    const supabase = createPublicClient();
+
+    let seasonNumber: number | null = null;
+    if (parsedSeason.data !== "all") {
+        const resolved = await resolveSeasonNumber(supabase, parsedSeason.data);
+        if (!resolved.ok) return toApiResponse(resolved);
+        seasonNumber = resolved.value;
+    }
+
+    const result = await getCachedPlayerStatsByRobloxId(parsedId.data.robloxId, seasonNumber);
+    return toApiResponse(result);
+}

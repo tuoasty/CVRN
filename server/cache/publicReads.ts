@@ -19,6 +19,7 @@ import {
     getLeaderboardIdentity,
     getTeamLeaderboard,
     getPlayerDetailByRobloxUserId,
+    getPlayerRawStatsBySeasonNumber,
     getRawStatSummaryBySeasonNumber,
 } from "@/server/domains/player";
 import {findHeldSpecSeasonId} from "@/server/db/seasons.repo";
@@ -460,6 +461,13 @@ export const getCachedPlayerDetailByRobloxId = unstable_cache(
     async (robloxUserId: string, seasonNumber: number | null) =>
         getPlayerDetailByRobloxUserId(createPublicClient(), {robloxUserId, seasonNumber}),
     ["public:player-detail-by-roblox-id"],
+    {tags: [CACHE_TAGS.rawStats], revalidate: RAW_STATS_REVALIDATE_SECONDS},
+);
+
+export const getCachedPlayerStatsByRobloxId = unstable_cache(
+    async (robloxUserId: string, seasonNumber: number | null) =>
+        getPlayerRawStatsBySeasonNumber(createPublicClient(), {robloxUserId, seasonNumber}),
+    ["public:player-stats-by-roblox-id"],
     {tags: [CACHE_TAGS.rawStats], revalidate: RAW_STATS_REVALIDATE_SECONDS},
 );
 

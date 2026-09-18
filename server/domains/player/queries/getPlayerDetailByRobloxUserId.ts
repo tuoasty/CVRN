@@ -6,7 +6,7 @@ import {getPlayerByRobloxUserId} from "./getPlayerByRobloxUserId";
 import {getPlayerAchievements} from "./getPlayerAchievements";
 import {getPlayerAwards} from "./getPlayerAwards";
 import {getPlayerSpecs} from "./getPlayerSpecs";
-import {getPlayerRawStatsBySeasonNumber} from "./getPlayerRawStatsBySeasonNumber";
+import {findSeasonsBySeasonNumber} from "@/server/db/seasons.repo";
 import {PlayerDetailApiResponse} from "../types";
 
 const DETAIL_AWARD_CATEGORIES = new Set(["individual_winners", "staff_team", "first_team"]);
@@ -21,30 +21,37 @@ export async function getPlayerDetailByRobloxUserId(
         if (!existing.value) return Err({message: "Player not found", code: "NOT_FOUND"});
         const playerId = existing.value.id;
 
-        const [achievementsRes, awardsRes, specsRes, statsRes] = await Promise.all([
+        const [achievementsRes, awardsRes, specsRes] = await Promise.all([
             getPlayerAchievements(supabase, {playerId}),
             getPlayerAwards(supabase, {playerId}),
             getPlayerSpecs(supabase, {playerId}),
-            getPlayerRawStatsBySeasonNumber(supabase, {robloxUserId: p.robloxUserId, seasonNumber: p.seasonNumber}),
         ]);
         if (!achievementsRes.ok) return achievementsRes;
         if (!awardsRes.ok) return awardsRes;
         if (!specsRes.ok) return specsRes;
-        if (!statsRes.ok) return statsRes;
+
+        let seasonIdFilter: Set<string> | null = null;
+        if (p.seasonNumber !== null) {
+            const seasonsRes = await findSeasonsBySeasonNumber(supabase, p.seasonNumber);
+            if (!seasonsRes.ok) return seasonsRes;
+            seasonIdFilter = new Set(seasonsRes.value.map(s => s.id));
+        }
+        const inSeason = (seasonId: string) => !seasonIdFilter || seasonIdFilter.has(seasonId);
 
         return Ok({
-            achievements: achievementsRes.value,
+            achievements: achievementsRes.value.filter(a => inSeason(a.season_id)),
             awards: awardsRes.value
-                .filter(a => DETAIL_AWARD_CATEGORIES.has(a.category))
+                .filter(a => DETAIL_AWARD_CATEGORIES.has(a.category) && inSeason(a.season_id))
                 .map(a => ({award_name: a.award_name, category: a.category, season_id: a.season_id, season_name: a.season_name})),
-            spec_awards: specsRes.value.map(s => ({
-                name: s.spec_name,
-                position: s.position,
-                stars: s.stars,
-                season_id: s.season_id,
-                season_name: s.season_name,
-            })),
-            stats: statsRes.value,
+            spec_awards: specsRes.value
+                .filter(s => inSeason(s.season_id))
+                .map(s => ({
+                    name: s.spec_name,
+                    position: s.position,
+                    stars: s.stars,
+                    season_id: s.season_id,
+                    season_name: s.season_name,
+                })),
         });
     } catch (error) {
         logger.error({error}, "Unexpected error fetching player detail");

@@ -370,7 +370,6 @@ export interface PlayerDetailApiResponse {
     achievements: PlayerAchievement[];
     awards: PlayerDetailAward[];
     spec_awards: PlayerDetailSpecAward[];
-    stats: PlayerStatsResponse;
 }
 
 interface StatSummaryTriplet {
