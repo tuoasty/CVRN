@@ -3,6 +3,7 @@ import {BUCKETS, STORAGE_PATHS} from "@/server/storage/storage.paths";
 import {Ok, Err, Result} from "@/shared/types/result";
 import {logger} from "@/server/utils/logger";
 import {serializeError} from "@/server/utils/serializeableError";
+import {toCdnUrl} from "@/server/storage/toCdnUrl";
 
 export async function storeAwardAvatar(
     awardId: string,
@@ -20,7 +21,7 @@ export async function storeAwardAvatar(
 
         const {error: uploadError} = await supabaseAdmin.storage
             .from(BUCKETS.PUBLIC)
-            .upload(path, buffer, {contentType: "image/png", upsert: true});
+            .upload(path, buffer, {contentType: "image/png", cacheControl: "31536000", upsert: true});
 
         if (uploadError) {
             logger.error({error: uploadError, awardId}, "storeAwardAvatar: upload failed");
@@ -28,7 +29,7 @@ export async function storeAwardAvatar(
         }
 
         const {data: {publicUrl}} = supabaseAdmin.storage.from(BUCKETS.PUBLIC).getPublicUrl(path);
-        const versionedUrl = `${publicUrl}?t=${Date.now()}`;
+        const versionedUrl = `${toCdnUrl(publicUrl)}?t=${Date.now()}`;
 
         const {error: updateError} = await supabaseAdmin
             .from("season_awards")

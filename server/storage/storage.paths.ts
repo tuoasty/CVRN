@@ -20,5 +20,6 @@ export const STORAGE_PATHS = {
 export function extractStoragePath(url: string, bucket: string): string {
     const marker = `/object/public/${bucket}/`
     const idx = url.indexOf(marker)
-    return idx !== -1 ? url.slice(idx + marker.length) : url
+    const path = idx !== -1 ? url.slice(idx + marker.length) : url
+    return path.split("?")[0]
 }

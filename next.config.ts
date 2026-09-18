@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "cdn.cvrn.net",
+      },
+      {
+        protocol: "https",
         hostname: "img.youtube.com",
       },
       {

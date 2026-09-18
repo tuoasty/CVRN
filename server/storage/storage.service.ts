@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import {getUserRole} from "@/server/db/roles.repo";
 import {checkUploadRateLimit} from "@/server/utils/rateLimiter";
 import {processLogoBackground} from "./imageProcessing";
+import {toCdnUrl} from "./toCdnUrl";
 
 const IMAGE_VALIDATION = {
     MAX_FILE_SIZE: 2 * 1024 * 1024,
@@ -112,6 +113,7 @@ export async function uploadFile(supabase: DBClient, p: {
 
         const {data, error} = await supabase.storage.from(p.bucket).upload(p.path, fileToUpload, {
             contentType: contentType,
+            cacheControl: "31536000",
             upsert: p.upsert ?? true,
         });
 
@@ -130,7 +132,7 @@ export async function uploadFile(supabase: DBClient, p: {
 
         const { data: publicUrlData } = supabase.storage.from(p.bucket).getPublicUrl(data.path)
         return Ok({
-            url:publicUrlData.publicUrl,
+            url:`${toCdnUrl(publicUrlData.publicUrl)}?v=${Date.now()}`,
             path:data.path,
             bgRemoved,
         })
