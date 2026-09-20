@@ -35,6 +35,7 @@ export async function getPlayerRawStatsBySeasonNumber(
         return Ok({
             roblox_user_id: p.robloxUserId,
             sets_played: t.sets_played,
+            points_per_set: r.points_per_set,
             points_per_set_rank: r.points_per_set_rank,
             spiking: {
                 ape_kills: t.ape_kills,
@@ -44,18 +45,21 @@ export async function getPlayerRawStatsBySeasonNumber(
                 wipes_tools: t.wipes_tools,
                 kill_attempts: t.kill_attempts,
                 spiking_errors: t.spiking_errors,
+                kills_per_set: r.kills_per_set,
                 kills_per_set_rank: r.kills_per_set_rank,
                 hit_pct_rank: r.hit_pct_rank,
             },
             setting: {
                 assists: t.assists,
                 setting_errors: t.setting_errors,
+                assists_per_set: r.assists_per_set,
                 assists_per_set_rank: r.assists_per_set_rank,
                 set_pct_rank: r.set_pct_rank,
             },
             blocking: {
                 kill_blocks: t.kill_blocks,
                 block_touches: t.block_touches,
+                blocks_per_set: r.blocks_per_set,
                 blocks_per_set_rank: r.blocks_per_set_rank,
                 kb_pct_rank: r.kb_pct_rank,
             },
@@ -65,6 +69,7 @@ export async function getPlayerRawStatsBySeasonNumber(
                 block_follows: t.block_follows,
                 dives: t.dives,
                 receive_errors: t.receive_errors,
+                receives_per_set: r.receives_per_set,
                 receives_per_set_rank: r.receives_per_set_rank,
                 rec_pct_rank: r.rec_pct_rank,
             },
@@ -72,6 +77,7 @@ export async function getPlayerRawStatsBySeasonNumber(
                 jump_serve_aces: t.jump_serve_aces,
                 float_aces: t.float_aces,
                 service_errors: t.service_errors,
+                aces_per_set: r.aces_per_set,
                 aces_per_set_rank: r.aces_per_set_rank,
             },
         });
