@@ -110,7 +110,7 @@ export function useSpecLeaderboard(seasonId: string | null, position: string | n
     const {data, error, isLoading} = useSWR(
         key,
         fetchSpecLeaderboard as BareFetcher<SpecLeaderboardData>,
-        {dedupingInterval: TTL, revalidateOnFocus: false}
+        {revalidateOnFocus: true}
     );
     const value = data as SpecLeaderboardData | undefined;
     return {
