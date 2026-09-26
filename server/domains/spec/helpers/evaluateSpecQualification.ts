@@ -60,6 +60,7 @@ export function evaluateSpecQualification(
             teamLogoBgRemoved: player.team_logo_bg_removed,
             place,
             isUpperFinalist,
+            setsPlayed: typeof player.sets_played === "number" ? player.sets_played : 0,
             placementBonus: bonus,
 
             qualified:

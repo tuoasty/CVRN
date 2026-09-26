@@ -30,6 +30,8 @@ export interface SpecQualificationRow {
     place: number | null;
     isUpperFinalist: boolean;
 
+    setsPlayed: number;
+
     placementBonus: number;
     qualified: boolean;
     mainPassed: number;

@@ -34,6 +34,7 @@ const FROZEN: Record<'num' | 'player' | 'team', CSSProperties> = {
 
 const COL_SLOT: CSSProperties = {width: 62, minWidth: 62};
 const COL_MS: CSSProperties = {width: 46, minWidth: 46};
+const COL_SETS: CSSProperties = {width: 46, minWidth: 46};
 const COL_STAT: CSSProperties = {minWidth: 58};
 
 const HEAD = 'bg-muted text-muted-foreground';
@@ -55,7 +56,7 @@ export default function SpecQualificationTable({
         );
     }
 
-    const colCount = 6 + statKeys.length;
+    const colCount = 7 + statKeys.length;
     const cellBg = (qualified: boolean, frozen: boolean) =>
         qualified ? 'bg-primary/5' : frozen ? 'bg-background' : '';
 
@@ -133,6 +134,10 @@ export default function SpecQualificationTable({
                     {row.secondaryPassed}/{row.secondaryTotal}
                 </td>
 
+                <td style={COL_SETS} className={cn('px-1.5 py-1 text-right font-mono tabular-nums border-l border-b border-border', cellBg(q, false))}>
+                    {formatSpecStatValue(row.setsPlayed, 'count')}
+                </td>
+
                 {statKeys.map((key, ci) => {
                     const check = row.checks.find(c => c.statKey === key);
                     const format = specStatMeta(key)?.format ?? 'count';
@@ -189,6 +194,9 @@ export default function SpecQualificationTable({
                     <th colSpan={2} className={cn(HEAD, 'sticky top-0 z-20 h-6 px-2 text-center font-semibold uppercase tracking-wide border-l border-border')}>
                         Qualification
                     </th>
+                    <th className={cn(HEAD, 'sticky top-0 z-20 h-6 px-2 text-center font-semibold uppercase tracking-wide border-l border-border')}>
+                        Sets
+                    </th>
                     {statKeys.length > 0 && (
                         <th colSpan={statKeys.length} className={cn(HEAD, 'sticky top-0 z-20 h-6 px-2 text-center font-semibold uppercase tracking-wide border-l border-border')}>
                             Stats — threshold
@@ -202,6 +210,7 @@ export default function SpecQualificationTable({
                     <th style={COL_SLOT} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold border-l border-border')}>Place·Bon</th>
                     <th style={COL_MS} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold border-l border-border')}>Main</th>
                     <th style={COL_MS} className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-center font-semibold')}>Sec</th>
+                    <th style={COL_SETS} title="Sets played" className={cn(HEAD, 'sticky top-6 z-20 px-1.5 py-1 text-right font-semibold border-l border-border')}>Played</th>
                     {statKeys.map((key, i) => {
                         const t = thresholdByKey.get(key);
                         return (
