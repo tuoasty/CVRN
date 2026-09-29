@@ -270,14 +270,11 @@ export async function findArchiveSeasons(
         .select(`
             id, name, slug, region_id, start_date, end_date,
             season_podium(place, is_override, notes, teams(id, name, slug, logo_url)),
-            season_awards(id, award_name, category, awarded_at, sort_order, players(id, username)),
-            champion_gfx:media_posts(id, image_url, title)
+            season_awards(id, award_name, category, awarded_at, sort_order, players(id, username))
         `)
         .lte("season_podium.place", 3)
-        .eq("champion_gfx.type", "champion")
         .order("sort_order", {referencedTable: "season_awards", ascending: true})
-        .order("start_date", {ascending: false})
-        .limit(1, {referencedTable: "champion_gfx"});
+        .order("start_date", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
 }

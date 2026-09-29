@@ -90,8 +90,10 @@ export default function PublicNavItems({
                             "h-9 px-3",
                             layout === "vertical" ? "w-full justify-start" : "",
                             isActive
-                                ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                                : "hover:bg-accent hover:text-accent-foreground"
+                                ? layout === "vertical"
+                                    ? "bg-accent text-foreground font-semibold"
+                                    : "text-foreground font-semibold underline decoration-2 underline-offset-[6px]"
+                                : "text-muted-foreground hover:bg-accent hover:text-foreground"
                         )}
                     >
                         {item.label}

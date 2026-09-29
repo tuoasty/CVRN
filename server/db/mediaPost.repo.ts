@@ -206,6 +206,17 @@ export async function findChampionGfxBySeasonId(supabase: DBClient, seasonId: st
     return Ok(data as unknown as MediaPost | null)
 }
 
+export async function findChampionGfxBySeasonIds(supabase: DBClient, seasonIds: string[]): Promise<Result<MediaPost[]>> {
+    if (seasonIds.length === 0) return Ok([])
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .eq('type', 'champion')
+        .in('season_id', seasonIds)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []) as unknown as MediaPost[])
+}
+
 export async function findGfxByMatchIds(supabase: DBClient, matchIds: string[]): Promise<Result<MediaPost[]>> {
     if (matchIds.length === 0) return Ok([])
     const { data, error } = await supabase

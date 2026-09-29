@@ -10,6 +10,11 @@ import {
 } from "@/app/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+const ACTIVE_UNDERLINE = "text-foreground font-semibold underline decoration-2 underline-offset-[6px]";
+const ACTIVE_FILL = "bg-accent text-foreground font-semibold";
+const INACTIVE = "text-muted-foreground";
 
 type NavItem = { href: string; label: string; superAdminOnly?: boolean };
 
@@ -94,9 +99,9 @@ export default function AdminNavItems({
                 {allVisibleItems.map((item) => (
                     <Button
                         key={item.href}
-                        variant={pathname === item.href ? "secondary" : "ghost"}
+                        variant="ghost"
                         size="sm"
-                        className="w-full justify-start rounded-sm text-sm"
+                        className={cn("w-full justify-start rounded-sm text-sm", pathname === item.href ? ACTIVE_FILL : INACTIVE)}
                         onClick={() => navigate(item.href)}
                     >
                         {item.label}
@@ -111,9 +116,9 @@ export default function AdminNavItems({
             {visibleFlatItems.map((item) => (
                 <Button
                     key={item.href}
-                    variant={pathname === item.href ? "secondary" : "ghost"}
+                    variant="ghost"
                     size="sm"
-                    className="rounded-sm text-sm"
+                    className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : INACTIVE)}
                     onClick={() => navigate(item.href)}
                 >
                     {item.label}
@@ -128,9 +133,9 @@ export default function AdminNavItems({
                     return (
                         <Button
                             key={item.href}
-                            variant={pathname === item.href ? "secondary" : "ghost"}
+                            variant="ghost"
                             size="sm"
-                            className="rounded-sm text-sm"
+                            className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : INACTIVE)}
                             onClick={() => navigate(item.href)}
                         >
                             {item.label}
@@ -142,9 +147,9 @@ export default function AdminNavItems({
                     <DropdownMenu key={group.label}>
                         <DropdownMenuTrigger asChild>
                             <Button
-                                variant={isActive ? "secondary" : "ghost"}
+                                variant="ghost"
                                 size="sm"
-                                className="rounded-sm text-sm gap-1"
+                                className={cn("rounded-sm text-sm gap-1", isActive ? ACTIVE_UNDERLINE : INACTIVE)}
                             >
                                 {group.label}
                                 <ChevronDown className="h-3 w-3 opacity-60" />
@@ -154,7 +159,7 @@ export default function AdminNavItems({
                             {group.items.map((item) => (
                                 <DropdownMenuItem
                                     key={item.href}
-                                    className={`rounded-sm cursor-pointer ${pathname === item.href ? "bg-secondary" : ""}`}
+                                    className={cn("rounded-sm cursor-pointer", pathname === item.href && ACTIVE_FILL)}
                                     onClick={() => navigate(item.href)}
                                 >
                                     {item.label}

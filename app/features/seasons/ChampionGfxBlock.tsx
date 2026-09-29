@@ -7,6 +7,7 @@ import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
 import { Label } from "@/app/components/ui/label"
 import ImageDropzone from "@/app/features/media/ImageDropzone"
+import AuthorPicker, { type AuthorSelection } from "@/app/features/media/AuthorPicker"
 import { createMediaPostAction, deleteMediaPostAction, getAllMediaPostsAction } from "@/app/actions/media.actions"
 import { MediaPost } from "@/server/domains/media"
 import { compressImage } from "@/app/utils/imageCompression"
@@ -27,6 +28,7 @@ export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBl
     const [compressing, setCompressing] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const [author, setAuthor] = useState<AuthorSelection | null>(null)
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -69,11 +71,13 @@ export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBl
             formData.set("title", title.trim() || `${seasonName ?? "Season"} Champion`)
             formData.set("seasonId", seasonId)
             formData.set("imageFile", imageFile)
+            if (author) formData.set("authorId", author.id)
 
             const result = await createMediaPostAction(formData)
             if (!result.ok) { toast.error(result.error.message); return }
             toast.success("Champion GFX uploaded")
             setTitle("")
+            setAuthor(null)
             clearFile()
             await load()
         } catch (err) {
@@ -143,6 +147,9 @@ export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBl
                             placeholder={`${seasonName ?? "Season"} Champion`}
                             className="rounded-sm max-w-xl"
                         />
+                    </div>
+                    <div className="max-w-xl">
+                        <AuthorPicker value={author} onChange={setAuthor} />
                     </div>
                     <ImageDropzone
                         preview={preview}

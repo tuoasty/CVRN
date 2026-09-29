@@ -7,6 +7,15 @@ import { getCachedSeasonHistoryDetail, getCachedRegions } from "@/server/cache/p
 import { SeasonDetail } from "@/server/domains/season";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { buildPublicTeamHref, buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
+import GfxFrame from "@/app/features/media/GfxFrame";
+import { getLogoClassName } from "@/app/lib/logoClass";
+import { cn } from "@/lib/utils";
+
+const LOGO_SHADOW =
+    "[filter:drop-shadow(0_0_1px_rgba(255,255,255,0.65))_drop-shadow(0_1px_3px_rgba(0,0,0,0.85))]";
+
+const CHAMPION_SCRIM =
+    "linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.30) 12%, transparent 34%)";
 
 function TeamLogoSmall({ name, logoUrl, size = 28, priority = false }: { name: string; logoUrl: string | null; size?: number; priority?: boolean }) {
     if (logoUrl) {
@@ -77,6 +86,75 @@ function ChampionMasthead({ podium, regionCode, seasonSlug }: { podium: SeasonDe
                                 ? <Link key={r.place} href={href} prefetch={false} className="hover:opacity-80 transition-opacity">{line}</Link>
                                 : <div key={r.place}>{line}</div>;
                         })}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function ChampionGfxHero({ gfx, podium, regionCode, seasonSlug }: { gfx: { image_url: string | null; title: string }; podium: SeasonDetail["season_podium"]; regionCode: string; seasonSlug: string }) {
+    if (!gfx.image_url) return null;
+
+    const sorted = [...podium].filter(e => e.place <= 3).sort((a, b) => a.place - b.place);
+    const champion = sorted.find(e => e.place === 1);
+    const runnerUp = sorted.find(e => e.place === 2);
+    const third = sorted.find(e => e.place === 3);
+
+    const teamHref = (slug: string) =>
+        buildPublicTeamHref({ regionCode: regionCode.toLowerCase(), seasonSlug, teamSlug: slug });
+    const championHref = champion ? teamHref(champion.teams.slug) : null;
+
+    const RankRow = ({ place, entry }: { place: number; entry: typeof sorted[number] }) => {
+        const href = teamHref(entry.teams.slug);
+        const inner = (
+            <>
+                <span className="font-mono tabular-nums text-sm font-bold uppercase tracking-wide text-muted-foreground shrink-0">{place === 2 ? "2nd" : "3rd"}</span>
+                {entry.teams.logo_url ? (
+                    <div className="relative w-9 h-9 shrink-0">
+                        <Image src={entry.teams.logo_url} alt={entry.teams.name} fill sizes="36px" className={getLogoClassName(true)} />
+                    </div>
+                ) : (
+                    <span className="flex items-center justify-center w-9 h-9 shrink-0 text-xs font-bold text-primary bg-primary/10">{entry.teams.name.slice(0, 2).toUpperCase()}</span>
+                )}
+                <span className="text-base font-semibold text-foreground truncate">{entry.teams.name}</span>
+            </>
+        );
+        return href ? (
+            <Link href={href} prefetch={false} className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity">{inner}</Link>
+        ) : (
+            <div className="flex items-center gap-2.5 min-w-0">{inner}</div>
+        );
+    };
+
+    return (
+        <div className="border-t-2 border-foreground border-b border-border pt-3.5 pb-4">
+            <div className="mx-auto w-full max-w-[calc(60vh*16/9)]">
+                <div className="relative w-full aspect-video overflow-hidden bg-black">
+                    <GfxFrame src={gfx.image_url} alt={gfx.title} sizes="100vw" priority className="absolute inset-0 w-full h-full" />
+                    <div className="absolute inset-0 pointer-events-none" style={{ background: CHAMPION_SCRIM }} />
+                    {champion && championHref && (
+                        <Link href={championHref} prefetch={false} className="absolute inset-0 z-10" aria-label={champion.teams.name} />
+                    )}
+                    {champion && (
+                        <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none flex flex-col items-center gap-2.5 px-4 pt-12 pb-5">
+                            <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">Champion</span>
+                            <div className="flex items-center gap-3.5 min-w-0">
+                                {champion.teams.logo_url && (
+                                    <div className="relative w-12 h-12 shrink-0">
+                                        <Image src={champion.teams.logo_url} alt={champion.teams.name} fill sizes="48px" className={cn("object-contain", LOGO_SHADOW)} />
+                                    </div>
+                                )}
+                                <span className="text-2xl sm:text-3xl font-bold text-white truncate">{champion.teams.name}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {(runnerUp || third) && (
+                    <div className="mt-4 flex items-center justify-between gap-4 border-t border-border pt-4">
+                        {runnerUp ? <RankRow place={2} entry={runnerUp} /> : <div />}
+                        {third ? <RankRow place={3} entry={third} /> : <div />}
                     </div>
                 )}
             </div>
@@ -296,6 +374,7 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
     const podium = season.season_podium ?? [];
     const awards = season.season_awards ?? [];
     const specWinners = season.spec_winners ?? [];
+    const gfx = season.champion_gfx?.[0] ?? null;
 
     const individualAwards = awards.filter(a => a.category === "individual_winners");
     const firstTeamAwards = awards.filter(a => a.category === "first_team");
@@ -304,8 +383,9 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
     const specShown = specWinners.filter(w => w.specs);
 
     const hasPodium = podium.length > 0;
+    const hasGfx = !!gfx?.image_url;
     const hasColumns = individualAwards.length > 0 || firstTeamAwards.length > 0 || staffTeamAwards.length > 0 || specShown.length > 0;
-    const hasContent = hasPodium || hasColumns || championRoster.length > 0;
+    const hasContent = hasPodium || hasGfx || hasColumns || championRoster.length > 0;
 
     return (
         <>
@@ -316,7 +396,9 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
                 </p>
             </div>
 
-            {hasPodium && <ChampionMasthead podium={podium} regionCode={regionCode} seasonSlug={seasonSlug} />}
+            {hasGfx
+                ? <ChampionGfxHero gfx={gfx!} podium={podium} regionCode={regionCode} seasonSlug={seasonSlug} />
+                : hasPodium && <ChampionMasthead podium={podium} regionCode={regionCode} seasonSlug={seasonSlug} />}
 
             {hasColumns && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-7 items-start">

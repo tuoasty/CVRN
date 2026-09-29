@@ -5,7 +5,7 @@ import {Err, Ok} from "@/shared/types/result";
 import {getAllSeasons, getSeasonBySlugAndRegion, createSeason, updateSeason, deleteSeason, getSeasonById} from "@/server/domains/season";
 import {SeasonSlugRegionSchema, SeasonIdSchema, CreateSeasonSchema, UpdateSeasonSchema} from "@/server/domains/season";
 import {
-    getSeasonPodium, getSeasonAwards, getArchive, getSeasonHistoryDetail,
+    getSeasonPodium, getSeasonAwards, getSeasonHistoryDetail,
     upsertSeasonPodiumSlot, deleteSeasonPodiumSlot, deriveAndSaveSeasonPodium,
     upsertSeasonAward, deleteSeasonAward, storeAwardAvatar, fetchChampionRosterAwards,
     batchUpsertSeasonAwards, updateSeasonAward, reorderSeasonAwards,
@@ -87,11 +87,6 @@ export async function getSeasonAwardsAction(input: unknown) {
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return getSeasonAwards(supabase, parsed.data.seasonId);
-}
-
-export async function getArchiveAction() {
-    const supabase = await createServerSupabase();
-    return getArchive(supabase);
 }
 
 export async function getSeasonHistoryDetailAction(slug: string, regionCode:string) {
