@@ -18,6 +18,7 @@ import {
     groupPlayerColumns,
     playerColWidthClass,
 } from "@/app/features/player/playerStatColumnMeta";
+import {formatPositions, positionsTitle} from "@/app/features/player/formatPositions";
 import {LeaderboardFilters, matchesPlayerQuery, SortKey} from "./useLeaderboardFilters";
 
 type Props = {
@@ -61,6 +62,7 @@ const PAGE_SIZE = 50;
 
 const RANK_W = "w-14";
 const PLAYER_W = "w-52";
+const POSITION_W = "w-24";
 const TEAM_W = "w-36";
 const REGION_W = "w-10";
 
@@ -149,7 +151,7 @@ export default function LeaderboardTable({
         Math.max(0, windowEnd - visible.length),
     );
 
-    const totalColumnCount = 2 + (showTeam ? 1 : 0) + (showRegion ? 1 : 0) + columns.length + 1;
+    const totalColumnCount = 2 + 1 + (showTeam ? 1 : 0) + (showRegion ? 1 : 0) + columns.length + 1;
 
     if (rows.length === 0) {
         return <p className="text-sm text-muted-foreground py-8 text-center">{emptyMessage}</p>;
@@ -190,6 +192,7 @@ export default function LeaderboardTable({
                     <colgroup>
                         <col className={RANK_W} />
                         <col className={PLAYER_W} />
+                        <col className={POSITION_W} />
                         {showTeam && <col className={TEAM_W} />}
                         {showRegion && <col className={REGION_W} />}
                         {columns.map(col => (
@@ -220,6 +223,21 @@ export default function LeaderboardTable({
                                 )}
                             >
                                 Player
+                            </TableHead>
+                            <TableHead
+                                rowSpan={2}
+                                className={cn(
+                                    "text-left align-bottom px-2 text-xs font-semibold uppercase tracking-wider",
+                                    HEAD_BG,
+                                    HEAD_RULE,
+                                )}
+                            >
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span>Pos</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">Positions played</TooltipContent>
+                                </Tooltip>
                             </TableHead>
                             {showTeam && (
                                 <TableHead
@@ -480,6 +498,15 @@ function LeaderboardRow({
                         )}
                     </div>
                 </div>
+            </TableCell>
+
+            <TableCell className="py-0 px-2 align-middle">
+                <span
+                    title={positionsTitle(row.position_counts)}
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground tabular-nums"
+                >
+                    {formatPositions(row.position_counts)}
+                </span>
             </TableCell>
 
             {showTeam && (

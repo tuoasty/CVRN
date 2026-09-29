@@ -18,6 +18,7 @@ import {
     groupPlayerColumns,
     playerHeadWidthClass,
 } from "./playerStatColumnMeta";
+import {formatPositions, positionsTitle} from "./formatPositions";
 
 type TeamLogoInfo = {logo_url: string | null; logo_bg_removed: boolean};
 
@@ -94,6 +95,17 @@ export default function PlayerSeasonStatsTable({rows, teamLogoBySeasonId}: Props
                                 >
                                     Season
                                 </TableHead>
+                                <TableHead
+                                    rowSpan={2}
+                                    className="text-left align-bottom px-2 border-r border-border/30 text-[11px] font-semibold uppercase tracking-wider"
+                                >
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="cursor-help">Pos</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">Positions played</TooltipContent>
+                                    </Tooltip>
+                                </TableHead>
                                 {groups.map((g, idx) => (
                                     <TableHead
                                         key={`group-${idx}`}
@@ -159,6 +171,9 @@ function SeasonStatRow({row, columns, teamLogo}: {row: PlayerSeasonStat; columns
                         </div>
                     )}
                 </div>
+            </TableCell>
+            <TableCell className="border-r border-border/30 py-1 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                <span title={positionsTitle(row.position_counts)}>{formatPositions(row.position_counts)}</span>
             </TableCell>
             {columns.map((col, i) => {
                 const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;

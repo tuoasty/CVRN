@@ -10,6 +10,7 @@ import {aggregateCareerRows} from "@/app/features/leaderboard/aggregateCareerRow
 import {deriveSeasonCohorts} from "@/app/features/leaderboard/seasonCohorts";
 import {
     matchesPlayerQuery,
+    matchesPosition,
     REGION_ALL,
     useLeaderboardFilters,
 } from "@/app/features/leaderboard/useLeaderboardFilters";
@@ -25,7 +26,7 @@ type Props = {
 };
 
 export default function AllTimeLeaderboardPage({rows, statsVersion}: Props) {
-    const {filters, setView, setSort, setRegion, setQuery, toggleSeason, clearSeasons} =
+    const {filters, setView, setSort, setRegion, setPosition, setQuery, toggleSeason, clearSeasons} =
         useLeaderboardFilters();
     const {stale, refresh} = useDataFreshness({tag: "stats", baseline: statsVersion});
 
@@ -46,13 +47,13 @@ export default function AllTimeLeaderboardPage({rows, statsVersion}: Props) {
         return aggregateCareerRows(scoped);
     }, [rows, selectedSeasons]);
 
-    const pool = useMemo(
-        () =>
+    const pool = useMemo(() => {
+        const byRegion =
             filters.region === REGION_ALL
                 ? careers
-                : careers.filter(r => r.region_code.toUpperCase() === filters.region),
-        [careers, filters.region]
-    );
+                : careers.filter(r => r.region_code.toUpperCase() === filters.region);
+        return byRegion.filter(r => matchesPosition(r, filters.position));
+    }, [careers, filters.region, filters.position]);
 
     const shownCount = useMemo(
         () => pool.filter(r => matchesPlayerQuery(r, filters.q)).length,
@@ -106,6 +107,8 @@ export default function AllTimeLeaderboardPage({rows, statsVersion}: Props) {
                 shownCount={shownCount}
                 region={filters.region}
                 onRegionChange={setRegion}
+                position={filters.position}
+                onPositionChange={setPosition}
                 cohorts={cohorts}
                 selectedSeasons={selectedSeasons}
                 onToggleSeason={toggleSeason}

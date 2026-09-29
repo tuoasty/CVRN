@@ -1,5 +1,7 @@
 import {PositionCode} from "@/shared/volleyball/positions";
 
+export type PositionCounts = Partial<Record<PositionCode, number>>;
+
 export interface RobloxUserIdInput {
     robloxUserId: string;
 }
@@ -122,6 +124,7 @@ export interface PlayerSeasonStat extends PlayerSeasonStatRow {
     season_name: string;
     season_slug: string;
     region_code: string;
+    position_counts: PositionCounts | null;
 }
 
 export interface PlayerLeaderboardRow extends PlayerSeasonStat {

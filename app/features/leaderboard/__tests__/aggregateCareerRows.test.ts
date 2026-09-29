@@ -171,6 +171,14 @@ describe("aggregateCareerRows", () => {
         expect(career.season_name).toBeNull();
     });
 
+    it("sums position_counts across a player's seasons", () => {
+        const [career] = aggregateCareerRows([
+            row({season_slug: "s1", season_start_date: "2025-01-01", sets_played: 10, position_counts: {OUT: 20, OPP: 5}}),
+            row({season_slug: "s2", season_start_date: "2025-06-01", sets_played: 10, position_counts: {OUT: 5, MID: 30}}),
+        ]);
+        expect(career.position_counts).toEqual({OUT: 25, OPP: 5, MID: 30});
+    });
+
     it("aggregates only the seasons it is given", () => {
         const all = [
             row({season_slug: "s1", season_start_date: "2025-01-01", sets_played: 10, aces_total: 10}),

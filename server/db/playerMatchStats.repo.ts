@@ -8,7 +8,12 @@ import {
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {PlayerMatchStatsInsert} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
-import {PlayerRawStatTotalsRow, RawStatSummaryRow, PlayerStatRanksRow} from "@/server/domains/player/types";
+import {PlayerRawStatTotalsRow, RawStatSummaryRow, PlayerStatRanksRow, PositionCounts} from "@/server/domains/player/types";
+
+export interface RangedPositionCountsRow {
+    player_id: string;
+    position_counts: PositionCounts | null;
+}
 
 export async function findMatchIdsWithStats(supabase: DBClient, matchIds: string[]): Promise<Result<string[]>> {
     if (matchIds.length === 0) return Ok([]);
@@ -75,6 +80,19 @@ export async function findRangedPlayerLeaderboard(
     });
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as RangedSeasonStatRow[]);
+}
+
+export async function findRangedPositionCounts(
+    supabase: DBClient,
+    p: {seasonId: string; from: string; to: string}
+): Promise<Result<RangedPositionCountsRow[]>> {
+    const {data, error} = await supabase.rpc("get_player_position_counts_ranged", {
+        p_season_id: p.seasonId,
+        p_from: p.from,
+        p_to: p.to,
+    });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as RangedPositionCountsRow[]);
 }
 
 export async function findPlayerLeaderboardByPosition(
