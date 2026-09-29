@@ -7,6 +7,7 @@ import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
 import { uploadFile, deleteFile } from '@/server/storage/storage.service'
 import { insertMediaPost } from '@/server/db/mediaPost.repo'
 import { assertMatchSlotFree } from '../helpers/assertMatchSlotFree'
+import { assertChampionSlotFree } from '../helpers/assertChampionSlotFree'
 import { CreateMediaInput, MediaPost } from '../types'
 
 const TIKTOK_HOSTNAMES = new Set(['www.tiktok.com', 'tiktok.com', 'vt.tiktok.com', 'm.tiktok.com'])
@@ -94,6 +95,14 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
 
         if (p.matchId && (p.type === 'gfx' || p.type === 'video')) {
             const free = await assertMatchSlotFree(supabase, p.matchId, p.type)
+            if (!free.ok) return free
+        }
+
+        if (p.type === 'champion') {
+            if (!p.seasonId) {
+                return Err({ message: 'A season is required for a champion GFX', code: 'VALIDATION_ERROR' })
+            }
+            const free = await assertChampionSlotFree(supabase, p.seasonId)
             if (!free.ok) return free
         }
 

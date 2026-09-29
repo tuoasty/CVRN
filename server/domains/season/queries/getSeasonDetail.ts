@@ -3,6 +3,7 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findSeasonHistoryBySlugAndRegion} from "@/server/db/seasonHistory.repo";
+import {findChampionGfxBySeasonId} from "@/server/db/mediaPost.repo";
 import {SeasonDetail} from "../types";
 import { findRegionByCode } from "@/server/db/regions.repo";
 
@@ -21,7 +22,20 @@ export async function getSeasonHistoryDetail(
             logger.error({error: result.error, slug}, "Failed to fetch season detail");
             return result as Result<SeasonDetail>;
         }
-        return Ok(result.value as SeasonDetail);
+
+        const season = result.value as SeasonDetail & {id: string};
+
+        const gfxRes = await findChampionGfxBySeasonId(supabase, season.id);
+        if (!gfxRes.ok) {
+            logger.error({error: gfxRes.error, slug}, "Failed to fetch champion GFX for season detail");
+            return gfxRes as Result<SeasonDetail>;
+        }
+
+        const gfx = gfxRes.value;
+        return Ok({
+            ...season,
+            champion_gfx: gfx ? [{id: gfx.id, image_url: gfx.image_url, title: gfx.title}] : [],
+        });
     } catch (error) {
         logger.error({error, slug}, "Unexpected error fetching season detail");
         return Err(serializeError(error));

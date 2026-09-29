@@ -41,6 +41,7 @@ import {useTeamsBySeason} from "@/app/hooks/useTeams";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
 import {formatPlacement, ordinalSuffix} from "@/app/utils/placement";
+import ChampionGfxBlock from "@/app/features/seasons/ChampionGfxBlock";
 
 function placeMeta(place: number, groupSize: number): {label: string; color: string; Icon: typeof Trophy} {
     if (place === 1) return {label: "Champion", color: "text-secondary", Icon: Trophy};
@@ -687,6 +688,8 @@ export default function SeasonResultsPage() {
                         )
                     }
                 </div>
+
+                <ChampionGfxBlock seasonId={seasonId} seasonName={season?.name} />
 
                 <div className="space-y-4 pt-4 border-t border-border">
                     <div className="flex items-center justify-between">

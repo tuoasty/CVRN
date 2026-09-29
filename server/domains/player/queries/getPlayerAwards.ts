@@ -29,6 +29,7 @@ export async function getPlayerAwards(
                 .from("player_team_seasons")
                 .select("team_id, season_id, team:teams!team_id(name, slug, logo_url, logo_bg_removed, deleted_at)")
                 .eq("player_id", p.playerId)
+                .is("left_at", null)
                 .order("joined_at", {ascending: false}),
         ]);
 

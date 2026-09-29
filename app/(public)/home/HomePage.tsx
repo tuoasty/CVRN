@@ -7,6 +7,7 @@ import CompactMatchCard from "@/app/(public)/home/CompactMatchCard";
 import FeaturedMatchCard from "@/app/(public)/home/FeaturedMatchCard";
 import FeaturedMatchCarousel, { type FeaturedSlide, type FeaturedAwardSlide, type FeaturedMatchSlide } from "@/app/(public)/home/FeaturedMatchCarousel";
 import SeasonChampionCard from "@/app/(public)/home/SeasonChampionCard";
+import SeasonChampionGfxCard from "@/app/(public)/home/SeasonChampionGfxCard";
 import MediaSidebar from "@/app/(public)/home/MediaSidebar";
 import Link from "next/link";
 import ArticleList from "@/app/(public)/articles/ArticleList";
@@ -73,6 +74,10 @@ export default function HomePage({
     const potwPost = mediaPosts
         .filter((p) => p.type === "potw" && p.image_url && p.season_id === season.id)
         .sort((a, b) => b.published_at.localeCompare(a.published_at))[0] ?? null;
+
+    const championGfx = mediaPosts.find(
+        (p) => p.type === "champion" && p.image_url && p.season_id === season.id
+    ) ?? null;
 
     const idsToFetch = useMemo(() => {
         const ids = new Set<string>();
@@ -269,7 +274,18 @@ export default function HomePage({
                     {}
                     <section className="space-y-6">
                         {isSeasonCompleted ? (
-                            <SeasonChampionCard podium={podium} seasonName={season.name} regionCode={regionCode} seasonSlug={seasonSlug} />
+                            championGfx ? (
+                                <SeasonChampionGfxCard
+                                    gfx={championGfx}
+                                    podium={podium}
+                                    authorName={authorNameFor(championGfx)}
+                                    seasonName={season.name}
+                                    regionCode={regionCode}
+                                    seasonSlug={seasonSlug}
+                                />
+                            ) : (
+                                <SeasonChampionCard podium={podium} seasonName={season.name} regionCode={regionCode} seasonSlug={seasonSlug} />
+                            )
                         ) : slides.length > 0 ? (
                             <FeaturedMatchCarousel slides={slides} regionCode={regionCode} />
                         ) : featuredMatch ? (
