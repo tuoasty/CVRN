@@ -1,7 +1,9 @@
 "use client";
 
 import {useCallback, useState} from "react";
-import {PlayerSeasonStat} from "@/server/domains/player";
+import {PlayerSeasonStat, PositionCounts} from "@/server/domains/player";
+import {PositionCode} from "@/shared/volleyball/positions";
+import {topPositions} from "@/app/features/player/formatPositions";
 import {
     STAT_VIEW_DEFAULT_SORT,
     StatView,
@@ -12,6 +14,7 @@ export type SortOrder = "asc" | "desc";
 
 export const REGION_ORDER = ["AS", "EU", "NA", "SA"] as const;
 export const REGION_ALL = "all";
+export const POSITION_ALL = "all";
 
 export type DateRange = {from: string | null; to: string | null};
 
@@ -21,6 +24,8 @@ export type LeaderboardFilters = {
     order: SortOrder;
 
     region: string;
+
+    position: string;
 
     seasons: string[];
 
@@ -41,11 +46,20 @@ export function matchesPlayerQuery(
     );
 }
 
+export function matchesPosition(
+    row: {position_counts: PositionCounts | null},
+    position: string
+): boolean {
+    if (position === POSITION_ALL) return true;
+    return topPositions(row.position_counts).includes(position as PositionCode);
+}
+
 const DEFAULT_FILTERS: LeaderboardFilters = {
     view: "overview",
     sort: STAT_VIEW_DEFAULT_SORT["overview"],
     order: "desc",
     region: REGION_ALL,
+    position: POSITION_ALL,
     seasons: [],
     range: {from: null, to: null},
     q: "",
@@ -70,6 +84,10 @@ export function useLeaderboardFilters() {
         setFilters(f => ({...f, region}));
     }, []);
 
+    const setPosition = useCallback((position: string) => {
+        setFilters(f => ({...f, position}));
+    }, []);
+
     const setQuery = useCallback((q: string) => {
         setFilters(f => ({...f, q}));
     }, []);
@@ -91,5 +109,5 @@ export function useLeaderboardFilters() {
         setFilters(f => ({...f, range}));
     }, []);
 
-    return {filters, setView, setSort, setRegion, setQuery, toggleSeason, clearSeasons, setRange};
+    return {filters, setView, setSort, setRegion, setPosition, setQuery, toggleSeason, clearSeasons, setRange};
 }

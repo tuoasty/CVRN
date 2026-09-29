@@ -9,6 +9,7 @@ import LeaderboardFilterBar from "@/app/features/leaderboard/LeaderboardFilterBa
 import LeaderboardTable from "@/app/features/leaderboard/LeaderboardTable";
 import {
     matchesPlayerQuery,
+    matchesPosition,
     useLeaderboardFilters,
 } from "@/app/features/leaderboard/useLeaderboardFilters";
 import {useRangedLeaderboard} from "@/app/hooks/useRangedLeaderboard";
@@ -26,7 +27,7 @@ type Props = {
 };
 
 export default function SeasonLeaderboardPage({rows, season, region, statsVersion}: Props) {
-    const {filters, setView, setSort, setQuery, setRange} = useLeaderboardFilters();
+    const {filters, setView, setSort, setQuery, setRange, setPosition} = useLeaderboardFilters();
     const {stale, refresh} = useDataFreshness({tag: "stats", baseline: statsVersion});
 
     const {rows: rangedRows, isLoading: rangedLoading, active: rangeActive} =
@@ -37,9 +38,14 @@ export default function SeasonLeaderboardPage({rows, season, region, statsVersio
         [rangeActive, rangedRows, rows]
     );
 
+    const pool = useMemo(
+        () => activeRows.filter(r => matchesPosition(r, filters.position)),
+        [activeRows, filters.position]
+    );
+
     const shownCount = useMemo(
-        () => activeRows.filter(r => matchesPlayerQuery(r, filters.q)).length,
-        [activeRows, filters.q]
+        () => pool.filter(r => matchesPlayerQuery(r, filters.q)).length,
+        [pool, filters.q]
     );
 
     const rangeLabel =
@@ -78,8 +84,10 @@ export default function SeasonLeaderboardPage({rows, season, region, statsVersio
                 query={filters.q}
                 onViewChange={setView}
                 onQueryChange={setQuery}
-                totalCount={activeRows.length}
+                totalCount={pool.length}
                 shownCount={shownCount}
+                position={filters.position}
+                onPositionChange={setPosition}
                 range={filters.range}
                 onRangeChange={setRange}
             />
@@ -91,7 +99,7 @@ export default function SeasonLeaderboardPage({rows, season, region, statsVersio
                     </div>
                 )}
                 <LeaderboardTable
-                    rows={activeRows}
+                    rows={pool}
                     filters={filters}
                     onSort={setSort}
                     onClearSearch={() => setQuery("")}

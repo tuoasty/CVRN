@@ -12,7 +12,8 @@ import type {DateRange} from "./useLeaderboardFilters";
 import type {SeasonCohort} from "./seasonCohorts";
 import StatViewSelector from "@/app/features/player/StatViewSelector";
 import {StatView} from "@/app/features/player/playerStatColumnMeta";
-import {REGION_ALL, REGION_ORDER} from "./useLeaderboardFilters";
+import {REGION_ALL, REGION_ORDER, POSITION_ALL} from "./useLeaderboardFilters";
+import {POSITIONS} from "@/shared/volleyball/positions";
 
 type Props = {
     view: StatView;
@@ -26,6 +27,9 @@ type Props = {
 
     region?: string;
     onRegionChange?: (region: string) => void;
+
+    position?: string;
+    onPositionChange?: (position: string) => void;
 
     cohorts?: SeasonCohort[];
     selectedSeasons?: string[];
@@ -45,6 +49,8 @@ export default function LeaderboardFilterBar({
     shownCount,
     region,
     onRegionChange,
+    position,
+    onPositionChange,
     cohorts,
     selectedSeasons,
     onToggleSeason,
@@ -53,6 +59,7 @@ export default function LeaderboardFilterBar({
     onRangeChange,
 }: Props) {
     const showRegions = region !== undefined && onRegionChange !== undefined;
+    const showPositions = position !== undefined && onPositionChange !== undefined;
     const showSeasons =
         cohorts !== undefined &&
         selectedSeasons !== undefined &&
@@ -67,6 +74,7 @@ export default function LeaderboardFilterBar({
                 <div className="flex items-center gap-2 flex-wrap">
                     <StatViewSelector value={view} onChange={onViewChange} />
                     {showRange && <DateRangeFilter range={range} onChange={onRangeChange} />}
+                    {showPositions && <PositionFilter value={position} onChange={onPositionChange} />}
                 </div>
                 <PlayerSearchInput value={query} onChange={onQueryChange} />
             </div>
@@ -165,6 +173,36 @@ function RegionFilter({value, onChange}: {value: string; onChange: (region: stri
                         )}
                     >
                         {code === REGION_ALL ? "All" : code}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
+function PositionFilter({value, onChange}: {value: string; onChange: (position: string) => void}) {
+    return (
+        <div
+            role="group"
+            aria-label="Filter by position"
+            className="flex items-center h-9 rounded-sm border border-border bg-muted/50 p-0.5"
+        >
+            {[POSITION_ALL, ...POSITIONS.map(p => p.code)].map(code => {
+                const selected = value === code;
+                return (
+                    <button
+                        key={code}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => onChange(code)}
+                        className={cn(
+                            "px-3 h-full text-xs font-semibold rounded-sm transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                            selected
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:text-foreground",
+                        )}
+                    >
+                        {code === POSITION_ALL ? "All" : code}
                     </button>
                 );
             })}

@@ -17,6 +17,7 @@ export {getPlayerSeasonStats} from "./queries/getPlayerSeasonStats";
 export {getLeaderboardStatRows} from "./queries/getLeaderboardStatRows";
 export {getTeamLeaderboard} from "./queries/getTeamLeaderboard";
 export {getRangedLeaderboardStatRows} from "./queries/getRangedLeaderboardStatRows";
+export {getRangedPositionCounts} from "./queries/getRangedPositionCounts";
 export {getPositionLeaderboardStatRows} from "./queries/getPositionLeaderboardStatRows";
 export {getLeaderboardIdentity} from "./queries/getLeaderboardIdentity";
 export {getPlayerAwards} from "./queries/getPlayerAwards";
@@ -51,6 +52,7 @@ export type {
     TransferCaptainInput,
     PlayerWithCurrentTeam,
     PlayerSeasonStat,
+    PositionCounts,
     PlayerLeaderboardRow,
     AllTimeLeaderboardRow,
     LeaderboardStatRow,

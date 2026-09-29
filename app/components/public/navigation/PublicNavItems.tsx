@@ -13,6 +13,7 @@ const NAV_PAGES = [
     { page: "teams", label: "Teams" },
     { page: "players", label: "Players" },
     { page: "leaderboard", label: "Leaderboard" },
+    { page: "spec-requirements", label: "Specs" },
     { page: "media", label: "Media" },
     { page: "archive", label: "Archive" },
 ];
@@ -20,6 +21,7 @@ const NAV_PAGES = [
 const GLOBAL_HREFS: Record<string, string> = {
     archive: "/archive",
     players: "/players",
+    "spec-requirements": "/spec-requirements",
 };
 
 interface PublicNavItemsProps {
