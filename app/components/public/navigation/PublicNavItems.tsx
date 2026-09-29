@@ -93,7 +93,9 @@ export default function PublicNavItems({
                                 ? layout === "vertical"
                                     ? "bg-accent text-foreground font-semibold"
                                     : "text-foreground font-semibold underline decoration-2 underline-offset-[6px]"
-                                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                                : layout === "vertical"
+                                    ? "text-muted-foreground hover:bg-accent hover:text-foreground"
+                                    : "text-muted-foreground hover:text-foreground hover:underline hover:decoration-2 hover:decoration-muted-foreground hover:underline-offset-[6px]"
                         )}
                     >
                         {item.label}

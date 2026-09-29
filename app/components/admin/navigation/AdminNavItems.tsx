@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 const ACTIVE_UNDERLINE = "text-foreground font-semibold underline decoration-2 underline-offset-[6px]";
 const ACTIVE_FILL = "bg-accent text-foreground font-semibold";
 const INACTIVE = "text-muted-foreground";
+const HOVER_UNDERLINE = "hover:bg-transparent dark:hover:bg-transparent hover:text-foreground hover:underline hover:decoration-2 hover:decoration-muted-foreground hover:underline-offset-[6px]";
 
 type NavItem = { href: string; label: string; superAdminOnly?: boolean };
 
@@ -118,7 +119,7 @@ export default function AdminNavItems({
                     key={item.href}
                     variant="ghost"
                     size="sm"
-                    className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : INACTIVE)}
+                    className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : cn(INACTIVE, HOVER_UNDERLINE))}
                     onClick={() => navigate(item.href)}
                 >
                     {item.label}
@@ -135,7 +136,7 @@ export default function AdminNavItems({
                             key={item.href}
                             variant="ghost"
                             size="sm"
-                            className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : INACTIVE)}
+                            className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : cn(INACTIVE, HOVER_UNDERLINE))}
                             onClick={() => navigate(item.href)}
                         >
                             {item.label}
@@ -149,7 +150,7 @@ export default function AdminNavItems({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className={cn("rounded-sm text-sm gap-1", isActive ? ACTIVE_UNDERLINE : INACTIVE)}
+                                className={cn("rounded-sm text-sm gap-1", isActive ? ACTIVE_UNDERLINE : cn(INACTIVE, HOVER_UNDERLINE))}
                             >
                                 {group.label}
                                 <ChevronDown className="h-3 w-3 opacity-60" />
