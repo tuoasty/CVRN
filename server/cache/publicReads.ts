@@ -91,7 +91,7 @@ export const getCachedSeasons = unstable_cache(
 export const getCachedArchive = unstable_cache(
     async () => unwrap(await getArchive(createPublicClient()), "getCachedArchive"),
     ["public:archive"],
-    {tags: [CACHE_TAGS.seasons], revalidate: PUBLIC_REVALIDATE_SECONDS},
+    {tags: [CACHE_TAGS.seasons, CACHE_TAGS.media], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedSeasonHistoryDetail = unstable_cache(

@@ -99,6 +99,7 @@ export interface ArchiveSeason {
         awarded_at: string;
         players: { id: string; username: string };
     }>;
+    champion_gfx: Array<{ id: string; image_url: string | null; title: string }>;
 }
 
 export interface ChampionArchiveEntry {

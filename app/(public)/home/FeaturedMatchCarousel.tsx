@@ -215,7 +215,7 @@ function MatchChrome({ slide, regionTimezone }: { slide: FeaturedMatchSlide; reg
 
     return (
         <>
-            <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 px-5 py-4 bg-gradient-to-b from-black/85 to-transparent">
+            <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 px-5 py-4 bg-gradient-to-b from-black/65 to-transparent">
                 <h3 className="text-[13px] font-bold uppercase tracking-wider text-white/85">
                     {slide.isRecent ? "Result" : "Up Next"}
                 </h3>
@@ -224,7 +224,7 @@ function MatchChrome({ slide, regionTimezone }: { slide: FeaturedMatchSlide; reg
                 </span>
             </div>
 
-            <div className="absolute inset-x-0 bottom-0 px-5 pt-12 pb-4 bg-gradient-to-t from-black/95 via-black/70 to-transparent">
+            <div className="absolute inset-x-0 bottom-0 px-5 pt-12 pb-4 bg-gradient-to-t from-black/80 via-black/45 to-transparent">
                 <div className="flex h-10 items-center justify-center sm:justify-start gap-3">
                     <SlideTeam team={slide.homeTeam} dim={isCompleted && !homeWon} />
                     <span className="shrink-0 text-xl font-bold tabular-nums text-white">
@@ -257,13 +257,13 @@ function AwardChrome({ slide }: { slide: FeaturedAwardSlide }) {
 
     return (
         <>
-            <div className="absolute inset-x-0 top-0 flex items-center px-5 py-4 bg-gradient-to-b from-black/85 to-transparent">
+            <div className="absolute inset-x-0 top-0 flex items-center px-5 py-4 bg-gradient-to-b from-black/65 to-transparent">
                 <h3 className="text-[13px] font-bold uppercase tracking-wider text-white/85">
                     {heading}
                 </h3>
             </div>
 
-            <div className="absolute inset-x-0 bottom-0 px-5 pt-12 pb-4 bg-gradient-to-t from-black/95 via-black/70 to-transparent">
+            <div className="absolute inset-x-0 bottom-0 px-5 pt-12 pb-4 bg-gradient-to-t from-black/80 via-black/45 to-transparent">
                 <div className="flex h-10 items-center gap-3">
                     {slide.subjectAvatarUrl && (
                         isPotw ? (
