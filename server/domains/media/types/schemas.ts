@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const CreateMediaFormSchema = z.object({
-    type:        z.enum(['gfx', 'video', 'clip', 'totw', 'potw']),
+    type:        z.enum(['gfx', 'video', 'clip', 'totw', 'potw', 'champion']),
     title:       z.string(),
     description: z.string().optional(),
     videoUrl:    z.string().url('Invalid URL').optional().or(z.literal('')),
@@ -31,7 +31,7 @@ export const AssignMediaToMatchSchema = z.object({
 export type AssignMediaToMatchInput = z.infer<typeof AssignMediaToMatchSchema>
 
 export const GetAllMediaSchema = z.object({
-    type:     z.enum(['gfx', 'video', 'news', 'recap', 'clip', 'totw', 'potw']).optional(),
+    type:     z.enum(['gfx', 'video', 'news', 'recap', 'clip', 'totw', 'potw', 'champion']).optional(),
     matchId:  z.string().uuid().optional(),
     teamId:   z.string().uuid().optional(),
     playerId: z.string().uuid().optional(),

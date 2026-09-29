@@ -21,7 +21,7 @@ function TeamLogo({ name, logoUrl, size = 24 }: { name: string; logoUrl: string 
                 width={size}
                 height={size}
                 style={{ width: size, height: size }}
-                className="rounded-sm object-contain mix-blend-multiply dark:mix-blend-screen shrink-0"
+                className="rounded-sm object-contain shrink-0"
             />
         );
     }

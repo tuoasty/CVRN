@@ -30,7 +30,7 @@ function TeamLogo({
                     alt={name}
                     fill
                     sizes={`${size}px`}
-                    className="object-contain mix-blend-multiply dark:mix-blend-screen"
+                    className="object-contain"
                 />
             </div>
         );
