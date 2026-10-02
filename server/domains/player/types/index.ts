@@ -291,24 +291,22 @@ export interface PlayerStatRanksRow {
     assists_per_set: number | null;
     blocks_per_set: number | null;
     receives_per_set: number | null;
+    digs_per_set: number | null;
     aces_per_set: number | null;
-    points_per_set_rank: number | null;
-    kills_per_set_rank: number | null;
-    hit_pct_rank: number | null;
-    assists_per_set_rank: number | null;
-    set_pct_rank: number | null;
-    blocks_per_set_rank: number | null;
-    kb_pct_rank: number | null;
-    receives_per_set_rank: number | null;
-    rec_pct_rank: number | null;
-    aces_per_set_rank: number | null;
+    net_serve_per_set: number | null;
+    scoring_rank: number | null;
+    spiking_rank: number | null;
+    setting_rank: number | null;
+    blocking_rank: number | null;
+    receiving_rank: number | null;
+    serving_rank: number | null;
 }
 
 export interface PlayerStatsResponse {
     roblox_user_id: string;
     sets_played: number;
     points_per_set: number | null;
-    points_per_set_rank: number | null;
+    scoring_rank: number | null;
     spiking: {
         ape_kills: number;
         ape_attempts: number;
@@ -318,22 +316,19 @@ export interface PlayerStatsResponse {
         kill_attempts: number;
         spiking_errors: number;
         kills_per_set: number | null;
-        kills_per_set_rank: number | null;
-        hit_pct_rank: number | null;
+        spiking_rank: number | null;
     };
     setting: {
         assists: number;
         setting_errors: number;
         assists_per_set: number | null;
-        assists_per_set_rank: number | null;
-        set_pct_rank: number | null;
+        setting_rank: number | null;
     };
     blocking: {
         kill_blocks: number;
         block_touches: number;
         blocks_per_set: number | null;
-        blocks_per_set_rank: number | null;
-        kb_pct_rank: number | null;
+        blocking_rank: number | null;
     };
     receiving: {
         receives: number;
@@ -342,15 +337,16 @@ export interface PlayerStatsResponse {
         dives: number;
         receive_errors: number;
         receives_per_set: number | null;
-        receives_per_set_rank: number | null;
-        rec_pct_rank: number | null;
+        digs_per_set: number | null;
+        receiving_rank: number | null;
     };
     serving: {
         jump_serve_aces: number;
         float_aces: number;
         service_errors: number;
         aces_per_set: number | null;
-        aces_per_set_rank: number | null;
+        net_serve_per_set: number | null;
+        serving_rank: number | null;
     };
 }
 
