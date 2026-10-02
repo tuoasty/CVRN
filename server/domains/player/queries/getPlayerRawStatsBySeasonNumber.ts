@@ -37,6 +37,11 @@ export async function getPlayerRawStatsBySeasonNumber(
             sets_played: t.sets_played,
             points_per_set: r.points_per_set,
             scoring_rank: r.scoring_rank,
+            spiking_rank: r.spiking_rank,
+            setting_rank: r.setting_rank,
+            receiving_rank: r.receiving_rank,
+            blocking_rank: r.blocking_rank,
+            serving_rank: r.serving_rank,
             spiking: {
                 ape_kills: t.ape_kills,
                 ape_attempts: t.ape_attempts,
@@ -46,19 +51,16 @@ export async function getPlayerRawStatsBySeasonNumber(
                 kill_attempts: t.kill_attempts,
                 spiking_errors: t.spiking_errors,
                 kills_per_set: r.kills_per_set,
-                spiking_rank: r.spiking_rank,
             },
             setting: {
                 assists: t.assists,
                 setting_errors: t.setting_errors,
                 assists_per_set: r.assists_per_set,
-                setting_rank: r.setting_rank,
             },
             blocking: {
                 kill_blocks: t.kill_blocks,
                 block_touches: t.block_touches,
                 blocks_per_set: r.blocks_per_set,
-                blocking_rank: r.blocking_rank,
             },
             receiving: {
                 receives: t.receives,
@@ -68,7 +70,6 @@ export async function getPlayerRawStatsBySeasonNumber(
                 receive_errors: t.receive_errors,
                 receives_per_set: r.receives_per_set,
                 digs_per_set: r.digs_per_set,
-                receiving_rank: r.receiving_rank,
             },
             serving: {
                 jump_serve_aces: t.jump_serve_aces,
@@ -76,7 +77,6 @@ export async function getPlayerRawStatsBySeasonNumber(
                 service_errors: t.service_errors,
                 aces_per_set: r.aces_per_set,
                 net_serve_per_set: r.net_serve_per_set,
-                serving_rank: r.serving_rank,
             },
         });
     } catch (error) {

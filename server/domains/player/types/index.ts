@@ -307,6 +307,11 @@ export interface PlayerStatsResponse {
     sets_played: number;
     points_per_set: number | null;
     scoring_rank: number | null;
+    spiking_rank: number | null;
+    setting_rank: number | null;
+    receiving_rank: number | null;
+    blocking_rank: number | null;
+    serving_rank: number | null;
     spiking: {
         ape_kills: number;
         ape_attempts: number;
@@ -316,19 +321,16 @@ export interface PlayerStatsResponse {
         kill_attempts: number;
         spiking_errors: number;
         kills_per_set: number | null;
-        spiking_rank: number | null;
     };
     setting: {
         assists: number;
         setting_errors: number;
         assists_per_set: number | null;
-        setting_rank: number | null;
     };
     blocking: {
         kill_blocks: number;
         block_touches: number;
         blocks_per_set: number | null;
-        blocking_rank: number | null;
     };
     receiving: {
         receives: number;
@@ -338,7 +340,6 @@ export interface PlayerStatsResponse {
         receive_errors: number;
         receives_per_set: number | null;
         digs_per_set: number | null;
-        receiving_rank: number | null;
     };
     serving: {
         jump_serve_aces: number;
@@ -346,7 +347,6 @@ export interface PlayerStatsResponse {
         service_errors: number;
         aces_per_set: number | null;
         net_serve_per_set: number | null;
-        serving_rank: number | null;
     };
 }
 
