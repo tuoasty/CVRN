@@ -10,7 +10,7 @@ export type DraftThreshold = {
     rowId: string;
     tier: SpecTier;
     statKey: string;
-    minValue: number;
+    minValue: number | null;
 };
 
 interface Props {
@@ -64,8 +64,13 @@ export default function SpecThresholdEditor({
                                 <input
                                     type="number"
                                     step="any"
-                                    value={String(row.minValue)}
-                                    onChange={e => onChange(row.rowId, {minValue: Number(e.target.value)})}
+                                    value={row.minValue === null ? '' : String(row.minValue)}
+                                    placeholder="unset"
+                                    onChange={e =>
+                                        onChange(row.rowId, {
+                                            minValue: e.target.value === '' ? null : Number(e.target.value),
+                                        })
+                                    }
                                     className="w-full min-w-0 bg-transparent px-1.5 text-right font-mono tabular-nums text-sm outline-none"
                                     aria-label="Threshold"
                                 />

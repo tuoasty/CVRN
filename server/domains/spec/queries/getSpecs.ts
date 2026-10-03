@@ -1,8 +1,19 @@
-import {DBClient} from "@/shared/types/db";
+import {DBClient, Spec} from "@/shared/types/db";
 import {Result} from "@/shared/types/result";
-import {findSpecsWithRequirements} from "@/server/db/specs.repo";
-import {SpecWithRequirements} from "../types";
+import {findSpecCatalog, findSpecsWithAllRegions, findSpecsWithRequirements} from "@/server/db/specs.repo";
+import {SpecWithAllRegions, SpecWithRequirements} from "../types";
 
-export async function getSpecs(supabase: DBClient): Promise<Result<SpecWithRequirements[]>> {
-    return findSpecsWithRequirements(supabase);
+export async function getSpecs(
+    supabase: DBClient,
+    regionId: string
+): Promise<Result<SpecWithRequirements[]>> {
+    return findSpecsWithRequirements(supabase, regionId);
+}
+
+export async function getSpecsAllRegions(supabase: DBClient): Promise<Result<SpecWithAllRegions[]>> {
+    return findSpecsWithAllRegions(supabase);
+}
+
+export async function getSpecCatalog(supabase: DBClient): Promise<Result<Spec[]>> {
+    return findSpecCatalog(supabase);
 }

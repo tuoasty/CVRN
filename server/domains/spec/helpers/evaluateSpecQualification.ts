@@ -6,7 +6,7 @@ import {BonusScope, DEFAULT_BONUS_SCOPE, PlacementBonusConfig, resolvePlacementB
 export type EvaluableRequirement = {
     tier: SpecTier;
     statKey: string;
-    minValue: number;
+    minValue: number | null;
 };
 
 export type EvaluateOptions = {
@@ -113,12 +113,15 @@ function check(
         minValue: r.minValue,
         value,
         adjustedValue: adjusted,
-        passed: adjusted !== null && (lower ? adjusted <= r.minValue : adjusted >= r.minValue),
+        passed:
+            adjusted !== null &&
+            r.minValue !== null &&
+            (lower ? adjusted <= r.minValue : adjusted >= r.minValue),
     };
 }
 
 function checkRatio(c: SpecRequirementCheck): number {
-    if (c.adjustedValue === null) return 0;
+    if (c.adjustedValue === null || c.minValue === null) return 0;
     const lower = isLowerIsBetterStatKey(c.statKey);
     if (lower) {
         if (c.adjustedValue <= c.minValue) return 1;

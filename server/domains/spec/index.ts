@@ -1,9 +1,12 @@
 export * from "./types";
-export {getSpecs} from "./queries/getSpecs";
+export {getSpecs, getSpecsAllRegions, getSpecCatalog} from "./queries/getSpecs";
+export {exportSpecRequirements} from "./queries/exportSpecRequirements";
 export {getPublicSpecSnapshot} from "./queries/getPublicSpecSnapshot";
 export {getPlacementBonus} from "./queries/getPlacementBonus";
 export {getSpecWinners} from "./queries/getSpecWinners";
-export {saveSpec} from "./commands/saveSpec";
+export {saveSpecIdentity} from "./commands/saveSpecIdentity";
+export {saveRegionRequirements} from "./commands/saveRegionRequirements";
+export {importSpecRequirements} from "./commands/importSpecRequirements";
 export {removeSpec} from "./commands/removeSpec";
 export {generateSpecSnapshot} from "./commands/generateSpecSnapshot";
 export {savePlacementBonus} from "./commands/savePlacementBonus";

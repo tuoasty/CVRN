@@ -13,8 +13,8 @@ import {Label} from "@/app/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/app/components/ui/select";
 import {SeasonPodiumEntryWithTeam, SeasonAwardEntryWithPlayer, AwardCategory} from "@/server/domains/season";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
-import {SpecWithRequirements, SpecWinnerWithRefs} from "@/server/domains/spec";
-import {Season} from "@/shared/types/db";
+import {SpecWinnerWithRefs} from "@/server/domains/spec";
+import {Season, Spec} from "@/shared/types/db";
 import {
     getSeasonByIdAction,
     getSeasonPodiumAction,
@@ -32,7 +32,7 @@ import {
 } from "@/app/actions/season.actions";
 import {searchPlayersInDatabaseAction} from "@/app/actions/player.actions";
 import {
-    getSpecsAction,
+    getSpecCatalogAction,
     getSpecWinnersAction,
     awardSpecWinnerAction,
     deleteSpecWinnerAction,
@@ -124,7 +124,7 @@ function PlayerSearchInput({seasonId, onSelect}: {seasonId: string; onSelect: (p
     );
 }
 
-function SpecSearchInput({specs, selectedSpec, onSelect}: {specs: SpecWithRequirements[]; selectedSpec: SpecWithRequirements | null; onSelect: (spec: SpecWithRequirements) => void}) {
+function SpecSearchInput({specs, selectedSpec, onSelect}: {specs: Spec[]; selectedSpec: Spec | null; onSelect: (spec: Spec) => void}) {
     const [query, setQuery] = useState("");
     const [open, setOpen] = useState(false);
     const q = query.trim().toLowerCase();
@@ -133,7 +133,7 @@ function SpecSearchInput({specs, selectedSpec, onSelect}: {specs: SpecWithRequir
         : specs
     ).slice(0, 8);
 
-    const handleSelect = (spec: SpecWithRequirements) => {
+    const handleSelect = (spec: Spec) => {
         onSelect(spec);
         setQuery(spec.name);
         setOpen(false);
@@ -315,7 +315,7 @@ export default function SeasonResultsPage() {
     } | null>(null);
     const [confirming, setConfirming] = useState(false);
 
-    const [specs, setSpecs] = useState<SpecWithRequirements[]>([]);
+    const [specs, setSpecs] = useState<Spec[]>([]);
     const [specWinners, setSpecWinners] = useState<SpecWinnerWithRefs[]>([]);
     const [selectedSpecId, setSelectedSpecId] = useState<string>("");
     const [specPlayer, setSpecPlayer] = useState<PlayerWithTeamInfo | null>(null);
@@ -334,7 +334,7 @@ export default function SeasonResultsPage() {
                 getSeasonByIdAction({seasonId}),
                 getSeasonPodiumAction({seasonId}),
                 getSeasonAwardsAction({seasonId}),
-                getSpecsAction(),
+                getSpecCatalogAction(),
                 getSpecWinnersAction(seasonId),
             ]);
             if (sRes.ok) setSeason(sRes.value);

@@ -29,8 +29,14 @@ function RequirementRows({reqs}: {reqs: SpecWithRequirements['requirements']}) {
                     >
                         <span className="truncate">{specStatLabel(r.stat_key)}</span>
                         <span className="font-mono tabular-nums font-medium shrink-0">
-                            {isLowerIsBetterStatKey(r.stat_key) ? '≤' : '≥'}{' '}
-                            {formatSpecStatValue(Number(r.min_value), format)}
+                            {r.min_value === null ? (
+                                <span className="text-muted-foreground">unset</span>
+                            ) : (
+                                <>
+                                    {isLowerIsBetterStatKey(r.stat_key) ? '≤' : '≥'}{' '}
+                                    {formatSpecStatValue(Number(r.min_value), format)}
+                                </>
+                            )}
                         </span>
                     </div>
                 );

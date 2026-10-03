@@ -1,25 +1,106 @@
 'use client';
 
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import Link from 'next/link';
-import {Award, Plus, SlidersHorizontal, Upload, EyeOff} from 'lucide-react';
+import {Award, Plus, SlidersHorizontal, Upload, EyeOff, Download, FileUp} from 'lucide-react';
 import {Button} from '@/app/components/ui/button';
 import PositionRail from '@/app/features/spec/PositionRail';
 import SpecCard from '@/app/features/spec/SpecCard';
 import SpecEditPane from '@/app/features/spec/SpecEditPane';
-import {useSpecs} from '@/app/hooks/useSpecs';
+import {useSpecs, exportSpecRequirements, importSpecRequirements} from '@/app/hooks/useSpecs';
+import {clientLogger} from '@/app/utils/clientLogger';
+import {SpecImportRegionDiff} from '@/server/domains/spec/types';
+import {useAdminContextStore} from '@/app/stores/adminContextStore';
 import {SpecPosition, positionLabel} from '@/server/domains/spec/types';
 import {generateSpecSnapshotAction, deleteSpecSnapshotAction} from '@/app/actions/spec.actions';
 import {toast} from '@/app/utils/toast';
 
+function summarizeDiff(d: SpecImportRegionDiff): string {
+    const c = d.counts;
+    return `${c.added} added, ${c.changed} changed, ${c.cleared} cleared, ${c.unchanged} unchanged, ${d.unsetCount} unset values`;
+}
+
 export default function AdminSpecsPage() {
-    const {specs, isLoading, error} = useSpecs();
+    const regionId = useAdminContextStore(s => s.selectedRegionId);
+    const {specs, isLoading, error} = useSpecs(regionId);
 
     const [active, setActive] = useState<SpecPosition | 'ALL'>('ALL');
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
     const [publishing, setPublishing] = useState(false);
     const [unpublishing, setUnpublishing] = useState(false);
+    const [transferring, setTransferring] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleExport = async (statsOnly: boolean) => {
+        if (!regionId) return;
+        setTransferring(true);
+        try {
+            const result = await exportSpecRequirements(regionId, statsOnly);
+            if (!result.ok) {
+                toast.error('Failed to export', result.error.message);
+                return;
+            }
+            const blob = new Blob([JSON.stringify(result.value.file, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = result.value.filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch {
+            toast.error('Something went wrong');
+        } finally {
+            setTransferring(false);
+        }
+    };
+
+    const handleImportFile = async (fileList: FileList | null) => {
+        const picked = fileList?.[0];
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        const targetRegionId = regionId;
+        if (!picked || !targetRegionId) return;
+        setTransferring(true);
+        try {
+            let parsed: unknown;
+            try {
+                parsed = JSON.parse(await picked.text());
+            } catch {
+                toast.error('Import rejected', 'The file is not valid JSON');
+                return;
+            }
+            const preview = await importSpecRequirements(targetRegionId, parsed, true);
+            if (!preview.ok) {
+                toast.error('Failed to import', preview.error.message);
+                return;
+            }
+            if (preview.value.status === 'rejected') {
+                clientLogger.warn('AdminSpecsPage', 'Import rejected', {issues: preview.value.issues});
+                toast.error(
+                    'Import rejected',
+                    `${preview.value.issues.length} problem${preview.value.issues.length === 1 ? '' : 's'}. First: ${preview.value.issues[0]?.message ?? ''}. Full list in the console.`,
+                );
+                return;
+            }
+            if (preview.value.status !== 'preview') return;
+            const diff = preview.value.diff;
+            clientLogger.info('AdminSpecsPage', 'Import preview', {diff});
+            if (!window.confirm(`Import into ${diff.regionCode}? This replaces ${diff.regionCode} requirements for the listed specs.\n\n${summarizeDiff(diff)}`)) return;
+
+            const applied = await importSpecRequirements(targetRegionId, parsed, false);
+            if (!applied.ok) {
+                toast.error('Failed to import', applied.error.message);
+                return;
+            }
+            if (applied.value.status === 'applied') {
+                toast.success(`Imported into ${applied.value.diff.regionCode}`, summarizeDiff(applied.value.diff));
+            }
+        } catch {
+            toast.error('Something went wrong');
+        } finally {
+            setTransferring(false);
+        }
+    };
 
     const visibleSpecs = active === 'ALL' ? specs : specs.filter(s => s.position === active);
     const selectedSpec = specs.find(s => s.id === selectedId) ?? null;
@@ -44,9 +125,10 @@ export default function AdminSpecsPage() {
     };
 
     const handlePublish = async () => {
+        if (!regionId) return;
         setPublishing(true);
         try {
-            const result = await generateSpecSnapshotAction();
+            const result = await generateSpecSnapshotAction(regionId);
             if (!result.ok) {
                 toast.error('Failed to publish', result.error.message);
                 return;
@@ -63,9 +145,10 @@ export default function AdminSpecsPage() {
     };
 
     const handleUnpublish = async () => {
+        if (!regionId) return;
         setUnpublishing(true);
         try {
-            const result = await deleteSpecSnapshotAction();
+            const result = await deleteSpecSnapshotAction(regionId);
             if (!result.ok) {
                 toast.error('Failed to unpublish', result.error.message);
                 return;
@@ -96,6 +179,40 @@ export default function AdminSpecsPage() {
                             <Plus className="h-4 w-4" />
                             New Spec
                         </Button>
+                        <Button
+                            onClick={() => handleExport(false)}
+                            disabled={transferring || !regionId}
+                            variant="ghost"
+                            className="rounded-sm gap-1"
+                        >
+                            <Download className="h-4 w-4" />
+                            Export
+                        </Button>
+                        <Button
+                            onClick={() => handleExport(true)}
+                            disabled={transferring || !regionId}
+                            variant="ghost"
+                            className="rounded-sm gap-1"
+                        >
+                            <Download className="h-4 w-4" />
+                            Stats only
+                        </Button>
+                        <Button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={transferring || !regionId}
+                            variant="ghost"
+                            className="rounded-sm gap-1"
+                        >
+                            <FileUp className="h-4 w-4" />
+                            Import
+                        </Button>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="application/json,.json"
+                            className="hidden"
+                            onChange={e => handleImportFile(e.target.files)}
+                        />
                         <Button asChild variant="outline" className="rounded-sm gap-1">
                             <Link href="/admin/specs/qualify">
                                 <SlidersHorizontal className="h-4 w-4" />
@@ -104,7 +221,7 @@ export default function AdminSpecsPage() {
                         </Button>
                         <Button
                             onClick={handlePublish}
-                            disabled={publishing}
+                            disabled={publishing || !regionId}
                             variant="outline"
                             className="rounded-sm gap-1"
                         >
@@ -113,7 +230,7 @@ export default function AdminSpecsPage() {
                         </Button>
                         <Button
                             onClick={handleUnpublish}
-                            disabled={unpublishing}
+                            disabled={unpublishing || !regionId}
                             variant="ghost"
                             className="rounded-sm gap-1 text-muted-foreground"
                         >
@@ -123,7 +240,11 @@ export default function AdminSpecsPage() {
                     </div>
                 </div>
 
-                {error ? (
+                {!regionId ? (
+                    <div className="panel p-6 mt-6 text-center">
+                        <p className="text-muted-foreground text-sm">Select a region to edit its requirements.</p>
+                    </div>
+                ) : error ? (
                     <div className="panel p-6 mt-6 text-center">
                         <p className="text-destructive text-sm">{error}</p>
                     </div>
@@ -157,11 +278,12 @@ export default function AdminSpecsPage() {
 
                         <div className="border-l border-border bg-muted/20 overflow-y-auto">
                             {creating ? (
-                                <SpecEditPane spec={null} mode="create" onSaved={handleSaved} onDeleted={handleDeleted} />
+                                <SpecEditPane spec={null} mode="create" regionId={regionId} onSaved={handleSaved} onDeleted={handleDeleted} />
                             ) : selectedSpec ? (
                                 <SpecEditPane
                                     spec={selectedSpec}
                                     mode="edit"
+                                    regionId={regionId}
                                     onSaved={handleSaved}
                                     onDeleted={handleDeleted}
                                 />

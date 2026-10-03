@@ -1,27 +1,38 @@
 import useSWR, {mutate as globalMutate, type BareFetcher} from 'swr';
 import {
     getSpecsAction,
-    saveSpecAction,
+    getSpecsAllRegionsAction,
+    saveSpecIdentityAction,
+    saveRegionRequirementsAction,
+    exportSpecRequirementsAction,
+    importSpecRequirementsAction,
     deleteSpecAction,
     getSpecLeaderboardAction,
     getPlacementBonusAction,
     savePlacementBonusAction,
     resetPlacementBonusAction,
 } from '@/app/actions/spec.actions';
-import {PlacementBonusConfig, SaveSpecInput, SpecWithRequirements} from '@/server/domains/spec/types';
+import {
+    PlacementBonusConfig,
+    SaveRegionRequirementsInput,
+    SaveSpecIdentityInput,
+    SpecWithAllRegions,
+    SpecWithRequirements,
+} from '@/server/domains/spec/types';
 import {PlayerLeaderboardRow} from '@/server/domains/player';
 
 const TTL = 2 * 60 * 1000;
 
-async function fetchSpecs(): Promise<SpecWithRequirements[]> {
-    const result = await getSpecsAction();
+async function fetchSpecs([, regionId]: [string, string]): Promise<SpecWithRequirements[]> {
+    const result = await getSpecsAction(regionId);
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
 }
 
-export function useSpecs() {
+export function useSpecs(regionId: string | null) {
+    const key = regionId ? (['specs', regionId] as const) : null;
     const {data, error, isLoading, mutate} = useSWR(
-        ['specs'] as const,
+        key,
         fetchSpecs as BareFetcher<SpecWithRequirements[]>,
         {dedupingInterval: TTL, revalidateOnFocus: false}
     );
@@ -33,13 +44,49 @@ export function useSpecs() {
     };
 }
 
+async function fetchSpecsAllRegions(): Promise<SpecWithAllRegions[]> {
+    const result = await getSpecsAllRegionsAction();
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+export function useSpecsAllRegions() {
+    const {data, error, isLoading, mutate} = useSWR(
+        ['specs', '__all__'] as const,
+        fetchSpecsAllRegions as BareFetcher<SpecWithAllRegions[]>,
+        {dedupingInterval: TTL, revalidateOnFocus: false}
+    );
+    return {
+        specs: (data as SpecWithAllRegions[] | undefined) ?? [],
+        isLoading,
+        error: error?.message ?? null,
+        mutate,
+    };
+}
+
 export function revalidateSpecs() {
     return globalMutate((key: unknown) => Array.isArray(key) && key[0] === 'specs', undefined, {revalidate: true});
 }
 
-export async function saveSpec(input: SaveSpecInput) {
-    const result = await saveSpecAction(input);
+export async function saveSpecIdentity(input: SaveSpecIdentityInput) {
+    const result = await saveSpecIdentityAction(input);
     if (result.ok) await revalidateSpecs();
+    return result;
+}
+
+export async function saveRegionRequirements(input: SaveRegionRequirementsInput) {
+    const result = await saveRegionRequirementsAction(input);
+    if (result.ok) await revalidateSpecs();
+    return result;
+}
+
+export async function exportSpecRequirements(regionId: string, statsOnly: boolean) {
+    return exportSpecRequirementsAction({regionId, statsOnly});
+}
+
+export async function importSpecRequirements(regionId: string, file: unknown, dryRun: boolean) {
+    const result = await importSpecRequirementsAction({regionId, file, dryRun});
+    if (result.ok && result.value.status === 'applied') await revalidateSpecs();
     return result;
 }
 

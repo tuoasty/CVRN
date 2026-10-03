@@ -23,7 +23,7 @@ import {
     AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog';
 import SpecThresholdEditor, {DraftThreshold} from '@/app/features/spec/SpecThresholdEditor';
-import {saveSpec, deleteSpec} from '@/app/hooks/useSpecs';
+import {saveSpecIdentity, saveRegionRequirements, deleteSpec} from '@/app/hooks/useSpecs';
 import {
     SPEC_POSITIONS,
     SpecPosition,
@@ -42,11 +42,12 @@ const EMPTY_COUNTS = new Map<string, number>();
 interface Props {
     spec: SpecWithRequirements | null;
     mode: 'edit' | 'create';
+    regionId: string | null;
     onSaved: () => void;
     onDeleted: () => void;
 }
 
-export default function SpecEditPane({spec, mode, onSaved, onDeleted}: Props) {
+export default function SpecEditPane({spec, mode, regionId, onSaved, onDeleted}: Props) {
     const [name, setName] = useState('');
     const [stars, setStars] = useState(5);
     const [position, setPosition] = useState<SpecPosition>('OUT');
@@ -77,7 +78,7 @@ export default function SpecEditPane({spec, mode, onSaved, onDeleted}: Props) {
                 rowId: newRowId(),
                 tier: r.tier as SpecTier,
                 statKey: r.stat_key,
-                minValue: Number(r.min_value),
+                minValue: r.min_value === null ? null : Number(r.min_value),
             }))
         );
     }, [spec, mode]);
@@ -98,10 +99,11 @@ export default function SpecEditPane({spec, mode, onSaved, onDeleted}: Props) {
         setRows(rs => [...rs, {rowId: newRowId(), tier, statKey: '', minValue: 0}]);
 
     const validationError = (() => {
+        if (!regionId) return 'Select a region first';
         if (!name.trim()) return 'Name is required';
         if (parsedHeight === null) return 'Height must look like 6\'7"';
         if (rows.some(r => !r.statKey)) return 'Every requirement needs a stat';
-        if (rows.some(r => !Number.isFinite(r.minValue))) return 'Every requirement needs a number';
+        if (rows.some(r => r.minValue !== null && !Number.isFinite(r.minValue))) return 'Every requirement needs a number or unset';
         if (secondaryRequired > secondaryRows.length) {
             return `Requires ${secondaryRequired} of ${secondaryRows.length} secondary — nobody could qualify`;
         }
@@ -115,25 +117,35 @@ export default function SpecEditPane({spec, mode, onSaved, onDeleted}: Props) {
         }
         setSaving(true);
         try {
-            const result = await saveSpec({
+            const identity = await saveSpecIdentity({
                 ...(spec && mode === 'edit' ? {id: spec.id} : {}),
                 name: name.trim(),
                 stars,
                 position,
                 height: parsedHeight,
-                secondaryRequired,
-                requirements: rows
-                    .filter(r => r.statKey)
-                    .map(({tier, statKey, minValue}) => ({
-                        tier,
-                        statKey: statKey as SpecRequirementInput['statKey'],
-                        minValue,
-                    })),
             });
-            if (!result.ok) {
-                clientLogger.error('SpecEditPane', 'Failed to save spec', {error: result.error});
-                toast.error('Failed to save', result.error.message);
+            if (!identity.ok) {
+                clientLogger.error('SpecEditPane', 'Failed to save spec', {error: identity.error});
+                toast.error('Failed to save', identity.error.message);
                 return;
+            }
+            const requirements = rows
+                .filter(r => r.statKey)
+                .map(({tier, statKey, minValue}) => ({
+                    tier,
+                    statKey: statKey as SpecRequirementInput['statKey'],
+                    minValue,
+                }));
+            if (regionId && (mode === 'edit' || requirements.length > 0)) {
+                const result = await saveRegionRequirements({
+                    regionId,
+                    specs: [{specId: identity.value.id, secondaryRequired, requirements}],
+                });
+                if (!result.ok) {
+                    clientLogger.error('SpecEditPane', 'Failed to save requirements', {error: result.error});
+                    toast.error('Details saved, requirements failed', result.error.message);
+                    return;
+                }
             }
             toast.success(mode === 'edit' ? 'Spec updated' : 'Spec created');
             onSaved();

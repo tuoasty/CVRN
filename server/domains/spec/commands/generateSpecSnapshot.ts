@@ -28,16 +28,17 @@ function isTieredSkillKey(statKey: string): boolean {
 }
 
 export async function generateSpecSnapshot(
-    supabase: DBClient
+    supabase: DBClient,
+    regionId: string
 ): Promise<Result<{specCount: number; statCount: number}>> {
-    const specsResult = await findSpecsWithRequirements(supabase);
+    const specsResult = await findSpecsWithRequirements(supabase, regionId);
     if (!specsResult.ok) return specsResult;
     const allSpecs = specsResult.value;
 
     const valuesByStat = new Map<string, number[]>();
     for (const spec of allSpecs) {
         for (const req of spec.requirements) {
-            if (!isTieredSkillKey(req.stat_key)) continue;
+            if (!isTieredSkillKey(req.stat_key) || req.min_value === null) continue;
             const arr = valuesByStat.get(req.stat_key);
             if (arr) arr.push(req.min_value);
             else valuesByStat.set(req.stat_key, [req.min_value]);
@@ -52,6 +53,7 @@ export async function generateSpecSnapshot(
         const secondary: PublicRequirement[] = [];
 
         for (const req of spec.requirements) {
+            if (req.min_value === null) continue;
             const statKey = req.stat_key;
             const bucket = req.tier === "main" ? main : secondary;
 
@@ -102,7 +104,7 @@ export async function generateSpecSnapshot(
     };
 
     const statCount = valuesByStat.size;
-    const upsert = await upsertSpecSnapshot(supabase, {payload, poolSize: statCount});
+    const upsert = await upsertSpecSnapshot(supabase, {regionId, payload, poolSize: statCount});
     if (!upsert.ok) return upsert;
 
     return Ok({specCount: specs.length, statCount});

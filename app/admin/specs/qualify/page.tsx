@@ -24,7 +24,7 @@ import {
     AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
-import {useSpecs, useSpecLeaderboard, useSpecBonus, saveSpec} from '@/app/hooks/useSpecs';
+import {useSpecs, useSpecLeaderboard, useSpecBonus, saveSpecIdentity, saveRegionRequirements} from '@/app/hooks/useSpecs';
 import SpecThresholdEditor, {DraftThreshold} from '@/app/features/spec/SpecThresholdEditor';
 import PlacementBonusEditor from '@/app/features/spec/PlacementBonusEditor';
 import SpecQualificationTable from '@/app/features/spec/SpecQualificationTable';
@@ -48,7 +48,7 @@ const newRowId = () => Math.random().toString(36).slice(2);
 export default function AdminSpecQualifyPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId);
     const regionId = useAdminContextStore(s => s.selectedRegionId);
-    const {specs} = useSpecs();
+    const {specs} = useSpecs(regionId);
 
     const {
         config: savedBonus,
@@ -102,7 +102,7 @@ export default function AdminSpecQualifyPage() {
                 rowId: newRowId(),
                 tier: r.tier as SpecTier,
                 statKey: r.stat_key,
-                minValue: Number(r.min_value),
+                minValue: r.min_value === null ? null : Number(r.min_value),
             }))
         );
         setSecondaryRequired(spec.secondary_required);
@@ -173,7 +173,7 @@ export default function AdminSpecQualifyPage() {
     const qualifiedCount = matchedEval.rows.filter(r => r.qualified).length;
 
     const thresholdByKey = useMemo(() => {
-        const m = new Map<string, {minValue: number; format: string; lowerIsBetter: boolean}>();
+        const m = new Map<string, {minValue: number | null; format: string; lowerIsBetter: boolean}>();
         for (const t of thresholds) {
             if (!t.statKey) continue;
             m.set(t.statKey, {
@@ -199,9 +199,10 @@ export default function AdminSpecQualifyPage() {
     };
 
     const saveError = (() => {
+        if (!regionId) return 'Select a region first';
         if (!selectedSpec) return 'Pick a spec to save into';
         if (thresholds.some(t => !t.statKey)) return 'Every requirement needs a stat';
-        if (thresholds.some(t => !Number.isFinite(t.minValue))) return 'Every requirement needs a number';
+        if (thresholds.some(t => t.minValue !== null && !Number.isFinite(t.minValue))) return 'Every requirement needs a number or unset';
         if (secondaryRequired > secondaryRows.length) {
             return `Requires ${secondaryRequired} of ${secondaryRows.length} secondary — nobody could qualify`;
         }
@@ -209,27 +210,42 @@ export default function AdminSpecQualifyPage() {
     })();
 
     const handleSave = async () => {
-        if (!selectedSpec) return;
+        if (!selectedSpec || !regionId) return;
         if (saveError) {
             toast.error(saveError);
             return;
         }
         setSaving(true);
         try {
-            const result = await saveSpec({
-                id: selectedSpec.id,
-                name: selectedSpec.name,
-                stars,
-                position: selectedSpec.position as SpecPosition,
-                height: selectedSpec.height,
-                secondaryRequired,
-                requirements: thresholds
-                    .filter(t => t.statKey)
-                    .map(({tier, statKey, minValue}) => ({
-                        tier,
-                        statKey: statKey as SpecRequirementInput['statKey'],
-                        minValue,
-                    })),
+            if (stars !== selectedSpec.stars) {
+                const identity = await saveSpecIdentity({
+                    id: selectedSpec.id,
+                    name: selectedSpec.name,
+                    stars,
+                    position: selectedSpec.position as SpecPosition,
+                    height: selectedSpec.height,
+                });
+                if (!identity.ok) {
+                    clientLogger.error('SpecQualifyPage', 'Failed to save spec', {error: identity.error});
+                    toast.error('Failed to save', identity.error.message);
+                    return;
+                }
+            }
+            const result = await saveRegionRequirements({
+                regionId,
+                specs: [
+                    {
+                        specId: selectedSpec.id,
+                        secondaryRequired,
+                        requirements: thresholds
+                            .filter(t => t.statKey)
+                            .map(({tier, statKey, minValue}) => ({
+                                tier,
+                                statKey: statKey as SpecRequirementInput['statKey'],
+                                minValue,
+                            })),
+                    },
+                ],
             });
             if (!result.ok) {
                 clientLogger.error('SpecQualifyPage', 'Failed to save spec', {error: result.error});
