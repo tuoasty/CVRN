@@ -12,6 +12,7 @@ import type {
     SpecFileReqMap,
     SpecFileSpec,
     SpecImportIssue,
+    SpecImportMode,
     SpecImportRegionDiff,
     SpecImportSpecDiff,
     SpecStatChange,
@@ -59,7 +60,6 @@ function regionSecondary(spec: SpecFileSpec, regionId: string): number {
 export function buildSpecExport(p: {
     specs: SpecFileSpec[];
     regionId: string;
-    statsOnly: boolean;
     exportedAt: string;
 }): SpecExportFile {
     const specs: SpecFileEntry[] = [];
@@ -70,7 +70,7 @@ export function buildSpecExport(p: {
         const sub_reqs: SpecFileReqMap = {};
         for (const r of reqs) {
             const target = r.tier === "main" ? main_reqs : sub_reqs;
-            target[r.statKey] = p.statsOnly ? null : r.minValue;
+            target[r.statKey] = r.minValue;
         }
         specs.push({
             spec_name: spec.name,
@@ -85,11 +85,11 @@ export function buildSpecExport(p: {
     return {version: 1, exportedAt: p.exportedAt, specs};
 }
 
-export function specExportFilename(regionCode: string, statsOnly: boolean, date: Date): string {
+export function specExportFilename(regionCode: string, date: Date): string {
     const y = date.getUTCFullYear();
     const m = String(date.getUTCMonth() + 1).padStart(2, "0");
     const d = String(date.getUTCDate()).padStart(2, "0");
-    return `cvrn-spec-reqs-${regionCode.trim().toLowerCase()}-${y}${m}${d}${statsOnly ? "-stats-only" : ""}.json`;
+    return `cvrn-spec-reqs-${regionCode.trim().toLowerCase()}-${y}${m}${d}.json`;
 }
 
 export type SpecImportValidation =
@@ -177,10 +177,35 @@ export function validateSpecImport(file: unknown, ctx: {specs: SpecFileSpec[]}):
     return {ok: true, specs: resolved};
 }
 
+export function applyImportMode(
+    incoming: ResolvedSpecImport[],
+    mode: SpecImportMode,
+    regionId: string,
+    specs: SpecFileSpec[]
+): ResolvedSpecImport[] {
+    if (mode === "full") return incoming;
+    const specById = new Map(specs.map(s => [s.id, s]));
+
+    return incoming.map(spec => {
+        const current = specById.get(spec.specId);
+        const existing = new Map(
+            (current ? regionRequirements(current, regionId) : []).map(r => [r.statKey, r.minValue])
+        );
+        return {
+            ...spec,
+            requirements: spec.requirements.map(r => ({
+                ...r,
+                minValue: existing.has(r.statKey) ? (existing.get(r.statKey) ?? null) : null,
+            })),
+        };
+    });
+}
+
 export function diffSpecImport(
     region: SpecFileRegion,
     incomingSpecs: ResolvedSpecImport[],
-    specs: SpecFileSpec[]
+    specs: SpecFileSpec[],
+    mode: SpecImportMode = "full"
 ): SpecImportRegionDiff {
     const specById = new Map(specs.map(s => [s.id, s]));
 
@@ -232,6 +257,7 @@ export function diffSpecImport(
     return {
         regionId: region.id,
         regionCode: region.code,
+        mode,
         specs: specDiffs,
         counts,
         unsetCount: regionUnset,

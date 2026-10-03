@@ -139,6 +139,7 @@ export async function importSpecRequirementsAction(data: unknown) {
     const result = await importSpecRequirements(supabase, {
         regionId: parsed.data.regionId,
         file: parsed.data.file,
+        mode: parsed.data.mode,
         dryRun: parsed.data.dryRun,
     });
     if (result.ok && result.value.status === "applied") {

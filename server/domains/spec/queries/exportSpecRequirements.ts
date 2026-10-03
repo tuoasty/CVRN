@@ -24,9 +24,8 @@ export async function exportSpecRequirements(
     const file = buildSpecExport({
         specs: specsRes.value,
         regionId: region.id,
-        statsOnly: input.statsOnly,
         exportedAt: now.toISOString(),
     });
 
-    return Ok({filename: specExportFilename(region.code, input.statsOnly, now), file});
+    return Ok({filename: specExportFilename(region.code, now), file});
 }

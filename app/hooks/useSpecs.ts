@@ -16,6 +16,7 @@ import {
     PlacementBonusConfig,
     SaveRegionRequirementsInput,
     SaveSpecIdentityInput,
+    SpecImportMode,
     SpecWithAllRegions,
     SpecWithRequirements,
 } from '@/server/domains/spec/types';
@@ -80,12 +81,17 @@ export async function saveRegionRequirements(input: SaveRegionRequirementsInput)
     return result;
 }
 
-export async function exportSpecRequirements(regionId: string, statsOnly: boolean) {
-    return exportSpecRequirementsAction({regionId, statsOnly});
+export async function exportSpecRequirements(regionId: string) {
+    return exportSpecRequirementsAction({regionId});
 }
 
-export async function importSpecRequirements(regionId: string, file: unknown, dryRun: boolean) {
-    const result = await importSpecRequirementsAction({regionId, file, dryRun});
+export async function importSpecRequirements(
+    regionId: string,
+    file: unknown,
+    mode: SpecImportMode,
+    dryRun: boolean
+) {
+    const result = await importSpecRequirementsAction({regionId, file, mode, dryRun});
     if (result.ok && result.value.status === 'applied') await revalidateSpecs();
     return result;
 }

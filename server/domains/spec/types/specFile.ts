@@ -49,6 +49,8 @@ export interface ResolvedSpecImport {
     requirements: ResolvedRequirement[];
 }
 
+export type SpecImportMode = "full" | "shape";
+
 export type SpecDiffStatus = "added" | "changed" | "cleared" | "unchanged";
 
 export interface SpecStatChange {
@@ -70,6 +72,7 @@ export interface SpecImportSpecDiff {
 export interface SpecImportRegionDiff {
     regionId: string;
     regionCode: string;
+    mode: SpecImportMode;
     specs: SpecImportSpecDiff[];
     counts: Record<SpecDiffStatus, number>;
     unsetCount: number;

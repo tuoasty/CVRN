@@ -3,7 +3,7 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {createError} from "@/server/utils/serializeableError";
 import {findSpecsWithAllRegions, replaceRegionSpecRequirements} from "@/server/db/specs.repo";
 import {findAllRegions} from "@/server/db/regions.repo";
-import {diffSpecImport, validateSpecImport} from "../helpers/specRequirementsFile";
+import {applyImportMode, diffSpecImport, validateSpecImport} from "../helpers/specRequirementsFile";
 import {ImportSpecRequirementsInput, SpecImportResult} from "../types";
 
 export async function importSpecRequirements(
@@ -23,10 +23,11 @@ export async function importSpecRequirements(
     const validation = validateSpecImport(input.file, {specs: specsRes.value});
     if (!validation.ok) return Ok({status: "rejected", issues: validation.issues});
 
-    const diff = diffSpecImport(region, validation.specs, specsRes.value);
+    const incoming = applyImportMode(validation.specs, input.mode, region.id, specsRes.value);
+    const diff = diffSpecImport(region, incoming, specsRes.value, input.mode);
     if (input.dryRun) return Ok({status: "preview", diff});
 
-    const res = await replaceRegionSpecRequirements(supabase, region.id, validation.specs);
+    const res = await replaceRegionSpecRequirements(supabase, region.id, incoming);
     if (!res.ok) return res;
 
     return Ok({status: "applied", diff});

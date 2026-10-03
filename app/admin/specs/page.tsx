@@ -9,7 +9,7 @@ import SpecCard from '@/app/features/spec/SpecCard';
 import SpecEditPane from '@/app/features/spec/SpecEditPane';
 import {useSpecs, exportSpecRequirements, importSpecRequirements} from '@/app/hooks/useSpecs';
 import {clientLogger} from '@/app/utils/clientLogger';
-import {SpecImportRegionDiff} from '@/server/domains/spec/types';
+import {SpecImportMode, SpecImportRegionDiff} from '@/server/domains/spec/types';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
 import {useRegions} from '@/app/hooks/useRegions';
 import {SpecPosition, positionLabel} from '@/server/domains/spec/types';
@@ -34,12 +34,18 @@ export default function AdminSpecsPage() {
     const [unpublishing, setUnpublishing] = useState(false);
     const [transferring, setTransferring] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const importModeRef = useRef<SpecImportMode>('full');
 
-    const handleExport = async (statsOnly: boolean) => {
+    const pickImportFile = (mode: SpecImportMode) => {
+        importModeRef.current = mode;
+        fileInputRef.current?.click();
+    };
+
+    const handleExport = async () => {
         if (!regionId) return;
         setTransferring(true);
         try {
-            const result = await exportSpecRequirements(regionId, statsOnly);
+            const result = await exportSpecRequirements(regionId);
             if (!result.ok) {
                 toast.error('Failed to export', result.error.message);
                 return;
@@ -62,6 +68,7 @@ export default function AdminSpecsPage() {
         const picked = fileList?.[0];
         if (fileInputRef.current) fileInputRef.current.value = '';
         const targetRegionId = regionId;
+        const mode = importModeRef.current;
         if (!picked || !targetRegionId) return;
         setTransferring(true);
         try {
@@ -72,7 +79,7 @@ export default function AdminSpecsPage() {
                 toast.error('Import rejected', 'The file is not valid JSON');
                 return;
             }
-            const preview = await importSpecRequirements(targetRegionId, parsed, true);
+            const preview = await importSpecRequirements(targetRegionId, parsed, mode, true);
             if (!preview.ok) {
                 toast.error('Failed to import', preview.error.message);
                 return;
@@ -88,9 +95,13 @@ export default function AdminSpecsPage() {
             if (preview.value.status !== 'preview') return;
             const diff = preview.value.diff;
             clientLogger.info('AdminSpecsPage', 'Import preview', {diff});
-            if (!window.confirm(`Import into ${diff.regionCode}? This replaces ${diff.regionCode} requirements for the listed specs.\n\n${summarizeDiff(diff)}`)) return;
+            const modeLine =
+                mode === 'shape'
+                    ? 'Shape only: requirement lists and tiers from the file, existing thresholds kept, new requirements added as unset.'
+                    : 'Full: requirement lists and thresholds from the file.';
+            if (!window.confirm(`Import into ${diff.regionCode}? This replaces ${diff.regionCode} requirements for the listed specs.\n${modeLine}\n\n${summarizeDiff(diff)}`)) return;
 
-            const applied = await importSpecRequirements(targetRegionId, parsed, false);
+            const applied = await importSpecRequirements(targetRegionId, parsed, mode, false);
             if (!applied.ok) {
                 toast.error('Failed to import', applied.error.message);
                 return;
@@ -189,7 +200,7 @@ export default function AdminSpecsPage() {
                             New Spec
                         </Button>
                         <Button
-                            onClick={() => handleExport(false)}
+                            onClick={handleExport}
                             disabled={transferring || !regionId}
                             variant="ghost"
                             className="rounded-sm gap-1"
@@ -198,22 +209,24 @@ export default function AdminSpecsPage() {
                             Export
                         </Button>
                         <Button
-                            onClick={() => handleExport(true)}
+                            onClick={() => pickImportFile('full')}
                             disabled={transferring || !regionId}
                             variant="ghost"
                             className="rounded-sm gap-1"
-                        >
-                            <Download className="h-4 w-4" />
-                            Stats only
-                        </Button>
-                        <Button
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={transferring || !regionId}
-                            variant="ghost"
-                            className="rounded-sm gap-1"
+                            title="Requirement lists and thresholds from the file"
                         >
                             <FileUp className="h-4 w-4" />
-                            Import
+                            Import full
+                        </Button>
+                        <Button
+                            onClick={() => pickImportFile('shape')}
+                            disabled={transferring || !regionId}
+                            variant="ghost"
+                            className="rounded-sm gap-1"
+                            title="Requirement lists and tiers from the file; existing thresholds kept, new ones unset"
+                        >
+                            <FileUp className="h-4 w-4" />
+                            Import shape
                         </Button>
                         <input
                             ref={fileInputRef}

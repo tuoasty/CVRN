@@ -70,12 +70,12 @@ export const SpecImportFileSchema = z
 
 export const ExportSpecRequirementsSchema = z.object({
     regionId: z.string().uuid(),
-    statsOnly: z.boolean(),
 });
 
 export const ImportSpecRequirementsSchema = z.object({
     regionId: z.string().uuid(),
     file: z.unknown(),
+    mode: z.enum(["full", "shape"]),
     dryRun: z.boolean(),
 });
 

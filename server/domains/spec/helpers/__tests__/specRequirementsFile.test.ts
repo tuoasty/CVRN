@@ -1,5 +1,6 @@
 import {describe, expect, it} from "vitest";
 import {
+    applyImportMode,
     buildSpecExport,
     diffSpecImport,
     specExportFilename,
@@ -79,7 +80,6 @@ describe("buildSpecExport", () => {
         const file = buildSpecExport({
             specs: makeSpecs(),
             regionId: NA,
-            statsOnly: false,
             exportedAt: "2026-10-03T00:00:00Z",
         });
         expect(Object.keys(file)).toEqual(["version", "exportedAt", "specs"]);
@@ -95,7 +95,7 @@ describe("buildSpecExport", () => {
     });
 
     it("only reads the requested region", () => {
-        const file = buildSpecExport({specs: makeSpecs(), regionId: EU, statsOnly: false, exportedAt: "x"});
+        const file = buildSpecExport({specs: makeSpecs(), regionId: EU, exportedAt: "x"});
         expect(file.specs).toEqual([
             {
                 spec_name: "Wilfredo Leon",
@@ -108,18 +108,18 @@ describe("buildSpecExport", () => {
         ]);
     });
 
-    it("writes null for every value in stats-only mode", () => {
-        const file = buildSpecExport({specs: makeSpecs(), regionId: NA, statsOnly: true, exportedAt: "x"});
-        const values = file.specs.flatMap(e => [...Object.values(e.main_reqs), ...Object.values(e.sub_reqs)]);
-        expect(values.length).toBe(4);
-        expect(values.every(v => v === null)).toBe(true);
-        expect(file.specs[0].secondary_required).toBe(1);
+    it("always carries the region's values, including unset ones", () => {
+        const specs = makeSpecs();
+        specs[0].requirements[1] = {...specs[0].requirements[1], min_value: null};
+        const file = buildSpecExport({specs, regionId: NA, exportedAt: "x"});
+        expect(file.specs[0].sub_reqs).toEqual({hit_eff: 0.3, aces_per_set: null});
+        expect(file.specs[0].main_reqs).toEqual({kills_per_set: 6.5});
     });
 
     it("builds the filename from the source region code and the date", () => {
         const date = new Date("2026-10-03T12:00:00Z");
-        expect(specExportFilename("NA", false, date)).toBe("cvrn-spec-reqs-na-20261003.json");
-        expect(specExportFilename("EU", true, date)).toBe("cvrn-spec-reqs-eu-20261003-stats-only.json");
+        expect(specExportFilename("NA", date)).toBe("cvrn-spec-reqs-na-20261003.json");
+        expect(specExportFilename("EU", date)).toBe("cvrn-spec-reqs-eu-20261003.json");
     });
 });
 
@@ -195,7 +195,7 @@ describe("validateSpecImport", () => {
 describe("export to import round trip", () => {
     it("re-imports an export into the same region as all unchanged", () => {
         const specs = makeSpecs();
-        const file = buildSpecExport({specs, regionId: NA, statsOnly: false, exportedAt: "x"});
+        const file = buildSpecExport({specs, regionId: NA, exportedAt: "x"});
         const res = validateSpecImport(JSON.parse(JSON.stringify(file)), {specs});
         expect(res.ok).toBe(true);
         if (!res.ok) return;
@@ -214,23 +214,87 @@ describe("export to import round trip", () => {
         expect(diff.specs.every(s => s.status === "unchanged")).toBe(true);
     });
 
-    it("imports a stats-only NA export into EU as unset rows", () => {
+    it("full import of an NA export into EU writes NA's values", () => {
         const specs = makeSpecs();
-        const file = buildSpecExport({specs, regionId: NA, statsOnly: true, exportedAt: "x"});
+        const file = buildSpecExport({specs, regionId: NA, exportedAt: "x"});
         const res = validateSpecImport(file, {specs});
         expect(res.ok).toBe(true);
         if (!res.ok) return;
 
-        const diff = diffSpecImport(regions[1], res.specs, specs);
-        expect(diff.regionId).toBe(EU);
-        expect(diff.regionCode).toBe("EU");
-        expect(diff.unsetCount).toBe(4);
-        expect(diff.specs.find(s => s.specName === "Wilfredo Leon")!.status).toBe("changed");
+        const incoming = applyImportMode(res.specs, "full", EU, specs);
+        const diff = diffSpecImport(regions[1], incoming, specs, "full");
+        expect(diff.mode).toBe("full");
+        expect(diff.unsetCount).toBe(0);
+        const leon = diff.specs.find(s => s.specName === "Wilfredo Leon")!;
+        expect(leon.status).toBe("changed");
+        expect(leon.changes.find(c => c.statKey === "kills_per_set")).toEqual({
+            statKey: "kills_per_set",
+            before: {tier: "main", value: 5},
+            after: {tier: "main", value: 6.5},
+        });
+    });
+
+    it("shape import keeps the target's existing thresholds and adds new requirements as unset", () => {
+        const specs = makeSpecs();
+        const file = buildSpecExport({specs, regionId: NA, exportedAt: "x"});
+        const res = validateSpecImport(file, {specs});
+        expect(res.ok).toBe(true);
+        if (!res.ok) return;
+
+        const incoming = applyImportMode(res.specs, "shape", EU, specs);
+        const leon = incoming.find(s => s.specName === "Wilfredo Leon")!;
+        expect(leon.requirements).toEqual([
+            {tier: "main", statKey: "kills_per_set", minValue: 5},
+            {tier: "secondary", statKey: "hit_eff", minValue: null},
+            {tier: "secondary", statKey: "aces_per_set", minValue: null},
+        ]);
+        expect(leon.secondaryRequired).toBe(1);
+
+        const diff = diffSpecImport(regions[1], incoming, specs, "shape");
+        expect(diff.mode).toBe("shape");
+        expect(diff.unsetCount).toBe(3);
+        const leonDiff = diff.specs.find(s => s.specName === "Wilfredo Leon")!;
+        expect(leonDiff.changes.map(c => c.statKey)).toEqual(["hit_eff", "aces_per_set"]);
         const ishikawa = diff.specs.find(s => s.specName === "Yuki Ishikawa")!;
         expect(ishikawa.status).toBe("added");
         expect(ishikawa.changes).toEqual([
             {statKey: "digs_per_set", before: null, after: {tier: "main", value: null}},
         ]);
+    });
+
+    it("shape import into the source region changes nothing", () => {
+        const specs = makeSpecs();
+        const file = buildSpecExport({specs, regionId: NA, exportedAt: "x"});
+        const res = validateSpecImport(file, {specs});
+        expect(res.ok).toBe(true);
+        if (!res.ok) return;
+        const diff = diffSpecImport(regions[0], applyImportMode(res.specs, "shape", NA, specs), specs, "shape");
+        expect(diff.specs.every(s => s.status === "unchanged")).toBe(true);
+    });
+
+    it("shape import removes target requirements the file does not list and moves tiers", () => {
+        const specs = makeSpecs();
+        const file = fileWith([
+            {
+                spec_name: "Wilfredo Leon",
+                stars: 5,
+                position: "OUT",
+                secondary_required: 0,
+                main_reqs: {},
+                sub_reqs: {kills_per_set: 1, blocks_per_set: 2},
+            },
+        ]);
+        const res = validateSpecImport(file, {specs});
+        expect(res.ok).toBe(true);
+        if (!res.ok) return;
+        const incoming = applyImportMode(res.specs, "shape", NA, specs);
+        expect(incoming[0].requirements).toEqual([
+            {tier: "secondary", statKey: "kills_per_set", minValue: 6.5},
+            {tier: "secondary", statKey: "blocks_per_set", minValue: null},
+        ]);
+        const diff = diffSpecImport(regions[0], incoming, specs, "shape");
+        const removed = diff.specs[0].changes.filter(c => c.after === null).map(c => c.statKey);
+        expect(removed.sort()).toEqual(["aces_per_set", "hit_eff"]);
     });
 
     it("marks a spec listed with empty objects as cleared", () => {
