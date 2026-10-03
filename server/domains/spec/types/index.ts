@@ -97,6 +97,7 @@ export type {
     PublicParticipation,
     PublicSpec,
     SpecSnapshotPayload,
+    PublishedSpecRegion,
 } from "./publicSnapshot";
 export type {
     SpecFileReqMap,

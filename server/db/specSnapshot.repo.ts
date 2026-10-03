@@ -16,16 +16,20 @@ export async function getSpecSnapshot(
     return Ok(data ?? null);
 }
 
-export async function getAnySpecSnapshot(
+export async function findSpecSnapshotRegions(
     supabase: DBClient
-): Promise<Result<PublicSpecSnapshotRow | null>> {
+): Promise<Result<{region_id: string; code: string; name: string}[]>> {
     const {data, error} = await supabase
         .from("public_spec_snapshot")
-        .select("*")
-        .limit(1)
-        .maybeSingle();
+        .select("region_id, regions(code, name)");
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok(data ?? null);
+
+    return Ok(
+        (data ?? []).flatMap(row => {
+            const region = row.regions as {code: string; name: string} | null;
+            return region ? [{region_id: row.region_id, code: region.code, name: region.name}] : [];
+        })
+    );
 }
 
 export async function upsertSpecSnapshot(

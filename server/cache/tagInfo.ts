@@ -74,8 +74,8 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     [CACHE_TAGS.specs]: {
         label: "Specs",
         description:
-            "The published public spec-requirements snapshot (masked difficulty tiers). Regenerated on Publish.",
-        readCount: 1,
+            "The published public spec-requirements snapshots (masked difficulty tiers, one per region) and the list of published regions. Regenerated on Publish.",
+        readCount: 2,
         affects: "Spec requirements page",
     },
     [CACHE_TAGS.rawStats]: {

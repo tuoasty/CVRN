@@ -54,7 +54,7 @@ import type {MatchWithDetails} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
-import {getPublicSpecSnapshot} from "@/server/domains/spec";
+import {getPublicSpecSnapshot, getPublishedSpecRegions} from "@/server/domains/spec";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS, RAW_STATS_REVALIDATE_SECONDS} from "./tags";
 
@@ -259,8 +259,15 @@ export const getCachedAllSeasonRows = unstable_cache(
 );
 
 export const getCachedPublicSpecSnapshot = unstable_cache(
-    async () => unwrap(await getPublicSpecSnapshot(createPublicClient()), "getCachedPublicSpecSnapshot"),
+    async (regionId: string) =>
+        unwrap(await getPublicSpecSnapshot(createPublicClient(), regionId), "getCachedPublicSpecSnapshot"),
     ["public:spec-snapshot"],
+    {tags: [CACHE_TAGS.specs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedPublishedSpecRegions = unstable_cache(
+    async () => unwrap(await getPublishedSpecRegions(createPublicClient()), "getCachedPublishedSpecRegions"),
+    ["public:spec-snapshot-regions"],
     {tags: [CACHE_TAGS.specs], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 

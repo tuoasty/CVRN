@@ -7,13 +7,6 @@ import {Button} from '@/app/components/ui/button';
 import {Input} from '@/app/components/ui/input';
 import {Label} from '@/app/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/app/components/ui/select';
-import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -24,7 +17,8 @@ import {
     AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
-import {useSpecs, useSpecLeaderboard, useSpecBonus, saveSpecIdentity, saveRegionRequirements} from '@/app/hooks/useSpecs';
+import {useSpecs, useSpecLeaderboard, useSpecBonus, saveRegionRequirements} from '@/app/hooks/useSpecs';
+import {useRegions} from '@/app/hooks/useRegions';
 import SpecThresholdEditor, {DraftThreshold} from '@/app/features/spec/SpecThresholdEditor';
 import PlacementBonusEditor from '@/app/features/spec/PlacementBonusEditor';
 import SpecQualificationTable from '@/app/features/spec/SpecQualificationTable';
@@ -32,7 +26,6 @@ import SpecSelector from '@/app/features/spec/SpecSelector';
 import {evaluateSpecQualification} from '@/server/domains/spec/helpers/evaluateSpecQualification';
 import {
     SpecTier,
-    SpecPosition,
     SpecRequirementInput,
     SpecWithRequirements,
     PlacementBonusConfig,
@@ -49,6 +42,8 @@ export default function AdminSpecQualifyPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId);
     const regionId = useAdminContextStore(s => s.selectedRegionId);
     const {specs} = useSpecs(regionId);
+    const {regions} = useRegions();
+    const regionCode = regions.find(r => r.id === regionId)?.code ?? null;
 
     const {
         config: savedBonus,
@@ -69,11 +64,18 @@ export default function AdminSpecQualifyPage() {
     const [specId, setSpecId] = useState<string>('');
     const [thresholds, setThresholds] = useState<DraftThreshold[]>([]);
     const [secondaryRequired, setSecondaryRequired] = useState(0);
-    const [stars, setStars] = useState(5);
     const [dirty, setDirty] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const [pendingSpec, setPendingSpec] = useState<SpecWithRequirements | null>(null);
+
+    useEffect(() => {
+        setSpecId('');
+        setThresholds([]);
+        setSecondaryRequired(0);
+        setDirty(false);
+        setPendingSpec(null);
+    }, [regionId]);
 
     const selectedSpec = specs.find(s => s.id === specId) ?? null;
 
@@ -106,7 +108,6 @@ export default function AdminSpecQualifyPage() {
             }))
         );
         setSecondaryRequired(spec.secondary_required);
-        setStars(spec.stars);
         setDirty(false);
     };
 
@@ -217,20 +218,6 @@ export default function AdminSpecQualifyPage() {
         }
         setSaving(true);
         try {
-            if (stars !== selectedSpec.stars) {
-                const identity = await saveSpecIdentity({
-                    id: selectedSpec.id,
-                    name: selectedSpec.name,
-                    stars,
-                    position: selectedSpec.position as SpecPosition,
-                    height: selectedSpec.height,
-                });
-                if (!identity.ok) {
-                    clientLogger.error('SpecQualifyPage', 'Failed to save spec', {error: identity.error});
-                    toast.error('Failed to save', identity.error.message);
-                    return;
-                }
-            }
             const result = await saveRegionRequirements({
                 regionId,
                 specs: [
@@ -252,7 +239,7 @@ export default function AdminSpecQualifyPage() {
                 toast.error('Failed to save', result.error.message);
                 return;
             }
-            toast.success('Spec updated');
+            toast.success(`${regionCode ?? 'Region'} requirements saved`, selectedSpec.name);
             setDirty(false);
         } catch (err) {
             clientLogger.error('SpecQualifyPage', 'Exception saving spec', {err});
@@ -300,9 +287,19 @@ export default function AdminSpecQualifyPage() {
                         <SlidersHorizontal className="h-7 w-7 text-primary" />
                     </div>
                     <div className="flex-1">
-                        <h1 className="text-2xl font-bold uppercase tracking-wider">Spec Calibration</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold uppercase tracking-wider">Spec Calibration</h1>
+                            {regionCode && (
+                                <span
+                                    className="bg-secondary px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wide text-secondary-foreground"
+                                    title="Save writes to this region only"
+                                >
+                                    {regionCode}
+                                </span>
+                            )}
+                        </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Tune thresholds against a season and see who clears them. Save writes back to the selected spec.
+                            Tune thresholds against a season and see who clears them. Save writes the selected spec&apos;s {regionCode ?? 'region'} requirements only.
                         </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -313,7 +310,7 @@ export default function AdminSpecQualifyPage() {
                             title={!selectedSpec ? 'Pick a spec to save into' : saveError ?? undefined}
                         >
                             <Save className="h-4 w-4" />
-                            {saving ? 'Saving…' : 'Save'}
+                            {saving ? 'Saving…' : `Save ${regionCode ?? ''}`.trim()}
                         </Button>
                         <Button asChild variant="outline" className="rounded-sm gap-1">
                             <Link href="/admin/specs">
@@ -395,27 +392,6 @@ export default function AdminSpecQualifyPage() {
 
                                     {selectedSpec ? (
                                         <>
-                                        <div className="flex items-center justify-between gap-2">
-                                            <Label htmlFor="qualify-stars">Star tier</Label>
-                                            <Select
-                                                value={String(stars)}
-                                                onValueChange={v => {
-                                                    setStars(Number(v));
-                                                    setDirty(true);
-                                                }}
-                                            >
-                                                <SelectTrigger id="qualify-stars" className="rounded-sm text-sm w-24">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent className="rounded-sm">
-                                                    {[3, 4, 5].map(s => (
-                                                        <SelectItem key={s} value={String(s)} className="rounded-sm text-sm">
-                                                            {s} ★
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
 
                                         <div className="space-y-2">
                                             <div>

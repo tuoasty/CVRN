@@ -387,4 +387,29 @@ describe('evaluateSpecQualification', () => {
         )
         expect(rows.map(r => r.username)).toEqual(['nearOne', 'farBoth'])
     })
+
+    describe('unset thresholds', () => {
+        it('fails a null main threshold even for a player with a huge value', () => {
+            const {rows} = evaluateSpecQualification(
+                [player('star', {points_total: 999, kills_total: 999})],
+                [main('points_total', 50), {tier: 'main', statKey: 'kills_total', minValue: null}],
+                0
+            )
+            const killsCheck = rows[0].checks.find(c => c.statKey === 'kills_total')!
+            expect(killsCheck.minValue).toBeNull()
+            expect(killsCheck.passed).toBe(false)
+            expect(rows[0].qualified).toBe(false)
+            expect(rows[0].mainPassed).toBe(1)
+        })
+
+        it('never counts a null secondary threshold toward the needed count', () => {
+            const {rows} = evaluateSpecQualification(
+                [player('star', {points_total: 999, kills_total: 999})],
+                [secondary('points_total', 50), {tier: 'secondary', statKey: 'kills_total', minValue: null}],
+                2
+            )
+            expect(rows[0].secondaryPassed).toBe(1)
+            expect(rows[0].qualified).toBe(false)
+        })
+    })
 })

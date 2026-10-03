@@ -1,3 +1,5 @@
+import type {PlacementBonusConfig} from "../helpers/placementBonus";
+
 export type SpecDifficultyTier = 1 | 2 | 3 | 4;
 
 export interface PublicRequirement {
@@ -28,5 +30,12 @@ export interface SpecSnapshotPayload {
     generatedAt: string;
     tierCount: number;
     setsFloorByStar: Record<number, number>;
+    placementBonus: PlacementBonusConfig;
     specs: PublicSpec[];
+}
+
+export interface PublishedSpecRegion {
+    regionId: string;
+    code: string;
+    name: string;
 }

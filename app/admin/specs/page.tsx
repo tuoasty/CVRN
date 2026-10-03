@@ -11,6 +11,7 @@ import {useSpecs, exportSpecRequirements, importSpecRequirements} from '@/app/ho
 import {clientLogger} from '@/app/utils/clientLogger';
 import {SpecImportRegionDiff} from '@/server/domains/spec/types';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
+import {useRegions} from '@/app/hooks/useRegions';
 import {SpecPosition, positionLabel} from '@/server/domains/spec/types';
 import {generateSpecSnapshotAction, deleteSpecSnapshotAction} from '@/app/actions/spec.actions';
 import {toast} from '@/app/utils/toast';
@@ -23,6 +24,8 @@ function summarizeDiff(d: SpecImportRegionDiff): string {
 export default function AdminSpecsPage() {
     const regionId = useAdminContextStore(s => s.selectedRegionId);
     const {specs, isLoading, error} = useSpecs(regionId);
+    const {regions} = useRegions();
+    const regionCode = regions.find(r => r.id === regionId)?.code ?? '';
 
     const [active, setActive] = useState<SpecPosition | 'ALL'>('ALL');
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -133,10 +136,16 @@ export default function AdminSpecsPage() {
                 toast.error('Failed to publish', result.error.message);
                 return;
             }
-            toast.success(
-                'Requirements published',
-                `${result.value.specCount} specs · ${result.value.statCount} stats ranked`,
-            );
+            const {specCount, statCount, skippedSpecs} = result.value;
+            const summary = `${specCount} spec${specCount === 1 ? '' : 's'} · ${statCount} stats ranked`;
+            if (skippedSpecs.length > 0) {
+                toast.warning(
+                    `Published ${regionCode}, ${skippedSpecs.length} skipped`,
+                    `${summary}. Skipped for unset values: ${skippedSpecs.join(', ')}`,
+                );
+            } else {
+                toast.success(`Published ${regionCode}`, summary);
+            }
         } catch {
             toast.error('Something went wrong');
         } finally {
@@ -153,7 +162,7 @@ export default function AdminSpecsPage() {
                 toast.error('Failed to unpublish', result.error.message);
                 return;
             }
-            toast.success('Requirements unpublished', 'The public page is now empty');
+            toast.success(`Unpublished ${regionCode}`, `${regionCode} no longer appears on the public page`);
         } catch {
             toast.error('Something went wrong');
         } finally {
@@ -226,7 +235,7 @@ export default function AdminSpecsPage() {
                             className="rounded-sm gap-1"
                         >
                             <Upload className="h-4 w-4" />
-                            {publishing ? 'Publishing…' : 'Publish'}
+                            {publishing ? 'Publishing…' : `Publish ${regionCode}`}
                         </Button>
                         <Button
                             onClick={handleUnpublish}
@@ -235,7 +244,7 @@ export default function AdminSpecsPage() {
                             className="rounded-sm gap-1 text-muted-foreground"
                         >
                             <EyeOff className="h-4 w-4" />
-                            {unpublishing ? 'Unpublishing…' : 'Unpublish'}
+                            {unpublishing ? 'Unpublishing…' : `Unpublish ${regionCode}`}
                         </Button>
                     </div>
                 </div>
