@@ -17,7 +17,7 @@ export async function getPlayerTeamHistory(
                 joined_at,
                 left_at,
                 team:teams!team_id(id, name, slug, logo_url, logo_bg_removed, brick_color, deleted_at),
-                season:seasons!season_id(id, name, slug, end_date, region:regions!region_id(code), league_type)
+                season:seasons!season_id(id, name, slug, start_date, end_date, region:regions!region_id(code), league_type)
             `)
             .eq("player_id", p.playerId)
             .order("joined_at", {ascending: false});
@@ -29,7 +29,7 @@ export async function getPlayerTeamHistory(
 
         const rows: PlayerTeamHistoryEntry[] = (data ?? []).map(r => {
             const team = r.team as {id: string; name: string; slug: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null; deleted_at: string | null} | null;
-            const season = r.season as {id: string; name: string; slug: string; end_date: string | null; league_type:"main" | "side"; region: {code: string}} | null;
+            const season = r.season as {id: string; name: string; slug: string; start_date: string; end_date: string | null; league_type:"main" | "side"; region: {code: string}} | null;
             return {
                 team_id: team?.id ?? "",
                 team_name: team?.name ?? "",
@@ -47,6 +47,7 @@ export async function getPlayerTeamHistory(
                 position: (r.position ?? null) as PlayerTeamHistoryEntry["position"],
                 joined_at: r.joined_at,
                 left_at: r.left_at ?? null,
+                season_start_date: season?.start_date ?? "",
                 season_end_date: season?.end_date ?? null,
             };
         });
@@ -59,7 +60,9 @@ export async function getPlayerTeamHistory(
                 seen.set(key, row);
             }
         }
-        const deduped = Array.from(seen.values()).sort((a, b) => b.joined_at.localeCompare(a.joined_at));
+        const deduped = Array.from(seen.values()).sort((a, b) =>
+            b.season_start_date.localeCompare(a.season_start_date) || b.joined_at.localeCompare(a.joined_at)
+        );
 
         return Ok(deduped);
     } catch (error) {

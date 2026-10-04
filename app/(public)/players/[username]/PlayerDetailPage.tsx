@@ -10,6 +10,7 @@ import PlayerSeasonStatsTable from "@/app/features/player/PlayerSeasonStatsTable
 import BackButton from "@/app/components/public/BackButton";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
 import {formatPlacement} from "@/app/utils/placement";
+import {buildPlayerAwardList} from "@/app/utils/playerAwardList";
 
 const ROLE_LABELS: Record<string, string> = {
     captain: "Captain",
@@ -28,6 +29,7 @@ const ACHIEVEMENT_ROW: Record<string, {row: string; hover: string}> = {
 
 const AWARD_CATEGORY_STYLE: Record<string, {dot: string; text: string}> = {
     individual_winners: {dot: "bg-secondary", text: "text-secondary"},
+    all_star:           {dot: "bg-primary",   text: "text-primary"},
     first_team:         {dot: "bg-primary",   text: "text-primary"},
 };
 
@@ -48,7 +50,15 @@ function placeLabel(award: PlayerAward): {text: string; className: string} {
 
 function awardLabel(award: PlayerAward): string {
     if (award.category === "first_team") return `First Team ${award.award_name}`;
+    if (award.category === "all_star") {
+        const slot = award.all_star_slot === "sub" ? "Sub" : "Starter";
+        return `All-Star ${award.all_star_team_name ?? "Team"} · ${slot}`;
+    }
     return award.award_name;
+}
+
+function awardDetail(award: PlayerAward): string | null {
+    return award.category === "all_star" ? award.award_name : null;
 }
 
 type Props = {
@@ -60,7 +70,10 @@ export default function PlayerDetailPage({detail}: Props) {
     const team = player.current_team;
 
     const achievements = awards.filter(a => PODIUM_CATEGORIES.has(a.category));
-    const individualAwards = awards.filter(a => !PODIUM_CATEGORIES.has(a.category) && a.category !== "staff_team");
+    const awardList = buildPlayerAwardList(
+        awards.filter(a => !PODIUM_CATEGORIES.has(a.category) && a.category !== "staff_team"),
+        specs,
+    );
 
     const teamLogoBySeasonId = new Map<string, {logo_url: string | null; logo_bg_removed: boolean}>();
     const lockedActiveSeasons = new Set<string>();
@@ -193,7 +206,7 @@ export default function PlayerDetailPage({detail}: Props) {
             <PlayerSeasonStatsTable rows={seasonStats} teamLogoBySeasonId={teamLogoBySeasonId} />
 
             {(() => {
-                const hasSideContent = achievements.length > 0 || individualAwards.length > 0 || specs.length > 0;
+                const hasSideContent = achievements.length > 0 || awardList.length > 0;
 
                 if (!hasSideContent) {
                     return teamHistory.length > 0 ? (
@@ -220,23 +233,19 @@ export default function PlayerDetailPage({detail}: Props) {
                                 </AwardSection>
                             )}
 
-                            {(individualAwards.length > 0 || specs.length > 0) && (
+                            {awardList.length > 0 && (
                                 <AwardSection title="Awards">
                                     <div className="sm:hidden divide-y divide-border">
-                                        {individualAwards.map(a => (
-                                            <AwardCard key={a.id} award={a} />
-                                        ))}
-                                        {specs.map(s => (
-                                            <SpecAwardCard key={s.id} spec={s} />
-                                        ))}
+                                        {awardList.map(item => item.kind === "award"
+                                            ? <AwardCard key={item.key} award={item.award} />
+                                            : <SpecAwardCard key={item.key} spec={item.spec} />
+                                        )}
                                     </div>
                                     <DesktopAwardTable valueHeader="Award">
-                                        {individualAwards.map(a => (
-                                            <AwardRow key={a.id} award={a} />
-                                        ))}
-                                        {specs.map(s => (
-                                            <SpecAwardRow key={s.id} spec={s} />
-                                        ))}
+                                        {awardList.map(item => item.kind === "award"
+                                            ? <AwardRow key={item.key} award={item.award} />
+                                            : <SpecAwardRow key={item.key} spec={item.spec} />
+                                        )}
                                     </DesktopAwardTable>
                                 </AwardSection>
                             )}
@@ -415,14 +424,16 @@ function AchievementRow({award}: {award: PlayerAward}) {
 
 function AwardRow({award}: {award: PlayerAward}) {
     const style = AWARD_CATEGORY_STYLE[award.category] ?? {dot: "bg-muted-foreground", text: ""};
+    const detail = awardDetail(award);
     return (
         <tr className="hover:bg-muted/20 transition-colors">
             <td className="px-4 py-3 text-muted-foreground tabular-nums">{formatDate(award.awarded_at)}</td>
             <td className="px-4 py-3 text-muted-foreground">{award.region_code} · {award.season_name}</td>
             <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                     <span className={cn("w-2 h-2 rounded-full shrink-0", style.dot)} />
-                    <span className={cn("font-medium", style.text)}>{awardLabel(award)}</span>
+                    <span className={cn("font-medium truncate", style.text)}>{awardLabel(award)}</span>
+                    {detail && <span className="text-xs uppercase tracking-wide text-muted-foreground shrink-0">{detail}</span>}
                 </div>
             </td>
             <td className="px-4 py-3">
@@ -451,12 +462,14 @@ function AchievementCard({award}: {award: PlayerAward}) {
 
 function AwardCard({award}: {award: PlayerAward}) {
     const style = AWARD_CATEGORY_STYLE[award.category] ?? {dot: "bg-muted-foreground", text: ""};
+    const detail = awardDetail(award);
     return (
         <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                     <span className={cn("w-2 h-2 rounded-full shrink-0", style.dot)} />
                     <span className={cn("text-sm font-medium truncate", style.text)}>{awardLabel(award)}</span>
+                    {detail && <span className="text-xs uppercase tracking-wide text-muted-foreground shrink-0">{detail}</span>}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">{award.region_code} · {award.season_name}</p>
                 <p className="text-xs text-muted-foreground tabular-nums">{formatDate(award.awarded_at)}</p>

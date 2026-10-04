@@ -9,6 +9,7 @@ import {
     upsertSeasonPodiumSlot, deleteSeasonPodiumSlot, deriveAndSaveSeasonPodium,
     upsertSeasonAward, deleteSeasonAward, storeAwardAvatar, fetchChampionRosterAwards,
     batchUpsertSeasonAwards, updateSeasonAward, reorderSeasonAwards,
+    getSeasonAllStarTeams, upsertSeasonAllStarTeamName, UpsertSeasonAllStarTeamNameSchema,
     UpsertSeasonPodiumSlotSchema, DeleteSeasonPodiumSlotSchema,
     DeriveSeasonPodiumSchema, UpsertSeasonAwardSchema, DeleteSeasonAwardSchema,
     BatchUpsertSeasonAwardsSchema, UpdateSeasonAwardSchema, ReorderSeasonAwardsSchema,
@@ -178,6 +179,24 @@ export async function reorderSeasonAwardsAction(input: unknown) {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
     const result = await reorderSeasonAwards(supabase, parsed.data);
+    if (result.ok) revalidatePath('/admin/seasons');
+    return result;
+}
+
+export async function getSeasonAllStarTeamsAction(input: unknown) {
+    const parsed = SeasonIdSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getSeasonAllStarTeams(supabase, parsed.data.seasonId);
+}
+
+export async function upsertSeasonAllStarTeamNameAction(input: unknown) {
+    const parsed = UpsertSeasonAllStarTeamNameSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    const result = await upsertSeasonAllStarTeamName(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
     return result;
 }

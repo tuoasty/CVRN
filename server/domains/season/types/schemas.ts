@@ -65,8 +65,14 @@ export const DeriveSeasonPodiumSchema = z.object({
 })
 export type DeriveSeasonPodiumInput = z.infer<typeof DeriveSeasonPodiumSchema>
 
-export const AwardCategoryEnum = z.enum(["individual_winners", "first_team", "staff_team", "champion_roster"]);
+export const AwardCategoryEnum = z.enum(["individual_winners", "all_star", "first_team", "staff_team", "champion_roster"]);
 export type AwardCategory = z.infer<typeof AwardCategoryEnum>;
+
+export const AllStarTeamCodeEnum = z.enum(["A", "B"]);
+export type AllStarTeamCode = z.infer<typeof AllStarTeamCodeEnum>;
+
+export const AllStarSlotEnum = z.enum(["starter", "sub"]);
+export type AllStarSlot = z.infer<typeof AllStarSlotEnum>;
 
 export const UpsertSeasonAwardSchema = z.object({
     seasonId: z.uuid(),
@@ -88,9 +94,23 @@ export const BatchUpsertSeasonAwardsSchema = z.object({
         playerId: z.uuid(),
         awardName: z.string().min(1, "Award name is required"),
         category: AwardCategoryEnum,
-    })).min(1, "Add at least one award"),
+        allStarTeam: AllStarTeamCodeEnum.optional(),
+        allStarSlot: AllStarSlotEnum.optional(),
+    }).refine(
+        a => a.category === "all_star"
+            ? a.allStarTeam != null && a.allStarSlot != null
+            : a.allStarTeam == null && a.allStarSlot == null,
+        {message: "All-Star awards need a team and a slot; other categories must not have them"}
+    )).min(1, "Add at least one award"),
 })
 export type BatchUpsertSeasonAwardsInput = z.infer<typeof BatchUpsertSeasonAwardsSchema>
+
+export const UpsertSeasonAllStarTeamNameSchema = z.object({
+    seasonId: z.uuid(),
+    code: AllStarTeamCodeEnum,
+    name: z.string().trim().min(1, "Team name is required").max(40, "Team name is too long"),
+})
+export type UpsertSeasonAllStarTeamNameInput = z.infer<typeof UpsertSeasonAllStarTeamNameSchema>
 
 export const UpdateSeasonAwardSchema = z.object({
     awardId: z.uuid(),

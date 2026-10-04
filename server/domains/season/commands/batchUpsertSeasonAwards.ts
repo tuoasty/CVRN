@@ -20,6 +20,8 @@ export async function batchUpsertSeasonAwards(
                 playerId: a.playerId,
                 awardName: a.awardName,
                 category: a.category,
+                allStarTeam: a.allStarTeam,
+                allStarSlot: a.allStarSlot,
                 createdBy,
             }))
         );

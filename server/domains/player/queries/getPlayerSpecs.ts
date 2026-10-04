@@ -17,7 +17,7 @@ export async function getPlayerSpecs(
                     stars_awarded,
                     season_id,
                     spec:specs(name, position, stars),
-                    season:seasons!season_id(name, slug, end_date, region:regions!region_id(code))
+                    season:seasons!season_id(name, slug, start_date, end_date, region:regions!region_id(code))
                 `)
                 .eq("player_id", p.playerId),
             supabase
@@ -49,7 +49,7 @@ export async function getPlayerSpecs(
         const rows: PlayerSpecEntry[] = (winnersRes.data ?? [])
             .map(r => {
                 const spec = r.spec as {name: string; position: string; stars: number} | null;
-                const season = r.season as {name: string; slug: string; end_date: string | null; region: {code: string}} | null;
+                const season = r.season as {name: string; slug: string; start_date: string; end_date: string | null; region: {code: string}} | null;
                 if (!spec) return null;
                 const team = teamBySeason.get(r.season_id);
                 return {
@@ -64,6 +64,7 @@ export async function getPlayerSpecs(
                     season_slug: season?.slug ?? "",
                     region_code: season?.region?.code ?? "",
                     awarded_at: season?.end_date ?? null,
+                    season_start_date: season?.start_date ?? "",
                     team_name: team?.name ?? null,
                     team_slug: team?.slug ?? null,
                     team_disbanded: team?.disbanded ?? false,
@@ -72,7 +73,7 @@ export async function getPlayerSpecs(
                 } as PlayerSpecEntry;
             })
             .filter((e): e is PlayerSpecEntry => e !== null)
-            .sort((a, b) => (b.awarded_at ?? "").localeCompare(a.awarded_at ?? ""));
+            .sort((a, b) => b.season_start_date.localeCompare(a.season_start_date));
 
         return Ok(rows);
     } catch (error) {

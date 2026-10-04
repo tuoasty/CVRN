@@ -73,10 +73,18 @@ export interface SeasonAwardEntryWithPlayer {
     sort_order: number;
     full_avatar_url: string | null;
     avatar_bucket_path: string | null;
+    all_star_team: import("./schemas").AllStarTeamCode | null;
+    all_star_slot: import("./schemas").AllStarSlot | null;
     players: {
         id: string;
         username: string;
     };
+}
+
+export interface SeasonAllStarTeam {
+    season_id: string;
+    code: import("./schemas").AllStarTeamCode;
+    name: string;
 }
 
 export interface ArchiveSeason {
@@ -165,6 +173,9 @@ export type {
     UpdateSeasonAwardInput,
     ReorderSeasonAwardsInput,
     AwardCategory,
+    AllStarTeamCode,
+    AllStarSlot,
+    UpsertSeasonAllStarTeamNameInput,
     SeasonNumberQueryInput,
 } from "./schemas";
 
@@ -182,5 +193,8 @@ export {
     UpdateSeasonAwardSchema,
     ReorderSeasonAwardsSchema,
     AwardCategoryEnum,
+    AllStarTeamCodeEnum,
+    AllStarSlotEnum,
+    UpsertSeasonAllStarTeamNameSchema,
     SeasonNumberQuerySchema,
 } from "./schemas";
