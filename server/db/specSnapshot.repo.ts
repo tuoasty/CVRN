@@ -4,23 +4,40 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {SpecSnapshotPayload} from "@/server/domains/spec/types";
 
 export async function getSpecSnapshot(
-    supabase: DBClient
+    supabase: DBClient,
+    regionId: string
 ): Promise<Result<PublicSpecSnapshotRow | null>> {
     const {data, error} = await supabase
         .from("public_spec_snapshot")
         .select("*")
-        .eq("id", 1)
+        .eq("region_id", regionId)
         .maybeSingle();
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? null);
 }
 
+export async function findSpecSnapshotRegions(
+    supabase: DBClient
+): Promise<Result<{region_id: string; code: string; name: string}[]>> {
+    const {data, error} = await supabase
+        .from("public_spec_snapshot")
+        .select("region_id, regions(code, name)");
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+
+    return Ok(
+        (data ?? []).flatMap(row => {
+            const region = row.regions as {code: string; name: string} | null;
+            return region ? [{region_id: row.region_id, code: region.code, name: region.name}] : [];
+        })
+    );
+}
+
 export async function upsertSpecSnapshot(
     supabase: DBClient,
-    p: {payload: SpecSnapshotPayload; poolSize: number}
+    p: {regionId: string; payload: SpecSnapshotPayload; poolSize: number}
 ): Promise<Result<true>> {
     const {error} = await supabase.from("public_spec_snapshot").upsert({
-        id: 1,
+        region_id: p.regionId,
         payload: p.payload as unknown as PublicSpecSnapshotRow["payload"],
         pool_size: p.poolSize,
         generated_at: new Date().toISOString(),
@@ -29,8 +46,8 @@ export async function upsertSpecSnapshot(
     return Ok(true);
 }
 
-export async function deleteSpecSnapshot(supabase: DBClient): Promise<Result<true>> {
-    const {error} = await supabase.from("public_spec_snapshot").delete().eq("id", 1);
+export async function deleteSpecSnapshot(supabase: DBClient, regionId: string): Promise<Result<true>> {
+    const {error} = await supabase.from("public_spec_snapshot").delete().eq("region_id", regionId);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);
 }

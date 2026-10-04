@@ -1,7 +1,8 @@
 import type {Metadata} from "next";
-import {getCachedPublicSpecSnapshot} from "@/server/cache/publicReads";
+import {getCachedPublicSpecSnapshot, getCachedPublishedSpecRegions} from "@/server/cache/publicReads";
 import {isPositionCode, positionLabel} from "@/shared/volleyball/positions";
 import PositionTabs from "./PositionTabs";
+import RegionTabs from "./RegionTabs";
 import PlacementBonuses from "./PlacementBonuses";
 import SpecRequirementCard from "./SpecRequirementCard";
 
@@ -13,13 +14,21 @@ export const metadata: Metadata = {
 export default async function SpecRequirementsPage({
     searchParams,
 }: {
-    searchParams: Promise<{pos?: string}>;
+    searchParams: Promise<{pos?: string; region?: string}>;
 }) {
     const sp = await searchParams;
     const raw = (sp.pos ?? "oh").toUpperCase();
     const pos = isPositionCode(raw) ? raw : "OUT";
 
-    const snapshot = await getCachedPublicSpecSnapshot();
+    const regions = await getCachedPublishedSpecRegions();
+    const wanted = (sp.region ?? "").toUpperCase();
+    const region =
+        regions.find(r => r.code.toUpperCase() === wanted) ??
+        regions.find(r => r.code.toUpperCase() === "NA") ??
+        regions[0] ??
+        null;
+
+    const snapshot = region ? await getCachedPublicSpecSnapshot(region.regionId) : null;
 
     return (
         <div className="mx-auto max-w-[1400px] px-7 pb-20 pt-6">
@@ -33,8 +42,9 @@ export default async function SpecRequirementsPage({
                 </div>
             ) : (
                 <>
-                    <PlacementBonuses />
-                    <PositionTabs active={pos} />
+                    <RegionTabs regions={regions} active={region?.regionId ?? ""} pos={pos} />
+                    <PlacementBonuses config={snapshot.placementBonus} />
+                    <PositionTabs active={pos} region={regions.length > 1 ? (region?.code ?? null) : null} />
                     <SpecGrid snapshot={snapshot} pos={pos} />
                 </>
             )}

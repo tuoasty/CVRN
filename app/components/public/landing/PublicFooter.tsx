@@ -6,11 +6,11 @@ import Link from "next/link";
 
 const STAFF = [
     { name: "CertifiedEddy", role: "Owner"},
-    { name: "DivKenma", role: "Co-Owner"},
-    { name: "curse", role: "Co-Owner" },
-    { name: "sonny", role: "AS Commissioner" },
-    { name: "Hunter", role: "NA/SA Commissioner" },
-    { name: "tee", role: "EU Commissioner" },
+    { name: "keirahela", role: "Developer"},
+    { name: "curse", role: "Council" },
+    { name: "Ardmair", role: "Council" },
+    { name: "tee", role: "Council" },
+    { name: "Aaron5959", role: "Council" },
 ];
 
 const LINKS = [

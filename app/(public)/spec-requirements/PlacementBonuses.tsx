@@ -1,18 +1,18 @@
 import {
-    DEFAULT_PLACEMENT_BONUS,
     formatPlacementBonus,
+    type PlacementBonusConfig,
 } from "@/server/domains/spec/helpers/placementBonus";
 import {formatPlacement} from "@/app/utils/placement";
 
-const ROWS: {label: string; bonus: number}[] = [
-    {label: "Upper-bracket finalist", bonus: DEFAULT_PLACEMENT_BONUS.upperFinalist},
-    ...DEFAULT_PLACEMENT_BONUS.ladder
-        .map((bonus, i) => ({label: formatPlacement(i + 1, 1), bonus}))
-        .filter(row => row.bonus !== 0),
-    {label: "Outside the top 8", bonus: DEFAULT_PLACEMENT_BONUS.outside},
-];
+export default function PlacementBonuses({config}: {config: PlacementBonusConfig}) {
+    const ROWS: {label: string; bonus: number}[] = [
+        {label: "Upper-bracket finalist", bonus: config.upperFinalist},
+        ...config.ladder
+            .map((bonus, i) => ({label: formatPlacement(i + 1, 1), bonus}))
+            .filter(row => row.bonus !== 0),
+        {label: "Outside the top 8", bonus: config.outside},
+    ];
 
-export default function PlacementBonuses() {
     return (
         <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border/60 pb-3 text-xs">
             <span className="font-semibold uppercase tracking-wider text-muted-foreground">

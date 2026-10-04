@@ -10,11 +10,20 @@ import {getPositionLeaderboardStatRows, LeaderboardStatRow} from "@/server/domai
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
 import {requireRoles} from "@/server/domains/auth";
 import {getSeasonFinalsSlots, getSeasonPodium} from "@/server/domains/season";
+import {z} from "zod";
 import {
     getSpecs,
-    saveSpec,
+    getSpecsAllRegions,
+    getSpecCatalog,
+    saveSpecIdentity,
+    saveRegionRequirements,
     removeSpec,
-    SaveSpecSchema,
+    SaveSpecIdentitySchema,
+    SaveRegionRequirementsSchema,
+    exportSpecRequirements,
+    importSpecRequirements,
+    ExportSpecRequirementsSchema,
+    ImportSpecRequirementsSchema,
     generateSpecSnapshot,
     getPlacementBonus,
     savePlacementBonus,
@@ -30,16 +39,40 @@ import {deleteSpecSnapshot} from "@/server/db/specSnapshot.repo";
 
 const SPEC_ROLES = ["admin", "super_admin", "spec_manager"] as const;
 
-export async function getSpecsAction() {
+const RegionIdSchema = z.string().uuid();
+
+function invalidRegion() {
+    return Err({message: "A valid region is required", code: "VALIDATION_ERROR" as const});
+}
+
+export async function getSpecsAction(regionId: string) {
+    if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
+
     const supabase = await createServerSupabase();
     const guard = await requireRoles(supabase, SPEC_ROLES);
     if (!guard.ok) return guard;
 
-    return getSpecs(supabase);
+    return getSpecs(supabase, regionId);
 }
 
-export async function saveSpecAction(data: unknown) {
-    const parsed = SaveSpecSchema.safeParse(data);
+export async function getSpecsAllRegionsAction() {
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return getSpecsAllRegions(supabase);
+}
+
+export async function getSpecCatalogAction() {
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return getSpecCatalog(supabase);
+}
+
+export async function saveSpecIdentityAction(data: unknown) {
+    const parsed = SaveSpecIdentitySchema.safeParse(data);
     if (!parsed.success) {
         return Err({
             message: parsed.error.issues.map(i => i.message).join(", "),
@@ -51,8 +84,68 @@ export async function saveSpecAction(data: unknown) {
     const guard = await requireRoles(supabase, SPEC_ROLES);
     if (!guard.ok) return guard;
 
-    const result = await saveSpec(supabase, parsed.data);
+    const result = await saveSpecIdentity(supabase, parsed.data);
     if (result.ok) revalidatePath("/admin/specs");
+    return result;
+}
+
+export async function saveRegionRequirementsAction(data: unknown) {
+    const parsed = SaveRegionRequirementsSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await saveRegionRequirements(supabase, parsed.data);
+    if (result.ok) revalidatePath("/admin/specs");
+    return result;
+}
+
+export async function exportSpecRequirementsAction(data: unknown) {
+    const parsed = ExportSpecRequirementsSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return exportSpecRequirements(supabase, parsed.data);
+}
+
+export async function importSpecRequirementsAction(data: unknown) {
+    const parsed = ImportSpecRequirementsSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await importSpecRequirements(supabase, {
+        regionId: parsed.data.regionId,
+        file: parsed.data.file,
+        mode: parsed.data.mode,
+        dryRun: parsed.data.dryRun,
+    });
+    if (result.ok && result.value.status === "applied") {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/specs");
+    }
     return result;
 }
 
@@ -66,12 +159,14 @@ export async function deleteSpecAction(id: string) {
     return result;
 }
 
-export async function generateSpecSnapshotAction() {
+export async function generateSpecSnapshotAction(regionId: string) {
+    if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
+
     const supabase = await createServerSupabase();
     const guard = await requireRoles(supabase, SPEC_ROLES);
     if (!guard.ok) return guard;
 
-    const result = await generateSpecSnapshot(supabase);
+    const result = await generateSpecSnapshot(supabase, regionId);
     if (result.ok) {
         revalidatePublicData([CACHE_TAGS.specs]);
         revalidatePath("/spec-requirements");
@@ -79,12 +174,14 @@ export async function generateSpecSnapshotAction() {
     return result;
 }
 
-export async function deleteSpecSnapshotAction() {
+export async function deleteSpecSnapshotAction(regionId: string) {
+    if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
+
     const supabase = await createServerSupabase();
     const guard = await requireRoles(supabase, SPEC_ROLES);
     if (!guard.ok) return guard;
 
-    const result = await deleteSpecSnapshot(supabase);
+    const result = await deleteSpecSnapshot(supabase, regionId);
     if (result.ok) {
         revalidatePublicData([CACHE_TAGS.specs]);
         revalidatePath("/spec-requirements");

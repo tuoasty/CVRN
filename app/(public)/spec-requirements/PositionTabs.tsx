@@ -10,13 +10,13 @@ const SHORT: Record<string, string> = {
     LIB: "Libero",
 };
 
-export default function PositionTabs({active}: {active: string}) {
+export default function PositionTabs({active, region}: {active: string; region: string | null}) {
     return (
         <div className="flex w-max border border-border">
             {SPEC_POSITIONS.map(p => (
                 <Link
                     key={p.code}
-                    href={`?pos=${p.code.toLowerCase()}`}
+                    href={`?${region ? `region=${region.toLowerCase()}&` : ""}pos=${p.code.toLowerCase()}`}
                     scroll={false}
                     className={cn(
                         "flex h-[38px] items-center border-r border-border px-[18px] text-sm font-medium last:border-r-0",

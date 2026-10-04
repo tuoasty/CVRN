@@ -22,7 +22,7 @@ interface Props {
     matchedLabel: string;
     fallbackLabel: string;
     statKeys: string[];
-    thresholdByKey: Map<string, {minValue: number; format: string; lowerIsBetter: boolean}>;
+    thresholdByKey: Map<string, {minValue: number | null; format: string; lowerIsBetter: boolean}>;
     placeGroupSize: Map<number, number>;
 }
 
@@ -152,7 +152,7 @@ export default function SpecQualificationTable({
                             style={COL_STAT}
                             title={
                                 check
-                                    ? `${specStatLabel(key)} — ${isLowerIsBetterStatKey(key) ? 'at most' : 'needs'} ${formatSpecStatValue(check.minValue, format)} (${check.tier})`
+                                    ? `${specStatLabel(key)} — ${check.minValue === null ? 'threshold unset' : `${isLowerIsBetterStatKey(key) ? 'at most' : 'needs'} ${formatSpecStatValue(check.minValue, format)}`} (${check.tier})`
                                     : undefined
                             }
                             className={cn(
@@ -223,7 +223,7 @@ export default function SpecQualificationTable({
                                 <div className="font-semibold">{specStatShort(key)}</div>
                                 {t && (
                                     <div className="font-normal text-primary normal-case tracking-normal">
-                                        {t.lowerIsBetter ? '≤' : '≥'} {formatSpecStatValue(t.minValue, t.format as SpecStatFormat)}
+                                        {t.minValue === null ? 'unset' : `${t.lowerIsBetter ? '≤' : '≥'} ${formatSpecStatValue(t.minValue, t.format as SpecStatFormat)}`}
                                     </div>
                                 )}
                             </th>

@@ -1,4 +1,4 @@
-import {Spec, SpecRequirement} from "@/shared/types/db";
+import {Spec, SpecRegionRule, SpecRequirement} from "@/shared/types/db";
 
 export type SpecTier = "main" | "secondary";
 
@@ -6,10 +6,15 @@ export interface SpecWithRequirements extends Spec {
     requirements: SpecRequirement[];
 }
 
+export interface SpecWithAllRegions extends Spec {
+    requirements: SpecRequirement[];
+    rules: SpecRegionRule[];
+}
+
 export interface SpecRequirementCheck {
     statKey: string;
     tier: SpecTier;
-    minValue: number;
+    minValue: number | null;
 
     value: number | null;
 
@@ -71,8 +76,8 @@ export {
     formatPlacementBonus,
 } from "../helpers/placementBonus";
 
-export type {SaveSpecInput, SpecRequirementInput, SpecQualificationInput, SavePlacementBonusInput, AwardSpecWinnerInput, DeleteSpecWinnerInput} from "./schemas";
-export {SaveSpecSchema, SpecRequirementSchema, SpecQualificationSchema, SavePlacementBonusSchema, PlacementBonusConfigSchema, AwardSpecWinnerSchema, DeleteSpecWinnerSchema} from "./schemas";
+export type {ExportSpecRequirementsInput, ImportSpecRequirementsInput, SaveSpecIdentityInput, RegionSpecRequirementsInput, SaveRegionRequirementsInput, SpecPositionInput, SpecRequirementInput, SpecQualificationInput, SavePlacementBonusInput, AwardSpecWinnerInput, DeleteSpecWinnerInput} from "./schemas";
+export {SpecImportFileSchema, SpecFileEntrySchema, ExportSpecRequirementsSchema, ImportSpecRequirementsSchema, SaveSpecIdentitySchema, RegionSpecRequirementsSchema, SaveRegionRequirementsSchema, SpecPositionSchema, SpecRequirementSchema, SpecQualificationSchema, SavePlacementBonusSchema, PlacementBonusConfigSchema, AwardSpecWinnerSchema, DeleteSpecWinnerSchema} from "./schemas";
 export {
     SPEC_STAT_KEYS,
     PARTICIPATION_STAT_KEYS,
@@ -92,4 +97,21 @@ export type {
     PublicParticipation,
     PublicSpec,
     SpecSnapshotPayload,
+    PublishedSpecRegion,
 } from "./publicSnapshot";
+export type {
+    SpecFileReqMap,
+    SpecFileEntry,
+    SpecExportFile,
+    SpecImportIssue,
+    SpecFileRegion,
+    SpecFileSpec,
+    ResolvedRequirement,
+    ResolvedSpecImport,
+    SpecDiffStatus,
+    SpecImportMode,
+    SpecStatChange,
+    SpecImportSpecDiff,
+    SpecImportRegionDiff,
+    SpecImportResult,
+} from "./specFile";

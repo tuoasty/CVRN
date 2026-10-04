@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import {ReactNode, useState} from 'react';
 import {Check, ChevronsUpDown, Search} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import {Popover, PopoverContent, PopoverTrigger} from '@/app/components/ui/popover';
@@ -13,9 +13,10 @@ interface Props {
     onChange: (key: string) => void;
     takenKeys: Set<string>;
     disabled?: boolean;
+    trigger?: ReactNode;
 }
 
-export default function SpecStatCombobox({value, onChange, takenKeys, disabled}: Props) {
+export default function SpecStatCombobox({value, onChange, takenKeys, disabled, trigger}: Props) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
 
@@ -43,7 +44,7 @@ export default function SpecStatCombobox({value, onChange, takenKeys, disabled}:
             }}
         >
             <PopoverTrigger asChild disabled={disabled}>
-                <button
+                {trigger ?? <button
                     type="button"
                     className="flex items-center justify-between gap-2 w-full min-w-0 h-9 rounded-md border border-input bg-transparent px-3 text-sm hover:border-primary/50 disabled:opacity-50"
                 >
@@ -51,7 +52,7 @@ export default function SpecStatCombobox({value, onChange, takenKeys, disabled}:
                         {value ? specStatLabel(value) : 'Choose a stat'}
                     </span>
                     <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                </button>
+                </button>}
             </PopoverTrigger>
             <PopoverContent align="start" className="w-64 p-0 rounded-sm overflow-hidden">
                 <div className="flex items-center gap-2 border-b border-border px-3 h-9">

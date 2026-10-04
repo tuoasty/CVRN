@@ -6,16 +6,22 @@ export const SpecRequirementSchema = z.object({
     statKey: z.string().refine(isSpecStatKey, {
         message: "Not a stat a requirement can threshold",
     }),
-    minValue: z.number().finite(),
+    minValue: z.number().finite().nullable(),
 });
 
-export const SaveSpecSchema = z
+export const SpecPositionSchema = z.enum(["OUT", "OPP", "MID", "SET", "LIB"]);
+
+export const SaveSpecIdentitySchema = z.object({
+    id: z.string().uuid().optional(),
+    name: z.string().trim().min(1, "Name required").max(80),
+    stars: z.number().int().min(3).max(5),
+    position: SpecPositionSchema,
+    height: z.number().int().min(48).max(96),
+});
+
+export const RegionSpecRequirementsSchema = z
     .object({
-        id: z.string().uuid().optional(),
-        name: z.string().trim().min(1, "Name required").max(80),
-        stars: z.number().int().min(3).max(5),
-        position: z.enum(["OUT", "OPP", "MID", "SET", "LIB"]),
-        height: z.number().int().min(48).max(96),
+        specId: z.string().uuid(),
         secondaryRequired: z.number().int().min(0),
         requirements: z.array(SpecRequirementSchema),
     })
@@ -26,10 +32,52 @@ export const SaveSpecSchema = z
     .refine(
         s => s.secondaryRequired <= s.requirements.filter(r => r.tier === "secondary").length,
         {
-            message: "Secondary requirement count is higher than the number of secondary requirements — nobody could qualify",
+            message: "Secondary requirement count is higher than the number of secondary requirements, so nobody could qualify",
             path: ["secondaryRequired"],
         }
     );
+
+export const SaveRegionRequirementsSchema = z
+    .object({
+        regionId: z.string().uuid(),
+        specs: z.array(RegionSpecRequirementsSchema).min(1),
+    })
+    .refine(
+        s => new Set(s.specs.map(x => x.specId)).size === s.specs.length,
+        {message: "A spec can only appear once per save", path: ["specs"]}
+    );
+
+const SpecFileReqMapSchema = z.record(z.string(), z.number().finite().nullable());
+
+export const SpecFileEntrySchema = z
+    .object({
+        spec_name: z.string().min(1),
+        stars: z.number().int(),
+        position: z.string().min(1),
+        secondary_required: z.number().int().min(0),
+        main_reqs: SpecFileReqMapSchema,
+        sub_reqs: SpecFileReqMapSchema,
+    })
+    .strict();
+
+export const SpecImportFileSchema = z
+    .object({
+        version: z.literal(1),
+        exportedAt: z.string().optional(),
+        specs: z.array(SpecFileEntrySchema),
+    })
+    .strict();
+
+export const ExportSpecRequirementsSchema = z.object({
+    regionId: z.string().uuid(),
+});
+
+export const ImportSpecRequirementsSchema = z.object({
+    regionId: z.string().uuid(),
+    file: z.unknown(),
+    mode: z.enum(["full", "shape"]),
+    dryRun: z.boolean(),
+});
 
 export const SpecQualificationSchema = z.object({
     seasonId: z.string().uuid(),
@@ -67,7 +115,12 @@ export const DeleteSpecWinnerSchema = z.object({
 });
 
 export type SpecRequirementInput = z.infer<typeof SpecRequirementSchema>;
-export type SaveSpecInput = z.infer<typeof SaveSpecSchema>;
+export type SpecPositionInput = z.infer<typeof SpecPositionSchema>;
+export type SaveSpecIdentityInput = z.infer<typeof SaveSpecIdentitySchema>;
+export type RegionSpecRequirementsInput = z.infer<typeof RegionSpecRequirementsSchema>;
+export type SaveRegionRequirementsInput = z.infer<typeof SaveRegionRequirementsSchema>;
+export type ExportSpecRequirementsInput = z.infer<typeof ExportSpecRequirementsSchema>;
+export type ImportSpecRequirementsInput = z.infer<typeof ImportSpecRequirementsSchema>;
 export type SpecQualificationInput = z.infer<typeof SpecQualificationSchema>;
 export type SavePlacementBonusInput = z.infer<typeof SavePlacementBonusSchema>;
 export type AwardSpecWinnerInput = z.infer<typeof AwardSpecWinnerSchema>;
