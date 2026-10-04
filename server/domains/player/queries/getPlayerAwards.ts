@@ -23,6 +23,7 @@ export async function getPlayerAwards(
                     sort_order,
                     all_star_team,
                     all_star_slot,
+                    all_star_captain,
                     season:seasons!season_id(name, slug, start_date, end_date, region:regions!region_id(code))
                 `)
                 .eq("player_id", p.playerId)
@@ -151,6 +152,7 @@ export async function getPlayerAwards(
                 sort_order: r.sort_order,
                 all_star_team: r.all_star_team as PlayerAward["all_star_team"],
                 all_star_slot: r.all_star_slot as PlayerAward["all_star_slot"],
+                all_star_captain: r.all_star_captain,
                 all_star_team_name: r.all_star_team
                     ? allStarNameByKey.get(`${r.season_id}::${r.all_star_team}`) ?? `Team ${r.all_star_team}`
                     : null,

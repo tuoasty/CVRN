@@ -75,6 +75,7 @@ export interface SeasonAwardEntryWithPlayer {
     avatar_bucket_path: string | null;
     all_star_team: import("./schemas").AllStarTeamCode | null;
     all_star_slot: import("./schemas").AllStarSlot | null;
+    all_star_captain: boolean;
     players: {
         id: string;
         username: string;
@@ -137,15 +138,22 @@ export interface SeasonDetail {
         award_name: string;
         category: import("./schemas").AwardCategory;
         awarded_at: string;
+        sort_order: number;
         full_avatar_url: string | null;
         avatar_bucket_path: string | null;
+        all_star_team: import("./schemas").AllStarTeamCode | null;
+        all_star_slot: import("./schemas").AllStarSlot | null;
+        all_star_captain: boolean;
         players: {
             id: string;
             username: string;
             display_name: string | null;
+            avatar_url: string | null;
             player_team_seasons: Array<{
                 team_id: string;
                 season_id: string;
+                joined_at: string;
+                left_at: string | null;
                 teams: { id: string; name: string; logo_url: string | null; brick_color: string | null } | null;
             }>;
         };
@@ -157,6 +165,7 @@ export interface SeasonDetail {
         players: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null;
     }>;
     champion_gfx: Array<{ id: string; image_url: string | null; title: string }>;
+    all_star_teams: SeasonAllStarTeam[];
 }
 
 export type {
@@ -176,6 +185,7 @@ export type {
     AllStarTeamCode,
     AllStarSlot,
     UpsertSeasonAllStarTeamNameInput,
+    SetAllStarCaptainInput,
     SeasonNumberQueryInput,
 } from "./schemas";
 
@@ -196,5 +206,6 @@ export {
     AllStarTeamCodeEnum,
     AllStarSlotEnum,
     UpsertSeasonAllStarTeamNameSchema,
+    SetAllStarCaptainSchema,
     SeasonNumberQuerySchema,
 } from "./schemas";

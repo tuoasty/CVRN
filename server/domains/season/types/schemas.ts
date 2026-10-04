@@ -105,6 +105,12 @@ export const BatchUpsertSeasonAwardsSchema = z.object({
 })
 export type BatchUpsertSeasonAwardsInput = z.infer<typeof BatchUpsertSeasonAwardsSchema>
 
+export const SetAllStarCaptainSchema = z.object({
+    awardId: z.uuid(),
+    isCaptain: z.boolean(),
+})
+export type SetAllStarCaptainInput = z.infer<typeof SetAllStarCaptainSchema>
+
 export const UpsertSeasonAllStarTeamNameSchema = z.object({
     seasonId: z.uuid(),
     code: AllStarTeamCodeEnum,

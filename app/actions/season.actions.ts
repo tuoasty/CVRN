@@ -10,6 +10,7 @@ import {
     upsertSeasonAward, deleteSeasonAward, storeAwardAvatar, fetchChampionRosterAwards,
     batchUpsertSeasonAwards, updateSeasonAward, reorderSeasonAwards,
     getSeasonAllStarTeams, upsertSeasonAllStarTeamName, UpsertSeasonAllStarTeamNameSchema,
+    setAllStarCaptain, SetAllStarCaptainSchema,
     UpsertSeasonPodiumSlotSchema, DeleteSeasonPodiumSlotSchema,
     DeriveSeasonPodiumSchema, UpsertSeasonAwardSchema, DeleteSeasonAwardSchema,
     BatchUpsertSeasonAwardsSchema, UpdateSeasonAwardSchema, ReorderSeasonAwardsSchema,
@@ -197,6 +198,17 @@ export async function upsertSeasonAllStarTeamNameAction(input: unknown) {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
     const result = await upsertSeasonAllStarTeamName(supabase, parsed.data);
+    if (result.ok) revalidatePath('/admin/seasons');
+    return result;
+}
+
+export async function setAllStarCaptainAction(input: unknown) {
+    const parsed = SetAllStarCaptainSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const user = await requireAuth(supabase);
+    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    const result = await setAllStarCaptain(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
     return result;
 }

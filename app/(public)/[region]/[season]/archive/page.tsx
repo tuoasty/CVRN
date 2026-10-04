@@ -31,8 +31,10 @@ function TeamLogoSmall({ name, logoUrl, size = 28, priority = false }: { name: s
 }
 
 function getAwardTeam(award: SeasonDetail["season_awards"][number], seasonId: string) {
-    const pts = award.players.player_team_seasons?.find(p => p.season_id === seasonId);
-    return pts?.teams ?? null;
+    const rows = (award.players.player_team_seasons ?? []).filter(p => p.season_id === seasonId);
+    const active = rows.find(p => p.left_at == null);
+    const latest = active ?? [...rows].sort((a, b) => (b.joined_at ?? "").localeCompare(a.joined_at ?? ""))[0];
+    return latest?.teams ?? null;
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -304,6 +306,99 @@ function SpecWinnerRow({ winner }: { winner: SeasonDetail["spec_winners"][number
     return <Link href={href} prefetch={false} className="block hover:bg-muted/30 transition-colors">{inner}</Link>;
 }
 
+type SeasonAwardEntry = SeasonDetail["season_awards"][number];
+
+function AllStarTile({ award, headshot, className }: { award: SeasonAwardEntry; headshot?: boolean; className?: string }) {
+    const { award_name, full_avatar_url, players } = award;
+    const href = buildPublicPlayerHref(players.username);
+    const displayName = players.display_name ?? players.username;
+    const avatar = (
+        <AvatarTile
+            url={headshot ? players.avatar_url : full_avatar_url}
+            name={players.username ?? "?"}
+            className={cn(headshot ? "aspect-square" : "aspect-[3/4]", "group-hover:opacity-90 transition-opacity")}
+        />
+    );
+    const inner = (
+        <div className="group min-w-0">
+            <div className="relative">
+                {avatar}
+                {award.all_star_captain && (
+                    <span className="absolute top-0 left-0 w-4 h-4 flex items-center justify-center bg-foreground text-background text-xs font-bold leading-none" title="Captain">C</span>
+                )}
+            </div>
+            <p
+                className="text-[11px] font-semibold text-center leading-tight truncate mt-1.5"
+                title={`${displayName} (@${players.username})`}
+            >
+                {displayName}
+            </p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground text-center font-semibold truncate">{award_name}</p>
+        </div>
+    );
+    const wrapperClass = cn("block min-w-0", className);
+    if (!href) return <div className={wrapperClass}>{inner}</div>;
+    return <Link href={href} prefetch={false} className={wrapperClass}>{inner}</Link>;
+}
+
+function AllStarTeamHalf({ code, name, awards }: { code: string; name: string; awards: SeasonAwardEntry[] }) {
+    const starters = awards
+        .filter(a => a.all_star_slot === "starter")
+        .sort((a, b) => Number(b.all_star_captain) - Number(a.all_star_captain) || a.sort_order - b.sort_order);
+    const subs = awards
+        .filter(a => a.all_star_slot === "sub")
+        .sort((a, b) => a.sort_order - b.sort_order);
+    return (
+        <div className="min-w-0">
+            <div className="flex items-center gap-2.5 border-t-2 border-foreground pt-2.5 mb-3">
+                <span className="inline-flex items-center justify-center w-[22px] h-[22px] border border-border font-mono text-xs font-semibold text-muted-foreground">{code}</span>
+                <span className="text-lg font-semibold uppercase tracking-tight truncate">{name}</span>
+            </div>
+            {starters.length > 0 && (
+                <>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Starters</p>
+                    <div className="grid grid-cols-4 gap-2">
+                        {starters.map(a => a.all_star_captain
+                            ? <AllStarTile key={a.id} award={a} className="row-span-2 self-center" />
+                            : <AllStarTile key={a.id} award={a} />
+                        )}
+                    </div>
+                </>
+            )}
+            {subs.length > 0 && (
+                <>
+                    <div className="flex items-center gap-2 mt-3.5 mb-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subs</span>
+                        <span className="flex-1 h-px bg-border" />
+                    </div>
+                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                        {subs.map(a => <AllStarTile key={a.id} award={a} headshot />)}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
+
+function AllStarSection({ awards, teams }: { awards: SeasonAwardEntry[]; teams: SeasonDetail["all_star_teams"] }) {
+    const halves = (["A", "B"] as const)
+        .map(code => ({
+            code,
+            name: teams.find(t => t.code === code)?.name ?? `Team ${code}`,
+            awards: awards.filter(a => a.all_star_team === code),
+        }))
+        .filter(h => h.awards.length > 0);
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-y-7 lg:divide-x lg:divide-border">
+            {halves.map((h, i) => (
+                <div key={h.code} className={cn("min-w-0", i === 0 ? "lg:pr-5" : "lg:pl-5")}>
+                    <AllStarTeamHalf code={h.code} name={h.name} awards={h.awards} />
+                </div>
+            ))}
+        </div>
+    );
+}
+
 const ROSTER_ROLE_RANK: Record<string, number> = { captain: 0, vice_captain: 1, court_captain: 2 };
 const ROSTER_ROLE_LABEL: Record<string, string> = { captain: "C", vice_captain: "VC", court_captain: "CC" };
 
@@ -380,12 +475,14 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
     const firstTeamAwards = awards.filter(a => a.category === "first_team");
     const staffTeamAwards = awards.filter(a => a.category === "staff_team");
     const championRoster = awards.filter(a => a.category === "champion_roster");
+    const allStarAwards = awards.filter(a => a.category === "all_star");
+    const allStarTeams = season.all_star_teams ?? [];
     const specShown = specWinners.filter(w => w.specs);
 
     const hasPodium = podium.length > 0;
     const hasGfx = !!gfx?.image_url;
     const hasColumns = individualAwards.length > 0 || firstTeamAwards.length > 0 || staffTeamAwards.length > 0 || specShown.length > 0;
-    const hasContent = hasPodium || hasGfx || hasColumns || championRoster.length > 0;
+    const hasContent = hasPodium || hasGfx || hasColumns || allStarAwards.length > 0 || championRoster.length > 0;
 
     return (
         <>
@@ -428,6 +525,13 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
                             <StaffTable awards={staffTeamAwards} />
                         </section>
                     )}
+                </div>
+            )}
+
+            {allStarAwards.length > 0 && (
+                <div>
+                    <SectionLabel>All-Star</SectionLabel>
+                    <AllStarSection awards={allStarAwards} teams={allStarTeams} />
                 </div>
             )}
 

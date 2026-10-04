@@ -190,6 +190,7 @@ export interface PlayerAward {
     all_star_team?: "A" | "B" | null;
     all_star_team_name?: string | null;
     all_star_slot?: "starter" | "sub" | null;
+    all_star_captain?: boolean;
     place?: number;
     place_end?: number;
 }

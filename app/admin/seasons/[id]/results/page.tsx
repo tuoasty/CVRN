@@ -31,6 +31,7 @@ import {
     reorderSeasonAwardsAction,
     getSeasonAllStarTeamsAction,
     upsertSeasonAllStarTeamNameAction,
+    setAllStarCaptainAction,
 } from "@/app/actions/season.actions";
 import {searchPlayersInDatabaseAction} from "@/app/actions/player.actions";
 import {
@@ -306,12 +307,17 @@ type AwardPortraitCardProps = {
     onDelete: () => void;
     onRename: (v: string) => void;
     onMove: (direction: "up" | "down") => void;
+    onToggleCaptain?: () => void;
+    togglingCaptain?: boolean;
 };
 
-function AwardPortraitCard({a, isFirst, isLast, reordering, previewing, deleting, onPreview, onDelete, onRename, onMove}: AwardPortraitCardProps) {
+function AwardPortraitCard({a, isFirst, isLast, reordering, previewing, deleting, onPreview, onDelete, onRename, onMove, onToggleCaptain, togglingCaptain}: AwardPortraitCardProps) {
     return (
         <div className="flex flex-col items-center gap-1 relative group/card">
             <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-primary/10">
+                {a.all_star_captain && (
+                    <span className="absolute top-0 left-0 z-10 w-4 h-4 flex items-center justify-center bg-foreground text-background text-xs font-bold leading-none">C</span>
+                )}
                 {a.full_avatar_url ? (
                     <Image
                         src={a.full_avatar_url}
@@ -326,7 +332,17 @@ function AwardPortraitCard({a, isFirst, isLast, reordering, previewing, deleting
                         <ImageIcon className="h-4 w-4 text-muted-foreground" />
                     </div>
                 )}
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                <div className="absolute inset-0 z-20 bg-black/50 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                    {onToggleCaptain && (
+                        <Button variant="ghost" size="sm"
+                            className="h-7 w-7 p-0 text-white hover:bg-white/20 rounded-sm text-xs font-bold"
+                            onClick={onToggleCaptain}
+                            disabled={togglingCaptain}
+                            title={a.all_star_captain ? "Remove captain" : "Make captain"}
+                        >
+                            {togglingCaptain ? <RefreshCw className="h-3 w-3 animate-spin" /> : a.all_star_captain ? "−C" : "C"}
+                        </Button>
+                    )}
                     <Button variant="ghost" size="sm"
                         className="h-7 w-7 p-0 text-white hover:bg-white/20 rounded-sm"
                         onClick={onPreview}
@@ -387,6 +403,7 @@ export default function SeasonResultsPage() {
     const [previewLoading, setPreviewLoading] = useState<string | null>(null);
 
     const [allStarTeams, setAllStarTeams] = useState<SeasonAllStarTeam[]>([]);
+    const [togglingCaptain, setTogglingCaptain] = useState<string | null>(null);
     const [draftAwards, setDraftAwards] = useState<{tempId: string; awardName: string; category: AwardCategory; allStarTeam?: AllStarTeamCode; allStarSlot?: AllStarSlot; player: PlayerWithTeamInfo}[]>([]);
     const [draftName, setDraftName] = useState("");
     const [draftCategory, setDraftCategory] = useState<AwardCategory>("individual_winners");
@@ -554,6 +571,20 @@ export default function SeasonResultsPage() {
         }
     };
 
+    const handleToggleCaptain = async (award: SeasonAwardEntryWithPlayer) => {
+        const isCaptain = !award.all_star_captain;
+        setTogglingCaptain(award.id);
+        try {
+            const result = await setAllStarCaptainAction({awardId: award.id, isCaptain});
+            if (!result.ok) { toast.error("Failed to update captain", result.error.message); return; }
+            setAwards(prev => prev.map(a => {
+                if (a.id === award.id) return {...a, all_star_captain: isCaptain};
+                if (isCaptain && a.season_id === award.season_id && a.all_star_team === award.all_star_team) return {...a, all_star_captain: false};
+                return a;
+            }));
+        } finally { setTogglingCaptain(null); }
+    };
+
     const handleRenameAllStarTeam = async (code: AllStarTeamCode, name: string) => {
         const result = await upsertSeasonAllStarTeamNameAction({seasonId, code, name});
         if (!result.ok) { toast.error("Failed to rename all-star team", result.error.message); return; }
@@ -564,7 +595,8 @@ export default function SeasonResultsPage() {
         const group = awards
             .filter(a => a.category === award.category
                 && a.all_star_team === award.all_star_team
-                && a.all_star_slot === award.all_star_slot)
+                && a.all_star_slot === award.all_star_slot
+                && !a.all_star_captain)
             .sort((a, b) => a.sort_order - b.sort_order);
         const idx = group.findIndex(a => a.id === award.id);
         const swapIdx = direction === "up" ? idx - 1 : idx + 1;
@@ -1022,7 +1054,10 @@ export default function SeasonResultsPage() {
                                                                 </div>
                                                             </div>
                                                             {ALL_STAR_SLOTS.map(slot => {
-                                                                const slotAwards = teamAwards.filter(a => a.all_star_slot === slot);
+                                                                const slotAwards = teamAwards
+                                                                    .filter(a => a.all_star_slot === slot)
+                                                                    .sort((x, y) => Number(y.all_star_captain) - Number(x.all_star_captain));
+                                                                const hasCaptain = slotAwards[0]?.all_star_captain ?? false;
                                                                 if (slotAwards.length === 0) return null;
                                                                 return (
                                                                     <div key={slot} className="space-y-1">
@@ -1032,8 +1067,8 @@ export default function SeasonResultsPage() {
                                                                                 <AwardPortraitCard
                                                                                     key={a.id}
                                                                                     a={a}
-                                                                                    isFirst={i === 0}
-                                                                                    isLast={i === list.length - 1}
+                                                                                    isFirst={a.all_star_captain || i === (hasCaptain ? 1 : 0)}
+                                                                                    isLast={a.all_star_captain || i === list.length - 1}
                                                                                     reordering={reordering}
                                                                                     previewing={previewLoading === a.id}
                                                                                     deleting={deletingAward === a.id}
@@ -1041,6 +1076,8 @@ export default function SeasonResultsPage() {
                                                                                     onDelete={() => handleDeleteAward(a.id)}
                                                                                     onRename={v => handleRenameAward(a.id, v)}
                                                                                     onMove={direction => handleMoveAward(a, direction)}
+                                                                                    onToggleCaptain={slot === "starter" ? () => handleToggleCaptain(a) : undefined}
+                                                                                    togglingCaptain={togglingCaptain === a.id}
                                                                                 />
                                                                             ))}
                                                                         </div>

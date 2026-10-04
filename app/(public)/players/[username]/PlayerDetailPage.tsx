@@ -52,7 +52,7 @@ function awardLabel(award: PlayerAward): string {
     if (award.category === "first_team") return `First Team ${award.award_name}`;
     if (award.category === "all_star") {
         const slot = award.all_star_slot === "sub" ? "Sub" : "Starter";
-        return `All-Star ${award.all_star_team_name ?? "Team"} · ${slot}`;
+        return `All-Star ${award.all_star_team_name ?? "Team"} · ${award.all_star_captain ? "Captain" : slot}`;
     }
     return award.award_name;
 }
