@@ -1,6 +1,6 @@
 'use client';
 
-import {useCallback, useMemo, useState} from 'react';
+import {useCallback, useMemo, useRef, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {useRegions} from '@/app/hooks/useRegions';
 import {deleteSpec, saveRegionRequirements, useSpecsAllRegions} from '@/app/hooks/useSpecs';
@@ -18,6 +18,9 @@ import BySpecView, {RegionColumn} from './BySpecView';
 import SpecIdentityForm from './SpecIdentityForm';
 import DraftSaveBar from './DraftSaveBar';
 import ConfirmDialog from './ConfirmDialog';
+import ImportDialog, {ImportFile} from './ImportDialog';
+import {useSpecPublishing} from './useSpecPublishing';
+import {unpublishableSpecNames} from './transfer';
 import {useSpecCatalogUrl} from './useSpecCatalogUrl';
 import {orderRegions} from './catalogParams';
 import {useRegionDraft} from './useRegionDraft';
@@ -29,6 +32,8 @@ type Pending =
     | {kind: 'region'; code: string}
     | {kind: 'leave'; href: string}
     | {kind: 'delete'; spec: SpecWithAllRegions}
+    | {kind: 'import'}
+    | {kind: 'unpublish'}
     | null;
 
 const EMPTY_STATE: RegionState = {};
@@ -45,6 +50,8 @@ export default function SpecCatalog() {
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [pending, setPending] = useState<Pending>(null);
+    const [importFile, setImportFile] = useState<ImportFile | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const statesByRegion = useMemo(() => {
         const out: Record<string, RegionState> = {};
@@ -55,6 +62,9 @@ export default function SpecCatalog() {
     const regionId = region?.id ?? null;
     const baseline = (regionId && statesByRegion[regionId]) || EMPTY_STATE;
     const {draft, edit, discard, discardSpec, summary, stateOf, dirty} = useRegionDraft(regionId, baseline);
+
+    const publishing = useSpecPublishing(regionId, region?.code ?? '');
+    const unsetSpecNames = useMemo(() => unpublishableSpecNames(specs, baseline), [specs, baseline]);
 
     const blockLeave = useCallback((href: string) => setPending({kind: 'leave', href}), []);
     useLeaveGuard(dirty, blockLeave);
@@ -90,6 +100,27 @@ export default function SpecCatalog() {
     const requestRegion = (nextCode: string) => {
         if (dirty) setPending({kind: 'region', code: nextCode});
         else setRegion(nextCode);
+    };
+
+    const pickImportFile = () => {
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        fileInputRef.current?.click();
+    };
+
+    const requestImport = () => {
+        if (dirty) setPending({kind: 'import'});
+        else pickImportFile();
+    };
+
+    const readImportFile = async (files: FileList | null) => {
+        const picked = files?.[0];
+        if (!picked) return;
+        const text = await picked.text();
+        try {
+            setImportFile({name: picked.name, parsed: JSON.parse(text)});
+        } catch {
+            setImportFile({name: picked.name, parseError: true});
+        }
     };
 
     const handleSave = async () => {
@@ -138,9 +169,14 @@ export default function SpecCatalog() {
             void handleDelete(pending.spec);
             return;
         }
+        if (pending.kind === 'unpublish') {
+            void publishing.unpublish().then(ok => ok && setPending(null));
+            return;
+        }
         discard();
         setPending(null);
         if (pending.kind === 'region') setRegion(pending.code);
+        else if (pending.kind === 'import') pickImportFile();
         else router.push(pending.href);
     };
 
@@ -161,6 +197,22 @@ export default function SpecCatalog() {
                     setCreating(true);
                     if (params.view !== 'spec') setView('spec');
                 }}
+                onExport={publishing.exportRegion}
+                onImport={requestImport}
+                onPublish={publishing.publish}
+                onUnpublish={() => setPending({kind: 'unpublish'})}
+                exporting={publishing.exporting}
+                publishing={publishing.publishing}
+                unpublishing={publishing.unpublishing}
+                unsetSpecNames={unsetSpecNames}
+                dirtyChanges={summary.changes}
+            />
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={e => void readImportFile(e.target.files)}
             />
             <div className="mt-4 grid grid-cols-[260px_1fr] border border-border min-h-[560px]">
                 <SpecCatalogList
@@ -274,6 +326,36 @@ export default function SpecCatalog() {
                 destructive
                 onCancel={() => setPending(null)}
                 onConfirm={confirmPending}
+            />
+            <ConfirmDialog
+                open={pending?.kind === 'import'}
+                title={`You have ${summary.changes} unsaved ${summary.changes === 1 ? 'change' : 'changes'} in ${code}`}
+                description={`Importing replaces ${code} requirements. Your draft will be discarded.`}
+                cancelLabel="Keep editing"
+                confirmLabel="Discard and choose file"
+                onCancel={() => setPending(null)}
+                onConfirm={confirmPending}
+            />
+            <ConfirmDialog
+                open={pending?.kind === 'unpublish'}
+                title={`Remove ${code} from the public page?`}
+                description="Requirements stay saved. Publish again any time."
+                cancelLabel="Cancel"
+                confirmLabel={publishing.unpublishing ? 'Unpublishing…' : `Unpublish ${code}`}
+                destructive
+                busy={publishing.unpublishing}
+                onCancel={() => setPending(null)}
+                onConfirm={confirmPending}
+            />
+            <ImportDialog
+                file={importFile}
+                regionId={region.id}
+                regionCode={params.region}
+                onClose={() => setImportFile(null)}
+                onChooseAnother={() => {
+                    setImportFile(null);
+                    pickImportFile();
+                }}
             />
             <ConfirmDialog
                 open={pending?.kind === 'delete'}

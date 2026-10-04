@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import {cn} from '@/lib/utils';
 import {Button} from '@/app/components/ui/button';
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/app/components/ui/tooltip';
 import {Region} from '@/shared/types/db';
 import {CatalogView} from './catalogParams';
 
@@ -13,6 +14,15 @@ interface Props {
     view: CatalogView;
     onView: (view: CatalogView) => void;
     onNewSpec: () => void;
+    onExport: () => void;
+    onImport: () => void;
+    onPublish: () => void;
+    onUnpublish: () => void;
+    exporting: boolean;
+    publishing: boolean;
+    unpublishing: boolean;
+    unsetSpecNames: string[];
+    dirtyChanges: number;
 }
 
 const VIEWS: {value: CatalogView; label: string}[] = [
@@ -20,7 +30,23 @@ const VIEWS: {value: CatalogView; label: string}[] = [
     {value: 'stat', label: 'By stat'},
 ];
 
-export default function SpecCatalogHeader({regions, regionCode, onRegion, view, onView, onNewSpec}: Props) {
+export default function SpecCatalogHeader({
+    regions,
+    regionCode,
+    onRegion,
+    view,
+    onView,
+    onNewSpec,
+    onExport,
+    onImport,
+    onPublish,
+    onUnpublish,
+    exporting,
+    publishing,
+    unpublishing,
+    unsetSpecNames,
+    dirtyChanges,
+}: Props) {
     const code = regionCode.toUpperCase();
     return (
         <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-border">
@@ -69,18 +95,50 @@ export default function SpecCatalogHeader({regions, regionCode, onRegion, view, 
             <Button size="sm" variant="outline" className="rounded-sm" onClick={onNewSpec}>
                 + New spec
             </Button>
-            <Button size="sm" variant="ghost" className="rounded-sm text-muted-foreground" disabled>
-                Export
+            <Button size="sm" variant="ghost" className="rounded-sm text-muted-foreground" onClick={onExport} disabled={exporting}>
+                {exporting ? 'Exporting…' : 'Export'}
             </Button>
-            <Button size="sm" variant="ghost" className="rounded-sm text-muted-foreground" disabled>
+            <Button size="sm" variant="ghost" className="rounded-sm text-muted-foreground" onClick={onImport}>
                 Import
             </Button>
             <Button asChild size="sm" variant="outline" className="rounded-sm">
                 <Link href="/admin/specs/qualify">Calibrate</Link>
             </Button>
-            <Button size="sm" className="rounded-sm" disabled>
-                Publish {code}
+            <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-sm text-muted-foreground"
+                onClick={onUnpublish}
+                disabled={unpublishing}
+            >
+                Unpublish {code}
             </Button>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span tabIndex={dirtyChanges > 0 ? 0 : -1}>
+                            <Button
+                                size="sm"
+                                className="rounded-sm"
+                                onClick={onPublish}
+                                disabled={publishing || dirtyChanges > 0}
+                            >
+                                {publishing ? 'Publishing…' : `Publish ${code}`}
+                                {unsetSpecNames.length > 0 && (
+                                    <span className="font-mono text-xs opacity-85">◌ {unsetSpecNames.length}</span>
+                                )}
+                            </Button>
+                        </span>
+                    </TooltipTrigger>
+                    {(dirtyChanges > 0 || unsetSpecNames.length > 0) && (
+                        <TooltipContent side="bottom" align="end" className="max-w-72">
+                            {dirtyChanges > 0
+                                ? `Save or discard your ${dirtyChanges} ${dirtyChanges === 1 ? 'change' : 'changes'} first`
+                                : `${unsetSpecNames.length} ${unsetSpecNames.length === 1 ? "spec won't" : "specs won't"} publish because of unset thresholds: ${unsetSpecNames.join(', ')}`}
+                        </TooltipContent>
+                    )}
+                </Tooltip>
+            </TooltipProvider>
         </div>
     );
 }
