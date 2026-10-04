@@ -130,7 +130,7 @@ export const replaceRequirementStat =
             : {
                   ...state,
                   requirements: state.requirements.map(r =>
-                      r.statKey === fromKey ? {...r, statKey: toKey, minValue: null} : r
+                      r.statKey === fromKey ? {...r, statKey: toKey} : r
                   ),
               };
 

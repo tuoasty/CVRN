@@ -7,10 +7,13 @@ import {deleteSpec, saveRegionRequirements, useSpecsAllRegions} from '@/app/hook
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
 import {toast} from '@/app/utils/toast';
 import {clientLogger} from '@/app/utils/clientLogger';
-import {SpecPosition, SpecWithAllRegions, positionLabel} from '@/server/domains/spec/types';
+import {SpecPosition, SpecWithAllRegions, isSpecStatKey, positionLabel} from '@/server/domains/spec/types';
 import SpecCatalogHeader from './SpecCatalogHeader';
 import SpecCatalogList from './SpecCatalogList';
 import SpecBandList from './SpecBandList';
+import StatList from './StatList';
+import ByStatView from './ByStatView';
+import {statCoverage} from './statView';
 import BySpecView, {RegionColumn} from './BySpecView';
 import SpecIdentityForm from './SpecIdentityForm';
 import DraftSaveBar from './DraftSaveBar';
@@ -35,7 +38,7 @@ export default function SpecCatalog() {
     const {regions: rawRegions, error: regionsError} = useRegions();
     const regions = useMemo(() => orderRegions(rawRegions), [rawRegions]);
     const storeRegionId = useAdminContextStore(s => s.selectedRegionId);
-    const {params, region, setRegion, setView, setPos, selectSpec} = useSpecCatalogUrl(regions, storeRegionId);
+    const {params, region, setRegion, setView, setPos, selectSpec, selectStat} = useSpecCatalogUrl(regions, storeRegionId);
     const {specs, isLoading, error} = useSpecsAllRegions();
 
     const [creating, setCreating] = useState(false);
@@ -80,6 +83,9 @@ export default function SpecCatalog() {
     const bands = groupByStars(positionSpecs);
     const selectedSpec = positionSpecs.find(s => s.id === params.spec) ?? bands[0]?.items[0] ?? null;
     const listState: RegionState = {...baseline, ...draft};
+    const coverage = statCoverage(positionSpecs.map(s => s.id), listState);
+    const requestedStat = params.stat && isSpecStatKey(params.stat) ? params.stat : null;
+    const selectedStat = requestedStat ?? coverage[0]?.statKey ?? null;
 
     const requestRegion = (nextCode: string) => {
         if (dirty) setPending({kind: 'region', code: nextCode});
@@ -180,7 +186,15 @@ export default function SpecCatalog() {
                                 selectSpec(id);
                             }}
                         />
-                    ) : null}
+                    ) : (
+                        <StatList
+                            regionCode={params.region}
+                            coverage={coverage}
+                            total={positionSpecs.length}
+                            selectedStat={selectedStat}
+                            onSelect={selectStat}
+                        />
+                    )}
                 </SpecCatalogList>
                 <div className="flex flex-col min-w-0">
                     {isLoading ? (
@@ -196,7 +210,28 @@ export default function SpecCatalog() {
                             }}
                         />
                     ) : params.view === 'stat' ? (
-                        <div className="p-6 text-sm text-muted-foreground">The By stat view arrives in milestone 3.</div>
+                        positionSpecs.length === 0 ? (
+                            <div className="p-6 text-sm text-muted-foreground">
+                                No {positionLabel(params.pos)} specs yet. Use + New spec to add one.
+                            </div>
+                        ) : selectedStat ? (
+                            <ByStatView
+                                key={selectedStat}
+                                statKey={selectedStat}
+                                pos={params.pos}
+                                regionCode={params.region}
+                                specs={positionSpecs}
+                                columns={columns}
+                                baseline={baseline}
+                                stateOf={stateOf}
+                                onEdit={edit}
+                                onOpenSpec={id => selectSpec(id)}
+                            />
+                        ) : (
+                            <div className="p-6 text-sm text-muted-foreground">
+                                No {positionLabel(params.pos)} requirements in {code} yet. Pick a stat with + Add a stat.
+                            </div>
+                        )
                     ) : selectedSpec ? (
                         <BySpecView
                             key={selectedSpec.id}

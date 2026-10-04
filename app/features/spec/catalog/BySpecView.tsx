@@ -149,10 +149,22 @@ export default function BySpecView({spec, regionCode, state, baseline, columns, 
         );
     };
 
-    const empty = (text: string) => (
+    const addRow = (tier: SpecTier) => (
         <tr>
-            <td colSpan={colSpan} className="h-10 px-3 border-b border-border/50 text-sm text-muted-foreground">
-                {text}
+            <td colSpan={colSpan} className="h-9 px-3 border-b border-border/50">
+                <SpecStatCombobox
+                    value=""
+                    takenKeys={takenKeys}
+                    onChange={key => {
+                        onEdit(addRequirement(key, tier));
+                        setFocusKey(key);
+                    }}
+                    trigger={
+                        <button type="button" className="text-sm text-muted-foreground hover:text-foreground">
+                            + Add {tier === 'main' ? 'main' : 'secondary'} requirement
+                        </button>
+                    }
+                />
             </td>
         </tr>
     );
@@ -217,7 +229,8 @@ export default function BySpecView({spec, regionCode, state, baseline, columns, 
                             <span className="text-xs text-muted-foreground"> · all must clear</span>
                         </td>
                     </tr>
-                    {main.length > 0 ? main.map(row) : empty(`No main requirements in ${code}`)}
+                    {main.map(row)}
+                    {addRow('main')}
                     <tr>
                         <td colSpan={colSpan} className="px-3 pt-3.5 pb-1.5 border-b border-border">
                             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Secondary</span>
@@ -234,24 +247,10 @@ export default function BySpecView({spec, regionCode, state, baseline, columns, 
                             </span>
                         </td>
                     </tr>
-                    {secondary.length > 0 ? secondary.map(row) : empty(`No secondary requirements in ${code}`)}
+                    {secondary.map(row)}
+                    {addRow('secondary')}
                 </tbody>
             </table>
-            <div className="px-5 py-3">
-                <SpecStatCombobox
-                    value=""
-                    takenKeys={takenKeys}
-                    onChange={key => {
-                        onEdit(addRequirement(key, 'secondary'));
-                        setFocusKey(key);
-                    }}
-                    trigger={
-                        <button type="button" className="text-sm text-muted-foreground hover:text-foreground">
-                            + Add stat
-                        </button>
-                    }
-                />
-            </div>
         </div>
     );
 }

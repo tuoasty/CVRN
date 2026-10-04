@@ -68,9 +68,9 @@ export default function AdminSpecQualifyPage() {
     const [saving, setSaving] = useState(false);
 
     const [pendingSpec, setPendingSpec] = useState<SpecWithRequirements | null>(null);
+    const [loadedRegionId, setLoadedRegionId] = useState<string | null>(null);
 
     useEffect(() => {
-        setSpecId('');
         setThresholds([]);
         setSecondaryRequired(0);
         setDirty(false);
@@ -99,6 +99,7 @@ export default function AdminSpecQualifyPage() {
 
     const loadSpec = (spec: SpecWithRequirements) => {
         setSpecId(spec.id);
+        setLoadedRegionId(regionId);
         setThresholds(
             spec.requirements.map(r => ({
                 rowId: newRowId(),
@@ -110,6 +111,12 @@ export default function AdminSpecQualifyPage() {
         setSecondaryRequired(spec.secondary_required);
         setDirty(false);
     };
+
+    useEffect(() => {
+        if (!specId || loadedRegionId === regionId) return;
+        const spec = specs.find(s => s.id === specId);
+        if (spec) loadSpec(spec);
+    });
 
     const handlePick = (spec: SpecWithRequirements) => {
         if (spec.id === specId) return;
@@ -211,7 +218,7 @@ export default function AdminSpecQualifyPage() {
     })();
 
     const handleSave = async () => {
-        if (!selectedSpec || !regionId) return;
+        if (!selectedSpec || !regionId || loadedRegionId !== regionId) return;
         if (saveError) {
             toast.error(saveError);
             return;
@@ -305,7 +312,7 @@ export default function AdminSpecQualifyPage() {
                     <div className="flex items-center gap-2 shrink-0">
                         <Button
                             onClick={handleSave}
-                            disabled={!selectedSpec || !!saveError || saving}
+                            disabled={!selectedSpec || loadedRegionId !== regionId || !!saveError || saving}
                             className="rounded-sm gap-1"
                             title={!selectedSpec ? 'Pick a spec to save into' : saveError ?? undefined}
                         >

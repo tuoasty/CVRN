@@ -53,11 +53,11 @@ describe('setRequirementTier', () => {
 });
 
 describe('replaceRequirementStat', () => {
-    it('swaps the stat and clears the threshold, refusing a stat already in use', () => {
+    it('swaps the stat keeping tier and threshold, refusing a stat already in use', () => {
         expect(replaceRequirementStat('hit_eff', 'digs_per_set')(leon).requirements[1]).toEqual({
             statKey: 'digs_per_set',
             tier: 'main',
-            minValue: null,
+            minValue: 0.32,
         });
         expect(replaceRequirementStat('hit_eff', 'aces_per_set')(leon)).toBe(leon);
     });
