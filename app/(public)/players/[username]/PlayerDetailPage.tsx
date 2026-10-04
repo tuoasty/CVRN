@@ -5,7 +5,7 @@ import Link from "next/link";
 import {getLogoClassName} from "@/app/lib/logoClass";
 import {cn} from "@/lib/utils";
 import {PlayerDetail, PlayerAward, PlayerSpecEntry, PlayerTeamHistoryEntry} from "@/server/domains/player";
-import {positionLabel} from "@/shared/volleyball/positions";
+import {positionLabel, positionShortLabel} from "@/shared/volleyball/positions";
 import PlayerSeasonStatsTable from "@/app/features/player/PlayerSeasonStatsTable";
 import BackButton from "@/app/components/public/BackButton";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
@@ -27,10 +27,10 @@ const ACHIEVEMENT_ROW: Record<string, {row: string; hover: string}> = {
     placement:       {row: "bg-muted/50",    hover: "hover:bg-muted"},
 };
 
-const AWARD_CATEGORY_STYLE: Record<string, {dot: string; text: string}> = {
-    individual_winners: {dot: "bg-secondary", text: "text-secondary"},
-    all_star:           {dot: "bg-primary",   text: "text-primary"},
-    first_team:         {dot: "bg-primary",   text: "text-primary"},
+const AWARD_CATEGORY_STYLE: Record<string, {text: string}> = {
+    individual_winners: {text: "text-secondary"},
+    all_star:           {text: "text-primary"},
+    first_team:         {text: "text-primary"},
 };
 
 function formatDate(isoString: string | null): string {
@@ -277,9 +277,9 @@ function DesktopAwardTable({valueHeader, children}: {valueHeader: string; childr
             <table className="w-full table-fixed text-sm">
                 <thead>
                     <tr className="border-b border-border bg-muted/40">
-                        <th className="w-[22%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
-                        <th className="w-[36%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
-                        <th className="w-[32%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">{valueHeader}</th>
+                        <th className="w-[20%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</th>
+                        <th className="w-[24%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Season</th>
+                        <th className="w-[46%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">{valueHeader}</th>
                         <th className="w-[10%] px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team</th>
                     </tr>
                 </thead>
@@ -338,13 +338,15 @@ function SpecAwardRow({spec}: {spec: PlayerSpecEntry}) {
     return (
         <tr className="hover:bg-muted/20 transition-colors">
             <td className="px-4 py-3 text-muted-foreground tabular-nums">{formatDate(spec.awarded_at)}</td>
-            <td className="px-4 py-3 text-muted-foreground">{spec.region_code} · {spec.season_name}</td>
+            <td className="px-4 py-3 text-muted-foreground truncate" title={`${spec.region_code} · ${spec.season_name}`}>{spec.region_code} · {spec.season_name}</td>
             <td className="px-4 py-3">
-                <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-medium truncate">{spec.spec_name}</span>
-                    <span className="font-mono text-secondary text-xs tabular-nums shrink-0">{spec.stars}★</span>
-                    {spec.position && <span className="text-xs uppercase tracking-wide text-muted-foreground shrink-0">{spec.position}</span>}
-                    {spec.dropped && <span className="italic text-xs text-muted-foreground shrink-0">dropped</span>}
+                <div className="-my-1.5 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 leading-4">
+                        <span className="font-medium truncate">{spec.spec_name}</span>
+                        <span className="font-mono text-secondary text-xs tabular-nums shrink-0">{spec.stars}★</span>
+                        {spec.dropped && <span className="italic text-xs text-muted-foreground shrink-0">dropped</span>}
+                    </div>
+                    {spec.position && <p className="text-xs leading-[14px] uppercase tracking-wide text-muted-foreground truncate">{positionShortLabel(spec.position)}</p>}
                 </div>
             </td>
             <td className="px-4 py-3"><TeamLogoLink award={spec} /></td>
@@ -359,6 +361,7 @@ function SpecAwardCard({spec}: {spec: PlayerSpecEntry}) {
                 <div className="flex items-center gap-2 min-w-0">
                     <span className="text-sm font-medium truncate">{spec.spec_name}</span>
                     <span className="font-mono text-secondary text-xs tabular-nums shrink-0">{spec.stars}★</span>
+                    {spec.position && <span className="text-xs uppercase tracking-wide text-muted-foreground shrink-0">{positionShortLabel(spec.position)}</span>}
                     {spec.dropped && <span className="italic text-xs text-muted-foreground shrink-0">dropped</span>}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">{spec.region_code} · {spec.season_name}</p>
@@ -411,7 +414,7 @@ function AchievementRow({award}: {award: PlayerAward}) {
     return (
         <tr className={cn("transition-colors", rowStyle.row, rowStyle.hover)}>
             <td className="px-4 py-3 text-muted-foreground tabular-nums">{formatDate(award.awarded_at)}</td>
-            <td className="px-4 py-3 text-muted-foreground">{award.region_code} · {award.season_name}</td>
+            <td className="px-4 py-3 text-muted-foreground truncate" title={`${award.region_code} · ${award.season_name}`}>{award.region_code} · {award.season_name}</td>
             <td className="px-4 py-3">
                 <span className={place.className}>{place.text}</span>
             </td>
@@ -423,17 +426,18 @@ function AchievementRow({award}: {award: PlayerAward}) {
 }
 
 function AwardRow({award}: {award: PlayerAward}) {
-    const style = AWARD_CATEGORY_STYLE[award.category] ?? {dot: "bg-muted-foreground", text: ""};
+    const style = AWARD_CATEGORY_STYLE[award.category] ?? {text: ""};
     const detail = awardDetail(award);
     return (
         <tr className="hover:bg-muted/20 transition-colors">
             <td className="px-4 py-3 text-muted-foreground tabular-nums">{formatDate(award.awarded_at)}</td>
-            <td className="px-4 py-3 text-muted-foreground">{award.region_code} · {award.season_name}</td>
+            <td className="px-4 py-3 text-muted-foreground truncate" title={`${award.region_code} · ${award.season_name}`}>{award.region_code} · {award.season_name}</td>
             <td className="px-4 py-3">
-                <div className="flex items-center gap-2 min-w-0">
-                    <span className={cn("w-2 h-2 rounded-full shrink-0", style.dot)} />
-                    <span className={cn("font-medium truncate", style.text)}>{awardLabel(award)}</span>
-                    {detail && <span className="text-xs uppercase tracking-wide text-muted-foreground shrink-0">{detail}</span>}
+                <div className={cn("min-w-0", detail && "-my-1.5")}>
+                    <div className={cn("flex items-center gap-2 min-w-0", detail && "leading-4")}>
+                        <span className={cn("font-medium truncate", style.text)}>{awardLabel(award)}</span>
+                    </div>
+                    {detail && <p className="text-xs leading-[14px] uppercase tracking-wide text-muted-foreground truncate">{detail}</p>}
                 </div>
             </td>
             <td className="px-4 py-3">
@@ -461,13 +465,12 @@ function AchievementCard({award}: {award: PlayerAward}) {
 }
 
 function AwardCard({award}: {award: PlayerAward}) {
-    const style = AWARD_CATEGORY_STYLE[award.category] ?? {dot: "bg-muted-foreground", text: ""};
+    const style = AWARD_CATEGORY_STYLE[award.category] ?? {text: ""};
     const detail = awardDetail(award);
     return (
         <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
-                    <span className={cn("w-2 h-2 rounded-full shrink-0", style.dot)} />
                     <span className={cn("text-sm font-medium truncate", style.text)}>{awardLabel(award)}</span>
                     {detail && <span className="text-xs uppercase tracking-wide text-muted-foreground shrink-0">{detail}</span>}
                 </div>
