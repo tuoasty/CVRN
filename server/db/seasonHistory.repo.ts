@@ -6,6 +6,7 @@ import { logger } from "../utils/logger";
 
 type SeasonPodiumRow = Database["public"]["Tables"]["season_podium"]["Row"];
 type SeasonAwardRow = Database["public"]["Tables"]["season_awards"]["Row"];
+type SeasonAllStarTeamRow = Database["public"]["Tables"]["season_all_star_teams"]["Row"];
 
 export async function findSeasonPodium(
     supabase: DBClient,
@@ -63,7 +64,7 @@ export async function findSeasonAwards(
 ): Promise<Result<SeasonAwardRow[]>> {
     const {data, error} = await supabase
         .from("season_awards")
-        .select("id, season_id, player_id, award_name, category, awarded_at, created_by, created_at, sort_order, full_avatar_url, avatar_bucket_path, players(id, username)")
+        .select("id, season_id, player_id, award_name, category, awarded_at, created_by, created_at, sort_order, full_avatar_url, avatar_bucket_path, all_star_team, all_star_slot, all_star_captain, players(id, username)")
         .eq("season_id", seasonId)
         .order("sort_order");
     if (error) return Err(serializeError(error, "DB_ERROR"));
@@ -73,7 +74,7 @@ export async function findSeasonAwards(
 export async function insertSeasonAwards(
     supabase: DBClient,
     seasonId: string,
-    rows: {playerId: string; awardName: string; category: string; createdBy: string}[]
+    rows: {playerId: string; awardName: string; category: string; allStarTeam?: string; allStarSlot?: string; createdBy: string}[]
 ): Promise<Result<SeasonAwardRow[]>> {
     const {data: maxRow, error: maxError} = await supabase
         .from("season_awards")
@@ -89,7 +90,9 @@ export async function insertSeasonAwards(
         season_id: seasonId,
         player_id: r.playerId,
         award_name: r.awardName,
-        category: r.category as "individual_winners" | "first_team" | "staff_team",
+        category: r.category as SeasonAwardRow["category"],
+        all_star_team: r.allStarTeam ?? null,
+        all_star_slot: r.allStarSlot ?? null,
         created_by: r.createdBy,
         sort_order: base + i,
     }));
@@ -136,7 +139,7 @@ export async function insertSeasonAward(
             season_id: p.seasonId,
             player_id: p.playerId,
             award_name: p.awardName,
-            category: p.category as "individual_winners" | "first_team" | "staff_team",
+            category: p.category as SeasonAwardRow["category"],
             created_by: p.createdBy,
         })
         .select()
@@ -227,15 +230,22 @@ export async function findSeasonHistoryBySlugAndRegion(
                 award_name,
                 category,
                 awarded_at,
+                sort_order,
                 full_avatar_url,
                 avatar_bucket_path,
+                all_star_team,
+                all_star_slot,
+                all_star_captain,
                 players(
                     id,
                     username,
                     display_name,
+                    avatar_url,
                     player_team_seasons(
                         team_id,
                         season_id,
+                        joined_at,
+                        left_at,
                         teams(id, name, logo_url, brick_color)
                     )
                 )
@@ -277,4 +287,74 @@ export async function findArchiveSeasons(
         .order("start_date", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
+}
+
+export async function findSeasonAllStarTeams(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<SeasonAllStarTeamRow[]>> {
+    const {data, error} = await supabase
+        .from("season_all_star_teams")
+        .select("*")
+        .eq("season_id", seasonId)
+        .order("code");
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+export async function upsertSeasonAllStarTeamName(
+    supabase: DBClient,
+    p: {seasonId: string; code: string; name: string}
+): Promise<Result<SeasonAllStarTeamRow>> {
+    const {data, error} = await supabase
+        .from("season_all_star_teams")
+        .upsert(
+            {season_id: p.seasonId, code: p.code, name: p.name, updated_at: new Date().toISOString()},
+            {onConflict: "season_id,code"}
+        )
+        .select()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
+export async function findSeasonAwardAllStarRef(
+    supabase: DBClient,
+    awardId: string
+): Promise<Result<{season_id: string; all_star_team: string | null; all_star_slot: string | null} | null>> {
+    const {data, error} = await supabase
+        .from("season_awards")
+        .select("season_id, all_star_team, all_star_slot")
+        .eq("id", awardId)
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
+export async function clearAllStarCaptain(
+    supabase: DBClient,
+    seasonId: string,
+    allStarTeam: string
+): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("season_awards")
+        .update({all_star_captain: false})
+        .eq("season_id", seasonId)
+        .eq("all_star_team", allStarTeam)
+        .eq("all_star_captain", true);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
+export async function updateAllStarCaptain(
+    supabase: DBClient,
+    awardId: string,
+    isCaptain: boolean
+): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("season_awards")
+        .update({all_star_captain: isCaptain})
+        .eq("id", awardId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
 }

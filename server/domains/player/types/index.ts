@@ -185,6 +185,12 @@ export interface PlayerAward {
     awarded_at: string | null;
     team_logo_url: string | null;
     team_logo_bg_removed: boolean;
+    season_start_date: string;
+    sort_order?: number;
+    all_star_team?: "A" | "B" | null;
+    all_star_team_name?: string | null;
+    all_star_slot?: "starter" | "sub" | null;
+    all_star_captain?: boolean;
     place?: number;
     place_end?: number;
 }
@@ -206,6 +212,7 @@ export interface PlayerTeamHistoryEntry {
     position: PositionCode | null;
     joined_at: string;
     left_at: string | null;
+    season_start_date: string;
     season_end_date: string | null;
 }
 
@@ -221,6 +228,7 @@ export interface PlayerSpecEntry {
     season_slug: string;
     region_code: string;
     awarded_at: string | null;
+    season_start_date: string;
     team_name: string | null;
     team_slug: string | null;
     team_disbanded: boolean;

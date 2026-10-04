@@ -9,7 +9,7 @@ import {getPlayerSpecs} from "./getPlayerSpecs";
 import {findSeasonsBySeasonNumber} from "@/server/db/seasons.repo";
 import {PlayerDetailApiResponse} from "../types";
 
-const DETAIL_AWARD_CATEGORIES = new Set(["individual_winners", "staff_team", "first_team"]);
+const DETAIL_AWARD_CATEGORIES = new Set(["individual_winners", "staff_team", "first_team", "all_star"]);
 
 export async function getPlayerDetailByRobloxUserId(
     supabase: DBClient,

@@ -14,6 +14,7 @@ export {getSeasonPodium} from "./queries/getSeasonPodium";
 export {getSeasonFinalsSlots} from "./queries/getSeasonFinalsSlots";
 export type {SeasonFinalsSlots} from "./queries/getSeasonFinalsSlots";
 export {getSeasonAwards} from "./queries/getSeasonAwards";
+export {getSeasonAllStarTeams} from "./queries/getSeasonAllStarTeams";
 export {getArchive} from "./queries/getArchive";
 export {getSeasonHistoryDetail} from "./queries/getSeasonDetail";
 export {upsertSeasonPodiumSlot} from "./commands/upsertSeasonPodiumSlot";
@@ -26,9 +27,12 @@ export {fetchChampionRosterAwards} from "./commands/fetchChampionRosterAwards";
 export {batchUpsertSeasonAwards} from "./commands/batchUpsertSeasonAwards";
 export {updateSeasonAward} from "./commands/updateSeasonAward";
 export {reorderSeasonAwards} from "./commands/reorderSeasonAwards";
+export {upsertSeasonAllStarTeamName} from "./commands/upsertSeasonAllStarTeamName";
+export {setAllStarCaptain} from "./commands/setAllStarCaptain";
 export type {
     SeasonPodiumEntryWithTeam,
     SeasonAwardEntryWithPlayer,
+    SeasonAllStarTeam,
     ArchiveSeason,
     SeasonDetail,
     UpsertSeasonPodiumSlotInput,
@@ -40,6 +44,10 @@ export type {
     UpdateSeasonAwardInput,
     ReorderSeasonAwardsInput,
     AwardCategory,
+    AllStarTeamCode,
+    AllStarSlot,
+    UpsertSeasonAllStarTeamNameInput,
+    SetAllStarCaptainInput,
 } from "./types";
 export {
     UpsertSeasonPodiumSlotSchema,
@@ -51,4 +59,8 @@ export {
     UpdateSeasonAwardSchema,
     ReorderSeasonAwardsSchema,
     AwardCategoryEnum,
+    AllStarTeamCodeEnum,
+    AllStarSlotEnum,
+    UpsertSeasonAllStarTeamNameSchema,
+    SetAllStarCaptainSchema,
 } from "./types";

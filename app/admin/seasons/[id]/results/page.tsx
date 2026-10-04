@@ -11,7 +11,7 @@ import {Badge} from "@/app/components/ui/badge";
 import {Input} from "@/app/components/ui/input";
 import {Label} from "@/app/components/ui/label";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/app/components/ui/select";
-import {SeasonPodiumEntryWithTeam, SeasonAwardEntryWithPlayer, AwardCategory} from "@/server/domains/season";
+import {SeasonPodiumEntryWithTeam, SeasonAwardEntryWithPlayer, SeasonAllStarTeam, AwardCategory, AllStarTeamCode, AllStarSlot} from "@/server/domains/season";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
 import {SpecWinnerWithRefs} from "@/server/domains/spec";
 import {Season, Spec} from "@/shared/types/db";
@@ -29,6 +29,9 @@ import {
     batchUpsertSeasonAwardsAction,
     updateSeasonAwardAction,
     reorderSeasonAwardsAction,
+    getSeasonAllStarTeamsAction,
+    upsertSeasonAllStarTeamNameAction,
+    setAllStarCaptainAction,
 } from "@/app/actions/season.actions";
 import {searchPlayersInDatabaseAction} from "@/app/actions/player.actions";
 import {
@@ -52,12 +55,21 @@ function placeMeta(place: number, groupSize: number): {label: string; color: str
 
 const CATEGORY_LABELS: Record<AwardCategory, string> = {
     individual_winners: "Individual Awards",
+    all_star: "All-Star",
     first_team: "First Team",
     staff_team: "Staff Team",
     champion_roster: "Champion Roster",
 };
 
-const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "first_team", "staff_team", "champion_roster"];
+const CATEGORY_ORDER: AwardCategory[] = ["individual_winners", "all_star", "first_team", "staff_team", "champion_roster"];
+
+const ALL_STAR_TEAM_CODES: AllStarTeamCode[] = ["A", "B"];
+const ALL_STAR_SLOTS: AllStarSlot[] = ["starter", "sub"];
+const ALL_STAR_SLOT_LABELS: Record<AllStarSlot, string> = {starter: "Starters", sub: "Subs"};
+
+function allStarTeamLabel(code: AllStarTeamCode, teams: SeasonAllStarTeam[]): string {
+    return teams.find(t => t.code === code)?.name ?? `Team ${code}`;
+}
 
 function PlayerSearchInput({seasonId, onSelect}: {seasonId: string; onSelect: (player: PlayerWithTeamInfo) => void}) {
     const [query, setQuery] = useState("");
@@ -261,7 +273,7 @@ function AwardAvatarCell({url}: {url: string | null}) {
     );
 }
 
-function AwardNameEditor({value, onSave}: {value: string; onSave: (v: string) => void}) {
+function AwardNameEditor({value, onSave, placeholder}: {value: string; onSave: (v: string) => void; placeholder?: string}) {
     const [text, setText] = useState(value);
     useEffect(() => { setText(value); }, [value]);
     const commit = () => {
@@ -273,6 +285,7 @@ function AwardNameEditor({value, onSave}: {value: string; onSave: (v: string) =>
         <Input
             className="rounded-sm h-7 text-sm"
             value={text}
+            placeholder={placeholder}
             onChange={e => setText(e.target.value)}
             onBlur={commit}
             onKeyDown={e => {
@@ -280,6 +293,95 @@ function AwardNameEditor({value, onSave}: {value: string; onSave: (v: string) =>
                 if (e.key === "Escape") { setText(value); e.currentTarget.blur(); }
             }}
         />
+    );
+}
+
+type AwardPortraitCardProps = {
+    a: SeasonAwardEntryWithPlayer;
+    isFirst: boolean;
+    isLast: boolean;
+    reordering: boolean;
+    previewing: boolean;
+    deleting: boolean;
+    onPreview: () => void;
+    onDelete: () => void;
+    onRename: (v: string) => void;
+    onMove: (direction: "up" | "down") => void;
+    onToggleCaptain?: () => void;
+    togglingCaptain?: boolean;
+};
+
+function AwardPortraitCard({a, isFirst, isLast, reordering, previewing, deleting, onPreview, onDelete, onRename, onMove, onToggleCaptain, togglingCaptain}: AwardPortraitCardProps) {
+    return (
+        <div className="flex flex-col items-center gap-1 relative group/card">
+            <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-primary/10">
+                {a.all_star_captain && (
+                    <span className="absolute top-0 left-0 z-10 w-4 h-4 flex items-center justify-center bg-foreground text-background text-xs font-bold leading-none">C</span>
+                )}
+                {a.full_avatar_url ? (
+                    <Image
+                        src={a.full_avatar_url}
+                        alt={a.players.username}
+                        fill
+                        className="object-cover object-top"
+                        sizes="14vw"
+                        unoptimized
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                )}
+                <div className="absolute inset-0 z-20 bg-black/50 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                    {onToggleCaptain && (
+                        <Button variant="ghost" size="sm"
+                            className="h-7 w-7 p-0 text-white hover:bg-white/20 rounded-sm text-xs font-bold"
+                            onClick={onToggleCaptain}
+                            disabled={togglingCaptain}
+                            title={a.all_star_captain ? "Remove captain" : "Make captain"}
+                        >
+                            {togglingCaptain ? <RefreshCw className="h-3 w-3 animate-spin" /> : a.all_star_captain ? "−C" : "C"}
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="sm"
+                        className="h-7 w-7 p-0 text-white hover:bg-white/20 rounded-sm"
+                        onClick={onPreview}
+                        disabled={previewing}
+                    >
+                        {previewing
+                            ? <RefreshCw className="h-3 w-3 animate-spin" />
+                            : <ImageIcon className="h-3 w-3" />}
+                    </Button>
+                    <Button variant="ghost" size="sm"
+                        className="h-7 w-7 p-0 text-red-400 hover:bg-white/20 rounded-sm"
+                        onClick={onDelete}
+                        disabled={deleting}
+                    >
+                        <Trash2 className="h-3 w-3" />
+                    </Button>
+                </div>
+            </div>
+            <AwardNameEditor value={a.award_name} onSave={onRename} />
+            <p className="text-[10px] font-medium text-center truncate w-full">{a.players.username}</p>
+            <div className="flex items-center gap-0.5">
+                <Button variant="ghost" size="sm"
+                    className="rounded-sm h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                    onClick={() => onMove("up")}
+                    disabled={isFirst || reordering}
+                    title="Move earlier"
+                >
+                    <ChevronUp className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="sm"
+                    className="rounded-sm h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                    onClick={() => onMove("down")}
+                    disabled={isLast || reordering}
+                    title="Move later"
+                >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+            </div>
+        </div>
     );
 }
 
@@ -300,10 +402,14 @@ export default function SeasonResultsPage() {
 
     const [previewLoading, setPreviewLoading] = useState<string | null>(null);
 
-    const [draftAwards, setDraftAwards] = useState<{tempId: string; awardName: string; category: AwardCategory; player: PlayerWithTeamInfo}[]>([]);
+    const [allStarTeams, setAllStarTeams] = useState<SeasonAllStarTeam[]>([]);
+    const [togglingCaptain, setTogglingCaptain] = useState<string | null>(null);
+    const [draftAwards, setDraftAwards] = useState<{tempId: string; awardName: string; category: AwardCategory; allStarTeam?: AllStarTeamCode; allStarSlot?: AllStarSlot; player: PlayerWithTeamInfo}[]>([]);
     const [draftName, setDraftName] = useState("");
     const [draftCategory, setDraftCategory] = useState<AwardCategory>("individual_winners");
     const [draftPlayer, setDraftPlayer] = useState<PlayerWithTeamInfo | null>(null);
+    const [draftAllStarTeam, setDraftAllStarTeam] = useState<AllStarTeamCode>("A");
+    const [draftAllStarSlot, setDraftAllStarSlot] = useState<AllStarSlot>("starter");
     const [draftKey, setDraftKey] = useState(0);
     const [savingBatch, setSavingBatch] = useState(false);
     const [reordering, setReordering] = useState(false);
@@ -330,16 +436,18 @@ export default function SeasonResultsPage() {
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const [sRes, pRes, aRes, specRes, winRes] = await Promise.all([
+            const [sRes, pRes, aRes, asRes, specRes, winRes] = await Promise.all([
                 getSeasonByIdAction({seasonId}),
                 getSeasonPodiumAction({seasonId}),
                 getSeasonAwardsAction({seasonId}),
+                getSeasonAllStarTeamsAction({seasonId}),
                 getSpecCatalogAction(),
                 getSpecWinnersAction(seasonId),
             ]);
             if (sRes.ok) setSeason(sRes.value);
             if (pRes.ok) setPodium(pRes.value);
             if (aRes.ok) setAwards(aRes.value);
+            if (asRes.ok) setAllStarTeams(asRes.value);
             if (specRes.ok) setSpecs(specRes.value);
             if (winRes.ok) setSpecWinners(winRes.value);
         } finally {
@@ -416,7 +524,13 @@ export default function SeasonResultsPage() {
         if (!draftName.trim() || !draftPlayer) return;
         setDraftAwards(prev => [
             ...prev,
-            {tempId: crypto.randomUUID(), awardName: draftName.trim(), category: draftCategory, player: draftPlayer},
+            {
+                tempId: crypto.randomUUID(),
+                awardName: draftName.trim(),
+                category: draftCategory,
+                ...(draftCategory === "all_star" ? {allStarTeam: draftAllStarTeam, allStarSlot: draftAllStarSlot} : {}),
+                player: draftPlayer,
+            },
         ]);
         setDraftName("");
         setDraftPlayer(null);
@@ -433,7 +547,13 @@ export default function SeasonResultsPage() {
         try {
             const result = await batchUpsertSeasonAwardsAction({
                 seasonId,
-                awards: draftAwards.map(d => ({playerId: d.player.id, awardName: d.awardName, category: d.category})),
+                awards: draftAwards.map(d => ({
+                    playerId: d.player.id,
+                    awardName: d.awardName,
+                    category: d.category,
+                    allStarTeam: d.allStarTeam,
+                    allStarSlot: d.allStarSlot,
+                })),
             });
             if (!result.ok) { toast.error("Failed to save awards", result.error.message); return; }
             setAwards(result.value);
@@ -451,9 +571,32 @@ export default function SeasonResultsPage() {
         }
     };
 
+    const handleToggleCaptain = async (award: SeasonAwardEntryWithPlayer) => {
+        const isCaptain = !award.all_star_captain;
+        setTogglingCaptain(award.id);
+        try {
+            const result = await setAllStarCaptainAction({awardId: award.id, isCaptain});
+            if (!result.ok) { toast.error("Failed to update captain", result.error.message); return; }
+            setAwards(prev => prev.map(a => {
+                if (a.id === award.id) return {...a, all_star_captain: isCaptain};
+                if (isCaptain && a.season_id === award.season_id && a.all_star_team === award.all_star_team) return {...a, all_star_captain: false};
+                return a;
+            }));
+        } finally { setTogglingCaptain(null); }
+    };
+
+    const handleRenameAllStarTeam = async (code: AllStarTeamCode, name: string) => {
+        const result = await upsertSeasonAllStarTeamNameAction({seasonId, code, name});
+        if (!result.ok) { toast.error("Failed to rename all-star team", result.error.message); return; }
+        setAllStarTeams(prev => [...prev.filter(t => t.code !== code), result.value]);
+    };
+
     const handleMoveAward = async (award: SeasonAwardEntryWithPlayer, direction: "up" | "down") => {
         const group = awards
-            .filter(a => a.category === award.category)
+            .filter(a => a.category === award.category
+                && a.all_star_team === award.all_star_team
+                && a.all_star_slot === award.all_star_slot
+                && !a.all_star_captain)
             .sort((a, b) => a.sort_order - b.sort_order);
         const idx = group.findIndex(a => a.id === award.id);
         const swapIdx = direction === "up" ? idx - 1 : idx + 1;
@@ -785,7 +928,7 @@ export default function SeasonResultsPage() {
                         <div className="flex gap-2 flex-wrap items-end">
                             <div className="w-40 shrink-0 space-y-1">
                                 <Label className="text-xs">Award Name</Label>
-                                <Input className="rounded-sm h-8 text-sm" placeholder="e.g. MVP"
+                                <Input className="rounded-sm h-8 text-sm" placeholder={draftCategory === "all_star" ? "e.g. Outside" : "e.g. MVP"}
                                     value={draftName}
                                     onChange={e => setDraftName(e.target.value)}
                                     onKeyDown={e => { if (e.key === "Enter") handleAddToDraft(); }}
@@ -804,6 +947,35 @@ export default function SeasonResultsPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                            {draftCategory === "all_star" && (
+                                <>
+                                    <div className="w-36 space-y-1">
+                                        <Label className="text-xs">Team</Label>
+                                        <Select value={draftAllStarTeam} onValueChange={v => setDraftAllStarTeam(v as AllStarTeamCode)}>
+                                            <SelectTrigger className="rounded-sm h-8 text-sm">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {ALL_STAR_TEAM_CODES.map(code => (
+                                                    <SelectItem key={code} value={code}>{code} · {allStarTeamLabel(code, allStarTeams)}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="w-28 space-y-1">
+                                        <Label className="text-xs">Slot</Label>
+                                        <Select value={draftAllStarSlot} onValueChange={v => setDraftAllStarSlot(v as AllStarSlot)}>
+                                            <SelectTrigger className="rounded-sm h-8 text-sm">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="starter">Starter</SelectItem>
+                                                <SelectItem value="sub">Sub</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </>
+                            )}
                             <PlayerSearchInput key={draftKey} seasonId={seasonId} onSelect={setDraftPlayer} />
                             <Button size="sm" variant="outline" className="rounded-sm h-8 gap-1.5"
                                 onClick={handleAddToDraft}
@@ -826,7 +998,10 @@ export default function SeasonResultsPage() {
                                 {draftAwards.map(d => (
                                     <div key={d.tempId} className="flex items-center gap-2 text-sm rounded-sm bg-muted/40 px-2 py-1.5">
                                         <span className="font-medium truncate">{d.awardName}</span>
-                                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">{CATEGORY_LABELS[d.category]}</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">
+                                            {CATEGORY_LABELS[d.category]}
+                                            {d.allStarTeam && d.allStarSlot && ` · ${allStarTeamLabel(d.allStarTeam, allStarTeams)} ${d.allStarSlot === "starter" ? "Starter" : "Sub"}`}
+                                        </span>
                                         <span className="text-muted-foreground truncate flex-1">@{d.player.username}</span>
                                         <Button variant="ghost" size="sm"
                                             className="rounded-sm h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
@@ -861,65 +1036,74 @@ export default function SeasonResultsPage() {
                                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
                                             {CATEGORY_LABELS[cat]}
                                         </p>
-                                        {cat === "first_team" ? (
-                                            <div className="grid grid-cols-7 gap-2">
-                                                {group.map((a, i) => (
-                                                    <div key={a.id} className="flex flex-col items-center gap-1 relative group/card">
-                                                        <div className="relative w-full aspect-[3/4] rounded-sm overflow-hidden bg-primary/10">
-                                                            {a.full_avatar_url ? (
-                                                                <Image
-                                                                    src={a.full_avatar_url}
-                                                                    alt={a.players.username}
-                                                                    fill
-                                                                    className="object-cover object-top"
-                                                                    sizes="14vw"
-                                                                    unoptimized
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center">
-                                                                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                        {cat === "all_star" ? (
+                                            <div className="space-y-4">
+                                                {ALL_STAR_TEAM_CODES.map(code => {
+                                                    const teamAwards = group.filter(a => a.all_star_team === code);
+                                                    if (teamAwards.length === 0) return null;
+                                                    return (
+                                                        <div key={code} className="space-y-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs font-mono font-semibold text-muted-foreground w-4">{code}</span>
+                                                                <div className="w-48">
+                                                                    <AwardNameEditor
+                                                                        value={allStarTeams.find(t => t.code === code)?.name ?? ""}
+                                                                        placeholder={`Team ${code} name`}
+                                                                        onSave={v => handleRenameAllStarTeam(code, v)}
+                                                                    />
                                                                 </div>
-                                                            )}
-                                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                                                                <Button variant="ghost" size="sm"
-                                                                    className="h-7 w-7 p-0 text-white hover:bg-white/20 rounded-sm"
-                                                                    onClick={() => handlePreviewForRefresh(a)}
-                                                                    disabled={previewLoading === a.id}
-                                                                >
-                                                                    {previewLoading === a.id
-                                                                        ? <RefreshCw className="h-3 w-3 animate-spin" />
-                                                                        : <ImageIcon className="h-3 w-3" />}
-                                                                </Button>
-                                                                <Button variant="ghost" size="sm"
-                                                                    className="h-7 w-7 p-0 text-red-400 hover:bg-white/20 rounded-sm"
-                                                                    onClick={() => handleDeleteAward(a.id)}
-                                                                    disabled={deletingAward === a.id}
-                                                                >
-                                                                    <Trash2 className="h-3 w-3" />
-                                                                </Button>
                                                             </div>
+                                                            {ALL_STAR_SLOTS.map(slot => {
+                                                                const slotAwards = teamAwards
+                                                                    .filter(a => a.all_star_slot === slot)
+                                                                    .sort((x, y) => Number(y.all_star_captain) - Number(x.all_star_captain));
+                                                                const hasCaptain = slotAwards[0]?.all_star_captain ?? false;
+                                                                if (slotAwards.length === 0) return null;
+                                                                return (
+                                                                    <div key={slot} className="space-y-1">
+                                                                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{ALL_STAR_SLOT_LABELS[slot]}</p>
+                                                                        <div className="grid grid-cols-7 gap-2">
+                                                                            {slotAwards.map((a, i, list) => (
+                                                                                <AwardPortraitCard
+                                                                                    key={a.id}
+                                                                                    a={a}
+                                                                                    isFirst={a.all_star_captain || i === (hasCaptain ? 1 : 0)}
+                                                                                    isLast={a.all_star_captain || i === list.length - 1}
+                                                                                    reordering={reordering}
+                                                                                    previewing={previewLoading === a.id}
+                                                                                    deleting={deletingAward === a.id}
+                                                                                    onPreview={() => handlePreviewForRefresh(a)}
+                                                                                    onDelete={() => handleDeleteAward(a.id)}
+                                                                                    onRename={v => handleRenameAward(a.id, v)}
+                                                                                    onMove={direction => handleMoveAward(a, direction)}
+                                                                                    onToggleCaptain={slot === "starter" ? () => handleToggleCaptain(a) : undefined}
+                                                                                    togglingCaptain={togglingCaptain === a.id}
+                                                                                />
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
                                                         </div>
-                                                        <AwardNameEditor value={a.award_name} onSave={v => handleRenameAward(a.id, v)} />
-                                                        <p className="text-[10px] font-medium text-center truncate w-full">{a.players.username}</p>
-                                                        <div className="flex items-center gap-0.5">
-                                                            <Button variant="ghost" size="sm"
-                                                                className="rounded-sm h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                                                                onClick={() => handleMoveAward(a, "up")}
-                                                                disabled={i === 0 || reordering}
-                                                                title="Move earlier"
-                                                            >
-                                                                <ChevronUp className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                            <Button variant="ghost" size="sm"
-                                                                className="rounded-sm h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                                                                onClick={() => handleMoveAward(a, "down")}
-                                                                disabled={i === group.length - 1 || reordering}
-                                                                title="Move later"
-                                                            >
-                                                                <ChevronDown className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : cat === "first_team" ? (
+                                            <div className="grid grid-cols-7 gap-2">
+                                                {group.map((a, i, list) => (
+                                                    <AwardPortraitCard
+                                                        key={a.id}
+                                                        a={a}
+                                                        isFirst={i === 0}
+                                                        isLast={i === list.length - 1}
+                                                        reordering={reordering}
+                                                        previewing={previewLoading === a.id}
+                                                        deleting={deletingAward === a.id}
+                                                        onPreview={() => handlePreviewForRefresh(a)}
+                                                        onDelete={() => handleDeleteAward(a.id)}
+                                                        onRename={v => handleRenameAward(a.id, v)}
+                                                        onMove={direction => handleMoveAward(a, direction)}
+                                                    />
                                                 ))}
                                             </div>
                                         ) : (

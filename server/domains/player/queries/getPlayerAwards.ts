@@ -4,7 +4,7 @@ import {PlayerAward} from "../types";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 
-const AWARD_CATEGORIES = ["individual_winners", "first_team", "champion_roster", "staff_team"] as const;
+const AWARD_CATEGORIES = ["individual_winners", "all_star", "first_team", "champion_roster", "staff_team"] as const;
 
 export async function getPlayerAwards(
     supabase: DBClient,
@@ -20,7 +20,11 @@ export async function getPlayerAwards(
                     category,
                     season_id,
                     awarded_at,
-                    season:seasons!season_id(name, slug, end_date, region:regions!region_id(code))
+                    sort_order,
+                    all_star_team,
+                    all_star_slot,
+                    all_star_captain,
+                    season:seasons!season_id(name, slug, start_date, end_date, region:regions!region_id(code))
                 `)
                 .eq("player_id", p.playerId)
                 .in("category", AWARD_CATEGORIES)
@@ -36,6 +40,21 @@ export async function getPlayerAwards(
         if (awardsRes.error) {
             logger.error({playerId: p.playerId, error: awardsRes.error}, "Failed to fetch player awards");
             return Err(serializeError(awardsRes.error, "DB_ERROR"));
+        }
+
+        const allStarSeasonIds = Array.from(new Set(
+            (awardsRes.data ?? []).filter(r => r.category === "all_star").map(r => r.season_id)
+        ));
+        const allStarNameByKey = new Map<string, string>();
+        if (allStarSeasonIds.length > 0) {
+            const {data: allStarTeams, error: allStarError} = await supabase
+                .from("season_all_star_teams")
+                .select("season_id, code, name")
+                .in("season_id", allStarSeasonIds);
+            if (allStarError) {
+                logger.error({playerId: p.playerId, error: allStarError}, "Failed to fetch all-star team names");
+            }
+            for (const t of allStarTeams ?? []) allStarNameByKey.set(`${t.season_id}::${t.code}`, t.name);
         }
 
         const teamNameBySeason = new Map<string, string>();
@@ -73,7 +92,7 @@ export async function getPlayerAwards(
                     place,
                     season_id,
                     team_id,
-                    season:seasons!season_id(name, slug, end_date, region:regions!region_id(code)),
+                    season:seasons!season_id(name, slug, start_date, end_date, region:regions!region_id(code)),
                     team:teams!team_id(name, slug, logo_url, logo_bg_removed, deleted_at)
                 `)
                 .in("season_id", seasonIds)
@@ -88,7 +107,7 @@ export async function getPlayerAwards(
             podiumAwards = (podiumData ?? [])
                 .filter(r => playerTeamPairs.has(`${r.season_id}::${r.team_id}`))
                 .map(r => {
-                    const season = r.season as {name: string; slug: string; end_date: string | null; region: {code: string}} | null;
+                    const season = r.season as {name: string; slug: string; start_date: string; end_date: string | null; region: {code: string}} | null;
                     const team = r.team as {name: string; slug: string; logo_url: string | null; logo_bg_removed: boolean; deleted_at: string | null} | null;
                     const groupSize = groupCount.get(`${r.season_id}::${r.place}`) ?? 1;
                     const placeEnd = r.place + groupSize - 1;
@@ -106,6 +125,7 @@ export async function getPlayerAwards(
                         team_slug: team?.slug ?? null,
                         team_disbanded: team?.deleted_at != null,
                         awarded_at: season?.end_date ?? null,
+                        season_start_date: season?.start_date ?? "",
                         team_logo_url: team?.logo_url ?? null,
                         team_logo_bg_removed: team?.logo_bg_removed ?? false,
                         place: r.place,
@@ -115,7 +135,7 @@ export async function getPlayerAwards(
         }
 
         const rows: PlayerAward[] = (awardsRes.data ?? []).map(r => {
-            const season = r.season as {name: string; slug: string; end_date: string | null; region: {code: string}} | null;
+            const season = r.season as {name: string; slug: string; start_date: string; end_date: string | null; region: {code: string}} | null;
             return {
                 id: r.id,
                 award_name: r.award_name,
@@ -128,12 +148,20 @@ export async function getPlayerAwards(
                 team_slug: teamSlugBySeason.get(r.season_id) ?? null,
                 team_disbanded: teamDisbandedBySeason.get(r.season_id) ?? false,
                 awarded_at: season?.end_date ?? null,
+                season_start_date: season?.start_date ?? "",
+                sort_order: r.sort_order,
+                all_star_team: r.all_star_team as PlayerAward["all_star_team"],
+                all_star_slot: r.all_star_slot as PlayerAward["all_star_slot"],
+                all_star_captain: r.all_star_captain,
+                all_star_team_name: r.all_star_team
+                    ? allStarNameByKey.get(`${r.season_id}::${r.all_star_team}`) ?? `Team ${r.all_star_team}`
+                    : null,
                 team_logo_url: teamLogoUrlBySeason.get(r.season_id) ?? null,
                 team_logo_bg_removed: teamLogoBgRemovedBySeason.get(r.season_id) ?? false,
             };
         });
 
-        return Ok([...rows, ...podiumAwards]);
+        return Ok([...rows, ...podiumAwards].sort((a, b) => b.season_start_date.localeCompare(a.season_start_date)));
     } catch (error) {
         logger.error({error, playerId: p.playerId}, "Unexpected error in getPlayerAwards");
         return Err(serializeError(error));
