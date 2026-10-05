@@ -37,7 +37,10 @@ export default function AdminMediaPage() {
         setPinning(id)
         try {
             const result = await togglePinMediaPostAction({ postId: id })
-            if (!result.ok) { toast.error(errorCodeToUserMessage(result.error.code)); return }
+            if (!result.ok) {
+                toast.error(result.error.code === 'MEDIA_PIN_LIMIT_EXCEEDED' ? result.error.message : errorCodeToUserMessage(result.error.code))
+                return
+            }
             await mutateAllMedia()
         } finally {
             setPinning(null)

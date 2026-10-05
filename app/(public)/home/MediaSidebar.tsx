@@ -62,12 +62,17 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
 
     const pinned  = posts.filter(p => p.is_pinned)
-    const gfx     = pinned.filter(p => p.type === 'gfx')
-    const gfxTop  = gfx[0] ?? null
-    const gfxRest = gfx.slice(1, 3)
-    const videos  = pinned.filter(p => p.type === 'video').slice(0, 2)
-    const features = pinned.filter(p => p.type === 'feature').slice(0, 2)
-    const hasAny  = gfx.length > 0 || videos.length > 0 || features.length > 0
+    const visual     = pinned.filter(p => p.type === 'gfx' || p.type === 'feature')
+    const visualTop  = visual[0] ?? null
+    const visualRest = visual.slice(1, 3)
+    const videos     = pinned.filter(p => p.type === 'video').slice(0, 2)
+    const hasAny     = visual.length > 0 || videos.length > 0
+
+    function renderVisual(post: MediaPost) {
+        return post.type === 'feature'
+            ? <FeatureCard key={post.id} post={post} onPlay={setVideoUrl} />
+            : <GfxCard key={post.id} post={post} onOpen={setGfxPost} />
+    }
 
     if (!hasAny) {
         return (
@@ -84,7 +89,7 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     return (
         <>
             <div className="panel p-3 space-y-3">
-                {gfxTop && <GfxCard post={gfxTop} onOpen={setGfxPost} />}
+                {visualTop && renderVisual(visualTop)}
 
                 {videos.map(post => {
                     const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
@@ -113,13 +118,7 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
                     )
                 })}
 
-                {features.map(post => (
-                    <FeatureCard key={post.id} post={post} onPlay={setVideoUrl} />
-                ))}
-
-                {gfxRest.map(post => (
-                    <GfxCard key={post.id} post={post} onOpen={setGfxPost} />
-                ))}
+                {visualRest.map(renderVisual)}
 
                 <Link href="/media" className="flex items-center justify-center gap-1 text-xs text-primary font-medium hover:underline pt-1">
                     View all <ArrowRight className="h-3 w-3" />

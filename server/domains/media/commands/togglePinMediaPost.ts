@@ -1,26 +1,19 @@
 import { Err, Result } from '@/shared/types/result'
 import { DBClient } from '@/shared/types/db'
-import { countPinnedByBucket, updateMediaPostPin } from '@/server/db/mediaPost.repo'
+import { countPinnedByTypes, updateMediaPostPin } from '@/server/db/mediaPost.repo'
 import { MediaPost } from '../types'
 
-type PinBucket = 'gfx' | 'video' | 'feature' | 'clip'
+type PinBucket = 'visual' | 'video' | 'clip'
 
-const BUCKET_LIMITS: Record<PinBucket, number> = {
-    gfx:     3,
-    video:   2,
-    feature: 2,
-    clip:    0,
-}
-
-const BUCKET_MESSAGES: Record<PinBucket, string> = {
-    gfx:     'Only 3 GFX posts can be pinned at a time.',
-    video:   'Only 2 video posts can be pinned at a time.',
-    feature: 'Only 2 feature posts can be pinned at a time.',
-    clip:    'Clips are discontinued and can no longer be pinned.',
+const BUCKETS: Record<PinBucket, { types: MediaPost['type'][]; limit: number; message: string }> = {
+    visual: { types: ['gfx', 'feature'], limit: 3, message: 'Only 3 GFX or feature posts can be pinned at a time.' },
+    video:  { types: ['video'],          limit: 2, message: 'Only 2 video posts can be pinned at a time.' },
+    clip:   { types: ['clip'],           limit: 0, message: 'Clips are discontinued and can no longer be pinned.' },
 }
 
 function toBucket(postType: string): PinBucket | null {
-    if (postType === 'gfx' || postType === 'video' || postType === 'feature' || postType === 'clip') return postType
+    if (postType === 'gfx' || postType === 'feature') return 'visual'
+    if (postType === 'video' || postType === 'clip') return postType
     return null
 }
 
@@ -33,10 +26,10 @@ export async function togglePinMediaPost(
     if (pin) {
         const bucket = toBucket(postType)
         if (bucket) {
-            const countResult = await countPinnedByBucket(supabase, bucket)
+            const countResult = await countPinnedByTypes(supabase, BUCKETS[bucket].types)
             if (!countResult.ok) return countResult
-            if (countResult.value >= BUCKET_LIMITS[bucket]) {
-                return Err({ message: BUCKET_MESSAGES[bucket], code: 'MEDIA_PIN_LIMIT_EXCEEDED' })
+            if (countResult.value >= BUCKETS[bucket].limit) {
+                return Err({ message: BUCKETS[bucket].message, code: 'MEDIA_PIN_LIMIT_EXCEEDED' })
             }
         }
     }
