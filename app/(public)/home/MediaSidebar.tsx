@@ -30,6 +30,33 @@ function GfxCard({ post, onOpen }: { post: MediaPost; onOpen: (p: MediaPost) => 
     )
 }
 
+function FeatureCard({ post, onPlay }: { post: MediaPost; onPlay: (url: string) => void }) {
+    const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
+    return (
+        <div
+            className="flex flex-col border border-border rounded-sm overflow-hidden cursor-pointer"
+            onClick={() => post.video_url && onPlay(post.video_url)}
+        >
+            <div className="relative w-full bg-muted" style={{ aspectRatio: '16/9' }}>
+                {thumbnail && (
+                    <Image src={thumbnail} alt={post.title} fill className="object-cover" sizes="240px" unoptimized />
+                )}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+                        <Play className="h-3.5 w-3.5 text-white fill-white ml-0.5" />
+                    </div>
+                </div>
+            </div>
+            <div className="px-2 py-1.5 flex-shrink-0">
+                <p className="text-xs font-semibold truncate">{post.title}</p>
+                {post.description && (
+                    <p className="text-[10px] text-muted-foreground truncate">{post.description}</p>
+                )}
+            </div>
+        </div>
+    )
+}
+
 export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [gfxPost, setGfxPost] = useState<MediaPost | null>(null)
@@ -39,7 +66,8 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
     const gfxTop  = gfx[0] ?? null
     const gfxRest = gfx.slice(1, 3)
     const videos  = pinned.filter(p => p.type === 'video').slice(0, 2)
-    const hasAny  = gfx.length > 0 || videos.length > 0
+    const features = pinned.filter(p => p.type === 'feature').slice(0, 2)
+    const hasAny  = gfx.length > 0 || videos.length > 0 || features.length > 0
 
     if (!hasAny) {
         return (
@@ -84,6 +112,10 @@ export default function MediaSidebar({ posts }: { posts: MediaPost[] }) {
                         </div>
                     )
                 })}
+
+                {features.map(post => (
+                    <FeatureCard key={post.id} post={post} onPlay={setVideoUrl} />
+                ))}
 
                 {gfxRest.map(post => (
                     <GfxCard key={post.id} post={post} onOpen={setGfxPost} />

@@ -91,7 +91,7 @@ export async function countPinnedMediaPosts(supabase: DBClient): Promise<Result<
     return Ok(count ?? 0)
 }
 
-type PinBucket = 'gfx' | 'video' | 'clip'
+type PinBucket = 'gfx' | 'video' | 'feature' | 'clip'
 
 export async function countPinnedByBucket(supabase: DBClient, bucket: PinBucket): Promise<Result<number>> {
     const { count, error } = await supabase

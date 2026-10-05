@@ -1,4 +1,4 @@
-export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap' | 'clip' | 'totw' | 'potw' | 'article' | 'champion'
+export type MediaPostType = 'gfx' | 'video' | 'news' | 'recap' | 'clip' | 'totw' | 'potw' | 'article' | 'champion' | 'feature'
 
 export type MatchMediaSlot = Extract<MediaPostType, 'gfx' | 'video'>
 
@@ -40,7 +40,7 @@ export interface InsertMediaPostDto {
 }
 
 export interface CreateMediaInput {
-    type: 'gfx' | 'video' | 'clip' | 'totw' | 'potw' | 'champion'
+    type: 'gfx' | 'video' | 'clip' | 'totw' | 'potw' | 'champion' | 'feature'
     title: string
     description?: string | null
     imageFile?: File | null

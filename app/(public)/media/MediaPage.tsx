@@ -23,6 +23,7 @@ type TabKey = MediaFilterType | 'articles'
 const TYPE_COLORS: Record<string, string> = {
     gfx:   'bg-violet-500/20 text-violet-400 border-violet-500/30',
     video: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    feature: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
     news:  'bg-green-500/20 text-green-400 border-green-500/30',
     recap: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
     clip:  'bg-pink-500/20 text-pink-400 border-pink-500/30',
@@ -32,6 +33,7 @@ const TAB_LABELS: Record<TabKey, string> = {
     all:      'All',
     articles: 'Articles',
     videos:   'Videos',
+    features: 'Features',
     gfx:      'GFX',
     clips:    'Clips',
 }
@@ -76,7 +78,7 @@ function MediaCard({ post, authorName, onVideoClick, onGfxClick }: {
     onVideoClick: (url: string) => void
     onGfxClick: (post: MediaPost) => void
 }) {
-    const isVideo = post.type === 'video' || post.type === 'recap'
+    const isVideo = post.type === 'video' || post.type === 'feature' || post.type === 'recap'
     const isImage = post.type === 'gfx' || post.type === 'totw' || post.type === 'potw'
     const thumbnail = resolveMediaThumbnail(post.image_url, post.video_url)
 
@@ -177,10 +179,11 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
 }
 
 const FILTER_TYPES: Record<MediaFilterType, MediaPost['type'][]> = {
-    all:    ['gfx', 'video', 'news', 'recap', 'totw', 'potw'],
-    videos: ['video'],
-    gfx:    ['gfx', 'totw', 'potw'],
-    clips:  ['clip'],
+    all:      ['gfx', 'video', 'feature', 'news', 'recap', 'totw', 'potw'],
+    videos:   ['video'],
+    features: ['feature'],
+    gfx:      ['gfx', 'totw', 'potw'],
+    clips:    ['clip'],
 }
 
 const PAGE_SIZE = 12

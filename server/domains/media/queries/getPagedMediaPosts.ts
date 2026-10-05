@@ -6,10 +6,11 @@ import { findMediaPostsPaged } from '@/server/db/mediaPost.repo'
 import { GetPagedMediaInput, MediaFilterType, PagedMediaResult } from '../types'
 
 const FILTER_TYPE_MAP: Record<MediaFilterType, string[]> = {
-    all:    ['gfx', 'video', 'news', 'recap', 'totw', 'potw'],
-    videos: ['video'],
-    gfx:    ['gfx'],
-    clips:  ['clip'],
+    all:      ['gfx', 'video', 'feature', 'news', 'recap', 'totw', 'potw'],
+    videos:   ['video'],
+    features: ['feature'],
+    gfx:      ['gfx'],
+    clips:    ['clip'],
 }
 
 export async function getPagedMediaPosts(

@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const CreateMediaFormSchema = z.object({
-    type:        z.enum(['gfx', 'video', 'clip', 'totw', 'potw', 'champion']),
+    type:        z.enum(['gfx', 'video', 'clip', 'totw', 'potw', 'champion', 'feature']),
     title:       z.string(),
     description: z.string().optional(),
     videoUrl:    z.string().url('Invalid URL').optional().or(z.literal('')),
@@ -31,7 +31,7 @@ export const AssignMediaToMatchSchema = z.object({
 export type AssignMediaToMatchInput = z.infer<typeof AssignMediaToMatchSchema>
 
 export const GetAllMediaSchema = z.object({
-    type:     z.enum(['gfx', 'video', 'news', 'recap', 'clip', 'totw', 'potw', 'champion']).optional(),
+    type:     z.enum(['gfx', 'video', 'news', 'recap', 'clip', 'totw', 'potw', 'champion', 'feature']).optional(),
     matchId:  z.string().uuid().optional(),
     teamId:   z.string().uuid().optional(),
     playerId: z.string().uuid().optional(),
@@ -39,7 +39,7 @@ export const GetAllMediaSchema = z.object({
 })
 export type GetAllMediaInput = z.infer<typeof GetAllMediaSchema>
 
-export const MEDIA_FILTER_TYPES = ['all', 'videos', 'gfx', 'clips'] as const
+export const MEDIA_FILTER_TYPES = ['all', 'videos', 'features', 'gfx', 'clips'] as const
 export type MediaFilterType = typeof MEDIA_FILTER_TYPES[number]
 
 export const GetPagedMediaSchema = z.object({

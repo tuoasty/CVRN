@@ -8,6 +8,7 @@ import { uploadFile, deleteFile } from '@/server/storage/storage.service'
 import { insertMediaPost } from '@/server/db/mediaPost.repo'
 import { assertMatchSlotFree } from '../helpers/assertMatchSlotFree'
 import { assertChampionSlotFree } from '../helpers/assertChampionSlotFree'
+import { getYoutubeId } from '@/shared/utils/youtube'
 import { CreateMediaInput, MediaPost } from '../types'
 
 const TIKTOK_HOSTNAMES = new Set(['www.tiktok.com', 'tiktok.com', 'vt.tiktok.com', 'm.tiktok.com'])
@@ -91,6 +92,15 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
             if (!title) title = 'TikTok Clip'
         } else if (!title) {
             return Err({ message: 'Title is required', code: 'VALIDATION_ERROR' })
+        }
+
+        if (p.type === 'feature') {
+            if (!p.videoUrl || !getYoutubeId(p.videoUrl)) {
+                return Err({ message: 'A feature needs a YouTube video or Shorts URL', code: 'VALIDATION_ERROR' })
+            }
+            if (p.matchId) {
+                return Err({ message: 'Features cannot be attached to a match', code: 'VALIDATION_ERROR' })
+            }
         }
 
         if (p.matchId && (p.type === 'gfx' || p.type === 'video')) {

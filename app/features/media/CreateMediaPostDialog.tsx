@@ -16,7 +16,7 @@ import { useTeamsBySeason } from '@/app/hooks/useTeams'
 import { useTeamPlayers } from '@/app/hooks/usePlayers'
 import AuthorPicker, { type AuthorSelection } from '@/app/features/media/AuthorPicker'
 
-type MediaFormType = 'gfx' | 'video' | 'clip' | 'totw' | 'potw'
+type MediaFormType = 'gfx' | 'video' | 'feature' | 'clip' | 'totw' | 'potw'
 
 interface CreateMediaPostDialogProps {
     open: boolean
@@ -42,6 +42,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
     const { players } = useTeamPlayers(type === 'potw' && teamId ? teamId : null, seasonId)
 
     const isImageType = type === 'gfx' || type === 'totw' || type === 'potw'
+    const isUrlType = type === 'video' || type === 'feature' || type === 'clip'
 
     function reset() {
         setType('gfx')
@@ -102,7 +103,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         if (type !== 'clip' && !title.trim()) { toast.error('Title is required'); return }
-        if ((type === 'video' || type === 'clip') && !videoUrl.trim()) { toast.error('URL is required'); return }
+        if (isUrlType && !videoUrl.trim()) { toast.error('URL is required'); return }
         if (isImageType && !imageFile) { toast.error('Image is required'); return }
         if ((type === 'totw' || type === 'potw') && !seasonId) { toast.error('Select a season in the admin bar first'); return }
         if (type === 'totw' && !teamId) { toast.error('Select a team'); return }
@@ -113,7 +114,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
             formData.set('type', type)
             formData.set('title', type === 'clip' ? '' : title.trim())
             if (type !== 'clip' && description.trim()) formData.set('description', description.trim())
-            if (type === 'video' || type === 'clip') formData.set('videoUrl', videoUrl.trim())
+            if (isUrlType) formData.set('videoUrl', videoUrl.trim())
             if (isImageType && imageFile) formData.set('imageFile', imageFile)
             if (type === 'totw' && teamId) formData.set('teamId', teamId)
             if (type === 'potw' && playerId) formData.set('playerId', playerId)
@@ -152,7 +153,8 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="gfx">GFX</SelectItem>
-                                    <SelectItem value="video">Video</SelectItem>
+                                    <SelectItem value="video">Video (Match VOD)</SelectItem>
+                                    <SelectItem value="feature">Feature (YouTube / Shorts)</SelectItem>
                                     <SelectItem value="clip">Clip (TikTok / Short-form)</SelectItem>
                                     <SelectItem value="totw">Team of the Week</SelectItem>
                                     <SelectItem value="potw">Player of the Week</SelectItem>
@@ -259,19 +261,22 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
                         </div>
                     )}
 
-                    {(type === 'video' || type === 'clip') && (
+                    {isUrlType && (
                         <div className="space-y-1">
                             <Label htmlFor="videoUrl">
-                                {type === 'clip' ? 'TikTok URL' : 'YouTube / Twitch URL'}
+                                {type === 'clip' ? 'TikTok URL' : type === 'feature' ? 'YouTube URL' : 'YouTube / Twitch URL'}
                             </Label>
                             <Input
                                 id="videoUrl"
                                 type="url"
-                                placeholder={type === 'clip' ? 'https://www.tiktok.com/@user/video/...' : 'https://youtube.com/watch?v=...'}
+                                placeholder={type === 'clip' ? 'https://www.tiktok.com/@user/video/...' : type === 'feature' ? 'https://youtube.com/shorts/...' : 'https://youtube.com/watch?v=...'}
                                 value={videoUrl}
                                 onChange={e => setVideoUrl(e.target.value)}
                                 className="rounded-sm"
                             />
+                            {type === 'feature' && (
+                                <p className="text-[11px] text-muted-foreground">Regular videos and Shorts both work. Features are standalone and never attach to a match.</p>
+                            )}
                             {type === 'clip' && (
                                 <p className="text-[11px] text-muted-foreground">Short links (vt.tiktok.com) and full URLs both work.</p>
                             )}

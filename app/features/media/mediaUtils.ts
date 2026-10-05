@@ -1,13 +1,6 @@
-export function getYoutubeId(url: string): string | null {
-    try {
-        const u = new URL(url)
-        if (u.hostname.includes('youtube.com')) return u.searchParams.get('v')
-        if (u.hostname.includes('youtu.be'))    return u.pathname.slice(1) || null
-        return null
-    } catch {
-        return null
-    }
-}
+import { getYoutubeId } from '@/shared/utils/youtube'
+
+export { getYoutubeId, isYoutubeShort } from '@/shared/utils/youtube'
 
 export function getYoutubeThumbnail(url: string): string | null {
     const id = getYoutubeId(url)
@@ -27,12 +20,9 @@ export function resolveMediaThumbnail(imageUrl: string | null, videoUrl: string 
 export function toEmbedUrl(url: string): string | null {
     try {
         const u = new URL(url)
-        if (u.hostname.includes('youtube.com')) {
-            const v = u.searchParams.get('v')
-            return v ? `https://www.youtube.com/embed/${v}` : null
-        }
-        if (u.hostname.includes('youtu.be')) {
-            return `https://www.youtube.com/embed${u.pathname}`
+        if (u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be')) {
+            const id = getYoutubeId(url)
+            return id ? `https://www.youtube.com/embed/${id}` : null
         }
         if (u.hostname.includes('twitch.tv')) {
             const parent = typeof window !== 'undefined' ? window.location.hostname : 'localhost'

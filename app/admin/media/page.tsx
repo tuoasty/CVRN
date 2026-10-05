@@ -18,8 +18,8 @@ import type { MediaPost } from '@/server/domains/media'
 import { toast } from '@/app/utils/toast'
 import { cn } from '@/lib/utils'
 
-type FilterType = 'all' | 'gfx' | 'video' | 'news' | 'recap' | 'clip' | 'totw' | 'potw'
-const FILTER_OPTIONS: FilterType[] = ['all', 'gfx', 'video', 'clip', 'totw', 'potw', 'news', 'recap']
+type FilterType = 'all' | 'gfx' | 'video' | 'feature' | 'news' | 'recap' | 'clip' | 'totw' | 'potw'
+const FILTER_OPTIONS: FilterType[] = ['all', 'gfx', 'video', 'feature', 'clip', 'totw', 'potw', 'news', 'recap']
 
 export default function AdminMediaPage() {
     const { posts, isLoading } = useAllMediaPosts()

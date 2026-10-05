@@ -1,7 +1,8 @@
 "use client"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
-import { toEmbedUrl } from '@/app/features/media/mediaUtils'
+import { isYoutubeShort, toEmbedUrl } from '@/app/features/media/mediaUtils'
+import { cn } from '@/lib/utils'
 
 interface VideoEmbedDialogProps {
     url: string
@@ -11,14 +12,18 @@ interface VideoEmbedDialogProps {
 
 export default function VideoEmbedDialog({ url, open, onOpenChange }: VideoEmbedDialogProps) {
     const embed = toEmbedUrl(url)
+    const vertical = isYoutubeShort(url)
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl sm:max-w-4xl w-[95vw] p-0 overflow-hidden rounded-sm border-border bg-black">
+            <DialogContent className={cn(
+                "p-0 overflow-hidden rounded-sm border-border bg-black",
+                vertical ? "w-auto max-w-[95vw] sm:max-w-[95vw]" : "max-w-4xl sm:max-w-4xl w-[95vw]",
+            )}>
                 <DialogHeader className="sr-only">
                     <DialogTitle>Video Player</DialogTitle>
                 </DialogHeader>
                 {embed ? (
-                    <div className="aspect-video w-full">
+                    <div className={vertical ? "aspect-[9/16] h-[min(85vh,168vw)]" : "aspect-video w-full"}>
                         <iframe
                             src={embed}
                             className="w-full h-full"
