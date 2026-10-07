@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { cn } from '@/lib/utils'
 import type { ChangelogToc, TocEntry } from './changelog/extractToc'
 import { activeTocId, OVERVIEW_ID } from './changelog/tocNavigation'
@@ -46,7 +45,6 @@ function ExpandAllButton({ allOpen, onClick, className }: { allOpen: boolean; on
 
 export default function ChangelogLayout({ toc, header, footer, rail, children }: Props) {
     const contentRef = useRef<HTMLDivElement>(null)
-    const barRef = useRef<HTMLDivElement>(null)
     const [navHeight, setNavHeight] = useState<number | null>(null)
     const entries = useMemo<TocEntry[]>(
         () => (toc.overview && toc.entries.length > 0
@@ -60,9 +58,7 @@ export default function ChangelogLayout({ toc, header, footer, rail, children }:
     const hasToggles = toc.toggleCount > 0
 
     const scrollOffset = useCallback(() => {
-        const nav = stickyNav()?.offsetHeight ?? 0
-        const bar = barRef.current && barRef.current.offsetParent !== null ? barRef.current.offsetHeight : 0
-        return nav + bar + GAP
+        return (stickyNav()?.offsetHeight ?? 0) + GAP
     }, [])
 
     const reveal = useCallback((id: string, smooth: boolean) => {
@@ -214,29 +210,6 @@ export default function ChangelogLayout({ toc, header, footer, rail, children }:
 
             <div className="min-w-0 lg:col-start-2 lg:row-start-1">
                 {header}
-                {hasNav && (
-                    <div
-                        ref={barRef}
-                        className="sticky z-40 -mx-7 flex items-center gap-2 border-b border-border bg-background px-7 py-2 lg:hidden"
-                        style={{ top: navHeight ?? 0 }}
-                    >
-                        {hasToc && (
-                            <Select value={active ?? undefined} onValueChange={go}>
-                                <SelectTrigger aria-label="Jump to a section" className="h-9 min-w-0 flex-1 rounded-sm">
-                                    <SelectValue placeholder="Jump to" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-sm">
-                                    {entries.map(entry => (
-                                        <SelectItem key={entry.id} value={entry.id} className={cn('rounded-sm', entry.depth === 2 && 'pl-6')}>
-                                            {entry.text}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                        {hasToggles && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} className={cn(!hasToc && '-ml-2.5')} />}
-                    </div>
-                )}
                 <div ref={contentRef}>{children}</div>
                 {footer}
             </div>

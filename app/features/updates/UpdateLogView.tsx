@@ -7,7 +7,7 @@ import { extractToc } from './changelog/extractToc'
 import { OVERVIEW_ID } from './changelog/tocNavigation'
 import ChangelogLayout from './ChangelogLayout'
 import VersionRail from './VersionRail'
-import VersionSwitcher from './VersionSwitcher'
+import VersionDots from './VersionDots'
 import { formatReleased } from './formatReleased'
 
 function PagerLink({ entry, direction }: { entry: UpdateLogIndexEntry; direction: 'older' | 'newer' }) {
@@ -35,17 +35,17 @@ export default function UpdateLogView({ log, index }: { log: UpdateLogPublic; in
     const toc = extractToc(log.body)
 
     const header = (
-        <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
-            <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Update · <span className="font-mono tabular-nums normal-case tracking-normal">{formatReleased(log.released_at)}</span>
-                </p>
-                <h1 className="mt-1.5 text-2xl font-semibold tracking-[-.025em]">
-                    <span className="font-mono">{log.version}</span>
-                    {log.title && <span className="text-muted-foreground"> {log.title}</span>}
-                </h1>
-            </div>
-            {index.length > 1 && <VersionSwitcher versions={index} current={log.version} />}
+        <header className="border-b border-border pb-5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Update · <span className="font-mono tabular-nums normal-case tracking-normal">{formatReleased(log.released_at)}</span>
+            </p>
+            <h1 className="mt-1.5 text-2xl font-semibold tracking-[-.025em]">
+                <span className="font-mono">{log.version}</span>
+                {log.title && <span className="text-muted-foreground"> {log.title}</span>}
+            </h1>
+            {index.length > 1 && (
+                <VersionDots index={index} current={log.version} newer={newer} older={older} className="mt-4 xl:hidden" />
+            )}
         </header>
     )
 

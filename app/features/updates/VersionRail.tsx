@@ -5,7 +5,7 @@ import type { UpdateLogIndexEntry } from '@/server/domains/updateLog'
 import { formatReleased } from './formatReleased'
 import { versionWindow } from './versionWindow'
 
-function versionHref(version: string): string {
+export function versionHref(version: string): string {
     return `/updates/${encodeURIComponent(version)}`
 }
 
