@@ -14,7 +14,8 @@ const sanitizeSchema: SanitizeSchema = {
     clobberPrefix: '',
     attributes: {
         ...defaultSchema.attributes,
-        span: [...(defaultSchema.attributes?.span ?? []), ['dataDelta', 'buff', 'nerf']],
+        span: [...(defaultSchema.attributes?.span ?? []), ['dataDelta', 'buff', 'nerf', 'rework'], ['dataTag', 'new']],
+        li: [...(defaultSchema.attributes?.li ?? []), ['dataMarker', 'buff', 'nerf', 'rework']],
         img: [
             ...(defaultSchema.attributes?.img ?? []),
             'dataImage',
@@ -24,50 +25,77 @@ const sanitizeSchema: SanitizeSchema = {
     },
 }
 
-const DELTA_MARK = {
-    buff: { label: 'Buff', className: 'text-success' },
-    nerf: { label: 'Nerf', className: 'text-destructive rotate-180' },
-} as const
+type DeltaKind = 'buff' | 'nerf' | 'rework'
+
+const DELTA_LABEL: Record<DeltaKind, string> = { buff: 'Buff', nerf: 'Nerf', rework: 'Rework' }
+
+function isDelta(value: unknown): value is DeltaKind {
+    return value === 'buff' || value === 'nerf' || value === 'rework'
+}
+
+function DeltaGlyph({ delta }: { delta: DeltaKind }) {
+    if (delta === 'rework') {
+        return (
+            <svg aria-hidden viewBox="0 0 24 24" className="h-[0.7em] w-[0.85em] fill-none stroke-secondary stroke-[3.2] [stroke-linecap:round]">
+                <path d="M3 14.5c2.2-4 5.4-4.6 9-1.5s6.8 2.5 9-1.5" />
+            </svg>
+        )
+    }
+    return <Triangle aria-hidden className={cn('h-[0.7em] w-[0.7em] fill-current stroke-none', delta === 'buff' ? 'text-success' : 'rotate-180 text-destructive')} />
+}
+
+const SUMMARY_HOVER = '[summary:hover>&]:text-primary'
 
 const components: Components = {
     ...proseComponents,
     h1: ({ id, children }) => (
-        <h1 id={id} className="clear-both scroll-mt-24 mt-12 mb-4 border-b border-border pb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0 [summary>&]:m-0 [summary>&]:border-0 [summary>&]:p-0">
+        <h1 id={id} className={cn('clear-both scroll-mt-24 mt-14 mb-1 text-4xl font-semibold tracking-[-0.03em] text-foreground first:mt-0 [summary>&]:m-0', SUMMARY_HOVER)}>
             {children}
         </h1>
     ),
     h2: ({ id, children }) => (
-        <h2 id={id} className="clear-both scroll-mt-24 mt-8 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground [summary>&]:my-0">
+        <h2 id={id} className={cn('clear-both scroll-mt-24 mt-7 mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground [h1+&]:mt-4 [summary>&]:my-0', SUMMARY_HOVER)}>
             {children}
         </h2>
     ),
     h3: ({ id, children }) => (
-        <h3 id={id} className="clear-both scroll-mt-24 mt-6 mb-1.5 text-base font-semibold text-foreground [summary>&]:my-0">
+        <h3 id={id} className={cn('clear-both scroll-mt-24 mt-5 mb-1 text-lg font-semibold text-foreground [h2+&]:mt-1.5 [summary>&]:my-0', SUMMARY_HOVER)}>
             {children}
         </h3>
     ),
     p: ({ children }) => <p className="my-3">{children}</p>,
     ul: ({ children }) => <ul className="my-3 ml-5 list-disc space-y-1.5 marker:text-muted-foreground">{children}</ul>,
     ol: ({ start, children }) => <ol start={start} className="my-3 ml-5 list-decimal space-y-1.5 marker:text-muted-foreground">{children}</ol>,
-    li: ({ children }) => <li className="pl-1">{children}</li>,
-    span: ({ children, ...props }) => {
-        const delta = (props as Record<string, unknown>)['data-delta']
-        if (delta !== 'buff' && delta !== 'nerf') return <span>{children}</span>
-        const mark = DELTA_MARK[delta]
+    li: ({ children, ...props }) => {
+        const marker = (props as Record<string, unknown>)['data-marker']
+        if (!isDelta(marker)) return <li className="pl-1">{children}</li>
         return (
-            <span data-delta={delta} role="img" aria-label={mark.label} title={mark.label} className="mr-1.5 inline-flex align-baseline">
-                <Triangle aria-hidden className={cn('h-[0.7em] w-[0.7em] fill-current stroke-none', mark.className)} />
+            <li data-marker={marker} className="relative list-none pl-1 [&>[data-delta]]:absolute [&>[data-delta]]:-left-[1.15em] [&>[data-delta]]:top-[0.45em] [&>[data-delta]]:mr-0">
+                {children}
+            </li>
+        )
+    },
+    span: ({ children, ...props }) => {
+        const attrs = props as Record<string, unknown>
+        if (attrs['data-tag'] === 'new') {
+            return <span data-tag="new" className="mr-[0.35em] font-semibold text-primary">NEW</span>
+        }
+        const delta = attrs['data-delta']
+        if (!isDelta(delta)) return <span>{children}</span>
+        return (
+            <span data-delta={delta} role="img" aria-label={DELTA_LABEL[delta]} title={DELTA_LABEL[delta]} className="mr-1.5 inline-flex align-baseline">
+                <DeltaGlyph delta={delta} />
             </span>
         )
     },
     details: ({ id, children }) => (
-        <details id={id} className="group/feature flow-root scroll-mt-24 border-b border-border [&>:not(summary)]:pl-6 [&>:last-child]:pb-3">
+        <details id={id} className="group/feature flow-root scroll-mt-24 [&>:not(summary)]:pl-6 [&>:last-child]:pb-2">
             {children}
         </details>
     ),
     summary: ({ children }) => (
-        <summary className="flex cursor-pointer list-none items-center gap-2 py-2.5 font-medium text-foreground hover:text-primary [&::-webkit-details-marker]:hidden">
-            <ChevronRight aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open/feature:rotate-90" />
+        <summary className="flex cursor-pointer list-none items-center gap-2 py-1.5 text-foreground hover:text-primary [&::-webkit-details-marker]:hidden">
+            <ChevronRight aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none group-open/feature:rotate-90" />
             {children}
         </summary>
     ),

@@ -225,8 +225,8 @@ describe('remarkChangelog balance markers', () => {
     })
 
     it('leaves unknown bracket tags alone', () => {
-        const html = render('- [rework] Serve system')
-        expect(html).toContain('[rework]')
+        const html = render('- [revamp] Serve system')
+        expect(html).toContain('[revamp]')
         expect(html).not.toContain('data-delta')
     })
 
@@ -234,6 +234,79 @@ describe('remarkChangelog balance markers', () => {
         const html = render('Jump [buff] later')
         expect(html).toContain('[buff]')
         expect(html).not.toContain('data-delta')
+    })
+
+    it('marks a [rework] line and removes the token', () => {
+        const html = render('- [rework] Serve system rebuilt')
+        expect(html).toContain('data-delta="rework"')
+        expect(html).toContain('aria-label="Rework"')
+        expect(html).not.toContain('[rework]')
+    })
+
+    it('puts a list marker in place of the bullet', () => {
+        const html = render('- [buff] Jump 12 → 14\n- Unchanged')
+        expect(html).toMatch(/<li data-marker="buff"[^>]*>\s*<span data-delta="buff"/)
+        expect(html).toMatch(/<li class="pl-1">Unchanged<\/li>/)
+    })
+
+    it('hoists the marker out of the paragraph in a loose list', () => {
+        const html = render('- [nerf] Spike CD 8s → 10s\n\n- Other')
+        expect(html).toMatch(/<li data-marker="nerf"[^>]*>\s*<span data-delta="nerf"[^>]*>.*?<\/span>\s*<p/s)
+    })
+
+    it('keeps a marker inline outside lists', () => {
+        const html = render('[rework] Serve system rebuilt')
+        expect(html).toMatch(/<p[^>]*><span data-delta="rework"/)
+        expect(html).not.toContain('data-marker')
+    })
+
+    it('only hoists a marker that starts the item', () => {
+        const html = render('- Jump\n[buff] Height')
+        expect(html).toContain('data-delta="buff"')
+        expect(html).not.toContain('data-marker')
+    })
+})
+
+describe('remarkChangelog NEW tag', () => {
+    it('turns [new] at the start of a line into a NEW label', () => {
+        const html = render('[new] Float serve is back')
+        expect(html).toContain('<span data-tag="new" class="mr-[0.35em] font-semibold text-primary">NEW</span>Float serve is back')
+        expect(html).not.toContain('[new]')
+    })
+
+    it('accepts any letter case', () => {
+        expect(render('[NEW] Float serve')).toContain('data-tag="new"')
+    })
+
+    it('leaves [new] in the middle of a line literal', () => {
+        const html = render('Float serve [new] is back')
+        expect(html).toContain('[new]')
+        expect(html).not.toContain('data-tag')
+    })
+
+    it('labels a feature heading and keeps NEW out of its anchor', () => {
+        const html = render('### [new] Float serve')
+        expect(html).toMatch(/<h3[^>]*id="float-serve"[^>]*><span data-tag="new"/)
+    })
+
+    it('labels a collapsible title', () => {
+        const summary = between(render('> ### [new] Power meter\nbody'), '<summary', '</summary>')
+        expect(summary).toContain('data-tag="new"')
+    })
+
+    it('keeps the bullet on a NEW list item', () => {
+        const html = render('- [new] Toss height setting')
+        expect(html).toContain('data-tag="new"')
+        expect(html).not.toContain('data-marker')
+    })
+
+    it('combines with a marker in either order, hoisting only the marker', () => {
+        for (const body of ['- [buff] [new] Jump', '- [new] [buff] Jump']) {
+            const html = render(body)
+            expect(html).toMatch(/<li data-marker="buff"[^>]*>\s*<span data-delta="buff"/)
+            expect(html).toContain('<span data-tag="new"')
+            expect(html).not.toMatch(/\[(new|buff)\]/i)
+        }
     })
 })
 

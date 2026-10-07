@@ -187,6 +187,8 @@ A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber ac
 
 **The Coordinated-Palette Rule.** The palette is a deliberate move off the stock shadcn defaults: a true-neutral (hue-agnostic) black/gray ramp — not Tailwind zinc — under a cobalt action accent (`#2D55E6`), a broadcast-amber location accent (`#E8992C`), and a green success token (`#42B87C`) for win/synced state. The neutrals carry no hue tint. Any future accent change must move *all* of them together — a single re-tinted primary against the others reads as a half-finished theme.
 
+**Exception: update-log change markers.** Inside an update log body, color marks the kind of change and nothing else: green ▲ buff (Success), red ▼ nerf (Destructive), a yellow `~` rework glyph (Location Yellow), and a plain-text `NEW` label in Action Blue (blue as state: "new in this version"). Each is a glyph or a single word, never a fill, and each is also carried by its shape or its word. Headings in update logs stay neutral; this exception does not extend to section, category, or feature titles.
+
 ## 3. Typography
 
 **Body Font:** IBM Plex Sans (with `ui-sans-serif`, `system-ui`, sans-serif fallback), loaded via `next/font` with `display: swap`; `font-size-adjust: 0.54` on the body matches its x-height to the fixed rem scale
@@ -211,6 +213,8 @@ A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber ac
 **The Fixed Scale Rule.** No `clamp()`, no viewport-relative type, anywhere. Users read this at a consistent desktop DPI, and a heading that shrinks inside a three-column shell looks broken rather than responsive.
 
 **The Small-Type Floor.** `0.75rem` is the floor for any text a user must read, and text at that size must sit in Ink or Quiet Ink on Surface — never Quiet Ink at reduced opacity. Below 12px, stat tables stop being dense and start being unreadable, which is the difference between this system and the spreadsheet it replaces.
+
+**Exception: update-log sections.** In an update log body, `#` sections are `2.25rem` (36px) semibold with `-0.03em` tracking, larger than the page's own 24px version title. A patch note is read by section, so sections carry the weight and the version header acts as a label. Below them, `##` categories are Label style (12px uppercase, Quiet Ink) acting as helpers, and `###` features are `1.125rem` semibold Ink. This is the only type step above Headline in the product.
 
 ## 4. Elevation
 

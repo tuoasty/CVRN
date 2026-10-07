@@ -28,6 +28,14 @@ describe('extractToc', () => {
         expect(extractToc('### Teaser\nx\n\n# Features').overview).toBe(true)
     })
 
+    it('keeps NEW labels and markers out of entry text', () => {
+        const toc = extractToc('# [new] Odyssey\n## [rework] Serving')
+        expect(toc.entries).toEqual([
+            { id: 'odyssey', text: 'Odyssey', depth: 1 },
+            { id: 'serving', text: 'Serving', depth: 2 },
+        ])
+    })
+
     it('treats a ## before any # as a top entry, not overview', () => {
         const toc = extractToc('## Serving\nx\n# Features')
         expect(toc.overview).toBe(false)

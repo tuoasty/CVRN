@@ -1,7 +1,8 @@
 import { parseImageToken, type ImageToken } from '@/shared/utils/imageTokens'
 import { OVERVIEW_ID } from './tocNavigation'
 
-export type Delta = 'buff' | 'nerf'
+export type Delta = 'buff' | 'nerf' | 'rework'
+type Marker = Delta | 'new'
 
 interface MdData {
     hName?: string
@@ -80,7 +81,7 @@ export function prepareChangelog(body: string): { source: string; toggles: Toggl
     return { source, toggles }
 }
 
-const DELTA_PREFIX = /^\s*\[(buff|nerf)\]\s*/i
+const MARKER_PREFIX = /^\s*\[(buff|nerf|rework|new)\]\s*/i
 
 export function slugBase(text: string): string {
     const slug = text
@@ -115,8 +116,21 @@ function setProperties(node: MdNode, props: Record<string, unknown>) {
 
 const PHRASING_PARENTS = new Set(['paragraph', 'heading', 'tableCell'])
 
-function deltaNode(delta: Delta): MdNode {
-    return { type: 'changelogDelta', data: { hName: 'span', hProperties: { dataDelta: delta } }, children: [] }
+function markerNode(marker: Marker): MdNode {
+    if (marker === 'new') return { type: 'changelogNew', data: { hName: 'span', hProperties: { dataTag: 'new' } }, children: [] }
+    return { type: 'changelogDelta', data: { hName: 'span', hProperties: { dataDelta: marker } }, children: [] }
+}
+
+function takeMarkers(text: string): { markers: MdNode[]; rest: string } {
+    const markers: MdNode[] = []
+    let rest = text
+    let match = MARKER_PREFIX.exec(rest)
+    while (match) {
+        markers.push(markerNode(match[1].toLowerCase() as Marker))
+        rest = rest.slice(match[0].length)
+        match = MARKER_PREFIX.exec(rest)
+    }
+    return { markers, rest }
 }
 
 function markLineStarts(parent: MdNode) {
@@ -132,14 +146,13 @@ function markLineStarts(parent: MdNode) {
 
         const lines = child.value.split('\n')
         lines.forEach((line, idx) => {
-            let text = line
+            const text = line
             if (idx > 0 || atLineStart) {
-                const match = DELTA_PREFIX.exec(text)
-                if (match) {
+                const { markers, rest } = takeMarkers(text)
+                if (markers.length > 0) {
                     if (idx > 0) out.push({ type: 'text', value: '\n' })
-                    out.push(deltaNode(match[1].toLowerCase() as Delta))
-                    text = text.slice(match[0].length)
-                    if (text) out.push({ type: 'text', value: text })
+                    out.push(...markers)
+                    if (rest) out.push({ type: 'text', value: rest })
                     return
                 }
             }
@@ -217,6 +230,25 @@ function markImages(node: MdNode) {
 function markDeltas(node: MdNode) {
     if (PHRASING_PARENTS.has(node.type)) markLineStarts(node)
     for (const child of node.children ?? []) markDeltas(child)
+}
+
+const MARKER_TYPES = new Set(['changelogDelta', 'changelogNew'])
+
+function hoistListMarker(item: MdNode) {
+    const first = item.children?.[0]
+    if (first?.type !== 'paragraph' || !first.children) return
+    let lead = 0
+    while (lead < first.children.length && MARKER_TYPES.has(first.children[lead].type)) lead++
+    const at = first.children.slice(0, lead).findIndex(child => child.type === 'changelogDelta')
+    if (at === -1) return
+    const [delta] = first.children.splice(at, 1)
+    setProperties(item, { dataMarker: delta.data?.hProperties?.dataDelta })
+    item.children = [delta, ...(item.children ?? [])]
+}
+
+function hoistListMarkers(node: MdNode) {
+    if (node.type === 'listItem') hoistListMarker(node)
+    for (const child of node.children ?? []) hoistListMarkers(child)
 }
 
 function isTitleHeading(node: MdNode): boolean {
@@ -310,6 +342,7 @@ export default function remarkChangelog(options: { toggles?: ToggleRange[] } = {
     return (tree: MdNode) => {
         markImages(tree)
         markDeltas(tree)
+        hoistListMarkers(tree)
         buildSections(tree, createSlugger(), toggleEnds)
     }
 }

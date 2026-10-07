@@ -481,7 +481,8 @@ export default function UpdateLogEditor({ initial, initialImages = [] }: Props) 
                             <code className="font-mono"># Section</code>, <code className="font-mono">## Category</code>,{' '}
                             <code className="font-mono">### Feature</code>. Put <code className="font-mono">&gt;</code> at the very start of a heading line to make it
                             collapsible, for example <code className="font-mono">&gt; ### Feature</code>. It ends at the first empty line.
-                            Start any line or heading with <code className="font-mono">[buff]</code> or <code className="font-mono">[nerf]</code> for a ▲/▼ marker.
+                            Start any line or heading with <code className="font-mono">[buff]</code>, <code className="font-mono">[nerf]</code> or <code className="font-mono">[rework]</code> for a ▲/▼/~ marker (it replaces the bullet in lists),
+                            or <code className="font-mono">[new]</code> to label it NEW.
                             Put <code className="font-mono">[image:name]</code> on its own line to show an image; add <code className="font-mono">:left</code> or <code className="font-mono">:right</code> and <code className="font-mono">:25</code>, <code className="font-mono">:50</code> or <code className="font-mono">:75</code> to float it.
                             Ctrl+Alt+1/2/3 headings, Ctrl+B bold, Ctrl+I italic, Tab / Shift+Tab to nest list items (Esc then Tab to leave the box).
                         </p>
