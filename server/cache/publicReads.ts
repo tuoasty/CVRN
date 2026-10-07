@@ -49,6 +49,7 @@ import {
     getWeekMatchCounts,
     getPlayoffMatchesBySeason,
     getTeamMatches,
+    getMatchSitemapRows,
 } from "@/server/domains/match";
 import type {MatchWithDetails} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
@@ -452,6 +453,12 @@ export const getCachedPlayoffMatches = unstable_cache(
         ),
     ["public:playoff-matches"],
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedMatchSitemapRows = unstable_cache(
+    async () => unwrap(await getMatchSitemapRows(createPublicClient()), "getCachedMatchSitemapRows"),
+    ["public:match-sitemap-rows"],
+    {tags: [CACHE_TAGS.matches], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedWeekMatchCounts = unstable_cache(

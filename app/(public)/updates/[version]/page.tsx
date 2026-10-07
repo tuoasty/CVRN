@@ -4,7 +4,7 @@ import { getCachedUpdateLogByVersion, getCachedUpdateLogIndex } from '@/server/c
 import UpdateLogView from '@/app/features/updates/UpdateLogView'
 
 export const metadata: Metadata = {
-    title: 'Updates · CVRN',
+    title: 'Updates',
     description: 'Game update logs and patch notes.',
 }
 

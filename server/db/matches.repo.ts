@@ -1,5 +1,5 @@
 import {DBClient, Match, MatchSet, Player} from "@/shared/types/db";
-import {InsertMatchDto} from "@/server/domains/match";
+import {InsertMatchDto, MatchSitemapRow} from "@/server/domains/match";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {createError, serializeError} from "@/server/utils/serializeableError";
 
@@ -43,6 +43,24 @@ export async function findAllMatches(supabase: DBClient): Promise<Result<Match[]
     const {data, error} = await supabase.from("matches").select("*");
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
+}
+
+const SITEMAP_PAGE_SIZE = 1000;
+
+export async function findCompletedMatchSitemapRows(supabase: DBClient): Promise<Result<MatchSitemapRow[]>> {
+    const rows: MatchSitemapRow[] = [];
+    for (let from = 0; ; from += SITEMAP_PAGE_SIZE) {
+        const {data, error} = await supabase
+            .from("matches")
+            .select("match_code, season_id, home_team_id, away_team_id, updated_at")
+            .eq("status", "completed")
+            .not("match_code", "is", null)
+            .order("id", {ascending: true})
+            .range(from, from + SITEMAP_PAGE_SIZE - 1);
+        if (error) return Err(serializeError(error, "DB_ERROR"));
+        rows.push(...(data ?? []));
+        if (!data || data.length < SITEMAP_PAGE_SIZE) return Ok(rows);
+    }
 }
 
 export async function findPlayoffMatchesFullBySeason(

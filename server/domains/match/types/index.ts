@@ -98,3 +98,5 @@ export type MatchWithDetailsRow = {
     match_officials: RawMatchOfficial[];
     [key: string]: unknown;
 };
+
+export type MatchSitemapRow = Pick<Match, "match_code" | "season_id" | "home_team_id" | "away_team_id" | "updated_at">;

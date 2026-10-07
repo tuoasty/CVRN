@@ -36,13 +36,20 @@ function isDelta(value: unknown): value is DeltaKind {
 function DeltaGlyph({ delta }: { delta: DeltaKind }) {
     if (delta === 'rework') {
         return (
-            <svg aria-hidden viewBox="0 0 24 24" className="h-[0.7em] w-[0.85em] fill-none stroke-secondary stroke-[3.2] [stroke-linecap:round]">
+            <svg aria-hidden viewBox="0 0 24 24" className="size-full fill-none stroke-secondary stroke-[3.2] [stroke-linecap:round]">
                 <path d="M3 14.5c2.2-4 5.4-4.6 9-1.5s6.8 2.5 9-1.5" />
             </svg>
         )
     }
-    return <Triangle aria-hidden className={cn('h-[0.7em] w-[0.7em] fill-current stroke-none', delta === 'buff' ? 'text-success' : 'rotate-180 text-destructive')} />
+    return <Triangle aria-hidden className={cn('size-full fill-current stroke-none', delta === 'buff' ? 'text-success' : 'rotate-180 text-destructive')} />
 }
+
+const LIST_MARKER = cn(
+    '[&>[data-delta]]:absolute [&>[data-delta]]:mr-0',
+    '[&>[data-delta]]:right-[calc(100%_+_5.7px_+_0.18em)] [&>[data-delta]]:top-[0.845em]',
+    '[&>[data-delta]]:size-[0.36em] [&>[data-delta]]:translate-x-1/2 [&>[data-delta]]:-translate-y-1/2',
+    '[&[data-marker=rework]>[data-delta]]:size-[0.48em]',
+)
 
 const SUMMARY_HOVER = '[summary:hover>&]:text-primary'
 
@@ -70,7 +77,7 @@ const components: Components = {
         const marker = (props as Record<string, unknown>)['data-marker']
         if (!isDelta(marker)) return <li className="pl-1">{children}</li>
         return (
-            <li data-marker={marker} className="relative list-none pl-1 [&>[data-delta]]:absolute [&>[data-delta]]:-left-[1.15em] [&>[data-delta]]:top-[0.45em] [&>[data-delta]]:mr-0">
+            <li data-marker={marker} className={cn('relative list-none pl-1', LIST_MARKER)}>
                 {children}
             </li>
         )
@@ -83,7 +90,13 @@ const components: Components = {
         const delta = attrs['data-delta']
         if (!isDelta(delta)) return <span>{children}</span>
         return (
-            <span data-delta={delta} role="img" aria-label={DELTA_LABEL[delta]} title={DELTA_LABEL[delta]} className="mr-1.5 inline-flex align-baseline">
+            <span
+                data-delta={delta}
+                role="img"
+                aria-label={DELTA_LABEL[delta]}
+                title={DELTA_LABEL[delta]}
+                className="mr-1.5 inline-flex h-[0.7em] w-[1em] shrink-0 items-center justify-center align-baseline"
+            >
                 <DeltaGlyph delta={delta} />
             </span>
         )
