@@ -77,6 +77,7 @@ export default function RootLayout({
                 height={3}
                 showSpinner={false}
                 shadow={false}
+                showForHashAnchor={false}
             />
             <SWRProvider>
             {children}

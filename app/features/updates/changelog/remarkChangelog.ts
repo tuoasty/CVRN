@@ -1,3 +1,5 @@
+import { OVERVIEW_ID } from './tocNavigation'
+
 export type Delta = 'buff' | 'nerf'
 
 interface MdData {
@@ -9,7 +11,7 @@ interface MdPoint {
     line: number
 }
 
-interface MdNode {
+export interface MdNode {
     type: string
     depth?: number
     value?: string
@@ -92,7 +94,7 @@ export function slugBase(text: string): string {
 }
 
 function createSlugger() {
-    const seen = new Map<string, number>()
+    const seen = new Map<string, number>([[OVERVIEW_ID, 1]])
     return (text: string) => {
         const base = slugBase(text)
         const count = (seen.get(base) ?? 0) + 1
@@ -101,7 +103,7 @@ function createSlugger() {
     }
 }
 
-function textOf(node: MdNode): string {
+export function textOf(node: MdNode): string {
     if (typeof node.value === 'string') return node.value
     return (node.children ?? []).map(textOf).join('')
 }
