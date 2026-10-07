@@ -3,7 +3,7 @@ import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import rehypeSanitize, { defaultSchema, type Options as SanitizeSchema } from 'rehype-sanitize'
 import { ChevronRight, Triangle } from 'lucide-react'
-import { proseComponents } from '@/app/components/prose/proseComponents'
+import { MarkdownImage, proseComponents } from '@/app/components/prose/proseComponents'
 import ProseImage from '@/app/components/prose/ProseImage'
 import type { ImagePlacement, ImageWidth } from '@/shared/utils/imageTokens'
 import { cn } from '@/lib/utils'
@@ -81,8 +81,6 @@ export interface ChangelogImage {
 
 const WIDTHS: Record<string, ImageWidth> = { '25': 25, '50': 50, '75': 75 }
 
-const MarkdownImage = proseComponents.img ?? 'img'
-
 function withImages(images: ChangelogImage[]): Components {
     const byName = new Map(images.map(image => [image.name, image]))
     return {
@@ -90,7 +88,7 @@ function withImages(images: ChangelogImage[]): Components {
         img: ({ node: _node, ...props }) => {
             const attrs = props as Record<string, unknown>
             const name = attrs['data-image']
-            if (typeof name !== 'string') return <MarkdownImage {...props} />
+            if (typeof name !== 'string') return <MarkdownImage src={props.src} alt={props.alt} />
             const image = byName.get(name)
             if (!image) return null
             const placement = (attrs['data-placement'] as ImagePlacement | undefined) ?? 'center'
@@ -103,7 +101,7 @@ function withImages(images: ChangelogImage[]): Components {
 export default function ChangelogBody({ body, images = [] }: { body: string; images?: ChangelogImage[] }) {
     const { source, toggles } = prepareChangelog(body)
     return (
-        <div className="flow-root text-sm leading-relaxed text-foreground">
+        <div className="flow-root text-sm leading-relaxed text-foreground">/
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks, [remarkChangelog, { toggles }]]}
                 rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}

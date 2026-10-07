@@ -1,5 +1,9 @@
 import type { Components } from 'react-markdown'
 
+export function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
+    return <img src={typeof src === 'string' ? src : ''} alt={alt ?? ''} className="my-6 rounded-sm border border-border max-w-full" />
+}
+
 export const proseComponents: Components = {
     h1: ({ children }) => <h1 className="clear-both text-2xl font-semibold tracking-tight text-foreground mt-10 mb-3">{children}</h1>,
     h2: ({ children }) => <h2 className="clear-both text-xl font-semibold tracking-tight text-foreground mt-9 mb-3">{children}</h2>,
@@ -23,7 +27,5 @@ export const proseComponents: Components = {
         <pre className="clear-both my-6 overflow-x-auto rounded-sm border border-border bg-muted/50 p-4 text-sm font-mono leading-relaxed">{children}</pre>
     ),
     hr: () => <hr className="clear-both my-8 border-border" />,
-    img: ({ src, alt }) => (
-        <img src={typeof src === 'string' ? src : ''} alt={alt ?? ''} className="my-6 rounded-sm border border-border max-w-full" />
-    ),
+    img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
 }
