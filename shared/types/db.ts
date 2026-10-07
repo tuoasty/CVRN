@@ -16,6 +16,12 @@ export type Article =
 export type ArticleMedia =
     Database["public"]["Tables"]["article_media"]["Row"];
 
+export type UpdateLog =
+    Database["public"]["Tables"]["update_logs"]["Row"];
+
+export type UpdateLogImage =
+    Database["public"]["Tables"]["update_log_images"]["Row"];
+
 export type Region =
     Database["public"]["Tables"]["regions"]["Row"];
 

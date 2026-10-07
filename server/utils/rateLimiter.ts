@@ -75,6 +75,27 @@ export function checkUploadRateLimit(userId: string, role: string): {
     };
 }
 
+const UPDATE_LOG_IMAGES_PER_HOUR = 30;
+const updateLogImageUploads = new Map<string, RateLimitEntry>();
+
+export function takeUpdateLogImageUpload(userId: string, role: string): { allowed: boolean; resetAt?: number } {
+    if (role === 'super_admin') return { allowed: true };
+
+    const now = Date.now();
+    const entry = updateLogImageUploads.get(userId);
+    if (!entry || now - entry.windowStart > RATE_LIMITS.WINDOW_MS) {
+        updateLogImageUploads.set(userId, { count: 1, windowStart: now });
+        return { allowed: true };
+    }
+    if (entry.count >= UPDATE_LOG_IMAGES_PER_HOUR) {
+        const resetAt = entry.windowStart + RATE_LIMITS.WINDOW_MS;
+        logger.warn({ userId, count: entry.count, resetAt }, "Update log image upload limit exceeded");
+        return { allowed: false, resetAt };
+    }
+    entry.count++;
+    return { allowed: true };
+}
+
 export function incrementUploadCount(userId: string): void {
     const now = Date.now();
     const entry = uploadLimits.get(userId);

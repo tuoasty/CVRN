@@ -6,22 +6,25 @@ import {Toaster} from "@/app/components/ui/sonner";
 import Script from "next/script";
 import {SWRProvider} from "@/app/providers/SWRProvider";
 import NextTopLoader from "nextjs-toploader";
-
-const siteUrl = process.env.SITE_URL ?? "https://cvrn.net";
+import { SITE_URL } from "@/app/lib/siteUrl";
 
 export const metadata: Metadata = {
-    metadataBase: new URL(siteUrl),
-    title: "CVR Network – Matches, Teams, and League Info",
+    metadataBase: new URL(SITE_URL),
+    title: {
+        default: "CVRN: CVR Network, the Roblox Volleyball League",
+        template: "%s · CVRN",
+    },
     description:
-        "The official CVR Network. View league standings, match schedules, teams, and playoff brackets for the CVRN Volleyball League.",
+        "CVRN (CVR Network) is the Confederate Volleyball Roblox Network. Standings, match results, teams, playoff brackets and player stats for the CVR Roblox volleyball league.",
+    applicationName: "CVRN",
     openGraph: {
         title: "CVR Network",
         description: "The official CVR Network. View league information, matches, teams, and more.",
-        url: siteUrl,
+        url: SITE_URL,
         siteName: "Confederate Volleyball Roblox Network",
         images: [
             {
-                url: `${siteUrl}/hero-banner-embed.png`,
+                url: `${SITE_URL}/hero-banner-embed.png`,
                 width: 1200,
                 height: 630,
                 alt: "CVRN - The official CVR Network",
@@ -35,7 +38,7 @@ export const metadata: Metadata = {
         title: "CVR Network",
         description:
             "The official CVR Network. View league standings, match schedules, teams, and playoff brackets for the CVRN Volleyball League.",
-        images: [`${siteUrl}/hero-banner.png`],
+        images: [`${SITE_URL}/hero-banner.png`],
     },
 };
 
@@ -77,6 +80,7 @@ export default function RootLayout({
                 height={3}
                 showSpinner={false}
                 shadow={false}
+                showForHashAnchor={false}
             />
             <SWRProvider>
             {children}

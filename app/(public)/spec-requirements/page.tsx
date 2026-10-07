@@ -7,7 +7,7 @@ import PlacementBonuses from "./PlacementBonuses";
 import SpecRequirementCard from "./SpecRequirementCard";
 
 export const metadata: Metadata = {
-    title: "Spec Requirements · CVRN",
+    title: "Spec Requirements",
     description: "What it takes to qualify for each spec, by position.",
 };
 

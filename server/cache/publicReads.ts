@@ -49,11 +49,13 @@ import {
     getWeekMatchCounts,
     getPlayoffMatchesBySeason,
     getTeamMatches,
+    getMatchSitemapRows,
 } from "@/server/domains/match";
 import type {MatchWithDetails} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
+import {getPublishedUpdateLogIndex, getPublishedUpdateLog} from "@/server/domains/updateLog";
 import {getPublicSpecSnapshot, getPublishedSpecRegions} from "@/server/domains/spec";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS, RAW_STATS_REVALIDATE_SECONDS} from "./tags";
@@ -366,6 +368,19 @@ export const getCachedArticleBySlug = unstable_cache(
     {tags: [CACHE_TAGS.articles, CACHE_TAGS.media, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
+export const getCachedUpdateLogIndex = unstable_cache(
+    async () => unwrap(await getPublishedUpdateLogIndex(createPublicClient()), "getCachedUpdateLogIndex"),
+    ["public:update-log-index"],
+    {tags: [CACHE_TAGS.updateLogs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedUpdateLogByVersion = unstable_cache(
+    async (version: string) =>
+        unwrap(await getPublishedUpdateLog(createPublicClient(), version), "getCachedUpdateLogByVersion"),
+    ["public:update-log-by-version"],
+    {tags: [CACHE_TAGS.updateLogs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
 export const getCachedTeamNameHistory = unstable_cache(
     async (teamId: string) =>
         unwrap(await getTeamNameHistory(createPublicClient(), teamId), "getCachedTeamNameHistory"),
@@ -438,6 +453,12 @@ export const getCachedPlayoffMatches = unstable_cache(
         ),
     ["public:playoff-matches"],
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedMatchSitemapRows = unstable_cache(
+    async () => unwrap(await getMatchSitemapRows(createPublicClient()), "getCachedMatchSitemapRows"),
+    ["public:match-sitemap-rows"],
+    {tags: [CACHE_TAGS.matches], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedWeekMatchCounts = unstable_cache(

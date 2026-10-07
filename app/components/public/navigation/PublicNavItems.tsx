@@ -14,6 +14,7 @@ const NAV_PAGES = [
     { page: "players", label: "Players" },
     { page: "leaderboard", label: "Leaderboard" },
     { page: "spec-requirements", label: "Specs" },
+    { page: "updates", label: "Updates" },
     { page: "media", label: "Media" },
     { page: "archive", label: "Archive" },
 ];
@@ -22,7 +23,16 @@ const GLOBAL_HREFS: Record<string, string> = {
     archive: "/archive",
     players: "/players",
     "spec-requirements": "/spec-requirements",
+    updates: "/updates",
 };
+
+const EXTRA_ACTIVE_PATHS: Record<string, string[]> = {
+    media: ["/articles"],
+};
+
+function isUnder(pathname: string, path: string): boolean {
+    return pathname === path || pathname.startsWith(`${path}/`);
+}
 
 interface PublicNavItemsProps {
     layout?: "horizontal" | "vertical";
@@ -71,16 +81,11 @@ export default function PublicNavItems({
                             ? "/select"
                             : `/select?next=${item.page}`;
                 const base = `/${params.region}/${params.season}`;
-                const isActive = item.page === "players"
-
-                    ? pathname.startsWith("/players")
-                    : globalHref
-                        ? pathname === globalHref
-                        : hasContext
-                            ? item.page === "home"
-                                ? pathname === base
-                                : pathname.startsWith(`${base}/${item.page}`)
-                            : pathname === `/${item.page}`;
+                const isActive = item.page === "home"
+                    ? pathname === (hasContext ? base : "/home")
+                    : isUnder(pathname, globalHref ?? `/${item.page}`)
+                        || (hasContext && isUnder(pathname, `${base}/${item.page}`))
+                        || (EXTRA_ACTIVE_PATHS[item.page] ?? []).some(path => isUnder(pathname, path));
                 return (
                     <Link
                         key={item.page}

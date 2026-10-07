@@ -9,17 +9,17 @@ colors:
   destructive-red: "#EF4444"
   success-green: "#42B87C"
   success-green-ink: "#FFFFFF"
-  page-light: "#FAFAFA"
+  page-light: "#F4F4F4"
   page-dark: "#0A0A0A"
   surface-light: "#FFFFFF"
   surface-dark: "#141414"
-  ink-light: "#0F0F0F"
+  ink-light: "#1C1C1C"
   ink-dark: "#F5F5F5"
-  recessed-light: "#F5F5F5"
+  recessed-light: "#EEEEEE"
   recessed-dark: "#1F1F1F"
-  quiet-ink-light: "#666666"
+  quiet-ink-light: "#5E5E5E"
   quiet-ink-dark: "#999999"
-  rule-light: "#E5E5E5"
+  rule-light: "#D9D9D9"
   rule-dark: "#2B2B2B"
 typography:
   headline:
@@ -172,12 +172,12 @@ A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber ac
 - **Destructive Red** (`#EF4444`, `hsl(0 84% 60%)`): Irreversible actions and error surfaces only. Voiding a match, deleting a team, a failed sync row. Never a warning, never an accent.
 
 ### Neutral
-- **Page** (`#FAFAFA` light / `#0E0E10` dark): The body field. Deliberately not pure white and not pure black.
+- **Page** (`#F4F4F4` light / `#0E0E10` dark): The body field. Deliberately not pure white and not pure black. In light mode it sits a clear step below the white Surface so panels separate from the page and the white anchors the eye (2026-10-07: was `#FAFAFA`, which left page and panels reading as one glaring sheet).
 - **Surface** (`#FFFFFF` light / `#161618` dark): Panels and elevated content sitting on the page field. The step between page and surface is the primary depth mechanism in this system.
-- **Recessed** (`#F4F4F5` light / `#27272A` dark): Table header bands, hover fills (used at `/30` opacity), zebra striping (`/20`), disabled fills. The layer *below* the surface.
-- **Ink** (`#0F0F10` light / `#F4F4F5` dark): All primary text and data values.
-- **Quiet Ink** (`#71717A` light / `#A1A1AA` dark): Column labels, metadata, secondary values, placeholder text. Never body copy at small sizes.
-- **Rule** (`#E4E4E7` light / `#27272A` dark): Every border, divider, and table line. Frequently used at `/30` opacity for internal column groupings inside dense tables.
+- **Recessed** (`#EEEEEE` light / `#27272A` dark): Table header bands, hover fills (used at `/30` opacity), zebra striping (`/20`), disabled fills. The layer *below* the surface.
+- **Ink** (`#1C1C1C` light / `#F4F4F5` dark): All primary text and data values.
+- **Quiet Ink** (`#5E5E5E` light / `#A1A1AA` dark): Column labels, metadata, secondary values, placeholder text. Never body copy at small sizes.
+- **Rule** (`#D9D9D9` light / `#27272A` dark): Every border, divider, and table line. Frequently used at `/30` opacity for internal column groupings inside dense tables.
 
 ### Named Rules
 
@@ -186,6 +186,8 @@ A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber ac
 **The No-Third-Accent Rule.** Anything that is not an action, a location, or a destructive operation is drawn from the neutral ramp. New categorical colors are prohibited. If a data category needs distinguishing, use position, weight, or rule lines before reaching for hue.
 
 **The Coordinated-Palette Rule.** The palette is a deliberate move off the stock shadcn defaults: a true-neutral (hue-agnostic) black/gray ramp — not Tailwind zinc — under a cobalt action accent (`#2D55E6`), a broadcast-amber location accent (`#E8992C`), and a green success token (`#42B87C`) for win/synced state. The neutrals carry no hue tint. Any future accent change must move *all* of them together — a single re-tinted primary against the others reads as a half-finished theme.
+
+**Exception: update-log change markers.** Inside an update log body, color marks the kind of change and nothing else: green ▲ buff (Success), red ▼ nerf (Destructive), a yellow `~` rework glyph (Location Yellow), and a plain-text `NEW` label in Action Blue (blue as state: "new in this version"). Each is a glyph or a single word, never a fill, and each is also carried by its shape or its word. Headings in update logs stay neutral; this exception does not extend to section, category, or feature titles.
 
 ## 3. Typography
 
@@ -211,6 +213,8 @@ A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber ac
 **The Fixed Scale Rule.** No `clamp()`, no viewport-relative type, anywhere. Users read this at a consistent desktop DPI, and a heading that shrinks inside a three-column shell looks broken rather than responsive.
 
 **The Small-Type Floor.** `0.75rem` is the floor for any text a user must read, and text at that size must sit in Ink or Quiet Ink on Surface — never Quiet Ink at reduced opacity. Below 12px, stat tables stop being dense and start being unreadable, which is the difference between this system and the spreadsheet it replaces.
+
+**Exception: update-log sections.** In an update log body, `#` sections are `2.25rem` (36px) semibold with `-0.03em` tracking, larger than the page's own 24px version title. A patch note is read by section, so sections carry the weight and the version header acts as a label. Below them, `##` categories are Label style (12px uppercase, Quiet Ink) acting as helpers, and `###` features are `1.125rem` semibold Ink. This is the only type step above Headline in the product.
 
 ## 4. Elevation
 

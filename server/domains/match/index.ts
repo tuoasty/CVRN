@@ -1,4 +1,5 @@
 export {getAllMatches} from "./queries/getAllMatches";
+export {getMatchSitemapRows} from "./queries/getMatchSitemapRows";
 export {getAvailableTeamsForWeek} from "./queries/getAvailableTeamsForWeek";
 export {getMatchesForWeek} from "./queries/getMatchesForWeek";
 export {getMatchSets} from "./queries/getMatchSets";
@@ -41,6 +42,7 @@ export type {
     MatchWithDetails,
     RawMatchOfficial,
     MatchWithDetailsRow,
+    MatchSitemapRow,
 } from "./types";
 export {
     CreateMatchSchema,

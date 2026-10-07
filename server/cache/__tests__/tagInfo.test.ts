@@ -1,7 +1,7 @@
 import {describe, it, expect} from "vitest";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
-import {ALL_CACHE_TAGS} from "../tags";
+import {ALL_CACHE_TAGS, CACHE_TAGS} from "../tags";
 import {CACHE_TAG_INFO, CACHE_TAG_ORDER} from "../tagInfo";
 
 function deriveReadCounts(): Record<string, number> {
@@ -20,7 +20,9 @@ function deriveReadCounts(): Record<string, number> {
 
         expect(tagsBlock, `${name} is registered with no cache tags`).toBeTruthy();
         reads++;
-        for (const [, tag] of tagsBlock![1].matchAll(/CACHE_TAGS\.(\w+)/g)) {
+        for (const [, key] of tagsBlock![1].matchAll(/CACHE_TAGS\.(\w+)/g)) {
+            const tag = CACHE_TAGS[key as keyof typeof CACHE_TAGS];
+            expect(tag, `${name} uses unknown CACHE_TAGS.${key}`).toBeDefined();
             counts[tag] = (counts[tag] ?? 0) + 1;
         }
     }
