@@ -69,3 +69,25 @@ export async function deleteUpdateLogById(supabase: DBClient, id: string): Promi
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok(null)
 }
+
+export async function findPublishedUpdateLogIndex(supabase: DBClient): Promise<Result<Pick<UpdateLog, 'version' | 'title' | 'released_at'>[]>> {
+    const { data, error } = await supabase
+        .from('update_logs')
+        .select('version, title, released_at')
+        .not('published_at', 'is', null)
+        .order('released_at', { ascending: false })
+        .order('created_at', { ascending: false })
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data ?? [])
+}
+
+export async function findPublishedUpdateLogByVersion(supabase: DBClient, version: string): Promise<Result<UpdateLog | null>> {
+    const { data, error } = await supabase
+        .from('update_logs')
+        .select('*')
+        .eq('version', version)
+        .not('published_at', 'is', null)
+        .maybeSingle()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as UpdateLog | null)
+}

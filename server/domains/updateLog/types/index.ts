@@ -28,6 +28,19 @@ export interface UpdateLogAdminDetail extends UpdateLogListItem {
     body: string
 }
 
+export interface UpdateLogIndexEntry {
+    version: string
+    title: string | null
+    released_at: string
+}
+
+export interface UpdateLogPublic {
+    version: string
+    title: string | null
+    body: string
+    released_at: string
+}
+
 export interface CreateUpdateLogInput {
     version: string
     title: string | null

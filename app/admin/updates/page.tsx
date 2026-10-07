@@ -10,18 +10,13 @@ import { useAdminUpdateLogs, mutateUpdateLogs } from '@/app/hooks/useUpdateLogs'
 import { deleteUpdateLogAction, setUpdateLogPublishedAction } from '@/app/actions/updateLog.actions'
 import type { UpdateLogListItem } from '@/server/domains/updateLog'
 import { toast } from '@/app/utils/toast'
+import { formatReleased } from '@/app/features/updates/formatReleased'
 import { cn } from '@/lib/utils'
 
 type FilterType = 'all' | 'published' | 'draft'
 const FILTER_OPTIONS: FilterType[] = ['all', 'published', 'draft']
 
 type Pending = { kind: 'delete' | 'unpublish'; log: UpdateLogListItem } | null
-
-function formatReleased(date: string): string {
-    return new Date(`${date}T00:00:00Z`).toLocaleDateString(undefined, {
-        timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric',
-    })
-}
 
 export default function AdminUpdatesPage() {
     const { logs, isLoading } = useAdminUpdateLogs()

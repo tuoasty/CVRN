@@ -18,26 +18,26 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Matches",
         description:
             "Match lists, schedules, match detail pages, box scores, standings and playoff rounds. Widest blast radius.",
-        readCount: 12,
+        readCount: 15,
         affects: "Matches, match detail, standings, playoffs, home",
     },
     [CACHE_TAGS.playoffs]: {
         label: "Playoffs",
         description: "Playoff bracket structure, rounds and advancement.",
-        readCount: 5,
+        readCount: 6,
         affects: "Playoffs page, matches playoff tab",
     },
     [CACHE_TAGS.teams]: {
         label: "Teams",
         description: "Team pages, logos, and rosters.",
-        readCount: 11,
+        readCount: 13,
         affects: "Teams, team detail, matches, match detail, archive, home",
     },
     [CACHE_TAGS.players]: {
         label: "Players",
         description:
             "Player profiles, avatars, and rosters. Also backs the identity (names, avatars, team logos) joined onto both leaderboards.",
-        readCount: 8,
+        readCount: 11,
         affects: "Players, player detail, teams, match detail, archive, leaderboards",
     },
     [CACHE_TAGS.seasons]: {
@@ -55,26 +55,26 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     [CACHE_TAGS.media]: {
         label: "Media",
         description: "Media posts, including the GFX and VOD attached to a match.",
-        readCount: 2,
+        readCount: 6,
         affects: "Media page, home sidebar, match detail",
     },
     [CACHE_TAGS.articles]: {
         label: "Articles",
         description: "News articles and their cover posts.",
-        readCount: 1,
+        readCount: 2,
         affects: "Media page articles tab, article detail, home",
     },
     [CACHE_TAGS.updateLogs]: {
         label: "Update Logs",
         description: "Published game update logs and the version list used for prev/next and the switcher.",
-        readCount: 0,
+        readCount: 2,
         affects: "Updates pages",
     },
     [CACHE_TAGS.stats]: {
         label: "Stats",
         description:
             "Player box-score numbers behind both leaderboards. Held for 30 days and purged only by a stats sync, so this is the tag to press after uploading match sheets.",
-        readCount: 2,
+        readCount: 3,
         affects: "Season leaderboard, all-time leaderboard, spec calibration",
     },
     [CACHE_TAGS.specs]: {
@@ -88,7 +88,7 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Raw Stats",
         description:
             "Raw (unpublished) per-player box-score totals and percentile ranks read directly off player_match_stats, independent of the Publish gate on the Stats tag. Held for 15 minutes.",
-        readCount: 2,
+        readCount: 3,
         affects: "Player detail API, stats summary API",
     },
 };

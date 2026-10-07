@@ -21,6 +21,7 @@ import type { UpdateLogAdminDetail } from '@/server/domains/updateLog'
 import { toast } from '@/app/utils/toast'
 import { applyEmphasisShortcut, emphasisKindForKey } from '@/app/utils/markdownEmphasis'
 import { indentLines } from '@/app/utils/markdownIndent'
+import { headingLevelForKey, setHeading } from '@/app/utils/markdownHeading'
 import { applyTextareaEdit } from '@/app/utils/textareaEdit'
 import { cn } from '@/lib/utils'
 
@@ -90,6 +91,14 @@ export default function UpdateLogEditor({ initial }: Props) {
             return
         }
         tabReleased.current = false
+
+        const level = headingLevelForKey(e)
+        if (level) {
+            e.preventDefault()
+            const el = e.currentTarget
+            applyTextareaEdit(el, setHeading(el.value, el.selectionStart, el.selectionEnd, level), v => set('body', v))
+            return
+        }
 
         const kind = emphasisKindForKey(e)
         if (!kind) return
@@ -254,10 +263,11 @@ export default function UpdateLogEditor({ initial }: Props) {
                     />
                     <p className="text-xs text-muted-foreground">
                         Text before the first <code className="font-mono">#</code> is the overview.{' '}
-                        <code className="font-mono"># Section</code>, <code className="font-mono">## Group</code>,{' '}
-                        <code className="font-mono">### Feature</code> (collapsed by default).
+                        <code className="font-mono"># Section</code>, <code className="font-mono">## Category</code>,{' '}
+                        <code className="font-mono">### Feature</code>. Start a line with <code className="font-mono">&gt;</code> to make it
+                        collapsible, for example <code className="font-mono">&gt; ### Feature</code>. It ends at the first empty line.
                         Mark balance lines with <code className="font-mono">- [buff]</code> or <code className="font-mono">- [nerf]</code>.
-                        Ctrl+B bold, Ctrl+I italic, Tab / Shift+Tab to nest list items (Esc then Tab to leave the box).
+                        Ctrl+Alt+1/2/3 headings, Ctrl+B bold, Ctrl+I italic, Tab / Shift+Tab to nest list items (Esc then Tab to leave the box).
                     </p>
                 </div>
 
