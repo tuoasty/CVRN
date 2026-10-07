@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
@@ -19,6 +19,9 @@ import {
 import { mutateUpdateLogs } from '@/app/hooks/useUpdateLogs'
 import type { UpdateLogAdminDetail } from '@/server/domains/updateLog'
 import { toast } from '@/app/utils/toast'
+import { applyEmphasisShortcut, emphasisKindForKey } from '@/app/utils/markdownEmphasis'
+import { indentLines } from '@/app/utils/markdownIndent'
+import { applyTextareaEdit } from '@/app/utils/textareaEdit'
 import { cn } from '@/lib/utils'
 
 interface Fields {
@@ -55,6 +58,7 @@ export default function UpdateLogEditor({ initial }: Props) {
     const [saving, setSaving] = useState(false)
     const [publishing, setPublishing] = useState(false)
     const [pending, setPending] = useState<Pending>(null)
+    const tabReleased = useRef(false)
 
     const dirty = useMemo(() => !sameFields(draft, baseline), [draft, baseline])
     const isPublished = !!log?.published_at
@@ -64,6 +68,33 @@ export default function UpdateLogEditor({ initial }: Props) {
 
     function set<K extends keyof Fields>(key: K, value: Fields[K]) {
         setDraft(d => ({ ...d, [key]: value }))
+    }
+
+    function handleBodyKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+        if (e.nativeEvent.isComposing) return
+        if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return
+
+        if (e.key === 'Escape') {
+            tabReleased.current = true
+            return
+        }
+        if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (tabReleased.current) {
+                tabReleased.current = false
+                return
+            }
+            e.preventDefault()
+            const el = e.currentTarget
+            const edit = indentLines(el.value, el.selectionStart, el.selectionEnd, e.shiftKey ? 'out' : 'in')
+            if (edit) applyTextareaEdit(el, edit, v => set('body', v))
+            return
+        }
+        tabReleased.current = false
+
+        const kind = emphasisKindForKey(e)
+        if (!kind) return
+        e.preventDefault()
+        applyEmphasisShortcut(e.currentTarget, kind, v => set('body', v))
     }
 
     async function handleSave() {
@@ -217,6 +248,7 @@ export default function UpdateLogEditor({ initial }: Props) {
                         id="update-body"
                         value={draft.body}
                         onChange={e => set('body', e.target.value)}
+                        onKeyDown={handleBodyKeyDown}
                         className="flex-1 min-h-[55vh] w-full resize-y rounded-sm border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         placeholder="Paste the patch notes here."
                     />
@@ -225,6 +257,7 @@ export default function UpdateLogEditor({ initial }: Props) {
                         <code className="font-mono"># Section</code>, <code className="font-mono">## Group</code>,{' '}
                         <code className="font-mono">### Feature</code> (collapsed by default).
                         Mark balance lines with <code className="font-mono">- [buff]</code> or <code className="font-mono">- [nerf]</code>.
+                        Ctrl+B bold, Ctrl+I italic, Tab / Shift+Tab to nest list items (Esc then Tab to leave the box).
                     </p>
                 </div>
 
