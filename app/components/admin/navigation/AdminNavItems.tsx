@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -9,7 +10,6 @@ import {
     DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const ACTIVE_UNDERLINE = "text-foreground font-semibold underline decoration-2 underline-offset-[6px]";
@@ -25,6 +25,7 @@ const FLAT_ITEMS: NavItem[] = [
     { href: "/admin/matches",   label: "Matches" },
     { href: "/admin/media",     label: "Media" },
     { href: "/admin/articles",  label: "Articles" },
+    { href: "/admin/updates",   label: "Updates" },
 ];
 
 const DROPDOWN_GROUPS: { label: string; items: NavItem[] }[] = [
@@ -68,7 +69,6 @@ export default function AdminNavItems({
     onNavigate,
 }: AdminNavItemsProps) {
     const pathname = usePathname();
-    const router = useRouter();
 
     const allowed = userRole ? ALLOWED_HREFS[userRole] : undefined;
     const isSuperAdmin = userRole === "super_admin";
@@ -84,11 +84,6 @@ export default function AdminNavItems({
         items: group.items.filter(canSee),
     })).filter(group => group.items.length > 0);
 
-    function navigate(href: string) {
-        router.push(href);
-        onNavigate?.();
-    }
-
     const allVisibleItems = [
         ...visibleFlatItems,
         ...visibleDropdownGroups.flatMap(g => g.items),
@@ -100,12 +95,12 @@ export default function AdminNavItems({
                 {allVisibleItems.map((item) => (
                     <Button
                         key={item.href}
+                        asChild
                         variant="ghost"
                         size="sm"
                         className={cn("w-full justify-start rounded-sm text-sm", pathname === item.href ? ACTIVE_FILL : INACTIVE)}
-                        onClick={() => navigate(item.href)}
                     >
-                        {item.label}
+                        <Link href={item.href} onClick={onNavigate}>{item.label}</Link>
                     </Button>
                 ))}
             </nav>
@@ -117,12 +112,12 @@ export default function AdminNavItems({
             {visibleFlatItems.map((item) => (
                 <Button
                     key={item.href}
+                    asChild
                     variant="ghost"
                     size="sm"
                     className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : cn(INACTIVE, HOVER_UNDERLINE))}
-                    onClick={() => navigate(item.href)}
                 >
-                    {item.label}
+                    <Link href={item.href}>{item.label}</Link>
                 </Button>
             ))}
 
@@ -134,12 +129,12 @@ export default function AdminNavItems({
                     return (
                         <Button
                             key={item.href}
+                            asChild
                             variant="ghost"
                             size="sm"
                             className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : cn(INACTIVE, HOVER_UNDERLINE))}
-                            onClick={() => navigate(item.href)}
                         >
-                            {item.label}
+                            <Link href={item.href}>{item.label}</Link>
                         </Button>
                     );
                 }
@@ -160,10 +155,10 @@ export default function AdminNavItems({
                             {group.items.map((item) => (
                                 <DropdownMenuItem
                                     key={item.href}
+                                    asChild
                                     className={cn("rounded-sm cursor-pointer", pathname === item.href && ACTIVE_FILL)}
-                                    onClick={() => navigate(item.href)}
                                 >
-                                    {item.label}
+                                    <Link href={item.href}>{item.label}</Link>
                                 </DropdownMenuItem>
                             ))}
                         </DropdownMenuContent>

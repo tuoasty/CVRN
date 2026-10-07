@@ -64,6 +64,12 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         readCount: 1,
         affects: "Media page articles tab, article detail, home",
     },
+    [CACHE_TAGS.updateLogs]: {
+        label: "Update Logs",
+        description: "Published game update logs and the version list used for prev/next and the switcher.",
+        readCount: 0,
+        affects: "Updates pages",
+    },
     [CACHE_TAGS.stats]: {
         label: "Stats",
         description:
@@ -98,6 +104,7 @@ export const CACHE_TAG_ORDER: CacheTag[] = [
     CACHE_TAGS.regions,
     CACHE_TAGS.media,
     CACHE_TAGS.articles,
+    CACHE_TAGS.updateLogs,
     CACHE_TAGS.specs,
     CACHE_TAGS.rawStats,
 ];

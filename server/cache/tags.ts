@@ -9,6 +9,7 @@ export const CACHE_TAGS = {
     playoffs: "playoffs",
     media: "media",
     articles: "articles",
+    updateLogs: "update-logs",
     stats: "stats",
     specs: "specs",
     rawStats: "raw-stats",

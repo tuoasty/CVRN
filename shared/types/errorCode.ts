@@ -9,4 +9,5 @@ export type ErrorCode =
     | "UNKNOWN"
     | "MEDIA_PIN_LIMIT_EXCEEDED"
     | "MEDIA_MATCH_SLOT_TAKEN"
-    | "INVITE_EXPIRED";
+    | "INVITE_EXPIRED"
+    | "UPDATE_LOG_VERSION_TAKEN";

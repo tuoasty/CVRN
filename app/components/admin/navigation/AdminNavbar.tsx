@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Menu, Users } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -20,7 +20,6 @@ import AdminRegionSeasonSelector from "@/app/components/admin/navigation/AdminRe
 
 export default function AdminNavbar({ userRole }: { userRole: string | null }) {
     const pathname = usePathname();
-    const router = useRouter();
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
@@ -56,12 +55,12 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
                         <LogoutButton />
                         <div className="h-6 w-px bg-border" />
                         <Button
+                            asChild
                             variant="ghost"
                             size="sm"
                             className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm"
-                            onClick={() => router.push("/")}
                         >
-                            <Users className="h-4 w-4" />
+                            <Link href="/" aria-label="Go to public site"><Users className="h-4 w-4" /></Link>
                         </Button>
                     </div>
                 </div>
@@ -76,13 +75,12 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
 
                     <div className="flex items-center gap-2">
                         <Button
+                            asChild
                             variant="ghost"
                             size="sm"
                             className="h-10 w-10 p-0 rounded-sm"
-                            aria-label="Go to public site"
-                            onClick={() => router.push("/")}
                         >
-                            <Users className="h-4 w-4" />
+                            <Link href="/" aria-label="Go to public site"><Users className="h-4 w-4" /></Link>
                         </Button>
                         <Sheet open={open} onOpenChange={setOpen}>
                             <SheetTrigger asChild>
