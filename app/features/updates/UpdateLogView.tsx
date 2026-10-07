@@ -6,6 +6,7 @@ import ChangelogBody from './changelog/ChangelogBody'
 import { extractToc } from './changelog/extractToc'
 import { OVERVIEW_ID } from './changelog/tocNavigation'
 import ChangelogLayout from './ChangelogLayout'
+import VersionRail from './VersionRail'
 import VersionSwitcher from './VersionSwitcher'
 import { formatReleased } from './formatReleased'
 
@@ -14,12 +15,12 @@ function PagerLink({ entry, direction }: { entry: UpdateLogIndexEntry; direction
     return (
         <Link
             href={`/updates/${encodeURIComponent(entry.version)}`}
-            className={`group flex min-w-0 flex-col gap-1 p-4 transition-colors hover:bg-muted/40 ${newer ? 'items-end text-right' : ''}`}
+            className={`group flex min-w-0 max-w-[48%] flex-col gap-1 ${newer ? '' : 'ml-auto items-end text-right'}`}
         >
-            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {!newer && <ArrowLeft className="h-3.5 w-3.5" />}
+            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
+                {newer && <ArrowLeft className="h-3.5 w-3.5" />}
                 {newer ? 'Newer' : 'Older'}
-                {newer && <ArrowRight className="h-3.5 w-3.5" />}
+                {!newer && <ArrowRight className="h-3.5 w-3.5" />}
             </span>
             <span className="max-w-full truncate text-sm font-medium text-foreground group-hover:text-primary">
                 <span className="font-mono">{entry.version}</span>
@@ -49,15 +50,21 @@ export default function UpdateLogView({ log, index }: { log: UpdateLogPublic; in
     )
 
     const footer = (older || newer) ? (
-        <nav aria-label="Other versions" className="panel mt-12 grid grid-cols-2 divide-x divide-border">
-            {older ? <PagerLink entry={older} direction="older" /> : <span />}
-            {newer ? <PagerLink entry={newer} direction="newer" /> : <span />}
+        <nav aria-label="Other versions" className="mt-12 flex items-start gap-6 border-t border-border pt-6">
+            {newer && <PagerLink entry={newer} direction="newer" />}
+            {older && <PagerLink entry={older} direction="older" />}
         </nav>
     ) : null
 
     return (
         <div className="mx-auto max-w-[1400px] px-7 pb-20 pt-6">
-            <ChangelogLayout key={log.version} toc={toc} header={header} footer={footer}>
+            <ChangelogLayout
+                key={log.version}
+                toc={toc}
+                header={header}
+                footer={footer}
+                rail={index.length > 1 ? <VersionRail index={index} current={log.version} newer={newer} older={older} /> : null}
+            >
                 <article id={toc.overview ? OVERVIEW_ID : undefined} className="scroll-mt-24 pt-6">
                     <ChangelogBody body={log.body} />
                 </article>

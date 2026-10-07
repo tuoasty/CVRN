@@ -14,6 +14,7 @@ interface Props {
     toc: ChangelogToc
     header: ReactNode
     footer: ReactNode
+    rail?: ReactNode
     children: ReactNode
 }
 
@@ -43,7 +44,7 @@ function ExpandAllButton({ allOpen, onClick, className }: { allOpen: boolean; on
     )
 }
 
-export default function ChangelogLayout({ toc, header, footer, children }: Props) {
+export default function ChangelogLayout({ toc, header, footer, rail, children }: Props) {
     const contentRef = useRef<HTMLDivElement>(null)
     const barRef = useRef<HTMLDivElement>(null)
     const [navHeight, setNavHeight] = useState<number | null>(null)
@@ -157,7 +158,13 @@ export default function ChangelogLayout({ toc, header, footer, children }: Props
         go(id)
     }
 
-    if (!hasToc && !hasToggles) {
+    const hasNav = hasToc || hasToggles
+    const stickyStyle = navHeight !== null
+        ? { top: navHeight + 24, maxHeight: `calc(100vh - ${navHeight + 48}px)` }
+        : undefined
+    const stickyClass = 'sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-8'
+
+    if (!hasNav && !rail) {
         return (
             <div className="mx-auto max-w-3xl">
                 {header}
@@ -168,70 +175,77 @@ export default function ChangelogLayout({ toc, header, footer, children }: Props
     }
 
     return (
-        <div className="mx-auto max-w-3xl lg:grid lg:max-w-none lg:grid-cols-[minmax(13rem,1fr)_minmax(0,48rem)_minmax(0,1fr)] lg:gap-x-10">
-            <aside className="hidden w-[13rem] justify-self-end lg:block">
-                <div
-                    className="sticky top-24 max-h-[calc(100vh-7rem)] space-y-4 overflow-y-auto pb-8"
-                    style={navHeight !== null ? { top: navHeight + 24, maxHeight: `calc(100vh - ${navHeight + 48}px)` } : undefined}
-                >
-                    {hasToc && (
-                        <nav aria-label="On this page">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">On this page</p>
-                            <ul className="mt-3 border-l border-border">
-                                {entries.map(entry => {
-                                    const isActive = entry.id === active
-                                    return (
-                                        <li key={entry.id}>
-                                            <a
-                                                href={`#${entry.id}`}
-                                                onClick={e => onTocClick(e, entry.id)}
-                                                aria-current={isActive ? 'location' : undefined}
-                                                className={cn(
-                                                    '-ml-px block border-l-2 py-1 pr-2 text-sm transition-colors',
-                                                    entry.depth === 2 ? 'pl-6' : 'pl-3',
-                                                    isActive
-                                                        ? 'border-foreground font-semibold text-foreground'
-                                                        : 'border-transparent text-muted-foreground hover:text-foreground',
-                                                )}
-                                            >
-                                                {entry.text}
-                                            </a>
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-                        </nav>
-                    )}
-                    {hasToggles && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} className="-ml-2.5" />}
-                </div>
-            </aside>
+        <div className="mx-auto max-w-3xl lg:grid lg:max-w-none lg:grid-cols-[minmax(13rem,1fr)_minmax(0,48rem)_minmax(0,1fr)] lg:gap-x-10 xl:grid-cols-[minmax(13rem,1fr)_minmax(0,48rem)_minmax(13rem,1fr)]">
+            {hasNav && (
+                <aside className="hidden w-[13rem] justify-self-end lg:col-start-1 lg:row-start-1 lg:block">
+                    <div className={cn(stickyClass, 'space-y-4')} style={stickyStyle}>
+                        {hasToc && (
+                            <nav aria-label="On this page">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">On this page</p>
+                                <ul className="mt-3 border-l border-border">
+                                    {entries.map(entry => {
+                                        const isActive = entry.id === active
+                                        return (
+                                            <li key={entry.id}>
+                                                <a
+                                                    href={`#${entry.id}`}
+                                                    onClick={e => onTocClick(e, entry.id)}
+                                                    aria-current={isActive ? 'location' : undefined}
+                                                    className={cn(
+                                                        '-ml-px block border-l-2 py-1 pr-2 text-sm transition-colors',
+                                                        entry.depth === 2 ? 'pl-6' : 'pl-3',
+                                                        isActive
+                                                            ? 'border-foreground font-semibold text-foreground'
+                                                            : 'border-transparent text-muted-foreground hover:text-foreground',
+                                                    )}
+                                                >
+                                                    {entry.text}
+                                                </a>
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
+                            </nav>
+                        )}
+                        {hasToggles && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} className="-ml-2.5" />}
+                    </div>
+                </aside>
+            )}
 
-            <div className="min-w-0">
+            <div className="min-w-0 lg:col-start-2 lg:row-start-1">
                 {header}
-                <div
-                    ref={barRef}
-                    className="sticky z-40 -mx-7 flex items-center gap-2 border-b border-border bg-background px-7 py-2 lg:hidden"
-                    style={{ top: navHeight ?? 0 }}
-                >
-                    {hasToc && (
-                        <Select value={active ?? undefined} onValueChange={go}>
-                            <SelectTrigger aria-label="Jump to a section" className="h-9 min-w-0 flex-1 rounded-sm">
-                                <SelectValue placeholder="Jump to" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-sm">
-                                {entries.map(entry => (
-                                    <SelectItem key={entry.id} value={entry.id} className={cn('rounded-sm', entry.depth === 2 && 'pl-6')}>
-                                        {entry.text}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                    {hasToggles && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} className={cn(!hasToc && '-ml-2.5')} />}
-                </div>
+                {hasNav && (
+                    <div
+                        ref={barRef}
+                        className="sticky z-40 -mx-7 flex items-center gap-2 border-b border-border bg-background px-7 py-2 lg:hidden"
+                        style={{ top: navHeight ?? 0 }}
+                    >
+                        {hasToc && (
+                            <Select value={active ?? undefined} onValueChange={go}>
+                                <SelectTrigger aria-label="Jump to a section" className="h-9 min-w-0 flex-1 rounded-sm">
+                                    <SelectValue placeholder="Jump to" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-sm">
+                                    {entries.map(entry => (
+                                        <SelectItem key={entry.id} value={entry.id} className={cn('rounded-sm', entry.depth === 2 && 'pl-6')}>
+                                            {entry.text}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        {hasToggles && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} className={cn(!hasToc && '-ml-2.5')} />}
+                    </div>
+                )}
                 <div ref={contentRef}>{children}</div>
                 {footer}
             </div>
+
+            {rail && (
+                <aside className="hidden w-[13rem] justify-self-start xl:col-start-3 xl:row-start-1 xl:block">
+                    <div className={stickyClass} style={stickyStyle}>{rail}</div>
+                </aside>
+            )}
         </div>
     )
 }
