@@ -264,7 +264,7 @@ export default function UpdateLogEditor({ initial }: Props) {
                     <p className="text-xs text-muted-foreground">
                         Text before the first <code className="font-mono">#</code> is the overview.{' '}
                         <code className="font-mono"># Section</code>, <code className="font-mono">## Category</code>,{' '}
-                        <code className="font-mono">### Feature</code>. Start a line with <code className="font-mono">&gt;</code> to make it
+                        <code className="font-mono">### Feature</code>. Put <code className="font-mono">&gt;</code> at the very start of a heading line to make it
                         collapsible, for example <code className="font-mono">&gt; ### Feature</code>. It ends at the first empty line.
                         Start any line or heading with <code className="font-mono">[buff]</code> or <code className="font-mono">[nerf]</code> for a ▲/▼ marker.
                         Ctrl+Alt+1/2/3 headings, Ctrl+B bold, Ctrl+I italic, Tab / Shift+Tab to nest list items (Esc then Tab to leave the box).

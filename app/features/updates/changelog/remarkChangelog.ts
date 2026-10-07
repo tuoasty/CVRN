@@ -5,13 +5,76 @@ interface MdData {
     hProperties?: Record<string, unknown>
 }
 
+interface MdPoint {
+    line: number
+}
+
 interface MdNode {
     type: string
     depth?: number
     value?: string
+    ordered?: boolean | null
+    start?: number | null
+    spread?: boolean | null
     children?: MdNode[]
     data?: MdData
-    position?: { start: { line: number }; end: { line: number } }
+    position?: { start: MdPoint; end: MdPoint }
+}
+
+export interface ToggleRange {
+    start: number
+    end: number
+}
+
+const TOGGLE_START = /^>[ \t]*(?=#{1,6}(?:[ \t]|$))/
+const TITLE_HEADING_LINE = /^ {0,3}#{1,3}(?:[ \t]|$)/
+const FENCE = /^[ \t]*(`{3,}|~{3,})/
+
+function fencedLines(lines: string[]): boolean[] {
+    const fenced: boolean[] = []
+    let open: { char: string; size: number } | null = null
+    for (const line of lines) {
+        const m = FENCE.exec(line)
+        if (open) {
+            fenced.push(true)
+            if (m && m[1][0] === open.char && m[1].length >= open.size && line.slice(m[0].length).trim() === '') open = null
+            continue
+        }
+        if (m) open = { char: m[1][0], size: m[1].length }
+        fenced.push(!!m)
+    }
+    return fenced
+}
+
+export function prepareChangelog(body: string): { source: string; toggles: ToggleRange[] } {
+    const parts = body.split(/(\r\n|\r|\n)/)
+    const lines: string[] = []
+    const endings: string[] = []
+    for (let i = 0; i < parts.length; i += 2) {
+        lines.push(parts[i])
+        endings.push(parts[i + 1] ?? '')
+    }
+
+    const fenced = fencedLines(lines)
+    const isStart = lines.map((line, i) => !fenced[i] && TOGGLE_START.test(line))
+
+    const toggles: ToggleRange[] = []
+    for (let i = 0; i < lines.length; i++) {
+        if (!isStart[i]) continue
+        let end = i
+        while (end + 1 < lines.length) {
+            const j = end + 1
+            const stops = isStart[j] || lines[j].trim() === '' || TITLE_HEADING_LINE.test(lines[j])
+            if (!fenced[j] && stops) break
+            end = j
+        }
+        toggles.push({ start: i + 1, end: end + 1 })
+    }
+
+    const source = lines
+        .map((line, i) => (isStart[i] ? line.replace(TOGGLE_START, '') : line) + endings[i])
+        .join('')
+    return { source, toggles }
 }
 
 const DELTA_PREFIX = /^\s*\[(buff|nerf)\]\s*/i
@@ -95,91 +158,80 @@ function isTitleHeading(node: MdNode): boolean {
     return node.type === 'heading' && typeof node.depth === 'number' && node.depth <= 3
 }
 
-function splitParagraphTitle(paragraph: MdNode): { title: MdNode[]; rest: MdNode[] } {
-    const title: MdNode[] = []
-    const rest: MdNode[] = []
-    let inTitle = true
-    for (const child of paragraph.children ?? []) {
-        if (!inTitle) {
-            rest.push(child)
-            continue
-        }
-        if (child.type === 'break') {
-            inTitle = false
-            continue
-        }
-        const newline = child.type === 'text' ? (child.value ?? '').indexOf('\n') : -1
-        if (newline !== -1) {
-            const head = child.value!.slice(0, newline)
-            const tail = child.value!.slice(newline + 1)
-            if (head) title.push({ type: 'text', value: head })
-            if (tail) rest.push({ type: 'text', value: tail })
-            inTitle = false
-            continue
-        }
-        title.push(child)
+function startLine(node: MdNode): number | undefined {
+    return node.position?.start.line
+}
+
+function hasGap(items: MdNode[]): boolean {
+    return items.some((item, k) => {
+        if (k === 0) return false
+        const prevEnd = items[k - 1].position?.end.line
+        const start = startLine(item)
+        return prevEnd !== undefined && start !== undefined && start > prevEnd + 1
+    })
+}
+
+function splitList(list: MdNode, end: number): { inside: MdNode; outside: MdNode | null } {
+    const items = list.children ?? []
+    const inside = items.filter(item => (startLine(item) ?? 0) <= end)
+    const outside = items.slice(inside.length)
+    if (outside.length === 0) return { inside: list, outside: null }
+    return {
+        inside: { ...list, children: inside, spread: hasGap(inside) },
+        outside: {
+            ...list,
+            children: outside,
+            spread: hasGap(outside),
+            start: list.ordered ? (list.start ?? 1) + inside.length : list.start,
+            position: outside[0].position && list.position
+                ? { start: outside[0].position.start, end: list.position.end }
+                : undefined,
+        },
     }
-    return { title, rest }
 }
 
-function splitQuote(quote: MdNode): { heading: MdNode | null; title: MdNode[]; rest: MdNode[] } | null {
-    const [first, ...others] = quote.children ?? []
-    if (!first) return null
-    if (isTitleHeading(first)) return { heading: first, title: first.children ?? [], rest: others }
-    if (first.type !== 'paragraph') return null
-    const { title, rest } = splitParagraphTitle(first)
-    const restNodes = rest.length > 0 ? [{ type: 'paragraph', children: rest }, ...others] : others
-    return { heading: null, title, rest: restNodes }
-}
-
-function buildSections(root: MdNode, slug: (text: string) => string) {
-    const source = root.children ?? []
+function buildSections(root: MdNode, slug: (text: string) => string, toggleEnds: Map<number, number>) {
+    const queue = [...(root.children ?? [])]
     const out: MdNode[] = []
 
-    for (let i = 0; i < source.length; i++) {
-        const node = source[i]
+    while (queue.length > 0) {
+        const node = queue.shift()!
+        const line = startLine(node)
+        const end = node.type === 'heading' && line !== undefined ? toggleEnds.get(line) : undefined
 
-        if (isTitleHeading(node)) {
-            setProperties(node, { id: slug(textOf(node)) })
+        if (end === undefined) {
+            if (isTitleHeading(node)) setProperties(node, { id: slug(textOf(node)) })
             out.push(node)
             continue
         }
 
-        const split = node.type === 'blockquote' ? splitQuote(node) : null
-        if (!split) {
-            out.push(node)
-            continue
+        const id = slug(textOf(node))
+        const body: MdNode[] = []
+        while (queue.length > 0) {
+            const next = queue[0]
+            const nextLine = startLine(next)
+            if (nextLine === undefined || nextLine > end || isTitleHeading(next) || toggleEnds.has(nextLine)) break
+            if (next.type === 'list' && (next.position?.end.line ?? 0) > end) {
+                const { inside, outside } = splitList(next, end)
+                body.push(inside)
+                if (outside) queue[0] = outside
+                else queue.shift()
+                break
+            }
+            body.push(queue.shift()!)
         }
-
-        const body = [...split.rest]
-        let endLine = node.position?.end.line
-        while (i + 1 < source.length && endLine !== undefined) {
-            const next = source[i + 1]
-            if (next.position?.start.line !== endLine + 1) break
-            if (isTitleHeading(next) || next.type === 'blockquote') break
-            body.push(next)
-            endLine = next.position?.end.line
-            i++
-        }
-
-        const id = slug(split.title.map(textOf).join(''))
 
         if (body.length === 0) {
-            if (split.heading) {
-                setProperties(split.heading, { id })
-                out.push(split.heading)
-            } else {
-                out.push({ type: 'paragraph', children: split.title })
-            }
+            setProperties(node, { id })
+            out.push(node)
             continue
         }
 
-        const summaryContent = split.heading ?? { type: 'changelogTitle', data: { hName: 'span' }, children: split.title }
         out.push({
             type: 'changelogToggle',
             data: { hName: 'details', hProperties: { id } },
             children: [
-                { type: 'changelogSummary', data: { hName: 'summary' }, children: [summaryContent] },
+                { type: 'changelogSummary', data: { hName: 'summary' }, children: [node] },
                 ...body,
             ],
         })
@@ -188,9 +240,10 @@ function buildSections(root: MdNode, slug: (text: string) => string) {
     root.children = out
 }
 
-export default function remarkChangelog() {
+export default function remarkChangelog(options: { toggles?: ToggleRange[] } = {}) {
+    const toggleEnds = new Map((options.toggles ?? []).map(t => [t.start, t.end]))
     return (tree: MdNode) => {
         markDeltas(tree)
-        buildSections(tree, createSlugger())
+        buildSections(tree, createSlugger(), toggleEnds)
     }
 }

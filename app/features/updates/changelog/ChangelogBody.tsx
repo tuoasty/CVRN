@@ -5,7 +5,7 @@ import rehypeSanitize, { defaultSchema, type Options as SanitizeSchema } from 'r
 import { ChevronRight, Triangle } from 'lucide-react'
 import { proseComponents } from '@/app/components/prose/proseComponents'
 import { cn } from '@/lib/utils'
-import remarkChangelog from './remarkChangelog'
+import remarkChangelog, { prepareChangelog } from './remarkChangelog'
 
 const sanitizeSchema: SanitizeSchema = {
     ...defaultSchema,
@@ -24,12 +24,12 @@ const DELTA_MARK = {
 const components: Components = {
     ...proseComponents,
     h1: ({ id, children }) => (
-        <h1 id={id} className="scroll-mt-24 mt-12 mb-4 border-b border-border pb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0">
+        <h1 id={id} className="scroll-mt-24 mt-12 mb-4 border-b border-border pb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0 [summary>&]:m-0 [summary>&]:border-0 [summary>&]:p-0">
             {children}
         </h1>
     ),
     h2: ({ id, children }) => (
-        <h2 id={id} className="scroll-mt-24 mt-8 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h2 id={id} className="scroll-mt-24 mt-8 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground [summary>&]:my-0">
             {children}
         </h2>
     ),
@@ -40,7 +40,7 @@ const components: Components = {
     ),
     p: ({ children }) => <p className="my-3">{children}</p>,
     ul: ({ children }) => <ul className="my-3 ml-5 list-disc space-y-1.5 marker:text-muted-foreground">{children}</ul>,
-    ol: ({ children }) => <ol className="my-3 ml-5 list-decimal space-y-1.5 marker:text-muted-foreground">{children}</ol>,
+    ol: ({ start, children }) => <ol start={start} className="my-3 ml-5 list-decimal space-y-1.5 marker:text-muted-foreground">{children}</ol>,
     li: ({ children }) => <li className="pl-1">{children}</li>,
     span: ({ children, ...props }) => {
         const delta = (props as Record<string, unknown>)['data-delta']
@@ -66,14 +66,15 @@ const components: Components = {
 }
 
 export default function ChangelogBody({ body }: { body: string }) {
+    const { source, toggles } = prepareChangelog(body)
     return (
         <div className="text-sm leading-relaxed text-foreground">
             <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkBreaks, remarkChangelog]}
+                remarkPlugins={[remarkGfm, remarkBreaks, [remarkChangelog, { toggles }]]}
                 rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}
                 components={components}
             >
-                {body}
+                {source}
             </ReactMarkdown>
         </div>
     )

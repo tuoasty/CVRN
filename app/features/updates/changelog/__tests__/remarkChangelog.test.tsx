@@ -36,12 +36,24 @@ describe('remarkChangelog features and toggles', () => {
         expect(html.match(/id="speed-surge"/g)).toHaveLength(1)
     })
 
-    it('turns a plain > line into a collapsible titled by that line', () => {
-        const toggle = between(render('> Nation VFX\nBuy a region effect pack'), '<details', '</details>')
-        const summary = between(toggle, '<summary', '</summary>')
-        expect(summary).toContain('Nation VFX')
-        expect(summary).not.toContain('Buy a region')
-        expect(toggle).toContain('Buy a region effect pack')
+    it('turns > before any heading level into a collapsible', () => {
+        const html = render('> # Features\nintro\n\n> ## Serving\nserve text\n\n> #### Detail\ndetail text')
+        expect(html.match(/<details/g)).toHaveLength(3)
+        expect(between(html, '<details id="features"', '</details>')).toMatch(/<summary[^>]*>.*<h1[^>]*>Features<\/h1>/)
+        expect(between(html, '<details id="serving"', '</details>')).toContain('serve text')
+        expect(between(html, '<details id="detail"', '</details>')).toContain('detail text')
+    })
+
+    it('keeps a > line without a heading as a regular blockquote', () => {
+        const html = render('> Nation VFX\nBuy a region effect pack')
+        expect(html).not.toContain('<details')
+        expect(html).toContain('<blockquote')
+    })
+
+    it('only treats > at the very start of a line as a toggle', () => {
+        const html = render('  > ### Indented\nbody')
+        expect(html).not.toContain('<details')
+        expect(html).toContain('<blockquote')
     })
 
     it('ends a collapsible at the first empty line', () => {
@@ -52,11 +64,57 @@ describe('remarkChangelog features and toggles', () => {
         expect(html.indexOf('</details>')).toBeLessThan(html.indexOf('outside'))
     })
 
-    it('treats consecutive > lines as one title plus body', () => {
-        const toggle = between(render('> Title\n> more detail\nand this'), '<details', '</details>')
-        expect(between(toggle, '<summary', '</summary>')).not.toContain('more detail')
-        expect(toggle).toContain('more detail')
-        expect(toggle).toContain('and this')
+    it('splits features written with > on every line into separate toggles', () => {
+        const html = render('> ### A\n> body a\n> ### B\n> body b')
+        expect(html.match(/<details/g)).toHaveLength(2)
+        expect(between(html, '<details id="a"', '</details>')).toContain('body a')
+        expect(between(html, '<details id="a"', '</details>')).not.toContain('body b')
+        expect(between(html, '<details id="b"', '</details>')).toContain('body b')
+    })
+
+    it('ends a collapsible at an empty line between list items', () => {
+        const html = render('> ### A\n- hidden\n\n- visible')
+        const toggle = between(html, '<details', '</details>')
+        expect(toggle).toContain('hidden')
+        expect(toggle).not.toContain('visible')
+        expect(html.indexOf('</details>')).toBeLessThan(html.indexOf('visible'))
+        expect(html).not.toMatch(/<p[^>]*>hidden/)
+        expect(html).not.toMatch(/<p[^>]*>visible/)
+    })
+
+    it('continues numbering when an ordered list is split by the toggle end', () => {
+        const html = render('> ### A\n1. one\n\n2. two')
+        expect(between(html, '<details', '</details>')).toContain('one')
+        expect(html).toMatch(/<\/details>\s*<ol[^>]*start="2"/)
+    })
+
+    it('stops a collapsible at the next heading without an empty line', () => {
+        const html = render('> ### A\nbody\n## Next')
+        expect(between(html, '<details', '</details>')).not.toContain('Next')
+        expect(html).toMatch(/<h2[^>]*id="next"/)
+    })
+
+    it('keeps empty lines inside a fenced code block within the collapsible', () => {
+        const toggle = between(render('> ### A\n```\ncode\n\nmore\n```\nafter'), '<details', '</details>')
+        expect(toggle).toContain('more')
+        expect(toggle).toContain('after')
+    })
+
+    it('ignores > headings inside a fenced code block', () => {
+        const html = render('```\n> ### Not a toggle\nx\n```')
+        expect(html).not.toContain('<details')
+        expect(html).toContain('&gt; ### Not a toggle')
+    })
+
+    it('handles CRLF bodies', () => {
+        const html = render('> ### A\r\ninside\r\n\r\noutside')
+        expect(between(html, '<details', '</details>')).toContain('inside')
+        expect(between(html, '<details', '</details>')).not.toContain('outside')
+    })
+
+    it('closes a collapsible at the end of the document', () => {
+        const toggle = between(render('intro\n> ### End\nlast line'), '<details', '</details>')
+        expect(toggle).toContain('last line')
     })
 
     it('renders a > heading with nothing under it as a plain heading', () => {
@@ -64,13 +122,6 @@ describe('remarkChangelog features and toggles', () => {
         expect(html).not.toContain('<details')
         expect(html).not.toContain('<blockquote')
         expect(html).toMatch(/<h3[^>]*id="lonely"/)
-    })
-
-    it('renders a > line with nothing under it as a plain line', () => {
-        const html = render('> Just a note\n\nnext')
-        expect(html).not.toContain('<details')
-        expect(html).not.toContain('<blockquote')
-        expect(html).toContain('Just a note')
     })
 
     it('renders separate collapsibles for features split by empty lines', () => {
