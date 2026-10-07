@@ -4,8 +4,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import rehypeSanitize from 'rehype-sanitize'
-import { cn } from '@/lib/utils'
 import { proseComponents } from '@/app/components/prose/proseComponents'
+import ProseImage from '@/app/components/prose/ProseImage'
 
 type Placement = 'left' | 'center' | 'right'
 type Width = 25 | 50 | 75
@@ -52,28 +52,6 @@ function Prose({ children }: { children: string }) {
     )
 }
 
-function ArticleImage({ url, placement, width }: { url: string; placement: Placement; width?: Width }) {
-    if (placement === 'center') {
-        return (
-            <figure className="clear-both my-8">
-                <img src={url} alt="" loading="lazy" className="w-full h-auto rounded-sm border border-border" />
-            </figure>
-        )
-    }
-    const widthClass = width === 25 ? 'w-1/4' : width === 75 ? 'w-3/4' : 'w-1/2'
-    return (
-        <figure
-            className={cn(
-                'my-2',
-                widthClass,
-                placement === 'left' ? 'float-left mr-5 mb-3' : 'float-right ml-5 mb-3',
-            )}
-        >
-            <img src={url} alt="" loading="lazy" className="w-full h-auto rounded-sm border border-border" />
-        </figure>
-    )
-}
-
 export default function ArticleBody({ body, images, hasMatchHero }: { body: string; images: ArticleImageRef[]; hasMatchHero?: boolean }) {
     const byHandle = new Map(images.map(i => [i.handle, i]))
     const segments = tokenize(body)
@@ -83,12 +61,12 @@ export default function ArticleBody({ body, images, hasMatchHero }: { body: stri
 
     return (
         <div className="mx-auto max-w-[68ch] text-[17px] leading-[1.7] text-foreground">
-            {shouldLeadCover && cover?.url && <ArticleImage url={cover.url} placement="center" />}
+            {shouldLeadCover && cover?.url && <ProseImage url={cover.url} placement="center" />}
             {segments.map((seg, i) => {
                 if (seg.type === 'text') return <Prose key={i}>{seg.text}</Prose>
                 const img = byHandle.get(seg.handle)
                 if (!img?.url) return null
-                return <ArticleImage key={i} url={img.url} placement={seg.placement ?? 'center'} width={seg.width} />
+                return <ProseImage key={i} url={img.url} placement={seg.placement ?? 'center'} width={seg.width} />
             })}
             <div className="clear-both" />
         </div>

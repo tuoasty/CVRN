@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { isValidImageName, IMAGE_NAME_MAX, IMAGE_MAX_BYTES } from "@/shared/utils/imageTokens"
 
 export const UPDATE_LOG_VERSION_PATTERN = /^[A-Za-z0-9._-]{1,32}$/
 
@@ -25,3 +26,26 @@ export const SetUpdateLogPublishedSchema = z.object({
     published:   z.boolean(),
 })
 export type SetUpdateLogPublishedInput = z.infer<typeof SetUpdateLogPublishedSchema>
+
+export const UPDATE_LOG_IMAGE_MAX_BYTES = IMAGE_MAX_BYTES
+
+const ImageNameSchema = z.string().trim().refine(isValidImageName, `Image names use lowercase letters, numbers and single dashes (max ${IMAGE_NAME_MAX})`)
+const CaptionSchema = z.string().trim().max(200, 'Captions must be 200 characters or fewer')
+
+export const UploadUpdateLogImageFormSchema = z.object({
+    updateLogId: z.string().uuid(),
+    name:        ImageNameSchema,
+    caption:     CaptionSchema,
+})
+export type UploadUpdateLogImageFormInput = z.infer<typeof UploadUpdateLogImageFormSchema>
+
+export const UpdateUpdateLogImagesSchema = z.object({
+    updateLogId: z.string().uuid(),
+    changes: z.array(z.object({
+        id:      z.string().uuid(),
+        name:    ImageNameSchema,
+        caption: CaptionSchema.nullable(),
+    })).max(200),
+    removedIds: z.array(z.string().uuid()).max(200),
+})
+export type UpdateUpdateLogImagesFormInput = z.infer<typeof UpdateUpdateLogImagesSchema>

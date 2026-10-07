@@ -21,5 +21,5 @@ export default async function EditUpdateLogPage({ params }: PageProps) {
         )
     }
 
-    return <UpdateLogEditor key={result.value.id} initial={result.value} />
+    return <UpdateLogEditor key={result.value.log.id} initial={result.value.log} initialImages={result.value.images} />
 }

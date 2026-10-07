@@ -236,3 +236,64 @@ describe('remarkChangelog balance markers', () => {
         expect(html).not.toContain('data-delta')
     })
 })
+
+describe('remarkChangelog images', () => {
+    const images = [
+        { name: 'new-map', url: 'https://cdn.example/map.webp', caption: 'The new map' },
+        { name: 'serve', url: 'https://cdn.example/serve.webp', caption: null },
+    ]
+    const renderWith = (body: string) => renderToStaticMarkup(<ChangelogBody body={body} images={images} />)
+
+    it('renders a token on its own line as a figure with its caption as alt text', () => {
+        const html = renderWith('[image:new-map]')
+        expect(html).toContain('<figure')
+        expect(html).toContain('src="https://cdn.example/map.webp"')
+        expect(html).toContain('alt="The new map"')
+        expect(html).toContain('<figcaption')
+        expect(html).not.toContain('[image:')
+    })
+
+    it('floats an image with placement and width modifiers', () => {
+        const html = renderWith('[image:serve:left:25]')
+        expect(between(html, '<figure', '>')).toContain('float-left')
+        expect(between(html, '<figure', '>')).toContain('w-1/4')
+        expect(html).not.toContain('<figcaption')
+    })
+
+    it('renders nothing for a name with no attached image', () => {
+        const html = renderWith('before\n\n[image:missing]\n\nafter')
+        expect(html).not.toContain('<figure')
+        expect(html).not.toContain('[image:missing]')
+    })
+
+    it('leaves a token in the middle of a sentence as text', () => {
+        const html = renderWith('see [image:new-map] here')
+        expect(html).not.toContain('<figure')
+        expect(html).toContain('see [image:new-map] here')
+    })
+
+    it('splits a paragraph around a token line and keeps the order', () => {
+        const html = renderWith('before\n[image:serve]\nafter')
+        expect(html.indexOf('before')).toBeLessThan(html.indexOf('<figure'))
+        expect(html.indexOf('</figure>')).toBeLessThan(html.indexOf('after'))
+        expect(html).not.toMatch(/<p[^>]*>before<br/)
+    })
+
+    it('renders a token inside a list item', () => {
+        const html = renderWith('- Serve rework\n  [image:serve]')
+        expect(between(html, '<li', '</li>')).toContain('<figure')
+    })
+
+    it('keeps an image inside a collapsible and still ends it at the empty line', () => {
+        const html = renderWith('> ### A\ntext\n[image:serve]\n\noutside')
+        const toggle = between(html, '<details', '</details>')
+        expect(toggle).toContain('<figure')
+        expect(toggle).not.toContain('outside')
+    })
+
+    it('ignores the image source from markdown and only uses attached urls', () => {
+        const html = renderWith('[image:serve]')
+        expect(html.match(/src="/g)).toHaveLength(1)
+        expect(html).not.toContain('data-image')
+    })
+})

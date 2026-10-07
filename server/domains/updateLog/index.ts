@@ -2,6 +2,8 @@ export { createUpdateLog } from './commands/createUpdateLog'
 export { updateUpdateLog } from './commands/updateUpdateLog'
 export { setUpdateLogPublished } from './commands/setUpdateLogPublished'
 export { deleteUpdateLog } from './commands/deleteUpdateLog'
+export { uploadUpdateLogImage } from './commands/uploadUpdateLogImage'
+export { updateUpdateLogImages } from './commands/updateUpdateLogImages'
 export { getUpdateLogsForAdmin } from './queries/getUpdateLogsForAdmin'
 export { getUpdateLogForAdmin } from './queries/getUpdateLogForAdmin'
 export { getPublishedUpdateLogIndex } from './queries/getPublishedUpdateLogIndex'
@@ -13,6 +15,14 @@ export type {
     UpdateUpdateLogFields,
     UpdateLogListItem,
     UpdateLogAdminDetail,
+    UpdateLogImageRef,
+    UpdateLogAdminImage,
+    UpdateLogEditorData,
+    UpdateLogImageChange,
+    UploadUpdateLogImageInput,
+    UpdateUpdateLogImagesInput,
+    UploadUpdateLogImageFormInput,
+    UpdateUpdateLogImagesFormInput,
     UpdateLogIndexEntry,
     UpdateLogPublic,
     CreateUpdateLogInput,
@@ -30,4 +40,7 @@ export {
     UpdateUpdateLogFormSchema,
     UpdateLogIdSchema,
     SetUpdateLogPublishedSchema,
+    UploadUpdateLogImageFormSchema,
+    UpdateUpdateLogImagesSchema,
+    UPDATE_LOG_IMAGE_MAX_BYTES,
 } from './types'

@@ -1,3 +1,4 @@
+import { parseImageToken, type ImageToken } from '@/shared/utils/imageTokens'
 import { OVERVIEW_ID } from './tocNavigation'
 
 export type Delta = 'buff' | 'nerf'
@@ -151,6 +152,68 @@ function markLineStarts(parent: MdNode) {
     parent.children = out
 }
 
+function lineRange(start: number | undefined, from: number, to: number): MdNode['position'] {
+    return start === undefined ? undefined : { start: { line: start + from }, end: { line: start + to } }
+}
+
+function imageNode(token: ImageToken, position: MdNode['position']): MdNode {
+    return {
+        type: 'changelogImage',
+        data: {
+            hName: 'img',
+            hProperties: {
+                dataImage: token.name,
+                dataPlacement: token.placement,
+                ...(token.width ? { dataWidth: String(token.width) } : {}),
+            },
+        },
+        position,
+    }
+}
+
+function splitImageLines(paragraph: MdNode): MdNode[] | null {
+    const lines: MdNode[][] = [[]]
+    for (const child of paragraph.children ?? []) {
+        if (child.type === 'break') lines.push([])
+        else lines[lines.length - 1].push(child)
+    }
+    const tokens = lines.map(line => (line.length === 1 && line[0].type === 'text' ? parseImageToken(line[0].value ?? '') : null))
+    if (!tokens.some(Boolean)) return null
+
+    const start = paragraph.position?.start.line
+    const out: MdNode[] = []
+    let buffer: MdNode[] = []
+    let bufferFrom = 0
+    const flush = (to: number) => {
+        if (buffer.length > 0) out.push({ type: 'paragraph', children: buffer, position: lineRange(start, bufferFrom, to) })
+        buffer = []
+    }
+
+    lines.forEach((line, idx) => {
+        const token = tokens[idx]
+        if (token) {
+            flush(idx - 1)
+            out.push(imageNode(token, lineRange(start, idx, idx)))
+            return
+        }
+        if (line.length === 0) return
+        if (buffer.length === 0) bufferFrom = idx
+        else buffer.push({ type: 'break' })
+        buffer.push(...line)
+    })
+    flush(lines.length - 1)
+    return out
+}
+
+function markImages(node: MdNode) {
+    if (!node.children) return
+    node.children = node.children.flatMap(child => {
+        if (child.type === 'paragraph') return splitImageLines(child) ?? [child]
+        markImages(child)
+        return [child]
+    })
+}
+
 function markDeltas(node: MdNode) {
     if (PHRASING_PARENTS.has(node.type)) markLineStarts(node)
     for (const child of node.children ?? []) markDeltas(child)
@@ -245,6 +308,7 @@ function buildSections(root: MdNode, slug: (text: string) => string, toggleEnds:
 export default function remarkChangelog(options: { toggles?: ToggleRange[] } = {}) {
     const toggleEnds = new Map((options.toggles ?? []).map(t => [t.start, t.end]))
     return (tree: MdNode) => {
+        markImages(tree)
         markDeltas(tree)
         buildSections(tree, createSlugger(), toggleEnds)
     }

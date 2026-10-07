@@ -4,6 +4,8 @@ import remarkBreaks from 'remark-breaks'
 import rehypeSanitize, { defaultSchema, type Options as SanitizeSchema } from 'rehype-sanitize'
 import { ChevronRight, Triangle } from 'lucide-react'
 import { proseComponents } from '@/app/components/prose/proseComponents'
+import ProseImage from '@/app/components/prose/ProseImage'
+import type { ImagePlacement, ImageWidth } from '@/shared/utils/imageTokens'
 import { cn } from '@/lib/utils'
 import remarkChangelog, { prepareChangelog } from './remarkChangelog'
 
@@ -13,6 +15,12 @@ const sanitizeSchema: SanitizeSchema = {
     attributes: {
         ...defaultSchema.attributes,
         span: [...(defaultSchema.attributes?.span ?? []), ['dataDelta', 'buff', 'nerf']],
+        img: [
+            ...(defaultSchema.attributes?.img ?? []),
+            'dataImage',
+            ['dataPlacement', 'left', 'center', 'right'],
+            ['dataWidth', '25', '50', '75'],
+        ],
     },
 }
 
@@ -24,17 +32,17 @@ const DELTA_MARK = {
 const components: Components = {
     ...proseComponents,
     h1: ({ id, children }) => (
-        <h1 id={id} className="scroll-mt-24 mt-12 mb-4 border-b border-border pb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0 [summary>&]:m-0 [summary>&]:border-0 [summary>&]:p-0">
+        <h1 id={id} className="clear-both scroll-mt-24 mt-12 mb-4 border-b border-border pb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0 [summary>&]:m-0 [summary>&]:border-0 [summary>&]:p-0">
             {children}
         </h1>
     ),
     h2: ({ id, children }) => (
-        <h2 id={id} className="scroll-mt-24 mt-8 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground [summary>&]:my-0">
+        <h2 id={id} className="clear-both scroll-mt-24 mt-8 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground [summary>&]:my-0">
             {children}
         </h2>
     ),
     h3: ({ id, children }) => (
-        <h3 id={id} className="scroll-mt-24 mt-6 mb-1.5 text-base font-semibold text-foreground [summary>&]:my-0">
+        <h3 id={id} className="clear-both scroll-mt-24 mt-6 mb-1.5 text-base font-semibold text-foreground [summary>&]:my-0">
             {children}
         </h3>
     ),
@@ -53,7 +61,7 @@ const components: Components = {
         )
     },
     details: ({ id, children }) => (
-        <details id={id} className="group/feature scroll-mt-24 border-b border-border [&>:not(summary)]:pl-6 [&>:last-child]:pb-3">
+        <details id={id} className="group/feature flow-root scroll-mt-24 border-b border-border [&>:not(summary)]:pl-6 [&>:last-child]:pb-3">
             {children}
         </details>
     ),
@@ -65,14 +73,41 @@ const components: Components = {
     ),
 }
 
-export default function ChangelogBody({ body }: { body: string }) {
+export interface ChangelogImage {
+    name: string
+    url: string
+    caption: string | null
+}
+
+const WIDTHS: Record<string, ImageWidth> = { '25': 25, '50': 50, '75': 75 }
+
+const MarkdownImage = proseComponents.img ?? 'img'
+
+function withImages(images: ChangelogImage[]): Components {
+    const byName = new Map(images.map(image => [image.name, image]))
+    return {
+        ...components,
+        img: ({ node: _node, ...props }) => {
+            const attrs = props as Record<string, unknown>
+            const name = attrs['data-image']
+            if (typeof name !== 'string') return <MarkdownImage {...props} />
+            const image = byName.get(name)
+            if (!image) return null
+            const placement = (attrs['data-placement'] as ImagePlacement | undefined) ?? 'center'
+            const width = WIDTHS[String(attrs['data-width'])]
+            return <ProseImage url={image.url} placement={placement} width={width} caption={image.caption} />
+        },
+    }
+}
+
+export default function ChangelogBody({ body, images = [] }: { body: string; images?: ChangelogImage[] }) {
     const { source, toggles } = prepareChangelog(body)
     return (
-        <div className="text-sm leading-relaxed text-foreground">
+        <div className="flow-root text-sm leading-relaxed text-foreground">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks, [remarkChangelog, { toggles }]]}
                 rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}
-                components={components}
+                components={withImages(images)}
             >
                 {source}
             </ReactMarkdown>

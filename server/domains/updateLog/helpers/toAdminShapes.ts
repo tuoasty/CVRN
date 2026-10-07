@@ -1,5 +1,5 @@
-import { UpdateLog } from '@/shared/types/db'
-import { UpdateLogAdminDetail, UpdateLogListItem } from '../types'
+import { UpdateLog, UpdateLogImage } from '@/shared/types/db'
+import { UpdateLogAdminDetail, UpdateLogAdminImage, UpdateLogImageRef, UpdateLogListItem } from '../types'
 
 export function toUpdateLogListItem(row: UpdateLog): UpdateLogListItem {
     return {
@@ -15,4 +15,12 @@ export function toUpdateLogListItem(row: UpdateLog): UpdateLogListItem {
 
 export function toUpdateLogAdminDetail(row: UpdateLog): UpdateLogAdminDetail {
     return { ...toUpdateLogListItem(row), body: row.body }
+}
+
+export function toUpdateLogAdminImage(row: UpdateLogImage): UpdateLogAdminImage {
+    return { id: row.id, name: row.handle, url: row.url, caption: row.caption ?? null }
+}
+
+export function toUpdateLogImageRef(row: UpdateLogImage): UpdateLogImageRef {
+    return { name: row.handle, url: row.url, caption: row.caption ?? null }
 }

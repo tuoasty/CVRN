@@ -66,7 +66,7 @@ export default function UpdateLogView({ log, index }: { log: UpdateLogPublic; in
                 rail={index.length > 1 ? <VersionRail index={index} current={log.version} newer={newer} older={older} /> : null}
             >
                 <article id={toc.overview ? OVERVIEW_ID : undefined} className="scroll-mt-24 pt-6">
-                    <ChangelogBody body={log.body} />
+                    <ChangelogBody body={log.body} images={log.images ?? []} />
                 </article>
             </ChangelogLayout>
         </div>

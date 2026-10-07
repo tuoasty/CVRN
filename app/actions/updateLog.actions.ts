@@ -12,8 +12,15 @@ import {
     deleteUpdateLog,
     getUpdateLogsForAdmin,
     getUpdateLogForAdmin,
+    uploadUpdateLogImage,
+    updateUpdateLogImages,
     UpdateLogListItem,
     UpdateLogAdminDetail,
+    UpdateLogAdminImage,
+    UpdateLogEditorData,
+    UploadUpdateLogImageFormSchema,
+    UpdateUpdateLogImagesSchema,
+    UPDATE_LOG_IMAGE_MAX_BYTES,
     CreateUpdateLogFormSchema,
     UpdateUpdateLogFormSchema,
     UpdateLogIdSchema,
@@ -106,7 +113,7 @@ export async function getUpdateLogsForAdminAction(): Promise<Result<UpdateLogLis
     return getUpdateLogsForAdmin(supabase)
 }
 
-export async function getUpdateLogForAdminAction(input: unknown): Promise<Result<UpdateLogAdminDetail>> {
+export async function getUpdateLogForAdminAction(input: unknown): Promise<Result<UpdateLogEditorData>> {
     const parsed = UpdateLogIdSchema.safeParse(input)
     if (!parsed.success) return Err({ message: 'Update log not found', code: 'NOT_FOUND' })
 
@@ -114,4 +121,49 @@ export async function getUpdateLogForAdminAction(input: unknown): Promise<Result
     const guard = await requireAdmin(supabase)
     if (!guard.ok) return guard
     return getUpdateLogForAdmin(supabase, parsed.data.updateLogId)
+}
+
+export async function uploadUpdateLogImageAction(formData: FormData): Promise<Result<UpdateLogAdminImage>> {
+    const parsed = UploadUpdateLogImageFormSchema.safeParse({
+        updateLogId: formData.get('updateLogId'),
+        name:        formData.get('name'),
+        caption:     formData.get('caption') ?? '',
+    })
+    if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
+
+    const file = formData.get('file')
+    if (!(file instanceof File) || file.size === 0) return Err({ message: 'No image attached', code: 'VALIDATION_ERROR' })
+    if (!file.type.startsWith('image/')) return Err({ message: 'Only images can be attached', code: 'VALIDATION_ERROR' })
+    if (file.size > UPDATE_LOG_IMAGE_MAX_BYTES) return Err({ message: 'Images must be 2 MB or smaller', code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const result = await uploadUpdateLogImage(supabase, {
+        updateLogId: parsed.data.updateLogId,
+        name:        parsed.data.name,
+        caption:     parsed.data.caption || null,
+        file,
+        userId:      guard.value,
+    })
+    if (result.ok) revalidatePublicData(UPDATE_LOG_TAGS)
+    return result
+}
+
+export async function updateUpdateLogImagesAction(input: unknown): Promise<Result<UpdateLogAdminImage[]>> {
+    const parsed = UpdateUpdateLogImagesSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const result = await updateUpdateLogImages(supabase, {
+        updateLogId: parsed.data.updateLogId,
+        changes:     parsed.data.changes.map(c => ({ id: c.id, name: c.name, caption: c.caption || null })),
+        removedIds:  parsed.data.removedIds,
+    })
+    if (result.ok) revalidatePublicData(UPDATE_LOG_TAGS)
+    return result
 }

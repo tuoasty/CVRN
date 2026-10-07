@@ -16,8 +16,8 @@ export const STORAGE_PATHS = {
     mediaPost(postId: string, ext: string) {
         return `media/${postId}.${ext}`;
     },
-    updateLogImage(logId: string, handle: string, ext: string) {
-        return `update-logs/${logId}/${handle}.${ext}`;
+    updateLogImage(logId: string, imageId: string, ext: string) {
+        return `update-logs/${logId}/${imageId}.${ext}`;
     },
 }
 export function extractStoragePath(url: string, bucket: string): string {

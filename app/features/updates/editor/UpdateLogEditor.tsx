@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
@@ -15,15 +15,29 @@ import {
     createUpdateLogAction,
     updateUpdateLogAction,
     setUpdateLogPublishedAction,
+    uploadUpdateLogImageAction,
+    updateUpdateLogImagesAction,
 } from '@/app/actions/updateLog.actions'
 import { mutateUpdateLogs } from '@/app/hooks/useUpdateLogs'
-import type { UpdateLogAdminDetail } from '@/server/domains/updateLog'
+import type { UpdateLogAdminDetail, UpdateLogAdminImage } from '@/server/domains/updateLog'
 import { toast } from '@/app/utils/toast'
 import { applyEmphasisShortcut, emphasisKindForKey } from '@/app/utils/markdownEmphasis'
 import { indentLines } from '@/app/utils/markdownIndent'
 import { headingLevelForKey, setHeading } from '@/app/utils/markdownHeading'
 import { applyTextareaEdit } from '@/app/utils/textareaEdit'
 import { cn } from '@/lib/utils'
+import { compressImage } from '@/app/utils/imageCompression'
+import ArticleEditorModeToggle, { type EditorMode } from '@/app/features/articles/ArticleEditorModeToggle'
+import ChangelogBody from '@/app/features/updates/changelog/ChangelogBody'
+import {
+    IMAGE_MAX_BYTES,
+    referencedImageNames,
+    renameImageTokens,
+    slugImageName,
+    uniqueImageName,
+} from '@/shared/utils/imageTokens'
+import { diffImages, fromSavedImage, imagesDirty, renameError, tokenInsertEdit, type EditorImage } from './editorImages'
+import UpdateLogImagesPanel from './UpdateLogImagesPanel'
 
 interface Fields {
     version: string
@@ -32,7 +46,11 @@ interface Fields {
     body: string
 }
 
-type Pending = { kind: 'leave'; href: string } | { kind: 'unpublish' } | null
+type Pending =
+    | { kind: 'leave'; href: string }
+    | { kind: 'unpublish' }
+    | { kind: 'removeImage'; key: string; name: string; uses: number }
+    | null
 
 function today(): string {
     return new Date().toLocaleDateString('en-CA')
@@ -43,15 +61,30 @@ function toFields(log: UpdateLogAdminDetail | null): Fields {
     return { version: log.version, title: log.title ?? '', releasedAt: log.released_at, body: log.body }
 }
 
+function fieldsFormData(fields: Fields, updateLogId?: string): FormData {
+    const fd = new FormData()
+    fd.set('version', fields.version)
+    fd.set('title', fields.title)
+    fd.set('releasedAt', fields.releasedAt)
+    fd.set('body', fields.body)
+    if (updateLogId) fd.set('updateLogId', updateLogId)
+    return fd
+}
+
+function revokePending(images: EditorImage[]) {
+    for (const image of images) if (image.file) URL.revokeObjectURL(image.url)
+}
+
 function sameFields(a: Fields, b: Fields): boolean {
     return a.version === b.version && a.title === b.title && a.releasedAt === b.releasedAt && a.body === b.body
 }
 
 interface Props {
     initial: UpdateLogAdminDetail | null
+    initialImages?: UpdateLogAdminImage[]
 }
 
-export default function UpdateLogEditor({ initial }: Props) {
+export default function UpdateLogEditor({ initial, initialImages = [] }: Props) {
     const router = useRouter()
     const [log, setLog] = useState<UpdateLogAdminDetail | null>(initial)
     const [baseline, setBaseline] = useState<Fields>(() => toFields(initial))
@@ -59,9 +92,31 @@ export default function UpdateLogEditor({ initial }: Props) {
     const [saving, setSaving] = useState(false)
     const [publishing, setPublishing] = useState(false)
     const [pending, setPending] = useState<Pending>(null)
+    const [images, setImages] = useState<EditorImage[]>(() => initialImages.map(fromSavedImage))
+    const [savedImages, setSavedImages] = useState<EditorImage[]>(() => initialImages.map(fromSavedImage))
+    const [processing, setProcessing] = useState(false)
+    const [mode, setMode] = useState<EditorMode>('edit')
     const tabReleased = useRef(false)
+    const bodyRef = useRef<HTMLTextAreaElement>(null)
+    const pendingSeq = useRef(0)
+    const imagesRef = useRef(images)
 
-    const dirty = useMemo(() => !sameFields(draft, baseline), [draft, baseline])
+    useEffect(() => {
+        imagesRef.current = images
+    }, [images])
+
+    useEffect(() => () => revokePending(imagesRef.current), [])
+
+    const uses = useMemo(() => referencedImageNames(draft.body), [draft.body])
+    const missing = useMemo(() => {
+        const attached = new Set(images.map(image => image.name))
+        return [...uses.entries()].filter(([name]) => !attached.has(name))
+    }, [uses, images])
+
+    const dirty = useMemo(
+        () => !sameFields(draft, baseline) || imagesDirty(images, savedImages),
+        [draft, baseline, images, savedImages],
+    )
     const isPublished = !!log?.published_at
 
     const blockLeave = useCallback((href: string) => setPending({ kind: 'leave', href }), [])
@@ -106,26 +161,167 @@ export default function UpdateLogEditor({ initial }: Props) {
         applyEmphasisShortcut(e.currentTarget, kind, v => set('body', v))
     }
 
+    function insertTokens(names: string[]) {
+        const el = bodyRef.current
+        if (!el || names.length === 0) return
+        applyTextareaEdit(el, tokenInsertEdit(el.value, el.selectionStart, el.selectionEnd, names), v => set('body', v))
+    }
+
+    async function addFiles(files: File[]) {
+        const candidates = files.filter(file => file.type.startsWith('image/'))
+        if (candidates.length === 0) return
+        setProcessing(true)
+        const added: EditorImage[] = []
+        try {
+            const taken = new Set(imagesRef.current.map(image => image.name))
+            for (const file of candidates) {
+                try {
+                    const compressed = await compressImage(file, { maxDimension: 1920 })
+                    if (compressed.size > IMAGE_MAX_BYTES) {
+                        toast.error(`${file.name} is still over 2 MB after compression`)
+                        continue
+                    }
+                    const name = uniqueImageName(slugImageName(file.name), taken)
+                    taken.add(name)
+                    pendingSeq.current += 1
+                    added.push({
+                        key:     `pending-${pendingSeq.current}`,
+                        id:      null,
+                        name,
+                        caption: '',
+                        url:     URL.createObjectURL(compressed),
+                        file:    compressed,
+                    })
+                } catch {
+                    toast.error(`Could not read ${file.name}`)
+                }
+            }
+        } finally {
+            setProcessing(false)
+        }
+        if (added.length === 0) return
+        setImages(prev => [...prev, ...added])
+        insertTokens(added.map(image => image.name))
+    }
+
+    function handleBodyPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
+        const files = Array.from(e.clipboardData.files).filter(file => file.type.startsWith('image/'))
+        if (files.length === 0) return
+        e.preventDefault()
+        void addFiles(files)
+    }
+
+    function handleBodyDragOver(e: DragEvent<HTMLTextAreaElement>) {
+        if (e.dataTransfer.types.includes('Files')) e.preventDefault()
+    }
+
+    function handleBodyDrop(e: DragEvent<HTMLTextAreaElement>) {
+        const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'))
+        if (files.length > 0) {
+            e.preventDefault()
+            void addFiles(files)
+            return
+        }
+        if (/<img\b/i.test(e.dataTransfer.getData('text/html'))) {
+            e.preventDefault()
+            toast.error('Save the image and drop the file instead. Image links expire.')
+        }
+    }
+
+    function renameImage(key: string, raw: string): string | null {
+        const image = images.find(i => i.key === key)
+        if (!image) return null
+        const name = raw.trim().toLowerCase()
+        if (name === image.name) return null
+        const problem = renameError(raw, key, images)
+        if (problem) return problem
+        setImages(prev => prev.map(i => (i.key === key ? { ...i, name } : i)))
+        set('body', renameImageTokens(draft.body, image.name, name))
+        return null
+    }
+
+    function setCaption(key: string, caption: string) {
+        setImages(prev => prev.map(i => (i.key === key ? { ...i, caption } : i)))
+    }
+
+    function removeImage(key: string) {
+        const image = images.find(i => i.key === key)
+        if (!image) return
+        if (image.file) URL.revokeObjectURL(image.url)
+        setImages(prev => prev.filter(i => i.key !== key))
+    }
+
+    function requestRemove(key: string) {
+        const image = images.find(i => i.key === key)
+        if (!image) return
+        const count = uses.get(image.name) ?? 0
+        if (count > 0) setPending({ kind: 'removeImage', key, name: image.name, uses: count })
+        else removeImage(key)
+    }
+
+    function discard() {
+        revokePending(images.filter(image => !image.id))
+        setDraft(baseline)
+        setImages(savedImages)
+    }
+
     async function handleSave() {
         setSaving(true)
         try {
-            const fd = new FormData()
-            fd.set('version', draft.version)
-            fd.set('title', draft.title)
-            fd.set('releasedAt', draft.releasedAt)
-            fd.set('body', draft.body)
-            if (log) fd.set('updateLogId', log.id)
+            let current = log
+            let fieldsSaved = false
+            if (!current) {
+                const created = await createUpdateLogAction(fieldsFormData(draft))
+                if (!created.ok) { toast.error(created.error.message); return }
+                current = created.value
+                fieldsSaved = true
+                setLog(created.value)
+                const savedFields = toFields(created.value)
+                setBaseline(savedFields)
+                setDraft(savedFields)
+                window.history.replaceState(null, '', `/admin/updates/${created.value.id}`)
+            }
 
-            const result = log ? await updateUpdateLogAction(fd) : await createUpdateLogAction(fd)
-            if (!result.ok) { toast.error(result.error.message); return }
+            const { changes, removedIds, pending: toUpload } = diffImages(images, savedImages)
+            let saved = savedImages
+            if (changes.length > 0 || removedIds.length > 0) {
+                const res = await updateUpdateLogImagesAction({ updateLogId: current.id, changes, removedIds })
+                if (!res.ok) { toast.error(res.error.message); return }
+                saved = res.value.map(fromSavedImage)
+            }
 
-            const saved = toFields(result.value)
-            setLog(result.value)
-            setBaseline(saved)
-            setDraft(saved)
-            toast.success(log ? 'Saved' : 'Draft created')
+            const uploaded = new Map<string, EditorImage>()
+            let failure: string | null = null
+            for (const image of toUpload) {
+                const fd = new FormData()
+                fd.set('updateLogId', current.id)
+                fd.set('name', image.name)
+                fd.set('caption', image.caption)
+                fd.set('file', image.file!)
+                const res = await uploadUpdateLogImageAction(fd)
+                if (res.ok) {
+                    URL.revokeObjectURL(image.url)
+                    uploaded.set(image.key, fromSavedImage(res.value))
+                } else {
+                    failure ??= `${image.name}: ${res.error.message}`
+                }
+            }
+            saved = [...saved, ...uploaded.values()]
+            setSavedImages(saved)
+            setImages(prev => [...saved, ...prev.filter(image => !image.id && !uploaded.has(image.key))])
+
+            if (!fieldsSaved && !sameFields(draft, baseline)) {
+                const updated = await updateUpdateLogAction(fieldsFormData(draft, current.id))
+                if (!updated.ok) { toast.error(updated.error.message); return }
+                setLog(updated.value)
+                const savedFields = toFields(updated.value)
+                setBaseline(savedFields)
+                setDraft(savedFields)
+            }
+
+            if (failure) toast.error(`Some images did not upload. ${failure}`)
+            else toast.success(log ? 'Saved' : 'Draft created')
             await mutateUpdateLogs()
-            if (!log) router.replace(`/admin/updates/${result.value.id}`)
         } finally {
             setSaving(false)
         }
@@ -149,7 +345,7 @@ export default function UpdateLogEditor({ initial }: Props) {
     function confirmLeave() {
         if (pending?.kind !== 'leave') return
         const href = pending.href
-        setDraft(baseline)
+        discard()
         setPending(null)
         router.push(href)
     }
@@ -251,24 +447,56 @@ export default function UpdateLogEditor({ initial }: Props) {
                     </div>
                 </div>
 
-                <div className="flex flex-col flex-1 pt-4 space-y-1">
-                    <Label htmlFor="update-body">Body</Label>
-                    <textarea
-                        id="update-body"
-                        value={draft.body}
-                        onChange={e => set('body', e.target.value)}
-                        onKeyDown={handleBodyKeyDown}
-                        className="flex-1 min-h-[55vh] w-full resize-y rounded-sm border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        placeholder="Paste the patch notes here."
+                <div className="grid flex-1 gap-6 pt-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+                    <div className="flex min-w-0 flex-col space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                            <Label htmlFor="update-body">Body</Label>
+                            <ArticleEditorModeToggle mode={mode} onChange={setMode} />
+                        </div>
+                        <textarea
+                            ref={bodyRef}
+                            id="update-body"
+                            value={draft.body}
+                            onChange={e => set('body', e.target.value)}
+                            onKeyDown={handleBodyKeyDown}
+                            onPaste={handleBodyPaste}
+                            onDragOver={handleBodyDragOver}
+                            onDrop={handleBodyDrop}
+                            className={cn(
+                                'flex-1 min-h-[55vh] w-full resize-y rounded-sm border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                                mode === 'preview' && 'hidden',
+                            )}
+                            placeholder="Paste the patch notes here. Paste or drop screenshots to attach them."
+                        />
+                        {mode === 'preview' && (
+                            <div className="min-h-[55vh] flex-1 overflow-auto rounded-sm border border-border bg-background px-6 py-5">
+                                {draft.body.trim()
+                                    ? <ChangelogBody body={draft.body} images={images.map(i => ({ name: i.name, url: i.url, caption: i.caption.trim() || null }))} />
+                                    : <p className="py-16 text-center text-sm text-muted-foreground">Nothing to preview yet.</p>}
+                            </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                            Text before the first <code className="font-mono">#</code> is the overview.{' '}
+                            <code className="font-mono"># Section</code>, <code className="font-mono">## Category</code>,{' '}
+                            <code className="font-mono">### Feature</code>. Put <code className="font-mono">&gt;</code> at the very start of a heading line to make it
+                            collapsible, for example <code className="font-mono">&gt; ### Feature</code>. It ends at the first empty line.
+                            Start any line or heading with <code className="font-mono">[buff]</code> or <code className="font-mono">[nerf]</code> for a ▲/▼ marker.
+                            Put <code className="font-mono">[image:name]</code> on its own line to show an image; add <code className="font-mono">:left</code> or <code className="font-mono">:right</code> and <code className="font-mono">:25</code>, <code className="font-mono">:50</code> or <code className="font-mono">:75</code> to float it.
+                            Ctrl+Alt+1/2/3 headings, Ctrl+B bold, Ctrl+I italic, Tab / Shift+Tab to nest list items (Esc then Tab to leave the box).
+                        </p>
+                    </div>
+
+                    <UpdateLogImagesPanel
+                        images={images}
+                        uses={uses}
+                        missing={missing}
+                        processing={processing}
+                        onAddFiles={files => void addFiles(files)}
+                        onRename={renameImage}
+                        onCaption={setCaption}
+                        onInsert={name => insertTokens([name])}
+                        onRemove={requestRemove}
                     />
-                    <p className="text-xs text-muted-foreground">
-                        Text before the first <code className="font-mono">#</code> is the overview.{' '}
-                        <code className="font-mono"># Section</code>, <code className="font-mono">## Category</code>,{' '}
-                        <code className="font-mono">### Feature</code>. Put <code className="font-mono">&gt;</code> at the very start of a heading line to make it
-                        collapsible, for example <code className="font-mono">&gt; ### Feature</code>. It ends at the first empty line.
-                        Start any line or heading with <code className="font-mono">[buff]</code> or <code className="font-mono">[nerf]</code> for a ▲/▼ marker.
-                        Ctrl+Alt+1/2/3 headings, Ctrl+B bold, Ctrl+I italic, Tab / Shift+Tab to nest list items (Esc then Tab to leave the box).
-                    </p>
                 </div>
 
                 {dirty && (
@@ -278,7 +506,7 @@ export default function UpdateLogEditor({ initial }: Props) {
                             {isPublished && ' · saving updates the public page'}
                         </span>
                         <span className="flex-1" />
-                        <Button size="sm" variant="ghost" className="rounded-sm" onClick={() => setDraft(baseline)} disabled={saving}>
+                        <Button size="sm" variant="ghost" className="rounded-sm" onClick={discard} disabled={saving}>
                             Discard
                         </Button>
                         <Button size="sm" className="rounded-sm" onClick={handleSave} disabled={saving}>
@@ -297,6 +525,21 @@ export default function UpdateLogEditor({ initial }: Props) {
                 destructive
                 onCancel={() => setPending(null)}
                 onConfirm={confirmLeave}
+            />
+            <ConfirmDialog
+                open={pending?.kind === 'removeImage'}
+                title={pending?.kind === 'removeImage' ? `Remove ${pending.name}?` : ''}
+                description={pending?.kind === 'removeImage'
+                    ? `It is used ${pending.uses} ${pending.uses === 1 ? 'time' : 'times'} in the body. Those tokens stay and show as missing until you attach an image named ${pending.name} again. The file is deleted when you save.`
+                    : ''}
+                cancelLabel="Keep image"
+                confirmLabel="Remove"
+                destructive
+                onCancel={() => setPending(null)}
+                onConfirm={() => {
+                    if (pending?.kind === 'removeImage') removeImage(pending.key)
+                    setPending(null)
+                }}
             />
             <ConfirmDialog
                 open={pending?.kind === 'unpublish'}
