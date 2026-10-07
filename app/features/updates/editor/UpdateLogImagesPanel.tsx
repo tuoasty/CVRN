@@ -13,10 +13,11 @@ import type { EditorImage } from './editorImages'
 
 interface NameFieldProps {
     image: EditorImage
+    disabled: boolean
     onRename: (key: string, name: string) => string | null
 }
 
-function NameField({ image, onRename }: NameFieldProps) {
+function NameField({ image, disabled, onRename }: NameFieldProps) {
     const [value, setValue] = useState(image.name)
     const [error, setError] = useState<string | null>(null)
 
@@ -49,6 +50,7 @@ function NameField({ image, onRename }: NameFieldProps) {
                 onChange={e => setValue(e.target.value)}
                 onBlur={commit}
                 onKeyDown={onKeyDown}
+                disabled={disabled}
                 maxLength={IMAGE_NAME_MAX}
                 spellCheck={false}
                 autoComplete="off"
@@ -79,6 +81,7 @@ interface Props {
     uses: Map<string, number>
     missing: [string, number][]
     processing: boolean
+    locked: boolean
     onAddFiles: (files: File[]) => void
     onRename: (key: string, name: string) => string | null
     onCaption: (key: string, caption: string) => void
@@ -86,7 +89,7 @@ interface Props {
     onRemove: (key: string) => void
 }
 
-export default function UpdateLogImagesPanel({ images, uses, missing, processing, onAddFiles, onRename, onCaption, onInsert, onRemove }: Props) {
+export default function UpdateLogImagesPanel({ images, uses, missing, processing, locked, onAddFiles, onRename, onCaption, onInsert, onRemove }: Props) {
     const fileRef = useRef<HTMLInputElement>(null)
     const [enlarged, setEnlarged] = useState<EditorImage | null>(null)
 
@@ -96,7 +99,7 @@ export default function UpdateLogImagesPanel({ images, uses, missing, processing
                 <Label>
                     Images <span className="font-mono tabular-nums text-muted-foreground">{images.length}</span>
                 </Label>
-                <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 rounded-sm" onClick={() => fileRef.current?.click()} disabled={processing}>
+                <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 rounded-sm" onClick={() => fileRef.current?.click()} disabled={processing || locked}>
                     <ImagePlus className="h-4 w-4" /> Add
                 </Button>
                 <input
@@ -132,13 +135,14 @@ export default function UpdateLogImagesPanel({ images, uses, missing, processing
                         </button>
                         <div className="space-y-2 p-2.5">
                             <div className="flex items-start gap-2">
-                                <NameField key={image.name} image={image} onRename={onRename} />
+                                <NameField key={image.name} image={image} disabled={locked} onRename={onRename} />
                                 <span className="pt-1.5"><StatusBadge image={image} uses={uses.get(image.name) ?? 0} /></span>
                             </div>
                             <Input
                                 aria-label="Caption"
                                 value={image.caption}
                                 onChange={e => onCaption(image.key, e.target.value)}
+                                disabled={locked}
                                 placeholder="Caption (optional)"
                                 maxLength={200}
                                 className="h-8 rounded-sm px-2 text-xs"
@@ -154,6 +158,7 @@ export default function UpdateLogImagesPanel({ images, uses, missing, processing
                                     aria-label={`Remove ${image.name}`}
                                     className="ml-auto h-7 w-7 rounded-sm p-0 text-destructive hover:bg-destructive/10"
                                     onClick={() => onRemove(image.key)}
+                                    disabled={locked}
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>

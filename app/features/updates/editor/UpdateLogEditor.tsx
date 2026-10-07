@@ -94,12 +94,14 @@ export default function UpdateLogEditor({ initial, initialImages = [] }: Props) 
     const [pending, setPending] = useState<Pending>(null)
     const [images, setImages] = useState<EditorImage[]>(() => initialImages.map(fromSavedImage))
     const [savedImages, setSavedImages] = useState<EditorImage[]>(() => initialImages.map(fromSavedImage))
-    const [processing, setProcessing] = useState(false)
+    const [processingCount, setProcessingCount] = useState(0)
     const [mode, setMode] = useState<EditorMode>('edit')
     const tabReleased = useRef(false)
     const bodyRef = useRef<HTMLTextAreaElement>(null)
     const pendingSeq = useRef(0)
     const imagesRef = useRef(images)
+    const reservedNames = useRef(new Set<string>())
+    const processing = processingCount > 0
 
     useEffect(() => {
         imagesRef.current = images
@@ -170,19 +172,23 @@ export default function UpdateLogEditor({ initial, initialImages = [] }: Props) 
     async function addFiles(files: File[]) {
         const candidates = files.filter(file => file.type.startsWith('image/'))
         if (candidates.length === 0) return
-        setProcessing(true)
+        const taken = new Set([...imagesRef.current.map(image => image.name), ...reservedNames.current])
+        const planned = candidates.map(file => {
+            const name = uniqueImageName(slugImageName(file.name), taken)
+            taken.add(name)
+            reservedNames.current.add(name)
+            return { file, name }
+        })
+        setProcessingCount(c => c + 1)
         const added: EditorImage[] = []
         try {
-            const taken = new Set(imagesRef.current.map(image => image.name))
-            for (const file of candidates) {
+            for (const { file, name } of planned) {
                 try {
                     const compressed = await compressImage(file, { maxDimension: 1920 })
                     if (compressed.size > IMAGE_MAX_BYTES) {
                         toast.error(`${file.name} is still over 2 MB after compression`)
                         continue
                     }
-                    const name = uniqueImageName(slugImageName(file.name), taken)
-                    taken.add(name)
                     pendingSeq.current += 1
                     added.push({
                         key:     `pending-${pendingSeq.current}`,
@@ -197,8 +203,10 @@ export default function UpdateLogEditor({ initial, initialImages = [] }: Props) 
                 }
             }
         } finally {
-            setProcessing(false)
+            setProcessingCount(c => c - 1)
         }
+        imagesRef.current = [...imagesRef.current, ...added]
+        for (const { name } of planned) reservedNames.current.delete(name)
         if (added.length === 0) return
         setImages(prev => [...prev, ...added])
         insertTokens(added.map(image => image.name))
@@ -267,22 +275,24 @@ export default function UpdateLogEditor({ initial, initialImages = [] }: Props) 
 
     async function handleSave() {
         setSaving(true)
+        const submitted = draft
+        const submittedImages = images
         try {
             let current = log
-            let fieldsSaved = false
-            if (!current) {
-                const created = await createUpdateLogAction(fieldsFormData(draft))
-                if (!created.ok) { toast.error(created.error.message); return }
-                current = created.value
-                fieldsSaved = true
-                setLog(created.value)
-                const savedFields = toFields(created.value)
+            if (!current || !sameFields(submitted, baseline)) {
+                const res = current
+                    ? await updateUpdateLogAction(fieldsFormData(submitted, current.id))
+                    : await createUpdateLogAction(fieldsFormData(submitted))
+                if (!res.ok) { toast.error(res.error.message); return }
+                if (!current) window.history.replaceState(null, '', `/admin/updates/${res.value.id}`)
+                current = res.value
+                setLog(res.value)
+                const savedFields = toFields(res.value)
                 setBaseline(savedFields)
-                setDraft(savedFields)
-                window.history.replaceState(null, '', `/admin/updates/${created.value.id}`)
+                setDraft(d => (sameFields(d, submitted) ? savedFields : d))
             }
 
-            const { changes, removedIds, pending: toUpload } = diffImages(images, savedImages)
+            const { changes, removedIds, pending: toUpload } = diffImages(submittedImages, savedImages)
             let saved = savedImages
             if (changes.length > 0 || removedIds.length > 0) {
                 const res = await updateUpdateLogImagesAction({ updateLogId: current.id, changes, removedIds })
@@ -309,15 +319,6 @@ export default function UpdateLogEditor({ initial, initialImages = [] }: Props) 
             saved = [...saved, ...uploaded.values()]
             setSavedImages(saved)
             setImages(prev => [...saved, ...prev.filter(image => !image.id && !uploaded.has(image.key))])
-
-            if (!fieldsSaved && !sameFields(draft, baseline)) {
-                const updated = await updateUpdateLogAction(fieldsFormData(draft, current.id))
-                if (!updated.ok) { toast.error(updated.error.message); return }
-                setLog(updated.value)
-                const savedFields = toFields(updated.value)
-                setBaseline(savedFields)
-                setDraft(savedFields)
-            }
 
             if (failure) toast.error(`Some images did not upload. ${failure}`)
             else toast.success(log ? 'Saved' : 'Draft created')
@@ -491,6 +492,7 @@ export default function UpdateLogEditor({ initial, initialImages = [] }: Props) 
                         uses={uses}
                         missing={missing}
                         processing={processing}
+                        locked={saving}
                         onAddFiles={files => void addFiles(files)}
                         onRename={renameImage}
                         onCaption={setCaption}

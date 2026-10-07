@@ -101,7 +101,7 @@ function withImages(images: ChangelogImage[]): Components {
 export default function ChangelogBody({ body, images = [] }: { body: string; images?: ChangelogImage[] }) {
     const { source, toggles } = prepareChangelog(body)
     return (
-        <div className="flow-root text-sm leading-relaxed text-foreground">/
+        <div className="flow-root text-sm leading-relaxed text-foreground">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks, [remarkChangelog, { toggles }]]}
                 rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}
