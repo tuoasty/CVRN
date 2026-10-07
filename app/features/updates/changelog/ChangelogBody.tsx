@@ -2,7 +2,7 @@ import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import rehypeSanitize, { defaultSchema, type Options as SanitizeSchema } from 'rehype-sanitize'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Triangle } from 'lucide-react'
 import { proseComponents } from '@/app/components/prose/proseComponents'
 import { cn } from '@/lib/utils'
 import remarkChangelog from './remarkChangelog'
@@ -12,13 +12,13 @@ const sanitizeSchema: SanitizeSchema = {
     clobberPrefix: '',
     attributes: {
         ...defaultSchema.attributes,
-        li: [...(defaultSchema.attributes?.li ?? []), ['dataDelta', 'buff', 'nerf']],
+        span: [...(defaultSchema.attributes?.span ?? []), ['dataDelta', 'buff', 'nerf']],
     },
 }
 
-const DELTA_CHIP = {
-    buff: { glyph: '▲', label: 'Buff', className: 'text-success bg-success/10 border-success/20' },
-    nerf: { glyph: '▼', label: 'Nerf', className: 'text-destructive bg-destructive/10 border-destructive/20' },
+const DELTA_MARK = {
+    buff: { label: 'Buff', className: 'text-success' },
+    nerf: { label: 'Nerf', className: 'text-destructive rotate-180' },
 } as const
 
 const components: Components = {
@@ -41,21 +41,15 @@ const components: Components = {
     p: ({ children }) => <p className="my-3">{children}</p>,
     ul: ({ children }) => <ul className="my-3 ml-5 list-disc space-y-1.5 marker:text-muted-foreground">{children}</ul>,
     ol: ({ children }) => <ol className="my-3 ml-5 list-decimal space-y-1.5 marker:text-muted-foreground">{children}</ol>,
-    li: ({ children, ...props }) => {
+    li: ({ children }) => <li className="pl-1">{children}</li>,
+    span: ({ children, ...props }) => {
         const delta = (props as Record<string, unknown>)['data-delta']
-        const chip = delta === 'buff' || delta === 'nerf' ? DELTA_CHIP[delta] : null
-        if (!chip) return <li className="pl-1">{children}</li>
+        if (delta !== 'buff' && delta !== 'nerf') return <span>{children}</span>
+        const mark = DELTA_MARK[delta]
         return (
-            <li data-delta={delta as string} className="pl-1">
-                <span
-                    aria-label={chip.label}
-                    title={chip.label}
-                    className={cn('mr-2 inline-flex h-5 min-w-5 items-center justify-center rounded-sm border px-1 align-[1px] font-mono text-xs leading-none', chip.className)}
-                >
-                    {chip.glyph}
-                </span>
-                {children}
-            </li>
+            <span data-delta={delta} role="img" aria-label={mark.label} title={mark.label} className="mr-1.5 inline-flex align-baseline">
+                <Triangle aria-hidden className={cn('h-[0.7em] w-[0.7em] fill-current stroke-none', mark.className)} />
+            </span>
         )
     },
     details: ({ id, children }) => (

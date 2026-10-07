@@ -125,16 +125,43 @@ describe('remarkChangelog balance markers', () => {
     it('marks a [buff] list item and removes the token', () => {
         const html = render('- [buff] Jump 12 → 14')
         expect(html).toContain('data-delta="buff"')
+        expect(html).toContain('aria-label="Buff"')
         expect(html).toContain('Jump 12 → 14')
         expect(html).not.toContain('[buff]')
-        expect(html).toContain('▲')
     })
 
     it('marks a nested [nerf] list item', () => {
         const html = render('- Serving\n  - [nerf] Spike CD 8s → 10s')
         expect(html).toContain('data-delta="nerf"')
+        expect(html).toContain('aria-label="Nerf"')
         expect(html).not.toContain('[nerf]')
-        expect(html).toContain('▼')
+    })
+
+    it('marks a plain paragraph that starts with a marker', () => {
+        const html = render('[buff] Jump 12 → 14')
+        expect(html).toContain('data-delta="buff"')
+        expect(html).toContain('Jump 12 → 14')
+        expect(html).not.toContain('[buff]')
+    })
+
+    it('marks every line that starts with a marker inside one paragraph', () => {
+        const html = render('Changes\n[buff] Jump 12 → 14\n[nerf] Spike CD 8s → 10s')
+        expect(html.match(/data-delta="buff"/g)).toHaveLength(1)
+        expect(html.match(/data-delta="nerf"/g)).toHaveLength(1)
+        expect(html).not.toContain('[buff]')
+        expect(html).not.toContain('[nerf]')
+    })
+
+    it('marks a heading and keeps the marker out of its anchor', () => {
+        const html = render('### [nerf] Speed Surge')
+        expect(html).toMatch(/<h3[^>]*id="speed-surge"[^>]*>.*data-delta="nerf"/)
+        expect(html).not.toContain('[nerf]')
+    })
+
+    it('marks a collapsible title', () => {
+        const html = render('> ### [buff] Relentless\nbody')
+        expect(between(html, '<summary', '</summary>')).toContain('data-delta="buff"')
+        expect(html).toContain('id="relentless"')
     })
 
     it('accepts markers in any letter case', () => {
@@ -152,8 +179,8 @@ describe('remarkChangelog balance markers', () => {
         expect(html).not.toContain('data-delta')
     })
 
-    it('only treats a marker at the start of the item as a marker', () => {
-        const html = render('- Jump [buff] later')
+    it('only treats a marker at the start of a line as a marker', () => {
+        const html = render('Jump [buff] later')
         expect(html).toContain('[buff]')
         expect(html).not.toContain('data-delta')
     })

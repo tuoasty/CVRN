@@ -47,16 +47,47 @@ function setProperties(node: MdNode, props: Record<string, unknown>) {
     node.data = { ...node.data, hProperties: { ...node.data?.hProperties, ...props } }
 }
 
-function markDeltas(node: MdNode) {
-    if (node.type === 'listItem') {
-        const first = node.children?.[0]
-        const lead = first?.type === 'paragraph' ? first.children?.[0] : undefined
-        const match = lead?.type === 'text' && typeof lead.value === 'string' ? DELTA_PREFIX.exec(lead.value) : null
-        if (lead && match) {
-            lead.value = lead.value!.slice(match[0].length)
-            setProperties(node, { dataDelta: match[1].toLowerCase() })
+const PHRASING_PARENTS = new Set(['paragraph', 'heading', 'tableCell'])
+
+function deltaNode(delta: Delta): MdNode {
+    return { type: 'changelogDelta', data: { hName: 'span', hProperties: { dataDelta: delta } }, children: [] }
+}
+
+function markLineStarts(parent: MdNode) {
+    const out: MdNode[] = []
+    let atLineStart = true
+
+    for (const child of parent.children ?? []) {
+        if (child.type !== 'text' || typeof child.value !== 'string') {
+            out.push(child)
+            atLineStart = child.type === 'break'
+            continue
         }
+
+        const lines = child.value.split('\n')
+        lines.forEach((line, idx) => {
+            let text = line
+            if (idx > 0 || atLineStart) {
+                const match = DELTA_PREFIX.exec(text)
+                if (match) {
+                    if (idx > 0) out.push({ type: 'text', value: '\n' })
+                    out.push(deltaNode(match[1].toLowerCase() as Delta))
+                    text = text.slice(match[0].length)
+                    if (text) out.push({ type: 'text', value: text })
+                    return
+                }
+            }
+            const piece = (idx > 0 ? '\n' : '') + text
+            if (piece) out.push({ type: 'text', value: piece })
+        })
+        atLineStart = lines.length > 1 && lines[lines.length - 1] === ''
     }
+
+    parent.children = out
+}
+
+function markDeltas(node: MdNode) {
+    if (PHRASING_PARENTS.has(node.type)) markLineStarts(node)
     for (const child of node.children ?? []) markDeltas(child)
 }
 

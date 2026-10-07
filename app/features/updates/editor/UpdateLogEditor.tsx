@@ -266,7 +266,7 @@ export default function UpdateLogEditor({ initial }: Props) {
                         <code className="font-mono"># Section</code>, <code className="font-mono">## Category</code>,{' '}
                         <code className="font-mono">### Feature</code>. Start a line with <code className="font-mono">&gt;</code> to make it
                         collapsible, for example <code className="font-mono">&gt; ### Feature</code>. It ends at the first empty line.
-                        Mark balance lines with <code className="font-mono">- [buff]</code> or <code className="font-mono">- [nerf]</code>.
+                        Start any line or heading with <code className="font-mono">[buff]</code> or <code className="font-mono">[nerf]</code> for a ▲/▼ marker.
                         Ctrl+Alt+1/2/3 headings, Ctrl+B bold, Ctrl+I italic, Tab / Shift+Tab to nest list items (Esc then Tab to leave the box).
                     </p>
                 </div>
