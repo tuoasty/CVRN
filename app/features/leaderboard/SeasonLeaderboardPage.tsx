@@ -5,7 +5,8 @@ import Link from "next/link";
 import {ArrowRight, Loader2, Trophy} from "lucide-react";
 import {format} from "date-fns";
 import {PublicPageHeader} from "@/app/components/public/PublicPageHeader";
-import LeaderboardFilterBar from "@/app/features/leaderboard/LeaderboardFilterBar";
+import LeaderboardFilterBar, {LEADERBOARD_TABS_ID, LeaderboardCount} from "@/app/features/leaderboard/LeaderboardFilterBar";
+import {viewPanelId, viewTabId} from "@/app/components/filters/ViewTabs";
 import LeaderboardTable from "@/app/features/leaderboard/LeaderboardTable";
 import {
     matchesPlayerQuery,
@@ -62,14 +63,16 @@ export default function SeasonLeaderboardPage({rows, season, region, statsVersio
                 title="Leaderboard"
                 subtitle={subtitle}
                 actions={
-
-                    <Link
-                        href="/leaderboard"
-                        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-sm border border-border text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    >
-                        See all-time
-                        <ArrowRight className="h-4 w-4" aria-hidden />
-                    </Link>
+                    <div className="flex flex-col-reverse items-end gap-1 sm:flex-row sm:items-center sm:gap-4">
+                        <LeaderboardCount total={pool.length} shown={shownCount} />
+                        <Link
+                            href="/leaderboard"
+                            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-sm border border-border text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        >
+                            See all-time
+                            <ArrowRight className="h-4 w-4" aria-hidden />
+                        </Link>
+                    </div>
                 }
             />
 
@@ -84,15 +87,18 @@ export default function SeasonLeaderboardPage({rows, season, region, statsVersio
                 query={filters.q}
                 onViewChange={setView}
                 onQueryChange={setQuery}
-                totalCount={pool.length}
-                shownCount={shownCount}
                 position={filters.position}
                 onPositionChange={setPosition}
                 range={filters.range}
                 onRangeChange={setRange}
             />
 
-            <div className="relative">
+            <div
+                id={viewPanelId(LEADERBOARD_TABS_ID)}
+                role="tabpanel"
+                aria-labelledby={viewTabId(LEADERBOARD_TABS_ID, filters.view)}
+                className="relative"
+            >
                 {rangeActive && rangedLoading && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-label="Loading" />
