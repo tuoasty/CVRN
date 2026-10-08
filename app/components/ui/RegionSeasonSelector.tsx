@@ -61,18 +61,19 @@ export default function RegionSeasonSelector({ fullWidth }: RegionSeasonSelector
         <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
                 <button className={cn(
-                    "flex items-center h-9 border border-border rounded-sm overflow-hidden bg-background text-sm focus:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    "flex items-center h-9 border border-border rounded-sm overflow-hidden bg-background text-sm",
+                    "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                     fullWidth && "w-full"
                 )}>
-                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2.5 self-stretch flex items-center tracking-wide uppercase shrink-0">
-                        {selectedRegion?.code ?? "—"}
+                    <span className="bg-muted text-foreground font-mono text-xs font-semibold px-2.5 self-stretch flex items-center tracking-wide uppercase shrink-0">
+                        {selectedRegion?.code ?? "?"}
                     </span>
                     <span className="w-px self-stretch bg-border shrink-0" />
-                    <span className={cn("text-foreground px-2.5 whitespace-nowrap", fullWidth && "flex-1")}>
+                    <span className={cn("bg-background text-foreground px-2.5 whitespace-nowrap", fullWidth && "flex-1 text-left")}>
                         {selectedSeason?.name ?? "Select Season"}
                     </span>
                     <ChevronDown className={cn(
-                        "h-3.5 w-3.5 text-muted-foreground mr-2 ml-0.5 transition-transform duration-150",
+                        "h-3.5 w-3.5 text-muted-foreground mr-2 ml-0.5 transition-transform duration-150 motion-reduce:transition-none",
                         open && "rotate-180"
                     )} />
                 </button>
@@ -87,7 +88,7 @@ export default function RegionSeasonSelector({ fullWidth }: RegionSeasonSelector
                             className={cn(
                                 "text-[10px] font-bold py-1.5 rounded-sm transition-colors",
                                 activeTabId === region.id
-                                    ? "bg-primary text-primary-foreground"
+                                    ? "bg-muted-foreground text-background"
                                     : "text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground"
                             )}
                         >
@@ -106,13 +107,13 @@ export default function RegionSeasonSelector({ fullWidth }: RegionSeasonSelector
                             className={cn(
                                 "text-left text-xs px-2 py-1.5 rounded-sm transition-colors flex items-center justify-between",
                                 season.slug === params.season && season.region_id === selectedRegion?.id
-                                    ? "bg-primary/10 text-foreground border border-primary/20"
+                                    ? "bg-muted text-foreground border border-border"
                                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                             )}
                         >
                             {season.name}
                             {isSeasonActive(season) && (
-                                <span className="text-[9px] text-primary font-semibold ml-2">Active</span>
+                                <span className="text-[9px] text-muted-foreground font-semibold ml-2">Active</span>
                             )}
                         </button>
                     ))}

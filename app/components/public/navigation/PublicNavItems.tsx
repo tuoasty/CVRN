@@ -4,10 +4,12 @@ import { useState, useEffect, useId } from "react";
 import { usePathname, useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import {
     DropdownMenu,
-    DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuPortal,
     DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,8 @@ const NAV_ENTRIES: NavEntry[] = [
     { page: "players", label: "Players" },
     { page: "leaderboard", label: "Leaderboard" },
     { page: "records", label: "Records" },
+    { page: "media", label: "Media" },
+    { page: "archive", label: "Archive" },
     {
         label: "Information",
         children: [
@@ -32,9 +36,9 @@ const NAV_ENTRIES: NavEntry[] = [
             { page: "updates", label: "Updates" },
         ],
     },
-    { page: "media", label: "Media" },
-    { page: "archive", label: "Archive" },
 ];
+
+const PANEL_SIDE_OFFSET = 13;
 
 const GLOBAL_HREFS: Record<string, string> = {
     archive: "/archive",
@@ -165,27 +169,47 @@ export default function PublicNavItems({
 
         return (
             <DropdownMenu key={group.label}>
-                <DropdownMenuTrigger className={itemClass(groupActive, "gap-1")}>
+                <DropdownMenuTrigger className={itemClass(groupActive, "group gap-1")}>
                     {group.label}
-                    <ChevronDown className="h-3 w-3 opacity-60" aria-hidden />
+                    <ChevronDown
+                        className="h-3 w-3 opacity-60 transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                        aria-hidden
+                    />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="rounded-sm">
-                    {children.map(({ child, href, isActive }) => (
-                        <DropdownMenuItem
-                            key={child.page}
-                            asChild
-                            className={cn("rounded-sm cursor-pointer", isActive && VERTICAL_ACTIVE)}
-                        >
-                            <Link
-                                href={href}
-                                onClick={onNavigate}
-                                aria-current={isActive ? "page" : undefined}
+                <DropdownMenuPortal>
+                    <DropdownMenuPrimitive.Content
+                        align="start"
+                        sideOffset={PANEL_SIDE_OFFSET}
+                        className={cn(
+                            "z-50 w-80 rounded-none border border-t-0 border-border bg-card p-3 text-foreground shadow-lg outline-none",
+                            "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 data-[state=open]:duration-200 data-[state=open]:ease-out",
+                            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-150",
+                            "motion-reduce:animate-none"
+                        )}
+                    >
+                        <DropdownMenuLabel className="px-2 pb-1.5 pt-0 text-xs font-semibold text-muted-foreground">
+                            {group.label}
+                        </DropdownMenuLabel>
+                        {children.map(({ child, href, isActive }) => (
+                            <DropdownMenuItem
+                                key={child.page}
+                                asChild
+                                className={cn(
+                                    "flex cursor-pointer items-center justify-between gap-3 rounded-none p-2 transition-colors duration-150",
+                                    "hover:bg-muted focus:bg-muted focus:text-foreground",
+                                    isActive && "bg-muted"
+                                )}
                             >
-                                {child.label}
-                            </Link>
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
+                                <Link href={href} onClick={onNavigate} aria-current={isActive ? "page" : undefined}>
+                                    <span className="text-sm font-semibold text-foreground">{child.label}</span>
+                                    {isActive && (
+                                        <span className="text-xs font-semibold text-foreground">Here</span>
+                                    )}
+                                </Link>
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuPrimitive.Content>
+                </DropdownMenuPortal>
             </DropdownMenu>
         );
     };

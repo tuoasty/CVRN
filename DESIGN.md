@@ -108,17 +108,28 @@ components:
     padding: "4px 12px"
     height: "36px"
   nav-item:
-    textColor: "{colors.ink-light}"
+    textColor: "{colors.quiet-ink-light}"
     typography: "{typography.body}"
     rounded: "{rounded.sm}"
     padding: "0 12px"
     height: "36px"
   nav-item-active:
-    backgroundColor: "{colors.location-yellow}"
-    textColor: "{colors.location-yellow-ink}"
+    textColor: "{colors.ink-light}"
+    fontWeight: 600
+    textDecoration: "underline 2px"
+    underlineOffset: "6px"
     rounded: "{rounded.sm}"
     padding: "0 12px"
     height: "36px"
+  filter-option:
+    textColor: "{colors.quiet-ink-light}"
+    typography: "{typography.body}"
+    padding: "0 10px"
+    height: "32px"
+  filter-option-selected:
+    textColor: "{colors.ink-light}"
+    fontWeight: 600
+    underline: "2px {colors.ink-light}, inset to the text"
   badge-default:
     backgroundColor: "{colors.action-blue}"
     textColor: "{colors.action-blue-ink}"
@@ -154,7 +165,7 @@ What this system rejects is decoration standing in for authority. It does not us
 - Square corners on every data surface — `.panel` resolves to a literal `0px` radius
 - Flat by default; borders and tonal fills carry all in-page depth
 - One type family (IBM Plex Sans) for everything except numbers, which use its sibling IBM Plex Mono
-- Two accents with fixed jobs: blue acts, yellow locates
+- One accent with one job: blue acts. Selected and you-are-here states are ink weight plus an ink underline, never a color
 - Dense by design — 12px vertical cell padding, `0.875rem` body, `0.75rem` labels
 - Desktop-first; density expands upward rather than collapsing downward
 
@@ -166,7 +177,7 @@ A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber ac
 - **Action Blue** (cobalt `#2D55E6`, `hsl(227 79% 54%)` dark / `hsl(227 74% 47%)` light): Every actionable and stateful thing. Primary buttons, links, focus rings, the active sort column in a stat table, status dots, the top-loading progress bar. If it can be clicked or it reports live state, it is this cobalt.
 
 ### Secondary
-- **Location Yellow** (broadcast amber `#E8992C`, `hsl(35 80% 54%)`): Position, not action. Its only structural use is the active navigation item, where it sits behind near-black text. This is the system's single most distinctive decision and it must not erode: yellow answers "where am I," never "what can I do."
+- **Location Yellow** (broadcast amber `#E8992C`, `hsl(35 80% 54%)`): Reserved. It no longer has a structural use: the active navigation item and selected filters are marked by an ink underline (see Navigation and Filters). The token stays in the coordinated palette; new uses need a design decision first. Its one remaining sanctioned use is the update-log rework glyph.
 
 ### Tertiary
 - **Destructive Red** (`#EF4444`, `hsl(0 84% 60%)`): Irreversible actions and error surfaces only. Voiding a match, deleting a team, a failed sync row. Never a warning, never an accent.
@@ -181,7 +192,7 @@ A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber ac
 
 ### Named Rules
 
-**The Two-Signal Rule.** Blue means *act*. Yellow means *you are here*. A screen that uses either color for any third purpose has broken the system, and the failure is invisible until a user misreads a highlighted row as a button.
+**The Two-Signal Rule.** Blue means *act*. Ink means *selected* or *you are here*. A selected filter, tab or nav item is a state, not an action, so it is drawn as ink text at semibold weight with a 2px ink underline; cobalt is never a selected-state fill. A screen that uses blue for anything but actions, links and focus has broken the system, and the failure is invisible until a user misreads a highlighted row as a button.
 
 **The No-Third-Accent Rule.** Anything that is not an action, a location, or a destructive operation is drawn from the neutral ramp. New categorical colors are prohibited. If a data category needs distinguishing, use position, weight, or rule lines before reaching for hue.
 
@@ -253,7 +264,7 @@ The one deliberate exception is affordance. A panel that navigates somewhere mus
 ### Buttons
 - **Shape:** Barely-rounded (`rounded-md`, 2px). Height `36px` default, with `24px` / `32px` / `40px` steps and matching square icon sizes.
 - **Primary:** Action Blue fill, white text, `8px 16px` padding. Hover drops to `90%` opacity.
-- **Secondary:** Location Yellow fill with near-black text — **use sparingly.** In practice this variant collides with the yellow-means-location rule; prefer outline for secondary actions.
+- **Secondary:** Location Yellow fill with near-black text. Amber is reserved (see Colors); prefer outline for secondary actions.
 - **Outline / Ghost:** Transparent or Page-colored fill with a Rule border; hover fills with the accent tint.
 - **Destructive:** Destructive Red fill, white text. Reserved for irreversible operations.
 - **Focus:** `3px` ring in Action Blue at 50% opacity, plus a border shift to the ring color.
@@ -278,11 +289,30 @@ The signature surface of the product, and the one most worth protecting.
 - **Numbers:** monospace, `tabular-nums`, centered. Text columns left-align; the leading identity column is sticky on wide tables.
 - **Column grouping:** dense stat tables use a two-row header with a group band above the column labels, separated by Rule borders at `/30`.
 
+### Ruled Sections
+
+The pattern for grouping list content without a container: a heading, a 1px Rule-tone line under it, the rows, and whitespace before the next section. Used by the Records category blocks. It is not a container (no fill, no surrounding border), so it coexists with the One Container Rule; reach for it when a `.panel` per item would box every list into a card.
+
+- **Heading:** 14px semibold Ink, `8px` below it, then the Rule line. Never an Ink rule: a full-strength line reads as a white bar in dark mode.
+- **Rows:** separated by Rule lines (`/60` for secondary rows), the last row without one.
+- **Spacing between sections:** 44px vertical, 48px horizontal in a grid.
+
+### Filters
+
+Shared components live in `app/components/filters/`.
+
+- **Selected filter state:** Ink text, semibold, plus a 2px Ink underline inset to the text. Unselected options are Quiet Ink medium and go to Ink on hover. No fill, no box, no cobalt.
+- **Option rows (`OptionRow`):** a 12px semibold Quiet Ink label followed by plain-text options. "All" comes first, separated from specific values by a 1px Rule divider. Numbers (season numbers) are mono. Multi-select rows mark every selected value; "All" clears them.
+- **View tabs (`ViewTabs`):** page-level tabs on a full-width Rule line; the selected tab carries a 2px Ink bottom border over that line. Page tools sit at the right end of the same line and drop to their own row beneath it when space runs out. `StatViewSelector` uses the same tabs with the rule fitted to the tabs' width.
+- **Inline switch (`InlineSwitch`):** two or three text options separated by a Rule-tone `/`, the selected one underlined.
+
 ### Navigation
 - **Style:** Horizontal link row at `lg` and above, collapsing to a vertical stack in a sheet below it. Items are `36px` tall, `12px` horizontal padding, square (`rounded-sm` = 0), `0.875rem` medium.
-- **Default:** Ink text, no fill. **Hover:** accent fill with accent-foreground text.
-- **Active:** Location Yellow fill with near-black text. This is the system's you-are-here signal and it appears nowhere else.
-- **Focus:** `2px` Action Blue ring.
+- **Default:** Quiet Ink text, no fill. **Hover:** Ink text with a Quiet Ink 2px underline.
+- **Active:** Ink text, semibold, with a 2px Ink underline at a 6px offset. This is the you-are-here signal.
+- **Grouped items (Information):** a click-to-open anchored panel, 320px wide, square, Surface fill, 1px Rule border with no top border so it attaches flush to the header's bottom edge, Overlay shadow, 12px padding. A Label-style group name, then one row per child (14px semibold title). Hover and the current page get a Recessed fill; the current page carries a right-aligned "Here". Opens with opacity plus a 4px rise over 200ms, instant under reduced motion.
+- **Region / season picker (tonal step):** the trigger separates region from season by tone, not color: the region code in mono semibold 12px on Recessed, a 1px Rule hairline, the season name on Page. The popover keeps a fixed width and labeled structure: boxed region buttons with the selected one filled in Quiet Ink (light text on it), and the current season on a Recessed fill with a Rule border. No cobalt.
+- **Focus:** `2px` Action Blue ring on nav items (converging on the `3px` control ring; see Don'ts).
 
 ### Page Containers
 Three fixed widths, chosen by content density rather than by page type: `.page-narrow` (`max-w-7xl` / 1280px) for forms and reading, `.page-wide` (1440px) for the standard public shell, `.page-bleed` (1920px) for the widest stat tables. All use `16px` / `24px` / `32px` responsive gutters.
@@ -293,13 +323,15 @@ Three fixed widths, chosen by content density rather than by page type: `.page-n
 
 **The One Container Rule.** `.panel` is the only container vocabulary. shadcn's `<Card>` currently survives in seven files with `rounded-xl` and `shadow-sm`; those are deviations to migrate, not a second sanctioned system.
 
+**The Inline-Over-Dropdown Rule.** When every option fits on one line (regions, seasons, positions, stat views), render them inline as an option row or view tabs. A popover is reserved for controls that cannot be inline (a date calendar) and for global context (the navbar region/season picker). A dropdown that hides four choices behind a click is a spreadsheet filter, not a record desk.
+
 ## 6. Do's and Don'ts
 
 ### Do:
 - **Do** use `.panel` for every container: square corners, 1px Rule border, Surface background, no resting shadow.
 - **Do** give clickable panels a full-strength border and a trailing chevron at rest, then add `shadow-sm`, an Action Blue border, and a 1px lift on hover.
 - **Do** set `font-mono tabular-nums` on every number that sits in a column.
-- **Do** keep Action Blue for what acts and Location Yellow for where you are. One job each.
+- **Do** keep Action Blue for what acts, and mark what is selected or where you are with ink weight and an ink underline.
 - **Do** build depth from the Page → Surface → Recessed tonal step and 1px Rule borders.
 - **Do** use fixed rem type sizes and let responsive behavior be structural — collapse the sidebar, stack the columns, make the table scroll.
 - **Do** hold body text to Ink and metadata to Quiet Ink. `0.75rem` is the floor for anything a user must actually read.
@@ -320,4 +352,4 @@ Three fixed widths, chosen by content density rather than by page type: `.page-n
 - **Don't** mix focus vocabularies. Controls use a `3px` ring at 50% opacity; navigation currently uses `2px` at full opacity. Converge on the `3px` treatment.
 - **Don't** let a color be the only carrier of meaning. Win/loss, qualified/eliminated, and synced/failed each need a second cue — a glyph, a label, or position.
 
-**Audit test:** if a screenshot of a new surface could be dropped into a shadcn starter template without looking out of place, it is wrong. The square corners, the yellow active-nav, the monospaced columns, and the total absence of resting shadows are what make a CVRN screen identifiable — and any one of them going missing is the system eroding.
+**Audit test:** if a screenshot of a new surface could be dropped into a shadcn starter template without looking out of place, it is wrong. The square corners, the ink-underlined active state, the monospaced columns, and the total absence of resting shadows are what make a CVRN screen identifiable — and any one of them going missing is the system eroding.
