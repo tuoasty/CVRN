@@ -20,7 +20,7 @@ export interface RawCatalogParams {
 
 export const DEFAULT_POSITION: SpecPosition = 'OUT';
 
-export const REGION_ORDER = ['AS', 'NA', 'EU', 'SA'];
+export const REGION_ORDER = ['AS', 'EU', 'NA', 'SA'];
 
 export function orderRegions<T extends {code: string}>(regions: T[]): T[] {
     const rank = (code: string) => {

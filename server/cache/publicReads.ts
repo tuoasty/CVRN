@@ -57,6 +57,7 @@ import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
 import {getPublishedUpdateLogIndex, getPublishedUpdateLog} from "@/server/domains/updateLog";
 import {getPublicSpecSnapshot, getPublishedSpecRegions} from "@/server/domains/spec";
+import {getRecords} from "@/server/domains/record";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS, RAW_STATS_REVALIDATE_SECONDS} from "./tags";
 
@@ -514,4 +515,20 @@ export const getCachedSeasonBySlugAndRegion = unstable_cache(
         ),
     ["public:season-by-slug-region"],
     {tags: [CACHE_TAGS.seasons], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedRecords = unstable_cache(
+    async (regionCode: string | null, seasonSlug: string | null) =>
+        unwrapNullable(
+            await getRecords(createPublicClient(), {
+                regionCode: regionCode ?? undefined,
+                seasonSlug: seasonSlug ?? undefined,
+            }),
+            "getCachedRecords",
+        ),
+    ["public:records"],
+    {
+        tags: [CACHE_TAGS.stats, CACHE_TAGS.players, CACHE_TAGS.teams, CACHE_TAGS.seasons],
+        revalidate: STATS_REVALIDATE_SECONDS,
+    },
 );
