@@ -518,11 +518,11 @@ export const getCachedSeasonBySlugAndRegion = unstable_cache(
 );
 
 export const getCachedRecords = unstable_cache(
-    async (regionCode: string | null, seasonSlug: string | null) =>
+    async (regionCode: string | null, seasonNumber: number | null) =>
         unwrapNullable(
             await getRecords(createPublicClient(), {
                 regionCode: regionCode ?? undefined,
-                seasonSlug: seasonSlug ?? undefined,
+                seasonNumber: seasonNumber ?? undefined,
             }),
             "getCachedRecords",
         ),

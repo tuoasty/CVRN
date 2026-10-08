@@ -123,26 +123,34 @@ describe("scopeKeyFor", () => {
     it("builds the matview scope keys", () => {
         expect(scopeKeyFor({kind: "all"})).toBe("all");
         expect(scopeKeyFor({kind: "region", regionId: "r1", regionCode: "NA"})).toBe("r:r1");
+        expect(scopeKeyFor({kind: "seasonNumber", seasonNumber: 2})).toBe("n:2");
         expect(
-            scopeKeyFor({kind: "season", regionId: "r1", regionCode: "NA", seasonId: "s1", seasonSlug: "season-2", seasonName: "Season 2"}),
+            scopeKeyFor({
+                kind: "season",
+                regionId: "r1",
+                regionCode: "NA",
+                seasonId: "s1",
+                seasonSlug: "season-2",
+                seasonName: "Season 2",
+                seasonNumber: 2,
+            }),
         ).toBe("s:s1");
     });
 });
 
 describe("RecordsParamsSchema", () => {
-    it("accepts no params, a region, or a region and season, lowercased", () => {
-        expect(RecordsParamsSchema.safeParse({}).success).toBe(true);
+    it("accepts region only, season only, both, or neither", () => {
+        expect(RecordsParamsSchema.parse({})).toEqual({});
         expect(RecordsParamsSchema.parse({region: "NA"})).toEqual({region: "na"});
-        expect(RecordsParamsSchema.parse({region: "NA", season: "Season-2"})).toEqual({region: "na", season: "season-2"});
-    });
-
-    it("rejects a season without a region", () => {
-        expect(RecordsParamsSchema.safeParse({season: "season-2"}).success).toBe(false);
+        expect(RecordsParamsSchema.parse({season: "2"})).toEqual({season: 2});
+        expect(RecordsParamsSchema.parse({region: "NA", season: "2"})).toEqual({region: "na", season: 2});
     });
 
     it("rejects malformed or repeated params", () => {
         expect(RecordsParamsSchema.safeParse({region: "n%a"}).success).toBe(false);
         expect(RecordsParamsSchema.safeParse({region: ["NA", "AS"]}).success).toBe(false);
-        expect(RecordsParamsSchema.safeParse({region: "NA", season: "season 2"}).success).toBe(false);
+        expect(RecordsParamsSchema.safeParse({season: "season-2"}).success).toBe(false);
+        expect(RecordsParamsSchema.safeParse({season: "0"}).success).toBe(false);
+        expect(RecordsParamsSchema.safeParse({season: "-1"}).success).toBe(false);
     });
 });

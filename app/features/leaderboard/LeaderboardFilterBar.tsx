@@ -150,7 +150,7 @@ function PlayerSearchInput({value, onChange}: {value: string; onChange: (q: stri
     );
 }
 
-function RegionFilter({value, onChange}: {value: string; onChange: (region: string) => void}) {
+export function RegionFilter({value, onChange}: {value: string; onChange: (region: string) => void}) {
     return (
         <div
             role="group"

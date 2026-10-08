@@ -30,7 +30,16 @@ export const TEAM_EXCLUDED_CATEGORIES: readonly RecordCategory[] = ["points"];
 export type RecordScope =
     | {kind: "all"}
     | {kind: "region"; regionId: string; regionCode: string}
-    | {kind: "season"; regionId: string; regionCode: string; seasonId: string; seasonSlug: string; seasonName: string};
+    | {kind: "seasonNumber"; seasonNumber: number}
+    | {
+          kind: "season";
+          regionId: string;
+          regionCode: string;
+          seasonId: string;
+          seasonSlug: string;
+          seasonName: string;
+          seasonNumber: number;
+      };
 
 export interface RecordEntry {
     grain: RecordGrain;
@@ -69,7 +78,7 @@ export interface RecordsPayload {
 
 export interface GetRecordsInput {
     regionCode?: string;
-    seasonSlug?: string;
+    seasonNumber?: number;
 }
 
 export {RecordsParamsSchema} from "./schemas";
