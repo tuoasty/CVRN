@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import { Trophy, Medal } from "lucide-react";
 import { SeasonPodiumEntryWithTeam } from "@/server/domains/season";
@@ -36,11 +37,8 @@ function TeamLogo({
         );
     }
     return (
-        <div
-            className="rounded-sm flex items-center justify-center font-bold bg-primary/10 text-primary shrink-0"
-            style={{ width: size, height: size, fontSize: Math.round(size * 0.35) }}
-        >
-            {name.slice(0, 2).toUpperCase()}
+        <div className="relative shrink-0" style={{ width: size, height: size }}>
+            <DefaultTeamLogo sizes={`${size}px`} alt={name} />
         </div>
     );
 }

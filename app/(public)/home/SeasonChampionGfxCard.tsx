@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import GfxFrame from "@/app/features/media/GfxFrame";
 import { cn } from "@/lib/utils";
@@ -67,15 +68,19 @@ export default function SeasonChampionGfxCard({
 
                 <div className="absolute inset-x-0 bottom-0 px-5 pt-12 pb-4">
                     <div className="flex h-10 items-center gap-3">
-                        {champion?.teams.logo_url && (
+                        {champion?.teams && (
                             <div className="relative w-11 h-11 shrink-0">
-                                <Image
-                                    src={champion.teams.logo_url}
-                                    alt={champion.teams.name}
-                                    fill
-                                    sizes="44px"
-                                    className={cn("object-contain", LOGO_SHADOW)}
-                                />
+                                {champion?.teams.logo_url ? (
+                                    <Image
+                                        src={champion.teams.logo_url}
+                                        alt={champion.teams.name}
+                                        fill
+                                        sizes="44px"
+                                        className={cn("object-contain", LOGO_SHADOW)}
+                                    />
+                                ) : (
+                                    <DefaultTeamLogo sizes="44px" alt={champion.teams.name} />
+                                )}
                             </div>
                         )}
                         {champion && (

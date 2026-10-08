@@ -2,7 +2,8 @@
 
 import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
-import Image from "next/image";
+import Image from "next/image"
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import { Badge } from "@/app/components/ui/badge";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
@@ -74,9 +75,13 @@ export default function CompactMatchCard({
             <div className={compact ? 'space-y-1' : 'space-y-1.5'}>
                 <div className={`flex items-center justify-between ${homeWon ? 'opacity-100' : isCompleted ? 'opacity-60' : ''}`}>
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                        {homeTeam?.logo_url && (
+                        {homeTeam && !homeTeam.is_bye && (
                             <div className={`relative ${logoSize} shrink-0`}>
-                                <Image src={homeTeam.logo_url} alt={homeTeam.name} fill sizes={logoSizePx} className="object-contain" />
+                                {homeTeam.logo_url ? (
+                                    <Image src={homeTeam.logo_url} alt={homeTeam.name} fill sizes={logoSizePx} className="object-contain" />
+                                ) : (
+                                    <DefaultTeamLogo sizes={logoSizePx} alt={homeTeam.name} />
+                                )}
                             </div>
                         )}
                         <span className="text-xs font-semibold truncate">
@@ -92,9 +97,13 @@ export default function CompactMatchCard({
 
                 <div className={`flex items-center justify-between ${awayWon ? 'opacity-100' : isCompleted ? 'opacity-60' : ''}`}>
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                        {awayTeam?.logo_url && (
+                        {awayTeam && !awayTeam.is_bye && (
                             <div className={`relative ${logoSize} shrink-0`}>
-                                <Image src={awayTeam.logo_url} alt={awayTeam.name} fill sizes={logoSizePx} className="object-contain" />
+                                {awayTeam.logo_url ? (
+                                    <Image src={awayTeam.logo_url} alt={awayTeam.name} fill sizes={logoSizePx} className="object-contain" />
+                                ) : (
+                                    <DefaultTeamLogo sizes={logoSizePx} alt={awayTeam.name} />
+                                )}
                             </div>
                         )}
                         <span className="text-xs font-semibold truncate">

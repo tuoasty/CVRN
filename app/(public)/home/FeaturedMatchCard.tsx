@@ -4,6 +4,7 @@ import { MatchWithDetails } from "@/server/domains/match";
 import { TeamWithRegion } from "@/server/domains/team";
 import type { MediaPost } from "@/server/domains/media";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { Calendar } from "lucide-react";
@@ -96,9 +97,13 @@ export default function FeaturedMatchCard({
             {}
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-8">
                 <div className={cn("flex flex-col items-center gap-3", isCompleted && !homeWon && "opacity-60")}>
-                    {homeTeam?.logo_url && (
+                    {homeTeam && !homeTeam.is_bye && (
                         <div className="relative w-20 h-20">
-                            <Image src={homeTeam.logo_url} alt={homeTeam.name} fill priority sizes="80px" className="object-contain" />
+                            {homeTeam?.logo_url ? (
+                                <Image src={homeTeam.logo_url} alt={homeTeam.name} fill priority sizes="80px" className="object-contain" />
+                            ) : (
+                                <DefaultTeamLogo sizes="80px" alt={homeTeam.name} />
+                            )}
                         </div>
                     )}
                     <span className="font-bold text-center text-base">{homeTeam?.name || "TBD"}</span>
@@ -115,9 +120,13 @@ export default function FeaturedMatchCard({
                 </div>
 
                 <div className={cn("flex flex-col items-center gap-3", isCompleted && !awayWon && "opacity-60")}>
-                    {awayTeam?.logo_url && (
+                    {awayTeam && !awayTeam.is_bye && (
                         <div className="relative w-20 h-20">
-                            <Image src={awayTeam.logo_url} alt={awayTeam.name} fill priority sizes="80px" className="object-contain" />
+                            {awayTeam?.logo_url ? (
+                                <Image src={awayTeam.logo_url} alt={awayTeam.name} fill priority sizes="80px" className="object-contain" />
+                            ) : (
+                                <DefaultTeamLogo sizes="80px" alt={awayTeam.name} />
+                            )}
                         </div>
                     )}
                     <span className="font-bold text-center text-base">{awayTeam?.name || "TBD"}</span>
@@ -153,16 +162,19 @@ export default function FeaturedMatchCard({
 function BleedTeam({ team, dim, reverse }: { team?: TeamWithRegion; dim: boolean; reverse?: boolean }) {
     return (
         <div className={cn("flex items-center gap-2.5 min-w-0", reverse && "flex-row-reverse", dim && "opacity-60")}>
-            {team?.logo_url && (
+            {team && !team.is_bye && (
                 <div className="relative w-9 h-9 shrink-0">
-                    {}
-                    <Image
-                        src={team.logo_url}
-                        alt={team.name}
-                        fill
-                        sizes="36px"
-                        className="object-contain [filter:drop-shadow(0_0_1px_rgba(255,255,255,0.65))_drop-shadow(0_1px_3px_rgba(0,0,0,0.85))]"
-                    />
+                    {team?.logo_url ? (
+                        <Image
+                            src={team.logo_url}
+                            alt={team.name}
+                            fill
+                            sizes="36px"
+                            className="object-contain [filter:drop-shadow(0_0_1px_rgba(255,255,255,0.65))_drop-shadow(0_1px_3px_rgba(0,0,0,0.85))]"
+                        />
+                    ) : (
+                        <DefaultTeamLogo sizes="36px" alt={team.name} />
+                    )}
                 </div>
             )}
             <span className={cn("text-sm font-bold text-white truncate min-w-0", reverse && "text-right")}>

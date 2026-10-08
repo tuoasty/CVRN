@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import {Shield} from "lucide-react";
 import {cn} from "@/lib/utils";
 import {getLogoClassName} from "@/app/lib/logoClass";
+import {DefaultTeamLogo} from "@/app/components/ui/DefaultTeamLogo";
 import type {RecordEntry} from "@/server/domains/record";
 import {recordEntryHref, recordEntryName} from "./recordContext";
 
@@ -10,13 +10,6 @@ export const ROW_LINK =
     "hover:underline underline-offset-[3px] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
 const LOGO_SIZE = {24: "size-6", 28: "size-7", 40: "size-10"} as const;
-
-const LOGO_BACKDROP =
-    "object-contain drop-shadow-[0_0_1px_rgba(0,0,0,0.35)] dark:drop-shadow-[0_0_1px_rgba(255,255,255,0.35)]";
-
-function logoClass(bgRemoved: boolean): string {
-    return bgRemoved ? getLogoClassName(true) : LOGO_BACKDROP;
-}
 
 export function TeamLogo({
     team,
@@ -42,26 +35,11 @@ export function TeamLogo({
                     alt=""
                     fill
                     sizes={`${size}px`}
-                    className={logoClass(team.logoBgRemoved)}
+                    className={getLogoClassName(true)}
                     unoptimized
                 />
             ) : (
-                <>
-                    <Image
-                        src="/default-team-light.png"
-                        alt=""
-                        fill
-                        sizes={`${size}px`}
-                        className={cn(LOGO_BACKDROP, "dark:hidden")}
-                    />
-                    <Image
-                        src="/default-team-dark.png"
-                        alt=""
-                        fill
-                        sizes={`${size}px`}
-                        className={cn(LOGO_BACKDROP, "hidden dark:block")}
-                    />
-                </>
+                <DefaultTeamLogo sizes={`${size}px`} />
             )}
         </span>
     );

@@ -2,6 +2,7 @@
 
 import {useState, useCallback, useRef} from "react";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import {Table, TableHeader, TableBody, TableRow, TableHead, TableCell} from "@/app/components/ui/table";
 import {Tooltip, TooltipContent, TooltipTrigger, TooltipProvider} from "@/app/components/ui/tooltip";
 import {cn} from "@/lib/utils";
@@ -158,16 +159,20 @@ function SeasonStatRow({row, columns, teamLogo}: {row: PlayerSeasonStat; columns
                 <div className="flex items-center gap-1.5">
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{row.region_code}</span>
                     <span>{row.season_name}</span>
-                    {teamLogo?.logo_url && (
+                    {teamLogo && (
                         <div className="relative w-5 h-5 shrink-0 ml-auto">
-                            <Image
-                                src={teamLogo.logo_url}
-                                alt=""
-                                fill
-                                sizes="20px"
-                                className={cn("object-contain", getLogoClassName(teamLogo.logo_bg_removed))}
-                                unoptimized
-                            />
+                            {teamLogo?.logo_url ? (
+                                <Image
+                                    src={teamLogo.logo_url}
+                                    alt=""
+                                    fill
+                                    sizes="20px"
+                                    className={cn("object-contain", getLogoClassName(teamLogo.logo_bg_removed))}
+                                    unoptimized
+                                />
+                            ) : (
+                                <DefaultTeamLogo sizes="20px" alt="" />
+                            )}
                         </div>
                     )}
                 </div>

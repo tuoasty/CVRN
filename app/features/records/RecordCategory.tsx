@@ -41,7 +41,7 @@ function HolderRow({entry}: {entry: RecordEntry}) {
                 </div>
                 {team && (
                     <div className="flex min-w-0 items-center gap-1 whitespace-nowrap text-xs">
-                        <TeamLogo team={team} size={20} />
+                        <TeamLogo team={team} size={28} className="-my-1.5" />
                         {teamHref ? (
                             <Link href={teamHref} className={cn("min-w-0 truncate", ROW_LINK)}>
                                 {team.name}
@@ -68,7 +68,7 @@ function ChaserRow({entry}: {entry: RecordEntry}) {
             <div className="flex min-w-0 flex-col pl-3">
                 <div className="flex min-w-0 items-center gap-1">
                     <EntryLink entry={entry} className="text-sm font-medium" />
-                    {team && <TeamLogo team={team} size={20} label={team.name} />}
+                    {team && <TeamLogo team={team} size={28} label={team.name} className="-my-1" />}
                     <Positions entry={entry} />
                 </div>
                 <RecordContextLine entry={entry} />

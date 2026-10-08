@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import { Trophy, ChevronLeft } from "lucide-react";
 import { getCachedSeasonHistoryDetail, getCachedRegions } from "@/server/cache/publicReads";
 import { SeasonDetail } from "@/server/domains/season";
@@ -117,7 +118,9 @@ function ChampionGfxHero({ gfx, podium, regionCode, seasonSlug }: { gfx: { image
                         <Image src={entry.teams.logo_url} alt={entry.teams.name} fill sizes="36px" className={getLogoClassName(true)} />
                     </div>
                 ) : (
-                    <span className="flex items-center justify-center w-9 h-9 shrink-0 text-xs font-bold text-primary bg-primary/10">{entry.teams.name.slice(0, 2).toUpperCase()}</span>
+                    <div className="relative w-9 h-9 shrink-0">
+                        <DefaultTeamLogo sizes="36px" alt={entry.teams.name} />
+                    </div>
                 )}
                 <span className="text-base font-semibold text-foreground truncate">{entry.teams.name}</span>
             </>
@@ -142,9 +145,13 @@ function ChampionGfxHero({ gfx, podium, regionCode, seasonSlug }: { gfx: { image
                         <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none flex flex-col items-center gap-2.5 px-4 pt-12 pb-5">
                             <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">Champion</span>
                             <div className="flex items-center gap-3.5 min-w-0">
-                                {champion.teams.logo_url && (
+                                {champion.teams && (
                                     <div className="relative w-12 h-12 shrink-0">
-                                        <Image src={champion.teams.logo_url} alt={champion.teams.name} fill sizes="48px" className={cn("object-contain", LOGO_SHADOW)} />
+                                        {champion.teams.logo_url ? (
+                                            <Image src={champion.teams.logo_url} alt={champion.teams.name} fill sizes="48px" className={cn("object-contain", LOGO_SHADOW)} />
+                                        ) : (
+                                            <DefaultTeamLogo sizes="48px" alt={champion.teams.name} />
+                                        )}
                                     </div>
                                 )}
                                 <span className="text-2xl sm:text-3xl font-bold text-white truncate">{champion.teams.name}</span>

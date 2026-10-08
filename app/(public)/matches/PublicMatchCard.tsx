@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import { Badge } from "@/app/components/ui/badge";
 import { MatchWithDetails } from "@/server/domains/match";
@@ -68,10 +69,8 @@ function TeamLogo({
         </div>
     );
     return (
-        <div className={cn(sizeClass, "rounded-sm bg-muted/50 border border-border flex items-center justify-center")}>
-            <span className="text-sm text-muted-foreground font-bold">
-                {team.name.slice(0, 3).toUpperCase()}
-            </span>
+        <div className={cn("relative", sizeClass)}>
+            <DefaultTeamLogo sizes="(max-width: 640px) 48px, 72px" alt={team.name} />
         </div>
     );
 }

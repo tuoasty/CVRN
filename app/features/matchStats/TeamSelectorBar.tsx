@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import {Team} from "@/shared/types/db";
 import {getLogoClassName} from "@/app/lib/logoClass";
 import {cn} from "@/lib/utils";
@@ -71,13 +72,13 @@ function TeamHalf({
 }) {
     const content = (
         <>
-            {team.logo_url && (
-                <div
-                    className={cn(
-                        "relative w-7 h-7 rounded-sm overflow-hidden shrink-0 transition-all",
-                        !selected && "grayscale",
-                    )}
-                >
+            <div
+                className={cn(
+                    "relative w-7 h-7 rounded-sm overflow-hidden shrink-0 transition-all",
+                    !selected && "grayscale",
+                )}
+            >
+                {team.logo_url ? (
                     <Image
                         src={team.logo_url}
                         alt={team.name}
@@ -85,8 +86,10 @@ function TeamHalf({
                         sizes="28px"
                         className={getLogoClassName(team.logo_bg_removed)}
                     />
-                </div>
-            )}
+                ) : (
+                    <DefaultTeamLogo sizes="28px" alt={team.name} />
+                )}
+            </div>
             <span
                 className={cn(
                     "font-semibold tracking-wide truncate transition-all",

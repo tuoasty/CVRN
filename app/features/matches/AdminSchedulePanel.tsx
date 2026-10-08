@@ -6,6 +6,7 @@ import { useWeekSchedule, usePlayoffSchedule } from "@/app/hooks/useMatches";
 import { useTeamsByIds } from "@/app/hooks/useTeams";
 import { useAllMediaPosts } from "@/app/hooks/useMediaPosts";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import { formatDateInTimezone, getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { buildMatchMediaTitle } from "@/app/utils/matchLabel";
 import ManageMatchDialog from "@/app/features/matches/ManageMatchDialog";
@@ -289,6 +290,8 @@ function TeamSide({ team, won, align }: { team?: TeamWithRegion; won: boolean; a
                     </div>
                 ) : team?.logo_url ? (
                     <Image src={team.logo_url} alt={team.name} fill sizes="40px" className="object-contain" />
+                ) : team ? (
+                    <DefaultTeamLogo sizes="40px" alt={team.name} />
                 ) : (
                     <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
                         <span className="text-xs text-muted-foreground font-bold">?</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { TeamWithRegion } from "@/server/domains/team";
@@ -10,16 +11,6 @@ import { getLogoClassName } from "@/app/lib/logoClass";
 interface PublicTeamCardProps {
     team: TeamWithRegion;
     isPriority?: boolean;
-}
-
-function getInitials(name: string | null | undefined): string {
-    if (!name) return "??";
-    return name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
 }
 
 export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps) {
@@ -66,10 +57,8 @@ export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps
                         />
                     </div>
                 ) : (
-                    <div className="w-[108px] h-[108px] rounded-sm border border-border bg-muted flex items-center justify-center">
-                        <span className="text-3xl font-extrabold uppercase tracking-wide text-muted-foreground">
-                            {getInitials(team.name)}
-                        </span>
+                    <div className="relative w-[108px] h-[108px]">
+                        <DefaultTeamLogo sizes="108px" alt={team.name || "Team"} />
                     </div>
                 )}
             </div>

@@ -8,6 +8,7 @@ import { Badge } from "@/app/components/ui/badge";
 import { Calendar, Trophy, AlertCircle, RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import { getLogoClassName } from "@/app/lib/logoClass";
 
 type MatchBracketCardProps = {
@@ -56,7 +57,7 @@ function TeamRow({
             {team ? (
                 <>
                     <div className="relative w-8 h-8">
-                        {team.logo_url && (
+                        {team.logo_url ? (
                             <Image
                                 src={team.logo_url}
                                 alt={team.name}
@@ -64,7 +65,9 @@ function TeamRow({
                                 sizes="32px"
                                 className={getLogoClassName(team.logo_bg_removed)}
                             />
-                        )}
+                        ) : !team.is_bye ? (
+                            <DefaultTeamLogo sizes="32px" alt={team.name} />
+                        ) : null}
                     </div>
                     <span className={cn("text-sm truncate min-w-0", won ? "font-bold" : "font-semibold")}>
                         {team.name}
