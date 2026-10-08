@@ -7,6 +7,7 @@ import Link from "next/link";
 const STAFF = [
     { name: "CertifiedEddy", role: "Owner"},
     { name: "keirahela", role: "Developer"},
+    { name: "Hunter", role: "Council" },
     { name: "curse", role: "Council" },
     { name: "Ardmair", role: "Council" },
     { name: "tee", role: "Council" },

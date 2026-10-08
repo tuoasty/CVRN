@@ -11,3 +11,9 @@ export async function findRecordsByScope(supabase: DBClient, scopeKey: string): 
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
 }
+
+export async function refreshRecordsView(supabase: DBClient): Promise<Result<true>> {
+    const {error} = await supabase.rpc("refresh_records");
+    if (error) return Err(serializeError(error, error.code === "42501" ? "FORBIDDEN" : "DB_ERROR"));
+    return Ok(true);
+}

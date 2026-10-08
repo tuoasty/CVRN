@@ -12,6 +12,7 @@ function row(overrides: Partial<RecordViewRow> = {}): RecordViewRow {
         scope_kind: "all",
         scope_region_id: null,
         scope_season_id: null,
+        scope_season_number: null,
         grain: "set",
         subject: "player",
         category: "kills",

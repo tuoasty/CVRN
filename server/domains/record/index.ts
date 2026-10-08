@@ -1,4 +1,5 @@
 export {getRecords} from "./queries/getRecords";
+export {refreshRecords} from "./commands/refreshRecords";
 export {groupRecords} from "./helpers/groupRecords";
 export {mapRecordRow} from "./helpers/mapRecordRow";
 export {scopeKeyFor} from "./helpers/scopeKey";

@@ -51,7 +51,7 @@ export default function AdminStatsPage() {
                 toast.error(result.error.message);
                 return;
             }
-            toast.success('Public leaderboards refreshed');
+            toast.success('Public leaderboards and records refreshed');
         } catch (err) {
             clientLogger.error('AdminStatsPage', 'Exception publishing stats', {err});
             toast.error('Something went wrong');
