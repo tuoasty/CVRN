@@ -9,7 +9,7 @@ import {recordEntryHref, recordEntryName} from "./recordContext";
 export const ROW_LINK =
     "hover:underline underline-offset-[3px] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
-const LOGO_SIZE = {24: "size-6", 28: "size-7", 40: "size-10"} as const;
+const LOGO_SIZE = {20: "size-5", 24: "size-6", 40: "size-10"} as const;
 
 export function TeamLogo({
     team,
@@ -35,7 +35,7 @@ export function TeamLogo({
                     alt=""
                     fill
                     sizes={`${size}px`}
-                    className={getLogoClassName(true)}
+                    className={getLogoClassName(team.logoBgRemoved)}
                     unoptimized
                 />
             ) : (

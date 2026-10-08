@@ -89,7 +89,7 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
                         className={getLogoClassName(team.logo_bg_removed)}
                         unoptimized
                     />
-                ) : team && !team.is_bye ? (
+                ) : team ? (
                     <DefaultTeamLogo sizes="48px" alt={team.name} />
                 ) : null}
             </div>

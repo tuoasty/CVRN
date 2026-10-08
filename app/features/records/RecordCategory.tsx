@@ -40,8 +40,8 @@ function HolderRow({entry}: {entry: RecordEntry}) {
                     {username && <span className="min-w-0 truncate text-xs text-muted-foreground">{username}</span>}
                 </div>
                 {team && (
-                    <div className="flex min-w-0 items-center gap-1 whitespace-nowrap text-xs">
-                        <TeamLogo team={team} size={28} className="-my-1.5" />
+                    <div className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs">
+                        <TeamLogo team={team} size={20} className="-my-0.5" />
                         {teamHref ? (
                             <Link href={teamHref} className={cn("min-w-0 truncate", ROW_LINK)}>
                                 {team.name}
@@ -66,9 +66,9 @@ function ChaserRow({entry}: {entry: RecordEntry}) {
             <span className="pr-2 text-right font-mono text-xs tabular-nums text-muted-foreground">{entry.rank}</span>
             <RecordAvatar entry={entry} size={24} />
             <div className="flex min-w-0 flex-col pl-3">
-                <div className="flex min-w-0 items-center gap-1">
+                <div className="flex min-w-0 items-center gap-1.5">
                     <EntryLink entry={entry} className="text-sm font-medium" />
-                    {team && <TeamLogo team={team} size={28} label={team.name} className="-my-1" />}
+                    {team && <TeamLogo team={team} size={20} label={team.name} />}
                     <Positions entry={entry} />
                 </div>
                 <RecordContextLine entry={entry} />
