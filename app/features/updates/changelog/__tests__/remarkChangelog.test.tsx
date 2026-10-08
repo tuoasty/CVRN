@@ -310,6 +310,37 @@ describe('remarkChangelog NEW tag', () => {
     })
 })
 
+describe('remarkChangelog rarity tags', () => {
+    it('turns each rarity marker into a labelled span', () => {
+        for (const rarity of ['mythic', 'epic', 'rare', 'common']) {
+            const html = render(`[${rarity}] Thunder Spike`)
+            expect(html).toMatch(new RegExp(`<span data-rarity="${rarity}"[^>]*>${rarity}</span>Thunder Spike`))
+            expect(html).not.toContain(`[${rarity}]`)
+        }
+    })
+
+    it('is case-insensitive', () => {
+        expect(render('[MYTHIC] Thunder Spike')).toContain('data-rarity="mythic"')
+    })
+
+    it('leaves a rarity in the middle of a line literal', () => {
+        expect(render('Thunder Spike [epic]')).toContain('[epic]')
+    })
+
+    it('keeps the rarity out of a heading anchor and stacks with NEW', () => {
+        const html = render('### [new] [mythic] Thunder Spike')
+        expect(html).toMatch(/<h3[^>]*id="thunder-spike"[^>]*><span data-tag="new"[^>]*>NEW<\/span><span data-rarity="mythic"/)
+    })
+
+    it('hoists a delta that follows a rarity and keeps the rarity inline', () => {
+        for (const body of ['- [epic] [buff] Power Serve', '- [buff] [epic] Power Serve']) {
+            const html = render(body)
+            expect(html).toMatch(/<li data-marker="buff"[^>]*>\s*<span data-delta="buff"/)
+            expect(html).toMatch(/<span data-rarity="epic"[^>]*>epic<\/span>Power Serve/)
+        }
+    })
+})
+
 describe('remarkChangelog images', () => {
     const images = [
         { name: 'new-map', url: 'https://cdn.example/map.webp', caption: 'The new map' },

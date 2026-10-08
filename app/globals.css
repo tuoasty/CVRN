@@ -22,6 +22,9 @@
     --destructive-foreground: 0 0% 98%;
     --success: 142 72% 29%;
     --success-foreground: 0 0% 100%;
+    --rarity-rare: 222 78% 53%;
+    --rarity-epic: 271 62% 52%;
+    --rarity-mythic: linear-gradient(90deg, hsl(0 72% 46%), hsl(28 88% 42%), hsl(45 92% 36%), hsl(140 60% 34%), hsl(195 80% 38%), hsl(227 74% 50%), hsl(275 62% 50%));
     --border: 0 0% 85%;
     --input: 0 0% 82%;
     --ring: 227 74% 47%;
@@ -47,6 +50,9 @@
     --destructive-foreground: 0 0% 98%;
     --success: 142 58% 52%;
     --success-foreground: 0 0% 100%;
+    --rarity-rare: 217 88% 66%;
+    --rarity-epic: 271 78% 70%;
+    --rarity-mythic: linear-gradient(90deg, hsl(0 85% 66%), hsl(28 92% 62%), hsl(50 95% 60%), hsl(140 62% 58%), hsl(190 80% 60%), hsl(222 88% 68%), hsl(275 80% 72%));
     --border: 0 0% 17%;
     --input: 0 0% 17%;
     --ring: 227 79% 54%;
@@ -228,6 +234,12 @@
 }
 
 @layer utilities {
+  .text-rarity-mythic {
+    background-image: var(--rarity-mythic);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
   .row-flash {
     animation: row-flash 0.9s ease-out;
   }

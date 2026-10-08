@@ -48,6 +48,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        rarity: {
+          rare: "hsl(var(--rarity-rare))",
+          epic: "hsl(var(--rarity-epic))",
+        },
         panel: {
           DEFAULT: "hsl(var(--panel))",
           border: "hsl(var(--panel-border))",

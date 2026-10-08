@@ -2,7 +2,10 @@ import { parseImageToken, type ImageToken } from '@/shared/utils/imageTokens'
 import { OVERVIEW_ID } from './tocNavigation'
 
 export type Delta = 'buff' | 'nerf' | 'rework'
-type Marker = Delta | 'new'
+export type Rarity = 'mythic' | 'epic' | 'rare' | 'common'
+type Marker = Delta | Rarity | 'new'
+
+const RARITIES = new Set<string>(['mythic', 'epic', 'rare', 'common'])
 
 interface MdData {
     hName?: string
@@ -81,7 +84,7 @@ export function prepareChangelog(body: string): { source: string; toggles: Toggl
     return { source, toggles }
 }
 
-const MARKER_PREFIX = /^\s*\[(buff|nerf|rework|new)\]\s*/i
+const MARKER_PREFIX = /^\s*\[(buff|nerf|rework|new|mythic|epic|rare|common)\]\s*/i
 
 export function slugBase(text: string): string {
     const slug = text
@@ -118,6 +121,7 @@ const PHRASING_PARENTS = new Set(['paragraph', 'heading', 'tableCell'])
 
 function markerNode(marker: Marker): MdNode {
     if (marker === 'new') return { type: 'changelogNew', data: { hName: 'span', hProperties: { dataTag: 'new' } }, children: [] }
+    if (RARITIES.has(marker)) return { type: 'changelogRarity', data: { hName: 'span', hProperties: { dataRarity: marker } }, children: [] }
     return { type: 'changelogDelta', data: { hName: 'span', hProperties: { dataDelta: marker } }, children: [] }
 }
 
@@ -232,7 +236,7 @@ function markDeltas(node: MdNode) {
     for (const child of node.children ?? []) markDeltas(child)
 }
 
-const MARKER_TYPES = new Set(['changelogDelta', 'changelogNew'])
+const MARKER_TYPES = new Set(['changelogDelta', 'changelogNew', 'changelogRarity'])
 
 function hoistListMarker(item: MdNode) {
     const first = item.children?.[0]

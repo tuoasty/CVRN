@@ -14,7 +14,7 @@ const sanitizeSchema: SanitizeSchema = {
     clobberPrefix: '',
     attributes: {
         ...defaultSchema.attributes,
-        span: [...(defaultSchema.attributes?.span ?? []), ['dataDelta', 'buff', 'nerf', 'rework'], ['dataTag', 'new']],
+        span: [...(defaultSchema.attributes?.span ?? []), ['dataDelta', 'buff', 'nerf', 'rework'], ['dataTag', 'new'], ['dataRarity', 'mythic', 'epic', 'rare', 'common']],
         li: [...(defaultSchema.attributes?.li ?? []), ['dataMarker', 'buff', 'nerf', 'rework']],
         img: [
             ...(defaultSchema.attributes?.img ?? []),
@@ -28,6 +28,19 @@ const sanitizeSchema: SanitizeSchema = {
 type DeltaKind = 'buff' | 'nerf' | 'rework'
 
 const DELTA_LABEL: Record<DeltaKind, string> = { buff: 'Buff', nerf: 'Nerf', rework: 'Rework' }
+
+type RarityKind = 'mythic' | 'epic' | 'rare' | 'common'
+
+const RARITY_CLASS: Record<RarityKind, string> = {
+    mythic: 'text-rarity-mythic',
+    epic: 'text-rarity-epic',
+    rare: 'text-rarity-rare',
+    common: 'text-muted-foreground',
+}
+
+function isRarity(value: unknown): value is RarityKind {
+    return typeof value === 'string' && Object.hasOwn(RARITY_CLASS, value)
+}
 
 function isDelta(value: unknown): value is DeltaKind {
     return value === 'buff' || value === 'nerf' || value === 'rework'
@@ -86,6 +99,14 @@ const components: Components = {
         const attrs = props as Record<string, unknown>
         if (attrs['data-tag'] === 'new') {
             return <span data-tag="new" className="mr-[0.35em] font-semibold text-primary">NEW</span>
+        }
+        const rarity = attrs['data-rarity']
+        if (isRarity(rarity)) {
+            return (
+                <span data-rarity={rarity} className={cn('mr-[0.45em] align-[0.08em] text-[0.75em] font-semibold uppercase tracking-[0.08em]', RARITY_CLASS[rarity])}>
+                    {rarity}
+                </span>
+            )
         }
         const delta = attrs['data-delta']
         if (!isDelta(delta)) return <span>{children}</span>
