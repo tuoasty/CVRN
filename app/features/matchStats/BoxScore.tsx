@@ -2,6 +2,7 @@
 
 import {useCallback, useRef} from "react";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import {buildPublicPlayerHref} from "@/app/utils/matchDetailHref";
 import {Team} from "@/shared/types/db";
@@ -373,7 +374,7 @@ function TeamLabel({team}: {team: Team}) {
                         className={getLogoClassName(team.logo_bg_removed)}
                     />
                 ) : (
-                    <div className="w-full h-full bg-muted" />
+                    <DefaultTeamLogo sizes="24px" alt={team.name} />
                 )}
             </div>
             <span className="text-xs font-semibold uppercase tracking-wide truncate">{team.name}</span>

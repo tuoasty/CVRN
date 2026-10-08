@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import { Globe } from "lucide-react";
 import { getCachedArchive, getCachedRegions } from "@/server/cache/publicReads";
 import { logger } from "@/server/utils/logger";
@@ -26,11 +27,8 @@ function TeamLogo({ name, logoUrl, size = 24 }: { name: string; logoUrl: string 
         );
     }
     return (
-        <div
-            className="rounded-sm flex items-center justify-center font-bold bg-primary/10 text-primary shrink-0"
-            style={{ width: size, height: size, fontSize: Math.round(size * 0.32) }}
-        >
-            {name.slice(0, 2).toUpperCase()}
+        <div className="relative shrink-0" style={{ width: size, height: size }}>
+            <DefaultTeamLogo sizes={`${size}px`} alt={name} />
         </div>
     );
 }

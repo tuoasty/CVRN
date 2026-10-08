@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo"
 import PlayerAvatar from "./PlayerAvatar"
 import { buildPublicPlayerHref } from "@/app/utils/matchDetailHref"
 import { getLogoClassName } from "@/app/lib/logoClass"
@@ -79,7 +80,7 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
 
             {}
             <div className="relative z-10 h-[2.75rem] w-full self-center sm:h-[3rem]">
-                {team?.logo_url && (
+                {team?.logo_url ? (
                     <Image
                         src={team.logo_url}
                         alt={team.name}
@@ -88,7 +89,9 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
                         className={getLogoClassName(team.logo_bg_removed)}
                         unoptimized
                     />
-                )}
+                ) : team ? (
+                    <DefaultTeamLogo sizes="48px" alt={team.name} />
+                ) : null}
             </div>
 
             <div className="relative z-10 hidden min-w-0 truncate text-sm sm:block">

@@ -3,6 +3,7 @@
 import { useState, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 
 import AddPlayerToTeam from "@/app/features/players/AddPlayerToTeam";
 import { deleteTeamAction } from "@/app/actions/team.actions";
@@ -258,8 +259,8 @@ export default function TeamDetailPage({
 
             <div className="panel p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
-                    {teamData.logo_url && (
-                        <div className="relative w-24 h-24 sm:w-32 sm:h-32 shrink-0 mx-auto sm:mx-0">
+                    <div className="relative w-24 h-24 sm:w-32 sm:h-32 shrink-0 mx-auto sm:mx-0">
+                        {teamData.logo_url ? (
                             <Image
                                 src={teamData.logo_url}
                                 alt={teamData.name || ""}
@@ -267,8 +268,10 @@ export default function TeamDetailPage({
                                 sizes="(max-width: 640px) 96px, 128px"
                                 className={getLogoClassName(teamData.logo_bg_removed ?? false)}
                             />
-                        </div>
-                    )}
+                        ) : (
+                            <DefaultTeamLogo sizes="(max-width: 640px) 96px, 128px" alt={teamData.name || ""} />
+                        )}
+                    </div>
                     <div className="space-y-3 w-full min-w-0">
                         <div>
                             <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">

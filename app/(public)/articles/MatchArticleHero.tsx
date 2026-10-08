@@ -1,5 +1,6 @@
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo"
 import type { Team } from "@/shared/types/db"
 
 function initials(name: string | null | undefined): string {
@@ -18,6 +19,10 @@ function ScoreTeam({ team, dim, side }: { team: Team | null; dim: boolean; side:
             {team?.logo_url ? (
                 <span className="relative h-9 w-9 flex-none">
                     <Image src={team.logo_url} alt="" fill sizes="40px" className="object-contain [filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.85))]" unoptimized />
+                </span>
+            ) : team && !team.is_bye ? (
+                <span className="relative h-9 w-9 flex-none">
+                    <DefaultTeamLogo sizes="40px" />
                 </span>
             ) : (
                 <span className="flex h-9 w-9 flex-none items-center justify-center border border-white/20 bg-white/10 text-xs font-bold text-white">

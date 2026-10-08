@@ -4,7 +4,8 @@ import {useMemo} from "react";
 import Link from "next/link";
 import {ArrowLeft, Trophy} from "lucide-react";
 import {PublicPageHeader} from "@/app/components/public/PublicPageHeader";
-import LeaderboardFilterBar from "@/app/features/leaderboard/LeaderboardFilterBar";
+import LeaderboardFilterBar, {LEADERBOARD_TABS_ID, LeaderboardCount} from "@/app/features/leaderboard/LeaderboardFilterBar";
+import {viewPanelId, viewTabId} from "@/app/components/filters/ViewTabs";
 import LeaderboardTable from "@/app/features/leaderboard/LeaderboardTable";
 import {aggregateCareerRows} from "@/app/features/leaderboard/aggregateCareerRows";
 import {deriveSeasonCohorts} from "@/app/features/leaderboard/seasonCohorts";
@@ -26,8 +27,7 @@ type Props = {
 };
 
 export default function AllTimeLeaderboardPage({rows, statsVersion}: Props) {
-    const {filters, setView, setSort, setRegion, setPosition, setQuery, toggleSeason, clearSeasons} =
-        useLeaderboardFilters();
+    const {filters, setView, setSort, setRegion, setPosition, setQuery, setSeasons} = useLeaderboardFilters();
     const {stale, refresh} = useDataFreshness({tag: "stats", baseline: statsVersion});
 
     const lastContext = useLastSeasonContext();
@@ -78,17 +78,20 @@ export default function AllTimeLeaderboardPage({rows, statsVersion}: Props) {
                 title="All-Time Leaderboard"
                 subtitle={subtitle}
                 actions={
-                    <Link
-                        href={
-                            lastContext
-                                ? `/${lastContext.region}/${lastContext.season}/leaderboard`
-                                : "/select?next=leaderboard"
-                        }
-                        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-sm border border-border text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    >
-                        <ArrowLeft className="h-4 w-4" aria-hidden />
-                        Season board
-                    </Link>
+                    <div className="flex flex-col-reverse items-end gap-1 sm:flex-row sm:items-center sm:gap-4">
+                        <LeaderboardCount total={pool.length} shown={shownCount} />
+                        <Link
+                            href={
+                                lastContext
+                                    ? `/${lastContext.region}/${lastContext.season}/leaderboard`
+                                    : "/select?next=leaderboard"
+                            }
+                            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-sm border border-border text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        >
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
+                            Season board
+                        </Link>
+                    </div>
                 }
             />
 
@@ -103,27 +106,30 @@ export default function AllTimeLeaderboardPage({rows, statsVersion}: Props) {
                 query={filters.q}
                 onViewChange={setView}
                 onQueryChange={setQuery}
-                totalCount={pool.length}
-                shownCount={shownCount}
                 region={filters.region}
                 onRegionChange={setRegion}
                 position={filters.position}
                 onPositionChange={setPosition}
                 cohorts={cohorts}
                 selectedSeasons={selectedSeasons}
-                onToggleSeason={toggleSeason}
-                onClearSeasons={clearSeasons}
+                onSeasonsChange={setSeasons}
             />
 
-            <LeaderboardTable
-                rows={pool}
-                filters={filters}
-                onSort={setSort}
-                onClearSearch={() => setQuery("")}
+            <div
+                id={viewPanelId(LEADERBOARD_TABS_ID)}
+                role="tabpanel"
+                aria-labelledby={viewTabId(LEADERBOARD_TABS_ID, filters.view)}
+            >
+                <LeaderboardTable
+                    rows={pool}
+                    filters={filters}
+                    onSort={setSort}
+                    onClearSearch={() => setQuery("")}
 
-                showRegion={filters.region === REGION_ALL}
-                emptyMessage="No career stats recorded yet."
-            />
+                    showRegion={filters.region === REGION_ALL}
+                    emptyMessage="No career stats recorded yet."
+                />
+            </div>
         </div>
     );
 }

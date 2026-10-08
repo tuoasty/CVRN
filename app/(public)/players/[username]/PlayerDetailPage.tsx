@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import {getLogoClassName} from "@/app/lib/logoClass";
 import {cn} from "@/lib/utils";
@@ -100,16 +101,20 @@ export default function PlayerDetailPage({detail}: Props) {
                 {}
                 <div className="sm:hidden flex items-stretch min-h-[148px]">
                     <div className="flex-1 p-4 flex flex-col min-w-0">
-                        {team?.team_logo_url && (
+                        {team && (
                             <div className="relative w-9 h-9 shrink-0">
-                                <Image
-                                    src={team.team_logo_url}
-                                    alt={team.team_name}
-                                    fill
-                                    sizes="36px"
-                                    className={getLogoClassName(team.team_logo_bg_removed)}
-                                    unoptimized
-                                />
+                                {team?.team_logo_url ? (
+                                    <Image
+                                        src={team.team_logo_url}
+                                        alt={team.team_name}
+                                        fill
+                                        sizes="36px"
+                                        className={getLogoClassName(team.team_logo_bg_removed)}
+                                        unoptimized
+                                    />
+                                ) : (
+                                    <DefaultTeamLogo sizes="36px" alt={team.team_name} />
+                                )}
                             </div>
                         )}
                         <div className="mt-auto pt-2">
@@ -149,16 +154,20 @@ export default function PlayerDetailPage({detail}: Props) {
 
                 {}
                 <div className="hidden sm:flex gap-1 p-4 pb-0">
-                    {team?.team_logo_url && (
+                    {team && (
                         <div className="self-start relative shrink-0 w-20 h-20">
-                            <Image
-                                src={team.team_logo_url}
-                                alt={team.team_name}
-                                fill
-                                sizes="80px"
-                                className={getLogoClassName(team.team_logo_bg_removed)}
-                                unoptimized
-                            />
+                            {team?.team_logo_url ? (
+                                <Image
+                                    src={team.team_logo_url}
+                                    alt={team.team_name}
+                                    fill
+                                    sizes="80px"
+                                    className={getLogoClassName(team.team_logo_bg_removed)}
+                                    unoptimized
+                                />
+                            ) : (
+                                <DefaultTeamLogo sizes="80px" alt={team.team_name} />
+                            )}
                         </div>
                     )}
                     <div className="self-end relative shrink-0 w-[200px] h-[200px]">
@@ -514,16 +523,20 @@ function TeamHistoryRow({entry}: {entry: PlayerTeamHistoryEntry}) {
                 className="w-1 self-stretch rounded-full shrink-0"
                 style={{backgroundColor: entry.team_brick_color ?? "hsl(var(--border))"}}
             />
-            {entry.team_logo_url && (
+            {entry.team_name && (
                 <div className="relative w-9 h-9 overflow-hidden shrink-0">
-                    <Image
-                        src={entry.team_logo_url}
-                        alt={entry.team_name}
-                        fill
-                        sizes="36px"
-                        className={getLogoClassName(entry.team_logo_bg_removed)}
-                        unoptimized
-                    />
+                    {entry.team_logo_url ? (
+                        <Image
+                            src={entry.team_logo_url}
+                            alt={entry.team_name}
+                            fill
+                            sizes="36px"
+                            className={getLogoClassName(entry.team_logo_bg_removed)}
+                            unoptimized
+                        />
+                    ) : (
+                        <DefaultTeamLogo sizes="36px" alt={entry.team_name} />
+                    )}
                 </div>
             )}
             <div className="flex-1 min-w-0">

@@ -16,6 +16,7 @@ import {getSeasonPlayoffMatches} from "@/server/domains/matchStats/queries/getSe
 import {SaveMatchSheetConfigSchema} from "@/server/domains/matchStats/types";
 import {buildMatchStatsPlan, PlayerOverrides} from "@/server/domains/sheets/commands/buildMatchStatsPlan";
 import {syncMatchStats} from "@/server/domains/sheets/commands/syncMatchStats";
+import {refreshRecords} from "@/server/domains/record";
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
     const {data: {user}} = await supabase.auth.getUser();
@@ -92,6 +93,9 @@ export async function publishStatsAction() {
     const supabase = await createServerSupabase();
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+
+    const refreshed = await refreshRecords(supabase);
+    if (!refreshed.ok) return refreshed;
 
     revalidatePublicData([CACHE_TAGS.matches, CACHE_TAGS.stats, CACHE_TAGS.players, CACHE_TAGS.rawStats]);
     await bumpCacheVersion(supabase, [CACHE_TAGS.stats]);

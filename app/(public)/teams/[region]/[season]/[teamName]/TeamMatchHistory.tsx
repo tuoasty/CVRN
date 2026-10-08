@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { buildPublicMatchHref } from "@/app/utils/matchDetailHref";
@@ -36,10 +37,6 @@ const LOSS_TEXT = "text-destructive";
 const COLS = "56px minmax(120px,1fr) 96px minmax(140px,1.4fr) 72px 14px";
 const LABEL = "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
 
-function initials(name: string): string {
-    return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-}
-
 function roundLabel(md: MatchWithDetails): string {
     const m = md.match;
     if (m.match_type === "playoffs") return m.match_code ?? "PO";
@@ -55,7 +52,14 @@ function OpponentCrest({ team }: { team?: TeamWithRegion }) {
             </div>
         );
     }
-    const label = team?.is_bye ? "BYE" : team?.name ? initials(team.name) : "?";
+    if (team && !team.is_bye) {
+        return (
+            <div className="relative w-7 h-7 shrink-0">
+                <DefaultTeamLogo sizes="28px" alt={team.name} />
+            </div>
+        );
+    }
+    const label = team?.is_bye ? "BYE" : "?";
     if (team?.brick_color) {
         return (
             <div

@@ -2,8 +2,9 @@
 
 import {z} from "zod";
 import {revalidatePublicData} from "@/server/cache/revalidate";
-import {ALL_CACHE_TAGS, type CacheTag} from "@/server/cache/tags";
+import {ALL_CACHE_TAGS, CACHE_TAGS, type CacheTag} from "@/server/cache/tags";
 import {requireSuperAdmin} from "@/server/domains/auth";
+import {refreshRecords} from "@/server/domains/record";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {createError} from "@/server/utils/serializeableError";
@@ -23,6 +24,11 @@ export async function purgeCacheTagAction(input: unknown) {
     const guard = await requireSuperAdmin(supabase);
     if (!guard.ok) return guard;
 
+    if (parsed.data.tag === CACHE_TAGS.stats) {
+        const refreshed = await refreshRecords(supabase);
+        if (!refreshed.ok) return refreshed;
+    }
+
     revalidatePublicData([parsed.data.tag]);
     logger.info({tag: parsed.data.tag, userId: guard.value}, "Super admin purged cache tag");
     return Ok({tag: parsed.data.tag});
@@ -33,7 +39,10 @@ export async function purgeAllCacheAction() {
     const guard = await requireSuperAdmin(supabase);
     if (!guard.ok) return guard;
 
-    revalidatePublicData();  
+    const refreshed = await refreshRecords(supabase);
+    if (!refreshed.ok) return refreshed;
+
+    revalidatePublicData();
     logger.info({userId: guard.value}, "Super admin purged all cache tags");
     return Ok({tags: ALL_CACHE_TAGS});
 }

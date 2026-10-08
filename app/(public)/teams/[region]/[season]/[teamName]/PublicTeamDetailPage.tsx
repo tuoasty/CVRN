@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import AvatarImage from "@/app/components/ui/AvatarImage";
 import BackButton from "@/app/components/public/BackButton";
@@ -242,16 +243,20 @@ export default function PublicTeamDetailPage({
                     <BackButton />
                 </div>
                 <div className="flex items-center gap-5">
-                    {teamData.logo_url && (
+                    {teamData && (
                         <div className="relative w-36 h-36 sm:w-44 sm:h-44 shrink-0">
-                            <Image
-                                src={teamData.logo_url}
-                                alt={teamData.name || ""}
-                                fill
-                                priority
-                                sizes="(max-width: 640px) 144px, 176px"
-                                className={getLogoClassName(teamData.logo_bg_removed)}
-                            />
+                            {teamData.logo_url ? (
+                                <Image
+                                    src={teamData.logo_url}
+                                    alt={teamData.name || ""}
+                                    fill
+                                    priority
+                                    sizes="(max-width: 640px) 144px, 176px"
+                                    className={getLogoClassName(teamData.logo_bg_removed)}
+                                />
+                            ) : (
+                                <DefaultTeamLogo sizes="(max-width: 640px) 144px, 176px" alt={teamData.name || ""} />
+                            )}
                         </div>
                     )}
                     <div>

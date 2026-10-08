@@ -30,21 +30,21 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     [CACHE_TAGS.teams]: {
         label: "Teams",
         description: "Team pages, logos, and rosters.",
-        readCount: 13,
-        affects: "Teams, team detail, matches, match detail, archive, home",
+        readCount: 14,
+        affects: "Teams, team detail, matches, match detail, archive, home, records",
     },
     [CACHE_TAGS.players]: {
         label: "Players",
         description:
             "Player profiles, avatars, and rosters. Also backs the identity (names, avatars, team logos) joined onto both leaderboards.",
-        readCount: 11,
-        affects: "Players, player detail, teams, match detail, archive, leaderboards",
+        readCount: 12,
+        affects: "Players, player detail, teams, match detail, archive, leaderboards, records",
     },
     [CACHE_TAGS.seasons]: {
         label: "Seasons",
         description: "Season metadata, archive, and podium.",
-        readCount: 6,
-        affects: "Archive, season routing, podium",
+        readCount: 7,
+        affects: "Archive, season routing, podium, records",
     },
     [CACHE_TAGS.regions]: {
         label: "Regions",
@@ -73,9 +73,9 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     [CACHE_TAGS.stats]: {
         label: "Stats",
         description:
-            "Player box-score numbers behind both leaderboards. Held for 30 days and purged only by a stats sync, so this is the tag to press after uploading match sheets.",
-        readCount: 3,
-        affects: "Season leaderboard, all-time leaderboard, spec calibration",
+            "Player box-score numbers behind both leaderboards and the records page. Held for 30 days and purged only by a stats sync, so this is the tag to press after uploading match sheets. Purging it also rebuilds the records table first.",
+        readCount: 4,
+        affects: "Season leaderboard, all-time leaderboard, records page, spec calibration",
     },
     [CACHE_TAGS.specs]: {
         label: "Specs",

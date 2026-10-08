@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StandingWithInfo } from "@/server/domains/standing";
 import { StandingMethod } from "@/shared/types/standing";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import React, { useMemo } from "react";
 import { Skeleton } from "@/app/components/ui/skeleton";
@@ -266,8 +267,8 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                     <TableCell className="py-4">
                                         {teamHref ? (
                                             <Link href={teamHref} prefetch={false} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                                                {standing.team_logo_url && (
-                                                    <div className="w-11 h-11 flex-shrink-0 flex items-center justify-center">
+                                                <div className="relative w-11 h-11 flex-shrink-0 flex items-center justify-center">
+                                                    {standing.team_logo_url ? (
                                                         <Image
                                                             src={standing.team_logo_url}
                                                             alt={standing.team_name || "Team"}
@@ -275,14 +276,16 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                                             height={44}
                                                             className={`w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
                                                         />
-                                                    </div>
-                                                )}
+                                                    ) : (
+                                                        <DefaultTeamLogo sizes="44px" alt={standing.team_name || "Team"} />
+                                                    )}
+                                                </div>
                                                 <span className="font-semibold text-[0.95rem] tracking-tight">{standing.team_name}</span>
                                             </Link>
                                         ) : (
                                             <div className="flex items-center gap-3">
-                                                {standing.team_logo_url && (
-                                                    <div className="w-11 h-11 flex-shrink-0 flex items-center justify-center">
+                                                <div className="relative w-11 h-11 flex-shrink-0 flex items-center justify-center">
+                                                    {standing.team_logo_url ? (
                                                         <Image
                                                             src={standing.team_logo_url}
                                                             alt={standing.team_name || "Team"}
@@ -290,8 +293,10 @@ export function StandingsTable({ standings, isLoading, qualifiedTeams = 12, play
                                                             height={44}
                                                             className={`w-full h-full ${getLogoClassName(standing.team_logo_bg_removed ?? false)}`}
                                                         />
-                                                    </div>
-                                                )}
+                                                    ) : (
+                                                        <DefaultTeamLogo sizes="44px" alt={standing.team_name || "Team"} />
+                                                    )}
+                                                </div>
                                                 <span className="font-semibold text-[0.95rem] tracking-tight">{standing.team_name}</span>
                                             </div>
                                         )}

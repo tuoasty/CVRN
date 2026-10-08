@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import GfxFrame from "@/app/features/media/GfxFrame";
@@ -333,15 +334,19 @@ function Arrow({ side, onClick }: { side: "left" | "right"; onClick: () => void 
 function SlideTeam({ team, dim, reverse }: { team?: TeamWithRegion; dim: boolean; reverse?: boolean }) {
     return (
         <div className={cn("flex items-center gap-2.5 min-w-0", reverse && "flex-row-reverse", dim && "opacity-60")}>
-            {team?.logo_url && (
+            {team && !team.is_bye && (
                 <div className="relative w-9 h-9 shrink-0">
-                    <Image
-                        src={team.logo_url}
-                        alt={team.name}
-                        fill
-                        sizes="36px"
-                        className={cn("object-contain", LOGO_SHADOW)}
-                    />
+                    {team?.logo_url ? (
+                        <Image
+                            src={team.logo_url}
+                            alt={team.name}
+                            fill
+                            sizes="36px"
+                            className={cn("object-contain", LOGO_SHADOW)}
+                        />
+                    ) : (
+                        <DefaultTeamLogo sizes="36px" alt={team.name} />
+                    )}
                 </div>
             )}
             <span className={cn("hidden sm:block text-sm font-bold text-white truncate min-w-0", reverse && "text-right")}>

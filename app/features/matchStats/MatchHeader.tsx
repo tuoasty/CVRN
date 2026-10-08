@@ -3,6 +3,7 @@
 import {useState} from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import AvatarImage from "@/app/components/ui/AvatarImage";
 import {Badge} from "@/app/components/ui/badge";
 import {getLogoClassName} from "@/app/lib/logoClass";
@@ -267,6 +268,7 @@ function TeamLogo({team, sizes}: {team: Team | null; sizes: string}) {
             />
         );
     }
+    if (team) return <DefaultTeamLogo sizes={sizes} alt={team.name} />;
     return (
         <div className="w-full h-full rounded-sm bg-muted/50 border border-border flex items-center justify-center">
             <span className="text-lg text-muted-foreground font-bold">?</span>

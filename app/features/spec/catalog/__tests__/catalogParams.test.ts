@@ -47,8 +47,8 @@ describe('buildCatalogQuery', () => {
 });
 
 describe('orderRegions', () => {
-    it('uses the fixed AS NA EU SA order and appends unknown regions', () => {
+    it('uses the fixed AS EU NA SA order and appends unknown regions', () => {
         const codes = orderRegions([{code: 'SA'}, {code: 'OCE'}, {code: 'EU'}, {code: 'na'}, {code: 'AS'}]).map(r => r.code);
-        expect(codes).toEqual(['AS', 'na', 'EU', 'SA', 'OCE']);
+        expect(codes).toEqual(['AS', 'EU', 'na', 'SA', 'OCE']);
     });
 });

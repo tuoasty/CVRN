@@ -81,6 +81,9 @@ export type RangedSeasonStatRow =
 export type PlayerLeaderboardViewRow =
     Database["public"]["Views"]["v_player_leaderboard"]["Row"];
 
+export type RecordViewRow =
+    Database["public"]["Views"]["v_records"]["Row"];
+
 export type Spec =
     Database["public"]["Tables"]["specs"]["Row"];
 

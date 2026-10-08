@@ -92,22 +92,13 @@ export function useLeaderboardFilters() {
         setFilters(f => ({...f, q}));
     }, []);
 
-    const toggleSeason = useCallback((slug: string) => {
-        setFilters(f => ({
-            ...f,
-            seasons: f.seasons.includes(slug)
-                ? f.seasons.filter(s => s !== slug)
-                : [...f.seasons, slug],
-        }));
-    }, []);
-
-    const clearSeasons = useCallback(() => {
-        setFilters(f => ({...f, seasons: []}));
+    const setSeasons = useCallback((seasons: string[]) => {
+        setFilters(f => ({...f, seasons}));
     }, []);
 
     const setRange = useCallback((range: DateRange) => {
         setFilters(f => ({...f, range}));
     }, []);
 
-    return {filters, setView, setSort, setRegion, setPosition, setQuery, toggleSeason, clearSeasons, setRange};
+    return {filters, setView, setSort, setRegion, setPosition, setQuery, setSeasons, setRange};
 }

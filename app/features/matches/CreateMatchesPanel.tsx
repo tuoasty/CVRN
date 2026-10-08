@@ -14,6 +14,7 @@ import {
 } from "@/app/components/ui/select";
 import { clientLogger } from "@/app/utils/clientLogger";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import { Input } from "@/app/components/ui/input";
 import { timezoneOptions } from "@/app/utils/timezoneOptions";
 import { X } from "lucide-react";
@@ -285,29 +286,37 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
 
                                         return (
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                {homeTeam?.logo_url && (
+                                                {homeTeam && !homeTeam.is_bye && (
                                                     <div className="relative w-5 h-5">
-                                                        <Image
-                                                            src={homeTeam.logo_url}
-                                                            alt={homeTeam.name}
-                                                            fill
-                                                            sizes="20px"
-                                                            className="object-contain"
-                                                        />
+                                                        {homeTeam?.logo_url ? (
+                                                            <Image
+                                                                src={homeTeam.logo_url}
+                                                                alt={homeTeam.name}
+                                                                fill
+                                                                sizes="20px"
+                                                                className="object-contain"
+                                                            />
+                                                        ) : (
+                                                            <DefaultTeamLogo sizes="20px" alt={homeTeam.name} />
+                                                        )}
                                                     </div>
                                                 )}
                                                 <span className="font-medium">{homeTeam?.name}</span>
                                                 <span>vs</span>
                                                 <span className="font-medium">{awayTeam?.name}</span>
-                                                {awayTeam?.logo_url && (
+                                                {awayTeam && !awayTeam.is_bye && (
                                                     <div className="relative w-5 h-5">
-                                                        <Image
-                                                            src={awayTeam.logo_url}
-                                                            alt={awayTeam.name}
-                                                            fill
-                                                            sizes="20px"
-                                                            className="object-contain"
-                                                        />
+                                                        {awayTeam?.logo_url ? (
+                                                            <Image
+                                                                src={awayTeam.logo_url}
+                                                                alt={awayTeam.name}
+                                                                fill
+                                                                sizes="20px"
+                                                                className="object-contain"
+                                                            />
+                                                        ) : (
+                                                            <DefaultTeamLogo sizes="20px" alt={awayTeam.name} />
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -341,15 +350,19 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                                     return selectedTeam ? (
                                                         <SelectItem key={selectedTeam.id} value={selectedTeam.id}>
                                                             <div className="flex items-center gap-2">
-                                                                {selectedTeam.logo_url && (
+                                                                {selectedTeam && !selectedTeam.is_bye && (
                                                                     <div className="relative w-4 h-4">
-                                                                        <Image
-                                                                            src={selectedTeam.logo_url}
-                                                                            alt={selectedTeam.name}
-                                                                            fill
-                                                                            sizes="16px"
-                                                                            className="object-contain"
-                                                                        />
+                                                                        {selectedTeam.logo_url ? (
+                                                                            <Image
+                                                                                src={selectedTeam.logo_url}
+                                                                                alt={selectedTeam.name}
+                                                                                fill
+                                                                                sizes="16px"
+                                                                                className="object-contain"
+                                                                            />
+                                                                        ) : (
+                                                                            <DefaultTeamLogo sizes="16px" alt={selectedTeam.name} />
+                                                                        )}
                                                                     </div>
                                                                 )}
                                                                 <span>{selectedTeam.name}</span>
@@ -363,15 +376,19 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                                 .map(t => (
                                                     <SelectItem key={t.id} value={t.id}>
                                                         <div className="flex items-center gap-2">
-                                                            {t.logo_url && (
+                                                            {t && !t.is_bye && (
                                                                 <div className="relative w-4 h-4">
-                                                                    <Image
-                                                                        src={t.logo_url}
-                                                                        alt={t.name}
-                                                                        fill
-                                                                        sizes="16px"
-                                                                        className="object-contain"
-                                                                    />
+                                                                    {t.logo_url ? (
+                                                                        <Image
+                                                                            src={t.logo_url}
+                                                                            alt={t.name}
+                                                                            fill
+                                                                            sizes="16px"
+                                                                            className="object-contain"
+                                                                        />
+                                                                    ) : (
+                                                                        <DefaultTeamLogo sizes="16px" alt={t.name} />
+                                                                    )}
                                                                 </div>
                                                             )}
                                                             <span>{t.name}</span>
@@ -398,15 +415,19 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                                     return selectedTeam ? (
                                                         <SelectItem key={selectedTeam.id} value={selectedTeam.id}>
                                                             <div className="flex items-center gap-2">
-                                                                {selectedTeam.logo_url && (
+                                                                {selectedTeam && !selectedTeam.is_bye && (
                                                                     <div className="relative w-4 h-4">
-                                                                        <Image
-                                                                            src={selectedTeam.logo_url}
-                                                                            alt={selectedTeam.name}
-                                                                            fill
-                                                                            sizes="16px"
-                                                                            className="object-contain"
-                                                                        />
+                                                                        {selectedTeam.logo_url ? (
+                                                                            <Image
+                                                                                src={selectedTeam.logo_url}
+                                                                                alt={selectedTeam.name}
+                                                                                fill
+                                                                                sizes="16px"
+                                                                                className="object-contain"
+                                                                            />
+                                                                        ) : (
+                                                                            <DefaultTeamLogo sizes="16px" alt={selectedTeam.name} />
+                                                                        )}
                                                                     </div>
                                                                 )}
                                                                 <span>{selectedTeam.name}</span>
@@ -420,15 +441,19 @@ export default function CreateMatchesPanel({ seasonId, week, onSuccess }: Create
                                                 .map(t => (
                                                     <SelectItem key={t.id} value={t.id}>
                                                         <div className="flex items-center gap-2">
-                                                            {t.logo_url && (
+                                                            {t && !t.is_bye && (
                                                                 <div className="relative w-4 h-4">
-                                                                    <Image
-                                                                        src={t.logo_url}
-                                                                        alt={t.name}
-                                                                        fill
-                                                                        sizes="16px"
-                                                                        className="object-contain"
-                                                                    />
+                                                                    {t.logo_url ? (
+                                                                        <Image
+                                                                            src={t.logo_url}
+                                                                            alt={t.name}
+                                                                            fill
+                                                                            sizes="16px"
+                                                                            className="object-contain"
+                                                                        />
+                                                                    ) : (
+                                                                        <DefaultTeamLogo sizes="16px" alt={t.name} />
+                                                                    )}
                                                                 </div>
                                                             )}
                                                             <span>{t.name}</span>

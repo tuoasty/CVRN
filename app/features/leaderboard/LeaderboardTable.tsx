@@ -2,6 +2,7 @@
 
 import {useEffect, useMemo, useState} from "react";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import {ArrowDown, ArrowUp, ChevronLeft, ChevronRight} from "lucide-react";
 import {Table, TableHeader, TableBody, TableRow, TableHead, TableCell} from "@/app/components/ui/table";
@@ -570,8 +571,8 @@ function TeamCell({
     const content = (
         <>
             {}
-            {logoUrl && (
-                <div className="relative w-10 h-10 shrink-0">
+            <div className="relative w-10 h-10 shrink-0">
+                {logoUrl ? (
                     <Image
                         src={logoUrl}
                         alt=""
@@ -580,8 +581,10 @@ function TeamCell({
                         className={getLogoClassName(bgRemoved)}
                         unoptimized
                     />
-                </div>
-            )}
+                ) : (
+                    <DefaultTeamLogo sizes="40px" />
+                )}
+            </div>
             <span className="truncate text-sm">{name}</span>
         </>
     );

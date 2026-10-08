@@ -1,5 +1,6 @@
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo"
 import type { Team } from "@/shared/types/db"
 
 function initials(name: string | null | undefined): string {
@@ -16,6 +17,10 @@ function TeamSide({ team, dim, side }: { team: Team | null; dim: boolean; side: 
             {team?.logo_url ? (
                 <span className="relative h-8 w-8 flex-none">
                     <Image src={team.logo_url} alt="" fill sizes="32px" className="object-contain" unoptimized />
+                </span>
+            ) : team && !team.is_bye ? (
+                <span className="relative h-8 w-8 flex-none">
+                    <DefaultTeamLogo sizes="32px" />
                 </span>
             ) : (
                 <span className="flex h-8 w-8 flex-none items-center justify-center border border-border bg-muted text-xs font-bold text-muted-foreground">

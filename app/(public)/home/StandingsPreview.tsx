@@ -6,6 +6,7 @@ import { ArrowRight, Trophy } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import { Fragment, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { getLogoClassName } from "@/app/lib/logoClass";
@@ -79,15 +80,19 @@ export default function StandingsPreview({
 
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                                 {}
-                                {standing.team_logo_url && (
+                                {standing.team_name && (
                                     <div className="relative w-6 h-6 shrink-0">
-                                        <Image
-                                            src={standing.team_logo_url}
-                                            alt={standing.team_name || ""}
-                                            fill
-                                            sizes="24px"
-                                            className={getLogoClassName(standing.team_logo_bg_removed ?? false)}
-                                        />
+                                        {standing.team_logo_url ? (
+                                            <Image
+                                                src={standing.team_logo_url}
+                                                alt={standing.team_name || ""}
+                                                fill
+                                                sizes="24px"
+                                                className={getLogoClassName(standing.team_logo_bg_removed ?? false)}
+                                            />
+                                        ) : (
+                                            <DefaultTeamLogo sizes="24px" alt={standing.team_name || ""} />
+                                        )}
                                     </div>
                                 )}
                                 <span className={cn(
