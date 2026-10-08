@@ -46,6 +46,7 @@ function row(overrides: Partial<RecordViewRow> = {}): RecordViewRow {
         sets_played: 1,
         matches_played: 1,
         position_counts: {OUT: 1},
+        match_round: "semifinal",
         ...overrides,
     };
 }
@@ -61,11 +62,15 @@ describe("mapRecordRow", () => {
         const e = entry();
         expect(e.player).toEqual({id: "p1", username: "spiker", displayName: "Spiker", avatarUrl: null});
         expect(e.opponent).toEqual({id: "t2", name: "Team Two", slug: "team-two"});
-        expect(e.match).toEqual({id: "m1", code: "W3-M2"});
+        expect(e.match).toEqual({id: "m1", code: "W3-M2", round: "semifinal"});
         expect(e.setNumber).toBe(4);
         expect(e.season).toEqual({id: "s1", name: "Season 2", slug: "season-2", number: 2, active: false});
         expect(e.regionCode).toBe("NA");
         expect(e.team?.logoBgRemoved).toBe(false);
+    });
+
+    it("keeps a missing playoff round as null", () => {
+        expect(entry({match_round: null}).match).toEqual({id: "m1", code: "W3-M2", round: null});
     });
 
     it("keeps null positions as null", () => {

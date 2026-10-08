@@ -62,7 +62,7 @@ export function mapRecordRow(row: RecordViewRow): RecordEntry | null {
         player,
         team,
         opponent,
-        match: row.match_id ? {id: row.match_id, code: row.match_code} : null,
+        match: row.match_id ? {id: row.match_id, code: row.match_code, round: row.match_round ?? null} : null,
         setNumber: row.set_number,
         season: {
             id: row.record_season_id,

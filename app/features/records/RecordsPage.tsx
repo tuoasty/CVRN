@@ -1,13 +1,14 @@
 "use client";
 
-import {useState, type ReactNode} from "react";
+import {useState} from "react";
+import Link from "next/link";
 import {useRouter} from "next/navigation";
-import {Check, ChevronDown} from "lucide-react";
-import {cn} from "@/lib/utils";
-import {Popover, PopoverContent, PopoverTrigger} from "@/app/components/ui/popover";
-import {RegionFilter} from "@/app/features/leaderboard/LeaderboardFilterBar";
-import {REGION_ALL} from "@/app/features/leaderboard/useLeaderboardFilters";
-import type {RecordEntry, RecordGrain, RecordSubject, RecordsPayload} from "@/server/domains/record";
+import {OptionRow} from "@/app/components/filters/OptionRow";
+import {ViewTabs, viewPanelId, viewTabId} from "@/app/components/filters/ViewTabs";
+import {InlineSwitch} from "@/app/components/filters/InlineSwitch";
+import {REGION_ORDER} from "@/app/features/leaderboard/useLeaderboardFilters";
+import type {RecordGrain, RecordSubject, RecordsPayload} from "@/server/domains/record";
+import {RecordCategory} from "./RecordCategory";
 import {
     buildRecordsHref,
     nextScopeForRegion,
@@ -15,16 +16,20 @@ import {
     type RecordSeasonOption,
 } from "./recordScopeParams";
 
-const GRAINS: {key: RecordGrain; label: string}[] = [
-    {key: "set", label: "Single Set"},
-    {key: "match", label: "Single Match"},
-    {key: "season", label: "Season"},
+const GRAINS: {value: RecordGrain; label: string}[] = [
+    {value: "set", label: "Single Set"},
+    {value: "match", label: "Single Match"},
+    {value: "season", label: "Season"},
 ];
 
-const SUBJECTS: {key: RecordSubject; label: string}[] = [
-    {key: "player", label: "Players"},
-    {key: "team", label: "Teams"},
+const SUBJECTS: {value: RecordSubject; label: string}[] = [
+    {value: "player", label: "Players"},
+    {value: "team", label: "Teams"},
 ];
+
+const REGION_OPTIONS = REGION_ORDER.map(code => ({value: code as string, label: code}));
+
+const TABS_ID = "records-grain";
 
 type Props = {
     payload: RecordsPayload;
@@ -35,205 +40,89 @@ type Props = {
 
 export default function RecordsPage({payload, seasonOptions, region, season}: Props) {
     const router = useRouter();
+    const [grain, setGrain] = useState<RecordGrain>("set");
     const [subject, setSubject] = useState<RecordSubject>("player");
 
     const goTo = (next: {region: string | null; season: number | null}) => {
         router.push(buildRecordsHref(next.region, next.season));
     };
 
-    const handleRegion = (code: string) => {
-        const nextRegion = code === REGION_ALL ? null : code;
-        goTo(nextScopeForRegion(seasonOptions, nextRegion, season));
-    };
+    const seasonRowOptions = seasonsForRegion(seasonOptions, region).map(option => ({
+        value: String(option.number),
+        label: String(option.number),
+        title: `Season ${option.number}`,
+    }));
 
-    const book = payload.book[subject];
-    const isEmpty = GRAINS.every(g => book[g.key].length === 0);
+    const scope = payload.scope;
+    const groups = payload.book[subject][grain];
 
     return (
-        <div className="mx-auto max-w-[1400px] px-7 pb-20 pt-6">
-            <h1 className="mb-5 text-2xl font-semibold tracking-[-.025em]">Records</h1>
+        <div className="page-wide pb-20 pt-7">
+            <h1 className="text-2xl font-semibold tracking-[-0.025em]">Records</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+                Best single-set, single-match and season performances in tracked playoff matches.
+            </p>
 
-            <div className="mb-6 flex flex-wrap items-center gap-2">
-                <RegionFilter value={region ? region.toUpperCase() : REGION_ALL} onChange={handleRegion} />
-                <SeasonSelect
-                    options={seasonsForRegion(seasonOptions, region)}
-                    value={season}
-                    showRegionCount={!region}
-                    onChange={next => goTo({region, season: next})}
+            <div className="mt-5 grid grid-cols-[72px_minmax(0,1fr)] items-center gap-y-1">
+                <OptionRow
+                    label="Region"
+                    allOption={{label: "All"}}
+                    options={REGION_OPTIONS}
+                    value={region ? region.toUpperCase() : null}
+                    onChange={next => goTo(nextScopeForRegion(seasonOptions, next, season))}
                 />
-                <SegmentedControl
-                    label="Record subject"
-                    options={SUBJECTS}
-                    value={subject}
-                    onChange={setSubject}
+                <OptionRow
+                    label="Season"
+                    mono
+                    allOption={{label: "All"}}
+                    options={seasonRowOptions}
+                    value={season === null ? null : String(season)}
+                    onChange={next => goTo({region, season: next === null ? null : Number(next)})}
                 />
             </div>
 
-            {isEmpty ? (
-                <p className="text-sm text-muted-foreground">No tracked matches in this scope yet.</p>
-            ) : (
-                GRAINS.map(grain => (
-                    <section key={grain.key} className="mb-10">
-                        <h2 className="mb-3 text-lg font-semibold">{grain.label}</h2>
-                        {book[grain.key].map(group => (
-                            <div key={group.category} className="mb-4">
-                                <h3 className="text-sm font-semibold">{group.label}</h3>
-                                <ol className="text-sm">
-                                    {group.entries.map(entry => (
-                                        <li key={entry.rowNum} className="flex gap-3">
-                                            <span className="w-6 font-mono tabular-nums">{entry.rank}</span>
-                                            <span className="w-48">{entryName(entry)}</span>
-                                            <span className="w-10 font-mono tabular-nums">{entry.value}</span>
-                                            <span className="text-muted-foreground">{contextLine(entry)}</span>
-                                        </li>
-                                    ))}
-                                </ol>
-                                {group.tiedBeyond > 0 && (
-                                    <p className="text-xs text-muted-foreground">
-                                        +{group.tiedBeyond} more tied at {group.entries[group.entries.length - 1].value}
-                                    </p>
-                                )}
-                            </div>
-                        ))}
-                    </section>
-                ))
-            )}
-
-            <p className="mt-10 text-xs text-muted-foreground">Records from tracked playoff matches.</p>
-        </div>
-    );
-}
-
-function entryName(entry: RecordEntry): string {
-    if (entry.subject === "team") return entry.team?.name ?? "Unknown team";
-    return entry.player?.displayName ?? entry.player?.username ?? "Unknown player";
-}
-
-function contextLine(entry: RecordEntry): string {
-    const scope = `${entry.regionCode} S${entry.season.number ?? "?"}`;
-    if (entry.grain === "season") {
-        const base = `${scope} · ${entry.matchesPlayed} M · ${entry.setsPlayed} S`;
-        return entry.season.active ? `${base} (in progress)` : base;
-    }
-    const parts = [
-        entry.opponent ? `vs ${entry.opponent.name}` : null,
-        entry.match?.code ?? null,
-        entry.grain === "set" ? `Set ${entry.setNumber}` : `${entry.setsPlayed} sets`,
-        scope,
-    ];
-    return parts.filter(Boolean).join(" · ");
-}
-
-function SegmentedControl<T extends string>({
-    label,
-    options,
-    value,
-    onChange,
-}: {
-    label: string;
-    options: {key: T; label: string}[];
-    value: T;
-    onChange: (value: T) => void;
-}) {
-    return (
-        <div role="group" aria-label={label} className="flex items-center h-9 rounded-sm border border-border bg-muted/50 p-0.5">
-            {options.map(option => {
-                const selected = option.key === value;
-                return (
-                    <button
-                        key={option.key}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => onChange(option.key)}
-                        className={cn(
-                            "px-3 h-full text-xs font-semibold rounded-sm transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                            selected ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-                        )}
-                    >
-                        {option.label}
-                    </button>
-                );
-            })}
-        </div>
-    );
-}
-
-function SeasonSelect({
-    options,
-    value,
-    showRegionCount,
-    onChange,
-}: {
-    options: RecordSeasonOption[];
-    value: number | null;
-    showRegionCount: boolean;
-    onChange: (season: number | null) => void;
-}) {
-    const [open, setOpen] = useState(false);
-    if (options.length === 0) return null;
-
-    const select = (next: number | null) => {
-        setOpen(false);
-        if (next !== value) onChange(next);
-    };
-
-    return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger
-                className={cn(
-                    "inline-flex items-center gap-1.5 h-9 px-3 rounded-sm border border-border text-xs font-semibold transition-colors",
-                    "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                    value !== null
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted/50 text-muted-foreground hover:text-foreground",
-                )}
+            <ViewTabs
+                className="mt-6"
+                label="Record type"
+                idBase={TABS_ID}
+                tabs={GRAINS}
+                value={grain}
+                onChange={setGrain}
+                wrapToolsBelow="sm"
+                toolsClassName="sm:pb-2"
             >
-                {value !== null ? `Season ${value}` : "All seasons"}
-                <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-56 rounded-sm p-1">
-                <SeasonOption checked={value === null} onSelect={() => select(null)}>
-                    All seasons
-                </SeasonOption>
-                <div className="my-1 h-px bg-border" />
-                {options.map(option => (
-                    <SeasonOption key={option.number} checked={value === option.number} onSelect={() => select(option.number)}>
-                        <span className="flex-1 text-left">Season {option.number}</span>
-                        {showRegionCount && (
-                            <span className="text-xs text-muted-foreground tabular-nums">
-                                {option.regionCodes.length}
-                                {option.regionCodes.length === 1 ? " region" : " regions"}
-                            </span>
-                        )}
-                    </SeasonOption>
-                ))}
-            </PopoverContent>
-        </Popover>
-    );
-}
+                <div className="flex items-center gap-5">
+                    {grain === "season" && scope.kind === "season" && (
+                        <Link
+                            href={`/${scope.regionCode.toLowerCase()}/${scope.seasonSlug}/leaderboard`}
+                            className="text-xs font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        >
+                            Full {scope.regionCode} Season{" "}
+                            <span className="font-mono tabular-nums">{scope.seasonNumber}</span> leaderboard{" "}
+                            <span aria-hidden>→</span>
+                        </Link>
+                    )}
+                    <InlineSwitch label="Record subject" options={SUBJECTS} value={subject} onChange={setSubject} />
+                </div>
+            </ViewTabs>
 
-function SeasonOption({
-    checked,
-    onSelect,
-    children,
-}: {
-    checked: boolean;
-    onSelect: () => void;
-    children: ReactNode;
-}) {
-    return (
-        <button
-            type="button"
-            aria-pressed={checked}
-            onClick={onSelect}
-            className={cn(
-                "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors",
-                "hover:bg-accent hover:text-accent-foreground",
-                "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-            )}
-        >
-            <Check className={cn("h-4 w-4 shrink-0", !checked && "invisible")} aria-hidden />
-            {children}
-        </button>
+            <div id={viewPanelId(TABS_ID)} role="tabpanel" aria-labelledby={viewTabId(TABS_ID, grain)} className="mt-8">
+                {groups.length === 0 ? (
+                    <p className="flex min-h-[320px] items-center justify-center text-sm text-muted-foreground">
+                        No tracked matches in this scope yet.
+                    </p>
+                ) : (
+                    <div className="grid grid-cols-1 gap-x-12 gap-y-11 md:grid-cols-2 xl:grid-cols-3">
+                        {groups.map(group => (
+                            <RecordCategory key={group.category} group={group} />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <p className="mt-12 border-t border-border pt-3 text-xs text-muted-foreground">
+                Records from tracked playoff matches. Forfeits and voided matches are excluded.
+            </p>
+        </div>
     );
 }

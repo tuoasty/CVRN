@@ -52,7 +52,7 @@ export interface RecordEntry {
     player: {id: string; username: string; displayName: string | null; avatarUrl: string | null} | null;
     team: {id: string; name: string; slug: string; logoUrl: string | null; logoBgRemoved: boolean} | null;
     opponent: {id: string; name: string; slug: string} | null;
-    match: {id: string; code: string | null} | null;
+    match: {id: string; code: string | null; round: string | null} | null;
     setNumber: number | null;
     season: {id: string; name: string; slug: string; number: number | null; active: boolean};
     regionCode: string;
