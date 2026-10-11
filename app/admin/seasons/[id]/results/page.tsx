@@ -926,14 +926,6 @@ export default function SeasonResultsPage() {
                     <div className="panel p-3 space-y-3">
                         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Add Awards</p>
                         <div className="flex gap-2 flex-wrap items-end">
-                            <div className="w-40 shrink-0 space-y-1">
-                                <Label className="text-xs">Award Name</Label>
-                                <Input className="rounded-sm h-8 text-sm" placeholder={draftCategory === "all_star" ? "e.g. Outside" : "e.g. MVP"}
-                                    value={draftName}
-                                    onChange={e => setDraftName(e.target.value)}
-                                    onKeyDown={e => { if (e.key === "Enter") handleAddToDraft(); }}
-                                />
-                            </div>
                             <div className="min-w-40 space-y-1">
                                 <Label className="text-xs">Category</Label>
                                 <Select value={draftCategory} onValueChange={v => setDraftCategory(v as AwardCategory)}>
@@ -947,6 +939,15 @@ export default function SeasonResultsPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                            <div className="w-40 shrink-0 space-y-1">
+                                <Label className="text-xs">Award Name</Label>
+                                <Input className="rounded-sm h-8 text-sm" placeholder={draftCategory === "all_star" ? "e.g. Outside" : "e.g. MVP"}
+                                    value={draftName}
+                                    onChange={e => setDraftName(e.target.value)}
+                                    onKeyDown={e => { if (e.key === "Enter") handleAddToDraft(); }}
+                                />
+                            </div>
+                            <PlayerSearchInput key={draftKey} seasonId={seasonId} onSelect={setDraftPlayer} />
                             {draftCategory === "all_star" && (
                                 <>
                                     <div className="w-36 space-y-1">
@@ -976,7 +977,6 @@ export default function SeasonResultsPage() {
                                     </div>
                                 </>
                             )}
-                            <PlayerSearchInput key={draftKey} seasonId={seasonId} onSelect={setDraftPlayer} />
                             <Button size="sm" variant="outline" className="rounded-sm h-8 gap-1.5"
                                 onClick={handleAddToDraft}
                                 disabled={!draftName.trim() || !draftPlayer}
