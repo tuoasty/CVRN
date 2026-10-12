@@ -21,6 +21,10 @@ interface SeasonFormDialogProps {
     onSuccess?: () => void;
 }
 
+function toDateInput(value: string | null | undefined): string {
+    return value ? value.slice(0, 10) : "";
+}
+
 function toSlug(name: string): string {
     return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
@@ -36,8 +40,8 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
     const [seasonNumber, setSeasonNumber] = useState(String(season?.season_number ?? ""));
     const [maxPlayers, setMaxPlayers] = useState(String(season?.max_players ?? 18));
     const [regionId, setRegionId] = useState(season?.region_id ?? "");
-    const [startDate, setStartDate] = useState(season?.start_date ?? "");
-    const [endDate, setEndDate] = useState(season?.end_date ?? "");
+    const [startDate, setStartDate] = useState(toDateInput(season?.start_date));
+    const [endDate, setEndDate] = useState(toDateInput(season?.end_date));
     const [leagueType, setLeagueType] = useState(season?.league_type ?? "main");
     const [loading, setLoading] = useState(false);
     const [slugManual, setSlugManual] = useState(isEdit);
@@ -49,8 +53,8 @@ export default function SeasonFormDialog({season, open, onOpenChange, onSuccess}
         setSeasonNumber(String(season?.season_number ?? ""));
         setRegionId(season?.region_id ?? "");
         setMaxPlayers(String(season?.max_players ?? 18));
-        setStartDate(season?.start_date ?? "");
-        setEndDate(season?.end_date ?? "");
+        setStartDate(toDateInput(season?.start_date));
+        setEndDate(toDateInput(season?.end_date));
         setLeagueType(season?.league_type ?? "main")
         setPlayoffConfigId(season?.playoff_config_id ?? "");
         setSlugManual(isEdit);

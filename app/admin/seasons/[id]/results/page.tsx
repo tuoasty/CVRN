@@ -758,14 +758,12 @@ export default function SeasonResultsPage() {
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Final Placements</h2>
-                        {season?.end_date && (
-                            <Button variant="outline" size="sm" className="rounded-sm gap-2 text-xs"
-                                onClick={handleDerive} disabled={deriving || loading}
-                            >
-                                <RefreshCw className={`h-3 w-3 ${deriving ? "animate-spin" : ""}`} />
-                                Auto-Derive from Playoffs
-                            </Button>
-                        )}
+                        <Button variant="outline" size="sm" className="rounded-sm gap-2 text-xs"
+                            onClick={handleDerive} disabled={deriving || loading}
+                        >
+                            <RefreshCw className={`h-3 w-3 ${deriving ? "animate-spin" : ""}`} />
+                            Auto-Derive from Playoffs
+                        </Button>
                     </div>
                     {loading
                         ? <p className="text-sm text-muted-foreground">Loading...</p>
