@@ -16,6 +16,8 @@ export type {SeasonFinalsSlots} from "./queries/getSeasonFinalsSlots";
 export {getSeasonAwards} from "./queries/getSeasonAwards";
 export {getSeasonAllStarTeams} from "./queries/getSeasonAllStarTeams";
 export {getAwardNameSuggestions} from "./queries/getAwardNameSuggestions";
+export {getSeasonResultsPage} from "./queries/getSeasonResultsPage";
+export type {SeasonResultsPageData} from "./queries/getSeasonResultsPage";
 export {getArchive} from "./queries/getArchive";
 export {getSeasonHistoryDetail} from "./queries/getSeasonDetail";
 export {upsertSeasonPodiumSlot} from "./commands/upsertSeasonPodiumSlot";

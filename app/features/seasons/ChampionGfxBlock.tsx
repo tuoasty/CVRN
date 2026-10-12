@@ -17,6 +17,7 @@ import { SectionHeader, TextAction } from "@/app/features/seasons/results/Result
 interface ChampionGfxBlockProps {
     seasonId: string
     seasonName?: string | null
+    initialPost?: MediaPost | null
 }
 
 function Thumb({ src, alt }: { src: string | null; alt: string }) {
@@ -27,9 +28,9 @@ function Thumb({ src, alt }: { src: string | null; alt: string }) {
     )
 }
 
-export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBlockProps) {
-    const [current, setCurrent] = useState<MediaPost | null>(null)
-    const [loaded, setLoaded] = useState(false)
+export default function ChampionGfxBlock({ seasonId, seasonName, initialPost }: ChampionGfxBlockProps) {
+    const [current, setCurrent] = useState<MediaPost | null>(initialPost ?? null)
+    const [loaded, setLoaded] = useState(initialPost !== undefined)
     const [title, setTitle] = useState("")
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
@@ -46,7 +47,9 @@ export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBl
         setLoaded(true)
     }, [seasonId])
 
-    useEffect(() => { fetchCurrent() }, [fetchCurrent])
+    useEffect(() => {
+        if (initialPost === undefined) fetchCurrent()
+    }, [fetchCurrent, initialPost])
 
     useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
 

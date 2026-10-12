@@ -18,11 +18,12 @@ interface Options {
     seasonId: string;
     awards: SeasonAwardEntryWithPlayer[];
     specWinners: SpecWinnerWithRefs[];
+    initialSuggestions?: Partial<Record<AwardBarCategory, string[]>>;
     onAwardsSaved: (awards: SeasonAwardEntryWithPlayer[]) => void;
     onSpecSaved: (winner: SpecWinnerWithRefs) => void;
 }
 
-export function useStagedAwards({seasonId, awards, specWinners, onAwardsSaved, onSpecSaved}: Options) {
+export function useStagedAwards({seasonId, awards, specWinners, initialSuggestions = {}, onAwardsSaved, onSpecSaved}: Options) {
     const [target, setTarget] = useState<BarTarget>(DEFAULT_TARGET);
     const [name, setName] = useState("");
     const [spec, setSpec] = useState<Spec | null>(null);
@@ -33,8 +34,8 @@ export function useStagedAwards({seasonId, awards, specWinners, onAwardsSaved, o
     const [saving, setSaving] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingSpecId, setEditingSpecId] = useState<string | null>(null);
-    const [suggestions, setSuggestions] = useState<Partial<Record<AwardBarCategory, string[]>>>({});
-    const requested = useRef(new Set<AwardBarCategory>());
+    const [suggestions, setSuggestions] = useState<Partial<Record<AwardBarCategory, string[]>>>(initialSuggestions);
+    const requested = useRef(new Set(Object.keys(initialSuggestions) as AwardBarCategory[]));
     const nameRef = useRef<HTMLInputElement | null>(null);
     const playerRef = useRef<HTMLInputElement | null>(null);
 

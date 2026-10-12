@@ -10,8 +10,8 @@ import {
     getSeasonPodiumAction,
     upsertSeasonPodiumSlotAction,
 } from "@/app/actions/season.actions";
-import {useTeamsBySeason} from "@/app/hooks/useTeams";
 import {SeasonPodiumEntryWithTeam} from "@/server/domains/season";
+import {Team} from "@/shared/types/db";
 import {formatPlacement, ordinalSuffix} from "@/app/utils/placement";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
@@ -22,12 +22,12 @@ const ROW = "grid h-8 grid-cols-[48px_minmax(0,1fr)_auto_24px] items-center gap-
 
 interface Props {
     seasonId: string;
+    teams: Team[];
     podium: SeasonPodiumEntryWithTeam[];
     setPodium: Dispatch<SetStateAction<SeasonPodiumEntryWithTeam[]>>;
 }
 
-export function PlacementsSection({seasonId, podium, setPodium}: Props) {
-    const {teams} = useTeamsBySeason(seasonId);
+export function PlacementsSection({seasonId, teams, podium, setPodium}: Props) {
     const [deriving, setDeriving] = useState(false);
     const [adding, setAdding] = useState(false);
     const [saving, setSaving] = useState(false);
