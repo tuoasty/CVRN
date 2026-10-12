@@ -39,7 +39,6 @@ const SaveSheetConfigSchema = z.object({
     headerRow: z.number().int().min(1).default(9),
     blockHeight: z.number().int().min(1).default(18),
     blockStride: z.number().int().min(1).default(5),
-    isActive: z.boolean().default(true),
 });
 
 const UpdateSheetConfigSchema = z.object({
@@ -50,7 +49,6 @@ const UpdateSheetConfigSchema = z.object({
     headerRow: z.number().int().min(1).optional(),
     blockHeight: z.number().int().min(1).optional(),
     blockStride: z.number().int().min(1).optional(),
-    isActive: z.boolean().optional(),
 });
 
 async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
