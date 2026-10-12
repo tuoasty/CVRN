@@ -24,8 +24,15 @@ import {SeasonWithPlayoffConfig} from "@/server/domains/season";
 import {deleteSeasonAction} from "@/app/actions/season.actions";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
-import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
+import { getSeasonStatus, SeasonStatus } from "@/server/domains/season/helpers/getSeasonStatus";
+import { REGION_ORDER } from "@/app/features/leaderboard/useLeaderboardFilters";
 import { useIsSuperAdmin } from "@/app/admin/AdminRoleProvider";
+
+const STATUS_BADGE: Record<SeasonStatus, {label: string; variant: "default" | "secondary" | "outline"}> = {
+    upcoming: {label: "Upcoming", variant: "outline"},
+    active: {label: "Active", variant: "default"},
+    ended: {label: "Ended", variant: "secondary"},
+};
 
 export default function AdminSeasonsPage() {
     const {seasons, isLoading, error} = useSeasons();
@@ -40,6 +47,29 @@ export default function AdminSeasonsPage() {
         const r = regions.find((reg) => reg.id === regionId);
         return r ? `${r.code.toUpperCase()} — ${r.name}` : regionId;
     };
+
+    const regionRank = (regionId: string) => {
+        const code = regions.find((reg) => reg.id === regionId)?.code.toUpperCase() ?? "";
+        const i = (REGION_ORDER as readonly string[]).indexOf(code);
+        return i === -1 ? REGION_ORDER.length : i;
+    };
+
+    const seasonGroups = Array.from(
+        seasons.reduce((acc, season) => {
+            const list = acc.get(season.season_number) ?? [];
+            list.push(season);
+            acc.set(season.season_number, list);
+            return acc;
+        }, new Map<number, SeasonWithPlayoffConfig[]>())
+    )
+        .sort(([a], [b]) => b - a)
+        .map(([seasonNumber, list]) => ({
+            seasonNumber,
+            seasons: [...list].sort((a, b) =>
+                regionRank(a.region_id) - regionRank(b.region_id)
+                || Number(a.league_type !== "main") - Number(b.league_type !== "main")
+            ),
+        }));
 
     const formatDate = (d: string | null) => {
         if (!d) return "—";
@@ -107,71 +137,82 @@ export default function AdminSeasonsPage() {
                 )}
 
                 {!isLoading && !error && seasons.length > 0 && (
-                    <div className="panel overflow-x-auto mt-6">
-                        <table className="table-dense">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Region</th>
-                                    <th>Start</th>
-                                    <th>End</th>
-                                    <th>Status</th>
-                                    <th className="w-32">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {seasons.map((season) => (
-                                    <tr key={season.id}>
-                                        <td>
-                                            <div className="font-medium">{season.name}</div>
-                                            <div className="text-xs text-muted-foreground font-mono">{season.slug}</div>
-                                        </td>
-                                        <td className="text-sm">{regionName(season.region_id)}</td>
-                                        <td className="text-sm">{formatDate(season.start_date)}</td>
-                                        <td className="text-sm">{formatDate(season.end_date)}</td>
-                                        <td>
-                                            {season.end_date ? (
-                                                <Badge variant="secondary" className="rounded-sm text-xs">Completed</Badge>
-                                            ) : isSeasonActive(season) ? (
-                                                <Badge variant="default" className="rounded-sm text-xs">Active</Badge>
-                                            ) : (
-                                                <Badge variant="outline" className="rounded-sm text-xs">Inactive</Badge>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="rounded-sm"
-                                                    onClick={() => handleEdit(season)}
-                                                >
-                                                    Edit
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="rounded-sm"
-                                                    asChild
-                                                >
-                                                    <Link href={`/admin/seasons/${season.id}/results`}>Results</Link>
-                                                </Button>
-                                                {isSuperAdmin && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                        onClick={() => setDeleteTarget(season)}
-                                                    >
-                                                        Delete
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="mt-6 space-y-8">
+                        {seasonGroups.map(group => (
+                            <section key={group.seasonNumber}>
+                                <h2 className="text-sm font-semibold pb-2 border-b border-border">
+                                    Season <span className="font-mono tabular-nums">{group.seasonNumber}</span>
+                                </h2>
+                                <div className="panel overflow-x-auto mt-2">
+                                    <table className="table-dense">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Region</th>
+                                                <th>Start</th>
+                                                <th>End</th>
+                                                <th>Status</th>
+                                                <th className="w-32">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {group.seasons.map((season) => {
+                                                const status = STATUS_BADGE[getSeasonStatus(season)];
+                                                return (
+                                                    <tr key={season.id}>
+                                                        <td>
+                                                            <div className="font-medium">{season.name}</div>
+                                                            <div className="text-xs text-muted-foreground font-mono">{season.slug}</div>
+                                                        </td>
+                                                        <td className="text-sm">
+                                                            {regionName(season.region_id)}
+                                                            {season.league_type === "side" && (
+                                                                <span className="ml-2 text-xs text-muted-foreground">Side</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="text-sm">{formatDate(season.start_date)}</td>
+                                                        <td className="text-sm">{formatDate(season.end_date)}</td>
+                                                        <td>
+                                                            <Badge variant={status.variant} className="rounded-sm text-xs">{status.label}</Badge>
+                                                        </td>
+                                                        <td>
+                                                            <div className="flex gap-2">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="rounded-sm"
+                                                                    onClick={() => handleEdit(season)}
+                                                                >
+                                                                    Edit
+                                                                </Button>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="rounded-sm"
+                                                                    asChild
+                                                                >
+                                                                    <Link href={`/admin/seasons/${season.id}/results`}>Results</Link>
+                                                                </Button>
+                                                                {isSuperAdmin && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                        onClick={() => setDeleteTarget(season)}
+                                                                    >
+                                                                        Delete
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        ))}
                     </div>
                 )}
             </div>

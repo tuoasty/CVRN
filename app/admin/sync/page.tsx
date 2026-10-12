@@ -1,8 +1,8 @@
 'use client';
 
-import {useState, useEffect, useCallback} from 'react';
-import {RefreshCw, Plus, Trash2, Eye, Sheet, Pencil, Play, History, RotateCcw, Clock, Copy, Check} from 'lucide-react';
-import {useRouter} from 'next/navigation';
+import {Suspense, useState, useEffect, useCallback, useMemo} from 'react';
+import {RefreshCw, Plus, Eye, Sheet, RotateCcw, Copy, Check} from 'lucide-react';
+import {useRouter, useSearchParams} from 'next/navigation';
 import {Button} from '@/app/components/ui/button';
 import {Badge} from '@/app/components/ui/badge';
 import {Input} from '@/app/components/ui/input';
@@ -32,8 +32,25 @@ import {
 } from '@/app/actions/sheets.actions';
 import { useRegions } from '@/app/hooks';
 import { useIsSuperAdmin } from '@/app/admin/AdminRoleProvider';
+import { AdminPageHeader } from '@/app/components/admin/AdminPageHeader';
+import { OptionRow } from '@/app/components/filters/OptionRow';
+import { REGION_ORDER } from '@/app/features/leaderboard/useLeaderboardFilters';
+import SyncConfigSection, { SyncConfigRow } from '@/app/features/sync/SyncConfigSection';
 
 const SHEET_TYPES = ['teams', 'qualifier', 'playoff'] as const;
+type SheetType = typeof SHEET_TYPES[number];
+
+const SECTION_LABELS: Record<SheetType, string> = {
+    teams: 'Team Sync',
+    qualifier: 'Qualifier Sync',
+    playoff: 'Playoff Sync',
+};
+
+const DEFAULT_HEADER_ROW: Record<SheetType, string> = {
+    teams: '9',
+    qualifier: '8',
+    playoff: '9',
+};
 
 const CHANGE_LABELS: Record<string, string> = {
     team_creation: 'Created',
@@ -67,7 +84,6 @@ type FormState = {
     headerRow: string;
     blockHeight: string;
     blockStride: string;
-    isActive: boolean;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -78,11 +94,19 @@ const DEFAULT_FORM: FormState = {
     headerRow: '9',
     blockHeight: '18',
     blockStride: '4',
-    isActive: true,
 };
 
 export default function AdminSyncPage() {
-    const {seasons} = useSeasons();
+    return (
+        <Suspense>
+            <AdminSyncContent />
+        </Suspense>
+    );
+}
+
+function AdminSyncContent() {
+    const {seasons, isLoading: seasonsLoading} = useSeasons();
+    const searchParams = useSearchParams();
     const {regions} = useRegions();
     const router = useRouter();
     const isSuperAdmin = useIsSuperAdmin();
@@ -94,6 +118,7 @@ export default function AdminSyncPage() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingConfig, setEditingConfig] = useState<SheetConfig | null>(null);
     const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+    const [formSeasonNumber, setFormSeasonNumber] = useState<number | null>(null);
     const [saving, setSaving] = useState(false);
 
     const [deleteTarget, setDeleteTarget] = useState<SheetConfig | null>(null);
@@ -135,22 +160,68 @@ export default function AdminSyncPage() {
 
     const seasonName = (seasonId: string) => {
         const season = seasons.find(s => s.id === seasonId);
-        console.log(season)
-
         if(!season) return seasonId.slice(0,8);
         const region = regionMap[season.region_id];
 
         return region ? `${season.name} (${region.code.toUpperCase()})` : season.name; 
     };
 
-    const handleOpenAdd = () => {
+    const seasonById = useMemo(() => new Map(seasons.map(s => [s.id, s])), [seasons]);
+
+    const seasonNumbers = useMemo(() => {
+        const nums = new Set<number>();
+        for (const cfg of configs) {
+            const season = seasonById.get(cfg.season_id);
+            if (season) nums.add(season.season_number);
+        }
+        return [...nums].sort((a, b) => b - a);
+    }, [configs, seasonById]);
+
+    const requestedSeason = Number(searchParams.get('season'));
+    const selectedSeasonNumber = seasonNumbers.includes(requestedSeason) ? requestedSeason : (seasonNumbers[0] ?? null);
+
+    const setSelectedSeasonNumber = (value: string | null) => {
+        if (value === null) return;
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('season', value);
+        router.replace(`?${params.toString()}`, {scroll: false});
+    };
+
+    const regionRank = (code: string) => {
+        const i = (REGION_ORDER as readonly string[]).indexOf(code);
+        return i === -1 ? REGION_ORDER.length : i;
+    };
+
+    const sectionRows = (sheetType: SheetType): SyncConfigRow[] =>
+        configs
+            .filter(cfg => cfg.sheet_type === sheetType && seasonById.get(cfg.season_id)?.season_number === selectedSeasonNumber)
+            .map(cfg => {
+                const season = seasonById.get(cfg.season_id);
+                return {
+                    config: cfg,
+                    regionCode: season ? (regionMap[season.region_id]?.code.toUpperCase() ?? '?') : '?',
+                    isSide: season?.league_type === 'side',
+                    cronEnabled: (cfg as SheetConfig & {cron_enabled?: boolean}).cron_enabled ?? true,
+                };
+            })
+            .sort((a, b) => regionRank(a.regionCode) - regionRank(b.regionCode) || Number(a.isSide) - Number(b.isSide));
+
+    const formSeasons = formSeasonNumber === null
+        ? seasons
+        : seasons.filter(s => s.season_number === formSeasonNumber);
+
+    const handleOpenAdd = (sheetType?: SheetType) => {
         setEditingConfig(null);
-        setForm(DEFAULT_FORM);
+        setFormSeasonNumber(sheetType ? selectedSeasonNumber : null);
+        setForm(sheetType
+            ? {...DEFAULT_FORM, sheetType, headerRow: DEFAULT_HEADER_ROW[sheetType]}
+            : DEFAULT_FORM);
         setFormOpen(true);
     };
 
     const handleOpenEdit = (cfg: SheetConfig) => {
         setEditingConfig(cfg);
+        setFormSeasonNumber(null);
         setForm({
             seasonId: cfg.season_id,
             sheetId: cfg.sheet_id,
@@ -159,7 +230,6 @@ export default function AdminSyncPage() {
             headerRow: String(cfg.header_row),
             blockHeight: String(cfg.block_height),
             blockStride: String(cfg.block_stride),
-            isActive: cfg.is_active,
         });
         setFormOpen(true);
     };
@@ -318,7 +388,6 @@ export default function AdminSyncPage() {
                 blockStride: config.block_stride,
             });
             clientLogger.debug('AdminSyncPage', 'Preview Result', {PreviewResult:result})
-            console.log(result)
             if (result.ok) {
                 setPreviewResult(result.value);
             } else {
@@ -334,182 +403,68 @@ export default function AdminSyncPage() {
     return (
         <div className="admin-container">
             <div className="admin-section">
-                {}
-                <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
-                    <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
-                        <Sheet className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                        <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">
-                            Sheet Sync
-                        </h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Manage Google Sheets sync configs per season
-                        </p>
-                    </div>
-                    <Button onClick={handleOpenAdd} className="rounded-sm gap-2">
-                        <Plus className="h-4 w-4" />
-                        Add Config
-                    </Button>
-                </div>
+                <AdminPageHeader
+                    icon={Sheet}
+                    title="Sheet Sync"
+                    description="Google Sheets sync configs, grouped by season number"
+                    actions={
+                        <Button onClick={() => handleOpenAdd()} className="rounded-sm gap-2">
+                            <Plus className="h-4 w-4" />
+                            Add Config
+                        </Button>
+                    }
+                />
 
-                {}
-                {configsLoading && (
-                    <div className="panel overflow-x-auto mt-6">
-                        <table className="table-dense">
-                            <thead>
-                                <tr>
-                                    <th>Season</th>
-                                    <th>Tab</th>
-                                    <th>Type</th>
-                                    <th>Active</th>
-                                    <th>Last Synced</th>
-                                    <th>Auto</th>
-                                    <th className="w-48">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {[...Array(3)].map((_, i) => (
-                                    <tr key={i}>
-                                        {[...Array(7)].map((_, j) => (
-                                            <td key={j}><div className="h-4 bg-muted/40 rounded animate-pulse" /></td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                {(configsLoading || seasonsLoading) && (
+                    <div className="mt-6 space-y-8">
+                        {SHEET_TYPES.map(t => (
+                            <div key={t} className="space-y-2">
+                                <div className="h-5 w-32 bg-muted/40 animate-pulse" />
+                                <div className="h-24 w-full bg-muted/40 animate-pulse" />
+                            </div>
+                        ))}
                     </div>
                 )}
 
-                {!configsLoading && configs.length === 0 && (
-                    <div className="panel p-6 mt-6 text-center">
-                        <p className="text-muted-foreground">No configs yet. Add one to get started.</p>
-                    </div>
+                {!configsLoading && !seasonsLoading && configs.length === 0 && (
+                    <p className="py-16 text-center text-sm text-muted-foreground">No configs yet. Add one to get started.</p>
                 )}
 
-                {!configsLoading && configs.length > 0 && (
-                    <div className="panel overflow-x-auto mt-6">
-                        <table className="table-dense">
-                            <thead>
-                                <tr>
-                                    <th>Season</th>
-                                    <th>Tab</th>
-                                    <th>Type</th>
-                                    <th>Active</th>
-                                    <th>Last Synced</th>
-                                    <th>Auto</th>
-                                    <th className="w-48">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {configs.map((cfg) => {
-
-                                    const cronEnabled = (cfg as SheetConfig & {cron_enabled?: boolean}).cron_enabled ?? true;
-                                    return (
-                                    <tr key={cfg.id}>
-                                        <td className="text-sm">{seasonName(cfg.season_id)}</td>
-                                        <td className="text-sm font-mono">{cfg.tab_name}</td>
-                                        <td>
-                                            <Badge variant="outline" className="rounded-sm text-xs font-mono">
-                                                {cfg.sheet_type}
-                                            </Badge>
-                                        </td>
-                                        <td>
-                                            {cfg.is_active
-                                                ? <Badge variant="default" className="rounded-sm text-xs">Active</Badge>
-                                                : <Badge variant="secondary" className="rounded-sm text-xs">Inactive</Badge>
-                                            }
-                                        </td>
-                                        <td className="text-xs text-muted-foreground whitespace-nowrap">
-                                            {lastSyncTimes[cfg.id]
-                                                ? new Date(lastSyncTimes[cfg.id]!).toLocaleString()
-                                                : <span className="text-muted-foreground/50">Never</span>}
-                                        </td>
-                                        <td>
-                                            <Button
-                                                variant={cronEnabled ? "default" : "ghost"}
-                                                size="sm"
-                                                className={`rounded-sm gap-1 ${cronEnabled ? '' : 'text-muted-foreground'}`}
-                                                onClick={() => handleToggleCron(cfg)}
-                                                disabled={togglingCronId !== null}
-                                                title={cronEnabled ? 'Auto-sync on — click to disable' : 'Auto-sync off — click to enable'}
-                                            >
-                                                {togglingCronId === cfg.id
-                                                    ? <RefreshCw className="h-3 w-3 animate-spin" />
-                                                    : <Clock className="h-3 w-3" />
-                                                }
-                                            </Button>
-                                        </td>
-                                        <td>
-                                            <div className="flex gap-1">
-                                                <Button
-                                                    variant="default"
-                                                    size="sm"
-                                                    className="rounded-sm gap-1"
-                                                    onClick={() => handleSync(cfg)}
-                                                    disabled={syncingId !== null}
-                                                >
-                                                    {syncingId === cfg.id
-                                                        ? <RefreshCw className="h-3 w-3 animate-spin" />
-                                                        : <Play className="h-3 w-3" />
-                                                    }
-                                                    Sync
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="rounded-sm gap-1"
-                                                    onClick={() => handlePreview(cfg)}
-                                                >
-                                                    <Eye className="h-3 w-3" />
-                                                    Preview
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="rounded-sm"
-                                                    onClick={() => handleOpenEdit(cfg)}
-                                                >
-                                                    <Pencil className="h-3 w-3" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="rounded-sm"
-                                                    onClick={() => router.push(`/admin/sync/history?config=${cfg.id}`)}
-                                                    title="View sync history"
-                                                >
-                                                    <History className="h-3 w-3" />
-                                                </Button>
-                                                {isSuperAdmin && (
-                                                    <>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="rounded-sm text-secondary hover:bg-secondary/10"
-                                                            onClick={() => { setResetTarget(cfg); setResetWipeData(true); setResetClearLogs(false); }}
-                                                            title="Reset config data"
-                                                        >
-                                                            <RotateCcw className="h-3 w-3" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                            onClick={() => setDeleteTarget(cfg)}
-                                                        >
-                                                            <Trash2 className="h-3 w-3" />
-                                                        </Button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                {!configsLoading && !seasonsLoading && configs.length > 0 && (
+                    <>
+                        <div className="mt-6 flex items-center">
+                            <OptionRow
+                                label="Season"
+                                layout="inline"
+                                mono
+                                options={seasonNumbers.map(n => ({value: String(n), label: String(n)}))}
+                                value={selectedSeasonNumber === null ? null : String(selectedSeasonNumber)}
+                                onChange={setSelectedSeasonNumber}
+                            />
+                        </div>
+                        <div className="mt-6 space-y-10">
+                            {SHEET_TYPES.map(sheetType => (
+                                <SyncConfigSection
+                                    key={sheetType}
+                                    title={SECTION_LABELS[sheetType]}
+                                    emptyLabel={`No ${SECTION_LABELS[sheetType].toLowerCase()} config for Season ${selectedSeasonNumber}`}
+                                    rows={sectionRows(sheetType)}
+                                    lastSyncTimes={lastSyncTimes}
+                                    syncingId={syncingId}
+                                    togglingCronId={togglingCronId}
+                                    isSuperAdmin={isSuperAdmin}
+                                    onAdd={() => handleOpenAdd(sheetType)}
+                                    onSync={handleSync}
+                                    onPreview={handlePreview}
+                                    onEdit={handleOpenEdit}
+                                    onHistory={cfg => router.push(`/admin/sync/history?config=${cfg.id}`)}
+                                    onToggleCron={handleToggleCron}
+                                    onReset={cfg => { setResetTarget(cfg); setResetWipeData(true); setResetClearLogs(false); }}
+                                    onDelete={setDeleteTarget}
+                                />
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
 
@@ -527,7 +482,7 @@ export default function AdminSyncPage() {
                                     <SelectValue placeholder="Select season" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {seasons.map(s => (
+                                    {formSeasons.map(s => (
                                         <SelectItem key={s.id} value={s.id}>{seasonName(s.id)}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -564,7 +519,7 @@ export default function AdminSyncPage() {
                                 onValueChange={(v) => setForm(f => ({
                                     ...f,
                                     sheetType: v,
-                                    headerRow: v === 'qualifier' ? '8' : v === 'teams' ? '9' : f.headerRow,
+                                    headerRow: DEFAULT_HEADER_ROW[v as SheetType] ?? f.headerRow,
                                 }))}
                             >
                                 <SelectTrigger className="rounded-sm">
@@ -616,18 +571,6 @@ export default function AdminSyncPage() {
                                 </>)}
                             </div>
                         )}
-                        <div className="space-y-2">
-                            <Label>Status</Label>
-                            <Select value={form.isActive ? 'active' : 'inactive'} onValueChange={v => setForm(f => ({...f, isActive: v === 'active'}))} disabled={saving}>
-                                <SelectTrigger className="rounded-sm">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="inactive">Inactive</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
                         <div className="flex gap-3 pt-1">
                             <Button type="submit" disabled={saving} className="rounded-sm">
                                 {saving ? 'Saving...' : editingConfig ? 'Save Changes' : 'Save Config'}

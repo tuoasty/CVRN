@@ -1,11 +1,12 @@
 import {DBClient} from "@/shared/types/db";
-import {Err, Result} from "@/shared/types/result";
+import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {insertSeasonAwards, findSeasonAwards} from "@/server/db/seasonHistory.repo";
 import {getRobloxFullAvatarsById} from "@/server/roblox/users";
 import {storeAwardAvatar} from "./storeAwardAvatar";
 import {BatchUpsertSeasonAwardsInput, SeasonAwardEntryWithPlayer} from "../types";
+import {toSeasonAwardEntries} from "../helpers/toSeasonAwardEntry";
 
 export async function batchUpsertSeasonAwards(
     supabase: DBClient,
@@ -64,7 +65,9 @@ export async function batchUpsertSeasonAwards(
             }
         }
 
-        return findSeasonAwards(supabase, input.seasonId) as Promise<Result<SeasonAwardEntryWithPlayer[]>>;
+        const awardsResult = await findSeasonAwards(supabase, input.seasonId);
+        if (!awardsResult.ok) return awardsResult;
+        return Ok(toSeasonAwardEntries(awardsResult.value));
     } catch (error) {
         logger.error({error, seasonId: input.seasonId}, "batchUpsertSeasonAwards: unexpected error");
         return Err(serializeError(error));

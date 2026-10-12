@@ -64,11 +64,25 @@ export async function findSeasonAwards(
 ): Promise<Result<SeasonAwardRow[]>> {
     const {data, error} = await supabase
         .from("season_awards")
-        .select("id, season_id, player_id, award_name, category, awarded_at, created_by, created_at, sort_order, full_avatar_url, avatar_bucket_path, all_star_team, all_star_slot, all_star_captain, players(id, username)")
+        .select("id, season_id, player_id, award_name, category, awarded_at, created_by, created_at, sort_order, full_avatar_url, avatar_bucket_path, all_star_team, all_star_slot, all_star_captain, players(id, username, player_team_seasons(season_id, teams(name)))")
         .eq("season_id", seasonId)
+        .eq("players.player_team_seasons.season_id", seasonId)
         .order("sort_order");
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as SeasonAwardRow[]);
+}
+
+export async function findAwardNamesByCategory(
+    supabase: DBClient,
+    category: SeasonAwardRow["category"]
+): Promise<Result<{award_name: string; created_at: string}[]>> {
+    const {data, error} = await supabase
+        .from("season_awards")
+        .select("award_name, created_at")
+        .eq("category", category)
+        .order("created_at", {ascending: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
 }
 
 export async function insertSeasonAwards(
@@ -110,6 +124,19 @@ export async function updateSeasonAwardName(
     const {error} = await supabase
         .from("season_awards")
         .update({award_name: awardName})
+        .eq("id", awardId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
+export async function updateSeasonAwardPlayer(
+    supabase: DBClient,
+    awardId: string,
+    playerId: string
+): Promise<Result<true>> {
+    const {error} = await supabase
+        .from("season_awards")
+        .update({player_id: playerId})
         .eq("id", awardId);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);

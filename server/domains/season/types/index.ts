@@ -79,6 +79,7 @@ export interface SeasonAwardEntryWithPlayer {
     players: {
         id: string;
         username: string;
+        season_team_name: string | null;
     };
 }
 
@@ -187,6 +188,7 @@ export type {
     UpsertSeasonAllStarTeamNameInput,
     SetAllStarCaptainInput,
     SeasonNumberQueryInput,
+    AwardNameSuggestionsInput,
 } from "./schemas";
 
 export {
@@ -208,4 +210,5 @@ export {
     UpsertSeasonAllStarTeamNameSchema,
     SetAllStarCaptainSchema,
     SeasonNumberQuerySchema,
+    AwardNameSuggestionsSchema,
 } from "./schemas";

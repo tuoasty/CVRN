@@ -362,26 +362,17 @@ function AllStarTeamHalf({ code, name, awards }: { code: string; name: string; a
                 <span className="text-lg font-semibold uppercase tracking-tight truncate">{name}</span>
             </div>
             {starters.length > 0 && (
-                <>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Starters</p>
-                    <div className="grid grid-cols-4 gap-2">
-                        {starters.map(a => a.all_star_captain
-                            ? <AllStarTile key={a.id} award={a} className="row-span-2 self-center" />
-                            : <AllStarTile key={a.id} award={a} />
-                        )}
-                    </div>
-                </>
+                <div className="grid grid-cols-4 gap-2">
+                    {starters.map(a => a.all_star_captain
+                        ? <AllStarTile key={a.id} award={a} className="row-span-2 self-center" />
+                        : <AllStarTile key={a.id} award={a} />
+                    )}
+                </div>
             )}
             {subs.length > 0 && (
-                <>
-                    <div className="flex items-center gap-2 mt-3.5 mb-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subs</span>
-                        <span className="flex-1 h-px bg-border" />
-                    </div>
-                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                        {subs.map(a => <AllStarTile key={a.id} award={a} headshot />)}
-                    </div>
-                </>
+                <div className={cn("grid grid-cols-4 sm:grid-cols-7 gap-2", starters.length > 0 && "mt-4")}>
+                    {subs.map(a => <AllStarTile key={a.id} award={a} headshot />)}
+                </div>
             )}
         </div>
     );

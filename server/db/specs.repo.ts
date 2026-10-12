@@ -62,6 +62,23 @@ export async function findSpecCatalog(supabase: DBClient): Promise<Result<Spec[]
     return Ok(data ?? []);
 }
 
+export async function findVaultedSpecIds(supabase: DBClient): Promise<Result<string[]>> {
+    const {data, error} = await supabase.from("specs").select("id").eq("is_vaulted", true);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(r => r.id));
+}
+
+export async function updateSpecVaulted(supabase: DBClient, id: string, isVaulted: boolean): Promise<Result<Spec>> {
+    const {data, error} = await supabase
+        .from("specs")
+        .update({is_vaulted: isVaulted, updated_at: new Date().toISOString()})
+        .eq("id", id)
+        .select()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
 export async function upsertSpecIdentity(
     supabase: DBClient,
     p: {id?: string; name: string; stars: number; position: string; height: number}

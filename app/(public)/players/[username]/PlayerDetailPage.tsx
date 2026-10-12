@@ -51,15 +51,13 @@ function placeLabel(award: PlayerAward): {text: string; className: string} {
 
 function awardLabel(award: PlayerAward): string {
     if (award.category === "first_team") return `First Team ${award.award_name}`;
-    if (award.category === "all_star") {
-        const slot = award.all_star_slot === "sub" ? "Sub" : "Starter";
-        return `All-Star ${award.all_star_team_name ?? "Team"} · ${award.all_star_captain ? "Captain" : slot}`;
-    }
+    if (award.category === "all_star") return award.all_star_captain ? "All-Star Captain" : "All-Star";
     return award.award_name;
 }
 
 function awardDetail(award: PlayerAward): string | null {
-    return award.category === "all_star" ? award.award_name : null;
+    if (award.category !== "all_star") return null;
+    return [award.all_star_team_name, award.award_name].filter(Boolean).join(" · ");
 }
 
 type Props = {
@@ -481,7 +479,7 @@ function AwardCard({award}: {award: PlayerAward}) {
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                     <span className={cn("text-sm font-medium truncate", style.text)}>{awardLabel(award)}</span>
-                    {detail && <span className="text-xs uppercase tracking-wide text-muted-foreground shrink-0">{detail}</span>}
+                    {detail && <span className="text-xs uppercase tracking-wide text-muted-foreground truncate">{detail}</span>}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">{award.region_code} · {award.season_name}</p>
                 <p className="text-xs text-muted-foreground tabular-nums">{formatDate(award.awarded_at)}</p>

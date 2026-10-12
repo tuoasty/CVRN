@@ -4,6 +4,7 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findSeasonAwards} from "@/server/db/seasonHistory.repo";
 import {SeasonAwardEntryWithPlayer} from "../types";
+import {toSeasonAwardEntries} from "../helpers/toSeasonAwardEntry";
 
 export async function getSeasonAwards(
     supabase: DBClient,
@@ -15,7 +16,7 @@ export async function getSeasonAwards(
             logger.error({seasonId, error: result.error}, "Failed to fetch season awards");
             return result;
         }
-        return Ok(result.value as unknown as SeasonAwardEntryWithPlayer[]);
+        return Ok(toSeasonAwardEntries(result.value));
     } catch (error) {
         logger.error({error}, "Unexpected error fetching season awards");
         return Err(serializeError(error));

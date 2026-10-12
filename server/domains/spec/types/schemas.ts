@@ -19,6 +19,11 @@ export const SaveSpecIdentitySchema = z.object({
     height: z.number().int().min(48).max(96),
 });
 
+export const SetSpecVaultedSchema = z.object({
+    id: z.string().uuid(),
+    isVaulted: z.boolean(),
+});
+
 export const RegionSpecRequirementsSchema = z
     .object({
         specId: z.string().uuid(),
@@ -117,6 +122,7 @@ export const DeleteSpecWinnerSchema = z.object({
 export type SpecRequirementInput = z.infer<typeof SpecRequirementSchema>;
 export type SpecPositionInput = z.infer<typeof SpecPositionSchema>;
 export type SaveSpecIdentityInput = z.infer<typeof SaveSpecIdentitySchema>;
+export type SetSpecVaultedInput = z.infer<typeof SetSpecVaultedSchema>;
 export type RegionSpecRequirementsInput = z.infer<typeof RegionSpecRequirementsSchema>;
 export type SaveRegionRequirementsInput = z.infer<typeof SaveRegionRequirementsSchema>;
 export type ExportSpecRequirementsInput = z.infer<typeof ExportSpecRequirementsSchema>;

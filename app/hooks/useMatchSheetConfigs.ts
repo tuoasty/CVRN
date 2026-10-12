@@ -29,7 +29,7 @@ export function useSeasonPlayoffMatches(seasonId: string | null) {
 }
 
 function revalidateSeasonPlayoffMatches() {
-    return globalMutate((key: unknown) => Array.isArray(key) && key[0] === 'seasonPlayoffMatches', undefined, {revalidate: true});
+    return globalMutate((key: unknown) => Array.isArray(key) && key[0] === 'seasonPlayoffMatches');
 }
 
 export async function saveMatchSheetConfig(input: SaveMatchSheetConfigInput) {
