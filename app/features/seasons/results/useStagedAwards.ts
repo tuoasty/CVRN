@@ -2,30 +2,43 @@
 
 import {useCallback, useEffect, useReducer, useRef, useState} from "react";
 import {batchUpsertSeasonAwardsAction, getAwardNameSuggestionsAction} from "@/app/actions/season.actions";
+import {awardSpecWinnerAction} from "@/app/actions/spec.actions";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
 import {SeasonAwardEntryWithPlayer} from "@/server/domains/season";
+import {SpecWinnerWithRefs} from "@/server/domains/spec";
+import {Spec} from "@/shared/types/db";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
 import {stagedAwardsReducer, toBatchAwards} from "./stagedAwards";
-import {BarCategory, BarTarget, isBarCategory} from "./types";
+import {AwardBarCategory, BarCategory, BarTarget, isBarCategory, isStagedAward, isStagedSpec} from "./types";
 
 const DEFAULT_TARGET: BarTarget = {category: "individual_winners", team: "A", slot: "starter"};
 
-export function useStagedAwards(seasonId: string, awards: SeasonAwardEntryWithPlayer[], onSaved: (awards: SeasonAwardEntryWithPlayer[]) => void) {
+interface Options {
+    seasonId: string;
+    awards: SeasonAwardEntryWithPlayer[];
+    onAwardsSaved: (awards: SeasonAwardEntryWithPlayer[]) => void;
+    onSpecSaved: (winner: SpecWinnerWithRefs) => void;
+}
+
+export function useStagedAwards({seasonId, awards, onAwardsSaved, onSpecSaved}: Options) {
     const [target, setTarget] = useState<BarTarget>(DEFAULT_TARGET);
     const [name, setName] = useState("");
+    const [spec, setSpec] = useState<Spec | null>(null);
+    const [specQuery, setSpecQuery] = useState("");
+    const [stars, setStars] = useState(0);
     const [playerQuery, setPlayerQuery] = useState("");
     const [staged, dispatch] = useReducer(stagedAwardsReducer, []);
     const [saving, setSaving] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [suggestions, setSuggestions] = useState<Partial<Record<BarCategory, string[]>>>({});
-    const requested = useRef(new Set<BarCategory>());
+    const [suggestions, setSuggestions] = useState<Partial<Record<AwardBarCategory, string[]>>>({});
+    const requested = useRef(new Set<AwardBarCategory>());
     const nameRef = useRef<HTMLInputElement | null>(null);
     const playerRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
         const category = target.category;
-        if (requested.current.has(category)) return;
+        if (category === "spec" || requested.current.has(category)) return;
         requested.current.add(category);
         getAwardNameSuggestionsAction({category})
             .then(res => {
@@ -48,48 +61,83 @@ export function useStagedAwards(seasonId: string, awards: SeasonAwardEntryWithPl
         focusName();
     }, [focusName]);
 
+    const selectSpec = useCallback((next: Spec | null) => {
+        setSpec(next);
+        if (next) setStars(next.stars);
+    }, []);
+
     const stage = useCallback((player: PlayerWithTeamInfo) => {
-        if (!name.trim()) {
-            nameRef.current?.focus();
-            return false;
+        if (target.category === "spec") {
+            if (!spec) {
+                nameRef.current?.focus();
+                return false;
+            }
+            dispatch({type: "addSpec", tempId: crypto.randomUUID(), spec, stars, player});
+            setSpec(null);
+            setSpecQuery("");
+            setStars(0);
+        } else {
+            if (!name.trim()) {
+                nameRef.current?.focus();
+                return false;
+            }
+            dispatch({type: "add", tempId: crypto.randomUUID(), target, awardName: name, player});
+            setName("");
         }
-        dispatch({type: "add", tempId: crypto.randomUUID(), target, awardName: name, player});
-        setName("");
         setPlayerQuery("");
         focusName();
         return true;
-    }, [name, target, focusName]);
+    }, [name, spec, stars, target, focusName]);
 
     const removeStaged = useCallback((tempId: string) => dispatch({type: "remove", tempId}), []);
 
     const save = useCallback(async () => {
         if (staged.length === 0 || saving) return;
         setSaving(true);
+        const awardItems = staged.filter(isStagedAward);
+        const specItems = staged.filter(isStagedSpec);
+        const saved: string[] = [];
+        let failed = 0;
         try {
-            const result = await batchUpsertSeasonAwardsAction({seasonId, awards: toBatchAwards(staged)});
-            if (!result.ok) {
-                toast.error("Failed to save awards", result.error.message);
-                return;
-            }
-            onSaved(result.value);
-            setSuggestions(prev => {
-                const next = {...prev};
-                for (const a of [...staged].reverse()) {
-                    const list = next[a.category];
-                    if (!list) continue;
-                    next[a.category] = [a.awardName, ...list.filter(n => n.toLowerCase() !== a.awardName.toLowerCase())];
+            if (awardItems.length > 0) {
+                const result = await batchUpsertSeasonAwardsAction({seasonId, awards: toBatchAwards(awardItems)});
+                if (result.ok) {
+                    onAwardsSaved(result.value);
+                    saved.push(...awardItems.map(a => a.tempId));
+                    setSuggestions(prev => {
+                        const next = {...prev};
+                        for (const a of [...awardItems].reverse()) {
+                            const list = next[a.category];
+                            if (!list) continue;
+                            next[a.category] = [a.awardName, ...list.filter(n => n.toLowerCase() !== a.awardName.toLowerCase())];
+                        }
+                        return next;
+                    });
+                } else {
+                    failed += awardItems.length;
+                    toast.error("Failed to save awards", result.error.message);
                 }
-                return next;
-            });
-            toast.success(`${staged.length} award${staged.length === 1 ? "" : "s"} saved`);
-            dispatch({type: "clear"});
+            }
+            for (const item of specItems) {
+                const result = await awardSpecWinnerAction({seasonId, specId: item.spec.id, playerId: item.player.id, starsAwarded: item.stars});
+                if (result.ok) {
+                    onSpecSaved(result.value);
+                    saved.push(item.tempId);
+                } else {
+                    failed += 1;
+                    clientLogger.error("useStagedAwards", "Spec winner save failed", {specId: item.spec.id, error: result.error});
+                }
+            }
         } catch (err) {
-            clientLogger.error("useStagedAwards", "Batch save failed", {err});
+            clientLogger.error("useStagedAwards", "Save failed", {err});
             toast.error("Something went wrong");
         } finally {
+            dispatch({type: "removeMany", tempIds: saved});
+            if (saved.length > 0) toast.success(`${saved.length} saved`);
+            if (failed > 0) toast.error(`${failed} not saved`, "They are still staged. Try saving again.");
             setSaving(false);
         }
-    }, [staged, saving, seasonId, onSaved]);
+    }, [staged, saving, seasonId, onAwardsSaved, onSpecSaved]);
 
     const startEdit = useCallback((award: SeasonAwardEntryWithPlayer) => {
         if (!isBarCategory(award.category)) return;
@@ -118,6 +166,12 @@ export function useStagedAwards(seasonId: string, awards: SeasonAwardEntryWithPl
         arm,
         name,
         setName,
+        spec,
+        selectSpec,
+        specQuery,
+        setSpecQuery,
+        stars,
+        setStars,
         playerQuery,
         setPlayerQuery,
         staged,
@@ -128,7 +182,7 @@ export function useStagedAwards(seasonId: string, awards: SeasonAwardEntryWithPl
         editing,
         startEdit,
         stopEdit,
-        suggestions: suggestions[target.category] ?? [],
+        suggestions: target.category === "spec" ? [] : suggestions[target.category] ?? [],
         nameRef,
         playerRef,
     };

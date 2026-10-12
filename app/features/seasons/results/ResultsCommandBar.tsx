@@ -5,10 +5,12 @@ import {ArrowDown, ArrowUp, ImageIcon, Loader2, Trash2, X} from "lucide-react";
 import {Button} from "@/app/components/ui/button";
 import {OptionButton} from "@/app/components/filters/OptionRow";
 import {AllStarSlot, AllStarTeamCode, SeasonAllStarTeam, SeasonAwardEntryWithPlayer} from "@/server/domains/season";
+import {Spec} from "@/shared/types/db";
 import {cn} from "@/lib/utils";
 import {AwardNameCombobox} from "./AwardNameCombobox";
 import {PlayerPicker} from "./PlayerPicker";
-import {TextAction} from "./ResultsUi";
+import {SpecCombobox} from "./SpecCombobox";
+import {StarPicker, TextAction} from "./ResultsUi";
 import {movability} from "./awardGroups";
 import {stagedChipLabel} from "./stagedAwards";
 import {BAR_CATEGORIES, CATEGORY_LABELS} from "./types";
@@ -51,28 +53,30 @@ interface Props {
     editor: AwardEditor;
     awards: SeasonAwardEntryWithPlayer[];
     allStarTeams: SeasonAllStarTeam[];
+    specs: Spec[];
+    winnerBySpec: ReadonlyMap<string, string>;
     stickyTop: number;
 }
 
-export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, stickyTop}: Props) {
+export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, specs, winnerBySpec, stickyTop}: Props) {
     const {target, editing, staged, saving} = bar;
     const isAllStar = target.category === "all_star";
+    const isSpec = target.category === "spec";
     const locked = editing !== null;
     const moves = editing ? movability(awards, editing) : {up: false, down: false};
-    const avatarDialogOpen = editor.avatarPreview !== null;
 
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !editing && staged.length > 0) {
                 e.preventDefault();
                 bar.save();
-            } else if (e.key === "Escape" && editing && !avatarDialogOpen) {
+            } else if (e.key === "Escape" && editing) {
                 bar.stopEdit();
             }
         };
         document.addEventListener("keydown", onKey);
         return () => document.removeEventListener("keydown", onKey);
-    }, [bar, editing, staged.length, avatarDialogOpen]);
+    }, [bar, editing, staged.length]);
 
     const teamName = (code: AllStarTeamCode) => allStarTeams.find(t => t.code === code)?.name ?? `Team ${code}`;
 
@@ -136,17 +140,40 @@ export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, 
                         </OptionButton>
                     ))}
                 </Group>
+                <Divider />
+                <Group label="Stars">
+                    <StarPicker
+                        label="Stars awarded"
+                        value={isSpec ? bar.stars : 0}
+                        max={bar.spec?.stars}
+                        disabled={!isSpec || !bar.spec || locked}
+                        onChange={bar.setStars}
+                    />
+                </Group>
             </div>
 
             <div className="mt-2 grid grid-cols-1 items-end gap-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto]">
-                <AwardNameCombobox
-                    value={bar.name}
-                    onChange={bar.setName}
-                    onEnter={onNameEnter}
-                    suggestions={bar.suggestions}
-                    categoryLabel={CATEGORY_LABELS[target.category]}
-                    inputRef={bar.nameRef}
-                />
+                {isSpec ? (
+                    <SpecCombobox
+                        specs={specs}
+                        query={bar.specQuery}
+                        onQueryChange={bar.setSpecQuery}
+                        selected={bar.spec}
+                        onSelect={bar.selectSpec}
+                        onEnter={() => bar.playerRef.current?.focus()}
+                        winnerBySpec={winnerBySpec}
+                        inputRef={bar.nameRef}
+                    />
+                ) : (
+                    <AwardNameCombobox
+                        value={bar.name}
+                        onChange={bar.setName}
+                        onEnter={onNameEnter}
+                        suggestions={bar.suggestions}
+                        categoryLabel={CATEGORY_LABELS[target.category]}
+                        inputRef={bar.nameRef}
+                    />
+                )}
                 <PlayerPicker
                     seasonId={seasonId}
                     query={bar.playerQuery}
@@ -199,8 +226,8 @@ export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, 
                             {editing.all_star_captain ? "Remove captain" : "Make captain"}
                         </TextAction>
                     )}
-                    <TextAction disabled={editor.busy !== null} onClick={() => editor.previewAvatar(editing)}>
-                        {editor.busy === "avatar" ? <Loader2 className="size-3 animate-spin motion-reduce:animate-none" /> : <ImageIcon className="size-3" />}
+                    <TextAction disabled={editor.busy !== null || editor.refreshingId !== null} onClick={() => editor.refreshAvatar(editing)}>
+                        {editor.refreshingId === editing.id ? <Loader2 className="size-3 animate-spin motion-reduce:animate-none" /> : <ImageIcon className="size-3" />}
                         Refresh avatar
                     </TextAction>
                     <TextAction disabled={!moves.up || editor.busy !== null} onClick={() => editor.move(editing, "up")}>

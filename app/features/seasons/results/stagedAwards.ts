@@ -1,18 +1,21 @@
 import {PlayerWithTeamInfo} from "@/server/domains/player";
 import {BatchUpsertSeasonAwardsInput} from "@/server/domains/season";
-import {BarTarget, CATEGORY_LABELS, StagedAward} from "./types";
+import {Spec} from "@/shared/types/db";
+import {BarTarget, CATEGORY_LABELS, StagedAward, StagedItem, isStagedAward} from "./types";
 
 export type StagedAction =
     | {type: "add"; tempId: string; target: BarTarget; awardName: string; player: PlayerWithTeamInfo}
+    | {type: "addSpec"; tempId: string; spec: Spec; stars: number; player: PlayerWithTeamInfo}
     | {type: "remove"; tempId: string}
+    | {type: "removeMany"; tempIds: readonly string[]}
     | {type: "clear"};
 
-export function stagedAwardsReducer(state: StagedAward[], action: StagedAction): StagedAward[] {
+export function stagedAwardsReducer(state: StagedItem[], action: StagedAction): StagedItem[] {
     switch (action.type) {
         case "add": {
             const awardName = action.awardName.trim();
-            if (!awardName) return state;
             const {category, team, slot} = action.target;
+            if (!awardName || category === "spec") return state;
             const award: StagedAward = {
                 tempId: action.tempId,
                 awardName,
@@ -22,15 +25,25 @@ export function stagedAwardsReducer(state: StagedAward[], action: StagedAction):
             };
             return [...state, award];
         }
+        case "addSpec":
+            return [
+                ...state.filter(s => s.category !== "spec" || s.spec.id !== action.spec.id),
+                {tempId: action.tempId, category: "spec", spec: action.spec, stars: action.stars, player: action.player},
+            ];
         case "remove":
             return state.filter(a => a.tempId !== action.tempId);
+        case "removeMany": {
+            if (action.tempIds.length === 0) return state;
+            const drop = new Set(action.tempIds);
+            return state.filter(a => !drop.has(a.tempId));
+        }
         case "clear":
             return state.length === 0 ? state : [];
     }
 }
 
-export function toBatchAwards(staged: readonly StagedAward[]): BatchUpsertSeasonAwardsInput["awards"] {
-    return staged.map(a => ({
+export function toBatchAwards(staged: readonly StagedItem[]): BatchUpsertSeasonAwardsInput["awards"] {
+    return staged.filter(isStagedAward).map(a => ({
         playerId: a.player.id,
         awardName: a.awardName,
         category: a.category,
@@ -39,9 +52,11 @@ export function toBatchAwards(staged: readonly StagedAward[]): BatchUpsertSeason
     }));
 }
 
-export function stagedChipLabel(a: StagedAward): string {
+export function stagedChipLabel(a: StagedItem): string {
+    const username = `@${a.player.username ?? a.player.id}`;
+    if (a.category === "spec") return `Spec · ${a.spec.name} ★${a.stars} · ${username}`;
     const category = a.category === "all_star"
         ? `All-Star ${a.allStarTeam}${a.allStarSlot === "sub" ? " Sub" : ""}`
         : CATEGORY_LABELS[a.category];
-    return `${category} · ${a.awardName} · @${a.player.username ?? a.player.id}`;
+    return `${category} · ${a.awardName} · ${username}`;
 }

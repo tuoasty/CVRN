@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import {ImageIcon, Loader2} from "lucide-react";
 import type {ComponentProps, ReactNode} from "react";
 import {cn} from "@/lib/utils";
 
@@ -84,3 +85,61 @@ export function SubLabel({children, split}: {children: ReactNode; split?: boolea
         </p>
     );
 }
+
+interface StarPickerProps {
+    value: number;
+    max?: number;
+    onChange: (n: number) => void;
+    disabled?: boolean;
+    label: string;
+    showCount?: boolean;
+}
+
+export function StarPicker({value, max, onChange, disabled, label, showCount = true}: StarPickerProps) {
+    return (
+        <div role="group" aria-label={label} className={cn("flex items-center", disabled && "opacity-50")}>
+            {[1, 2, 3, 4, 5].map(n => (
+                <button
+                    key={n}
+                    type="button"
+                    disabled={disabled}
+                    aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                    aria-pressed={n === value}
+                    onClick={() => onChange(value === n ? 0 : n)}
+                    className={cn(
+                        "inline-flex size-6 items-center justify-center rounded-md text-sm leading-none transition-colors duration-150 motion-reduce:transition-none",
+                        "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none",
+                        n <= value ? "text-foreground" : "text-border hover:text-muted-foreground",
+                    )}
+                >
+                    ★
+                </button>
+            ))}
+            {showCount && (
+                <span className="ml-1 w-8 font-mono text-xs tabular-nums text-muted-foreground">
+                    {value}/{max ?? 5}
+                </span>
+            )}
+        </div>
+    );
+}
+
+export function AvatarRefreshButton({username, busy, disabled, onClick}: {username: string; busy: boolean; disabled?: boolean; onClick: () => void}) {
+    return (
+        <button
+            type="button"
+            aria-label={`Refresh avatar for @${username}`}
+            title="Refresh avatar"
+            disabled={disabled || busy}
+            onClick={onClick}
+            className={cn(
+                "inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-[color,opacity] duration-150 hover:text-foreground motion-reduce:transition-none",
+                "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none",
+                busy ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100",
+            )}
+        >
+            {busy ? <Loader2 className="size-3 animate-spin motion-reduce:animate-none" /> : <ImageIcon className="size-3.5" />}
+        </button>
+    );
+}
+

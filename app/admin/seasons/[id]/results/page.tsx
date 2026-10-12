@@ -1,6 +1,6 @@
 "use client";
 
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import Link from "next/link";
 import {useParams, useRouter} from "next/navigation";
 import {ChevronLeft} from "lucide-react";
@@ -25,14 +25,14 @@ import ConfirmDialog from "@/app/features/spec/catalog/ConfirmDialog";
 import {useLeaveGuard} from "@/app/features/spec/catalog/useLeaveGuard";
 import {ResultsCommandBar} from "@/app/features/seasons/results/ResultsCommandBar";
 import {PlacementsSection} from "@/app/features/seasons/results/PlacementsSection";
-import {SpecWinnersSection} from "@/app/features/seasons/results/SpecWinnersSection";
+import {SpecWinnersSection, mergeSpecWinner} from "@/app/features/seasons/results/SpecWinnersSection";
 import {AwardRows} from "@/app/features/seasons/results/AwardRows";
 import {AllStarColumns} from "@/app/features/seasons/results/AllStarColumns";
 import {ChampionRosterColumns} from "@/app/features/seasons/results/ChampionRosterColumns";
-import {AvatarPreviewDialog} from "@/app/features/seasons/results/AvatarPreviewDialog";
 import {useStagedAwards} from "@/app/features/seasons/results/useStagedAwards";
 import {useAwardEditor} from "@/app/features/seasons/results/useAwardEditor";
 import {awardsIn, sortRoster} from "@/app/features/seasons/results/awardGroups";
+import {isStagedAward, isStagedSpec} from "@/app/features/seasons/results/types";
 
 function formatDay(value: string) {
     return new Date(value).toLocaleDateString("en-US", {month: "short", day: "numeric", year: "numeric", timeZone: "UTC"});
@@ -121,7 +121,8 @@ export default function SeasonResultsPage() {
         if (res.ok) setAwards(res.value);
     }, [seasonId]);
 
-    const bar = useStagedAwards(seasonId, awards, setAwards);
+    const onSpecSaved = useCallback((winner: SpecWinnerWithRefs) => setSpecWinners(prev => mergeSpecWinner(prev, winner)), []);
+    const bar = useStagedAwards({seasonId, awards, onAwardsSaved: setAwards, onSpecSaved});
     const editor = useAwardEditor({awards, setAwards, refreshAwards, onRemoved: bar.stopEdit});
 
     const blockLeave = useCallback((href: string) => setLeaveTo(href), []);
@@ -155,6 +156,10 @@ export default function SeasonResultsPage() {
     const regionCode = season ? regions.find(r => r.id === season.region_id)?.code.toUpperCase() : undefined;
     const champions = podium.filter(p => p.place === 1).map(p => p.teams.name);
     const editingId = bar.editing?.id ?? null;
+    const stagedAwards = bar.staged.filter(isStagedAward);
+    const stagedSpecs = bar.staged.filter(isStagedSpec);
+    const awardableSpecs = useMemo(() => specs.filter(s => !s.is_vaulted), [specs]);
+    const winnerBySpec = useMemo(() => new Map(specWinners.map(w => [w.spec_id, w.player.username])), [specWinners]);
     const armedCategory = bar.editing ? null : bar.target.category;
 
     return (
@@ -189,6 +194,8 @@ export default function SeasonResultsPage() {
                         editor={editor}
                         awards={awards}
                         allStarTeams={allStarTeams}
+                        specs={awardableSpecs}
+                        winnerBySpec={winnerBySpec}
                         stickyTop={stickyTop}
                     />
 
@@ -196,7 +203,14 @@ export default function SeasonResultsPage() {
                         <div className="min-w-0 space-y-8">
                             <PlacementsSection seasonId={seasonId} podium={podium} setPodium={setPodium} />
                             <ChampionGfxBlock seasonId={seasonId} seasonName={season.name} />
-                            <SpecWinnersSection seasonId={seasonId} specs={specs} winners={specWinners} setWinners={setSpecWinners} />
+                            <SpecWinnersSection
+                                seasonId={seasonId}
+                                winners={specWinners}
+                                setWinners={setSpecWinners}
+                                staged={stagedSpecs}
+                                armed={armedCategory === "spec"}
+                                onAdd={() => bar.arm({category: "spec"})}
+                            />
                         </div>
 
                         <div className="min-w-0 space-y-8">
@@ -204,7 +218,7 @@ export default function SeasonResultsPage() {
                                 title="Individual"
                                 emptyLabel="No individual awards yet"
                                 awards={awardsIn(awards, "individual_winners")}
-                                staged={bar.staged.filter(s => s.category === "individual_winners")}
+                                staged={stagedAwards.filter(s => s.category === "individual_winners")}
                                 editingId={editingId}
                                 armed={armedCategory === "individual_winners"}
                                 onAdd={() => bar.arm({category: "individual_winners"})}
@@ -214,7 +228,7 @@ export default function SeasonResultsPage() {
                                 title="Staff team"
                                 emptyLabel="No staff awards yet"
                                 awards={awardsIn(awards, "staff_team")}
-                                staged={bar.staged.filter(s => s.category === "staff_team")}
+                                staged={stagedAwards.filter(s => s.category === "staff_team")}
                                 editingId={editingId}
                                 armed={armedCategory === "staff_team"}
                                 onAdd={() => bar.arm({category: "staff_team"})}
@@ -225,7 +239,7 @@ export default function SeasonResultsPage() {
                         <div className="min-w-0 space-y-8">
                             <AllStarColumns
                                 awards={awards}
-                                staged={bar.staged}
+                                staged={stagedAwards}
                                 allStarTeams={allStarTeams}
                                 editingId={editingId}
                                 armedTeam={armedCategory === "all_star" ? bar.target.team : null}
@@ -235,6 +249,8 @@ export default function SeasonResultsPage() {
                                     slot: bar.target.category === "all_star" ? bar.target.slot : "starter",
                                 })}
                                 onSelect={bar.startEdit}
+                                refreshingId={editor.refreshingId}
+                                onRefreshAvatar={editor.refreshAvatar}
                                 onRenameTeam={handleRenameAllStarTeam}
                             />
                             <ChampionRosterColumns
@@ -242,21 +258,12 @@ export default function SeasonResultsPage() {
                                 championName={champions.length > 0 ? champions.join(", ") : null}
                                 fetching={fetchingRoster}
                                 onRefetch={handleFetchRoster}
+                                refreshingId={editor.refreshingId}
+                                onRefreshAvatar={editor.refreshAvatar}
                             />
                         </div>
                     </div>
                 </div>
-            )}
-
-            {editor.avatarPreview && (
-                <AvatarPreviewDialog
-                    open
-                    onOpenChange={open => { if (!open) editor.closeAvatarPreview(); }}
-                    playerName={editor.avatarPreview.playerName}
-                    cdnUrl={editor.avatarPreview.cdnUrl}
-                    onConfirm={editor.confirmAvatar}
-                    confirming={editor.confirmingAvatar}
-                />
             )}
 
             <ConfirmDialog

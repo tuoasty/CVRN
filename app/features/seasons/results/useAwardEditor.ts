@@ -15,13 +15,7 @@ import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
 import {reorderGroup} from "./awardGroups";
 
-export type EditBusy = "apply" | "captain" | "avatar" | "move" | "remove" | null;
-
-interface AvatarPreview {
-    awardId: string;
-    playerName: string;
-    cdnUrl: string;
-}
+export type EditBusy = "apply" | "captain" | "move" | "remove" | null;
 
 interface Options {
     awards: SeasonAwardEntryWithPlayer[];
@@ -32,8 +26,7 @@ interface Options {
 
 export function useAwardEditor({awards, setAwards, refreshAwards, onRemoved}: Options) {
     const [busy, setBusy] = useState<EditBusy>(null);
-    const [avatarPreview, setAvatarPreview] = useState<AvatarPreview | null>(null);
-    const [confirmingAvatar, setConfirmingAvatar] = useState(false);
+    const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
     const run = useCallback(async (kind: Exclude<EditBusy, null>, task: () => Promise<void>) => {
         setBusy(kind);
@@ -82,28 +75,22 @@ export function useAwardEditor({awards, setAwards, refreshAwards, onRemoved}: Op
         }));
     }), [setAwards, run]);
 
-    const previewAvatar = useCallback((award: SeasonAwardEntryWithPlayer) => run("avatar", async () => {
-        const res = await previewAwardAvatarAction({playerId: award.players.id});
-        if (!res.ok) { toast.error("Could not fetch avatar", res.error.message); return; }
-        setAvatarPreview({awardId: award.id, playerName: award.players.username, cdnUrl: res.value.cdnUrl});
-    }), [run]);
-
-    const confirmAvatar = useCallback(async () => {
-        if (!avatarPreview) return;
-        setConfirmingAvatar(true);
+    const refreshAvatar = useCallback(async (award: SeasonAwardEntryWithPlayer) => {
+        setRefreshingId(award.id);
         try {
-            const result = await saveAwardAvatarAction({awardId: avatarPreview.awardId, cdnUrl: avatarPreview.cdnUrl});
-            if (!result.ok) { toast.error("Failed to update avatar", result.error.message); return; }
+            const preview = await previewAwardAvatarAction({playerId: award.players.id});
+            if (!preview.ok) { toast.error("Could not fetch avatar", preview.error.message); return; }
+            const saved = await saveAwardAvatarAction({awardId: award.id, cdnUrl: preview.value.cdnUrl});
+            if (!saved.ok) { toast.error("Failed to update avatar", saved.error.message); return; }
             await refreshAwards();
-            toast.success("Avatar updated");
-            setAvatarPreview(null);
+            toast.success(`Avatar updated for @${award.players.username}`);
         } catch (err) {
-            clientLogger.error("useAwardEditor", "Avatar save failed", {err});
+            clientLogger.error("useAwardEditor", "Avatar refresh failed", {err});
             toast.error("Something went wrong");
         } finally {
-            setConfirmingAvatar(false);
+            setRefreshingId(null);
         }
-    }, [avatarPreview, refreshAwards]);
+    }, [refreshAwards]);
 
     const move = useCallback((award: SeasonAwardEntryWithPlayer, direction: "up" | "down") => run("move", async () => {
         const updates = reorderGroup(awards, award, direction);
@@ -130,11 +117,8 @@ export function useAwardEditor({awards, setAwards, refreshAwards, onRemoved}: Op
         busy,
         apply,
         toggleCaptain,
-        previewAvatar,
-        avatarPreview,
-        closeAvatarPreview: () => setAvatarPreview(null),
-        confirmAvatar,
-        confirmingAvatar,
+        refreshAvatar,
+        refreshingId,
         move,
         remove,
     };

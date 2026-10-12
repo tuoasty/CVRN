@@ -111,7 +111,7 @@ export function AwardNameCombobox({value, onChange, onEnter, suggestions, catego
                     placeholder="e.g. Finals MVP"
                     className="rounded-md pr-24"
                     onChange={e => change(e.target.value)}
-                    onFocus={() => setFocused(true)}
+                    onFocus={() => { setFocused(true); setDismissed(value.trim() !== ""); }}
                     onBlur={() => { setFocused(false); setDismissed(false); setActive(null); }}
                     onKeyDown={onKeyDown}
                 />

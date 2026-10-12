@@ -1,7 +1,8 @@
 import {describe, it, expect} from "vitest";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
 import {stagedAwardsReducer, stagedChipLabel, toBatchAwards} from "../stagedAwards";
-import {BarTarget, StagedAward} from "../types";
+import {BarTarget, StagedItem} from "../types";
+import {Spec} from "@/shared/types/db";
 
 function player(id: string, username: string): PlayerWithTeamInfo {
     return {
@@ -31,7 +32,7 @@ describe("stagedAwardsReducer", () => {
     });
 
     it("ignores a blank award name", () => {
-        const before: StagedAward[] = [];
+        const before: StagedItem[] = [];
         const after = stagedAwardsReducer(before, {type: "add", tempId: "t1", target: individual, awardName: "   ", player: player("p1", "x")});
         expect(after).toBe(before);
     });
@@ -50,8 +51,46 @@ describe("stagedAwardsReducer", () => {
     });
 
     it("returns the same array when clearing an empty list", () => {
-        const empty: StagedAward[] = [];
+        const empty: StagedItem[] = [];
         expect(stagedAwardsReducer(empty, {type: "clear"})).toBe(empty);
+    });
+});
+
+function spec(id: string, name: string): Spec {
+    return {id, name, stars: 4, position: "OH", is_vaulted: false} as Spec;
+}
+
+describe("spec staging", () => {
+    it("ignores an award add while the target is Spec", () => {
+        const before: StagedItem[] = [];
+        const after = stagedAwardsReducer(before, {type: "add", tempId: "t1", target: {...individual, category: "spec"}, awardName: "MVP", player: player("p1", "a")});
+        expect(after).toBe(before);
+    });
+
+    it("stages a spec winner with its stars", () => {
+        const state = stagedAwardsReducer([], {type: "addSpec", tempId: "t1", spec: spec("s1", "Ace Hunter"), stars: 3, player: player("p1", "sp1ke")});
+        expect(state).toEqual([{tempId: "t1", category: "spec", spec: spec("s1", "Ace Hunter"), stars: 3, player: player("p1", "sp1ke")}]);
+    });
+
+    it("replaces an earlier staged winner of the same spec, keeping other specs", () => {
+        let state = stagedAwardsReducer([], {type: "addSpec", tempId: "t1", spec: spec("s1", "Ace Hunter"), stars: 3, player: player("p1", "a")});
+        state = stagedAwardsReducer(state, {type: "addSpec", tempId: "t2", spec: spec("s2", "The Wall"), stars: 5, player: player("p2", "b")});
+        state = stagedAwardsReducer(state, {type: "addSpec", tempId: "t3", spec: spec("s1", "Ace Hunter"), stars: 4, player: player("p3", "c")});
+        expect(state.map(s => s.tempId)).toEqual(["t2", "t3"]);
+    });
+
+    it("removes several items at once", () => {
+        let state = stagedAwardsReducer([], {type: "add", tempId: "t1", target: individual, awardName: "MVP", player: player("p1", "a")});
+        state = stagedAwardsReducer(state, {type: "addSpec", tempId: "t2", spec: spec("s1", "Ace Hunter"), stars: 3, player: player("p2", "b")});
+        state = stagedAwardsReducer(state, {type: "add", tempId: "t3", target: individual, awardName: "Finals MVP", player: player("p3", "c")});
+        expect(stagedAwardsReducer(state, {type: "removeMany", tempIds: ["t1", "t3"]}).map(s => s.tempId)).toEqual(["t2"]);
+    });
+
+    it("leaves spec winners out of the award batch and labels them with stars", () => {
+        let state = stagedAwardsReducer([], {type: "addSpec", tempId: "t1", spec: spec("s1", "Ace Hunter"), stars: 3, player: player("p1", "sp1ke")});
+        state = stagedAwardsReducer(state, {type: "add", tempId: "t2", target: individual, awardName: "MVP", player: player("p2", "a")});
+        expect(toBatchAwards(state).map(a => a.awardName)).toEqual(["MVP"]);
+        expect(stagedChipLabel(state[0])).toBe("Spec · Ace Hunter ★3 · @sp1ke");
     });
 });
 
