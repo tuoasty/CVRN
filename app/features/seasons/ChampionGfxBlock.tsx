@@ -1,27 +1,35 @@
 "use client"
 
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { Trophy, Trash2, RefreshCw } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { Button } from "@/app/components/ui/button"
 import { Input } from "@/app/components/ui/input"
-import { Label } from "@/app/components/ui/label"
-import ImageDropzone from "@/app/features/media/ImageDropzone"
 import AuthorPicker, { type AuthorSelection } from "@/app/features/media/AuthorPicker"
 import { createMediaPostAction, deleteMediaPostAction, getAllMediaPostsAction } from "@/app/actions/media.actions"
 import { MediaPost } from "@/server/domains/media"
 import { compressImage } from "@/app/utils/imageCompression"
 import { toast } from "@/app/utils/toast"
 import { clientLogger } from "@/app/utils/clientLogger"
+import { cn } from "@/lib/utils"
+import { SectionHeader, TextAction } from "@/app/features/seasons/results/ResultsUi"
 
 interface ChampionGfxBlockProps {
     seasonId: string
     seasonName?: string | null
 }
 
+function Thumb({ src, alt }: { src: string | null; alt: string }) {
+    return (
+        <span className="relative block h-9 w-16 shrink-0 overflow-hidden bg-muted">
+            {src && <Image src={src} alt={alt} fill sizes="64px" unoptimized className="object-cover" />}
+        </span>
+    )
+}
+
 export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBlockProps) {
     const [current, setCurrent] = useState<MediaPost | null>(null)
-    const [loading, setLoading] = useState(true)
+    const [loaded, setLoaded] = useState(false)
     const [title, setTitle] = useState("")
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
@@ -29,21 +37,21 @@ export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBl
     const [uploading, setUploading] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [author, setAuthor] = useState<AuthorSelection | null>(null)
+    const [dragging, setDragging] = useState(false)
+    const fileRef = useRef<HTMLInputElement>(null)
 
-    const load = useCallback(async () => {
-        setLoading(true)
-        try {
-            const res = await getAllMediaPostsAction({ type: "champion", seasonId })
-            setCurrent(res.ok ? (res.value[0] ?? null) : null)
-        } finally {
-            setLoading(false)
-        }
+    const fetchCurrent = useCallback(async () => {
+        const res = await getAllMediaPostsAction({ type: "champion", seasonId })
+        setCurrent(res.ok ? (res.value[0] ?? null) : null)
+        setLoaded(true)
     }, [seasonId])
 
-    useEffect(() => { load() }, [load])
+    useEffect(() => { fetchCurrent() }, [fetchCurrent])
+
+    useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
 
     async function acceptFile(file: File) {
-        if (!file.type.startsWith("image/")) return
+        if (!file.type.startsWith("image/")) { toast.error("Choose an image file"); return }
         setCompressing(true)
         try {
             const compressed = await compressImage(file, { maxDimension: 1920 })
@@ -57,13 +65,16 @@ export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBl
         }
     }
 
-    function clearFile() {
+    function clearPending() {
         setImageFile(null)
         setPreview(null)
+        setTitle("")
+        setAuthor(null)
+        if (fileRef.current) fileRef.current.value = ""
     }
 
     async function handleUpload() {
-        if (!imageFile) { toast.error("Image is required"); return }
+        if (!imageFile) return
         setUploading(true)
         try {
             const formData = new FormData()
@@ -73,13 +84,16 @@ export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBl
             formData.set("imageFile", imageFile)
             if (author) formData.set("authorId", author.id)
 
+            if (current) {
+                const removed = await deleteMediaPostAction({ postId: current.id })
+                if (!removed.ok) { toast.error("Could not remove the current GFX", removed.error.message); return }
+                setCurrent(null)
+            }
             const result = await createMediaPostAction(formData)
             if (!result.ok) { toast.error(result.error.message); return }
-            toast.success("Champion GFX uploaded")
-            setTitle("")
-            setAuthor(null)
-            clearFile()
-            await load()
+            clearPending()
+            await fetchCurrent()
+            toast.success(current ? "Champion GFX replaced" : "Champion GFX uploaded")
         } catch (err) {
             clientLogger.error("ChampionGfxBlock", "Unexpected error", { err })
             toast.error("Unexpected error")
@@ -94,81 +108,80 @@ export default function ChampionGfxBlock({ seasonId, seasonName }: ChampionGfxBl
         try {
             const result = await deleteMediaPostAction({ postId: current.id })
             if (!result.ok) { toast.error(result.error.message); return }
+            setCurrent(null)
             toast.success("Champion GFX removed")
-            await load()
         } finally {
             setDeleting(false)
         }
     }
 
-    return (
-        <div className="space-y-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Trophy className="h-4 w-4" /> Champion GFX
-                </h2>
-            </div>
+    const busy = compressing || uploading
 
-            {loading ? (
-                <p className="text-sm text-muted-foreground">Loading...</p>
-            ) : current?.image_url ? (
-                <div className="panel p-3 space-y-3">
-                    <div className="relative w-full max-w-xl aspect-video">
-                        <Image
-                            src={current.image_url}
-                            alt={current.title}
-                            fill
-                            sizes="(max-width: 640px) 100vw, 576px"
-                            className="object-contain"
-                        />
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium truncate">{current.title}</span>
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            className="rounded-sm gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={handleDelete}
-                            disabled={deleting}
-                        >
-                            {deleting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                            Delete
+    return (
+        <section>
+            <SectionHeader title="Champion GFX" />
+            <div
+                className={cn("flex items-center gap-2 px-1 pt-2", dragging && "outline-dashed outline-1 outline-ring")}
+                onDragOver={e => { e.preventDefault(); setDragging(true) }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={e => {
+                    e.preventDefault()
+                    setDragging(false)
+                    const file = e.dataTransfer.files[0]
+                    if (file) acceptFile(file)
+                }}
+            >
+                <Thumb src={preview ?? current?.image_url ?? null} alt={preview ? "New champion GFX" : current?.title ?? ""} />
+                <span className="min-w-0 flex-1 truncate text-sm">
+                    {preview
+                        ? <span className="text-muted-foreground">New image ready</span>
+                        : current
+                            ? current.title
+                            : <span className="text-muted-foreground">{loaded ? "No GFX yet" : ""}</span>}
+                </span>
+                {!preview && (
+                    <>
+                        <TextAction disabled={busy || !loaded} onClick={() => fileRef.current?.click()}>
+                            {compressing && <Loader2 className="size-3 animate-spin motion-reduce:animate-none" />}
+                            {current ? "Replace" : "Upload"}
+                        </TextAction>
+                        {current && (
+                            <TextAction tone="danger" disabled={deleting} onClick={handleDelete}>
+                                {deleting && <Loader2 className="size-3 animate-spin motion-reduce:animate-none" />}
+                                Remove
+                            </TextAction>
+                        )}
+                    </>
+                )}
+                <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    tabIndex={-1}
+                    aria-hidden
+                    onChange={e => { const file = e.target.files?.[0]; if (file) acceptFile(file) }}
+                />
+            </div>
+            {preview && (
+                <div className="space-y-2 px-1 pt-2">
+                    <Input
+                        aria-label="GFX title"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        placeholder={`${seasonName ?? "Season"} Champion`}
+                        className="h-8 rounded-md"
+                    />
+                    <AuthorPicker value={author} onChange={setAuthor} />
+                    <div className="flex items-center justify-end gap-3">
+                        <TextAction tone="quiet" disabled={uploading} onClick={clearPending}>Cancel</TextAction>
+                        <Button size="sm" className="rounded-md" disabled={busy || !imageFile} onClick={handleUpload}>
+                            {uploading && <Loader2 className="animate-spin motion-reduce:animate-none" />}
+                            {current ? "Replace GFX" : "Upload GFX"}
                         </Button>
                     </div>
                 </div>
-            ) : (
-                <div className="panel p-3 space-y-3">
-                    <div className="space-y-1">
-                        <Label htmlFor="champion-title">Title <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                        <Input
-                            id="champion-title"
-                            value={title}
-                            onChange={e => setTitle(e.target.value)}
-                            placeholder={`${seasonName ?? "Season"} Champion`}
-                            className="rounded-sm max-w-xl"
-                        />
-                    </div>
-                    <div className="max-w-xl">
-                        <AuthorPicker value={author} onChange={setAuthor} />
-                    </div>
-                    <ImageDropzone
-                        preview={preview}
-                        onFile={acceptFile}
-                        onClear={clearFile}
-                        compressing={compressing}
-                        className="max-w-xl"
-                    />
-                    <Button
-                        size="sm"
-                        className="rounded-sm gap-1.5"
-                        onClick={handleUpload}
-                        disabled={uploading || compressing || !imageFile}
-                    >
-                        {uploading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Trophy className="h-3.5 w-3.5" />}
-                        {uploading ? "Uploading..." : "Upload GFX"}
-                    </Button>
-                </div>
             )}
-        </div>
+        </section>
     )
 }

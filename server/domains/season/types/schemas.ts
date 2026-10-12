@@ -121,8 +121,14 @@ export type UpsertSeasonAllStarTeamNameInput = z.infer<typeof UpsertSeasonAllSta
 export const UpdateSeasonAwardSchema = z.object({
     awardId: z.uuid(),
     awardName: z.string().min(1, "Award name is required"),
+    playerId: z.uuid().optional(),
 })
 export type UpdateSeasonAwardInput = z.infer<typeof UpdateSeasonAwardSchema>
+
+export const AwardNameSuggestionsSchema = z.object({
+    category: AwardCategoryEnum,
+})
+export type AwardNameSuggestionsInput = z.infer<typeof AwardNameSuggestionsSchema>
 
 export const ReorderSeasonAwardsSchema = z.object({
     updates: z.array(z.object({

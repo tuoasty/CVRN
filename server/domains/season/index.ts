@@ -15,6 +15,7 @@ export {getSeasonFinalsSlots} from "./queries/getSeasonFinalsSlots";
 export type {SeasonFinalsSlots} from "./queries/getSeasonFinalsSlots";
 export {getSeasonAwards} from "./queries/getSeasonAwards";
 export {getSeasonAllStarTeams} from "./queries/getSeasonAllStarTeams";
+export {getAwardNameSuggestions} from "./queries/getAwardNameSuggestions";
 export {getArchive} from "./queries/getArchive";
 export {getSeasonHistoryDetail} from "./queries/getSeasonDetail";
 export {upsertSeasonPodiumSlot} from "./commands/upsertSeasonPodiumSlot";
@@ -48,6 +49,7 @@ export type {
     AllStarSlot,
     UpsertSeasonAllStarTeamNameInput,
     SetAllStarCaptainInput,
+    AwardNameSuggestionsInput,
 } from "./types";
 export {
     UpsertSeasonPodiumSlotSchema,
@@ -63,4 +65,5 @@ export {
     AllStarSlotEnum,
     UpsertSeasonAllStarTeamNameSchema,
     SetAllStarCaptainSchema,
+    AwardNameSuggestionsSchema,
 } from "./types";
