@@ -16,6 +16,8 @@ import {
     getSpecsAllRegions,
     getSpecCatalog,
     saveSpecIdentity,
+    setSpecVaulted,
+    SetSpecVaultedSchema,
     saveRegionRequirements,
     removeSpec,
     SaveSpecIdentitySchema,
@@ -86,6 +88,28 @@ export async function saveSpecIdentityAction(data: unknown) {
 
     const result = await saveSpecIdentity(supabase, parsed.data);
     if (result.ok) revalidatePath("/admin/specs");
+    return result;
+}
+
+export async function setSpecVaultedAction(data: unknown) {
+    const parsed = SetSpecVaultedSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await setSpecVaulted(supabase, parsed.data);
+    if (result.ok) {
+        revalidatePath("/admin/specs");
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/spec-requirements");
+    }
     return result;
 }
 

@@ -842,7 +842,7 @@ export default function SeasonResultsPage() {
                     <div className="panel p-3 space-y-2">
                         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Award Spec</p>
                         <div className="flex gap-2 flex-wrap items-end">
-                            <SpecSearchInput key={`spec-${specFormKey}`} specs={specs} selectedSpec={selectedSpec} onSelect={s => handleSelectSpec(s.id)} />
+                            <SpecSearchInput key={`spec-${specFormKey}`} specs={specs.filter(s => !s.is_vaulted)}selectedSpec={selectedSpec} onSelect={s => handleSelectSpec(s.id)} />
                             <PlayerSearchInput key={`player-${specFormKey}`} seasonId={seasonId} onSelect={setSpecPlayer} />
                             <div className="space-y-1">
                                 <Label className="text-xs">Stars</Label>

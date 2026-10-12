@@ -1,8 +1,9 @@
 import type {Metadata} from "next";
-import {getCachedPublicSpecSnapshot, getCachedPublishedSpecRegions} from "@/server/cache/publicReads";
+import {getCachedPublicSpecSnapshot, getCachedPublishedSpecRegions, getCachedRegions} from "@/server/cache/publicReads";
+import {orderRegions} from "@/app/features/spec/catalog/catalogParams";
 import {isPositionCode, positionLabel} from "@/shared/volleyball/positions";
 import PositionTabs from "./PositionTabs";
-import RegionTabs from "./RegionTabs";
+import RegionPicker from "./RegionPicker";
 import PlacementBonuses from "./PlacementBonuses";
 import SpecRequirementCard from "./SpecRequirementCard";
 
@@ -20,15 +21,23 @@ export default async function SpecRequirementsPage({
     const raw = (sp.pos ?? "oh").toUpperCase();
     const pos = isPositionCode(raw) ? raw : "OUT";
 
-    const regions = await getCachedPublishedSpecRegions();
+    const [allRegions, published] = await Promise.all([getCachedRegions(), getCachedPublishedSpecRegions()]);
+    const publishedIds = new Set(published.map(r => r.regionId));
+    const regions = orderRegions(allRegions).map(r => ({
+        id: r.id,
+        code: r.code.toUpperCase(),
+        name: r.name,
+        published: publishedIds.has(r.id),
+    }));
     const wanted = (sp.region ?? "").toUpperCase();
     const region =
-        regions.find(r => r.code.toUpperCase() === wanted) ??
-        regions.find(r => r.code.toUpperCase() === "NA") ??
+        regions.find(r => r.code === wanted) ??
+        regions.find(r => r.code === "NA" && r.published) ??
+        regions.find(r => r.published) ??
         regions[0] ??
         null;
 
-    const snapshot = region ? await getCachedPublicSpecSnapshot(region.regionId) : null;
+    const snapshot = region?.published ? await getCachedPublicSpecSnapshot(region.id) : null;
 
     return (
         <div className="mx-auto max-w-[1400px] px-7 pb-20 pt-6">
@@ -36,15 +45,24 @@ export default async function SpecRequirementsPage({
                 <h1 className="mb-5 text-2xl font-semibold tracking-[-.025em]">Spec Requirements</h1>
             </header>
 
+            {regions.length > 0 && (
+                <RegionPicker
+                    regions={regions.map(({code, name, published}) => ({code, name, published}))}
+                    active={region?.code ?? ""}
+                    pos={pos}
+                />
+            )}
+
             {!snapshot || snapshot.specs.length === 0 ? (
                 <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">
-                    Nothing to see here
+                    {region && !region.published
+                        ? `${region.code} requirements aren't published yet`
+                        : "Nothing to see here"}
                 </div>
             ) : (
                 <>
-                    <RegionTabs regions={regions} active={region?.regionId ?? ""} pos={pos} />
                     <PlacementBonuses config={snapshot.placementBonus} />
-                    <PositionTabs active={pos} region={regions.length > 1 ? (region?.code ?? null) : null} />
+                    <PositionTabs active={pos} region={region?.code ?? null} />
                     <SpecGrid snapshot={snapshot} pos={pos} />
                 </>
             )}

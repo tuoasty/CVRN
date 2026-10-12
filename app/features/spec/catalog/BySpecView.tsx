@@ -22,6 +22,9 @@ import {
 import {ReferenceText} from './RequirementCells';
 import ThresholdInput, {NeedInput} from './ThresholdInput';
 import SpecIdentityForm from './SpecIdentityForm';
+import {setSpecVaulted} from '@/app/hooks/useSpecs';
+import {toast} from '@/app/utils/toast';
+import {clientLogger} from '@/app/utils/clientLogger';
 
 export interface RegionColumn {
     id: string;
@@ -51,6 +54,25 @@ const linkClass =
 
 export default function BySpecView({spec, regionCode, state, baseline, columns, onEdit, onDelete, onDetailsSaved}: Props) {
     const [editingDetails, setEditingDetails] = useState(false);
+    const [togglingVault, setTogglingVault] = useState(false);
+
+    const toggleVault = async () => {
+        const next = !spec.is_vaulted;
+        setTogglingVault(true);
+        try {
+            const result = await setSpecVaulted(spec.id, next);
+            if (!result.ok) {
+                toast.error(next ? 'Failed to vault spec' : 'Failed to unvault spec', result.error.message);
+                return;
+            }
+            toast.success(next ? `Vaulted ${spec.name}` : `Unvaulted ${spec.name}`);
+        } catch (err) {
+            clientLogger.error('BySpecView', 'Failed to toggle vault', {error: err});
+            toast.error('Something went wrong');
+        } finally {
+            setTogglingVault(false);
+        }
+    };
     const [flashKey, setFlashKey] = useState<string | null>(null);
     const [focusKey, setFocusKey] = useState<string | null>(null);
 
@@ -176,6 +198,18 @@ export default function BySpecView({spec, regionCode, state, baseline, columns, 
                 <span className="text-sm text-muted-foreground font-mono tabular-nums">
                     {spec.stars}★ · {spec.position} · {formatHeight(spec.height)}
                 </span>
+                {spec.is_vaulted && (
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Vaulted</span>
+                )}
+                <button
+                    type="button"
+                    className={linkClass}
+                    onClick={toggleVault}
+                    disabled={togglingVault}
+                    aria-pressed={spec.is_vaulted}
+                >
+                    {togglingVault ? 'Saving…' : spec.is_vaulted ? 'Unvault' : 'Vault'}
+                </button>
                 {!editingDetails && (
                     <button type="button" className={linkClass} onClick={() => setEditingDetails(true)}>
                         Edit details

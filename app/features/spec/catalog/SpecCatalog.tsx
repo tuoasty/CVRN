@@ -90,8 +90,11 @@ export default function SpecCatalog() {
     }));
 
     const positionSpecs = specs.filter(s => s.position === params.pos);
-    const bands = groupByStars(positionSpecs);
-    const selectedSpec = positionSpecs.find(s => s.id === params.spec) ?? bands[0]?.items[0] ?? null;
+    const bands = groupByStars(positionSpecs.filter(s => !s.is_vaulted));
+    const vaultedSpecs = positionSpecs
+        .filter(s => s.is_vaulted)
+        .sort((a, b) => b.stars - a.stars || a.name.localeCompare(b.name));
+    const selectedSpec = positionSpecs.find(s => s.id === params.spec) ?? bands[0]?.items[0] ?? vaultedSpecs[0] ?? null;
     const listState: RegionState = {...baseline, ...draft};
     const coverage = statCoverage(positionSpecs.map(s => s.id), listState);
     const requestedStat = params.stat && isSpecStatKey(params.stat) ? params.stat : null;
@@ -231,6 +234,7 @@ export default function SpecCatalog() {
                     ) : params.view === 'spec' ? (
                         <SpecBandList
                             bands={bands}
+                            vaulted={vaultedSpecs}
                             state={listState}
                             selectedId={creating ? null : selectedSpec?.id ?? null}
                             onSelect={id => {

@@ -3,6 +3,7 @@ import {
     getSpecsAction,
     getSpecsAllRegionsAction,
     saveSpecIdentityAction,
+    setSpecVaultedAction,
     saveRegionRequirementsAction,
     exportSpecRequirementsAction,
     importSpecRequirementsAction,
@@ -65,13 +66,26 @@ export function useSpecsAllRegions() {
     };
 }
 
+const isSpecsKey = (key: unknown) => Array.isArray(key) && key[0] === 'specs';
+
 export function revalidateSpecs() {
-    return globalMutate((key: unknown) => Array.isArray(key) && key[0] === 'specs', undefined, {revalidate: true});
+    return globalMutate(isSpecsKey);
 }
 
 export async function saveSpecIdentity(input: SaveSpecIdentityInput) {
     const result = await saveSpecIdentityAction(input);
     if (result.ok) await revalidateSpecs();
+    return result;
+}
+
+export async function setSpecVaulted(id: string, isVaulted: boolean) {
+    await globalMutate(
+        isSpecsKey,
+        (data: {id: string}[] | undefined) => data?.map(s => (s.id === id ? {...s, is_vaulted: isVaulted} : s)),
+        {revalidate: false}
+    );
+    const result = await setSpecVaultedAction({id, isVaulted});
+    await revalidateSpecs();
     return result;
 }
 
@@ -144,7 +158,7 @@ export function useSpecBonus(regionId: string | null) {
     const reset = async () => {
         if (!regionId) return {ok: false as const, error: {message: 'No region selected', code: 'VALIDATION_ERROR' as const}};
         const result = await resetPlacementBonusAction(regionId);
-        if (result.ok) await mutate(undefined, {revalidate: true});
+        if (result.ok) await mutate();
         return result;
     };
 

@@ -6,12 +6,13 @@ import {RegionState, StarBand, specListMarker} from './catalogState';
 
 interface Props {
     bands: StarBand<SpecWithAllRegions>[];
+    vaulted: SpecWithAllRegions[];
     state: RegionState;
     selectedId: string | null;
     onSelect: (id: string) => void;
 }
 
-export default function SpecBandList({bands, state, selectedId, onSelect}: Props) {
+export default function SpecBandList({bands, vaulted, state, selectedId, onSelect}: Props) {
     return (
         <>
             {bands.map(band => (
@@ -40,6 +41,26 @@ export default function SpecBandList({bands, state, selectedId, onSelect}: Props
                     })}
                 </div>
             ))}
+            {vaulted.length > 0 && (
+                <div>
+                    <ListBandLabel>Vaulted</ListBandLabel>
+                    {vaulted.map(spec => (
+                        <ListItem
+                            key={spec.id}
+                            active={spec.id === selectedId}
+                            quiet
+                            onClick={() => onSelect(spec.id)}
+                            label={
+                                <>
+                                    {spec.name}
+                                    <span className="ml-2 font-mono text-xs tabular-nums">{spec.stars}★</span>
+                                </>
+                            }
+                            trailing={null}
+                        />
+                    ))}
+                </div>
+            )}
         </>
     );
 }

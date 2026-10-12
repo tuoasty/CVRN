@@ -223,7 +223,7 @@ export async function updateMatchSchedule(input: UpdateMatchScheduleInput): Prom
     if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule')),
     ]);
     return Ok(true);
 }
@@ -233,7 +233,7 @@ export async function completeMatch(input: CompleteMatchInput): Promise<Result<t
     if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'upcoming' || key[0] === 'recent'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'upcoming' || key[0] === 'recent')),
     ]);
     return Ok(true);
 }
@@ -243,7 +243,7 @@ export async function voidMatch(input: VoidMatchInput): Promise<Result<true, Ser
     if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule')),
     ]);
     return Ok(true);
 }
@@ -253,7 +253,7 @@ export async function updateMatchResults(input: CompleteMatchInput): Promise<Res
     if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'matchSets'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'playoffSchedule' || key[0] === 'matchSets')),
     ]);
     return Ok(true);
 }
@@ -263,12 +263,12 @@ export async function deleteMatch(matchId: string): Promise<Result<true, Seriali
     if (!result.ok) return result;
     await Promise.all([
         globalMutate('matches'),
-        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'availableTeams'), undefined, { revalidate: true }),
+        globalMutate((key: unknown) => Array.isArray(key) && (key[0] === 'matchesForWeek' || key[0] === 'weekSchedule' || key[0] === 'availableTeams')),
     ]);
     return Ok(true);
 }
 
 export function invalidateMatchCaches() {
     globalMutate('matches');
-    globalMutate((key: unknown) => Array.isArray(key) && ['matchesForWeek', 'weekSchedule', 'playoffSchedule', 'availableTeams', 'upcoming', 'recent', 'matchSets', 'playoffRounds', 'playoffRoundCounts'].includes(key[0]), undefined, { revalidate: true });
+    globalMutate((key: unknown) => Array.isArray(key) && ['matchesForWeek', 'weekSchedule', 'playoffSchedule', 'availableTeams', 'upcoming', 'recent', 'matchSets', 'playoffRounds', 'playoffRoundCounts'].includes(key[0]));
 }

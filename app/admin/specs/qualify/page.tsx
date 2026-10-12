@@ -41,7 +41,8 @@ const newRowId = () => Math.random().toString(36).slice(2);
 export default function AdminSpecQualifyPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId);
     const regionId = useAdminContextStore(s => s.selectedRegionId);
-    const {specs} = useSpecs(regionId);
+    const {specs: allSpecs} = useSpecs(regionId);
+    const specs = useMemo(() => allSpecs.filter(s => !s.is_vaulted), [allSpecs]);
     const {regions} = useRegions();
     const regionCode = regions.find(r => r.id === regionId)?.code ?? null;
 
