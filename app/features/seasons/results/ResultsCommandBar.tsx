@@ -3,6 +3,7 @@
 import {useEffect, type ReactNode} from "react";
 import {ArrowDown, ArrowUp, ImageIcon, Loader2, Trash2, X} from "lucide-react";
 import {Button} from "@/app/components/ui/button";
+import {Input} from "@/app/components/ui/input";
 import {OptionButton} from "@/app/components/filters/OptionRow";
 import {AllStarSlot, AllStarTeamCode, SeasonAllStarTeam, SeasonAwardEntryWithPlayer} from "@/server/domains/season";
 import {Spec} from "@/shared/types/db";
@@ -16,6 +17,7 @@ import {stagedChipLabel} from "./stagedAwards";
 import {BAR_CATEGORIES, CATEGORY_LABELS} from "./types";
 import type {StagedAwardsState} from "./useStagedAwards";
 import type {AwardEditor} from "./useAwardEditor";
+import type {SpecWinnerEditor} from "./useSpecWinnerEditor";
 
 const TEAMS: AllStarTeamCode[] = ["A", "B"];
 const SLOTS: {value: AllStarSlot; label: string}[] = [
@@ -55,28 +57,31 @@ interface Props {
     allStarTeams: SeasonAllStarTeam[];
     specs: Spec[];
     winnerBySpec: ReadonlyMap<string, string>;
+    specEditor: SpecWinnerEditor;
     stickyTop: number;
 }
 
-export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, specs, winnerBySpec, stickyTop}: Props) {
-    const {target, editing, staged, saving} = bar;
+export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, specs, winnerBySpec, specEditor, stickyTop}: Props) {
+    const {target, editing, editingSpec, staged, saving} = bar;
     const isAllStar = target.category === "all_star";
     const isSpec = target.category === "spec";
-    const locked = editing !== null;
+    const anyEditing = editing !== null || editingSpec !== null;
+    const locked = anyEditing;
     const moves = editing ? movability(awards, editing) : {up: false, down: false};
+    const specBusy = editingSpec !== null && specEditor.busyId === editingSpec.id;
 
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !editing && staged.length > 0) {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !anyEditing && staged.length > 0) {
                 e.preventDefault();
                 bar.save();
-            } else if (e.key === "Escape" && editing) {
+            } else if (e.key === "Escape" && anyEditing) {
                 bar.stopEdit();
             }
         };
         document.addEventListener("keydown", onKey);
         return () => document.removeEventListener("keydown", onKey);
-    }, [bar, editing, staged.length]);
+    }, [bar, anyEditing, staged.length]);
 
     const teamName = (code: AllStarTeamCode) => allStarTeams.find(t => t.code === code)?.name ?? `Team ${code}`;
 
@@ -87,7 +92,7 @@ export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, 
 
     return (
         <section
-            aria-label={editing ? "Edit award" : "Add awards"}
+            aria-label={editing ? "Edit award" : editingSpec ? "Edit spec winner" : "Add awards"}
             className="panel sticky z-20 p-3"
             style={{top: stickyTop}}
         >
@@ -142,18 +147,44 @@ export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, 
                 </Group>
                 <Divider />
                 <Group label="Stars">
-                    <StarPicker
-                        label="Stars awarded"
-                        value={isSpec ? bar.stars : 0}
-                        max={bar.spec?.stars}
-                        disabled={!isSpec || !bar.spec || locked}
-                        onChange={bar.setStars}
-                    />
+                    {editingSpec ? (
+                        <StarPicker
+                            label={`Stars for ${editingSpec.spec.name}`}
+                            value={editingSpec.stars_awarded}
+                            max={editingSpec.spec.stars}
+                            disabled={specBusy}
+                            onChange={n => specEditor.setStars(editingSpec, n)}
+                        />
+                    ) : (
+                        <StarPicker
+                            label="Stars awarded"
+                            value={isSpec ? bar.stars : 0}
+                            max={bar.spec?.stars}
+                            disabled={!isSpec || !bar.spec || locked}
+                            onChange={bar.setStars}
+                        />
+                    )}
                 </Group>
             </div>
 
             <div className="mt-2 grid grid-cols-1 items-end gap-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto]">
-                {isSpec ? (
+                {editingSpec ? (
+                    <div className="flex min-w-0 flex-col gap-1">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Spec</span>
+                        <div className="relative">
+                            <Input
+                                readOnly
+                                aria-label="Spec"
+                                value={editingSpec.spec.name}
+                                className="rounded-md bg-muted/30 pr-24 font-semibold"
+                            />
+                            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center gap-2 text-xs text-muted-foreground">
+                                {editingSpec.spec.position}
+                                <span className="font-mono tabular-nums">★{editingSpec.spec.stars}</span>
+                            </span>
+                        </div>
+                    </div>
+                ) : isSpec ? (
                     <SpecCombobox
                         specs={specs}
                         query={bar.specQuery}
@@ -179,18 +210,29 @@ export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, 
                     query={bar.playerQuery}
                     onQueryChange={bar.setPlayerQuery}
                     inputRef={bar.playerRef}
-                    placeholder={editing ? `@${editing.players.username}, type to change` : "Search username"}
-                    hint={editing ? "change" : "add"}
+                    placeholder={editing
+                        ? `@${editing.players.username}, type to change`
+                        : editingSpec
+                            ? `@${editingSpec.player.username}, type to change`
+                            : "Search username"}
+                    hint={anyEditing ? "change" : "add"}
                     onCommit={player => {
                         if (editing) {
                             editor.apply(editing, bar.name, player);
+                            bar.setPlayerQuery("");
+                        } else if (editingSpec) {
+                            specEditor.changePlayer(editingSpec, player);
                             bar.setPlayerQuery("");
                         } else {
                             bar.stage(player);
                         }
                     }}
                 />
-                {editing ? (
+                {editingSpec ? (
+                    <Button variant="outline" className="rounded-md" onClick={bar.stopEdit}>
+                        Done <Kbd>Esc</Kbd>
+                    </Button>
+                ) : editing ? (
                     <div className="flex gap-2">
                         <Button
                             className="rounded-md"
@@ -238,6 +280,19 @@ export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, 
                     </TextAction>
                     <TextAction tone="danger" className="ml-auto" disabled={editor.busy !== null} onClick={() => editor.remove(editing)}>
                         <Trash2 className="size-3" /> Remove award
+                    </TextAction>
+                </div>
+            )}
+
+            {editingSpec && (
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-2.5 text-xs">
+                    <span className="min-w-0 truncate text-muted-foreground">
+                        Editing <span className="font-semibold text-foreground">{editingSpec.spec.name}</span> · @{editingSpec.player.username}
+                        {" · "}<span className="font-mono tabular-nums">{editingSpec.stars_awarded} / {editingSpec.spec.stars}</span>
+                    </span>
+                    {specBusy && <Loader2 aria-label="Saving" className="size-3 animate-spin motion-reduce:animate-none" />}
+                    <TextAction tone="danger" className="ml-auto" disabled={specBusy} onClick={() => specEditor.remove(editingSpec)}>
+                        <Trash2 className="size-3" /> Remove winner
                     </TextAction>
                 </div>
             )}

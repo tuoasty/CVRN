@@ -1,14 +1,14 @@
 "use client";
 
-import {useState, type Dispatch, type SetStateAction} from "react";
 import {Loader2, X} from "lucide-react";
-import {awardSpecWinnerAction, deleteSpecWinnerAction} from "@/app/actions/spec.actions";
 import {SpecWinnerWithRefs} from "@/server/domains/spec";
-import {toast} from "@/app/utils/toast";
-import {EmptyRows, NewLabel, SectionHeader, StarPicker, TextAction} from "./ResultsUi";
+import {cn} from "@/lib/utils";
+import {EmptyRows, NewLabel, SectionHeader, SubLabel, TextAction} from "./ResultsUi";
+import {ROW_INTERACTIVE} from "./AwardRows";
+import {groupBySpecPosition} from "./specGroups";
 import {StagedSpec} from "./types";
 
-const ROW = "grid h-8 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-2 border-b border-border px-1 text-sm";
+const CELLS = "grid h-8 grid-cols-[44px_minmax(0,1fr)] items-center gap-2 px-1 text-left text-sm";
 
 function byStars(a: SpecWinnerWithRefs, b: SpecWinnerWithRefs) {
     return b.stars_awarded - a.stars_awarded;
@@ -18,106 +18,93 @@ export function mergeSpecWinner(winners: SpecWinnerWithRefs[], winner: SpecWinne
     return [winner, ...winners.filter(w => w.spec_id !== winner.spec_id)].sort(byStars);
 }
 
-interface Props {
-    seasonId: string;
-    winners: SpecWinnerWithRefs[];
-    setWinners: Dispatch<SetStateAction<SpecWinnerWithRefs[]>>;
-    staged: StagedSpec[];
-    armed: boolean;
-    onAdd: () => void;
+function StarCount({awarded, max}: {awarded: number; max: number}) {
+    return (
+        <span className="font-mono text-xs tabular-nums" aria-label={`${awarded} of ${max} stars`}>
+            {awarded} / {max}
+        </span>
+    );
 }
 
-export function SpecWinnersSection({seasonId, winners, setWinners, staged, armed, onAdd}: Props) {
-    const [starsFor, setStarsFor] = useState<string | null>(null);
-    const [busy, setBusy] = useState<string | null>(null);
+type Row = {kind: "saved"; winner: SpecWinnerWithRefs} | {kind: "staged"; staged: StagedSpec};
 
-    const updateStars = async (w: SpecWinnerWithRefs, stars: number) => {
-        setStarsFor(null);
-        if (stars === w.stars_awarded) return;
-        setBusy(w.id);
-        const previous = winners;
-        setWinners(prev => prev.map(x => (x.id === w.id ? {...x, stars_awarded: stars} : x)).sort(byStars));
-        try {
-            const result = await awardSpecWinnerAction({seasonId, specId: w.spec_id, playerId: w.player_id, starsAwarded: stars});
-            if (!result.ok) {
-                setWinners(previous);
-                toast.error("Failed to update stars", result.error.message);
-            }
-        } finally {
-            setBusy(null);
-        }
-    };
+interface Props {
+    winners: SpecWinnerWithRefs[];
+    staged: StagedSpec[];
+    editingId: string | null;
+    busyId: string | null;
+    armed: boolean;
+    onAdd: () => void;
+    onSelect: (winner: SpecWinnerWithRefs) => void;
+    onRemove: (winner: SpecWinnerWithRefs) => void;
+}
 
-    const remove = async (w: SpecWinnerWithRefs) => {
-        setBusy(w.id);
-        try {
-            const result = await deleteSpecWinnerAction({id: w.id});
-            if (!result.ok) { toast.error("Failed to remove spec winner", result.error.message); return; }
-            setWinners(prev => prev.filter(x => x.id !== w.id));
-        } finally {
-            setBusy(null);
-        }
-    };
-
-    const replacedBy = new Set(staged.map(s => s.spec.id));
+export function SpecWinnersSection({winners, staged, editingId, busyId, armed, onAdd, onSelect, onRemove}: Props) {
+    const replaced = new Set(staged.map(s => s.spec.id));
+    const rows: Row[] = [
+        ...winners.map(winner => ({kind: "saved" as const, winner})),
+        ...staged.map(s => ({kind: "staged" as const, staged: s})),
+    ];
+    const groups = groupBySpecPosition(rows, r => (r.kind === "saved" ? r.winner.spec : r.staged.spec));
 
     return (
         <section>
             <SectionHeader title="Spec winners" meta={winners.length > 0 ? `${winners.length}` : undefined}>
                 <TextAction armed={armed} aria-pressed={armed} onClick={onAdd}>+ Award spec</TextAction>
             </SectionHeader>
-            {winners.length === 0 && staged.length === 0 && <EmptyRows>No spec winners yet</EmptyRows>}
-            <div className="[&>*:last-child]:border-b-0">
-                {winners.map(w => (
-                    <div key={w.id} className={ROW}>
-                        <button
-                            type="button"
-                            aria-label={`${w.spec.name}: ${w.stars_awarded} stars. Change stars`}
-                            aria-expanded={starsFor === w.id}
-                            onClick={() => setStarsFor(s => (s === w.id ? null : w.id))}
-                            className="inline-flex h-6 items-center rounded-md font-mono text-xs tabular-nums underline-offset-4 transition-colors duration-150 hover:underline focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none"
-                        >
-                            ★{w.stars_awarded}
-                        </button>
-                        <span className="truncate">
-                            <span className={replacedBy.has(w.spec_id) ? "text-muted-foreground line-through" : undefined}>{w.spec.name}</span>
-                            {" "}<span className="text-muted-foreground">@{w.player.username}</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                            {starsFor === w.id && (
-                                <StarPicker
-                                    label={`Stars for ${w.spec.name}`}
-                                    value={w.stars_awarded}
-                                    max={w.spec.stars}
-                                    disabled={busy === w.id}
-                                    onChange={n => updateStars(w, n)}
-                                />
-                            )}
-                            <button
-                                type="button"
-                                aria-label={`Remove ${w.spec.name} winner @${w.player.username}`}
-                                disabled={busy === w.id}
-                                onClick={() => remove(w)}
-                                className="inline-flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:text-destructive focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50 motion-reduce:transition-none"
-                            >
-                                {busy === w.id ? <Loader2 className="size-3 animate-spin motion-reduce:animate-none" /> : <X className="size-3.5" />}
-                            </button>
-                        </span>
+            {rows.length === 0 && <EmptyRows>No spec winners yet</EmptyRows>}
+            {groups.map((group, gi) => (
+                <div key={group.key}>
+                    <SubLabel split={gi > 0}>{group.label}</SubLabel>
+                    <div className="[&>*:last-child]:border-b-0">
+                        {group.items.map(row => {
+                            if (row.kind === "staged") {
+                                const s = row.staged;
+                                return (
+                                    <div key={s.tempId} className={cn(CELLS, "border-b border-border")}>
+                                        <StarCount awarded={s.stars} max={s.spec.stars} />
+                                        <span className="flex min-w-0 items-baseline gap-1.5">
+                                            <span className="truncate">
+                                                {s.spec.name} <span className="text-muted-foreground">@{s.player.username ?? s.player.id}</span>
+                                            </span>
+                                            <NewLabel />
+                                        </span>
+                                    </div>
+                                );
+                            }
+                            const w = row.winner;
+                            const busy = busyId === w.id;
+                            const selected = w.id === editingId;
+                            return (
+                                <div key={w.id} className={cn("group flex h-8 items-center border-b border-border pr-1", selected && "bg-muted")}>
+                                    <button
+                                        type="button"
+                                        aria-label={`Edit ${w.spec.name}, @${w.player.username}, ${w.stars_awarded} of ${w.spec.stars} stars`}
+                                        aria-current={selected || undefined}
+                                        onClick={() => onSelect(w)}
+                                        className={cn(CELLS, "min-w-0 flex-1", ROW_INTERACTIVE, selected && "font-semibold hover:bg-muted")}
+                                    >
+                                        <StarCount awarded={w.stars_awarded} max={w.spec.stars} />
+                                        <span className="truncate">
+                                            <span className={replaced.has(w.spec_id) ? "text-muted-foreground line-through" : undefined}>{w.spec.name}</span>
+                                            {" "}<span className="font-normal text-muted-foreground">@{w.player.username}</span>
+                                        </span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-label={`Remove ${w.spec.name} winner @${w.player.username}`}
+                                        disabled={busy}
+                                        onClick={() => onRemove(w)}
+                                        className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:text-destructive focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50 motion-reduce:transition-none"
+                                    >
+                                        {busy ? <Loader2 className="size-3 animate-spin motion-reduce:animate-none" /> : <X className="size-3.5" />}
+                                    </button>
+                                </div>
+                            );
+                        })}
                     </div>
-                ))}
-                {staged.map(s => (
-                    <div key={s.tempId} className={ROW}>
-                        <span className="font-mono text-xs tabular-nums">★{s.stars}</span>
-                        <span className="flex min-w-0 items-baseline gap-1.5">
-                            <span className="truncate">
-                                {s.spec.name} <span className="text-muted-foreground">@{s.player.username ?? s.player.id}</span>
-                            </span>
-                            <NewLabel />
-                        </span>
-                        <span />
-                    </div>
-                ))}
-            </div>
+                </div>
+            ))}
         </section>
     );
 }

@@ -17,11 +17,12 @@ const DEFAULT_TARGET: BarTarget = {category: "individual_winners", team: "A", sl
 interface Options {
     seasonId: string;
     awards: SeasonAwardEntryWithPlayer[];
+    specWinners: SpecWinnerWithRefs[];
     onAwardsSaved: (awards: SeasonAwardEntryWithPlayer[]) => void;
     onSpecSaved: (winner: SpecWinnerWithRefs) => void;
 }
 
-export function useStagedAwards({seasonId, awards, onAwardsSaved, onSpecSaved}: Options) {
+export function useStagedAwards({seasonId, awards, specWinners, onAwardsSaved, onSpecSaved}: Options) {
     const [target, setTarget] = useState<BarTarget>(DEFAULT_TARGET);
     const [name, setName] = useState("");
     const [spec, setSpec] = useState<Spec | null>(null);
@@ -31,6 +32,7 @@ export function useStagedAwards({seasonId, awards, onAwardsSaved, onSpecSaved}: 
     const [staged, dispatch] = useReducer(stagedAwardsReducer, []);
     const [saving, setSaving] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingSpecId, setEditingSpecId] = useState<string | null>(null);
     const [suggestions, setSuggestions] = useState<Partial<Record<AwardBarCategory, string[]>>>({});
     const requested = useRef(new Set<AwardBarCategory>());
     const nameRef = useRef<HTMLInputElement | null>(null);
@@ -57,6 +59,7 @@ export function useStagedAwards({seasonId, awards, onAwardsSaved, onSpecSaved}: 
 
     const arm = useCallback((next: Partial<BarTarget>) => {
         setEditingId(null);
+        setEditingSpecId(null);
         setTarget(prev => ({...prev, ...next}));
         focusName();
     }, [focusName]);
@@ -141,6 +144,7 @@ export function useStagedAwards({seasonId, awards, onAwardsSaved, onSpecSaved}: 
 
     const startEdit = useCallback((award: SeasonAwardEntryWithPlayer) => {
         if (!isBarCategory(award.category)) return;
+        setEditingSpecId(null);
         setEditingId(award.id);
         setTarget(prev => ({
             category: award.category as BarCategory,
@@ -152,13 +156,25 @@ export function useStagedAwards({seasonId, awards, onAwardsSaved, onSpecSaved}: 
         focusName();
     }, [focusName]);
 
+    const startSpecEdit = useCallback((winner: SpecWinnerWithRefs) => {
+        setEditingId(null);
+        setEditingSpecId(winner.id);
+        setTarget(prev => ({...prev, category: "spec"}));
+        setSpec(null);
+        setSpecQuery("");
+        setPlayerQuery("");
+        requestAnimationFrame(() => playerRef.current?.focus());
+    }, []);
+
     const stopEdit = useCallback(() => {
         setEditingId(null);
+        setEditingSpecId(null);
         setName("");
         setPlayerQuery("");
     }, []);
 
     const editing = editingId ? awards.find(a => a.id === editingId) ?? null : null;
+    const editingSpec = editingSpecId ? specWinners.find(w => w.id === editingSpecId) ?? null : null;
 
     return {
         target,
@@ -181,6 +197,8 @@ export function useStagedAwards({seasonId, awards, onAwardsSaved, onSpecSaved}: 
         saving,
         editing,
         startEdit,
+        editingSpec,
+        startSpecEdit,
         stopEdit,
         suggestions: target.category === "spec" ? [] : suggestions[target.category] ?? [],
         nameRef,

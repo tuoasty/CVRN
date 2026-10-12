@@ -31,6 +31,7 @@ import {AllStarColumns} from "@/app/features/seasons/results/AllStarColumns";
 import {ChampionRosterColumns} from "@/app/features/seasons/results/ChampionRosterColumns";
 import {useStagedAwards} from "@/app/features/seasons/results/useStagedAwards";
 import {useAwardEditor} from "@/app/features/seasons/results/useAwardEditor";
+import {useSpecWinnerEditor} from "@/app/features/seasons/results/useSpecWinnerEditor";
 import {awardsIn, sortRoster} from "@/app/features/seasons/results/awardGroups";
 import {isStagedAward, isStagedSpec} from "@/app/features/seasons/results/types";
 
@@ -122,8 +123,14 @@ export default function SeasonResultsPage() {
     }, [seasonId]);
 
     const onSpecSaved = useCallback((winner: SpecWinnerWithRefs) => setSpecWinners(prev => mergeSpecWinner(prev, winner)), []);
-    const bar = useStagedAwards({seasonId, awards, onAwardsSaved: setAwards, onSpecSaved});
+    const bar = useStagedAwards({seasonId, awards, specWinners, onAwardsSaved: setAwards, onSpecSaved});
     const editor = useAwardEditor({awards, setAwards, refreshAwards, onRemoved: bar.stopEdit});
+    const editingSpecId = bar.editingSpec?.id ?? null;
+    const stopEdit = bar.stopEdit;
+    const onSpecRemoved = useCallback((winnerId: string) => {
+        if (winnerId === editingSpecId) stopEdit();
+    }, [editingSpecId, stopEdit]);
+    const specEditor = useSpecWinnerEditor({seasonId, winners: specWinners, setWinners: setSpecWinners, onRemoved: onSpecRemoved});
 
     const blockLeave = useCallback((href: string) => setLeaveTo(href), []);
     useLeaveGuard(bar.staged.length > 0, blockLeave);
@@ -160,7 +167,7 @@ export default function SeasonResultsPage() {
     const stagedSpecs = bar.staged.filter(isStagedSpec);
     const awardableSpecs = useMemo(() => specs.filter(s => !s.is_vaulted), [specs]);
     const winnerBySpec = useMemo(() => new Map(specWinners.map(w => [w.spec_id, w.player.username])), [specWinners]);
-    const armedCategory = bar.editing ? null : bar.target.category;
+    const armedCategory = bar.editing || bar.editingSpec ? null : bar.target.category;
 
     return (
         <div className="admin-container">
@@ -196,6 +203,7 @@ export default function SeasonResultsPage() {
                         allStarTeams={allStarTeams}
                         specs={awardableSpecs}
                         winnerBySpec={winnerBySpec}
+                        specEditor={specEditor}
                         stickyTop={stickyTop}
                     />
 
@@ -203,13 +211,13 @@ export default function SeasonResultsPage() {
                         <div className="min-w-0 space-y-8">
                             <PlacementsSection seasonId={seasonId} podium={podium} setPodium={setPodium} />
                             <ChampionGfxBlock seasonId={seasonId} seasonName={season.name} />
-                            <SpecWinnersSection
-                                seasonId={seasonId}
-                                winners={specWinners}
-                                setWinners={setSpecWinners}
-                                staged={stagedSpecs}
-                                armed={armedCategory === "spec"}
-                                onAdd={() => bar.arm({category: "spec"})}
+                            <ChampionRosterColumns
+                                roster={sortRoster(awards)}
+                                championName={champions.length > 0 ? champions.join(", ") : null}
+                                fetching={fetchingRoster}
+                                onRefetch={handleFetchRoster}
+                                refreshingId={editor.refreshingId}
+                                onRefreshAvatar={editor.refreshAvatar}
                             />
                         </div>
 
@@ -224,19 +232,6 @@ export default function SeasonResultsPage() {
                                 onAdd={() => bar.arm({category: "individual_winners"})}
                                 onSelect={bar.startEdit}
                             />
-                            <AwardRows
-                                title="Staff team"
-                                emptyLabel="No staff awards yet"
-                                awards={awardsIn(awards, "staff_team")}
-                                staged={stagedAwards.filter(s => s.category === "staff_team")}
-                                editingId={editingId}
-                                armed={armedCategory === "staff_team"}
-                                onAdd={() => bar.arm({category: "staff_team"})}
-                                onSelect={bar.startEdit}
-                            />
-                        </div>
-
-                        <div className="min-w-0 space-y-8">
                             <AllStarColumns
                                 awards={awards}
                                 staged={stagedAwards}
@@ -253,13 +248,28 @@ export default function SeasonResultsPage() {
                                 onRefreshAvatar={editor.refreshAvatar}
                                 onRenameTeam={handleRenameAllStarTeam}
                             />
-                            <ChampionRosterColumns
-                                roster={sortRoster(awards)}
-                                championName={champions.length > 0 ? champions.join(", ") : null}
-                                fetching={fetchingRoster}
-                                onRefetch={handleFetchRoster}
-                                refreshingId={editor.refreshingId}
-                                onRefreshAvatar={editor.refreshAvatar}
+                        </div>
+
+                        <div className="min-w-0 space-y-8">
+                            <SpecWinnersSection
+                                winners={specWinners}
+                                staged={stagedSpecs}
+                                editingId={editingSpecId}
+                                busyId={specEditor.busyId}
+                                armed={armedCategory === "spec"}
+                                onAdd={() => bar.arm({category: "spec"})}
+                                onSelect={bar.startSpecEdit}
+                                onRemove={specEditor.remove}
+                            />
+                            <AwardRows
+                                title="Staff team"
+                                emptyLabel="No staff awards yet"
+                                awards={awardsIn(awards, "staff_team")}
+                                staged={stagedAwards.filter(s => s.category === "staff_team")}
+                                editingId={editingId}
+                                armed={armedCategory === "staff_team"}
+                                onAdd={() => bar.arm({category: "staff_team"})}
+                                onSelect={bar.startEdit}
                             />
                         </div>
                     </div>
