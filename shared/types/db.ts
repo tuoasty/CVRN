@@ -22,6 +22,9 @@ export type UpdateLog =
 export type UpdateLogImage =
     Database["public"]["Tables"]["update_log_images"]["Row"];
 
+export type GameDatasetRow =
+    Database["public"]["Tables"]["game_datasets"]["Row"];
+
 export type Region =
     Database["public"]["Tables"]["regions"]["Row"];
 

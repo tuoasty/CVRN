@@ -1,0 +1,98 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import { buildImportPreview } from '../../helpers/buildImportPreview'
+import { createAbilityLookup, describeAbility, unmappedTags } from '../describeAbility'
+import type { Ability } from '../../types/datasets'
+import { gameHeightToInches } from '@/shared/utils/height'
+
+function realAbilities(): Ability[] {
+    const text = readFileSync(join(__dirname, '../../__tests__/fixtures/abilities.txt'), 'utf8')
+    const preview = buildImportPreview(text)
+    if (preview.status !== 'ok') throw new Error('fixture failed to parse')
+    return preview.datasets[0].payload as Ability[]
+}
+
+const abilities = realAbilities()
+const byKey = new Map(abilities.map(a => [a.key, a]))
+const texts = (key: string) => describeAbility(byKey.get(key)!).map(b => b.text)
+
+describe('ability wording', () => {
+    it('has wording for every tag in the real catalog', () => {
+        expect(unmappedTags(abilities)).toEqual([])
+    })
+
+    it('converts game heights', () => {
+        expect(gameHeightToInches(1.45)).toBe(82)
+        expect(gameHeightToInches(1.475)).toBe(83)
+        expect(gameHeightToInches(1.025)).toBe(65)
+    })
+
+    it('words add effects with options as qualifiers', () => {
+        const short = 'stronger on shorter builds and diminishes as builds get taller'
+        expect(texts('Vertical Leap')).toEqual([
+            `Increased jump speed by 1.8 (${short}, standing jumps, up to 6'10")`,
+            `Increased jump speed by 1.2 (${short}, standing jumps, from 6'11", spike mode only)`,
+            `Increased jump speed by 0.96 (${short}, standing jumps, from 6'11", block mode only)`,
+        ])
+    })
+
+    it('skips the Group option', () => {
+        expect(texts('Athletic')[0]).toBe('Increased jump speed by 0.5')
+    })
+
+    it('words negative adds, scales and sets', () => {
+        expect(texts('Fast Approach')).toEqual(['Reduced spike windup by 0.025s', 'Faster block charge'])
+        expect(texts('Butterman')).toEqual(['Increased dive distance by 25%'])
+        expect(texts('Step Approach')).toEqual([
+            'Toggle, off by default',
+            'Reduced spike jump strength by 17%',
+            'Spike windup fixed at 0.2s',
+        ])
+    })
+
+    it('words sprint bonus generically', () => {
+        expect(texts('Sprinter')).toEqual(['Increased sprint bonus by 1.5'])
+    })
+
+    it('words the block green window from the 0.9 fill', () => {
+        expect(texts('Block Control')).toEqual(['Green block window starts at 75%', 'Releasing a block early never misses'])
+        expect(texts('Nerfed Block Control')).toEqual(['Green block window starts at 85%'])
+    })
+
+    it('puts activation first and words team grants', () => {
+        expect(texts('Speed Surge')[0]).toBe('Active ability, lasts 8s, 60s cooldown')
+        expect(texts('Auto Lockdown')[0]).toBe('Activates itself when ready, lasts 30s, 300s cooldown')
+        expect(texts('Special - Leader')).toEqual(["Teammates get Leader's Power", "Teammates get Leader's Jump"])
+    })
+
+    it('expands call grants into the granted ability', () => {
+        const lookup = createAbilityLookup(abilities)
+        const call = describeAbility(byKey.get('Captains Call')!, lookup).find(b => b.tag === 'CallCaptainJump')!
+        expect(call.text).toBe("Team gets Captain's Jump")
+        expect(call.children?.map(b => b.text)).toEqual(['Increased jump speed by 0.2 (spike mode only)'])
+
+        const wall = describeAbility(byKey.get('Captains Call - Wall')!, lookup).find(b => b.tag === 'CallTeamNerfedBroad')!
+        expect(wall.children?.map(b => b.text)).toEqual(['Increased block width by 0.5', 'Increased block height by 1', 'Increased block depth by 1'])
+    })
+
+    it('keeps the grant sentence without children when no lookup is given', () => {
+        const call = describeAbility(byKey.get('Captains Call')!).find(b => b.tag === 'CallEndurance')!
+        expect(call).toMatchObject({ text: "Team gets Captain's Endurance", grants: "Captain's Endurance" })
+        expect(call.children).toBeUndefined()
+    })
+
+    it('marks guessed wording', () => {
+        const bullets = describeAbility(byKey.get('Block Shatter')!)
+        expect(bullets).toEqual([{ category: 'block', text: 'Blocks can shatter', source: 'param', tag: 'BlockShatter', mapped: true, guess: true }])
+        expect(describeAbility(byKey.get('Unstoppable')!)[0].guess).toBe(false)
+    })
+
+    it('falls back to humanized raw text for unknown tags', () => {
+        const bullets = describeAbility({ key: 'X', effects: [{ op: 'add', tag: 'NewThing', amount: 2 }], params: { BrandNewFlag: 1 } })
+        expect(bullets.map(b => [b.text, b.mapped])).toEqual([
+            ['Increased new thing by 2', false],
+            ['Brand new flag', false],
+        ])
+    })
+})

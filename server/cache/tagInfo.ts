@@ -18,7 +18,7 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Matches",
         description:
             "Match lists, schedules, match detail pages, box scores, standings and playoff rounds. Widest blast radius.",
-        readCount: 15,
+        readCount: 16,
         affects: "Matches, match detail, standings, playoffs, home",
     },
     [CACHE_TAGS.playoffs]: {
@@ -70,6 +70,12 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         readCount: 2,
         affects: "Updates pages",
     },
+    [CACHE_TAGS.gameData]: {
+        label: "Game Data",
+        description: "Imported game datasets: the ability catalog, rarities, and the physical and technical roll lists. Regenerated on Publish in Game Data.",
+        readCount: 1,
+        affects: "Information pages",
+    },
     [CACHE_TAGS.stats]: {
         label: "Stats",
         description:
@@ -105,6 +111,7 @@ export const CACHE_TAG_ORDER: CacheTag[] = [
     CACHE_TAGS.media,
     CACHE_TAGS.articles,
     CACHE_TAGS.updateLogs,
+    CACHE_TAGS.gameData,
     CACHE_TAGS.specs,
     CACHE_TAGS.rawStats,
 ];

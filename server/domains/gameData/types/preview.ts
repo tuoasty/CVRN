@@ -1,5 +1,5 @@
 import type { LuaParseError } from './luaValue'
-import type { DatasetIssue, GameDatasetKind, GameDatasetPayloads } from './datasets'
+import type { DatasetDiff, DatasetIssue, GameDatasetKind, GameDatasetPayloads, StoredDatasetSummary } from './datasets'
 
 export type PreviewDataset = {
     [K in GameDatasetKind]: {
@@ -9,6 +9,7 @@ export type PreviewDataset = {
         count: number
         payload: GameDatasetPayloads[K]
         issues: DatasetIssue[]
+        diff: DatasetDiff | null
     }
 }[GameDatasetKind]
 
@@ -26,4 +27,10 @@ export type GameDataPreview =
         crossIssues: DatasetIssue[]
         checkedKinds: GameDatasetKind[]
         canPublish: boolean
+        hasChanges: boolean
     }
+
+export interface PublishGameDataResult {
+    published: GameDatasetKind[]
+    stored: StoredDatasetSummary[]
+}

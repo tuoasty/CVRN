@@ -13,9 +13,12 @@ export type {
     GameDatasetPayloads,
     IssueLevel,
     DatasetIssue,
+    DatasetDiff,
+    StoredDatasetSummary,
     NormalizeResult,
 } from './datasets'
 export { GAME_DATASET_KINDS } from './datasets'
-export type { PreviewDataset, IgnoredStatement, GameDataPreview } from './preview'
+export type { PreviewDataset, IgnoredStatement, GameDataPreview, PublishGameDataResult } from './preview'
+export type { UpsertGameDatasetDto } from './stored'
 export type { GameDataTextInput } from './schemas'
 export { GameDataTextSchema, GAME_DATA_TEXT_MAX } from './schemas'

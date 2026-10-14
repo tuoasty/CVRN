@@ -18,6 +18,19 @@ export const DATASET_LABELS: Record<GameDatasetKind, string> = {
     technicals: 'Technicals',
 }
 
+type EntryKeys = { [K in GameDatasetKind]: (entry: GameDatasetPayloads[K][number]) => string }
+
+const ENTRY_KEYS: EntryKeys = {
+    rarities: r => r.name,
+    abilities: a => a.key,
+    physicals: e => e.value,
+    technicals: e => e.value,
+}
+
+export function entryKey<K extends GameDatasetKind>(kind: K, entry: GameDatasetPayloads[K][number]): string {
+    return ENTRY_KEYS[kind](entry)
+}
+
 const KIND_BY_ROOT = new Map(
     (Object.entries(DATASET_ROOTS) as [GameDatasetKind, string][]).map(([kind, root]) => [root, kind]),
 )

@@ -56,6 +56,7 @@ import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
 import {getPublishedUpdateLogIndex, getPublishedUpdateLog} from "@/server/domains/updateLog";
+import {getGameDatasetPayloads} from "@/server/domains/gameData";
 import {getPublicSpecSnapshot, getPublishedSpecRegions} from "@/server/domains/spec";
 import {getRecords} from "@/server/domains/record";
 import {Result} from "@/shared/types/result";
@@ -380,6 +381,12 @@ export const getCachedUpdateLogByVersion = unstable_cache(
         unwrap(await getPublishedUpdateLog(createPublicClient(), version), "getCachedUpdateLogByVersion"),
     ["public:update-log-by-version"],
     {tags: [CACHE_TAGS.updateLogs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedGameDatasets = unstable_cache(
+    async () => unwrap(await getGameDatasetPayloads(createPublicClient()), "getCachedGameDatasets"),
+    ["public:game-datasets"],
+    {tags: [CACHE_TAGS.gameData], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedTeamNameHistory = unstable_cache(

@@ -71,6 +71,20 @@ export interface DatasetIssue {
     entry?: string
 }
 
+export interface DatasetDiff {
+    added: string[]
+    removed: string[]
+    changed: string[]
+    reordered: boolean
+    unchanged: boolean
+}
+
+export interface StoredDatasetSummary {
+    kind: GameDatasetKind
+    count: number
+    importedAt: string
+}
+
 export interface NormalizeResult<T> {
     payload: T[]
     issues: DatasetIssue[]

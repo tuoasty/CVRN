@@ -3,12 +3,13 @@
 import { useRef, useState, type DragEvent } from 'react'
 import { FileUp } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
-import { previewGameDataImportAction } from '@/app/actions/gameData.actions'
-import type { GameDataPreview, LuaParseError } from '@/server/domains/gameData'
+import { previewGameDataImportAction, publishGameDataImportAction } from '@/app/actions/gameData.actions'
+import type { GameDataPreview, LuaParseError, StoredDatasetSummary } from '@/server/domains/gameData'
 import { DATASET_LABELS, GAME_DATASET_KINDS } from '@/server/domains/gameData'
 import { toast } from '@/app/utils/toast'
 import DatasetPreviewCard from './DatasetPreviewCard'
 import IssueList from './IssueList'
+import StoredDatasetsStrip from './StoredDatasetsStrip'
 import { cn } from '@/lib/utils'
 
 async function readFiles(files: FileList | File[]): Promise<string> {
@@ -16,7 +17,8 @@ async function readFiles(files: FileList | File[]): Promise<string> {
     return texts.join('\n\n')
 }
 
-export default function GameDataImport() {
+export default function GameDataImport({ initialStored, storedError }: { initialStored: StoredDatasetSummary[]; storedError: string | null }) {
+    const [stored, setStored] = useState(initialStored)
     const [text, setText] = useState('')
     const [preview, setPreview] = useState<GameDataPreview | null>(null)
     const [previewedText, setPreviewedText] = useState<string | null>(null)
@@ -25,14 +27,35 @@ export default function GameDataImport() {
     const fileInput = useRef<HTMLInputElement>(null)
 
     const stale = preview !== null && previewedText !== text
+    const publishable = !stale && preview?.status === 'ok' && preview.canPublish && preview.hasChanges
+
+    async function loadPreview(source: string) {
+        const result = await previewGameDataImportAction({ text: source })
+        if (!result.ok) { toast.error(result.error.message); return }
+        setPreview(result.value)
+        setPreviewedText(source)
+    }
 
     async function runPreview() {
         setBusy(true)
         try {
-            const result = await previewGameDataImportAction({ text })
+            await loadPreview(text)
+        } finally {
+            setBusy(false)
+        }
+    }
+
+    async function runPublish() {
+        if (previewedText === null) return
+        setBusy(true)
+        try {
+            const result = await publishGameDataImportAction({ text: previewedText })
             if (!result.ok) { toast.error(result.error.message); return }
-            setPreview(result.value)
-            setPreviewedText(text)
+            setStored(result.value.stored)
+            toast.success(result.value.published.length > 0
+                ? `Published ${result.value.published.map(k => DATASET_LABELS[k]).join(', ')}`
+                : 'Nothing changed, nothing published')
+            await loadPreview(previewedText)
         } finally {
             setBusy(false)
         }
@@ -52,6 +75,9 @@ export default function GameDataImport() {
 
     return (
         <div className="mt-6 space-y-4">
+            {storedError
+                ? <div className="panel border-destructive/60 p-4 text-sm text-destructive">Could not load stored datasets: {storedError}</div>
+                : <StoredDatasetsStrip stored={stored} />}
             <div className="panel p-4 space-y-3">
                 <div className="flex items-center gap-3">
                     <p className="text-sm text-muted-foreground flex-1">
@@ -85,7 +111,10 @@ export default function GameDataImport() {
                 />
                 <div className="flex items-center gap-2">
                     <Button size="sm" className="rounded-sm" disabled={busy || text.trim() === ''} onClick={runPreview}>
-                        {busy ? 'Reading…' : 'Preview'}
+                        {busy ? 'Working…' : 'Preview'}
+                    </Button>
+                    <Button variant="outline" size="sm" className="rounded-sm" disabled={busy || !publishable} onClick={runPublish}>
+                        Publish
                     </Button>
                     <Button
                         variant="ghost"
@@ -135,7 +164,8 @@ function PreviewResult({ preview }: { preview: Extract<GameDataPreview, { status
                     <span className={preview.canPublish ? 'text-muted-foreground' : 'text-destructive'}>
                         {preview.datasets.length === 0
                             ? 'Nothing to import'
-                            : preview.canPublish ? 'No blocking errors' : 'Fix the errors before publishing'}
+                            : !preview.canPublish ? 'Fix the errors before publishing'
+                                : preview.hasChanges ? 'No blocking errors' : 'Matches what is stored, nothing to publish'}
                     </span>
                 </div>
                 {preview.ignored.length > 0 && (
