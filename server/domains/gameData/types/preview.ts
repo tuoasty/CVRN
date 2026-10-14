@@ -1,0 +1,29 @@
+import type { LuaParseError } from './luaValue'
+import type { DatasetIssue, GameDatasetKind, GameDatasetPayloads } from './datasets'
+
+export type PreviewDataset = {
+    [K in GameDatasetKind]: {
+        kind: K
+        root: string
+        line: number
+        count: number
+        payload: GameDatasetPayloads[K]
+        issues: DatasetIssue[]
+    }
+}[GameDatasetKind]
+
+export interface IgnoredStatement {
+    target: string
+    line: number
+}
+
+export type GameDataPreview =
+    | { status: 'parse_error'; error: LuaParseError }
+    | {
+        status: 'ok'
+        datasets: PreviewDataset[]
+        ignored: IgnoredStatement[]
+        crossIssues: DatasetIssue[]
+        checkedKinds: GameDatasetKind[]
+        canPublish: boolean
+    }

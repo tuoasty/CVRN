@@ -1,0 +1,6 @@
+RollCatalog.Rarities = {
+    { Name = "Common", Color = Color3.fromRGB(169, 183, 202), Weight = 30, Normal = 50, Lucky = 0 },
+    { Name = "Rare", Color = Color3.fromRGB(113, 184, 240), Weight = 20, Normal = 32, Lucky = 50 },
+    { Name = "Epic", Color = Color3.fromRGB(192, 149, 244), Weight = 8, Normal = 15, Lucky = 35 },
+    { Name = "Mythical", Color = Color3.fromRGB(255, 192, 116), Weight = 2, Normal = 3, Lucky = 15 },
+} :: { Rarity }
