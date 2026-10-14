@@ -4,12 +4,16 @@ import { useRef, useState, type DragEvent } from 'react'
 import { FileUp } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { previewGameDataImportAction, publishGameDataImportAction } from '@/app/actions/gameData.actions'
-import type { GameDataPreview, LuaParseError, StoredDatasetSummary } from '@/server/domains/gameData'
-import { DATASET_LABELS, GAME_DATASET_KINDS } from '@/server/domains/gameData'
+import type { Ability, GameDatasetKind, Rarity } from '@/server/domains/gameData/types/datasets'
+import type { LuaParseError } from '@/server/domains/gameData/types/luaValue'
+import type { GameDataPreview, StoredGameDatasets } from '@/server/domains/gameData/types/preview'
+import { GAME_DATASET_KINDS } from '@/server/domains/gameData/types/datasets'
+import { DATASET_LABELS } from '@/server/domains/gameData/helpers/datasets/registry'
 import { toast } from '@/app/utils/toast'
 import DatasetPreviewCard from './DatasetPreviewCard'
 import IssueList from './IssueList'
 import StoredDatasetsStrip from './StoredDatasetsStrip'
+import SavedDatasetPanel from './SavedDatasetPanel'
 import { cn } from '@/lib/utils'
 
 async function readFiles(files: FileList | File[]): Promise<string> {
@@ -17,8 +21,9 @@ async function readFiles(files: FileList | File[]): Promise<string> {
     return texts.join('\n\n')
 }
 
-export default function GameDataImport({ initialStored, storedError }: { initialStored: StoredDatasetSummary[]; storedError: string | null }) {
+export default function GameDataImport({ initialStored, storedError }: { initialStored: StoredGameDatasets; storedError: string | null }) {
     const [stored, setStored] = useState(initialStored)
+    const [viewing, setViewing] = useState<GameDatasetKind | null>(null)
     const [text, setText] = useState('')
     const [preview, setPreview] = useState<GameDataPreview | null>(null)
     const [previewedText, setPreviewedText] = useState<string | null>(null)
@@ -75,9 +80,6 @@ export default function GameDataImport({ initialStored, storedError }: { initial
 
     return (
         <div className="mt-6 space-y-4">
-            {storedError
-                ? <div className="panel border-destructive/60 p-4 text-sm text-destructive">Could not load stored datasets: {storedError}</div>
-                : <StoredDatasetsStrip stored={stored} />}
             <div className="panel p-4 space-y-3">
                 <div className="flex items-center gap-3">
                     <p className="text-sm text-muted-foreground flex-1">
@@ -130,7 +132,12 @@ export default function GameDataImport({ initialStored, storedError }: { initial
             </div>
 
             {preview?.status === 'parse_error' && <ParseErrorPanel error={preview.error} />}
-            {preview?.status === 'ok' && <PreviewResult preview={preview} />}
+            {preview?.status === 'ok' && <PreviewResult preview={preview} stored={stored} />}
+
+            {storedError
+                ? <div className="panel border-destructive/60 p-4 text-sm text-destructive">Could not load stored datasets: {storedError}</div>
+                : <StoredDatasetsStrip stored={stored.summaries} selected={viewing} onSelect={setViewing} />}
+            {viewing && <SavedDatasetPanel kind={viewing} stored={stored} />}
         </div>
     )
 }
@@ -151,8 +158,13 @@ function ParseErrorPanel({ error }: { error: LuaParseError }) {
     )
 }
 
-function PreviewResult({ preview }: { preview: Extract<GameDataPreview, { status: 'ok' }> }) {
+function PreviewResult({ preview, stored }: { preview: Extract<GameDataPreview, { status: 'ok' }>; stored: StoredGameDatasets }) {
     const unchecked = GAME_DATASET_KINDS.filter(k => !preview.checkedKinds.includes(k))
+    const pasted = (kind: GameDatasetKind) => preview.datasets.find(d => d.kind === kind)?.payload
+    const links = {
+        abilities: (pasted('abilities') as Ability[] | undefined) ?? stored.payloads.abilities,
+        rarities: (pasted('rarities') as Rarity[] | undefined) ?? stored.payloads.rarities,
+    }
 
     return (
         <div className="space-y-4">
@@ -184,7 +196,7 @@ function PreviewResult({ preview }: { preview: Extract<GameDataPreview, { status
                 <IssueList issues={preview.crossIssues} showKind />
             </div>
 
-            {preview.datasets.map(d => <DatasetPreviewCard key={d.kind} dataset={d} />)}
+            {preview.datasets.map(d => <DatasetPreviewCard key={d.kind} dataset={d} links={links} />)}
         </div>
     )
 }

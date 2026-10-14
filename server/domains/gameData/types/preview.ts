@@ -30,7 +30,12 @@ export type GameDataPreview =
         hasChanges: boolean
     }
 
+export interface StoredGameDatasets {
+    payloads: Partial<GameDatasetPayloads>
+    summaries: StoredDatasetSummary[]
+}
+
 export interface PublishGameDataResult {
     published: GameDatasetKind[]
-    stored: StoredDatasetSummary[]
+    stored: StoredGameDatasets
 }

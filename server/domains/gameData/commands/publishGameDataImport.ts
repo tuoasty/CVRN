@@ -36,5 +36,5 @@ export async function publishGameDataImport(supabase: DBClient, p: { text: strin
 
     const after = await getStoredGameDatasets(supabase)
     if (!after.ok) return after
-    return Ok({ published: rows.map(r => r.kind), stored: after.value.summaries })
+    return Ok({ published: rows.map(r => r.kind), stored: after.value })
 }

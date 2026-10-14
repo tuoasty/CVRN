@@ -1,6 +1,6 @@
 import { CircleX, TriangleAlert } from 'lucide-react'
-import type { DatasetIssue } from '@/server/domains/gameData'
-import { DATASET_LABELS } from '@/server/domains/gameData'
+import type { DatasetIssue } from '@/server/domains/gameData/types/datasets'
+import { DATASET_LABELS } from '@/server/domains/gameData/helpers/datasets/registry'
 import { cn } from '@/lib/utils'
 
 export default function IssueList({ issues, showKind = false }: { issues: DatasetIssue[]; showKind?: boolean }) {

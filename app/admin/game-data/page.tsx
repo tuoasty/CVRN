@@ -1,10 +1,10 @@
 import { Database } from 'lucide-react'
 import GameDataImport from '@/app/features/gameData/GameDataImport'
 import { createServerSupabase } from '@/server/supabase/server'
-import { getStoredDatasetSummaries } from '@/server/domains/gameData'
+import { getStoredGameDatasets } from '@/server/domains/gameData'
 
 export default async function AdminGameDataPage() {
-    const stored = await getStoredDatasetSummaries(await createServerSupabase())
+    const stored = await getStoredGameDatasets(await createServerSupabase())
 
     return (
         <div className="admin-container">
@@ -18,7 +18,7 @@ export default async function AdminGameDataPage() {
                         <p className="text-sm text-muted-foreground mt-1">Import abilities, rarities and rollable lists from the game&apos;s Lua tables</p>
                     </div>
                 </div>
-                <GameDataImport initialStored={stored.ok ? stored.value : []} storedError={stored.ok ? null : stored.error.message} />
+                <GameDataImport initialStored={stored.ok ? stored.value : { payloads: {}, summaries: [] }} storedError={stored.ok ? null : stored.error.message} />
             </div>
         </div>
     )
