@@ -65,7 +65,7 @@ describe('resolveVariantBase', () => {
     })
 
     it('resolves names that are not catalog keys', () => {
-        expect(resolve('+0.1 Backrow Blitz')).toBeUndefined()
+        expect(resolve('+0.1 Backrow Blitz')).toEqual({ base: 'Backrow Blitz', modifier: '+0.1' })
         expect(resolve('Slightly Buffed Bounce')).toEqual({ base: 'Bounce', modifier: 'Slightly Buffed' })
         expect(resolve('+0.2 Spin Control')).toEqual({ base: 'Spin Control', modifier: '+0.2' })
         expect(resolve('-0.1 Backrow Blitz')).toEqual({ base: 'Backrow Blitz', modifier: '-0.1' })
