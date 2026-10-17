@@ -1,5 +1,5 @@
-import PlaceholderTab from '@/app/features/gameData/information/PlaceholderTab'
+import TermsGlossary from '@/app/features/gameData/information/TermsGlossary'
 
 export default function AdminTermsPage() {
-    return <PlaceholderTab title="Terms" body="The terms glossary is next. Edit wording from an ability for now." />
+    return <TermsGlossary />
 }

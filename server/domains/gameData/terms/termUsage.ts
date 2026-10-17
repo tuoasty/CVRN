@@ -1,4 +1,4 @@
-import type { Ability, ScalarValue } from '../types/datasets'
+import type { Ability, EffectOp, ScalarValue } from '../types/datasets'
 import type { TermBook, TermKind } from './types'
 import { SKIPPED_OPTIONS } from './describeAbility'
 import { termMap } from './template'
@@ -11,6 +11,8 @@ export interface TermUsage {
     uses: number
     abilities: string[]
     examples: ScalarValue[]
+    op?: EffectOp
+    mixedSigns: boolean
 }
 
 export function termId(kind: TermKind, tag: string): string {
@@ -19,12 +21,19 @@ export function termId(kind: TermKind, tag: string): string {
 
 export function collectTermUsage(abilities: Ability[]): Map<string, TermUsage> {
     const usage = new Map<string, TermUsage>()
-    const add = (kind: TermKind, tag: string, ability: string, value: ScalarValue) => {
+    const signs = new Map<string, Set<boolean>>()
+    const add = (kind: TermKind, tag: string, ability: string, value: ScalarValue, op?: EffectOp) => {
         const id = termId(kind, tag)
         let entry = usage.get(id)
         if (!entry) {
-            entry = { kind, tag, uses: 0, abilities: [], examples: [] }
+            entry = { kind, tag, uses: 0, abilities: [], examples: [], op, mixedSigns: false }
             usage.set(id, entry)
+        }
+        if (op && typeof value === 'number') {
+            const seen = signs.get(id) ?? new Set<boolean>()
+            seen.add(op === 'scale' ? value >= 1 : value >= 0)
+            signs.set(id, seen)
+            entry.mixedSigns = seen.size > 1
         }
         entry.uses++
         if (!entry.abilities.includes(ability)) entry.abilities.push(ability)
@@ -32,7 +41,7 @@ export function collectTermUsage(abilities: Ability[]): Map<string, TermUsage> {
     }
     for (const ability of abilities) {
         for (const effect of ability.effects) {
-            add('effect', effect.tag, ability.key, effect.amount)
+            add('effect', effect.tag, ability.key, effect.amount, effect.op)
             for (const [key, value] of Object.entries(effect.options ?? {})) {
                 if (!SKIPPED_OPTIONS.has(key)) add('option', key, ability.key, value)
             }

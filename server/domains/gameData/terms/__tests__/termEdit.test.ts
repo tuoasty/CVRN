@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { fixtureAbilities, fixtureTerms } from '../../__tests__/fixtures/loadFixtures'
 import { createAbilityLookup } from '../describeAbility'
-import { lineNeedsAttention, normalizeTermDraft, previewTermChange, unseenValue, validateTermDraft } from '../termEdit'
+import { lineNeedsAttention, normalizeTermDraft, previewTermChange, previewTermChanges, termChanged, unseenValue, validateTermDraft } from '../termEdit'
 import { collectTermUsage, termId } from '../termUsage'
 import type { AbilityBullet } from '../types'
 
@@ -25,6 +25,18 @@ describe('term change preview', () => {
     it('includes abilities whose granted children change', () => {
         const draft = { ...terms.params.get('CallCaptainJump')!, grants: null }
         expect(previewTermChange(abilities, { terms, lookup }, draft).map(c => c.ability)).toContain('Captains Call')
+    })
+
+    it('previews several drafts together', () => {
+        const drafts = [
+            { ...terms.effects.get('JumpSpeed')!, label: 'jump height' },
+            { ...terms.options.get('Standing')!, template: 'from standing' },
+        ]
+        const leap = previewTermChanges(abilities, { terms, lookup }, drafts).find(c => c.ability === 'Vertical Leap')!
+        expect(leap.after[0]).toContain('Increased jump height by 1.8')
+        expect(leap.after[0]).toContain('from standing')
+        expect(termChanged(terms.effects.get('JumpSpeed'), drafts[0])).toBe(true)
+        expect(termChanged(terms.effects.get('JumpSpeed'), terms.effects.get('JumpSpeed')!)).toBe(false)
     })
 
     it('returns nothing when the draft matches the stored term', () => {
@@ -57,7 +69,7 @@ describe('attention and unseen values', () => {
     })
 
     it('warns when a fixed phrase meets a different value', () => {
-        const usage = { kind: 'option' as const, tag: 'Below', uses: 2, abilities: [], examples: [1, 2] }
+        const usage = { kind: 'option' as const, tag: 'Below', uses: 2, abilities: [], examples: [1, 2], mixedSigns: false }
         expect(unseenValue(usage, 'and below', 2)).toBe(true)
         expect(unseenValue(usage, 'and below', 1)).toBe(false)
         expect(unseenValue(usage, 'below by {v}', 2)).toBe(false)

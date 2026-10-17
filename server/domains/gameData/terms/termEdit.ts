@@ -1,7 +1,7 @@
 import type { Ability, ScalarValue } from '../types/datasets'
 import type { AbilityBullet, GameTerm, TermBook } from './types'
 import { describeAbility, type DescribeContext } from './describeAbility'
-import { TEMPLATE_PLACEHOLDERS, termMap, unknownPlaceholders } from './template'
+import { TEMPLATE_PLACEHOLDERS, unknownPlaceholders } from './template'
 import type { TermUsage } from './termUsage'
 
 export interface TermChange {
@@ -14,15 +14,22 @@ function flatten(bullets: AbilityBullet[]): string[] {
     return bullets.flatMap(b => [b.text, ...(b.children ?? []).map(c => `  ${c.text}`)])
 }
 
-export function withDraft(terms: TermBook, draft: GameTerm): TermBook {
+export function withDrafts(terms: TermBook, drafts: GameTerm[]): TermBook {
     const book: TermBook = { effects: terms.effects, params: terms.params, options: terms.options }
-    const key = draft.kind === 'effect' ? 'effects' : draft.kind === 'param' ? 'params' : 'options'
-    book[key] = new Map(termMap(terms, draft.kind)).set(draft.tag, draft)
+    for (const draft of drafts) {
+        const key = draft.kind === 'effect' ? 'effects' : draft.kind === 'param' ? 'params' : 'options'
+        book[key] = new Map(book[key]).set(draft.tag, draft)
+    }
     return book
 }
 
-export function previewTermChange(abilities: Ability[], context: DescribeContext, draft: GameTerm): TermChange[] {
-    const next: DescribeContext = { ...context, terms: withDraft(context.terms, draft) }
+export function withDraft(terms: TermBook, draft: GameTerm): TermBook {
+    return withDrafts(terms, [draft])
+}
+
+export function previewTermChanges(abilities: Ability[], context: DescribeContext, drafts: GameTerm[]): TermChange[] {
+    if (drafts.length === 0) return []
+    const next: DescribeContext = { ...context, terms: withDrafts(context.terms, drafts) }
     const changes: TermChange[] = []
     for (const ability of abilities) {
         const before = flatten(describeAbility(ability, context))
@@ -30,6 +37,15 @@ export function previewTermChange(abilities: Ability[], context: DescribeContext
         if (before.length !== after.length || before.some((line, i) => line !== after[i])) changes.push({ ability: ability.key, before, after })
     }
     return changes
+}
+
+export function previewTermChange(abilities: Ability[], context: DescribeContext, draft: GameTerm): TermChange[] {
+    return previewTermChanges(abilities, context, [draft])
+}
+
+export function termChanged(stored: GameTerm | undefined, draft: GameTerm): boolean {
+    if (!stored) return true
+    return draft.label !== stored.label || draft.unit !== stored.unit || draft.template !== stored.template || draft.grants !== stored.grants
 }
 
 export function normalizeTermDraft(draft: GameTerm): GameTerm {

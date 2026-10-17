@@ -2,20 +2,13 @@
 
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { describeAbility, describeEffectMain, describeOption, SKIPPED_OPTIONS } from '@/server/domains/gameData/terms/describeAbility'
-import { renderTemplate } from '@/server/domains/gameData/terms/template'
-import { fmt, humanize } from '@/server/domains/gameData/terms/format'
-import type { Ability, ScalarValue } from '@/server/domains/gameData/types/datasets'
-import type { GameTerm } from '@/server/domains/gameData/terms/types'
+import { describeAbility } from '@/server/domains/gameData/terms/describeAbility'
+import { resolveDescriptionSource } from '@/server/domains/gameData/terms/descriptionSource'
+import type { Ability } from '@/server/domains/gameData/types/datasets'
 import { useInformation } from './InformationProvider'
 import DescriptionSource from './DescriptionSource'
-import TermLine, { type TermStatus } from './TermLine'
+import AbilityLines from './AbilityLines'
 import { abilityHref, AVAILABILITY_LABELS } from './abilityLinks'
-
-function statusOf(term: GameTerm | undefined, handled: boolean): TermStatus {
-    if (!term || !handled) return 'unhandled'
-    return term.verified ? 'ok' : 'unverified'
-}
 
 function Section({ title, count, children }: { title: string; count: number; children: ReactNode }) {
     return (
@@ -29,13 +22,10 @@ function Section({ title, count, children }: { title: string; count: number; chi
     )
 }
 
-const show = (value: ScalarValue) => (typeof value === 'number' ? fmt(value) : String(value))
-
 export default function AbilityEditor({ ability }: { ability: Ability }) {
-    const { index, terms, context, abilityByKey } = useInformation()
+    const { index, context, abilityByKey, settings } = useInformation()
     const entry = index.get(ability.key)
     const activation = describeAbility(ability, context).filter(b => b.source === 'active' || b.source === 'toggle')
-    const params = Object.entries(ability.params)
     const grants = entry?.grants ?? []
 
     return (
@@ -54,71 +44,7 @@ export default function AbilityEditor({ ability }: { ability: Ability }) {
 
             <DescriptionSource ability={ability} />
 
-            {ability.effects.length > 0 && (
-                <Section title="Effects" count={ability.effects.length}>
-                    {ability.effects.map((effect, i) => {
-                        const term = terms.effects.get(effect.tag)
-                        const options = Object.entries(effect.options ?? {}).filter(([key]) => !SKIPPED_OPTIONS.has(key))
-                        return (
-                            <TermLine
-                                key={`${effect.tag}-${i}`}
-                                raw={`${effect.op} · ${effect.tag} · ${fmt(effect.amount)}`}
-                                sentence={describeEffectMain(effect, terms)}
-                                editable={term?.template ? null : term?.label ?? humanize(effect.tag).toLowerCase()}
-                                status={statusOf(term, term?.label != null || term?.template != null)}
-                            >
-                                {options.map(([key, value]) => {
-                                    const optionTerm = terms.options.get(key)
-                                    const wording = describeOption(key, value, terms)
-                                    return (
-                                        <TermLine
-                                            key={key}
-                                            nested
-                                            raw={`${key} · ${show(value)}`}
-                                            sentence={wording.text}
-                                            editable={null}
-                                            status={statusOf(optionTerm, wording.mapped)}
-                                        />
-                                    )
-                                })}
-                            </TermLine>
-                        )
-                    })}
-                </Section>
-            )}
-
-            {params.length > 0 && (
-                <Section title="Params" count={params.length}>
-                    {params.map(([tag, value]) => {
-                        const term = terms.params.get(tag)
-                        const handled = term?.template != null
-                        const granted = term?.grants ? context.lookup?.(term.grants) : undefined
-                        return (
-                            <TermLine
-                                key={tag}
-                                raw={`${tag} · ${show(value)}`}
-                                sentence={handled ? renderTemplate(term!.template!, value) : value === 1 || value === true ? humanize(tag) : `${humanize(tag)}: ${value}`}
-                                editable={null}
-                                status={statusOf(term, handled)}
-                            >
-                                {term?.grants && (
-                                    <div className="pl-5 pt-2 text-sm">
-                                        <span className="text-muted-foreground">Grants </span>
-                                        {granted
-                                            ? <Link href={abilityHref(granted.key, index.get(granted.key))} className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">{granted.key}</Link>
-                                            : <span className="text-foreground">{term.grants}</span>}
-                                        {granted && (
-                                            <ul className="mt-1 space-y-0.5 text-muted-foreground">
-                                                {describeAbility(granted, { terms }).map((b, j) => <li key={j}>{b.text}</li>)}
-                                            </ul>
-                                        )}
-                                    </div>
-                                )}
-                            </TermLine>
-                        )
-                    })}
-                </Section>
-            )}
+            {resolveDescriptionSource(ability, settings[ability.key]).source === 'derived' && <AbilityLines ability={ability} />}
 
             {grants.length > 0 && (
                 <Section title="Teammates get" count={grants.length}>

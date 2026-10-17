@@ -18,6 +18,8 @@ export { createVariantResolver } from './helpers/abilityIndex/resolveVariantBase
 export type { VariantResolver } from './helpers/abilityIndex/resolveVariantBase'
 export { describeAbility, describeEffectMain, describeOption, createAbilityLookup, unmappedTags, SKIPPED_OPTIONS } from './terms/describeAbility'
 export { resolveDescriptionSource } from './terms/descriptionSource'
+export { parseTemplate, joinSegments, materializeEffectTemplate, effectTermFields, editableTemplate, VERB_SLOTS, VALUE_SLOTS } from './terms/segments'
+export type { TemplateSegment } from './terms/segments'
 export type { ResolvedDescriptionSource } from './terms/descriptionSource'
 export type { OptionWording } from './terms/describeAbility'
 export type { AbilityLookup, DescribeContext } from './terms/describeAbility'

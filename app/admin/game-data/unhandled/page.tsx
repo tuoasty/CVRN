@@ -1,5 +1,5 @@
-import PlaceholderTab from '@/app/features/gameData/information/PlaceholderTab'
+import UnhandledTerms from '@/app/features/gameData/information/UnhandledTerms'
 
 export default function AdminUnhandledPage() {
-    return <PlaceholderTab title="To be handled" body="Tags without wording will be listed here." />
+    return <UnhandledTerms />
 }

@@ -4,7 +4,11 @@ import { capitalize, fmt, num, pct, pctChange, withUnit } from './format'
 import { formatGameHeight } from '@/shared/utils/height'
 
 export const TEMPLATE_PLACEHOLDERS = {
+    change: (value: ScalarValue) => (num(value) >= 0 ? 'Increased' : 'Reduced'),
+    scaleChange: (value: ScalarValue) => (num(value) >= 1 ? 'Increased' : 'Reduced'),
     v: (value: ScalarValue) => fmt(num(value)),
+    abs: (value: ScalarValue) => fmt(Math.abs(num(value))),
+    int: (value: ScalarValue) => String(Math.round(Math.abs(num(value)))),
     pct: (value: ScalarValue) => pct(num(value)),
     pctChange: (value: ScalarValue) => String(pctChange(num(value))),
     inverse: (value: ScalarValue) => fmt(1 / num(value)),
