@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildImportPreview } from '../../helpers/buildImportPreview'
-import { createAbilityLookup, describeAbility, unmappedTags } from '../describeAbility'
+import { createAbilityLookup, describeAbility, describeOption, unmappedTags } from '../describeAbility'
 import { createTermBook, EMPTY_TERM_BOOK, renderTemplate, unknownPlaceholders } from '../template'
 import type { Ability } from '../../types/datasets'
 import type { GameTerm } from '../types'
@@ -114,5 +114,26 @@ describe('term templates', () => {
     it('leaves unknown placeholders and reports them', () => {
         expect(renderTemplate('Up to {max}', 2)).toBe('Up to {max}')
         expect(unknownPlaceholders('{v} then {max} and {pct}')).toEqual(['max'])
+    })
+
+    it('renders option placeholders', () => {
+        expect(renderTemplate('{text} mode only', 'Spike')).toBe('spike mode only')
+        expect(renderTemplate('up to {height}', 1.45)).toBe(`up to 6'10"`)
+        expect(renderTemplate('{v}', true)).toBe('1')
+    })
+})
+
+describe('option wording', () => {
+    it('words options from rows', () => {
+        expect(describeOption('Standing', false, terms)).toEqual({ text: null, mapped: true, guess: false })
+        expect(describeOption('Standing', true, terms)).toEqual({ text: 'standing jumps', mapped: true, guess: false })
+        expect(describeOption('Below', 1, terms)).toEqual({ text: 'and below', mapped: true, guess: true })
+        expect(describeOption('Wobble', 2, terms)).toEqual({ text: 'wobble: 2', mapped: false, guess: false })
+    })
+
+    it('reports unknown options as unmapped', () => {
+        const unhandled = unmappedTags(abilities, { ...terms, options: new Map() }).filter(t => t.kind === 'option')
+        expect(unhandled.map(t => t.tag)).toEqual(expect.arrayContaining(['Mode', 'ShortBonus']))
+        expect(unhandled.map(t => t.tag)).not.toContain('Group')
     })
 })

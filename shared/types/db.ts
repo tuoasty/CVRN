@@ -104,3 +104,5 @@ export type PublicSpecSnapshotRow =
 
 export type SpecWinner =
     Database["public"]["Tables"]["spec_winners"]["Row"];
+export type GameAbilitySettingRow =
+    Database["public"]["Tables"]["game_ability_settings"]["Row"];

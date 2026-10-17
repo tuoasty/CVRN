@@ -1,9 +1,7 @@
-import type { ScalarValue } from '../types/datasets'
-
 export const TERM_CATEGORIES = ['jump', 'movement', 'attack', 'block', 'receive', 'set', 'serve', 'stamina', 'team', 'special'] as const
 export type TermCategory = (typeof TERM_CATEGORIES)[number]
 
-export const TERM_KINDS = ['effect', 'param'] as const
+export const TERM_KINDS = ['effect', 'param', 'option'] as const
 export type TermKind = (typeof TERM_KINDS)[number]
 
 export interface GameTerm {
@@ -15,16 +13,14 @@ export interface GameTerm {
     template: string | null
     grants: string | null
     verified: boolean
+    updatedBy?: string | null
+    updatedAt?: string | null
 }
 
 export interface TermBook {
     effects: Map<string, GameTerm>
     params: Map<string, GameTerm>
-}
-
-export interface OptionTerm {
-    describe: (value: ScalarValue) => string | null
-    guess?: true
+    options: Map<string, GameTerm>
 }
 
 export type BulletSource = 'effect' | 'param' | 'active' | 'toggle' | 'team' | 'aura'

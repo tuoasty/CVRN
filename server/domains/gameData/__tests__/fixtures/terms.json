@@ -1518,5 +1518,85 @@
     "template": "Spikes are 30% more likely to block break if the opponent is not using Unbreakable",
     "grants": null,
     "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "Mode",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "{text} mode only",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "Standing",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "standing jumps",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "ShortBonus",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "stronger on shorter builds and diminishes as builds get taller",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "MaxHeight",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "up to {height}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "MinHeight",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "from {height}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "RolledOnly",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "only as your rolled trait",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "AtHeight",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "at {height}",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "option",
+    "tag": "Below",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "and below",
+    "grants": null,
+    "verified": false
   }
 ]

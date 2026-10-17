@@ -15,5 +15,7 @@ export function toGameTerm(row: GameTermReadRow): GameTerm | null {
         template: row.template,
         grants: row.grants,
         verified: row.verified,
+        updatedBy: row.updated_by,
+        updatedAt: row.updated_at,
     }
 }

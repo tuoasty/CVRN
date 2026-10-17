@@ -1,8 +1,24 @@
-import type { Ability, AbilityEffect } from '../types/datasets'
+import type { Ability, AbilityEffect, ScalarValue } from '../types/datasets'
 import { TERM_CATEGORIES, type AbilityBullet, type TermBook } from './types'
-import { OPTION_TERMS, SKIPPED_OPTIONS } from './optionTerms'
 import { describeEffectGeneric, renderTemplate } from './template'
-import { fmt, humanize, num } from './format'
+import { fmt, humanize } from './format'
+
+export const SKIPPED_OPTIONS = new Set(['Group'])
+
+export interface OptionWording {
+    text: string | null
+    mapped: boolean
+    guess: boolean
+}
+
+export function describeOption(key: string, value: ScalarValue, terms: TermBook): OptionWording {
+    const term = terms.options.get(key)
+    if (!term || term.template === null) return { text: `${humanize(key).toLowerCase()}: ${value}`, mapped: false, guess: false }
+    const guess = !term.verified
+    if (value === false) return { text: null, mapped: true, guess }
+    if (value === true) return { text: term.template, mapped: true, guess }
+    return { text: renderTemplate(term.template, value), mapped: true, guess }
+}
 
 export type AbilityLookup = (name: string) => Ability | undefined
 
@@ -32,7 +48,7 @@ function describe(ability: Ability, context: DescribeContext, expandGrants: bool
             bullets.push({ category: 'special', text: v === 1 || v === true ? humanize(tag) : `${humanize(tag)}: ${v}`, source: 'param', tag, mapped: false, guess: false })
             continue
         }
-        const bullet: AbilityBullet = { category: term.category, text: renderTemplate(term.template, num(v)), source: 'param', tag, mapped: true, guess: !term.verified }
+        const bullet: AbilityBullet = { category: term.category, text: renderTemplate(term.template, v), source: 'param', tag, mapped: true, guess: !term.verified }
         if (term.grants) {
             bullet.grants = term.grants
             const granted = lookup?.(term.grants)
@@ -66,14 +82,9 @@ function describeEffect(effect: AbilityEffect, terms: TermBook): AbilityBullet {
     let mapped = !!term
     for (const [key, v] of Object.entries(effect.options ?? {})) {
         if (SKIPPED_OPTIONS.has(key)) continue
-        const option = OPTION_TERMS[key]
-        if (!option) {
-            mapped = false
-            qualifiers.push(`${humanize(key).toLowerCase()}: ${v}`)
-            continue
-        }
-        const text = option.describe(v)
-        if (text) qualifiers.push(text)
+        const option = describeOption(key, v, terms)
+        if (option.text) qualifiers.push(option.text)
+        if (!option.mapped) mapped = false
         if (option.guess) guess = true
     }
 
@@ -121,7 +132,7 @@ export function unmappedTags(abilities: Ability[], terms: TermBook): { kind: 'ef
         for (const effect of ability.effects) {
             if (!terms.effects.has(effect.tag)) bump('effect', effect.tag)
             for (const key of Object.keys(effect.options ?? {})) {
-                if (!SKIPPED_OPTIONS.has(key) && !OPTION_TERMS[key]) bump('option', key)
+                if (!SKIPPED_OPTIONS.has(key) && !terms.options.get(key)?.template) bump('option', key)
             }
         }
         for (const tag of Object.keys(ability.params)) {

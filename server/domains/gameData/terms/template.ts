@@ -1,19 +1,22 @@
-import type { EffectOp } from '../types/datasets'
+import type { EffectOp, ScalarValue } from '../types/datasets'
 import type { GameTerm, TermBook } from './types'
-import { capitalize, fmt, pct, pctChange, withUnit } from './format'
+import { capitalize, fmt, num, pct, pctChange, withUnit } from './format'
+import { formatGameHeight } from '@/shared/utils/height'
 
 export const TEMPLATE_PLACEHOLDERS = {
-    v: (value: number) => fmt(value),
-    pct: (value: number) => pct(value),
-    pctChange: (value: number) => String(pctChange(value)),
-    inverse: (value: number) => fmt(1 / value),
+    v: (value: ScalarValue) => fmt(num(value)),
+    pct: (value: ScalarValue) => pct(num(value)),
+    pctChange: (value: ScalarValue) => String(pctChange(num(value))),
+    inverse: (value: ScalarValue) => fmt(1 / num(value)),
+    height: (value: ScalarValue) => formatGameHeight(num(value)),
+    text: (value: ScalarValue) => String(value).toLowerCase(),
 } as const
 
 export type TemplatePlaceholder = keyof typeof TEMPLATE_PLACEHOLDERS
 
 const PLACEHOLDER = /\{(\w+)\}/g
 
-export function renderTemplate(template: string, value: number): string {
+export function renderTemplate(template: string, value: ScalarValue): string {
     return template.replace(PLACEHOLDER, (whole, name: string) =>
         name in TEMPLATE_PLACEHOLDERS ? TEMPLATE_PLACEHOLDERS[name as TemplatePlaceholder](value) : whole,
     )
@@ -30,9 +33,13 @@ export function describeEffectGeneric(label: string, amount: number, op: EffectO
 }
 
 export function createTermBook(terms: GameTerm[]): TermBook {
-    const book: TermBook = { effects: new Map(), params: new Map() }
-    for (const term of terms) (term.kind === 'effect' ? book.effects : book.params).set(term.tag, term)
+    const book: TermBook = { effects: new Map(), params: new Map(), options: new Map() }
+    for (const term of terms) termMap(book, term.kind).set(term.tag, term)
     return book
 }
 
-export const EMPTY_TERM_BOOK: TermBook = { effects: new Map(), params: new Map() }
+export function termMap(book: TermBook, kind: GameTerm['kind']): Map<string, GameTerm> {
+    return kind === 'effect' ? book.effects : kind === 'param' ? book.params : book.options
+}
+
+export const EMPTY_TERM_BOOK: TermBook = { effects: new Map(), params: new Map(), options: new Map() }
