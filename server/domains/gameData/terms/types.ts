@@ -1,21 +1,25 @@
-import type { EffectOp, ScalarValue } from '../types/datasets'
+import type { ScalarValue } from '../types/datasets'
 
 export const TERM_CATEGORIES = ['jump', 'movement', 'attack', 'block', 'receive', 'set', 'serve', 'stamina', 'team', 'special'] as const
 export type TermCategory = (typeof TERM_CATEGORIES)[number]
 
-export interface EffectTerm {
+export const TERM_KINDS = ['effect', 'param'] as const
+export type TermKind = (typeof TERM_KINDS)[number]
+
+export interface GameTerm {
+    kind: TermKind
+    tag: string
     category: TermCategory
-    label: string
-    unit?: string
-    describe?: (amount: number, op: EffectOp) => string
-    guess?: true
+    label: string | null
+    unit: string | null
+    template: string | null
+    grants: string | null
+    verified: boolean
 }
 
-export interface ParamTerm {
-    category: TermCategory
-    describe: (value: ScalarValue) => string
-    grants?: string
-    guess?: true
+export interface TermBook {
+    effects: Map<string, GameTerm>
+    params: Map<string, GameTerm>
 }
 
 export interface OptionTerm {

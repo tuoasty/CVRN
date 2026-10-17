@@ -1,37 +1,42 @@
 import type { Ability, AbilityEffect } from '../types/datasets'
-import { TERM_CATEGORIES, type AbilityBullet } from './types'
-import { EFFECT_TERMS, describeEffectGeneric } from './effectTerms'
-import { PARAM_TERMS } from './paramTerms'
+import { TERM_CATEGORIES, type AbilityBullet, type TermBook } from './types'
 import { OPTION_TERMS, SKIPPED_OPTIONS } from './optionTerms'
-import { fmt, humanize } from './format'
+import { describeEffectGeneric, renderTemplate } from './template'
+import { fmt, humanize, num } from './format'
 
 export type AbilityLookup = (name: string) => Ability | undefined
+
+export interface DescribeContext {
+    terms: TermBook
+    lookup?: AbilityLookup
+}
 
 export function createAbilityLookup(abilities: Ability[]): AbilityLookup {
     const byName = new Map(abilities.map(a => [a.key.toLowerCase(), a]))
     return name => byName.get(name.toLowerCase())
 }
 
-export function describeAbility(ability: Ability, lookup?: AbilityLookup): AbilityBullet[] {
-    return describe(ability, lookup, true)
+export function describeAbility(ability: Ability, context: DescribeContext): AbilityBullet[] {
+    return describe(ability, context, true)
 }
 
-function describe(ability: Ability, lookup: AbilityLookup | undefined, expandGrants: boolean): AbilityBullet[] {
+function describe(ability: Ability, context: DescribeContext, expandGrants: boolean): AbilityBullet[] {
+    const { terms, lookup } = context
     const bullets: AbilityBullet[] = []
 
-    for (const effect of ability.effects) bullets.push(describeEffect(effect))
+    for (const effect of ability.effects) bullets.push(describeEffect(effect, terms))
 
     for (const [tag, v] of Object.entries(ability.params)) {
-        const term = PARAM_TERMS[tag]
-        if (!term) {
+        const term = terms.params.get(tag)
+        if (!term || term.template === null) {
             bullets.push({ category: 'special', text: v === 1 || v === true ? humanize(tag) : `${humanize(tag)}: ${v}`, source: 'param', tag, mapped: false, guess: false })
             continue
         }
-        const bullet: AbilityBullet = { category: term.category, text: term.describe(v), source: 'param', tag, mapped: true, guess: !!term.guess }
+        const bullet: AbilityBullet = { category: term.category, text: renderTemplate(term.template, num(v)), source: 'param', tag, mapped: true, guess: !term.verified }
         if (term.grants) {
             bullet.grants = term.grants
             const granted = lookup?.(term.grants)
-            if (granted && expandGrants) bullet.children = describe(granted, lookup, false)
+            if (granted && expandGrants) bullet.children = describe(granted, context, false)
         }
         bullets.push(bullet)
     }
@@ -49,15 +54,15 @@ function describe(ability: Ability, lookup: AbilityLookup | undefined, expandGra
     return [...describeActivation(ability), ...sorted]
 }
 
-function describeEffect(effect: AbilityEffect): AbilityBullet {
-    const term = EFFECT_TERMS[effect.tag]
+function describeEffect(effect: AbilityEffect, terms: TermBook): AbilityBullet {
+    const term = terms.effects.get(effect.tag)
     const label = term?.label ?? humanize(effect.tag).toLowerCase()
-    const main = term?.describe
-        ? term.describe(effect.amount, effect.op)
+    const main = term?.template
+        ? renderTemplate(term.template, effect.amount)
         : describeEffectGeneric(label, effect.amount, effect.op, term?.unit)
 
     const qualifiers: string[] = []
-    let guess = !!term?.guess
+    let guess = !!term && !term.verified
     let mapped = !!term
     for (const [key, v] of Object.entries(effect.options ?? {})) {
         if (SKIPPED_OPTIONS.has(key)) continue
@@ -104,7 +109,7 @@ function describeActivation(ability: Ability): AbilityBullet[] {
     return bullets
 }
 
-export function unmappedTags(abilities: Ability[]): { kind: 'effect' | 'param' | 'option'; tag: string; uses: number }[] {
+export function unmappedTags(abilities: Ability[], terms: TermBook): { kind: 'effect' | 'param' | 'option'; tag: string; uses: number }[] {
     const counts = new Map<string, { kind: 'effect' | 'param' | 'option'; tag: string; uses: number }>()
     const bump = (kind: 'effect' | 'param' | 'option', tag: string) => {
         const id = `${kind}:${tag}`
@@ -114,13 +119,13 @@ export function unmappedTags(abilities: Ability[]): { kind: 'effect' | 'param' |
     }
     for (const ability of abilities) {
         for (const effect of ability.effects) {
-            if (!EFFECT_TERMS[effect.tag]) bump('effect', effect.tag)
+            if (!terms.effects.has(effect.tag)) bump('effect', effect.tag)
             for (const key of Object.keys(effect.options ?? {})) {
                 if (!SKIPPED_OPTIONS.has(key) && !OPTION_TERMS[key]) bump('option', key)
             }
         }
         for (const tag of Object.keys(ability.params)) {
-            if (!PARAM_TERMS[tag]) bump('param', tag)
+            if (!terms.params.get(tag)?.template) bump('param', tag)
         }
     }
     return [...counts.values()]

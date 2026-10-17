@@ -1,5 +1,6 @@
 export { previewGameDataImport } from './queries/previewGameDataImport'
 export { getStoredGameDatasets, getGameDatasetPayloads } from './queries/getStoredGameDatasets'
+export { getGameTerms } from './queries/getGameTerms'
 export { publishGameDataImport } from './commands/publishGameDataImport'
 export { parseLuaData } from './helpers/lua/parseLuaData'
 export { DATASET_ROOTS, DATASET_LABELS } from './helpers/datasets/registry'
@@ -8,8 +9,10 @@ export { buildAbilityIndex } from './helpers/abilityIndex/buildAbilityIndex'
 export { createVariantResolver } from './helpers/abilityIndex/resolveVariantBase'
 export type { VariantResolver } from './helpers/abilityIndex/resolveVariantBase'
 export { describeAbility, createAbilityLookup, unmappedTags } from './terms/describeAbility'
-export type { AbilityLookup } from './terms/describeAbility'
-export type { AbilityBullet, TermCategory } from './terms/types'
+export type { AbilityLookup, DescribeContext } from './terms/describeAbility'
+export { createTermBook, renderTemplate, unknownPlaceholders, TEMPLATE_PLACEHOLDERS, EMPTY_TERM_BOOK } from './terms/template'
+export type { AbilityBullet, TermCategory, TermKind, GameTerm, TermBook } from './terms/types'
+export { TERM_CATEGORIES, TERM_KINDS } from './terms/types'
 
 export type {
     LuaValue,

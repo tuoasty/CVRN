@@ -3,7 +3,9 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildImportPreview } from '../../helpers/buildImportPreview'
 import { createAbilityLookup, describeAbility, unmappedTags } from '../describeAbility'
+import { createTermBook, EMPTY_TERM_BOOK, renderTemplate, unknownPlaceholders } from '../template'
 import type { Ability } from '../../types/datasets'
+import type { GameTerm } from '../types'
 import { gameHeightToInches } from '@/shared/utils/height'
 
 function realAbilities(): Ability[] {
@@ -13,13 +15,14 @@ function realAbilities(): Ability[] {
     return preview.datasets[0].payload as Ability[]
 }
 
+const terms = createTermBook(JSON.parse(readFileSync(join(__dirname, '../../__tests__/fixtures/terms.json'), 'utf8')) as GameTerm[])
 const abilities = realAbilities()
 const byKey = new Map(abilities.map(a => [a.key, a]))
-const texts = (key: string) => describeAbility(byKey.get(key)!).map(b => b.text)
+const texts = (key: string) => describeAbility(byKey.get(key)!, { terms }).map(b => b.text)
 
 describe('ability wording', () => {
     it('has wording for every tag in the real catalog', () => {
-        expect(unmappedTags(abilities)).toEqual([])
+        expect(unmappedTags(abilities, terms)).toEqual([])
     })
 
     it('converts game heights', () => {
@@ -55,9 +58,9 @@ describe('ability wording', () => {
         expect(texts('Sprinter')).toEqual(['Increased sprint bonus by 1.5'])
     })
 
-    it('words the block green window from the 0.9 fill', () => {
-        expect(texts('Block Control')).toEqual(['Green block window starts at 75%', 'Releasing a block early never misses'])
-        expect(texts('Nerfed Block Control')).toEqual(['Green block window starts at 85%'])
+    it('words the block green window against the 0.9 fill', () => {
+        expect(texts('Block Control')).toEqual(['Green block window starts 15% earlier than the normal 90% fill', 'Releasing a block early never misses'])
+        expect(texts('Nerfed Block Control')).toEqual(['Green block window starts 5% earlier than the normal 90% fill'])
     })
 
     it('puts activation first and words team grants', () => {
@@ -68,31 +71,48 @@ describe('ability wording', () => {
 
     it('expands call grants into the granted ability', () => {
         const lookup = createAbilityLookup(abilities)
-        const call = describeAbility(byKey.get('Captains Call')!, lookup).find(b => b.tag === 'CallCaptainJump')!
+        const call = describeAbility(byKey.get('Captains Call')!, { terms, lookup }).find(b => b.tag === 'CallCaptainJump')!
         expect(call.text).toBe("Team gets Captain's Jump")
         expect(call.children?.map(b => b.text)).toEqual(['Increased jump speed by 0.2 (spike mode only)'])
 
-        const wall = describeAbility(byKey.get('Captains Call - Wall')!, lookup).find(b => b.tag === 'CallTeamNerfedBroad')!
+        const wall = describeAbility(byKey.get('Captains Call - Wall')!, { terms, lookup }).find(b => b.tag === 'CallTeamNerfedBroad')!
         expect(wall.children?.map(b => b.text)).toEqual(['Increased block width by 0.5', 'Increased block height by 1', 'Increased block depth by 1'])
     })
 
     it('keeps the grant sentence without children when no lookup is given', () => {
-        const call = describeAbility(byKey.get('Captains Call')!).find(b => b.tag === 'CallEndurance')!
+        const call = describeAbility(byKey.get('Captains Call')!, { terms }).find(b => b.tag === 'CallEndurance')!
         expect(call).toMatchObject({ text: "Team gets Captain's Endurance", grants: "Captain's Endurance" })
         expect(call.children).toBeUndefined()
     })
 
     it('marks guessed wording', () => {
-        const bullets = describeAbility(byKey.get('Block Shatter')!)
+        const bullets = describeAbility(byKey.get('Block Shatter')!, { terms })
         expect(bullets).toEqual([{ category: 'block', text: 'Blocks can shatter', source: 'param', tag: 'BlockShatter', mapped: true, guess: true }])
-        expect(describeAbility(byKey.get('Unstoppable')!)[0].guess).toBe(false)
+        expect(describeAbility(byKey.get('Unstoppable')!, { terms })[0].guess).toBe(false)
     })
 
     it('falls back to humanized raw text for unknown tags', () => {
-        const bullets = describeAbility({ key: 'X', effects: [{ op: 'add', tag: 'NewThing', amount: 2 }], params: { BrandNewFlag: 1 } })
+        const bullets = describeAbility({ key: 'X', effects: [{ op: 'add', tag: 'NewThing', amount: 2 }], params: { BrandNewFlag: 1 } }, { terms })
         expect(bullets.map(b => [b.text, b.mapped])).toEqual([
             ['Increased new thing by 2', false],
             ['Brand new flag', false],
         ])
+    })
+
+    it('renders everything raw with an empty term book', () => {
+        const bullets = describeAbility(byKey.get('Sprinter')!, { terms: EMPTY_TERM_BOOK })
+        expect(bullets.map(b => [b.text, b.mapped])).toEqual([['Increased sprint bonus by 1.5', false]])
+        expect(unmappedTags([byKey.get('Sprinter')!], EMPTY_TERM_BOOK)).toEqual([{ kind: 'effect', tag: 'SprintBonus', uses: 1 }])
+    })
+})
+
+describe('term templates', () => {
+    it('fills every placeholder', () => {
+        expect(renderTemplate('{v} | {pct} | {pctChange}% | {inverse}x', 0.25)).toBe('0.25 | 25% | 75% | 4x')
+    })
+
+    it('leaves unknown placeholders and reports them', () => {
+        expect(renderTemplate('Up to {max}', 2)).toBe('Up to {max}')
+        expect(unknownPlaceholders('{v} then {max} and {pct}')).toEqual(['max'])
     })
 })

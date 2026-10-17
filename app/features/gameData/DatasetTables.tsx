@@ -6,7 +6,8 @@ import { Input } from '@/app/components/ui/input'
 import type { Ability, AttributeEntry, Rarity } from '@/server/domains/gameData/types/datasets'
 import type { AbilityIndexEntry } from '@/server/domains/gameData/types/abilityIndex'
 import { buildAbilityIndex } from '@/server/domains/gameData/helpers/abilityIndex/buildAbilityIndex'
-import type { AbilityBullet } from '@/server/domains/gameData/terms/types'
+import type { AbilityBullet, GameTerm, TermBook } from '@/server/domains/gameData/terms/types'
+import { createTermBook } from '@/server/domains/gameData/terms/template'
 import { createAbilityLookup, describeAbility, type AbilityLookup } from '@/server/domains/gameData/terms/describeAbility'
 import { NO_ROLL_VALUE } from '@/server/domains/gameData/helpers/datasets/crossCheck'
 import { rarityForWeight } from '@/server/domains/gameData/helpers/datasets/rarityForWeight'
@@ -57,6 +58,7 @@ export interface AttributeLinks {
     rarities?: Rarity[]
     physicals?: AttributeEntry[]
     technicals?: AttributeEntry[]
+    terms?: GameTerm[]
 }
 
 const AVAILABILITY_LABEL: Record<AbilityIndexEntry['availability'], string> = {
@@ -66,8 +68,9 @@ const AVAILABILITY_LABEL: Record<AbilityIndexEntry['availability'], string> = {
 }
 
 export function AttributeTable({ entries, links = {} }: { entries: AttributeEntry[]; links?: AttributeLinks }) {
-    const { abilities, rarities } = links
+    const { abilities, rarities, terms } = links
     const lookup = useMemo(() => (abilities ? createAbilityLookup(abilities) : undefined), [abilities])
+    const book = useMemo(() => createTermBook(terms ?? []), [terms])
 
     return (
         <table className="w-full table-fixed text-sm">
@@ -87,14 +90,14 @@ export function AttributeTable({ entries, links = {} }: { entries: AttributeEntr
             </thead>
             <tbody>
                 {entries.map(e => (
-                    <AttributeRow key={e.value} entry={e} lookup={lookup} rarities={rarities} />
+                    <AttributeRow key={e.value} entry={e} lookup={lookup} rarities={rarities} book={book} />
                 ))}
             </tbody>
         </table>
     )
 }
 
-function AttributeRow({ entry, lookup, rarities }: { entry: AttributeEntry; lookup?: AbilityLookup; rarities?: Rarity[] }) {
+function AttributeRow({ entry, lookup, rarities, book }: { entry: AttributeEntry; lookup?: AbilityLookup; rarities?: Rarity[]; book: TermBook }) {
     const noRoll = entry.value === NO_ROLL_VALUE
     const ability = noRoll ? undefined : lookup?.(entry.value)
     const rarity = noRoll || !rarities ? undefined : rarityForWeight(rarities, entry.weight)
@@ -128,7 +131,7 @@ function AttributeRow({ entry, lookup, rarities }: { entry: AttributeEntry; look
                 {noRoll && <span className="text-muted-foreground">No ability rolled</span>}
                 {ability && (ability.description
                     ? <span>{ability.description}</span>
-                    : <BulletList bullets={describeAbility(ability, lookup)} />)}
+                    : <BulletList bullets={describeAbility(ability, { terms: book, lookup })} />)}
             </td>
         </tr>
     )
@@ -140,7 +143,8 @@ export function AbilityTable({ abilities, links = {} }: { abilities: Ability[]; 
     const q = query.trim().toLowerCase()
     const shown = q ? abilities.filter(a => a.key.toLowerCase().includes(q)) : abilities
     const lookup = useMemo(() => createAbilityLookup(abilities), [abilities])
-    const { physicals, technicals, rarities } = links
+    const { physicals, technicals, rarities, terms } = links
+    const book = useMemo(() => createTermBook(terms ?? []), [terms])
     const index = useMemo(
         () => new Map(buildAbilityIndex({ abilities, physicals, technicals, rarities }).map(e => [e.key, e])),
         [abilities, physicals, technicals, rarities],
@@ -182,6 +186,7 @@ export function AbilityTable({ abilities, links = {} }: { abilities: Ability[]; 
                             showSource={!!(physicals || technicals)}
                             rarity={rarityByName.get(index.get(a.key)?.rarity ?? '')}
                             lookup={lookup}
+                            book={book}
                             expanded={expanded === a.key}
                             onToggle={() => setExpanded(e => (e === a.key ? null : a.key))}
                         />
@@ -218,12 +223,13 @@ interface AbilityRowProps {
     showSource: boolean
     rarity?: Rarity
     lookup: AbilityLookup
+    book: TermBook
     expanded: boolean
     onToggle: () => void
 }
 
-function AbilityRow({ ability, entry, showSource, rarity, lookup, expanded, onToggle }: AbilityRowProps) {
-    const bullets = useMemo(() => describeAbility(ability, lookup), [ability, lookup])
+function AbilityRow({ ability, entry, showSource, rarity, lookup, book, expanded, onToggle }: AbilityRowProps) {
+    const bullets = useMemo(() => describeAbility(ability, { terms: book, lookup }), [ability, lookup, book])
     const kinds = [
         ability.active && 'Active',
         ability.toggle && 'Toggle',

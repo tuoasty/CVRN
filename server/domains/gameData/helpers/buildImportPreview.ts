@@ -1,5 +1,6 @@
 import type { Ability, DatasetIssue, GameDatasetKind, GameDatasetPayloads } from '../types/datasets'
 import { unmappedTags } from '../terms/describeAbility'
+import type { TermBook } from '../terms/types'
 import type { GameDataPreview, IgnoredStatement, PreviewDataset } from '../types/preview'
 import { parseLuaData } from './lua/parseLuaData'
 import { crossCheck } from './datasets/crossCheck'
@@ -11,11 +12,11 @@ export interface ImportAnalysis {
     sources: Partial<Record<GameDatasetKind, string>>
 }
 
-export function buildImportPreview(text: string, stored: Partial<GameDatasetPayloads> = {}): GameDataPreview {
-    return analyzeImport(text, stored).preview
+export function buildImportPreview(text: string, stored: Partial<GameDatasetPayloads> = {}, terms?: TermBook): GameDataPreview {
+    return analyzeImport(text, stored, terms).preview
 }
 
-export function analyzeImport(text: string, stored: Partial<GameDatasetPayloads> = {}): ImportAnalysis {
+export function analyzeImport(text: string, stored: Partial<GameDatasetPayloads> = {}, terms?: TermBook): ImportAnalysis {
     const parsed = parseLuaData(text)
     if (!parsed.ok) return { preview: { status: 'parse_error', error: parsed.error }, sources: {} }
 
@@ -38,8 +39,8 @@ export function analyzeImport(text: string, stored: Partial<GameDatasetPayloads>
             })
         }
         const { payload, issues } = normalizeDataset(kind, statement.value)
-        if (kind === 'abilities') {
-            for (const u of unmappedTags(payload as Ability[])) {
+        if (kind === 'abilities' && terms) {
+            for (const u of unmappedTags(payload as Ability[], terms)) {
                 issues.push({
                     level: 'warning',
                     entry: u.tag,
