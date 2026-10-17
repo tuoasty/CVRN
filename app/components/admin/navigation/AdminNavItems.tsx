@@ -15,9 +15,11 @@ import { cn } from "@/lib/utils";
 const ACTIVE_UNDERLINE = "text-foreground font-semibold underline decoration-2 underline-offset-[6px]";
 const ACTIVE_FILL = "bg-accent text-foreground font-semibold";
 const INACTIVE = "text-muted-foreground";
+const isCurrent = (pathname: string, item: NavItem) =>
+    pathname === item.href || (item.matchPrefix === true && pathname.startsWith(`${item.href}/`));
 const HOVER_UNDERLINE = "hover:bg-transparent dark:hover:bg-transparent hover:text-foreground hover:underline hover:decoration-2 hover:decoration-muted-foreground hover:underline-offset-[6px]";
 
-type NavItem = { href: string; label: string; superAdminOnly?: boolean };
+type NavItem = { href: string; label: string; superAdminOnly?: boolean; matchPrefix?: boolean };
 
 const FLAT_ITEMS: NavItem[] = [
     { href: "/admin/dashboard", label: "Dashboard" },
@@ -26,7 +28,7 @@ const FLAT_ITEMS: NavItem[] = [
     { href: "/admin/media",     label: "Media" },
     { href: "/admin/articles",  label: "Articles" },
     { href: "/admin/updates",   label: "Updates" },
-    { href: "/admin/game-data", label: "Game Data" },
+    { href: "/admin/game-data", label: "Information", matchPrefix: true },
 ];
 
 const DROPDOWN_GROUPS: { label: string; items: NavItem[] }[] = [
@@ -99,7 +101,7 @@ export default function AdminNavItems({
                         asChild
                         variant="ghost"
                         size="sm"
-                        className={cn("w-full justify-start rounded-sm text-sm", pathname === item.href ? ACTIVE_FILL : INACTIVE)}
+                        className={cn("w-full justify-start rounded-sm text-sm", isCurrent(pathname, item) ? ACTIVE_FILL : INACTIVE)}
                     >
                         <Link href={item.href} onClick={onNavigate}>{item.label}</Link>
                     </Button>
@@ -116,14 +118,14 @@ export default function AdminNavItems({
                     asChild
                     variant="ghost"
                     size="sm"
-                    className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : cn(INACTIVE, HOVER_UNDERLINE))}
+                    className={cn("rounded-sm text-sm", isCurrent(pathname, item) ? ACTIVE_UNDERLINE : cn(INACTIVE, HOVER_UNDERLINE))}
                 >
                     <Link href={item.href}>{item.label}</Link>
                 </Button>
             ))}
 
             {visibleDropdownGroups.map((group) => {
-                const isActive = group.items.some(i => pathname === i.href);
+                const isActive = group.items.some(i => isCurrent(pathname, i));
 
                 if (group.items.length === 1) {
                     const item = group.items[0];
@@ -133,7 +135,7 @@ export default function AdminNavItems({
                             asChild
                             variant="ghost"
                             size="sm"
-                            className={cn("rounded-sm text-sm", pathname === item.href ? ACTIVE_UNDERLINE : cn(INACTIVE, HOVER_UNDERLINE))}
+                            className={cn("rounded-sm text-sm", isCurrent(pathname, item) ? ACTIVE_UNDERLINE : cn(INACTIVE, HOVER_UNDERLINE))}
                         >
                             <Link href={item.href}>{item.label}</Link>
                         </Button>

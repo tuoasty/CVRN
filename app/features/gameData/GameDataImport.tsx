@@ -26,9 +26,10 @@ interface GameDataImportProps {
     initialStored: StoredGameDatasets
     terms: GameTerm[]
     storedError: string | null
+    onStoredChange?: (stored: StoredGameDatasets) => void
 }
 
-export default function GameDataImport({ initialStored, terms, storedError }: GameDataImportProps) {
+export default function GameDataImport({ initialStored, terms, storedError, onStoredChange }: GameDataImportProps) {
     const [stored, setStored] = useState(initialStored)
     const [viewing, setViewing] = useState<GameDatasetKind | null>(null)
     const [text, setText] = useState('')
@@ -64,6 +65,7 @@ export default function GameDataImport({ initialStored, terms, storedError }: Ga
             const result = await publishGameDataImportAction({ text: previewedText })
             if (!result.ok) { toast.error(result.error.message); return }
             setStored(result.value.stored)
+            onStoredChange?.(result.value.stored)
             toast.success(result.value.published.length > 0
                 ? `Published ${result.value.published.map(k => DATASET_LABELS[k]).join(', ')}`
                 : 'Nothing changed, nothing published')

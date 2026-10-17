@@ -70,12 +70,15 @@ function describe(ability: Ability, context: DescribeContext, expandGrants: bool
     return [...describeActivation(ability), ...sorted]
 }
 
+export function describeEffectMain(effect: AbilityEffect, terms: TermBook): string {
+    const term = terms.effects.get(effect.tag)
+    if (term?.template) return renderTemplate(term.template, effect.amount)
+    return describeEffectGeneric(term?.label ?? humanize(effect.tag).toLowerCase(), effect.amount, effect.op, term?.unit)
+}
+
 function describeEffect(effect: AbilityEffect, terms: TermBook): AbilityBullet {
     const term = terms.effects.get(effect.tag)
-    const label = term?.label ?? humanize(effect.tag).toLowerCase()
-    const main = term?.template
-        ? renderTemplate(term.template, effect.amount)
-        : describeEffectGeneric(label, effect.amount, effect.op, term?.unit)
+    const main = describeEffectMain(effect, terms)
 
     const qualifiers: string[] = []
     let guess = !!term && !term.verified

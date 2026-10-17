@@ -3,7 +3,7 @@
 import {useRef, type KeyboardEvent, type ReactNode} from "react";
 import {cn} from "@/lib/utils";
 
-export type ViewTab<T extends string> = {value: T; label: string};
+export type ViewTab<T extends string> = {value: T; label: ReactNode};
 
 const WRAP = {
     sm: {
