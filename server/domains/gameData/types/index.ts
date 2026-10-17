@@ -18,6 +18,7 @@ export type {
     NormalizeResult,
 } from './datasets'
 export { GAME_DATASET_KINDS } from './datasets'
+export type { AbilityAvailability, AbilityGrant, AbilityIndexEntry, VariantMatch } from './abilityIndex'
 export type { PreviewDataset, IgnoredStatement, GameDataPreview, PublishGameDataResult, StoredGameDatasets } from './preview'
 export type { UpsertGameDatasetDto } from './stored'
 export type { GameDataTextInput } from './schemas'

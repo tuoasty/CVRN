@@ -49,7 +49,7 @@ export default function DatasetPreviewCard({ dataset, links }: { dataset: Previe
                 <div className="border-t border-border">
                     {dataset.kind === 'rarities' && <RarityTable rarities={dataset.payload} />}
                     {(dataset.kind === 'physicals' || dataset.kind === 'technicals') && <AttributeTable entries={dataset.payload} links={links} />}
-                    {dataset.kind === 'abilities' && <AbilityTable abilities={dataset.payload} />}
+                    {dataset.kind === 'abilities' && <AbilityTable abilities={dataset.payload} links={links} />}
                 </div>
             )}
         </div>

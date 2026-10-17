@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react'
 import { Badge } from '@/app/components/ui/badge'
 import { Input } from '@/app/components/ui/input'
 import type { Ability, AttributeEntry, Rarity } from '@/server/domains/gameData/types/datasets'
+import type { AbilityIndexEntry } from '@/server/domains/gameData/types/abilityIndex'
+import { buildAbilityIndex } from '@/server/domains/gameData/helpers/abilityIndex/buildAbilityIndex'
 import type { AbilityBullet } from '@/server/domains/gameData/terms/types'
 import { createAbilityLookup, describeAbility, type AbilityLookup } from '@/server/domains/gameData/terms/describeAbility'
 import { NO_ROLL_VALUE } from '@/server/domains/gameData/helpers/datasets/crossCheck'
@@ -53,6 +55,14 @@ export function RarityTable({ rarities }: { rarities: Rarity[] }) {
 export interface AttributeLinks {
     abilities?: Ability[]
     rarities?: Rarity[]
+    physicals?: AttributeEntry[]
+    technicals?: AttributeEntry[]
+}
+
+const AVAILABILITY_LABEL: Record<AbilityIndexEntry['availability'], string> = {
+    physical: 'Physical',
+    technical: 'Technical',
+    exclusive: 'Exclusive',
 }
 
 export function AttributeTable({ entries, links = {} }: { entries: AttributeEntry[]; links?: AttributeLinks }) {
@@ -124,12 +134,18 @@ function AttributeRow({ entry, lookup, rarities }: { entry: AttributeEntry; look
     )
 }
 
-export function AbilityTable({ abilities }: { abilities: Ability[] }) {
+export function AbilityTable({ abilities, links = {} }: { abilities: Ability[]; links?: AttributeLinks }) {
     const [query, setQuery] = useState('')
     const [expanded, setExpanded] = useState<string | null>(null)
     const q = query.trim().toLowerCase()
     const shown = q ? abilities.filter(a => a.key.toLowerCase().includes(q)) : abilities
     const lookup = useMemo(() => createAbilityLookup(abilities), [abilities])
+    const { physicals, technicals, rarities } = links
+    const index = useMemo(
+        () => new Map(buildAbilityIndex({ abilities, physicals, technicals, rarities }).map(e => [e.key, e])),
+        [abilities, physicals, technicals, rarities],
+    )
+    const rarityByName = useMemo(() => new Map((rarities ?? []).map(r => [r.name, r])), [rarities])
 
     return (
         <div>
@@ -138,7 +154,9 @@ export function AbilityTable({ abilities }: { abilities: Ability[] }) {
             </div>
             <table className="w-full table-fixed text-sm">
                 <colgroup>
-                    <col className="w-40" />
+                    <col className="w-48" />
+                    <col className="w-24" />
+                    <col className="w-28" />
                     <col className="w-24" />
                     <col className="w-16" />
                     <col className="w-16" />
@@ -147,6 +165,8 @@ export function AbilityTable({ abilities }: { abilities: Ability[] }) {
                 <thead>
                     <tr className="border-b border-border">
                         <th className={TH}>Ability</th>
+                        <th className={cn(TH, 'px-2')}>Source</th>
+                        <th className={cn(TH, 'px-2')}>Rarity</th>
                         <th className={cn(TH, 'px-2')}>Kind</th>
                         <th className={cn(TH, 'px-2 text-right')}>Eff.</th>
                         <th className={cn(TH, 'px-2 text-right')}>Par.</th>
@@ -158,6 +178,9 @@ export function AbilityTable({ abilities }: { abilities: Ability[] }) {
                         <AbilityRow
                             key={a.key}
                             ability={a}
+                            entry={index.get(a.key)}
+                            showSource={!!(physicals || technicals)}
+                            rarity={rarityByName.get(index.get(a.key)?.rarity ?? '')}
                             lookup={lookup}
                             expanded={expanded === a.key}
                             onToggle={() => setExpanded(e => (e === a.key ? null : a.key))}
@@ -189,7 +212,17 @@ function BulletList({ bullets }: { bullets: AbilityBullet[] }) {
     )
 }
 
-function AbilityRow({ ability, lookup, expanded, onToggle }: { ability: Ability; lookup: AbilityLookup; expanded: boolean; onToggle: () => void }) {
+interface AbilityRowProps {
+    ability: Ability
+    entry?: AbilityIndexEntry
+    showSource: boolean
+    rarity?: Rarity
+    lookup: AbilityLookup
+    expanded: boolean
+    onToggle: () => void
+}
+
+function AbilityRow({ ability, entry, showSource, rarity, lookup, expanded, onToggle }: AbilityRowProps) {
     const bullets = useMemo(() => describeAbility(ability, lookup), [ability, lookup])
     const kinds = [
         ability.active && 'Active',
@@ -202,7 +235,26 @@ function AbilityRow({ ability, lookup, expanded, onToggle }: { ability: Ability;
     return (
         <>
             <tr onClick={onToggle} className="cursor-pointer border-b border-border hover:bg-muted/30">
-                <td className={cn(TD, 'font-medium break-words')}>{ability.key}</td>
+                <td className={cn(TD, 'break-words')}>
+                    <span className="font-medium">{ability.key}</span>
+                    {entry?.variantOf && (
+                        <span className="block text-xs text-muted-foreground">
+                            Variant of {entry.variantOf}
+                            {entry.modifier && <span className="ml-1">({entry.modifier})</span>}
+                        </span>
+                    )}
+                </td>
+                <td className={cn(TD, 'px-2', entry?.availability === 'exclusive' && 'text-muted-foreground')}>
+                    {entry && showSource && AVAILABILITY_LABEL[entry.availability]}
+                </td>
+                <td className={cn(TD, 'px-2')}>
+                    {rarity && (
+                        <span className="inline-flex items-center gap-2">
+                            <Swatch color={rarity.color} />
+                            {rarity.name}
+                        </span>
+                    )}
+                </td>
                 <td className={cn(TD, 'px-2')}>
                     <span className="flex flex-wrap gap-1">
                         {kinds.map(k => (
@@ -220,7 +272,7 @@ function AbilityRow({ ability, lookup, expanded, onToggle }: { ability: Ability;
             </tr>
             {expanded && (
                 <tr className="border-b border-border bg-muted/20">
-                    <td colSpan={5} className="px-4 py-3 space-y-3">
+                    <td colSpan={7} className="px-4 py-3 space-y-3">
                         {ability.description && (
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Generated wording</p>

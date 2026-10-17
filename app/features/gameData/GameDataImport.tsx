@@ -4,7 +4,7 @@ import { useRef, useState, type DragEvent } from 'react'
 import { FileUp } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { previewGameDataImportAction, publishGameDataImportAction } from '@/app/actions/gameData.actions'
-import type { Ability, GameDatasetKind, Rarity } from '@/server/domains/gameData/types/datasets'
+import type { Ability, AttributeEntry, GameDatasetKind, Rarity } from '@/server/domains/gameData/types/datasets'
 import type { LuaParseError } from '@/server/domains/gameData/types/luaValue'
 import type { GameDataPreview, StoredGameDatasets } from '@/server/domains/gameData/types/preview'
 import { GAME_DATASET_KINDS } from '@/server/domains/gameData/types/datasets'
@@ -164,6 +164,8 @@ function PreviewResult({ preview, stored }: { preview: Extract<GameDataPreview, 
     const links = {
         abilities: (pasted('abilities') as Ability[] | undefined) ?? stored.payloads.abilities,
         rarities: (pasted('rarities') as Rarity[] | undefined) ?? stored.payloads.rarities,
+        physicals: (pasted('physicals') as AttributeEntry[] | undefined) ?? stored.payloads.physicals,
+        technicals: (pasted('technicals') as AttributeEntry[] | undefined) ?? stored.payloads.technicals,
     }
 
     return (

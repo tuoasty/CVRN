@@ -7,7 +7,7 @@ import { AbilityTable, AttributeTable, RarityTable } from './DatasetTables'
 
 export default function SavedDatasetPanel({ kind, stored }: { kind: GameDatasetKind; stored: StoredGameDatasets }) {
     const { payloads } = stored
-    const links = { abilities: payloads.abilities, rarities: payloads.rarities }
+    const links = { abilities: payloads.abilities, rarities: payloads.rarities, physicals: payloads.physicals, technicals: payloads.technicals }
 
     return (
         <div className="panel">
@@ -16,7 +16,7 @@ export default function SavedDatasetPanel({ kind, stored }: { kind: GameDatasetK
                 <span className="font-mono text-xs text-muted-foreground">{DATASET_ROOTS[kind]}</span>
             </div>
             {kind === 'rarities' && payloads.rarities && <RarityTable rarities={payloads.rarities} />}
-            {kind === 'abilities' && payloads.abilities && <AbilityTable abilities={payloads.abilities} />}
+            {kind === 'abilities' && payloads.abilities && <AbilityTable abilities={payloads.abilities} links={links} />}
             {kind === 'physicals' && payloads.physicals && <AttributeTable entries={payloads.physicals} links={links} />}
             {kind === 'technicals' && payloads.technicals && <AttributeTable entries={payloads.technicals} links={links} />}
         </div>
