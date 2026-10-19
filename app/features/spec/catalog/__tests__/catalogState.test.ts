@@ -27,6 +27,7 @@ function spec(overrides: Partial<SpecWithAllRegions> = {}): SpecWithAllRegions {
         secondary_required: 0,
         is_vaulted: false,
         game_key: null,
+        photo_url: null,
         created_at: '',
         updated_at: '',
         requirements: [],

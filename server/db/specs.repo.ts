@@ -62,6 +62,27 @@ export async function findSpecCatalog(supabase: DBClient): Promise<Result<Spec[]
     return Ok(data ?? []);
 }
 
+export async function findSpecById(supabase: DBClient, id: string): Promise<Result<Spec | null>> {
+    const {data, error} = await supabase.from("specs").select("*").eq("id", id).maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
+export async function updateSpecPhoto(
+    supabase: DBClient,
+    id: string,
+    photoUrl: string | null
+): Promise<Result<Spec>> {
+    const {data, error} = await supabase
+        .from("specs")
+        .update({photo_url: photoUrl, updated_at: new Date().toISOString()})
+        .eq("id", id)
+        .select()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
 export async function upsertSpecIdentity(
     supabase: DBClient,
     p: {id?: string; name: string; stars: number; position: string; height: number}

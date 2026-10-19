@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { saveGameTermAction, setAbilityDescriptionSourceAction, setGameTermVerifiedAction } from '@/app/actions/gameData.actions'
-import { saveSpecFactsAction } from '@/app/actions/spec.actions'
+import { removeSpecPhotoAction, saveSpecFactsAction, uploadSpecPhotoAction } from '@/app/actions/spec.actions'
 import { toast } from '@/app/utils/toast'
 import { buildAbilityIndex } from '@/server/domains/gameData/helpers/abilityIndex/buildAbilityIndex'
 import { buildBuildIndex } from '@/server/domains/gameData/helpers/builds/buildBuildIndex'
@@ -50,6 +50,8 @@ export interface InformationState {
     replaceSpecs: (next: SpecWithAllRegions[]) => void
     replaceSkips: (next: string[]) => void
     saveSpecFacts: (specId: string, facts: { stars?: SpecStars; position?: PositionCode }) => Promise<boolean>
+    saveSpecPhoto: (specId: string, file: File) => Promise<boolean>
+    removeSpecPhoto: (specId: string) => Promise<boolean>
 }
 
 const InformationContext = createContext<InformationState | null>(null)
@@ -135,6 +137,54 @@ export function InformationProvider({ initialStored, initialTerms, initialSettin
         return true
     }, [specs])
 
+    const setSpecPhoto = useCallback((specId: string, photoUrl: string | null) => {
+        setSpecs(list => list.map(s => (s.id === specId ? { ...s, photo_url: photoUrl } : s)))
+    }, [])
+
+    const saveSpecPhoto = useCallback(async (specId: string, file: File) => {
+        const previous = specs.find(s => s.id === specId)
+        if (!previous) return false
+        const preview = URL.createObjectURL(file)
+        setSpecPhoto(specId, preview)
+        const form = new FormData()
+        form.append('photo', file)
+        try {
+            const result = await uploadSpecPhotoAction(specId, form)
+            if (!result.ok) {
+                setSpecPhoto(specId, previous.photo_url)
+                toast.error('Photo not saved', result.error.message)
+                return false
+            }
+            setSpecPhoto(specId, result.value.photoUrl)
+            return true
+        } catch (err) {
+            setSpecPhoto(specId, previous.photo_url)
+            toast.error('Photo not saved', err instanceof Error ? err.message : undefined)
+            return false
+        } finally {
+            URL.revokeObjectURL(preview)
+        }
+    }, [specs, setSpecPhoto])
+
+    const removeSpecPhoto = useCallback(async (specId: string) => {
+        const previous = specs.find(s => s.id === specId)
+        if (!previous) return false
+        setSpecPhoto(specId, null)
+        try {
+            const result = await removeSpecPhotoAction(specId)
+            if (!result.ok) {
+                setSpecPhoto(specId, previous.photo_url)
+                toast.error('Photo not removed', result.error.message)
+                return false
+            }
+            return true
+        } catch (err) {
+            setSpecPhoto(specId, previous.photo_url)
+            toast.error('Photo not removed', err instanceof Error ? err.message : undefined)
+            return false
+        }
+    }, [specs, setSpecPhoto])
+
     const saveTerm = useCallback(async (input: SaveGameTermInput) => {
         const previous = termList.find(sameTerm(input.kind, input.tag))
         const optimistic = normalizeTermDraft({ ...input, verified: previous?.verified ?? false, updatedBy: userId, updatedAt: new Date().toISOString() })
@@ -198,7 +248,9 @@ export function InformationProvider({ initialStored, initialTerms, initialSettin
         replaceSpecs: setSpecs,
         replaceSkips: setSkippedList,
         saveSpecFacts,
-    }), [stored, data, wording, termList, settings, userId, loadError, saveTerm, setVerified, setDescriptionSource, specData, specs, initialRegions, saveSpecFacts])
+        saveSpecPhoto,
+        removeSpecPhoto,
+    }), [stored, data, wording, termList, settings, userId, loadError, saveTerm, setVerified, setDescriptionSource, specData, specs, initialRegions, saveSpecFacts, saveSpecPhoto, removeSpecPhoto])
 
     return <InformationContext.Provider value={value}>{children}</InformationContext.Provider>
 }

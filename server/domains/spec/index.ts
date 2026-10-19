@@ -9,6 +9,8 @@ export {saveSpecFacts} from "./commands/saveSpecFacts";
 export {saveRegionRequirements} from "./commands/saveRegionRequirements";
 export {importSpecRequirements} from "./commands/importSpecRequirements";
 export {removeSpec} from "./commands/removeSpec";
+export {storeSpecPhoto} from "./commands/storeSpecPhoto";
+export {removeSpecPhoto} from "./commands/removeSpecPhoto";
 export {generateSpecSnapshot} from "./commands/generateSpecSnapshot";
 export {buildSpecSnapshot} from "./helpers/buildSpecSnapshot";
 export {savePlacementBonus} from "./commands/savePlacementBonus";

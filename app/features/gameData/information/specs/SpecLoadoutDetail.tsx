@@ -13,6 +13,7 @@ import { SPEC_STARS, type SpecStars } from '@/server/domains/gameData/types/spec
 import { useInformation } from '../InformationProvider'
 import { useUserRole } from '@/app/admin/AdminRoleProvider'
 import KitSection from './KitSection'
+import SpecPhotoControl from './SpecPhotoControl'
 
 const STAR_OPTIONS = SPEC_STARS.map(s => ({ value: String(s) as `${SpecStars}`, label: String(s) }))
 const POSITION_OPTIONS = POSITIONS.map(p => ({ value: p.code, label: p.shortLabel }))
@@ -33,6 +34,7 @@ export default function SpecLoadoutDetail({ loadout }: { loadout: SpecLoadout })
     const role = useUserRole()
     const canImport = role === 'admin' || role === 'super_admin'
     const showRequirements = role !== 'information_manager'
+    const canPhoto = role === 'admin' || role === 'super_admin' || role === 'information_manager'
     const spec = specByGameKey.get(loadout.key)
     const kit = useMemo(() => resolveKit(loadout, kitResolver), [loadout, kitResolver])
     const tunes = useMemo(() => resolveTuning(loadout, kit, abilityByKey), [loadout, kit, abilityByKey])
@@ -55,6 +57,11 @@ export default function SpecLoadoutDetail({ loadout }: { loadout: SpecLoadout })
             <dl className="mt-5 grid grid-cols-[120px_1fr] items-baseline gap-x-4 gap-y-2.5 text-sm">
                 {spec && (
                     <>
+                        {canPhoto && (
+                            <Fact label="Photo">
+                                <SpecPhotoControl spec={spec} />
+                            </Fact>
+                        )}
                         <Fact label="Stars">
                             <InlineSwitch
                                 label="Stars"
