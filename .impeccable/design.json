@@ -1,131 +1,376 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "generatedAt": "2026-10-19T07:17:09+00:00",
   "title": "Design System: CVRN",
   "extensions": {
     "colorMeta": {
       "action-blue": {
         "role": "primary",
         "displayName": "Action Blue",
-        "canonical": "hsl(217 91% 60%)",
-        "tonalRamp": ["#1E3A8A", "#1E40AF", "#1D4ED8", "#2563EB", "#3B82F6", "#60A5FA", "#93C5FD", "#DBEAFE"]
+        "canonical": "oklch(51.8% 0.223 266.3)",
+        "tonalRamp": [
+          "#010035",
+          "#070179",
+          "#1121B5",
+          "#274CDD",
+          "#4775FF",
+          "#7BA1FF",
+          "#B1C9FE",
+          "#E7EFFF"
+        ]
+      },
+      "action-blue-ink": {
+        "role": "primary",
+        "displayName": "Action Blue Ink",
+        "canonical": "oklch(100.0% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "location-yellow": {
         "role": "secondary",
         "displayName": "Location Yellow",
-        "canonical": "hsl(48 96% 53%)",
-        "tonalRamp": ["#713F12", "#854D0E", "#A16207", "#CA8A04", "#EAB308", "#FACC15", "#FDE047", "#FEF08A"]
+        "canonical": "oklch(74.5% 0.149 69.2)",
+        "tonalRamp": [
+          "#140800",
+          "#361F01",
+          "#5D3903",
+          "#875402",
+          "#B47206",
+          "#E09120",
+          "#FEBA68",
+          "#FEEBD6"
+        ]
+      },
+      "location-yellow-ink": {
+        "role": "secondary",
+        "displayName": "Location Yellow Ink",
+        "canonical": "oklch(18.9% 0.026 77.5)",
+        "tonalRamp": [
+          "#110A01",
+          "#2C2417",
+          "#4A4033",
+          "#6A6051",
+          "#8B8171",
+          "#AEA393",
+          "#D3C7B7",
+          "#F8EDDC"
+        ]
       },
       "destructive-red": {
         "role": "tertiary",
         "displayName": "Destructive Red",
-        "canonical": "hsl(0 84% 60%)",
-        "tonalRamp": ["#7F1D1D", "#991B1B", "#B91C1C", "#DC2626", "#EF4444", "#F87171", "#FCA5A5", "#FECACA"]
+        "canonical": "oklch(63.7% 0.208 25.3)",
+        "tonalRamp": [
+          "#1E0001",
+          "#4C0106",
+          "#800210",
+          "#B8001B",
+          "#E4393B",
+          "#FE736C",
+          "#FFB3AB",
+          "#FEE9E6"
+        ]
+      },
+      "success-green": {
+        "role": "tertiary",
+        "displayName": "Success Green",
+        "canonical": "oklch(70.1% 0.138 157.4)",
+        "tonalRamp": [
+          "#000F06",
+          "#002E19",
+          "#024F2F",
+          "#017446",
+          "#169A60",
+          "#4ABF82",
+          "#72E4A5",
+          "#C5FFDB"
+        ]
+      },
+      "success-green-ink": {
+        "role": "tertiary",
+        "displayName": "Success Green Ink",
+        "canonical": "oklch(100.0% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "page-light": {
         "role": "neutral",
         "displayName": "Page (light)",
-        "canonical": "hsl(0 0% 98%)",
-        "tonalRamp": ["#18181B", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#D4D4D8", "#FAFAFA"]
+        "canonical": "oklch(96.7% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "page-dark": {
         "role": "neutral",
         "displayName": "Page (dark)",
-        "canonical": "hsl(240 6% 6%)",
-        "tonalRamp": ["#0E0E10", "#161618", "#1B1B1D", "#27272A", "#3F3F46", "#71717A", "#A1A1AA", "#F4F4F5"]
+        "canonical": "oklch(14.5% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "surface-light": {
         "role": "neutral",
         "displayName": "Surface (light)",
-        "canonical": "hsl(0 0% 100%)",
-        "tonalRamp": ["#18181B", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#E4E4E7", "#FFFFFF"]
+        "canonical": "oklch(100.0% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "surface-dark": {
         "role": "neutral",
         "displayName": "Surface (dark)",
-        "canonical": "hsl(240 4% 9%)",
-        "tonalRamp": ["#0E0E10", "#161618", "#1B1B1D", "#27272A", "#3F3F46", "#71717A", "#A1A1AA", "#F4F4F5"]
-      },
-      "recessed-light": {
-        "role": "neutral",
-        "displayName": "Recessed (light)",
-        "canonical": "hsl(240 5% 96%)",
-        "tonalRamp": ["#18181B", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#D4D4D8", "#F4F4F5"]
-      },
-      "recessed-dark": {
-        "role": "neutral",
-        "displayName": "Recessed (dark)",
-        "canonical": "hsl(240 4% 16%)",
-        "tonalRamp": ["#18181B", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#D4D4D8", "#F4F4F5"]
+        "canonical": "oklch(19.1% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "ink-light": {
         "role": "neutral",
         "displayName": "Ink (light)",
-        "canonical": "hsl(240 5% 6%)",
-        "tonalRamp": ["#0F0F10", "#18181B", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#D4D4D8"]
+        "canonical": "oklch(22.6% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "ink-dark": {
         "role": "neutral",
         "displayName": "Ink (dark)",
-        "canonical": "hsl(240 5% 96%)",
-        "tonalRamp": ["#18181B", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#D4D4D8", "#F4F4F5"]
+        "canonical": "oklch(97.0% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "recessed-light": {
+        "role": "neutral",
+        "displayName": "Recessed (light)",
+        "canonical": "oklch(94.9% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "recessed-dark": {
+        "role": "neutral",
+        "displayName": "Recessed (dark)",
+        "canonical": "oklch(23.9% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "quiet-ink-light": {
         "role": "neutral",
         "displayName": "Quiet Ink (light)",
-        "canonical": "hsl(240 4% 46%)",
-        "tonalRamp": ["#18181B", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#D4D4D8", "#F4F4F5"]
+        "canonical": "oklch(48.2% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "quiet-ink-dark": {
         "role": "neutral",
         "displayName": "Quiet Ink (dark)",
-        "canonical": "hsl(240 5% 65%)",
-        "tonalRamp": ["#18181B", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#D4D4D8", "#F4F4F5"]
+        "canonical": "oklch(68.3% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "rule-light": {
         "role": "neutral",
         "displayName": "Rule (light)",
-        "canonical": "hsl(240 6% 90%)",
-        "tonalRamp": ["#18181B", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#E4E4E7", "#FAFAFA"]
+        "canonical": "oklch(88.5% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
       "rule-dark": {
         "role": "neutral",
         "displayName": "Rule (dark)",
-        "canonical": "hsl(240 4% 16%)",
-        "tonalRamp": ["#0E0E10", "#161618", "#27272A", "#3F3F46", "#52525B", "#71717A", "#A1A1AA", "#F4F4F5"]
+        "canonical": "oklch(28.9% 0 0)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       }
     },
     "typographyMeta": {
-      "headline": { "displayName": "Headline", "purpose": "Page titles. The largest type anywhere in the product; nothing sits above it." },
-      "title": { "displayName": "Title", "purpose": "Section headings within a page." },
-      "subtitle": { "displayName": "Subtitle", "purpose": "Sub-section headings and panel titles." },
-      "body": { "displayName": "Body", "purpose": "The workhorse: table cells, form values, descriptions, nav items. Prose caps at 65-75ch." },
-      "label": { "displayName": "Label", "purpose": "Uppercase column headers, stat labels, metadata keys. Always Quiet Ink." },
-      "data": { "displayName": "Data", "purpose": "Every numeric value that sits in a column. Monospace with tabular figures, always." }
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles. The largest type in the entire product; there is nothing above it."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings within a page."
+      },
+      "subtitle": {
+        "displayName": "Subtitle",
+        "purpose": "Sub-section headings and panel titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "The workhorse. Table cells, form values, descriptions, nav items. Prose caps at 65-75ch; tabular content runs as wide as the data requires."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Column headers, stat labels, metadata keys. Uppercase, always in Quiet Ink."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Every numeric value that sits in a column. IBM Plex Mono with tabular figures."
+      }
     },
     "shadows": [
       {
         "name": "overlay",
         "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
-        "purpose": "Dialogs, sheets, dropdowns, popovers. The only shadow that appears at rest, and only on things that genuinely float above the page."
+        "purpose": "Dialogs, sheets, dropdown menus, popovers. The only shadow that appears at rest, and only on things that float."
       },
       {
         "name": "hover-lift",
         "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-        "purpose": "Interactive panels on :hover and :focus-visible only. Never at rest. Pairs with a border shift to Action Blue and a 1px translate."
+        "purpose": "Interactive panels on :hover and :focus-visible only. Never at rest."
       }
     ],
     "motion": [
-      { "name": "duration-fast", "value": "150ms", "purpose": "Default for color, border, and background transitions on controls and rows." },
-      { "name": "duration-standard", "value": "200ms", "purpose": "Interactive panel hover: shadow, border, and transform together." },
-      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for all state transitions. No bounce, no elastic anywhere in the system." }
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Default for color, border, opacity and shadow transitions on controls, rows and interactive panels."
+      },
+      {
+        "name": "duration-standard",
+        "value": "200ms",
+        "purpose": "Reveals: expanding rows, the Information nav panel (opacity plus a 4px rise)."
+      },
+      {
+        "name": "ease-out-quint",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Entrances and height reveals. No bounce, no elastic anywhere in the system."
+      },
+      {
+        "name": "row-flash",
+        "value": "0.9s ease-out",
+        "purpose": "A just-changed row fades from Action Blue at 18% to transparent. Disabled under prefers-reduced-motion."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "xl", "value": "1280px" },
-      { "name": "2xl", "value": "1536px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px"
+      }
     ]
   },
   "components": [
@@ -133,114 +378,172 @@
       "name": "Panel",
       "kind": "card",
       "refersTo": "panel",
-      "description": "The canonical container. Square corners, 1px rule border, no resting shadow.",
-      "html": "<div class=\"ds-panel\"><div class=\"ds-panel-title\">Week 6 Results</div><div class=\"ds-panel-body\">Six matches completed. Standings updated 4 minutes ago.</div></div>",
-      "css": ".ds-panel { background: #FFFFFF; color: #0F0F10; border: 1px solid #E4E4E7; border-radius: 0; padding: 16px; font-family: Geist, ui-sans-serif, system-ui, sans-serif; } .ds-panel-title { font-size: 1.125rem; font-weight: 500; line-height: 1.75rem; margin-bottom: 4px; } .ds-panel-body { font-size: 0.875rem; line-height: 1.25rem; color: #71717A; }"
+      "description": "The canonical and only container. Square corners, 1px Rule border, Surface on Page, no resting shadow.",
+      "html": "<div class=\"ds-panel\"><div class=\"ds-panel-title\">Week 6 Results</div><div class=\"ds-panel-body\">Six matches completed. Standings updated <span class=\"ds-num\">4</span> minutes ago.</div></div>",
+      "css": ".ds-panel { background: #FFFFFF; color: #1C1C1C; border: 1px solid #D9D9D9; border-radius: 0; padding: 16px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; max-width: 360px; } .ds-panel-title { font-size: 1.125rem; font-weight: 500; line-height: 1.75rem; margin-bottom: 4px; } .ds-panel-body { font-size: 0.875rem; line-height: 1.25rem; color: #5E5E5E; } .ds-num { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }"
     },
     {
       "name": "Interactive Panel",
       "kind": "card",
       "refersTo": "panel-interactive",
-      "description": "A panel that navigates. Announces clickability at rest with a full-strength border and a trailing chevron; confirms on hover with a lift.",
-      "html": "<a class=\"ds-panel-interactive\" href=\"#\"><div class=\"ds-panel-interactive-main\"><div class=\"ds-panel-interactive-title\">Ashen Vipers vs Northgate</div><div class=\"ds-panel-interactive-meta\">W6-M3 &middot; 3&ndash;1</div></div><svg class=\"ds-chevron\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"9 18 15 12 9 6\"></polyline></svg></a>",
-      "css": ".ds-panel-interactive { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #FFFFFF; color: #0F0F10; border: 1px solid #E4E4E7; border-radius: 0; padding: 16px; text-decoration: none; font-family: Geist, ui-sans-serif, system-ui, sans-serif; transition: border-color 200ms cubic-bezier(0.4,0,0.2,1), box-shadow 200ms cubic-bezier(0.4,0,0.2,1), transform 200ms cubic-bezier(0.4,0,0.2,1); } .ds-panel-interactive:hover { border-color: #3B82F6; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transform: translateY(-1px); } .ds-panel-interactive:focus-visible { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); } .ds-panel-interactive-title { font-size: 0.875rem; font-weight: 500; line-height: 1.25rem; } .ds-panel-interactive-meta { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; line-height: 1rem; font-variant-numeric: tabular-nums; color: #71717A; margin-top: 2px; } .ds-chevron { width: 12px; height: 12px; flex-shrink: 0; color: #71717A; transition: color 200ms cubic-bezier(0.4,0,0.2,1); } .ds-panel-interactive:hover .ds-chevron { color: #3B82F6; } @media (prefers-reduced-motion: reduce) { .ds-panel-interactive { transition: border-color 200ms ease; } .ds-panel-interactive:hover { transform: none; } }"
+      "description": "A panel that navigates. Announces itself at rest with a full-strength border and a trailing chevron; hover adds an Action Blue border, shadow-sm and a 1px lift.",
+      "html": "<a href=\"#\" class=\"ds-panel-link\"><span class=\"ds-panel-link-title\">Northwind Spikers</span><span class=\"ds-panel-link-meta\">Week 6 &middot; <span class=\"ds-num\">3-1</span></span><span class=\"ds-chevron\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></span></a>",
+      "css": ".ds-panel-link { position: relative; display: block; max-width: 360px; background: #FFFFFF; color: #1C1C1C; border: 1px solid #D9D9D9; border-radius: 0; padding: 16px 32px 16px 16px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; text-decoration: none; transition: border-color 150ms, box-shadow 150ms, transform 150ms; } .ds-panel-link:hover { border-color: #2D55E6; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transform: translateY(-1px); } .ds-panel-link:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(45 85 230 / 0.5); border-color: #2D55E6; } .ds-panel-link-title { display: block; font-size: 0.875rem; font-weight: 600; } .ds-panel-link-meta { display: block; font-size: 0.75rem; color: #5E5E5E; margin-top: 2px; } .ds-num { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; } .ds-chevron { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #5E5E5E; display: flex; } @media (prefers-reduced-motion: reduce) { .ds-panel-link { transition: none; } .ds-panel-link:hover { transform: none; } }"
     },
     {
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Action Blue fill. The default affirmative action.",
-      "html": "<button class=\"ds-btn-primary\">Sync Results</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 8px 16px; background: #3B82F6; color: #FFFFFF; border: none; border-radius: 2px; font-family: Geist, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1.25rem; white-space: nowrap; cursor: pointer; transition: background 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background: #4A8BF7; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
+      "description": "Action Blue fill for the one thing to do. 2px corners, 36px tall; hover drops to 90% opacity.",
+      "html": "<button class=\"ds-btn-primary\">Publish</button>",
+      "css": ".ds-btn-primary { height: 36px; padding: 8px 16px; background: #2D55E6; color: #FFFFFF; border: none; border-radius: 2px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: opacity 150ms, box-shadow 150ms; } .ds-btn-primary:hover { opacity: 0.9; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(45 85 230 / 0.5); } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
     },
     {
       "name": "Outline Button",
       "kind": "button",
       "refersTo": "button-outline",
-      "description": "The preferred secondary action. Chosen over the yellow secondary variant, which collides with the you-are-here signal.",
-      "html": "<button class=\"ds-btn-outline\">Cancel</button>",
-      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 8px 16px; background: #FAFAFA; color: #0F0F10; border: 1px solid #E4E4E7; border-radius: 2px; font-family: Geist, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; line-height: 1.25rem; white-space: nowrap; cursor: pointer; transition: background 150ms cubic-bezier(0.4,0,0.2,1), color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-outline:hover { background: #3B82F6; color: #FFFFFF; border-color: #3B82F6; } .ds-btn-outline:focus-visible { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); }"
+      "description": "The secondary action. Page fill, 1px Rule border, 2px corners.",
+      "html": "<button class=\"ds-btn-outline\">Preview</button>",
+      "css": ".ds-btn-outline { height: 36px; padding: 8px 16px; background: #F4F4F4; color: #1C1C1C; border: 1px solid #D9D9D9; border-radius: 2px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background 150ms, box-shadow 150ms; } .ds-btn-outline:hover { background: #EEEEEE; } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(45 85 230 / 0.5); border-color: #2D55E6; }"
     },
     {
       "name": "Text Input",
       "kind": "input",
       "refersTo": "input",
-      "description": "Transparent fill, 1px rule border, 3px focus ring. Placeholder sits in Quiet Ink, never lighter.",
-      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search players\" />",
-      "css": ".ds-input { display: block; width: 100%; height: 36px; padding: 4px 12px; background: transparent; color: #0F0F10; border: 1px solid #E4E4E7; border-radius: 2px; font-family: Geist, ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; line-height: 1.25rem; outline: none; transition: color 150ms cubic-bezier(0.4,0,0.2,1), box-shadow 150ms cubic-bezier(0.4,0,0.2,1); } .ds-input::placeholder { color: #71717A; } .ds-input:focus-visible { border-color: #3B82F6; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); } .ds-input:disabled { opacity: 0.5; cursor: not-allowed; }"
+      "description": "Transparent field, 1px Rule border, 2px corners. Focus is a 3px Action Blue ring at 50%; placeholder stays Quiet Ink.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search players\" />",
+      "css": ".ds-input { height: 36px; width: 260px; padding: 4px 12px; background: transparent; color: #1C1C1C; border: 1px solid #D9D9D9; border-radius: 2px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; font-size: 0.875rem; transition: color 150ms, box-shadow 150ms; } .ds-input::placeholder { color: #5E5E5E; } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(45 85 230 / 0.5); border-color: #2D55E6; } .ds-input[aria-invalid='true'] { border-color: #EF4444; box-shadow: 0 0 0 3px rgb(239 68 68 / 0.2); }"
     },
     {
       "name": "Navigation Items",
       "kind": "nav",
       "refersTo": "nav-item",
-      "description": "The system's signature. Active state is Location Yellow on near-black; it means where-you-are and appears nowhere else.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\" href=\"#\">Matches</a><a class=\"ds-nav-item ds-nav-item--active\" href=\"#\">Standings</a><a class=\"ds-nav-item\" href=\"#\">Teams</a><a class=\"ds-nav-item\" href=\"#\">Leaderboard</a></nav>",
-      "css": ".ds-nav { display: flex; gap: 4px; font-family: Geist, ui-sans-serif, system-ui, sans-serif; } .ds-nav-item { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 12px; border-radius: 0; color: #0F0F10; font-size: 0.875rem; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background 150ms cubic-bezier(0.4,0,0.2,1), color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-nav-item:hover { background: #3B82F6; color: #FFFFFF; } .ds-nav-item:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(59 130 246 / 0.5); } .ds-nav-item--active { background: #FACC15; color: #0F0F10; } .ds-nav-item--active:hover { background: #EAB308; color: #0F0F10; }"
+      "description": "Quiet Ink at rest, Ink with a Quiet Ink underline on hover, Ink semibold with a 2px Ink underline at a 6px offset when you are here. No fill, no cobalt.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" class=\"ds-nav-item\">Matches</a><a href=\"#\" class=\"ds-nav-item is-active\" aria-current=\"page\">Standings</a><a href=\"#\" class=\"ds-nav-item\">Teams</a><a href=\"#\" class=\"ds-nav-item\">Information</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 0; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; } .ds-nav-item { display: inline-flex; align-items: center; height: 36px; padding: 0 12px; color: #5E5E5E; font-size: 0.875rem; font-weight: 500; text-decoration: none; text-underline-offset: 6px; text-decoration-thickness: 2px; transition: color 150ms; } .ds-nav-item:hover { color: #1C1C1C; text-decoration-line: underline; text-decoration-color: #5E5E5E; } .ds-nav-item.is-active { color: #1C1C1C; font-weight: 600; text-decoration-line: underline; text-decoration-color: #1C1C1C; } .ds-nav-item:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(45 85 230 / 0.5); }"
+    },
+    {
+      "name": "Option Row",
+      "kind": "chip",
+      "refersTo": "filter-option",
+      "description": "Inline filters instead of dropdowns. Label in Quiet Ink, \"All\" first behind a Rule divider, the selected option in Ink semibold with a 2px Ink underline inset to the text.",
+      "html": "<div class=\"ds-options\"><span class=\"ds-options-label\">Region</span><button class=\"ds-option\">All</button><span class=\"ds-options-divider\"></span><button class=\"ds-option\">AS</button><button class=\"ds-option\">EU</button><button class=\"ds-option is-selected\" aria-pressed=\"true\">NA</button><button class=\"ds-option\">SA</button></div>",
+      "css": ".ds-options { display: flex; align-items: center; gap: 2px; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; } .ds-options-label { font-size: 0.75rem; font-weight: 600; color: #5E5E5E; margin-right: 10px; } .ds-options-divider { width: 1px; height: 16px; background: #D9D9D9; margin: 0 6px; } .ds-option { position: relative; height: 32px; padding: 0 10px; background: none; border: none; color: #5E5E5E; font-family: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: color 150ms; } .ds-option:hover { color: #1C1C1C; } .ds-option.is-selected { color: #1C1C1C; font-weight: 600; } .ds-option.is-selected::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 4px; height: 2px; background: #1C1C1C; } .ds-option:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(45 85 230 / 0.5); }"
     },
     {
       "name": "Badge",
       "kind": "chip",
       "refersTo": "badge-default",
-      "description": "Fully rounded — the deliberate counterpoint to square panels.",
-      "html": "<span class=\"ds-badge\">Live</span> <span class=\"ds-badge ds-badge--outline\">Qualifier</span> <span class=\"ds-badge ds-badge--warning\">Unsynced</span>",
-      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 2px 8px; border: 1px solid transparent; border-radius: 9999px; background: #3B82F6; color: #FFFFFF; font-family: Geist, ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; line-height: 1rem; white-space: nowrap; } .ds-badge--outline { background: transparent; border-color: #E4E4E7; color: #0F0F10; } .ds-badge--warning { background: #EAB308; color: #0F0F10; }"
+      "description": "The one rounded shape in the system: a full pill, the deliberate counterpoint to square panels.",
+      "html": "<span class=\"ds-badge\">Live</span> <span class=\"ds-badge ds-badge-outline\">Final</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; background: #2D55E6; color: #FFFFFF; border: 1px solid transparent; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; font-size: 0.75rem; font-weight: 500; } .ds-badge-outline { background: transparent; color: #1C1C1C; border-color: #D9D9D9; }"
     },
     {
       "name": "Dense Stat Table",
       "kind": "custom",
       "refersTo": "table-head",
-      "description": "The signature surface. Uppercase Quiet Ink labels on a recessed band, monospaced tabular figures, rule lines between rows.",
-      "html": "<table class=\"ds-table\"><thead><tr><th class=\"ds-th ds-th--text\">Player</th><th class=\"ds-th\">K</th><th class=\"ds-th\">A</th><th class=\"ds-th\">B</th><th class=\"ds-th\">Eff</th></tr></thead><tbody><tr class=\"ds-tr\"><td class=\"ds-td ds-td--text\">reyzenith</td><td class=\"ds-td ds-td--num\">42</td><td class=\"ds-td ds-td--num\">11</td><td class=\"ds-td ds-td--num\">7</td><td class=\"ds-td ds-td--num\">.318</td></tr><tr class=\"ds-tr\"><td class=\"ds-td ds-td--text\">kavvo</td><td class=\"ds-td ds-td--num\">38</td><td class=\"ds-td ds-td--num\">9</td><td class=\"ds-td ds-td--num\">12</td><td class=\"ds-td ds-td--num\">.291</td></tr><tr class=\"ds-tr\"><td class=\"ds-td ds-td--text\">nullsoft</td><td class=\"ds-td ds-td--num\">31</td><td class=\"ds-td ds-td--num\">24</td><td class=\"ds-td ds-td--num\">4</td><td class=\"ds-td ds-td--num\">.276</td></tr></tbody></table>",
-      "css": ".ds-table { width: 100%; border-collapse: collapse; background: #FFFFFF; border: 1px solid #E4E4E7; font-family: Geist, ui-sans-serif, system-ui, sans-serif; } .ds-th { padding: 12px 16px; background: rgb(244 244 245 / 0.5); border-bottom: 1px solid #E4E4E7; color: #71717A; font-size: 0.75rem; font-weight: 600; line-height: 1rem; letter-spacing: 0.05em; text-transform: uppercase; text-align: center; white-space: nowrap; } .ds-th--text { text-align: left; } .ds-td { padding: 12px 16px; border-bottom: 1px solid #E4E4E7; font-size: 0.875rem; line-height: 1.25rem; color: #0F0F10; text-align: center; } .ds-td--text { text-align: left; font-weight: 500; } .ds-td--num { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.75rem; font-variant-numeric: tabular-nums; } .ds-tr:last-child .ds-td { border-bottom: none; } .ds-tr { transition: background 150ms cubic-bezier(0.4,0,0.2,1); } .ds-tr:hover { background: rgb(244 244 245 / 0.5); }"
+      "description": "The signature surface. Label-style header on a Recessed band, 12px/16px cells, Rule lines, every number in Plex Mono tabular figures.",
+      "html": "<div class=\"ds-panel-table\"><table class=\"ds-table\"><thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>Set %</th></tr></thead><tbody><tr><td class=\"ds-num\">1</td><td>Northwind Spikers</td><td class=\"ds-num\">9</td><td class=\"ds-num\">1</td><td class=\"ds-num\">.812</td></tr><tr><td class=\"ds-num\">2</td><td>Harbor Blockers</td><td class=\"ds-num\">8</td><td class=\"ds-num\">2</td><td class=\"ds-num\">.744</td></tr><tr><td class=\"ds-num\">3</td><td>Summit Six</td><td class=\"ds-num\">6</td><td class=\"ds-num\">4</td><td class=\"ds-num\">.590</td></tr></tbody></table></div>",
+      "css": ".ds-panel-table { background: #FFFFFF; border: 1px solid #D9D9D9; border-radius: 0; max-width: 460px; } .ds-table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: #1C1C1C; } .ds-table thead { background: rgb(238 238 238 / 0.3); border-bottom: 1px solid #D9D9D9; } .ds-table th { padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #5E5E5E; } .ds-table td { padding: 12px 16px; font-size: 0.875rem; border-bottom: 1px solid #D9D9D9; } .ds-table tbody tr:last-child td { border-bottom: none; } .ds-table tbody tr:hover { background: rgb(238 238 238 / 0.3); } .ds-table .ds-num { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; font-size: 0.75rem; }"
     }
   ],
   "narrative": {
     "northStar": "The Record Desk",
     "overview": "A press box desk with the league's record book open on it. Everything on that desk earns its place by being consulted: the standings, the box score, the schedule, the archive of past seasons. Nothing is there to set a mood. The record book is authoritative because it is complete and because it is the same every time you open it — and the desk is fast because whoever works at it is looking things up while play continues.\n\nThat fusion is the whole system. From the record book: squared corners, ruled lines, tabular figures, an archive that never loses a season. From the press box: density, speed, no ceremony between a question and its answer. The visual language is a broadcast stats graphic rendered for reading rather than for air — dense, ruled, unmistakably legible, and confident enough to present a Roblox volleyball league with the gravity of a real one.\n\nWhat this system rejects is decoration standing in for authority. It does not use gradients to make a heading feel important, or shadows to make a card feel modern, or neon to make a competition feel exciting. Weight, rule lines, and tabular alignment carry all of it. If a surface needs an effect to read as serious, the surface is wrong.",
     "keyCharacteristics": [
-      "Square corners on every data surface — .panel resolves to a literal 0px radius",
+      "Square corners on every data surface — `.panel` resolves to a literal `0px` radius",
       "Flat by default; borders and tonal fills carry all in-page depth",
-      "One type family (Geist) for everything except numbers, which are always monospaced",
-      "Two accents with fixed jobs: blue acts, yellow locates",
-      "Dense by design — 12px vertical cell padding, 0.875rem body, 0.75rem labels",
+      "One type family (IBM Plex Sans) for everything except numbers, which use its sibling IBM Plex Mono",
+      "One accent with one job: blue acts. Selected and you-are-here states are ink weight plus an ink underline, never a color",
+      "Dense by design — 12px vertical cell padding, `0.875rem` body, `0.75rem` labels",
       "Desktop-first; density expands upward rather than collapsing downward"
     ],
     "rules": [
-      { "name": "The Two-Signal Rule", "body": "Blue means act. Yellow means you are here. A screen that uses either color for any third purpose has broken the system, and the failure is invisible until a user misreads a highlighted row as a button.", "section": "colors" },
-      { "name": "The No-Third-Accent Rule", "body": "Anything that is not an action, a location, or a destructive operation is drawn from the neutral ramp. New categorical colors are prohibited. If a data category needs distinguishing, use position, weight, or rule lines before reaching for hue.", "section": "colors" },
-      { "name": "The Inherited-Default Rule", "body": "The current palette is Tailwind's stock zinc ramp with blue-500, yellow-400, and red-500 accents. That is a stated fact, not an endorsement. Any deliberate move away from it must change all of the accents together — a single re-tinted primary against stock zinc neutrals reads as a half-finished theme, which is worse than the default.", "section": "colors" },
-      { "name": "The One Family Rule", "body": "Geist carries headings, buttons, labels, body, and navigation. The monospace stack is the only second face, and it appears only on numbers. Introducing a display face is prohibited; it is the fastest available route to the esports look this brand rejects.", "section": "typography" },
-      { "name": "The Tabular Figures Rule", "body": "Any number that appears in a column gets font-mono tabular-nums. Non-negotiable. Proportional digits in a stat table cause the column to shimmer as values change and destroy the scannability that justifies the density in the first place.", "section": "typography" },
-      { "name": "The Fixed Scale Rule", "body": "No clamp(), no viewport-relative type, anywhere. Users read this at a consistent desktop DPI, and a heading that shrinks inside a three-column shell looks broken rather than responsive.", "section": "typography" },
-      { "name": "The Small-Type Floor", "body": "0.75rem is the floor for any text a user must read, and text at that size must sit in Ink or Quiet Ink on Surface — never Quiet Ink at reduced opacity. Below 12px, stat tables stop being dense and start being unreadable, which is the difference between this system and the spreadsheet it replaces.", "section": "typography" },
-      { "name": "The Flat-Page Rule", "body": "Nothing in the page flow casts a shadow at rest. If a surface needs to feel separated from what is behind it, change its tone or give it a border. A resting shadow-sm on a panel is the single clearest tell of an untouched component library.", "section": "elevation" },
-      { "name": "The Affordance-Before-Shadow Rule", "body": "Clickability is announced structurally at rest — border weight and a chevron — and confirmed with motion and shadow on hover. Discovery must never depend on the user hovering first.", "section": "elevation" },
-      { "name": "The Square-Corner Rule", "body": "Data containers have zero radius. Controls get 2px. Badges get a pill. There is no fourth radius, and rounded-xl — shadcn's Card default — is prohibited on any new surface.", "section": "components" },
-      { "name": "The One Container Rule", "body": ".panel is the only container vocabulary. shadcn's Card currently survives in seven files with rounded-xl and shadow-sm; those are deviations to migrate, not a second sanctioned system.", "section": "components" }
+      {
+        "name": "The Two-Signal Rule",
+        "body": "Blue means *act*. Ink means *selected* or *you are here*. A selected filter, tab or nav item is a state, not an action, so it is drawn as ink text at semibold weight with a 2px ink underline; cobalt is never a selected-state fill. A screen that uses blue for anything but actions, links and focus has broken the system, and the failure is invisible until a user misreads a highlighted row as a button.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Third-Accent Rule",
+        "body": "Anything that is not an action, a location, or a destructive operation is drawn from the neutral ramp. New categorical colors are prohibited. If a data category needs distinguishing, use position, weight, or rule lines before reaching for hue.",
+        "section": "colors"
+      },
+      {
+        "name": "The Coordinated-Palette Rule",
+        "body": "The palette is a deliberate move off the stock shadcn defaults: a true-neutral (hue-agnostic) black/gray ramp — not Tailwind zinc — under a cobalt action accent (`#2D55E6`), a broadcast-amber location accent (`#E8992C`), and a green success token (`#42B87C`) for win/synced state. The neutrals carry no hue tint. Any future accent change must move *all* of them together — a single re-tinted primary against the others reads as a half-finished theme.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "IBM Plex Sans carries headings, buttons, labels, body, and navigation; its matched sibling IBM Plex Mono is the only second face, and it appears only on numbers. `font-size-adjust: 0.54` on the body compensates for Plex's smaller x-height so apparent sizes match the fixed rem scale. Introducing a third face — a serif for headings, a condensed sans for scores — is prohibited; it is the fastest available route to the esports look this brand rejects.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Any number that appears in a column gets `font-mono tabular-nums`. Non-negotiable. Proportional digits in a stat table cause the column to shimmer as values change and destroy the scannability that justifies the density in the first place.",
+        "section": "typography"
+      },
+      {
+        "name": "The Fixed Scale Rule",
+        "body": "No `clamp()`, no viewport-relative type, anywhere. Users read this at a consistent desktop DPI, and a heading that shrinks inside a three-column shell looks broken rather than responsive.",
+        "section": "typography"
+      },
+      {
+        "name": "The Small-Type Floor",
+        "body": "`0.75rem` is the floor for any text a user must read, and text at that size must sit in Ink or Quiet Ink on Surface — never Quiet Ink at reduced opacity. Below 12px, stat tables stop being dense and start being unreadable, which is the difference between this system and the spreadsheet it replaces.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-Page Rule",
+        "body": "Nothing in the page flow casts a shadow at rest. If a surface needs to feel separated from what is behind it, change its tone or give it a border. A resting `shadow-sm` on a panel is the single clearest tell of an untouched component library.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Affordance-Before-Shadow Rule",
+        "body": "Clickability is announced structurally at rest — border weight and a chevron — and confirmed with motion and shadow on hover. Discovery must never depend on the user hovering first.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Square-Corner Rule",
+        "body": "Data containers have zero radius. Controls get 2px. Badges get a pill. There is no fourth radius, and `rounded-xl` — shadcn's `<Card>` default — is prohibited on any new surface.",
+        "section": "components"
+      },
+      {
+        "name": "The One Container Rule",
+        "body": "`.panel` is the only container vocabulary. shadcn's `<Card>` currently survives in seven files with `rounded-xl` and `shadow-sm`; those are deviations to migrate, not a second sanctioned system.",
+        "section": "components"
+      },
+      {
+        "name": "The Inline-Over-Dropdown Rule",
+        "body": "When every option fits on one line (regions, seasons, positions, stat views), render them inline as an option row or view tabs. A popover is reserved for controls that cannot be inline (a date calendar) and for global context (the navbar region/season picker). A dropdown that hides four choices behind a click is a spreadsheet filter, not a record desk.",
+        "section": "components"
+      }
     ],
     "dos": [
-      "Do use .panel for every container: square corners, 1px Rule border, Surface background, no resting shadow.",
-      "Do give clickable panels a full-strength border and a trailing chevron at rest, then add shadow-sm, an Action Blue border, and a 1px lift on hover.",
-      "Do set font-mono tabular-nums on every number that sits in a column.",
-      "Do keep Action Blue for what acts and Location Yellow for where you are. One job each.",
-      "Do build depth from the Page to Surface to Recessed tonal step and 1px Rule borders.",
-      "Do use fixed rem type sizes and let responsive behavior be structural — collapse the sidebar, stack the columns, make the table scroll.",
-      "Do hold body text to Ink and metadata to Quiet Ink. 0.75rem is the floor for anything a user must actually read.",
-      "Do keep transitions at 150-250ms on color, box-shadow, opacity, and transform — and pair every one with a prefers-reduced-motion alternative.",
-      "Do ship skeletons matching the real layout for loading, and empty states that name what will appear here and how it gets there."
+      "**Do** use `.panel` for every container: square corners, 1px Rule border, Surface background, no resting shadow.",
+      "**Do** give clickable panels a full-strength border and a trailing chevron at rest, then add `shadow-sm`, an Action Blue border, and a 1px lift on hover.",
+      "**Do** set `font-mono tabular-nums` on every number that sits in a column.",
+      "**Do** keep Action Blue for what acts, and mark what is selected or where you are with ink weight and an ink underline.",
+      "**Do** build depth from the Page → Surface → Recessed tonal step and 1px Rule borders.",
+      "**Do** use fixed rem type sizes and let responsive behavior be structural — collapse the sidebar, stack the columns, make the table scroll.",
+      "**Do** hold body text to Ink and metadata to Quiet Ink. `0.75rem` is the floor for anything a user must actually read.",
+      "**Do** keep transitions at 150–250ms on `color`, `box-shadow`, `opacity`, and `transform` — and pair every one with a `prefers-reduced-motion` alternative.",
+      "**Do** ship skeletons matching the real layout for loading, and empty states that name what will appear here and how it gets there — as centered Quiet Ink text in the space the content would fill, never boxed."
     ],
     "donts": [
-      "Don't use background-clip: text with a gradient. app/(public)/home/HomePage.tsx:196 currently does this on the Season Standings heading. Gradient text is decorative, never meaningful — use weight and size.",
-      "Don't use border-left or border-right above 1px as a colored accent stripe. app/(public)/home/HomePage.tsx:186 currently does this on the empty state. Use a full border, a background tint, or nothing.",
-      "Don't ship the generic SaaS admin template: untouched shadcn defaults, rounded-2xl containers, purple gradient cards, hero-metric tiles. rounded-xl on a container is this look arriving one class at a time.",
-      "Don't ship the hobby-project dashboard: mismatched spacing, half-styled surfaces, default components dropped in unmodified. This is the failure mode CVRN exists to disprove.",
-      "Don't reach for esports and gaming tropes — neon accents, angular clip-path panels, RGB glows, aggressive italics, condensed display faces on scores. The obvious reflex for a gaming league and the wrong one for this brand.",
-      "Don't produce a spreadsheet on the web: an undifferentiated grid of numbers with no rank, no state, and no visual weight. Density is the point; density without hierarchy is the anti-reference.",
-      "Don't put a resting shadow on anything in the page flow. If it does not float above the page, it does not cast a shadow.",
-      "Don't introduce a second type family, a display face, or clamp()-sized headings.",
-      "Don't introduce a third accent hue for categorical data. Use position, weight, and rule lines.",
-      "Don't mix focus vocabularies. Controls use a 3px ring at 50% opacity; navigation currently uses 2px at full opacity. Converge on the 3px treatment.",
-      "Don't let a color be the only carrier of meaning. Win/loss, qualified/eliminated, and synced/failed each need a second cue — a glyph, a label, or position."
+      "**Don't** use `background-clip: text` with a gradient. `app/(public)/home/HomePage.tsx:196` currently does this on the \"Season Standings\" heading. Gradient text is decorative, never meaningful — use weight and size.",
+      "**Don't** use `border-left` or `border-right` above 1px as a colored accent stripe. `app/(public)/home/HomePage.tsx:186` currently does this on the empty state. Use a full border, a background tint, or nothing.",
+      "**Don't** wrap an empty, zero, loading-failed, or not-found message in a `.panel` or any bordered box. A box with one line of gray text in it is a gratuitous container — it draws a frame around nothing. Render the message as centered Quiet Ink text in the region the real content would occupy (e.g. `flex items-center justify-center` at the grid's min-height). A box earns its border only when it holds structured content.",
+      "**Don't** ship the **generic SaaS admin template**: untouched shadcn defaults, `rounded-2xl` containers, purple gradient cards, hero-metric tiles. `rounded-xl` on a container is this look arriving one class at a time.",
+      "**Don't** ship the **hobby-project dashboard**: mismatched spacing, half-styled surfaces, default components dropped in unmodified. This is the failure mode CVRN exists to disprove.",
+      "**Don't** reach for **esports and gaming tropes** — neon accents, angular clip-path panels, RGB glows, aggressive italics, condensed display faces on scores. The obvious reflex for a gaming league and the wrong one for this brand.",
+      "**Don't** produce **a spreadsheet on the web**: an undifferentiated grid of numbers with no rank, no state, and no visual weight. Density is the point; density without hierarchy is the anti-reference.",
+      "**Don't** put a resting shadow on anything in the page flow. If it does not float above the page, it does not cast a shadow.",
+      "**Don't** introduce a second type family, a display face, or `clamp()`-sized headings.",
+      "**Don't** introduce a third accent hue for categorical data. Use position, weight, and rule lines.",
+      "**Don't** mix focus vocabularies. Controls use a `3px` ring at 50% opacity; navigation currently uses `2px` at full opacity. Converge on the `3px` treatment.",
+      "**Don't** let a color be the only carrier of meaning. Win/loss, qualified/eliminated, and synced/failed each need a second cue — a glyph, a label, or position."
     ]
   }
 }
