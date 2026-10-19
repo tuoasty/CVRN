@@ -3,12 +3,18 @@ name: CVRN
 description: The league's permanent record — dense, square-cornered, broadcast-serious.
 colors:
   action-blue: "#2D55E6"
+  action-blue-light: "#1F46D1"
   action-blue-ink: "#FFFFFF"
   location-yellow: "#E8992C"
   location-yellow-ink: "#1A1206"
   destructive-red: "#EF4444"
-  success-green: "#42B87C"
+  success-green-light: "#157F3C"
+  success-green-dark: "#3ECC72"
   success-green-ink: "#FFFFFF"
+  rarity-rare-light: "#2A62E5"
+  rarity-rare-dark: "#5C96F5"
+  rarity-epic-light: "#8739D0"
+  rarity-epic-dark: "#B477EE"
   page-light: "#F4F4F4"
   page-dark: "#0A0A0A"
   surface-light: "#FFFFFF"
@@ -174,21 +180,26 @@ What this system rejects is decoration standing in for authority. It does not us
 A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber accents plus a green success token, each carrying one job and no decorative use whatsoever.
 
 ### Primary
-- **Action Blue** (cobalt `#2D55E6`, `hsl(227 79% 54%)` dark / `hsl(227 74% 47%)` light): Every actionable and stateful thing. Primary buttons, links, focus rings, the active sort column in a stat table, status dots, the top-loading progress bar. If it can be clicked or it reports live state, it is this cobalt.
+- **Action Blue** (cobalt `#2D55E6` / `hsl(227 79% 54%)` dark, `#1F46D1` / `hsl(227 74% 47%)` light): Every actionable and stateful thing. Primary buttons, links, focus rings, the active sort column in a stat table, status dots, the top-loading progress bar. If it can be clicked or it reports live state, it is this cobalt.
 
 ### Secondary
-- **Location Yellow** (broadcast amber `#E8992C`, `hsl(35 80% 54%)`): Reserved. It no longer has a structural use: the active navigation item and selected filters are marked by an ink underline (see Navigation and Filters). The token stays in the coordinated palette; new uses need a design decision first. Its one remaining sanctioned use is the update-log rework glyph.
+- **Location Yellow** (broadcast amber `#E8992C`, `hsl(35 80% 54%)`): Reserved. It no longer has a structural use: the active navigation item and selected filters are marked by an ink underline (see Navigation and Filters). The token stays in the coordinated palette; new uses need a design decision first. Its sanctioned uses are the update-log rework glyph and the 5-star spec rating (the filled stars of a 5-star spec are amber; 4 and 3 stars take Epic and Rare, see Rarity).
 
 ### Tertiary
 - **Destructive Red** (`#EF4444`, `hsl(0 84% 60%)`): Irreversible actions and error surfaces only. Voiding a match, deleting a team, a failed sync row. Never a warning, never an accent.
 
 ### Neutral
-- **Page** (`#F4F4F4` light / `#0E0E10` dark): The body field. Deliberately not pure white and not pure black. In light mode it sits a clear step below the white Surface so panels separate from the page and the white anchors the eye (2026-10-07: was `#FAFAFA`, which left page and panels reading as one glaring sheet).
-- **Surface** (`#FFFFFF` light / `#161618` dark): Panels and elevated content sitting on the page field. The step between page and surface is the primary depth mechanism in this system.
-- **Recessed** (`#EEEEEE` light / `#27272A` dark): Table header bands, hover fills (used at `/30` opacity), zebra striping (`/20`), disabled fills. The layer *below* the surface.
-- **Ink** (`#1C1C1C` light / `#F4F4F5` dark): All primary text and data values.
-- **Quiet Ink** (`#5E5E5E` light / `#A1A1AA` dark): Column labels, metadata, secondary values, placeholder text. Never body copy at small sizes.
-- **Rule** (`#D9D9D9` light / `#27272A` dark): Every border, divider, and table line. Frequently used at `/30` opacity for internal column groupings inside dense tables.
+- **Page** (`#F4F4F4` light / `#0A0A0A` dark): The body field. Deliberately not pure white and not pure black. In light mode it sits a clear step below the white Surface so panels separate from the page and the white anchors the eye (2026-10-07: was `#FAFAFA`, which left page and panels reading as one glaring sheet).
+- **Surface** (`#FFFFFF` light / `#141414` dark): Panels and elevated content sitting on the page field. The step between page and surface is the primary depth mechanism in this system.
+- **Recessed** (`#EEEEEE` light / `#1F1F1F` dark): Table header bands, hover fills (used at `/30` opacity), zebra striping (`/20`), disabled fills. The layer *below* the surface.
+- **Ink** (`#1C1C1C` light / `#F5F5F5` dark): All primary text and data values.
+- **Quiet Ink** (`#5E5E5E` light / `#999999` dark): Column labels, metadata, secondary values, placeholder text. Never body copy at small sizes.
+- **Rule** (`#D9D9D9` light / `#2B2B2B` dark): Every border, divider, and table line. Frequently used at `/30` opacity for internal column groupings inside dense tables.
+
+### Rarity
+- **Rare** (`--rarity-rare`: `#5C96F5` dark / `#2A62E5` light), **Epic** (`--rarity-epic`: `#B477EE` dark / `#8739D0` light), **Mythical** (`--rarity-mythic`: a seven-stop spectrum gradient, brighter in dark mode). Common is plain Ink.
+- These are the game's own rarity tiers, not categorical colors. They appear only where the game's rarity is the thing being named: rarity headings on Abilities and Builds, rarity columns in the Builds pick tray, and the 4-star (Epic) and 3-star (Rare) spec ratings. Never on rows, values, or chrome.
+- **Exception: Mythical gradient text.** `.text-rarity-mythic` clips the Mythical gradient to text. It is sanctioned for the word "Mythical" (and a Mythical rarity heading) only; it is the one place gradient text is allowed.
 
 ### Named Rules
 
@@ -196,7 +207,7 @@ A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber ac
 
 **The No-Third-Accent Rule.** Anything that is not an action, a location, or a destructive operation is drawn from the neutral ramp. New categorical colors are prohibited. If a data category needs distinguishing, use position, weight, or rule lines before reaching for hue.
 
-**The Coordinated-Palette Rule.** The palette is a deliberate move off the stock shadcn defaults: a true-neutral (hue-agnostic) black/gray ramp — not Tailwind zinc — under a cobalt action accent (`#2D55E6`), a broadcast-amber location accent (`#E8992C`), and a green success token (`#42B87C`) for win/synced state. The neutrals carry no hue tint. Any future accent change must move *all* of them together — a single re-tinted primary against the others reads as a half-finished theme.
+**The Coordinated-Palette Rule.** The palette is a deliberate move off the stock shadcn defaults: a true-neutral (hue-agnostic) black/gray ramp — not Tailwind zinc — under a cobalt action accent (`#2D55E6`), a broadcast-amber location accent (`#E8992C`), and a green success token (`#3ECC72` dark / `#157F3C` light) for win/synced state. The neutrals carry no hue tint. Any future accent change must move *all* of them together — a single re-tinted primary against the others reads as a half-finished theme.
 
 **Exception: update-log change markers.** Inside an update log body, color marks the kind of change and nothing else: green ▲ buff (Success), red ▼ nerf (Destructive), a yellow `~` rework glyph (Location Yellow), and a plain-text `NEW` label in Action Blue (blue as state: "new in this version"). Each is a glyph or a single word, never a fill, and each is also carried by its shape or its word. Headings in update logs stay neutral; this exception does not extend to section, category, or feature titles.
 
@@ -252,7 +263,7 @@ The one deliberate exception is affordance. A panel that navigates somewhere mus
 `.panel` is the canonical container of this system and the only one. It is the load-bearing surface for standings, box scores, match cards, stat blocks, media posts, and admin forms alike.
 
 - **Corner Style:** Square. `rounded-sm` resolves to `calc(0.25rem - 4px)` = **`0px`**. This is intentional and it is the system's most recognizable trait. `rounded-md` (2px) and `rounded-lg` (4px) exist for controls; containers get none.
-- **Background:** Surface (`#FFFFFF` / `#161618`) on the Page field.
+- **Background:** Surface (`#FFFFFF` / `#141414`) on the Page field.
 - **Border:** 1px Rule token, always present. The border does the work the shadow would otherwise do.
 - **Shadow Strategy:** None at rest. See Elevation.
 - **Internal Padding:** `16px` standard, `24px` for full-page sections, `8px` for compact cards inside sidebars.
@@ -307,6 +318,17 @@ Shared components live in `app/components/filters/`.
 - **Inline switch (`InlineSwitch`):** two or three text options separated by a Rule-tone `/`, the selected one underlined.
 - **Wording editor (admin Information):** editors only appear when an ability shows its DERIVED description; ORIGINAL shows the game text alone. Each line is collapsed to its sentence (chevron, plus a Secondary dot when a part is unverified or unhandled; no toggle there, verification is set on the Terms tab). Expanding shows the raw game line in mono and one row per component (effect, each option, or param): tag on the left, labelled plain inputs for Label, Unit, Label description, Grants, and an `InlineSwitch` for the number format. Each expanded line has its own Save; when the change reaches other abilities, Save first reveals the notes (old line struck through in Quiet Ink, new in Ink) with a confirm. No boxes, no sticky bars.
 
+### Information area
+
+Public reference pages for the game's own data (`/information/*`). They follow the system with a few sanctioned patterns of their own.
+
+- **Segment picker:** ABILITIES / BUILDS / UPDATES / SPECS. At 640px and up, a centered line of 14px medium uppercase text separated by Rule-tone `/`; the current segment is Ink semibold with a 2px Ink underline. Below 640px, a 2 + 2 tonal strip on Recessed `/45`; the current segment takes the Page fill with an inset 2px Ink bottom line. It is the page's only header.
+- **Whitespace-only rarity lists (Abilities, Builds):** no row rules, no boxes. Groups are headed by the rarity name in its rarity token (Abilities add Normal / Lucky odds in mono; Builds show none), 44px between groups. Row hover and the open row are Recessed `/30`. A row that has more to show carries a 12px medium Quiet "See more" / "See less" at its end instead of a chevron; opening animates height over 200ms (`grid-template-rows` 0fr to 1fr), instant under reduced motion. One open row at a time, kept in the URL.
+- **Inspector:** ability details shown in three containers with the same content. A floating card on hover-capable desktops (Surface, 1px Rule, Overlay shadow, square, 150ms fade plus 4px rise, 200ms open delay, triggered by a dotted-underline name); a bottom Sheet on touch or below 768px; and docked beside the kit names on the spec page, where clicking a name switches it (no hover preview).
+- **Row-fill bar (Heights):** a Recessed fill behind the whole row, its width the row's weight over the top weight, with height, game value and odds sitting on it. Hover steps the fill to the Rule tone and the odds to Ink. It is the only bar in the row and the only place this pattern is used. Dropped on phone.
+- **Labelled slot filters with an in-page tray (Builds):** 190px slots on Recessed `/45`, Label on top, value "Any" in Quiet Ink or the pick in Ink semibold with an `×` to clear. Clicking a slot turns it into the input (Recessed `/90`, inset 2px Ink bottom line, ghost completion in Quiet Ink, Tab completes). Options open in the page under the slots, never in a floating box: rarity columns (or foot columns for heights) of Quiet names that go to Ink on Recessed `/90` when hovered or active, and a 12px "Close" at the top right. Typing hides non-matches in place. Phone stacks the slots full width, label left, value right.
+- **Spec photos:** real player photos at 4:5 everywhere, cropped at `object-position: 50% 20%` so heads survive. Gallery cards carry a lower third: a black gradient over the bottom 40% of the photo with the name in white, and stars plus height on a fixed bottom row. The gradient exists for legibility over arbitrary photos, not to decorate; it is sanctioned on spec photos only.
+
 ### Navigation
 - **Style:** Horizontal link row at `lg` and above, collapsing to a vertical stack in a sheet below it. Items are `36px` tall, `12px` horizontal padding, square (`rounded-sm` = 0), `0.875rem` medium.
 - **Default:** Quiet Ink text, no fill. **Hover:** Ink text with a Quiet Ink 2px underline.
@@ -340,8 +362,8 @@ Three fixed widths, chosen by content density rather than by page type: `.page-n
 - **Do** ship skeletons matching the real layout for loading, and empty states that name what will appear here and how it gets there — as centered Quiet Ink text in the space the content would fill, never boxed.
 
 ### Don't:
-- **Don't** use `background-clip: text` with a gradient. `app/(public)/home/HomePage.tsx:196` currently does this on the "Season Standings" heading. Gradient text is decorative, never meaningful — use weight and size.
-- **Don't** use `border-left` or `border-right` above 1px as a colored accent stripe. `app/(public)/home/HomePage.tsx:186` currently does this on the empty state. Use a full border, a background tint, or nothing.
+- **Don't** use `background-clip: text` with a gradient. Gradient text is decorative, never meaningful; use weight and size. The one sanctioned exception is the Mythical rarity name (see Rarity).
+- **Don't** use `border-left` or `border-right` above 1px as a colored accent stripe. Use a full border, a background tint, or nothing.
 - **Don't** wrap an empty, zero, loading-failed, or not-found message in a `.panel` or any bordered box. A box with one line of gray text in it is a gratuitous container — it draws a frame around nothing. Render the message as centered Quiet Ink text in the region the real content would occupy (e.g. `flex items-center justify-center` at the grid's min-height). A box earns its border only when it holds structured content.
 - **Don't** ship the **generic SaaS admin template**: untouched shadcn defaults, `rounded-2xl` containers, purple gradient cards, hero-metric tiles. `rounded-xl` on a container is this look arriving one class at a time.
 - **Don't** ship the **hobby-project dashboard**: mismatched spacing, half-styled surfaces, default components dropped in unmodified. This is the failure mode CVRN exists to disprove.
