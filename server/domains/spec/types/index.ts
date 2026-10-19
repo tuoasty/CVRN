@@ -76,8 +76,8 @@ export {
     formatPlacementBonus,
 } from "../helpers/placementBonus";
 
-export type {ExportSpecRequirementsInput, ImportSpecRequirementsInput, SaveSpecIdentityInput, SaveSpecFactsInput, RegionSpecRequirementsInput, SaveRegionRequirementsInput, SpecPositionInput, SpecRequirementInput, SpecQualificationInput, SavePlacementBonusInput, AwardSpecWinnerInput, DeleteSpecWinnerInput} from "./schemas";
-export {SpecImportFileSchema, SpecFileEntrySchema, ExportSpecRequirementsSchema, ImportSpecRequirementsSchema, SaveSpecIdentitySchema, SaveSpecFactsSchema, RegionSpecRequirementsSchema, SaveRegionRequirementsSchema, SpecPositionSchema, SpecRequirementSchema, SpecQualificationSchema, SavePlacementBonusSchema, PlacementBonusConfigSchema, AwardSpecWinnerSchema, DeleteSpecWinnerSchema} from "./schemas";
+export type {ExportSpecRequirementsInput, ImportSpecRequirementsInput, SaveSpecIdentityInput, SetSpecVaultedInput, SaveSpecFactsInput, RegionSpecRequirementsInput, SaveRegionRequirementsInput, SpecPositionInput, SpecRequirementInput, SpecQualificationInput, SavePlacementBonusInput, AwardSpecWinnerInput, DeleteSpecWinnerInput} from "./schemas";
+export {SpecImportFileSchema, SpecFileEntrySchema, ExportSpecRequirementsSchema, ImportSpecRequirementsSchema, SaveSpecIdentitySchema, SetSpecVaultedSchema, SaveSpecFactsSchema, RegionSpecRequirementsSchema, SaveRegionRequirementsSchema, SpecPositionSchema, SpecRequirementSchema, SpecQualificationSchema, SavePlacementBonusSchema, PlacementBonusConfigSchema, AwardSpecWinnerSchema, DeleteSpecWinnerSchema} from "./schemas";
 
 export {
     SPEC_STAT_KEYS,

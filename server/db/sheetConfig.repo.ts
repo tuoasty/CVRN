@@ -37,15 +37,6 @@ export async function findAllSheetConfigs(supabase: DBClient): Promise<Result<Sh
     return Ok(data ?? []);
 }
 
-export async function findActiveSheetConfigs(supabase: DBClient): Promise<Result<SheetConfig[]>> {
-    const {data, error} = await supabase
-        .from("sheet_configs")
-        .select("*, seasons(end_date)")
-        .order("created_at", {ascending: true});
-    if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok(withActiveSeason(data ?? []));
-}
-
 export async function findSheetConfigById(supabase: DBClient, id: string): Promise<Result<SheetConfig | null>> {
     const {data, error} = await supabase
         .from("sheet_configs")

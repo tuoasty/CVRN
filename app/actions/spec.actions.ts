@@ -105,7 +105,6 @@ export async function saveSpecIdentityAction(data: unknown) {
 
 export async function setSpecVaultedAction(data: unknown) {
     const parsed = SetSpecVaultedSchema.safeParse(data);
-
     if (!parsed.success) {
         return Err({
             message: parsed.error.issues.map(i => i.message).join(", "),
@@ -121,7 +120,7 @@ export async function setSpecVaultedAction(data: unknown) {
     if (result.ok) {
         revalidatePath("/admin/specs");
         revalidatePublicData([CACHE_TAGS.specs]);
-        revalidatePath("/spec-requirements");
+        revalidatePath("/information/specs");
     }
     return result;
 }

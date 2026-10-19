@@ -72,6 +72,12 @@ export async function updateSpecVaulted(supabase: DBClient, id: string, isVaulte
     const {data, error} = await supabase
         .from("specs")
         .update({is_vaulted: isVaulted, updated_at: new Date().toISOString()})
+        .eq("id", id)
+        .select()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
 
 export type PublicSpecRow = Pick<Spec, "id" | "name" | "stars" | "position" | "height" | "is_vaulted" | "game_key" | "photo_url" | "created_at">;
 
