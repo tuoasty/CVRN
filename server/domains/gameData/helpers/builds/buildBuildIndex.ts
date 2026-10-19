@@ -31,6 +31,13 @@ export function buildBuildIndex({ builds, passives = [], abilities }: BuildIndex
     })
 }
 
+export function buildEffectTarget(effect: ResolvedBuildEffect): string | undefined {
+    if (effect.type === 'ability') return effect.key
+    if (effect.type === 'variant') return effect.base
+    if (effect.type === 'bonus') return effect.key
+    return undefined
+}
+
 function resolveEffect(effect: BuildEffect, resolveName: NameResolver): ResolvedBuildEffect {
     if (effect.type === 'stat') return { type: 'text', name: `${humanize(effect.field)} ${fmt(effect.value)}` }
     const resolved = resolveName(effect.name)

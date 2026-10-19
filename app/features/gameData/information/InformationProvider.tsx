@@ -5,6 +5,7 @@ import { saveGameTermAction, setAbilityDescriptionSourceAction, setGameTermVerif
 import { saveSpecFactsAction } from '@/app/actions/spec.actions'
 import { toast } from '@/app/utils/toast'
 import { buildAbilityIndex } from '@/server/domains/gameData/helpers/abilityIndex/buildAbilityIndex'
+import { buildBuildIndex } from '@/server/domains/gameData/helpers/builds/buildBuildIndex'
 import { createAbilityLookup, describeAbility, type DescribeContext } from '@/server/domains/gameData/terms/describeAbility'
 import { createTermBook } from '@/server/domains/gameData/terms/template'
 import { lineNeedsAttention, normalizeTermDraft } from '@/server/domains/gameData/terms/termEdit'
@@ -15,6 +16,7 @@ import type { SpecStars } from '@/server/domains/gameData/types/specLinks'
 import type { SpecWithAllRegions } from '@/server/domains/spec/types'
 import type { PositionCode } from '@/shared/volleyball/positions'
 import type { AbilityIndexEntry } from '@/server/domains/gameData/types/abilityIndex'
+import type { BuildIndexEntry } from '@/server/domains/gameData/types/buildIndex'
 import type { StoredGameDatasets } from '@/server/domains/gameData/types/preview'
 import type { DescriptionSource, SaveGameTermInput } from '@/server/domains/gameData/types/schemas'
 import type { GameTerm, TermBook, TermKind } from '@/server/domains/gameData/terms/types'
@@ -25,6 +27,7 @@ export interface InformationState {
     abilityByKey: Map<string, Ability>
     rarities: Rarity[]
     index: Map<string, AbilityIndexEntry>
+    buildIndex: BuildIndexEntry[]
     termList: GameTerm[]
     terms: TermBook
     context: DescribeContext
@@ -100,7 +103,8 @@ export function InformationProvider({ initialStored, initialTerms, initialSettin
             technicals: stored.payloads.technicals,
             rarities,
         }).map(e => [e.key, e]))
-        return { abilities, rarities, index, abilityByKey: new Map(abilities.map(a => [a.key, a])), usage: collectTermUsage(abilities) }
+        const buildIndex = buildBuildIndex({ builds: stored.payloads.builds ?? [], passives: stored.payloads.buildPassives, abilities })
+        return { abilities, rarities, index, buildIndex, abilityByKey: new Map(abilities.map(a => [a.key, a])), usage: collectTermUsage(abilities) }
     }, [stored])
 
     const wording = useMemo(() => {

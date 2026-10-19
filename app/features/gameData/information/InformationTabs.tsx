@@ -23,7 +23,7 @@ function Count({ value, flag }: { value: number; flag?: boolean }) {
 export default function InformationTabs() {
     const pathname = usePathname()
     const router = useRouter()
-    const { index, termList, unhandled, loadouts, skipped, specByGameKey } = useInformation()
+    const { index, buildIndex, termList, unhandled, loadouts, skipped, specByGameKey } = useInformation()
     const role = useUserRole()
     const canImport = role === 'admin' || role === 'super_admin'
 
@@ -40,7 +40,7 @@ export default function InformationTabs() {
         { value: 'terms' as const, label: <>Terms<Count value={termList.length} /></> },
         { value: 'unhandled' as const, label: <>To be handled<Count value={unhandled.length} flag={unhandled.length > 0} /></> },
         { value: 'specs' as const, label: loadouts.length > 0 ? <>Spec loadouts<Count value={activeLoadouts.length} flag={unlinkedLoadouts} /></> : 'Spec loadouts' },
-        { value: 'builds' as const, label: 'Builds' },
+        { value: 'builds' as const, label: buildIndex.length > 0 ? <>Builds<Count value={buildIndex.length} /></> : 'Builds' },
     ]
     const tabs = role === 'spec_manager' ? allTabs.filter(t => t.value === 'specs') : allTabs
     const importing = segment === 'import'

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildBuildIndex } from '../buildBuildIndex'
+import { buildBuildIndex, buildEffectTarget } from '../buildBuildIndex'
 import { createNameResolver } from '../../specLoadouts/resolveKit'
 import { fixtureAbilities, fixtureDataset } from '../../../__tests__/fixtures/loadFixtures'
 
@@ -53,5 +53,18 @@ describe('buildBuildIndex', () => {
 
     it('works with no effects stored', () => {
         expect(buildBuildIndex({ builds, abilities }).every(b => !b.hasEffects)).toBe(true)
+    })
+})
+
+describe('buildEffectTarget', () => {
+    it('points ability-linked effects at the ability to edit', () => {
+        expect(buildEffectTarget({ type: 'ability', name: 'Third Stance', key: 'Third Stance' })).toBe('Third Stance')
+        expect(buildEffectTarget({ type: 'variant', name: '+0.1 Backrow Blitz', base: 'Backrow Blitz', modifier: '+0.1' })).toBe('Backrow Blitz')
+        expect(buildEffectTarget({ type: 'bonus', name: 'Stance', key: 'Stance' })).toBe('Stance')
+    })
+
+    it('has no target for text or an unknown bonus', () => {
+        expect(buildEffectTarget({ type: 'text', name: '+0.2 Jump Power' })).toBeUndefined()
+        expect(buildEffectTarget({ type: 'bonus', name: 'Nope' })).toBeUndefined()
     })
 })
