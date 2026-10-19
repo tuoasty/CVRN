@@ -142,9 +142,10 @@ interface LineEditorProps {
     raw: string
     parts: Part[]
     after?: (book: TermBook) => ReactNode
+    note?: string
 }
 
-function LineEditor({ abilityKey, line, raw, parts, after }: LineEditorProps) {
+function LineEditor({ abilityKey, line, raw, parts, after, note }: LineEditorProps) {
     const { terms } = useInformation()
     const drafts = useTermDrafts()
     const [open, setOpen] = useState(false)
@@ -177,6 +178,7 @@ function LineEditor({ abilityKey, line, raw, parts, after }: LineEditorProps) {
                 <span className="min-w-0 flex-1 text-base text-foreground">{sentence(line, book)}</span>
                 {flagged && <Dot label="Needs attention" />}
             </button>
+            {note && <p className="pl-5 text-xs text-secondary">{note}</p>}
             {open && (
                 <div className="pl-5">
                     <p className="mt-1 font-mono text-xs text-muted-foreground">{raw}</p>
@@ -238,7 +240,7 @@ function GrantedLines({ grants, book }: { grants: string | null; book: TermBook 
     )
 }
 
-export default function AbilityLines({ ability }: { ability: Ability }) {
+export default function AbilityLines({ ability, effectNotes }: { ability: Ability; effectNotes?: ReadonlyMap<number, string> }) {
     const params = Object.entries(ability.params)
 
     return (
@@ -257,6 +259,7 @@ export default function AbilityLines({ ability }: { ability: Ability }) {
                                     { kind: 'effect', tag: effect.tag, value: effect.amount, op: effect.op },
                                     ...options.map(([key, value]) => ({ kind: 'option' as const, tag: key, value })),
                                 ]}
+                                note={effectNotes?.get(i + 1)}
                             />
                         )
                     })}

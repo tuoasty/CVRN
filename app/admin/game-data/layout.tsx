@@ -2,18 +2,24 @@ import type { ReactNode } from 'react'
 import { Database } from 'lucide-react'
 import { createServerSupabase } from '@/server/supabase/server'
 import { getGameAbilitySettings, getGameTerms, getStoredGameDatasets } from '@/server/domains/gameData'
+import { getSkippedSpecKeys } from '@/server/domains/gameData/queries/getLinkSpecs'
+import { getSpecsAllRegions } from '@/server/domains/spec'
+import { getAllRegions } from '@/server/domains/region'
 import { InformationProvider } from '@/app/features/gameData/information/InformationProvider'
 import InformationTabs from '@/app/features/gameData/information/InformationTabs'
 
 export default async function AdminInformationLayout({ children }: { children: ReactNode }) {
     const supabase = await createServerSupabase()
-    const [stored, terms, settings, user] = await Promise.all([
+    const [stored, terms, settings, specs, regions, skipped, user] = await Promise.all([
         getStoredGameDatasets(supabase),
         getGameTerms(supabase),
         getGameAbilitySettings(supabase),
+        getSpecsAllRegions(supabase),
+        getAllRegions(supabase),
+        getSkippedSpecKeys(supabase),
         supabase.auth.getUser(),
     ])
-    const loadError = [stored, terms, settings].map(r => (r.ok ? null : r.error.message)).find(m => m !== null) ?? null
+    const loadError = [stored, terms, settings, specs, regions, skipped].map(r => (r.ok ? null : r.error.message)).find(m => m !== null) ?? null
 
     return (
         <div className="admin-container">
@@ -31,6 +37,9 @@ export default async function AdminInformationLayout({ children }: { children: R
                     initialStored={stored.ok ? stored.value : { payloads: {}, summaries: [] }}
                     initialTerms={terms.ok ? terms.value : []}
                     initialSettings={settings.ok ? settings.value : {}}
+                    initialSpecs={specs.ok ? specs.value : []}
+                    initialRegions={regions.ok ? regions.value.map(r => ({ id: r.id, code: r.code })) : []}
+                    initialSkipped={skipped.ok ? [...skipped.value] : []}
                     userId={user.data.user?.id ?? ''}
                     loadError={loadError}
                 >

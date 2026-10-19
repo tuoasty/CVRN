@@ -2,13 +2,18 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { saveGameTermAction, setAbilityDescriptionSourceAction, setGameTermVerifiedAction } from '@/app/actions/gameData.actions'
+import { saveSpecIdentityAction } from '@/app/actions/spec.actions'
 import { toast } from '@/app/utils/toast'
 import { buildAbilityIndex } from '@/server/domains/gameData/helpers/abilityIndex/buildAbilityIndex'
 import { createAbilityLookup, describeAbility, type DescribeContext } from '@/server/domains/gameData/terms/describeAbility'
 import { createTermBook } from '@/server/domains/gameData/terms/template'
 import { lineNeedsAttention, normalizeTermDraft } from '@/server/domains/gameData/terms/termEdit'
 import { collectTermUsage, unhandledTerms, type TermUsage } from '@/server/domains/gameData/terms/termUsage'
-import type { Ability, Rarity } from '@/server/domains/gameData/types/datasets'
+import { createKitResolver, type KitResolver } from '@/server/domains/gameData/helpers/specLoadouts/resolveKit'
+import type { Ability, Rarity, SpecLoadout } from '@/server/domains/gameData/types/datasets'
+import type { SpecStars } from '@/server/domains/gameData/types/specLinks'
+import type { SpecWithAllRegions } from '@/server/domains/spec/types'
+import type { PositionCode } from '@/shared/volleyball/positions'
 import type { AbilityIndexEntry } from '@/server/domains/gameData/types/abilityIndex'
 import type { StoredGameDatasets } from '@/server/domains/gameData/types/preview'
 import type { DescriptionSource, SaveGameTermInput } from '@/server/domains/gameData/types/schemas'
@@ -33,6 +38,15 @@ export interface InformationState {
     setVerified: (kind: TermKind, tag: string, verified: boolean) => Promise<boolean>
     setDescriptionSource: (abilityKey: string, source: DescriptionSource) => Promise<boolean>
     replaceStored: (next: StoredGameDatasets) => void
+    loadouts: SpecLoadout[]
+    specs: SpecWithAllRegions[]
+    specByGameKey: Map<string, SpecWithAllRegions>
+    regions: { id: string; code: string }[]
+    skipped: Set<string>
+    kitResolver: KitResolver
+    replaceSpecs: (next: SpecWithAllRegions[]) => void
+    replaceSkips: (next: string[]) => void
+    saveSpecFacts: (specId: string, facts: { stars?: SpecStars; position?: PositionCode }) => Promise<boolean>
 }
 
 const InformationContext = createContext<InformationState | null>(null)
@@ -62,15 +76,20 @@ interface InformationProviderProps {
     initialStored: StoredGameDatasets
     initialTerms: GameTerm[]
     initialSettings: Record<string, DescriptionSource>
+    initialSpecs: SpecWithAllRegions[]
+    initialRegions: { id: string; code: string }[]
+    initialSkipped: string[]
     userId: string
     loadError: string | null
     children: ReactNode
 }
 
-export function InformationProvider({ initialStored, initialTerms, initialSettings, userId, loadError, children }: InformationProviderProps) {
+export function InformationProvider({ initialStored, initialTerms, initialSettings, initialSpecs, initialRegions, initialSkipped, userId, loadError, children }: InformationProviderProps) {
     const [stored, setStored] = useState(initialStored)
     const [termList, setTermList] = useState(initialTerms)
     const [settings, setSettings] = useState(initialSettings)
+    const [specs, setSpecs] = useState(initialSpecs)
+    const [skippedList, setSkippedList] = useState(initialSkipped)
 
     const data = useMemo(() => {
         const abilities = stored.payloads.abilities ?? []
@@ -90,6 +109,27 @@ export function InformationProvider({ initialStored, initialTerms, initialSettin
         const attention = new Set(data.abilities.filter(a => lineNeedsAttention(describeAbility(a, context))).map(a => a.key))
         return { terms, context, attention, unhandled: unhandledTerms(data.usage, terms) }
     }, [termList, data])
+
+    const specData = useMemo(() => ({
+        loadouts: stored.payloads.specLoadouts ?? [],
+        specByGameKey: new Map(specs.filter(s => s.game_key !== null).map(s => [s.game_key as string, s])),
+        skipped: new Set(skippedList),
+        kitResolver: createKitResolver(data.abilityByKey.keys()),
+    }), [stored, specs, skippedList, data])
+
+    const saveSpecFacts = useCallback(async (specId: string, facts: { stars?: SpecStars; position?: PositionCode }) => {
+        const previous = specs.find(s => s.id === specId)
+        if (!previous) return false
+        const next = { ...previous, ...facts }
+        setSpecs(list => list.map(s => (s.id === specId ? next : s)))
+        const result = await saveSpecIdentityAction({ id: specId, name: next.name, stars: next.stars, position: next.position, height: next.height })
+        if (!result.ok) {
+            setSpecs(list => list.map(s => (s.id === specId ? previous : s)))
+            toast.error('Spec not saved', result.error.message)
+            return false
+        }
+        return true
+    }, [specs])
 
     const saveTerm = useCallback(async (input: SaveGameTermInput) => {
         const previous = termList.find(sameTerm(input.kind, input.tag))
@@ -148,7 +188,13 @@ export function InformationProvider({ initialStored, initialTerms, initialSettin
         setVerified,
         setDescriptionSource,
         replaceStored: setStored,
-    }), [stored, data, wording, termList, settings, userId, loadError, saveTerm, setVerified, setDescriptionSource])
+        ...specData,
+        specs,
+        regions: initialRegions,
+        replaceSpecs: setSpecs,
+        replaceSkips: setSkippedList,
+        saveSpecFacts,
+    }), [stored, data, wording, termList, settings, userId, loadError, saveTerm, setVerified, setDescriptionSource, specData, specs, initialRegions, saveSpecFacts])
 
     return <InformationContext.Provider value={value}>{children}</InformationContext.Provider>
 }

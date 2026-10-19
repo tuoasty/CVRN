@@ -52,8 +52,9 @@ export async function publishGameDataImport(
         if (!written.ok) return written
     }
 
-    const [after, fresh] = await Promise.all([getStoredGameDatasets(supabase), getSpecsAllRegions(supabase)])
+    const [after, fresh, skips] = await Promise.all([getStoredGameDatasets(supabase), getSpecsAllRegions(supabase), getSkippedSpecKeys(supabase)])
     if (!after.ok) return after
     if (!fresh.ok) return fresh
-    return Ok({ published: rows.map(r => r.kind), stored: after.value, specOps: ops.length, specs: fresh.value })
+    if (!skips.ok) return skips
+    return Ok({ published: rows.map(r => r.kind), stored: after.value, specOps: ops.length, specs: fresh.value, skipped: [...skips.value] })
 }

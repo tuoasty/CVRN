@@ -33,6 +33,7 @@ interface GameDataImportProps {
     storedError: string | null
     onStoredChange?: (stored: StoredGameDatasets) => void
     onSpecsChange?: (specs: SpecWithAllRegions[]) => void
+    onSkipsChange?: (skipped: string[]) => void
 }
 
 function TextAction({ disabled, onClick, children }: { disabled?: boolean; onClick: () => void; children: ReactNode }) {
@@ -58,7 +59,7 @@ function Heading({ title, count, aside }: { title: string; count?: number; aside
     )
 }
 
-export default function GameDataImport({ initialStored, terms, storedError, onStoredChange, onSpecsChange }: GameDataImportProps) {
+export default function GameDataImport({ initialStored, terms, storedError, onStoredChange, onSpecsChange, onSkipsChange }: GameDataImportProps) {
     const [stored, setStored] = useState(initialStored)
     const [viewing, setViewing] = useState<GameDatasetKind | null>(null)
     const [text, setText] = useState('')
@@ -153,6 +154,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
             setStored(result.value.stored)
             onStoredChange?.(result.value.stored)
             onSpecsChange?.(result.value.specs)
+            onSkipsChange?.(result.value.skipped)
             await loadPreview(previewedText)
         } finally {
             setBusy(false)

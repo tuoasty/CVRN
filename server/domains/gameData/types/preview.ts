@@ -43,4 +43,5 @@ export interface PublishGameDataResult {
     stored: StoredGameDatasets
     specOps: number
     specs: SpecWithAllRegions[]
+    skipped: string[]
 }

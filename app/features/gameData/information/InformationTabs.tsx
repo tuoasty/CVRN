@@ -22,19 +22,21 @@ function Count({ value, flag }: { value: number; flag?: boolean }) {
 export default function InformationTabs() {
     const pathname = usePathname()
     const router = useRouter()
-    const { index, termList, unhandled } = useInformation()
+    const { index, termList, unhandled, loadouts, skipped, specByGameKey } = useInformation()
 
     const segment = pathname.slice(BASE.length + 1).split('/')[0]
     const current = (TAB_VALUES as readonly string[]).includes(segment) ? (segment as TabValue) : null
     const entries = [...index.values()]
     const rollables = entries.filter(e => e.availability !== 'exclusive').length
+    const activeLoadouts = loadouts.filter(l => !skipped.has(l.key) || specByGameKey.has(l.key))
+    const unlinkedLoadouts = activeLoadouts.some(l => !specByGameKey.has(l.key))
 
     const tabs = [
         { value: 'rollables' as const, label: <>Rollables<Count value={rollables} /></> },
         { value: 'exclusives' as const, label: <>Exclusives<Count value={entries.length - rollables} /></> },
         { value: 'terms' as const, label: <>Terms<Count value={termList.length} /></> },
         { value: 'unhandled' as const, label: <>To be handled<Count value={unhandled.length} flag={unhandled.length > 0} /></> },
-        { value: 'specs' as const, label: 'Spec loadouts' },
+        { value: 'specs' as const, label: loadouts.length > 0 ? <>Spec loadouts<Count value={activeLoadouts.length} flag={unlinkedLoadouts} /></> : 'Spec loadouts' },
         { value: 'builds' as const, label: 'Builds' },
     ]
     const importing = segment === 'import'

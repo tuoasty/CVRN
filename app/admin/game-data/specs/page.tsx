@@ -1,5 +1,10 @@
-import PlaceholderTab from '@/app/features/gameData/information/PlaceholderTab'
+import { Suspense } from 'react'
+import SpecLoadoutBrowser from '@/app/features/gameData/information/specs/SpecLoadoutBrowser'
 
 export default function AdminSpecLoadoutsPage() {
-    return <PlaceholderTab title="Spec loadouts" body="Spec loadouts arrive with the spec import. The page design is ready." />
+    return (
+        <Suspense>
+            <SpecLoadoutBrowser />
+        </Suspense>
+    )
 }
