@@ -9,7 +9,7 @@ import SpecCard from './SpecCard'
 export type SpecGalleries = Record<PositionCode, { active: PublicSpecCard[]; vaulted: PublicSpecCard[] }>
 
 const OPTIONS = POSITIONS.map(p => ({ value: p.code, label: p.shortLabel }))
-const GRID = 'grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'
+const GRID = 'grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-6'
 
 export default function SpecGallery({ galleries }: { galleries: SpecGalleries }) {
     const params = useInfoParams()
