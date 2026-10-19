@@ -127,3 +127,24 @@ describe('buildImportPreview with spec loadouts', () => {
         expect(dataset(preview, 'specLoadouts').issues.map(i => i.message)).toEqual(['Tunes "Bounce" but it is not in the Active kit'])
     })
 })
+
+describe('buildImportPreview spec links', () => {
+    it('plans links when the paste has spec loadouts', () => {
+        const preview = okPreview(fixture('spec-loadouts.txt'))
+        expect(preview.specLinks?.items).toHaveLength(57)
+        expect(preview.specLinks?.items.every(i => i.status === 'ambiguous')).toBe(true)
+        expect(preview.canPublish).toBe(true)
+    })
+
+    it('proposes exact matches against DB specs', () => {
+        const parsed = buildImportPreview(fixture('spec-loadouts.txt'), {}, undefined, [
+            { id: 'a', name: 'Wilfredo León', stars: 5, position: 'OUT', height: 79, game_key: null },
+        ])
+        if (parsed.status !== 'ok') throw new Error('parse')
+        expect(parsed.specLinks?.items.find(i => i.gameKey === 'Wilfredo Leon')).toMatchObject({ status: 'exact', specId: 'a', height: 79 })
+    })
+
+    it('has no link step without spec loadouts', () => {
+        expect(okPreview(fixture('rarities.txt')).specLinks).toBeNull()
+    })
+})

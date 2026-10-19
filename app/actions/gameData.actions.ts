@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from 'next/cache'
 import { revalidatePublicData } from '@/server/cache/revalidate'
 import { CACHE_TAGS } from '@/server/cache/tags'
 import { Err, Result } from '@/shared/types/result'
@@ -12,6 +13,8 @@ import {
     setGameTermVerified,
     setAbilityDescriptionSource,
     GameDataTextSchema,
+    PublishGameDataSchema,
+    PublishGameDataInput,
     SaveGameTermSchema,
     SetGameTermVerifiedSchema,
     SetAbilityDescriptionSourceSchema,
@@ -34,16 +37,20 @@ export async function previewGameDataImportAction(input: { text: string }): Prom
     return previewGameDataImport(supabase, parsed.data.text)
 }
 
-export async function publishGameDataImportAction(input: { text: string }): Promise<Result<PublishGameDataResult>> {
-    const parsed = GameDataTextSchema.safeParse(input)
+export async function publishGameDataImportAction(input: PublishGameDataInput): Promise<Result<PublishGameDataResult>> {
+    const parsed = PublishGameDataSchema.safeParse(input)
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
     const guard = await requireAdmin(supabase)
     if (!guard.ok) return guard
 
-    const result = await publishGameDataImport(supabase, { text: parsed.data.text, userId: guard.value })
-    if (result.ok && result.value.published.length > 0) revalidatePublicData([CACHE_TAGS.gameData])
+    const result = await publishGameDataImport(supabase, { text: parsed.data.text, specLinks: parsed.data.specLinks, userId: guard.value })
+    if (result.ok && (result.value.published.length > 0 || result.value.specOps > 0)) revalidatePublicData([CACHE_TAGS.gameData])
+    if (result.ok && result.value.specOps > 0) {
+        revalidatePublicData([CACHE_TAGS.specs])
+        revalidatePath('/admin/specs')
+    }
     return result
 }
 

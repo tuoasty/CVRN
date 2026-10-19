@@ -1,5 +1,7 @@
 import type { LuaParseError } from './luaValue'
 import type { DatasetDiff, DatasetIssue, GameDatasetKind, GameDatasetPayloads, StoredDatasetSummary } from './datasets'
+import type { SpecLinkPlan } from './specLinks'
+import type { SpecWithAllRegions } from '@/server/domains/spec/types'
 
 export type PreviewDataset = {
     [K in GameDatasetKind]: {
@@ -27,6 +29,7 @@ export type GameDataPreview =
         crossIssues: DatasetIssue[]
         checkedKinds: GameDatasetKind[]
         canPublish: boolean
+        specLinks: SpecLinkPlan | null
         hasChanges: boolean
     }
 
@@ -38,4 +41,6 @@ export interface StoredGameDatasets {
 export interface PublishGameDataResult {
     published: GameDatasetKind[]
     stored: StoredGameDatasets
+    specOps: number
+    specs: SpecWithAllRegions[]
 }

@@ -5,10 +5,13 @@ import { buildImportPreview } from '../helpers/buildImportPreview'
 import { createTermBook } from '../terms/template'
 import { getStoredGameDatasets } from './getStoredGameDatasets'
 import { getGameTerms } from './getGameTerms'
+import { getLinkSpecs, getSkippedSpecKeys } from './getLinkSpecs'
 
 export async function previewGameDataImport(supabase: DBClient, text: string): Promise<Result<GameDataPreview>> {
-    const [stored, terms] = await Promise.all([getStoredGameDatasets(supabase), getGameTerms(supabase)])
+    const [stored, terms, specs, skipped] = await Promise.all([getStoredGameDatasets(supabase), getGameTerms(supabase), getLinkSpecs(supabase), getSkippedSpecKeys(supabase)])
     if (!stored.ok) return stored
     if (!terms.ok) return terms
-    return Ok(buildImportPreview(text, stored.value.payloads, createTermBook(terms.value)))
+    if (!specs.ok) return specs
+    if (!skipped.ok) return skipped
+    return Ok(buildImportPreview(text, stored.value.payloads, createTermBook(terms.value), specs.value, skipped.value))
 }

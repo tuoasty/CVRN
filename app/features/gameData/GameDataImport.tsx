@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, type DragEvent } from 'react'
+import { useMemo, useRef, useState, type DragEvent } from 'react'
 import { FileUp } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { previewGameDataImportAction, publishGameDataImportAction } from '@/app/actions/gameData.actions'
@@ -8,6 +8,9 @@ import type { Ability, AttributeEntry, GameDatasetKind, Rarity } from '@/server/
 import type { LuaParseError } from '@/server/domains/gameData/types/luaValue'
 import type { GameDataPreview, StoredGameDatasets } from '@/server/domains/gameData/types/preview'
 import type { GameTerm } from '@/server/domains/gameData/terms/types'
+import type { SpecLinkDecision } from '@/server/domains/gameData/types/specLinks'
+import type { SpecWithAllRegions } from '@/server/domains/spec/types'
+import { planSpecOps } from '@/server/domains/gameData/helpers/specLoadouts/linkPlan'
 import { GAME_DATASET_KINDS } from '@/server/domains/gameData/types/datasets'
 import { DATASET_LABELS } from '@/server/domains/gameData/helpers/datasets/registry'
 import { toast } from '@/app/utils/toast'
@@ -15,6 +18,7 @@ import DatasetPreviewCard from './DatasetPreviewCard'
 import IssueList from './IssueList'
 import StoredDatasetsStrip from './StoredDatasetsStrip'
 import SavedDatasetPanel from './SavedDatasetPanel'
+import SpecLinkPanel from './SpecLinkPanel'
 import { cn } from '@/lib/utils'
 
 async function readFiles(files: FileList | File[]): Promise<string> {
@@ -27,9 +31,10 @@ interface GameDataImportProps {
     terms: GameTerm[]
     storedError: string | null
     onStoredChange?: (stored: StoredGameDatasets) => void
+    onSpecsChange?: (specs: SpecWithAllRegions[]) => void
 }
 
-export default function GameDataImport({ initialStored, terms, storedError, onStoredChange }: GameDataImportProps) {
+export default function GameDataImport({ initialStored, terms, storedError, onStoredChange, onSpecsChange }: GameDataImportProps) {
     const [stored, setStored] = useState(initialStored)
     const [viewing, setViewing] = useState<GameDatasetKind | null>(null)
     const [text, setText] = useState('')
@@ -37,16 +42,45 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
     const [previewedText, setPreviewedText] = useState<string | null>(null)
     const [busy, setBusy] = useState(false)
     const [dragging, setDragging] = useState(false)
+    const [decisions, setDecisions] = useState<Record<string, SpecLinkDecision>>({})
     const fileInput = useRef<HTMLInputElement>(null)
 
+    const plan = preview?.status === 'ok' ? preview.specLinks : null
+    const specPlan = useMemo(() => (plan ? planSpecOps(plan, Object.values(decisions), plan.specs) : null), [plan, decisions])
+    const specOps = specPlan?.ok ? specPlan.value.ops.length : 0
+    const specsReady = !specPlan || (specPlan.ok && specPlan.value.undecided.length === 0)
+
     const stale = preview !== null && previewedText !== text
-    const publishable = !stale && preview?.status === 'ok' && preview.canPublish && preview.hasChanges
+    const publishable = !stale && preview?.status === 'ok' && preview.canPublish && specsReady && (preview.hasChanges || specOps > 0)
+
+    function decide(gameKey: string, decision: SpecLinkDecision | undefined) {
+        setDecisions(current => {
+            const next = { ...current }
+            if (decision) next[gameKey] = decision
+            else delete next[gameKey]
+            return next
+        })
+    }
+
+    function acceptAll() {
+        if (!plan) return
+        setDecisions(current => {
+            const next = { ...current }
+            for (const item of plan.items) {
+                if (item.status === 'exact' && next[item.gameKey] === undefined) {
+                    next[item.gameKey] = { gameKey: item.gameKey, action: 'link', specId: item.specId!, rename: false }
+                }
+            }
+            return next
+        })
+    }
 
     async function loadPreview(source: string) {
         const result = await previewGameDataImportAction({ text: source })
         if (!result.ok) { toast.error(result.error.message); return }
         setPreview(result.value)
         setPreviewedText(source)
+        setDecisions({})
     }
 
     async function runPreview() {
@@ -62,13 +96,16 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
         if (previewedText === null) return
         setBusy(true)
         try {
-            const result = await publishGameDataImportAction({ text: previewedText })
+            const result = await publishGameDataImportAction({ text: previewedText, specLinks: Object.values(decisions) })
             if (!result.ok) { toast.error(result.error.message); return }
             setStored(result.value.stored)
             onStoredChange?.(result.value.stored)
-            toast.success(result.value.published.length > 0
-                ? `Published ${result.value.published.map(k => DATASET_LABELS[k]).join(', ')}`
-                : 'Nothing changed, nothing published')
+            onSpecsChange?.(result.value.specs)
+            const parts = [
+                ...(result.value.published.length > 0 ? [`Published ${result.value.published.map(k => DATASET_LABELS[k]).join(', ')}`] : []),
+                ...(result.value.specOps > 0 ? [`saved ${result.value.specOps} spec change${result.value.specOps === 1 ? '' : 's'}`] : []),
+            ]
+            toast.success(parts.length > 0 ? parts.join(', ') : 'Nothing changed, nothing published')
             await loadPreview(previewedText)
         } finally {
             setBusy(false)
@@ -137,10 +174,25 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
                         Clear
                     </Button>
                     {stale && <span className="text-sm text-muted-foreground">The paste changed since this preview.</span>}
+                    {!stale && specPlan?.ok && specPlan.value.undecided.length > 0 && (
+                        <span className="text-sm text-muted-foreground">
+                            Link or skip <span className="font-mono tabular-nums">{specPlan.value.undecided.length}</span> spec{specPlan.value.undecided.length === 1 ? '' : 's'} to publish.
+                        </span>
+                    )}
                 </div>
             </div>
 
             {preview?.status === 'parse_error' && <ParseErrorPanel error={preview.error} />}
+            {plan && (
+                <SpecLinkPanel
+                    plan={plan}
+                    decisions={decisions}
+                    onDecide={decide}
+                    onAcceptAll={acceptAll}
+                    heightChanges={specPlan?.ok ? specPlan.value.heightChanges : []}
+                    errors={specPlan && !specPlan.ok ? specPlan.error : []}
+                />
+            )}
             {preview?.status === 'ok' && <PreviewResult preview={preview} stored={stored} terms={terms} />}
 
             {storedError

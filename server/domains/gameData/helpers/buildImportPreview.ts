@@ -1,4 +1,4 @@
-import type { Ability, DatasetIssue, GameDatasetKind, GameDatasetPayloads } from '../types/datasets'
+import type { Ability, DatasetIssue, GameDatasetKind, GameDatasetPayloads, SpecLoadout } from '../types/datasets'
 import { unmappedTags } from '../terms/describeAbility'
 import type { TermBook } from '../terms/types'
 import type { GameDataPreview, IgnoredStatement, PreviewDataset } from '../types/preview'
@@ -7,17 +7,19 @@ import { crossCheck } from './datasets/crossCheck'
 import { diffDataset } from './datasets/diffDataset'
 import { DATASET_ROOTS, kindForRoot, normalizeDataset } from './datasets/registry'
 import { createKitResolver, resolveKit, resolveTuning, tuneIssues } from './specLoadouts/resolveKit'
+import { buildSpecLinkPlan } from './specLoadouts/linkPlan'
+import type { LinkSpec } from '../types/specLinks'
 
 export interface ImportAnalysis {
     preview: GameDataPreview
     sources: Partial<Record<GameDatasetKind, string>>
 }
 
-export function buildImportPreview(text: string, stored: Partial<GameDatasetPayloads> = {}, terms?: TermBook): GameDataPreview {
-    return analyzeImport(text, stored, terms).preview
+export function buildImportPreview(text: string, stored: Partial<GameDatasetPayloads> = {}, terms?: TermBook, specs: LinkSpec[] = [], skipped: ReadonlySet<string> = new Set()): GameDataPreview {
+    return analyzeImport(text, stored, terms, specs, skipped).preview
 }
 
-export function analyzeImport(text: string, stored: Partial<GameDatasetPayloads> = {}, terms?: TermBook): ImportAnalysis {
+export function analyzeImport(text: string, stored: Partial<GameDatasetPayloads> = {}, terms?: TermBook, specs: LinkSpec[] = [], skipped: ReadonlySet<string> = new Set()): ImportAnalysis {
     const parsed = parseLuaData(text)
     if (!parsed.ok) return { preview: { status: 'parse_error', error: parsed.error }, sources: {} }
 
@@ -89,6 +91,7 @@ export function analyzeImport(text: string, stored: Partial<GameDatasetPayloads>
             crossIssues,
             checkedKinds: Object.keys(merged) as GameDatasetKind[],
             canPublish: datasets.length > 0 && !hasError,
+            specLinks: loadoutSet ? buildSpecLinkPlan(loadoutSet.payload as SpecLoadout[], specs, skipped) : null,
             hasChanges: datasets.some(d => !d.diff?.unchanged),
         },
         sources,

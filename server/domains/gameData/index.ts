@@ -14,6 +14,10 @@ export { parseLuaData } from './helpers/lua/parseLuaData'
 export { DATASET_ROOTS, DATASET_LABELS } from './helpers/datasets/registry'
 export { rarityForWeight } from './helpers/datasets/rarityForWeight'
 export { buildAbilityIndex } from './helpers/abilityIndex/buildAbilityIndex'
+export { buildSpecLinkPlan, planSpecOps } from './helpers/specLoadouts/linkPlan'
+export { normalizeSpecName, nameDistance } from './helpers/specLoadouts/nameDistance'
+export { createKitResolver, resolveKit, resolveTuning, tuneIssues, kitTarget } from './helpers/specLoadouts/resolveKit'
+export type { KitEntry, KitResolver, ResolvedTune } from './helpers/specLoadouts/resolveKit'
 export { createVariantResolver } from './helpers/abilityIndex/resolveVariantBase'
 export type { VariantResolver } from './helpers/abilityIndex/resolveVariantBase'
 export { describeAbility, describeEffectMain, describeOption, createAbilityLookup, unmappedTags, SKIPPED_OPTIONS } from './terms/describeAbility'
@@ -59,6 +63,19 @@ export type {
     AbilityGrant,
     AbilityIndexEntry,
     VariantMatch,
+    KitSlot,
+    SpecTune,
+    SpecLoadout,
+    LinkSpec,
+    SpecCandidate,
+    SpecLinkItem,
+    SpecLinkPlan,
+    SpecStars,
+    SpecLinkDecision,
+    SpecLinkOp,
+    HeightChange,
+    SpecOpsPlan,
+    PublishGameDataInput,
 } from './types'
 
-export { GAME_DATASET_KINDS, GameDataTextSchema, GAME_DATA_TEXT_MAX, DESCRIPTION_SOURCES, SaveGameTermSchema, SetGameTermVerifiedSchema, SetAbilityDescriptionSourceSchema } from './types'
+export { GAME_DATASET_KINDS, SPEC_STARS, PublishGameDataSchema, SpecLinkDecisionSchema, GameDataTextSchema, GAME_DATA_TEXT_MAX, DESCRIPTION_SOURCES, SaveGameTermSchema, SetGameTermVerifiedSchema, SetAbilityDescriptionSourceSchema } from './types'

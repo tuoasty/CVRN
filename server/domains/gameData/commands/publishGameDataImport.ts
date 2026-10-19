@@ -1,21 +1,39 @@
 import type { Json } from '@/database.types'
 import { DBClient } from '@/shared/types/db'
 import { Err, Ok, Result } from '@/shared/types/result'
-import { upsertGameDatasets } from '@/server/db/gameDataset.repo'
-import type { PublishGameDataResult, UpsertGameDatasetDto } from '../types'
+import { publishGameData } from '@/server/db/gameDataset.repo'
+import { getSpecsAllRegions } from '@/server/domains/spec/queries/getSpecs'
+import type { PublishGameDataResult, SpecLinkDecision, SpecLinkOp, UpsertGameDatasetDto } from '../types'
 import { analyzeImport } from '../helpers/buildImportPreview'
+import { planSpecOps } from '../helpers/specLoadouts/linkPlan'
 import { getStoredGameDatasets } from '../queries/getStoredGameDatasets'
+import { getLinkSpecs, getSkippedSpecKeys } from '../queries/getLinkSpecs'
 
-export async function publishGameDataImport(supabase: DBClient, p: { text: string; userId: string }): Promise<Result<PublishGameDataResult>> {
-    const stored = await getStoredGameDatasets(supabase)
+export async function publishGameDataImport(
+    supabase: DBClient,
+    p: { text: string; specLinks: SpecLinkDecision[]; userId: string },
+): Promise<Result<PublishGameDataResult>> {
+    const [stored, specs, skipped] = await Promise.all([getStoredGameDatasets(supabase), getLinkSpecs(supabase), getSkippedSpecKeys(supabase)])
     if (!stored.ok) return stored
+    if (!specs.ok) return specs
+    if (!skipped.ok) return skipped
 
-    const { preview, sources } = analyzeImport(p.text, stored.value.payloads)
+    const { preview, sources } = analyzeImport(p.text, stored.value.payloads, undefined, specs.value, skipped.value)
     if (preview.status === 'parse_error') {
         return Err({ message: `Line ${preview.error.line}: ${preview.error.message}`, code: 'VALIDATION_ERROR' })
     }
     if (!preview.canPublish) {
         return Err({ message: 'This paste has blocking errors. Preview it and fix them first.', code: 'VALIDATION_ERROR' })
+    }
+
+    let ops: SpecLinkOp[] = []
+    if (preview.specLinks) {
+        const planned = planSpecOps(preview.specLinks, p.specLinks, specs.value)
+        if (!planned.ok) return Err({ message: planned.error.join('. '), code: 'VALIDATION_ERROR' })
+        if (planned.value.undecided.length > 0) {
+            return Err({ message: `Decide every spec first: ${planned.value.undecided.join(', ')}`, code: 'VALIDATION_ERROR' })
+        }
+        ops = planned.value.ops
     }
 
     const importedAt = new Date().toISOString()
@@ -29,12 +47,13 @@ export async function publishGameDataImport(supabase: DBClient, p: { text: strin
             imported_at: importedAt,
         }))
 
-    if (rows.length > 0) {
-        const written = await upsertGameDatasets(supabase, rows)
+    if (rows.length > 0 || ops.length > 0) {
+        const written = await publishGameData(supabase, rows, ops)
         if (!written.ok) return written
     }
 
-    const after = await getStoredGameDatasets(supabase)
+    const [after, fresh] = await Promise.all([getStoredGameDatasets(supabase), getSpecsAllRegions(supabase)])
     if (!after.ok) return after
-    return Ok({ published: rows.map(r => r.kind), stored: after.value })
+    if (!fresh.ok) return fresh
+    return Ok({ published: rows.map(r => r.kind), stored: after.value, specOps: ops.length, specs: fresh.value })
 }
