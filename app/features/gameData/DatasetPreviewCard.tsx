@@ -6,7 +6,7 @@ import type { DatasetDiff } from '@/server/domains/gameData/types/datasets'
 import type { PreviewDataset } from '@/server/domains/gameData/types/preview'
 import { DATASET_LABELS } from '@/server/domains/gameData/helpers/datasets/registry'
 import IssueList from './IssueList'
-import { AbilityTable, AttributeTable, RarityTable, type AttributeLinks } from './DatasetTables'
+import { AbilityTable, AttributeTable, RarityTable, SpecLoadoutTable, type AttributeLinks } from './DatasetTables'
 import { cn } from '@/lib/utils'
 
 export default function DatasetPreviewCard({ dataset, links }: { dataset: PreviewDataset; links: AttributeLinks }) {
@@ -50,6 +50,7 @@ export default function DatasetPreviewCard({ dataset, links }: { dataset: Previe
                     {dataset.kind === 'rarities' && <RarityTable rarities={dataset.payload} />}
                     {(dataset.kind === 'physicals' || dataset.kind === 'technicals') && <AttributeTable entries={dataset.payload} links={links} />}
                     {dataset.kind === 'abilities' && <AbilityTable abilities={dataset.payload} links={links} />}
+                    {dataset.kind === 'specLoadouts' && <SpecLoadoutTable loadouts={dataset.payload} links={links} />}
                 </div>
             )}
         </div>

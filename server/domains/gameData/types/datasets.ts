@@ -1,4 +1,4 @@
-export const GAME_DATASET_KINDS = ['rarities', 'abilities', 'physicals', 'technicals'] as const
+export const GAME_DATASET_KINDS = ['rarities', 'abilities', 'physicals', 'technicals', 'specLoadouts'] as const
 export type GameDatasetKind = (typeof GAME_DATASET_KINDS)[number]
 
 export type ScalarValue = string | number | boolean
@@ -55,11 +55,36 @@ export interface AttributeEntry {
     weight: number
 }
 
+export type KitSlot = 'Passive' | 'Active'
+
+export interface SpecTune {
+    slot: KitSlot
+    ability: string
+    path: string
+    value: number
+}
+
+export interface SpecLoadout {
+    key: string
+    name: string
+    height: number
+    cooldown: number
+    lifetime?: number
+    endOnSpike: boolean
+    maxPower: number
+    activeMaxPower: number
+    passive: string[]
+    active: string[]
+    tuning: SpecTune[]
+    extra?: Record<string, PlainValue>
+}
+
 export interface GameDatasetPayloads {
     rarities: Rarity[]
     abilities: Ability[]
     physicals: AttributeEntry[]
     technicals: AttributeEntry[]
+    specLoadouts: SpecLoadout[]
 }
 
 export type IssueLevel = 'error' | 'warning'

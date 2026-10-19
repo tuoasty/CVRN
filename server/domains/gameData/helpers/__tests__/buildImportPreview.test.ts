@@ -108,3 +108,22 @@ describe('buildImportPreview issues', () => {
         expect(preview.canPublish).toBe(false)
     })
 })
+
+describe('buildImportPreview with spec loadouts', () => {
+    it('reads the spec catalog with the abilities in the same paste', () => {
+        const preview = okPreview([fixture('abilities.txt'), fixture('spec-loadouts.txt')].join('\n\n'))
+        const loadouts = dataset(preview, 'specLoadouts')
+        expect([loadouts.root, loadouts.count]).toEqual(['SpecCatalog.Specs', 57])
+        expect(loadouts.issues).toEqual([])
+        expect(preview.canPublish).toBe(true)
+    })
+
+    it('warns about tunes that do not match the kit', () => {
+        const abilities = okPreview(fixture('abilities.txt'))
+        const stored = { abilities: dataset(abilities, 'abilities').payload }
+        const text = 'SpecCatalog.Specs = { A = { Name = "A", Height = 1.3, Cooldown = 1, EndOnSpike = false, MaxPower = 1, ActiveMaxPower = 1, Passive = { "Bounce" }, Active = {}, Tuning = { tune("Active", "Bounce", "Effects.1.Amount", 1) } } }'
+        const preview = buildImportPreview(text, stored)
+        if (preview.status !== 'ok') throw new Error('parse')
+        expect(dataset(preview, 'specLoadouts').issues.map(i => i.message)).toEqual(['Tunes "Bounce" but it is not in the Active kit'])
+    })
+})

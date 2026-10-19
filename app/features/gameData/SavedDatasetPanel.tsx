@@ -4,7 +4,7 @@ import type { GameDatasetKind } from '@/server/domains/gameData/types/datasets'
 import type { StoredGameDatasets } from '@/server/domains/gameData/types/preview'
 import type { GameTerm } from '@/server/domains/gameData/terms/types'
 import { DATASET_LABELS, DATASET_ROOTS } from '@/server/domains/gameData/helpers/datasets/registry'
-import { AbilityTable, AttributeTable, RarityTable } from './DatasetTables'
+import { AbilityTable, AttributeTable, RarityTable, SpecLoadoutTable } from './DatasetTables'
 
 export default function SavedDatasetPanel({ kind, stored, terms }: { kind: GameDatasetKind; stored: StoredGameDatasets; terms: GameTerm[] }) {
     const { payloads } = stored
@@ -18,6 +18,7 @@ export default function SavedDatasetPanel({ kind, stored, terms }: { kind: GameD
             </div>
             {kind === 'rarities' && payloads.rarities && <RarityTable rarities={payloads.rarities} />}
             {kind === 'abilities' && payloads.abilities && <AbilityTable abilities={payloads.abilities} links={links} />}
+            {kind === 'specLoadouts' && payloads.specLoadouts && <SpecLoadoutTable loadouts={payloads.specLoadouts} links={links} />}
             {kind === 'physicals' && payloads.physicals && <AttributeTable entries={payloads.physicals} links={links} />}
             {kind === 'technicals' && payloads.technicals && <AttributeTable entries={payloads.technicals} links={links} />}
         </div>

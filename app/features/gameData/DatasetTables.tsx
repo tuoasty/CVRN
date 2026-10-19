@@ -11,6 +11,9 @@ import { createTermBook } from '@/server/domains/gameData/terms/template'
 import { createAbilityLookup, describeAbility, type AbilityLookup } from '@/server/domains/gameData/terms/describeAbility'
 import { NO_ROLL_VALUE } from '@/server/domains/gameData/helpers/datasets/crossCheck'
 import { rarityForWeight } from '@/server/domains/gameData/helpers/datasets/rarityForWeight'
+import { createKitResolver, resolveKit, resolveTuning, type ResolvedTune } from '@/server/domains/gameData/helpers/specLoadouts/resolveKit'
+import type { SpecLoadout } from '@/server/domains/gameData/types/datasets'
+import { formatGameHeight } from '@/shared/utils/height'
 import { cn } from '@/lib/utils'
 
 const TH = 'px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground'
@@ -290,5 +293,73 @@ function AbilityRow({ ability, entry, showSource, rarity, lookup, book, expanded
                 </tr>
             )}
         </>
+    )
+}
+
+function tuneText(tune: ResolvedTune): string {
+    return tune.before === null
+        ? `${tune.ability} ${tune.path} = ${tune.value}`
+        : `${tune.ability} ${tune.before} → ${tune.value}`
+}
+
+export function SpecLoadoutTable({ loadouts, links = {} }: { loadouts: SpecLoadout[]; links?: AttributeLinks }) {
+    const [query, setQuery] = useState('')
+    const q = query.trim().toLowerCase()
+    const shown = q ? loadouts.filter(l => l.key.toLowerCase().includes(q)) : loadouts
+    const { abilities } = links
+    const rows = useMemo(() => {
+        const abilityByKey = new Map((abilities ?? []).map(a => [a.key, a]))
+        const resolve = createKitResolver(abilityByKey.keys())
+        return new Map(loadouts.map(l => {
+            const kit = resolveKit(l, resolve)
+            return [l.key, { text: kit.filter(e => e.tier === 'text').length, tunes: resolveTuning(l, kit, abilityByKey) }]
+        }))
+    }, [loadouts, abilities])
+
+    return (
+        <div>
+            <div className="p-3 border-b border-border">
+                <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Filter specs" className="h-8 max-w-xs rounded-sm" />
+            </div>
+            <table className="w-full table-fixed text-sm">
+                <colgroup>
+                    <col className="w-56" />
+                    <col className="w-20" />
+                    <col className="w-20" />
+                    <col className="w-20" />
+                    <col className="w-24" />
+                    <col />
+                </colgroup>
+                <thead>
+                    <tr className="border-b border-border">
+                        <th className={TH}>Spec</th>
+                        <th className={cn(TH, 'px-2 text-right')}>Height</th>
+                        <th className={cn(TH, 'px-2 text-right')}>Passive</th>
+                        <th className={cn(TH, 'px-2 text-right')}>Active</th>
+                        <th className={cn(TH, 'px-2 text-right')}>Plain text</th>
+                        <th className={TH}>Tunes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {shown.map(l => {
+                        const row = rows.get(l.key)
+                        return (
+                            <tr key={l.key} className="border-b border-border last:border-b-0">
+                                <td className={cn(TD, 'font-medium')}>{l.key}</td>
+                                <td className={cn(TD, NUM, 'px-2')}>{formatGameHeight(l.height)}</td>
+                                <td className={cn(TD, NUM, 'px-2')}>{l.passive.length}</td>
+                                <td className={cn(TD, NUM, 'px-2')}>{l.active.length}</td>
+                                <td className={cn(TD, NUM, 'px-2')}>{row?.text ?? 0}</td>
+                                <td className={TD}>
+                                    {row?.tunes.length
+                                        ? <ul className="space-y-0.5 font-mono text-xs tabular-nums text-secondary">{row.tunes.map((t, i) => <li key={i}>{tuneText(t)}</li>)}</ul>
+                                        : <span className="text-muted-foreground">None</span>}
+                                </td>
+                            </tr>
+                        )
+                    })}
+                </tbody>
+            </table>
+        </div>
     )
 }

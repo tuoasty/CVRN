@@ -6,6 +6,7 @@ import { parseLuaData } from './lua/parseLuaData'
 import { crossCheck } from './datasets/crossCheck'
 import { diffDataset } from './datasets/diffDataset'
 import { DATASET_ROOTS, kindForRoot, normalizeDataset } from './datasets/registry'
+import { createKitResolver, resolveKit, resolveTuning, tuneIssues } from './specLoadouts/resolveKit'
 
 export interface ImportAnalysis {
     preview: GameDataPreview
@@ -66,6 +67,16 @@ export function analyzeImport(text: string, stored: Partial<GameDatasetPayloads>
         (merged as Record<GameDatasetKind, unknown>)[dataset.kind] = dataset.payload
     }
     crossIssues.push(...crossCheck(merged))
+
+    const loadoutSet = byKind.get('specLoadouts')
+    if (loadoutSet && merged.abilities) {
+        const abilityByKey = new Map(merged.abilities.map(a => [a.key, a]))
+        const resolve = createKitResolver(abilityByKey.keys())
+        for (const loadout of merged.specLoadouts ?? []) {
+            const tunes = resolveTuning(loadout, resolveKit(loadout, resolve), abilityByKey)
+            loadoutSet.issues.push(...tuneIssues(loadout, tunes).map(issue => ({ ...issue, kind: 'specLoadouts' as const })))
+        }
+    }
 
     const datasets = [...byKind.values()].sort((a, b) => a.line - b.line)
     const hasError = crossIssues.some(i => i.level === 'error') || datasets.some(d => d.issues.some(i => i.level === 'error'))
