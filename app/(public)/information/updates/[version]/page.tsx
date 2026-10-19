@@ -15,10 +15,10 @@ type PageProps = {
 export default async function UpdateVersionPage({ params }: PageProps) {
     const { version } = await params
     const index = await getCachedUpdateLogIndex()
-    if (!index.some(e => e.version === version)) redirect('/updates')
+    if (!index.some(e => e.version === version)) redirect('/information/updates')
 
     const log = await getCachedUpdateLogByVersion(version)
-    if (!log) redirect('/updates')
+    if (!log) redirect('/information/updates')
 
     return <UpdateLogView log={log} index={index} />
 }

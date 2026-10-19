@@ -6,7 +6,7 @@ import { formatReleased } from './formatReleased'
 import { versionWindow } from './versionWindow'
 
 export function versionHref(version: string): string {
-    return `/updates/${encodeURIComponent(version)}`
+    return `/information/updates/${encodeURIComponent(version)}`
 }
 
 function RailArrow({ entry, direction, hidden }: { entry: UpdateLogIndexEntry | null; direction: 'newer' | 'older'; hidden: number }) {

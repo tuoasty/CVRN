@@ -14,7 +14,7 @@ function PagerLink({ entry, direction }: { entry: UpdateLogIndexEntry; direction
     const newer = direction === 'newer'
     return (
         <Link
-            href={`/updates/${encodeURIComponent(entry.version)}`}
+            href={`/information/updates/${encodeURIComponent(entry.version)}`}
             className={`group flex min-w-0 max-w-[48%] flex-col gap-1 ${newer ? '' : 'ml-auto items-end text-right'}`}
         >
             <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
@@ -61,6 +61,7 @@ export default function UpdateLogView({ log, index }: { log: UpdateLogPublic; in
             <ChangelogLayout
                 key={log.version}
                 toc={toc}
+                title={log.title ?? log.version}
                 header={header}
                 footer={footer}
                 rail={index.length > 1 ? <VersionRail index={index} current={log.version} newer={newer} older={older} /> : null}

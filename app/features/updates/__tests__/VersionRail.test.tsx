@@ -18,7 +18,7 @@ function listedVersions(html: string): string[] {
     return [...html.matchAll(/<a ([^>]*)>/g)]
         .map(m => m[1])
         .filter(attrs => attrs.includes('class="group'))
-        .map(attrs => decodeURIComponent(/href="\/updates\/([^"]+)"/.exec(attrs)![1]))
+        .map(attrs => decodeURIComponent(/href="\/information\/updates\/([^"]+)"/.exec(attrs)![1]))
 }
 
 describe('VersionRail', () => {
@@ -27,7 +27,7 @@ describe('VersionRail', () => {
         expect(listedVersions(html)).toEqual(['1.9', '1.8', '1.7', '1.6', '1.5', '1.4', '1.3', '1.2', '1.1'])
         const current = [...html.matchAll(/<a ([^>]*)>/g)].map(m => m[1]).filter(a => a.includes('aria-current="page"'))
         expect(current).toHaveLength(1)
-        expect(current[0]).toContain('href="/updates/1.5"')
+        expect(current[0]).toContain('href="/information/updates/1.5"')
     })
 
     it('links the arrows to the neighbouring versions and counts what is hidden', () => {

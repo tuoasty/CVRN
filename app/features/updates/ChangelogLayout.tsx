@@ -11,6 +11,7 @@ const GAP = 16
 
 interface Props {
     toc: ChangelogToc
+    title: string
     header: ReactNode
     footer: ReactNode
     rail?: ReactNode
@@ -43,7 +44,7 @@ function ExpandAllButton({ allOpen, onClick, className }: { allOpen: boolean; on
     )
 }
 
-export default function ChangelogLayout({ toc, header, footer, rail, children }: Props) {
+export default function ChangelogLayout({ toc, title, header, footer, rail, children }: Props) {
     const contentRef = useRef<HTMLDivElement>(null)
     const [navHeight, setNavHeight] = useState<number | null>(null)
     const entries = useMemo<TocEntry[]>(
@@ -148,10 +149,21 @@ export default function ChangelogLayout({ toc, header, footer, rail, children }:
         setAllOpen(next)
     }
 
+    function isPlainClick(e: MouseEvent<HTMLAnchorElement>): boolean {
+        return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey
+    }
+
     function onTocClick(e: MouseEvent<HTMLAnchorElement>, id: string) {
-        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+        if (!isPlainClick(e)) return
         e.preventDefault()
         go(id)
+    }
+
+    function onTopClick(e: MouseEvent<HTMLAnchorElement>) {
+        if (!isPlainClick(e)) return
+        e.preventDefault()
+        if (window.location.hash) window.history.pushState(window.history.state, '', window.location.pathname + window.location.search)
+        window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
     }
 
     const hasNav = hasToc || hasToggles
@@ -179,6 +191,15 @@ export default function ChangelogLayout({ toc, header, footer, rail, children }:
                             <nav aria-label="On this page">
                                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">On this page</p>
                                 <ul className="mt-3 border-l border-border">
+                                    <li>
+                                        <a
+                                            href="#top"
+                                            onClick={onTopClick}
+                                            className="-ml-px block border-l-2 border-transparent py-1 pl-3 pr-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                                        >
+                                            {title}
+                                        </a>
+                                    </li>
                                     {entries.map(entry => {
                                         const isActive = entry.id === active
                                         return (

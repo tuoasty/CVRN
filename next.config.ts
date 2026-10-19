@@ -3,6 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
 
   output: "standalone",
+  async redirects() {
+    return [
+      { source: "/updates", destination: "/information/updates", permanent: true },
+      { source: "/updates/:version", destination: "/information/updates/:version", permanent: true },
+    ];
+  },
   experimental: {
     serverActions: {
 

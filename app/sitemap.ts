@@ -45,8 +45,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         entry("/", { changeFrequency: "daily", priority: 1 }),
         entry("/archive", { changeFrequency: "weekly", priority: 0.6 }),
         entry("/leaderboard", { changeFrequency: "weekly", priority: 0.6 }),
-        entry("/spec-requirements", { changeFrequency: "monthly", priority: 0.5 }),
-        entry("/updates", { changeFrequency: "weekly", priority: 0.5 }),
+        entry("/information", { changeFrequency: "weekly", priority: 0.5 }),
+        entry("/information/builds", { changeFrequency: "monthly", priority: 0.5 }),
+        entry("/information/specs", { changeFrequency: "monthly", priority: 0.5 }),
+        entry("/information/updates", { changeFrequency: "weekly", priority: 0.5 }),
     ];
 
     for (const season of seasons) {
@@ -98,7 +100,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     for (const log of updateLogs) {
-        entries.push(entry(`/updates/${encodeURIComponent(log.version)}`, {
+        entries.push(entry(`/information/updates/${encodeURIComponent(log.version)}`, {
             lastModified: log.released_at,
             changeFrequency: "yearly",
             priority: 0.4,
