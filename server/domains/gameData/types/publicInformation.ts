@@ -78,9 +78,54 @@ export interface PublicSpecKit {
     passive: PublicKitEntry[]
 }
 
+export interface PublicBuildCombo {
+    physical: string
+    physicalSlug: string
+    technical: string
+    technicalSlug: string
+    minInches: number
+    maxInches: number
+    heightLabel: string
+}
+
+export type PublicBuildEffect =
+    | { kind: 'text'; text: string }
+    | { kind: 'ability'; name: string; target: string }
+    | { kind: 'bonus'; name: string; target?: string }
+
+export interface PublicBuildPart {
+    name: string
+    role: 'Physical' | 'Technical' | 'Bonus'
+    wording: string[]
+    href?: string
+}
+
+export interface PublicBuild {
+    name: string
+    slug: string
+    rarity: string
+    combos: PublicBuildCombo[]
+    effects: PublicBuildEffect[]
+    parts: PublicBuildPart[]
+}
+
+export interface PickOption {
+    slug: string
+    name: string
+    rarity: string
+}
+
+export interface PublicBuildCatalog {
+    groups: { rarity: string; builds: PublicBuild[] }[]
+    physicals: PickOption[]
+    technicals: PickOption[]
+    heights: HeightRow[]
+}
+
 export interface PublicInformation {
     abilities: PublicAbilityCatalog
     inspectors: Record<string, InspectorData>
     heights: HeightColumn[]
     kits: Record<string, PublicSpecKit>
+    builds: PublicBuildCatalog
 }

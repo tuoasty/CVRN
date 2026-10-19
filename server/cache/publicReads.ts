@@ -403,7 +403,7 @@ export const getCachedGameDatasets = unstable_cache(
 
 export const getCachedPublicInformation = unstable_cache(
     async () => unwrap(await getPublicInformation(createPublicClient()), "getCachedPublicInformation"),
-    ["public:information:v2"],
+    ["public:information:v3"],
     {tags: [CACHE_TAGS.gameData], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 

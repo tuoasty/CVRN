@@ -6,6 +6,7 @@ import { createAbilityLookup } from '../../terms/describeAbility'
 import { createTermBook } from '../../terms/template'
 import { buildAbilityIndex } from '../abilityIndex/buildAbilityIndex'
 import { buildAbilityCatalog } from './abilityCatalog'
+import { buildBuildCatalog } from './buildCatalog'
 import { buildHeightColumns } from './heightColumns'
 import { buildInspector, type InspectorContext } from './inspector'
 import { buildSpecKits } from './specKits'
@@ -40,5 +41,14 @@ export function buildPublicInformation({ payloads, terms, settings }: PublicInfo
     })
     for (const kit of Object.values(kits)) for (const entry of [...kit.active, ...kit.passive]) if (entry.target) addInspector(entry.target)
 
-    return { abilities: catalog, inspectors, heights: buildHeightColumns(payloads.heights ?? []), kits }
+    const heights = buildHeightColumns(payloads.heights ?? [])
+    const builds = buildBuildCatalog(payloads, catalog, heights, key => {
+        addInspector(key)
+        return inspectors[key]
+    })
+    for (const build of builds.groups.flatMap(g => g.builds)) {
+        for (const effect of build.effects) if (effect.kind !== 'text' && effect.target) addInspector(effect.target)
+    }
+
+    return { abilities: catalog, inspectors, heights, kits, builds }
 }

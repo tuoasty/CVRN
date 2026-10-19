@@ -14,6 +14,8 @@ const payloads = {
     technicals: fixtureDataset('attributes.txt', 'technicals'),
     heights: fixtureDataset('heights.txt', 'heights'),
     specLoadouts: fixtureSpecLoadouts(),
+    builds: fixtureDataset('builds.txt', 'builds'),
+    buildPassives: fixtureDataset('build-passives.txt', 'buildPassives'),
 }
 
 describe('buildPublicInformation', () => {
@@ -23,6 +25,7 @@ describe('buildPublicInformation', () => {
             inspectors: {},
             heights: [],
             kits: {},
+            builds: { groups: [], physicals: [], technicals: [], heights: [] },
         })
     })
 
@@ -55,5 +58,18 @@ describe('buildPublicInformation', () => {
                 if (entry.target) expect(info.inspectors[entry.target], entry.target).toBeDefined()
             }
         }
+    })
+
+    it('fills builds and an inspector for every build effect target', () => {
+        const info = buildPublicInformation({ payloads, terms, settings: {} })
+        const builds = info.builds.groups.flatMap(g => g.builds)
+        expect(builds).toHaveLength(52)
+        expect(info.builds.heights).toHaveLength(24)
+        for (const build of builds) {
+            for (const effect of build.effects) {
+                if (effect.kind !== 'text' && effect.target) expect(info.inspectors[effect.target], effect.target).toBeDefined()
+            }
+        }
+        expect(info.inspectors['Nerfed Butterman']).toMatchObject({ kind: 'exclusive' })
     })
 })
