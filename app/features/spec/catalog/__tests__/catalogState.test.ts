@@ -25,6 +25,7 @@ function spec(overrides: Partial<SpecWithAllRegions> = {}): SpecWithAllRegions {
         position: 'OUT',
         height: 79,
         secondary_required: 0,
+        is_vaulted: false,
         created_at: '',
         updated_at: '',
         requirements: [],

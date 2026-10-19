@@ -11,6 +11,7 @@ import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/app/components
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/app/components/ui/select';
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from '@/app/components/ui/alert-dialog';
 import {useSeasons} from '@/app/hooks/useSeasons';
+import {isSeasonActive} from '@/server/domains/season/helpers/isSeasonActive';
 import {toast} from '@/app/utils/toast';
 import {clientLogger} from '@/app/utils/clientLogger';
 import {SheetConfig} from '@/shared/types/db';
@@ -67,7 +68,6 @@ type FormState = {
     headerRow: string;
     blockHeight: string;
     blockStride: string;
-    isActive: boolean;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -78,7 +78,6 @@ const DEFAULT_FORM: FormState = {
     headerRow: '9',
     blockHeight: '18',
     blockStride: '4',
-    isActive: true,
 };
 
 export default function AdminSyncPage() {
@@ -143,6 +142,11 @@ export default function AdminSyncPage() {
         return region ? `${season.name} (${region.code.toUpperCase()})` : season.name; 
     };
 
+    const seasonActive = (seasonId: string) => {
+        const season = seasons.find(s => s.id === seasonId);
+        return !!season && isSeasonActive(season);
+    };
+
     const handleOpenAdd = () => {
         setEditingConfig(null);
         setForm(DEFAULT_FORM);
@@ -159,7 +163,6 @@ export default function AdminSyncPage() {
             headerRow: String(cfg.header_row),
             blockHeight: String(cfg.block_height),
             blockStride: String(cfg.block_stride),
-            isActive: cfg.is_active,
         });
         setFormOpen(true);
     };
@@ -415,7 +418,7 @@ export default function AdminSyncPage() {
                                             </Badge>
                                         </td>
                                         <td>
-                                            {cfg.is_active
+                                            {seasonActive(cfg.season_id)
                                                 ? <Badge variant="default" className="rounded-sm text-xs">Active</Badge>
                                                 : <Badge variant="secondary" className="rounded-sm text-xs">Inactive</Badge>
                                             }
@@ -616,18 +619,6 @@ export default function AdminSyncPage() {
                                 </>)}
                             </div>
                         )}
-                        <div className="space-y-2">
-                            <Label>Status</Label>
-                            <Select value={form.isActive ? 'active' : 'inactive'} onValueChange={v => setForm(f => ({...f, isActive: v === 'active'}))} disabled={saving}>
-                                <SelectTrigger className="rounded-sm">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="inactive">Inactive</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
                         <div className="flex gap-3 pt-1">
                             <Button type="submit" disabled={saving} className="rounded-sm">
                                 {saving ? 'Saving...' : editingConfig ? 'Save Changes' : 'Save Config'}

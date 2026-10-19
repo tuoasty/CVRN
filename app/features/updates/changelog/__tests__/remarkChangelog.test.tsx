@@ -251,7 +251,7 @@ describe('remarkChangelog balance markers', () => {
 
     it('hoists the marker out of the paragraph in a loose list', () => {
         const html = render('- [nerf] Spike CD 8s → 10s\n\n- Other')
-        expect(html).toMatch(/<li data-marker="nerf"[^>]*>\s*<span data-delta="nerf"[^>]*>.*?<\/span>\s*<p/s)
+        expect(html).toMatch(/<li data-marker="nerf"[^>]*>\s*<span data-delta="nerf"[^>]*>[\s\S]*?<\/span>\s*<p/)
     })
 
     it('keeps a marker inline outside lists', () => {

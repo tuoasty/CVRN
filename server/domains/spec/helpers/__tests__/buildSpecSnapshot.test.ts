@@ -13,6 +13,7 @@ function spec(name: string, stars: number, reqs: Req[], regionId = "r1"): SpecWi
         position: "OUT",
         height: 79,
         secondary_required: 0,
+        is_vaulted: false,
         created_at: "",
         updated_at: "",
         requirements: reqs.map((r, i) => ({
