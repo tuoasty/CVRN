@@ -72,8 +72,8 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     },
     [CACHE_TAGS.gameData]: {
         label: "Game Data",
-        description: "Imported game datasets: the ability catalog, rarities, and the physical and technical roll lists. Regenerated on Publish in Game Data.",
-        readCount: 1,
+        description: "Imported game datasets plus the public Information view built from them, wording terms and description settings. Regenerated on Publish and on every wording save in Game Data.",
+        readCount: 2,
         affects: "Information pages",
     },
     [CACHE_TAGS.stats]: {
