@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import type { DatasetDiff } from '@/server/domains/gameData/types/datasets'
 import type { PreviewDataset } from '@/server/domains/gameData/types/preview'
 import { DATASET_LABELS } from '@/server/domains/gameData/helpers/datasets/registry'
@@ -9,44 +9,45 @@ import IssueList from './IssueList'
 import { AbilityTable, AttributeTable, RarityTable, SpecLoadoutTable, type AttributeLinks } from './DatasetTables'
 import { cn } from '@/lib/utils'
 
+export function diffParts(diff: DatasetDiff): string {
+    return [
+        diff.added.length > 0 && `${diff.added.length} added`,
+        diff.removed.length > 0 && `${diff.removed.length} removed`,
+        diff.changed.length > 0 && `${diff.changed.length} changed`,
+        diff.reordered && 'reordered',
+    ].filter(Boolean).join(', ')
+}
+
 export default function DatasetPreviewCard({ dataset, links }: { dataset: PreviewDataset; links: AttributeLinks }) {
     const [open, setOpen] = useState(false)
     const errors = dataset.issues.filter(i => i.level === 'error').length
     const warnings = dataset.issues.length - errors
 
     return (
-        <div className="panel">
+        <div>
             <button
                 type="button"
+                aria-expanded={open}
                 onClick={() => setOpen(o => !o)}
-                className="flex w-full items-center gap-3 p-4 text-left hover:bg-muted/30 transition-colors"
+                className="grid w-full grid-cols-[16px_170px_260px_96px_1fr_max-content] items-baseline gap-x-3.5 py-2 text-left text-sm transition-colors duration-150 hover:text-foreground motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
-                {open ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                <span className="font-semibold">{DATASET_LABELS[dataset.kind]}</span>
-                <span className="font-mono text-xs text-muted-foreground">{dataset.root}</span>
-                <span className="font-mono text-xs text-muted-foreground tabular-nums">line {dataset.line}</span>
-                <span className="ml-auto flex items-center gap-3 text-sm">
-                    <DiffLabel diff={dataset.diff} />
-                    {errors > 0 && <span className="text-destructive tabular-nums">{errors} error{errors === 1 ? '' : 's'}</span>}
-                    {warnings > 0 && <span className="text-muted-foreground tabular-nums">{warnings} warning{warnings === 1 ? '' : 's'}</span>}
-                    <span className="font-mono tabular-nums">{dataset.count} entries</span>
+                <ChevronRight aria-hidden className={cn('h-3.5 w-3.5 self-center text-muted-foreground transition-transform duration-150 motion-reduce:transition-none', open && 'rotate-90')} />
+                <span className="font-semibold text-foreground">{DATASET_LABELS[dataset.kind]}</span>
+                <span className="truncate font-mono text-xs tabular-nums text-muted-foreground">{dataset.root} · line {dataset.line}</span>
+                <span className="font-mono text-xs tabular-nums text-foreground">{dataset.count} entries</span>
+                <span className="text-muted-foreground">
+                    {!dataset.diff ? 'New, nothing stored yet' : dataset.diff.unchanged ? 'Unchanged' : diffParts(dataset.diff)}
+                </span>
+                <span className="flex gap-3 text-xs">
+                    {errors > 0 && <span className="text-destructive"><span className="font-mono tabular-nums">{errors}</span> error{errors === 1 ? '' : 's'}</span>}
+                    {warnings > 0 && <span className="text-secondary"><span className="font-mono tabular-nums">{warnings}</span> warning{warnings === 1 ? '' : 's'}</span>}
                 </span>
             </button>
 
-            {dataset.diff && !dataset.diff.unchanged && (
-                <div className="border-t border-border px-4 py-3">
-                    <DiffDetail diff={dataset.diff} />
-                </div>
-            )}
-
-            {dataset.issues.length > 0 && (
-                <div className="border-t border-border px-4 py-3">
-                    <IssueList issues={dataset.issues} />
-                </div>
-            )}
-
             {open && (
-                <div className="border-t border-border">
+                <div className="space-y-3 pb-4 pl-[30px]">
+                    {dataset.diff && !dataset.diff.unchanged && <DiffDetail diff={dataset.diff} />}
+                    <IssueList issues={dataset.issues} />
                     {dataset.kind === 'rarities' && <RarityTable rarities={dataset.payload} />}
                     {(dataset.kind === 'physicals' || dataset.kind === 'technicals') && <AttributeTable entries={dataset.payload} links={links} />}
                     {dataset.kind === 'abilities' && <AbilityTable abilities={dataset.payload} links={links} />}
@@ -55,18 +56,6 @@ export default function DatasetPreviewCard({ dataset, links }: { dataset: Previe
             )}
         </div>
     )
-}
-
-function DiffLabel({ diff }: { diff: DatasetDiff | null }) {
-    if (!diff) return <span className="text-primary">New</span>
-    if (diff.unchanged) return <span className="text-muted-foreground">No changes</span>
-    const parts = [
-        diff.added.length > 0 && `${diff.added.length} added`,
-        diff.removed.length > 0 && `${diff.removed.length} removed`,
-        diff.changed.length > 0 && `${diff.changed.length} changed`,
-        diff.reordered && 'reordered',
-    ].filter(Boolean)
-    return <span className="tabular-nums">{parts.join(', ')}</span>
 }
 
 function DiffDetail({ diff }: { diff: DatasetDiff }) {
@@ -80,7 +69,7 @@ function DiffDetail({ diff }: { diff: DatasetDiff }) {
         <dl className="space-y-1 text-sm">
             {rows.map(r => (
                 <div key={r.label} className="flex gap-3">
-                    <dt className="w-20 shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-0.5">{r.label}</dt>
+                    <dt className="w-20 shrink-0 pt-0.5 text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground">{r.label}</dt>
                     <dd className={cn(r.removed && 'text-destructive')}>{r.keys.join(', ')}</dd>
                 </div>
             ))}

@@ -6,7 +6,7 @@ import { DATASET_LABELS } from '@/server/domains/gameData/helpers/datasets/regis
 import { cn } from '@/lib/utils'
 
 function formatImportedAt(iso: string) {
-    return new Date(iso).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+    return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
 export default function StoredDatasetsStrip({ stored, selected, onSelect }: {
@@ -17,8 +17,8 @@ export default function StoredDatasetsStrip({ stored, selected, onSelect }: {
     const byKind = new Map(stored.map(s => [s.kind, s]))
 
     return (
-        <div className="panel grid grid-cols-2 md:grid-cols-4">
-            {GAME_DATASET_KINDS.map((kind, i) => {
+        <div className="mt-2.5 grid grid-cols-2 gap-x-5 gap-y-3 md:grid-cols-5">
+            {GAME_DATASET_KINDS.map(kind => {
                 const s = byKind.get(kind)
                 const active = selected === kind
                 return (
@@ -28,17 +28,18 @@ export default function StoredDatasetsStrip({ stored, selected, onSelect }: {
                         disabled={!s}
                         aria-pressed={active}
                         onClick={() => onSelect(active ? null : kind)}
-                        className={cn(
-                            'p-4 text-left border-b-2 border-transparent transition-colors enabled:hover:bg-muted/30 disabled:cursor-default',
-                            i > 0 && 'border-l border-l-border',
-                            active && 'border-b-foreground',
-                        )}
+                        className="group py-1 text-left disabled:cursor-default focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                     >
-                        <p className={cn('text-xs font-semibold uppercase tracking-wider', active ? 'text-foreground' : 'text-muted-foreground')}>{DATASET_LABELS[kind]}</p>
+                        <p className={cn(
+                            'text-xs font-semibold uppercase tracking-[0.05em] transition-colors duration-150 motion-reduce:transition-none',
+                            active ? 'text-foreground underline decoration-2 underline-offset-[6px]' : 'text-muted-foreground group-enabled:group-hover:text-foreground',
+                        )}>
+                            {DATASET_LABELS[kind]}
+                        </p>
                         {s ? (
                             <>
-                                <p className="mt-1 font-mono text-lg tabular-nums">{s.count}</p>
-                                <p className="text-xs text-muted-foreground tabular-nums" suppressHydrationWarning>{formatImportedAt(s.importedAt)}</p>
+                                <p className="mt-1 font-mono text-sm tabular-nums text-foreground">{s.count}</p>
+                                <p className="text-xs tabular-nums text-muted-foreground" suppressHydrationWarning>{formatImportedAt(s.importedAt)}</p>
                             </>
                         ) : (
                             <p className="mt-1 text-sm text-muted-foreground">Not imported</p>

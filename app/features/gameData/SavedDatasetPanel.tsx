@@ -11,9 +11,9 @@ export default function SavedDatasetPanel({ kind, stored, terms }: { kind: GameD
     const links = { abilities: payloads.abilities, rarities: payloads.rarities, physicals: payloads.physicals, technicals: payloads.technicals, terms }
 
     return (
-        <div className="panel">
-            <div className="flex items-center gap-3 p-4 border-b border-border">
-                <span className="font-semibold">Saved {DATASET_LABELS[kind]}</span>
+        <div className="mt-6">
+            <div className="mb-2 flex items-baseline gap-3">
+                <span className="text-sm font-semibold">Saved {DATASET_LABELS[kind]}</span>
                 <span className="font-mono text-xs text-muted-foreground">{DATASET_ROOTS[kind]}</span>
             </div>
             {kind === 'rarities' && payloads.rarities && <RarityTable rarities={payloads.rarities} />}
