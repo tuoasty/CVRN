@@ -1,7 +1,7 @@
 import {DBClient} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
-import {SpecWinnerWithRefs} from "@/server/domains/spec/types";
+import {RecentWinnerRow, SpecWinnerWithRefs} from "@/server/domains/spec/types";
 
 const SELECT_WITH_REFS =
     "id, season_id, spec_id, player_id, stars_awarded, created_at, updated_at, " +
@@ -19,6 +19,19 @@ export async function findSpecWinnersBySeason(
         .order("stars_awarded", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as SpecWinnerWithRefs[]);
+}
+
+export async function findSpecWinnersBySeasons(
+    supabase: DBClient,
+    seasonIds: string[]
+): Promise<Result<RecentWinnerRow[]>> {
+    if (seasonIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("spec_winners")
+        .select("season_id, spec_id, stars_awarded, player:players(id, username, display_name, avatar_url)")
+        .in("season_id", seasonIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(((data ?? []) as unknown as RecentWinnerRow[]).filter(row => row.player));
 }
 
 export interface RosterSpecRow {

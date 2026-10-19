@@ -3,7 +3,7 @@ import { Err, Ok, Result } from "@/shared/types/result";
 import { serializeError } from "@/server/utils/serializeableError";
 import { logger } from "@/server/utils/logger";
 
-export type UserRole = 'admin' | 'super_admin' | 'stat_tracker' | 'staff' | 'spec_manager' | null;
+export type UserRole = 'admin' | 'super_admin' | 'stat_tracker' | 'staff' | 'spec_manager' | 'information_manager' | 'none' | null;
 
 const roleCache = new Map<string, { role: UserRole; cachedAt: number }>();
 const ROLE_CACHE_TTL_MS = 5 * 60 * 1000;

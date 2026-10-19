@@ -6,6 +6,7 @@ const ROLE_LABELS: Record<InvitableRole, string> = {
     stat_tracker: "Stat Tracker",
     staff: "Staff",
     spec_manager: "Spec Manager",
+    information_manager: "Information Manager",
 };
 
 export function roleLabel(role: InvitableRole): string {

@@ -1,0 +1,1602 @@
+[
+  {
+    "kind": "effect",
+    "tag": "JumpSpeed",
+    "category": "jump",
+    "label": "jump speed",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "JumpSpeedScale",
+    "category": "jump",
+    "label": "spike jump strength",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "GlideCap",
+    "category": "jump",
+    "label": "spike-jump glide speed cap",
+    "unit": null,
+    "template": "Spike-jump glide speed cap raised to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "GlideScale",
+    "category": "jump",
+    "label": "glide strength",
+    "unit": null,
+    "template": "Increased glide strength by {pctChange}%",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "WalkSpeed",
+    "category": "movement",
+    "label": "walk speed",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "SprintBonus",
+    "category": "movement",
+    "label": "sprint bonus",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "SprintCap",
+    "category": "movement",
+    "label": "sprint speed cap",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "WalkSpeedPin",
+    "category": "movement",
+    "label": "movement speed",
+    "unit": null,
+    "template": "Movement speed locked at {v}, sprint off",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "ReachWidth",
+    "category": "attack",
+    "label": "attack hitbox width",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "ReachHeight",
+    "category": "attack",
+    "label": "attack hitbox height",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "ReachDepth",
+    "category": "attack",
+    "label": "attack hitbox depth",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "ReachCoreHeight",
+    "category": "attack",
+    "label": "attack hitbox core height",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "ReachLift",
+    "category": "attack",
+    "label": "attack hitbox position",
+    "unit": null,
+    "template": "Attack hitbox sits {v} higher",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "ReachHeightScale",
+    "category": "attack",
+    "label": "attack hitbox height",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "ArmScale",
+    "category": "attack",
+    "label": "arm length",
+    "unit": null,
+    "template": "Arms {pctChange}% longer",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "AttackPower",
+    "category": "attack",
+    "label": "attack power",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "MaxPower",
+    "category": "attack",
+    "label": "max power",
+    "unit": null,
+    "template": "Max power raised to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "JumpWindup",
+    "category": "attack",
+    "label": "spike windup",
+    "unit": "s",
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "JumpWindupAfter",
+    "category": "attack",
+    "label": "follow-up spike windup",
+    "unit": "s",
+    "template": null,
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "effect",
+    "tag": "JumpWindupOverride",
+    "category": "attack",
+    "label": "spike windup",
+    "unit": "s",
+    "template": "Spike windup fixed at {v}s",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "BlockWidth",
+    "category": "block",
+    "label": "block width",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "BlockHeight",
+    "category": "block",
+    "label": "block height",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "BlockDepth",
+    "category": "block",
+    "label": "block depth",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "BlockSideReach",
+    "category": "block",
+    "label": "angled block reach",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "BlockSideRoll",
+    "category": "block",
+    "label": "angled block tilt",
+    "unit": "°",
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "BlockChargeFast",
+    "category": "block",
+    "label": "block charge speed",
+    "unit": null,
+    "template": "Faster block charge",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "BlockChargeSlow",
+    "category": "block",
+    "label": "block charge speed",
+    "unit": null,
+    "template": "Slower block charge",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "BlockGlideCap",
+    "category": "block",
+    "label": "block-jump glide speed cap",
+    "unit": null,
+    "template": "Block-jump glide speed cap raised to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "BlockPose",
+    "category": "block",
+    "label": "block pose",
+    "unit": null,
+    "template": "Blocks with the V pose",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "DigWidth",
+    "category": "receive",
+    "label": "receive width",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "DigDepth",
+    "category": "receive",
+    "label": "receive depth",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "DigHeightScale",
+    "category": "receive",
+    "label": "receive hitbox height",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "DiveWidth",
+    "category": "receive",
+    "label": "dive width",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "DiveHeight",
+    "category": "receive",
+    "label": "dive height",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "DiveDepth",
+    "category": "receive",
+    "label": "dive depth",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "DiveDistanceScale",
+    "category": "receive",
+    "label": "dive distance",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "AnySetReach",
+    "category": "set",
+    "label": "set hitbox on every set",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "SetReach",
+    "category": "set",
+    "label": "setter mode hitbox",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "effect",
+    "tag": "Stamina",
+    "category": "stamina",
+    "label": "max stamina",
+    "unit": null,
+    "template": null,
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SprintAnywhere",
+    "category": "movement",
+    "label": null,
+    "unit": null,
+    "template": "Can sprint while busy with an action",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "MidAirTurn",
+    "category": "movement",
+    "label": null,
+    "unit": null,
+    "template": "Mid-air turn takes {v}s",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "AirReachShrink",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Attack hitbox shrinks by {v} in the air",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "GreenReachBonus",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Green spikes register from contacts {v} lower",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "GreenCooldownCut",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Can green {v}s sooner after a set",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SpikeMissWindow",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Can hit a set {v}s after it",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "TooLowFloorCut",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Reduced the too-low threshold by {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "TooLowImmune",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Spikes never count as too low",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "TooLowNerfCut",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Reduced the too-low nerf by {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "QuickNerfImmune",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Ignores the quick-set nerf",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SpikeImmune",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Ignores spiking penalties",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "ForceGreen",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Every spike is green",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "ApeNerfCut",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Reduced the ape nerf by {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlitzSpeed",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Spikes at power 12 to 15 fly {pctChange}% faster",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BackrowBlitz",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Back-row spikes get +{v} power",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BackrowBlitzCannon",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Back-row bonus is +{v} with Cannon or Heavy Hitter",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlitzCannon",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Lowers the Backrow Blitz bonus when combined",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "NoBlitzStack",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Does not stack with Blitz",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "HitterBlockLift",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Spikes hit {v} higher on the opposing block",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "HitterToolReach",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Spikes count {v} further out on the opposing block",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "HitterWipeKeep",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Wiped or tooled balls keep {pct} more spike speed",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "HitterWipeEase",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Easier to wipe off the opposing block ({v})",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "PressureRate",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Late-rally pressure builds by {v} per second",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "PressureCap",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Late-rally pressure caps at {v}x",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SwipePower",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Can swipe at power {v} or lower",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "FeintDrop",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Feints are pushed down by {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "FeintLoopDrop",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Feints keep dropping in flight ({v})",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "TopSpin",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Spikes without a picked spin get topspin",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SpinSide",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Sidespin curve set to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SpinDrop",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Spin drop set to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SpinTopDrop",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Topspin drop set to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SideOutPower",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "After receiving, next attack gets +{v} power",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SideOutReach",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "After receiving, next attack hitbox is {v} bigger",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "HeadshotRadius",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "Increased chance of headshot by 25%",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "Perfection",
+    "category": "attack",
+    "label": null,
+    "unit": null,
+    "template": "All spiking penalties are negated (No too low, No quick nerf, always green. Doesnt affect the ape nerf)",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlockAutoGreen",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Every block jump counts as a green charge",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlockGreenCut",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Green block window starts {pct} earlier than the normal 90% fill",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "BlockNoMiss",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Releasing a block early never misses",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlockWindow",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Block stays up for {v}s",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlockContactDrop",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Spikes land {v} lower on your block",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlockContactLift",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Spikes land {v} higher on your block",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlockReachCut",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Harder to tool off your block ({v})",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlockWipeDampCut",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Balls wiped off your block keep {pct} less speed",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlockVision",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "See contact bands on opposing blocks",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BlockShatter",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Blocks can shatter",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "SkyZone",
+    "category": "block",
+    "label": null,
+    "unit": null,
+    "template": "Can switch V Blocker on and off in the air",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigBreakBonus",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Reduced rec break surface area on digs by {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigServeBreak",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Reduced rec break surface area on serves by {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigUnbreakable",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Receives never break",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigNoDive",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Broken receives never force a dive",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigDiveWalk",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Can walk at {v} speed during a forced dive",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigLockCut",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Receive lockout reduced by {v}s",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigRise",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Receives rise to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigRiseSpike",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Receives off hard spikes and serves rise to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigStaminaCost",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Receiving a hard spike costs {v} stamina",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigToolControl",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Tooled receives are pushed sideways {v} less",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DigStackRec",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Each dig adds a stacking receive hitbox bonus (up to {v})",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "HeadImmune",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Spikes never headshot you",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DiveSwift",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Walk again sooner after a dive",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DiveRecoveryScale",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Dives recover {inverse}x as fast",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DiveOld",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Uses the old dive distance",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "GuardStackDive",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Each guard stack adds {v} dive hitbox",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "GuardStackRec",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Each guard stack adds {v} receive hitbox",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "GuardStackMax",
+    "category": "receive",
+    "label": null,
+    "unit": null,
+    "template": "Up to {v} guard stacks",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "SetMissCut",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "No-hit window after your set reduced by {v}s",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DumpMissCut",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "No-hit window after your dump reduced by {v}s",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "AssistGreenCooldownCut",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Hitters can green {v}s sooner after your set",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "AssistGreenFloorCut",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Hitters green from contacts {v} lower off your sets",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "AssistForceGreen",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Hitters always green off your sets",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "AssistLiftAlways",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Set height adjusted by {v}",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "AssistQuickCut",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Reduced the quick-set nerf for your hitters by {v}",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "AssistPower",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Setter mode sets give a {v} power buff for hitters",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "GroundAim",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Can aim sets from the ground",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "GroundSetRise",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Ground sets go {v} higher",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "InstantSetWindow",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Obtains a 16 power spike when hitting {v}s after a set",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "SilentSetterSet",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "No animation on setter mode sets",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "AirModeSwitch",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Can change mode mid-air",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DumpAim",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Dumps go the way you're facing",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DumpBoost",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Dumps come down {pct} faster",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "DumpRiseCut",
+    "category": "set",
+    "label": null,
+    "unit": null,
+    "template": "Setter dumps are faster",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "ServePower",
+    "category": "serve",
+    "label": null,
+    "unit": null,
+    "template": "Full-power serves go out at {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "ServeBreakBonus",
+    "category": "serve",
+    "label": null,
+    "unit": null,
+    "template": "Serves break receives more easily ({v})",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "FloatControl",
+    "category": "serve",
+    "label": null,
+    "unit": null,
+    "template": "Float serves move more ({v}x)",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "StaminaRegenScale",
+    "category": "stamina",
+    "label": null,
+    "unit": null,
+    "template": "Stamina regenerates {v}x as fast",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "RegenMoving",
+    "category": "stamina",
+    "label": null,
+    "unit": null,
+    "template": "Stamina regenerates while moving",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "RechargeStamina",
+    "category": "stamina",
+    "label": null,
+    "unit": null,
+    "template": "Restores {v} stamina",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "TeamGrantSeconds",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Ability lasts {v}s",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "CallCaptainJump",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Team gets Captain's Jump",
+    "grants": "Captain's Jump",
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "CallEndurance",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Team gets Captain's Endurance",
+    "grants": "Captain's Endurance",
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "CallBackRow",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Back-row teammates named 'lib' or 'ds' get Captain's Rec",
+    "grants": "Captain's Rec",
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "CallSelfJump",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "You get +{v} jump",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "CallTeamJump",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Teammates get +{v} jump",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "CallTeamPower",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Teammates get +{v} power",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "CallTeamNerfedBroad",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Teammates get Nerfed Broad Blocker",
+    "grants": "Nerfed Broad Blocker",
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "CallTeamNerfedStance",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Teammates get Nerfed Stance",
+    "grants": "Nerfed Stance",
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "CallTeamStance",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Teammates get Stance",
+    "grants": "Stance",
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "TeamSpeedOnDig",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "After each spike you receive, your team gets Hasty and Fast Approach for {v}s",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "TeamSprint",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Teammates get a sprint buff",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "ServeTeamStance",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Teammates get Stance on serves",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "ServeTeamStanceFull",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Full Stance on serves",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "ServeTeamStanceSelf",
+    "category": "team",
+    "label": null,
+    "unit": null,
+    "template": "Applies on your own serves",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "ClutchAt",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Clutch starts once either team reaches {v} points",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "ClutchServePower",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "During clutch, serve and spike up to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "LockdownStripSeconds",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Performing a block strips the hitter's traits for {v}s if the ball lands in their court",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "LockdownSoftStripSeconds",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "{v}s if their team recovers and plays the ball",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "ReadsMinds",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Mind Reader is on while your spec is popped",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "MindShield",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Enemy Mind Readers can't see your power",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "FakeJumpArm",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Once per pop, next spike jump is a fake with lower peak, no spike and slams down",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "Brotherhood",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Special ability for the Nikolov brothers when playing together",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "BrotherhoodAddon",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Special ability for Aleksandar Nikolov when playing with his brother",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "Domination",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Guaranteed receive break",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "Breaker",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Guaranteed block break",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "Unstoppable",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Spikes are 30% more likely to block break if the opponent is not using Unbreakable",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "Mode",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "{text} mode only",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "Standing",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "standing jumps",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "ShortBonus",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "stronger on shorter builds and diminishes as builds get taller",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "MaxHeight",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "up to {height}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "MinHeight",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "from {height}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "RolledOnly",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "only as your rolled trait",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "option",
+    "tag": "AtHeight",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "at {height}",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "option",
+    "tag": "Below",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "and below",
+    "grants": null,
+    "verified": false
+  }
+]

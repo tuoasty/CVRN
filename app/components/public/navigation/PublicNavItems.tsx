@@ -29,13 +29,7 @@ const NAV_ENTRIES: NavEntry[] = [
     { page: "records", label: "Records" },
     { page: "media", label: "Media" },
     { page: "archive", label: "Archive" },
-    {
-        label: "Information",
-        children: [
-            { page: "spec-requirements", label: "Specs" },
-            { page: "updates", label: "Updates" },
-        ],
-    },
+    { page: "information", label: "Information" },
 ];
 
 const PANEL_SIDE_OFFSET = 13;
@@ -44,8 +38,7 @@ const GLOBAL_HREFS: Record<string, string> = {
     archive: "/archive",
     players: "/players",
     records: "/records",
-    "spec-requirements": "/spec-requirements",
-    updates: "/updates",
+    information: "/information",
 };
 
 const EXTRA_ACTIVE_PATHS: Record<string, string[]> = {

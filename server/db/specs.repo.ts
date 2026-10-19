@@ -72,6 +72,32 @@ export async function updateSpecVaulted(supabase: DBClient, id: string, isVaulte
     const {data, error} = await supabase
         .from("specs")
         .update({is_vaulted: isVaulted, updated_at: new Date().toISOString()})
+
+export type PublicSpecRow = Pick<Spec, "id" | "name" | "stars" | "position" | "height" | "is_vaulted" | "game_key" | "photo_url" | "created_at">;
+
+export async function findPublicSpecs(supabase: DBClient): Promise<Result<PublicSpecRow[]>> {
+    const {data, error} = await supabase
+        .from("specs")
+        .select("id, name, stars, position, height, is_vaulted, game_key, photo_url, created_at")
+        .order("created_at", {ascending: true});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+export async function findSpecById(supabase: DBClient, id: string): Promise<Result<Spec | null>> {
+    const {data, error} = await supabase.from("specs").select("*").eq("id", id).maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
+export async function updateSpecPhoto(
+    supabase: DBClient,
+    id: string,
+    photoUrl: string | null
+): Promise<Result<Spec>> {
+    const {data, error} = await supabase
+        .from("specs")
+        .update({photo_url: photoUrl, updated_at: new Date().toISOString()})
         .eq("id", id)
         .select()
         .single();
@@ -93,6 +119,20 @@ export async function upsertSpecIdentity(
     };
 
     const {data, error} = await supabase.from("specs").upsert(payload).select().single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
+export async function updateSpecFacts(
+    supabase: DBClient,
+    p: {id: string; stars: number; position: string}
+): Promise<Result<Spec>> {
+    const {data, error} = await supabase
+        .from("specs")
+        .update({stars: p.stars, position: p.position, updated_at: new Date().toISOString()})
+        .eq("id", p.id)
+        .select()
+        .single();
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data);
 }

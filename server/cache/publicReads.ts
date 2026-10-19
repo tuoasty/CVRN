@@ -56,7 +56,8 @@ import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
 import {getPublishedUpdateLogIndex, getPublishedUpdateLog} from "@/server/domains/updateLog";
-import {getPublicSpecSnapshot, getPublishedSpecRegions} from "@/server/domains/spec";
+import {getGameDatasetPayloads, getPublicInformation} from "@/server/domains/gameData";
+import {getPublicSpecSnapshot, getPublishedSpecRegions, getPublicSpecs, getRecentSpecWinners} from "@/server/domains/spec";
 import {getRecords} from "@/server/domains/record";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS, RAW_STATS_REVALIDATE_SECONDS} from "./tags";
@@ -268,6 +269,18 @@ export const getCachedPublicSpecSnapshot = unstable_cache(
     {tags: [CACHE_TAGS.specs], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
+export const getCachedPublicSpecs = unstable_cache(
+    async () => unwrap(await getPublicSpecs(createPublicClient()), "getCachedPublicSpecs"),
+    ["public:specs"],
+    {tags: [CACHE_TAGS.specs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedRecentSpecWinners = unstable_cache(
+    async () => unwrap(await getRecentSpecWinners(createPublicClient()), "getCachedRecentSpecWinners"),
+    ["public:recent-spec-winners"],
+    {tags: [CACHE_TAGS.specs, CACHE_TAGS.seasons, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
 export const getCachedPublishedSpecRegions = unstable_cache(
     async () => unwrap(await getPublishedSpecRegions(createPublicClient()), "getCachedPublishedSpecRegions"),
     ["public:spec-snapshot-regions"],
@@ -380,6 +393,18 @@ export const getCachedUpdateLogByVersion = unstable_cache(
         unwrap(await getPublishedUpdateLog(createPublicClient(), version), "getCachedUpdateLogByVersion"),
     ["public:update-log-by-version"],
     {tags: [CACHE_TAGS.updateLogs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedGameDatasets = unstable_cache(
+    async () => unwrap(await getGameDatasetPayloads(createPublicClient()), "getCachedGameDatasets"),
+    ["public:game-datasets"],
+    {tags: [CACHE_TAGS.gameData], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedPublicInformation = unstable_cache(
+    async () => unwrap(await getPublicInformation(createPublicClient()), "getCachedPublicInformation"),
+    ["public:information:v3"],
+    {tags: [CACHE_TAGS.gameData], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedTeamNameHistory = unstable_cache(

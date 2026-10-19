@@ -7,19 +7,24 @@ import {getUserRole} from "@/server/db/roles.repo";
 import {checkUploadRateLimit} from "@/server/utils/rateLimiter";
 import {processLogoBackground} from "./imageProcessing";
 import {toCdnUrl} from "./toCdnUrl";
+import {IMAGE_PROFILES, type ImageProfile} from "@/shared/storage/imageProfiles";
+
+export {IMAGE_PROFILES, type ImageProfile};
 
 const IMAGE_VALIDATION = {
-    MAX_FILE_SIZE: 2 * 1024 * 1024,
-    MAX_DIMENSION: 256,
     ALLOWED_TYPES: ['image/png', 'image/jpeg', 'image/webp'] as string[],
     COMPRESSION_QUALITY: 85,
 } as const;
 
-async function validateAndCompressImage(file: File | Blob, removeBackground: boolean): Promise<Result<{ buffer: Buffer; contentType: string; bgRemoved: boolean }>> {
+export async function validateAndCompressImage(
+    file: File | Blob,
+    removeBackground: boolean,
+    profile: ImageProfile = IMAGE_PROFILES.logo,
+): Promise<Result<{ buffer: Buffer; contentType: string; bgRemoved: boolean }>> {
     try {
-        if (file.size > IMAGE_VALIDATION.MAX_FILE_SIZE) {
+        if (file.size > profile.maxFileSize) {
             return Err({
-                message: `File size exceeds ${IMAGE_VALIDATION.MAX_FILE_SIZE / 1024 / 1024}MB`,
+                message: `File size exceeds ${profile.maxFileSize / 1024 / 1024}MB`,
                 name: "FileSizeExceeded",
                 code: "VALIDATION_ERROR"
             });
@@ -46,7 +51,7 @@ async function validateAndCompressImage(file: File | Blob, removeBackground: boo
             });
         }
 
-        const resizedBuffer = await image.resize(IMAGE_VALIDATION.MAX_DIMENSION, IMAGE_VALIDATION.MAX_DIMENSION, {
+        const resizedBuffer = await image.resize(profile.maxDimension, profile.maxDimension, {
             fit: 'inside',
             withoutEnlargement: true
         }).webp({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
@@ -76,6 +81,7 @@ export async function uploadFile(supabase: DBClient, p: {
     upsert?:boolean;
     compress?: boolean;
     removeBackground?: boolean;
+    profile?: ImageProfile;
     userId: string;
 }): Promise<Result<{ url:string;path:string;bgRemoved:boolean }>> {
     try {
@@ -102,7 +108,7 @@ export async function uploadFile(supabase: DBClient, p: {
         let bgRemoved = false;
 
         if (p.compress) {
-            const compressionResult = await validateAndCompressImage(p.file, p.removeBackground ?? true);
+            const compressionResult = await validateAndCompressImage(p.file, p.removeBackground ?? true, p.profile);
             if (!compressionResult.ok) {
                 return Err(compressionResult.error);
             }

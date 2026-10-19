@@ -5,6 +5,8 @@ import {CACHE_TAGS} from "@/server/cache/tags";
 import {revalidatePublicData} from "@/server/cache/revalidate";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
+import {DBClient} from "@/shared/types/db";
 import {getCachedPlayerLeaderboard, getCachedLeaderboardIdentity} from "@/server/cache/publicReads";
 import {getPositionLeaderboardStatRows, LeaderboardStatRow} from "@/server/domains/player";
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
@@ -18,8 +20,12 @@ import {
     saveSpecIdentity,
     setSpecVaulted,
     SetSpecVaultedSchema,
+    saveSpecFacts,
+    SaveSpecFactsSchema,
     saveRegionRequirements,
     removeSpec,
+    storeSpecPhoto,
+    removeSpecPhoto,
     SaveSpecIdentitySchema,
     SaveRegionRequirementsSchema,
     exportSpecRequirements,
@@ -40,8 +46,11 @@ import {
 import {deleteSpecSnapshot} from "@/server/db/specSnapshot.repo";
 
 const SPEC_ROLES = ["admin", "super_admin", "spec_manager"] as const;
+const SPEC_FACT_ROLES = [...SPEC_ROLES, "information_manager"] as const;
+const SPEC_PHOTO_ROLES = ["admin", "super_admin", "information_manager"] as const;
 
 const RegionIdSchema = z.string().uuid();
+const SpecIdSchema = z.string().uuid();
 
 function invalidRegion() {
     return Err({message: "A valid region is required", code: "VALIDATION_ERROR" as const});
@@ -87,12 +96,16 @@ export async function saveSpecIdentityAction(data: unknown) {
     if (!guard.ok) return guard;
 
     const result = await saveSpecIdentity(supabase, parsed.data);
-    if (result.ok) revalidatePath("/admin/specs");
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/specs");
+    }
     return result;
 }
 
 export async function setSpecVaultedAction(data: unknown) {
     const parsed = SetSpecVaultedSchema.safeParse(data);
+
     if (!parsed.success) {
         return Err({
             message: parsed.error.issues.map(i => i.message).join(", "),
@@ -112,6 +125,72 @@ export async function setSpecVaultedAction(data: unknown) {
     }
     return result;
 }
+
+export async function saveSpecFactsAction(data: unknown) {
+    const parsed = SaveSpecFactsSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+
+    const guard = await requireRoles(supabase, SPEC_FACT_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await saveSpecFacts(supabase, parsed.data);
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/specs");
+
+    }
+    return result;
+}
+
+
+export async function uploadSpecPhotoAction(specId: string, formData: FormData) {
+    if (!SpecIdSchema.safeParse(specId).success) {
+        return Err({message: "A valid spec is required", code: "VALIDATION_ERROR" as const});
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_PHOTO_ROLES);
+    if (!guard.ok) return guard;
+
+    const file = formData.get("photo");
+    if (!(file instanceof File) || file.size === 0) {
+        return Err({message: "No file provided", code: "VALIDATION_ERROR" as const});
+    }
+
+    const admin = getSupabaseAdmin() as unknown as DBClient;
+    const result = await storeSpecPhoto(admin, {specId, file, userId: guard.value});
+    if (!result.ok) return result;
+
+    revalidatePublicData([CACHE_TAGS.specs]);
+    revalidatePath("/admin/game-data/specs");
+    return Ok({photoUrl: result.value.photo_url as string});
+}
+
+export async function removeSpecPhotoAction(specId: string) {
+    if (!SpecIdSchema.safeParse(specId).success) {
+        return Err({message: "A valid spec is required", code: "VALIDATION_ERROR" as const});
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_PHOTO_ROLES);
+    if (!guard.ok) return guard;
+
+    const admin = getSupabaseAdmin() as unknown as DBClient;
+    const result = await removeSpecPhoto(admin, specId);
+    if (!result.ok) return result;
+
+    revalidatePublicData([CACHE_TAGS.specs]);
+    revalidatePath("/admin/game-data/specs");
+    return Ok(null);
+}
+
 
 export async function saveRegionRequirementsAction(data: unknown) {
     const parsed = SaveRegionRequirementsSchema.safeParse(data);
@@ -179,7 +258,10 @@ export async function deleteSpecAction(id: string) {
     if (!guard.ok) return guard;
 
     const result = await removeSpec(supabase, id);
-    if (result.ok) revalidatePath("/admin/specs");
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/specs");
+    }
     return result;
 }
 
@@ -193,7 +275,7 @@ export async function generateSpecSnapshotAction(regionId: string) {
     const result = await generateSpecSnapshot(supabase, regionId);
     if (result.ok) {
         revalidatePublicData([CACHE_TAGS.specs]);
-        revalidatePath("/spec-requirements");
+        revalidatePath("/information/specs");
     }
     return result;
 }
@@ -208,7 +290,7 @@ export async function deleteSpecSnapshotAction(regionId: string) {
     const result = await deleteSpecSnapshot(supabase, regionId);
     if (result.ok) {
         revalidatePublicData([CACHE_TAGS.specs]);
-        revalidatePath("/spec-requirements");
+        revalidatePath("/information/specs");
     }
     return result;
 }
@@ -267,7 +349,10 @@ export async function awardSpecWinnerAction(data: unknown) {
     if (!guard.ok) return guard;
 
     const result = await awardSpecWinner(supabase, parsed.data);
-    if (result.ok) revalidatePath("/admin/seasons");
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/seasons");
+    }
     return result;
 }
 
@@ -285,7 +370,10 @@ export async function deleteSpecWinnerAction(data: unknown) {
     if (!guard.ok) return guard;
 
     const result = await deleteSpecWinner(supabase, parsed.data.id);
-    if (result.ok) revalidatePath("/admin/seasons");
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/seasons");
+    }
     return result;
 }
 

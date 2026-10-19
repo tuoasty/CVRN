@@ -1,6 +1,7 @@
 import {DBClient, SheetConfig} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
+import {isSeasonActive} from "@/server/domains/season/helpers/isSeasonActive";
 
 type InsertSheetConfigDto = {
     seasonId: string;
@@ -21,6 +22,12 @@ type UpdateSheetConfigDto = {
     blockStride?: number;
 };
 
+function withActiveSeason(rows: (SheetConfig & {seasons: {end_date: string | null} | null})[]): SheetConfig[] {
+    return rows
+        .filter(row => row.seasons !== null && isSeasonActive(row.seasons))
+        .map(({seasons: _season, ...config}) => config);
+}
+
 export async function findAllSheetConfigs(supabase: DBClient): Promise<Result<SheetConfig[]>> {
     const {data, error} = await supabase
         .from("sheet_configs")
@@ -28,6 +35,15 @@ export async function findAllSheetConfigs(supabase: DBClient): Promise<Result<Sh
         .order("created_at", {ascending: true});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
+}
+
+export async function findActiveSheetConfigs(supabase: DBClient): Promise<Result<SheetConfig[]>> {
+    const {data, error} = await supabase
+        .from("sheet_configs")
+        .select("*, seasons(end_date)")
+        .order("created_at", {ascending: true});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(withActiveSeason(data ?? []));
 }
 
 export async function findSheetConfigById(supabase: DBClient, id: string): Promise<Result<SheetConfig | null>> {
@@ -86,11 +102,11 @@ export async function deleteSheetConfig(supabase: DBClient, id: string): Promise
 export async function findCronEnabledConfigs(supabase: DBClient): Promise<Result<SheetConfig[]>> {
     const {data, error} = await supabase
         .from("sheet_configs")
-        .select("*")
-        .eq("cron_enabled" as keyof SheetConfig, true)
+        .select("*, seasons(end_date)")
+        .eq("cron_enabled", true)
         .order("created_at", {ascending: true});
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok(data ?? []);
+    return Ok(withActiveSeason(data ?? []));
 }
 
 export async function updateCronEnabled(supabase: DBClient, id: string, enabled: boolean): Promise<Result<SheetConfig>> {

@@ -11,6 +11,8 @@ const GAP = 16
 
 interface Props {
     toc: ChangelogToc
+    version: string
+    title: string | null
     header: ReactNode
     footer: ReactNode
     rail?: ReactNode
@@ -43,7 +45,7 @@ function ExpandAllButton({ allOpen, onClick, className }: { allOpen: boolean; on
     )
 }
 
-export default function ChangelogLayout({ toc, header, footer, rail, children }: Props) {
+export default function ChangelogLayout({ toc, version, title, header, footer, rail, children }: Props) {
     const contentRef = useRef<HTMLDivElement>(null)
     const [navHeight, setNavHeight] = useState<number | null>(null)
     const entries = useMemo<TocEntry[]>(
@@ -148,10 +150,21 @@ export default function ChangelogLayout({ toc, header, footer, rail, children }:
         setAllOpen(next)
     }
 
+    function isPlainClick(e: MouseEvent<HTMLAnchorElement>): boolean {
+        return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey
+    }
+
     function onTocClick(e: MouseEvent<HTMLAnchorElement>, id: string) {
-        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+        if (!isPlainClick(e)) return
         e.preventDefault()
         go(id)
+    }
+
+    function onTopClick(e: MouseEvent<HTMLAnchorElement>) {
+        if (!isPlainClick(e)) return
+        e.preventDefault()
+        if (window.location.hash) window.history.pushState(window.history.state, '', window.location.pathname + window.location.search)
+        window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
     }
 
     const hasNav = hasToc || hasToggles
@@ -177,6 +190,23 @@ export default function ChangelogLayout({ toc, header, footer, rail, children }:
                     <div className={cn(stickyClass, 'space-y-4')} style={stickyStyle}>
                         {hasToc && (
                             <nav aria-label="On this page">
+                                <a
+                                    href="#top"
+                                    onClick={onTopClick}
+                                    className="group mb-6 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                    <span className={cn(
+                                        'block font-mono tabular-nums',
+                                        title ? 'text-xs text-muted-foreground' : 'text-lg font-semibold text-foreground',
+                                    )}>
+                                        {version}
+                                    </span>
+                                    {title && (
+                                        <span className="mt-0.5 block text-balance text-lg font-semibold leading-snug tracking-[-0.01em] text-foreground decoration-muted-foreground decoration-1 underline-offset-4 group-hover:underline">
+                                            {title}
+                                        </span>
+                                    )}
+                                </a>
                                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">On this page</p>
                                 <ul className="mt-3 border-l border-border">
                                     {entries.map(entry => {

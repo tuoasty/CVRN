@@ -12,7 +12,7 @@ import {
 export type SortKey = keyof PlayerSeasonStat;
 export type SortOrder = "asc" | "desc";
 
-export const REGION_ORDER = ["AS", "EU", "NA", "SA"] as const;
+export {REGION_ORDER} from "@/shared/volleyball/regions";
 export const REGION_ALL = "all";
 export const POSITION_ALL = "all";
 

@@ -3,10 +3,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
 
   output: "standalone",
+  async redirects() {
+    return [
+      { source: "/updates", destination: "/information/updates", permanent: true },
+      { source: "/updates/:version", destination: "/information/updates/:version", permanent: true },
+      { source: "/spec-requirements", destination: "/information/specs", permanent: true },
+    ];
+  },
   experimental: {
     serverActions: {
 
-      bodySizeLimit: "2.5mb",
+      bodySizeLimit: "3mb",
     },
   },
   images: {

@@ -10,6 +10,7 @@ export const CACHE_TAGS = {
     media: "media",
     articles: "articles",
     updateLogs: "update-logs",
+    gameData: "game-data",
     stats: "stats",
     specs: "specs",
     rawStats: "raw-stats",

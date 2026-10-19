@@ -19,6 +19,9 @@ export const STORAGE_PATHS = {
     updateLogImage(logId: string, imageId: string, ext: string) {
         return `update-logs/${logId}/${imageId}.${ext}`;
     },
+    specPhoto(specId: string) {
+        return `specs/${specId}_${Date.now()}.webp`;
+    },
 }
 export function extractStoragePath(url: string, bucket: string): string {
     const marker = `/object/public/${bucket}/`

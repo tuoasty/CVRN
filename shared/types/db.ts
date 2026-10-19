@@ -22,6 +22,12 @@ export type UpdateLog =
 export type UpdateLogImage =
     Database["public"]["Tables"]["update_log_images"]["Row"];
 
+export type GameDatasetRow =
+    Database["public"]["Tables"]["game_datasets"]["Row"];
+
+export type GameTermRow =
+    Database["public"]["Tables"]["game_terms"]["Row"];
+
 export type Region =
     Database["public"]["Tables"]["regions"]["Row"];
 
@@ -98,3 +104,5 @@ export type PublicSpecSnapshotRow =
 
 export type SpecWinner =
     Database["public"]["Tables"]["spec_winners"]["Row"];
+export type GameAbilitySettingRow =
+    Database["public"]["Tables"]["game_ability_settings"]["Row"];

@@ -1,11 +1,7 @@
 export type {PositionCode as SpecPosition} from "@/shared/volleyball/positions";
 export {POSITIONS as SPEC_POSITIONS, positionLabel} from "@/shared/volleyball/positions";
 
-export function formatHeight(inches: number): string {
-    const feet = Math.floor(inches / 12);
-    const rem = inches % 12;
-    return `${feet}'${rem}"`;
-}
+export {formatHeight} from "@/shared/utils/height";
 
 export const parseHeight = (feet: number, inches: number): number => feet * 12 + inches;
 
