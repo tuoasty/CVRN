@@ -5,6 +5,7 @@ export {getPublicSpecSnapshot, getPublishedSpecRegions} from "./queries/getPubli
 export {getPlacementBonus} from "./queries/getPlacementBonus";
 export {getSpecWinners} from "./queries/getSpecWinners";
 export {saveSpecIdentity} from "./commands/saveSpecIdentity";
+export {saveSpecFacts} from "./commands/saveSpecFacts";
 export {saveRegionRequirements} from "./commands/saveRegionRequirements";
 export {importSpecRequirements} from "./commands/importSpecRequirements";
 export {removeSpec} from "./commands/removeSpec";

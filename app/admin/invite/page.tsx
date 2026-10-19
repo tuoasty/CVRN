@@ -92,12 +92,13 @@ export default function InvitePage() {
                                     <SelectItem value="stat_tracker">Stat Tracker</SelectItem>
                                     <SelectItem value="staff">Staff</SelectItem>
                                     <SelectItem value="spec_manager">Spec Manager</SelectItem>
+                                    <SelectItem value="information_manager">Information Manager</SelectItem>
                                     <SelectItem value="admin">Admin</SelectItem>
                                     <SelectItem value="super_admin">Super Admin</SelectItem>
                                 </SelectContent>
                             </Select>
                             <p className="text-xs text-muted-foreground">
-                                Super Admin: Full access | Admin: Manage teams/matches | Staff: Sync + logos | Spec Manager: Specs + calibration | Stat Tracker: View only
+                                Super Admin: Full access | Admin: Manage teams/matches | Staff: Sync + logos | Spec Manager: Specs + calibration + spec loadouts | Information Manager: Information wording, no import | Stat Tracker: View only
                             </p>
                         </div>
 

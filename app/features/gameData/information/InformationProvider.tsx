@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { saveGameTermAction, setAbilityDescriptionSourceAction, setGameTermVerifiedAction } from '@/app/actions/gameData.actions'
-import { saveSpecIdentityAction } from '@/app/actions/spec.actions'
+import { saveSpecFactsAction } from '@/app/actions/spec.actions'
 import { toast } from '@/app/utils/toast'
 import { buildAbilityIndex } from '@/server/domains/gameData/helpers/abilityIndex/buildAbilityIndex'
 import { createAbilityLookup, describeAbility, type DescribeContext } from '@/server/domains/gameData/terms/describeAbility'
@@ -122,7 +122,7 @@ export function InformationProvider({ initialStored, initialTerms, initialSettin
         if (!previous) return false
         const next = { ...previous, ...facts }
         setSpecs(list => list.map(s => (s.id === specId ? next : s)))
-        const result = await saveSpecIdentityAction({ id: specId, name: next.name, stars: next.stars, position: next.position, height: next.height })
+        const result = await saveSpecFactsAction({ id: specId, stars: next.stars, position: next.position })
         if (!result.ok) {
             setSpecs(list => list.map(s => (s.id === specId ? previous : s)))
             toast.error('Spec not saved', result.error.message)

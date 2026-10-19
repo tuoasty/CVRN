@@ -16,6 +16,8 @@ import {
     getSpecsAllRegions,
     getSpecCatalog,
     saveSpecIdentity,
+    saveSpecFacts,
+    SaveSpecFactsSchema,
     saveRegionRequirements,
     removeSpec,
     SaveSpecIdentitySchema,
@@ -38,6 +40,7 @@ import {
 import {deleteSpecSnapshot} from "@/server/db/specSnapshot.repo";
 
 const SPEC_ROLES = ["admin", "super_admin", "spec_manager"] as const;
+const SPEC_FACT_ROLES = [...SPEC_ROLES, "information_manager"] as const;
 
 const RegionIdSchema = z.string().uuid();
 
@@ -85,6 +88,24 @@ export async function saveSpecIdentityAction(data: unknown) {
     if (!guard.ok) return guard;
 
     const result = await saveSpecIdentity(supabase, parsed.data);
+    if (result.ok) revalidatePath("/admin/specs");
+    return result;
+}
+
+export async function saveSpecFactsAction(data: unknown) {
+    const parsed = SaveSpecFactsSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_FACT_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await saveSpecFacts(supabase, parsed.data);
     if (result.ok) revalidatePath("/admin/specs");
     return result;
 }

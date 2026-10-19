@@ -80,6 +80,20 @@ export async function upsertSpecIdentity(
     return Ok(data);
 }
 
+export async function updateSpecFacts(
+    supabase: DBClient,
+    p: {id: string; stars: number; position: string}
+): Promise<Result<Spec>> {
+    const {data, error} = await supabase
+        .from("specs")
+        .update({stars: p.stars, position: p.position, updated_at: new Date().toISOString()})
+        .eq("id", p.id)
+        .select()
+        .single();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
+}
+
 export async function replaceRegionSpecRequirements(
     supabase: DBClient,
     regionId: string,

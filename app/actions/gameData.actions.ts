@@ -5,7 +5,7 @@ import { revalidatePublicData } from '@/server/cache/revalidate'
 import { CACHE_TAGS } from '@/server/cache/tags'
 import { Err, Result } from '@/shared/types/result'
 import { createServerSupabase } from '@/server/supabase/server'
-import { requireAdmin } from '@/server/domains/auth'
+import { requireAdmin, requireRoles } from '@/server/domains/auth'
 import {
     previewGameDataImport,
     publishGameDataImport,
@@ -25,6 +25,8 @@ import {
     SetGameTermVerifiedInput,
     SetAbilityDescriptionSourceInput,
 } from '@/server/domains/gameData'
+
+const WORDING_ROLES = ['admin', 'super_admin', 'spec_manager', 'information_manager'] as const
 
 export async function previewGameDataImportAction(input: { text: string }): Promise<Result<GameDataPreview>> {
     const parsed = GameDataTextSchema.safeParse(input)
@@ -59,7 +61,7 @@ export async function saveGameTermAction(input: SaveGameTermInput): Promise<Resu
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireRoles(supabase, WORDING_ROLES)
     if (!guard.ok) return guard
 
     const result = await saveGameTerm(supabase, { input: parsed.data, userId: guard.value })
@@ -72,7 +74,7 @@ export async function setGameTermVerifiedAction(input: SetGameTermVerifiedInput)
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireRoles(supabase, WORDING_ROLES)
     if (!guard.ok) return guard
 
     const result = await setGameTermVerified(supabase, { input: parsed.data, userId: guard.value })
@@ -85,7 +87,7 @@ export async function setAbilityDescriptionSourceAction(input: SetAbilityDescrip
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireRoles(supabase, WORDING_ROLES)
     if (!guard.ok) return guard
 
     const result = await setAbilityDescriptionSource(supabase, { input: parsed.data, userId: guard.value })

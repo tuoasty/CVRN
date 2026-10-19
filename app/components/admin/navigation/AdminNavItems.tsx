@@ -57,7 +57,13 @@ const DROPDOWN_GROUPS: { label: string; items: NavItem[] }[] = [
 const ALLOWED_HREFS: Record<string, Set<string>> = {
     stat_tracker: new Set(["/admin/sync/history"]),
     staff:        new Set(["/admin/teams", "/admin/sync/history"]),
-    spec_manager: new Set(["/admin/specs", "/admin/specs/qualify"]),
+    spec_manager: new Set(["/admin/specs", "/admin/specs/qualify", "/admin/game-data"]),
+    information_manager: new Set(["/admin/game-data"]),
+    none: new Set(),
+};
+
+const HREF_OVERRIDES: Record<string, Record<string, string>> = {
+    spec_manager: { "/admin/game-data": "/admin/game-data/specs" },
 };
 
 interface AdminNavItemsProps {
@@ -80,7 +86,8 @@ export default function AdminNavItems({
         (!allowed || allowed.has(item.href)) &&
         (!item.superAdminOnly || isSuperAdmin);
 
-    const visibleFlatItems = FLAT_ITEMS.filter(canSee);
+    const overrides = userRole ? HREF_OVERRIDES[userRole] : undefined;
+    const visibleFlatItems = FLAT_ITEMS.filter(canSee).map(item => (overrides?.[item.href] ? { ...item, href: overrides[item.href] } : item));
 
     const visibleDropdownGroups = DROPDOWN_GROUPS.map(group => ({
         ...group,

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ViewTabs } from '@/app/components/filters/ViewTabs'
 import { cn } from '@/lib/utils'
+import { useUserRole } from '@/app/admin/AdminRoleProvider'
 import { useInformation } from './InformationProvider'
 
 const BASE = '/admin/game-data'
@@ -23,6 +24,8 @@ export default function InformationTabs() {
     const pathname = usePathname()
     const router = useRouter()
     const { index, termList, unhandled, loadouts, skipped, specByGameKey } = useInformation()
+    const role = useUserRole()
+    const canImport = role === 'admin' || role === 'super_admin'
 
     const segment = pathname.slice(BASE.length + 1).split('/')[0]
     const current = (TAB_VALUES as readonly string[]).includes(segment) ? (segment as TabValue) : null
@@ -31,7 +34,7 @@ export default function InformationTabs() {
     const activeLoadouts = loadouts.filter(l => !skipped.has(l.key) || specByGameKey.has(l.key))
     const unlinkedLoadouts = activeLoadouts.some(l => !specByGameKey.has(l.key))
 
-    const tabs = [
+    const allTabs = [
         { value: 'rollables' as const, label: <>Rollables<Count value={rollables} /></> },
         { value: 'exclusives' as const, label: <>Exclusives<Count value={entries.length - rollables} /></> },
         { value: 'terms' as const, label: <>Terms<Count value={termList.length} /></> },
@@ -39,6 +42,7 @@ export default function InformationTabs() {
         { value: 'specs' as const, label: loadouts.length > 0 ? <>Spec loadouts<Count value={activeLoadouts.length} flag={unlinkedLoadouts} /></> : 'Spec loadouts' },
         { value: 'builds' as const, label: 'Builds' },
     ]
+    const tabs = role === 'spec_manager' ? allTabs.filter(t => t.value === 'specs') : allTabs
     const importing = segment === 'import'
 
     return (
@@ -50,7 +54,7 @@ export default function InformationTabs() {
             density="compact"
             wrapToolsBelow="xl"
         >
-            <Link
+            {canImport && <Link
                 href={`${BASE}/import`}
                 aria-current={importing ? 'page' : undefined}
                 className={cn(
@@ -60,7 +64,7 @@ export default function InformationTabs() {
                 )}
             >
                 Import
-            </Link>
+            </Link>}
         </ViewTabs>
     )
 }

@@ -111,6 +111,13 @@ export async function updateSession(request: NextRequest) {
       );
     }
 
+    if (roleData.role === "none") {
+      logger.debug({ user_id: user.id, pathname }, "user with role none redirected home");
+      return NextResponse.redirect(
+          new URL("/", request.url)
+      );
+    }
+
     if (isInvite && roleData.role !== "super_admin") {
       logger.warn({ user_id: user.id, role: roleData.role }, "Non-super_admin attempted to access invite page");
       return NextResponse.redirect(
@@ -133,11 +140,19 @@ export async function updateSession(request: NextRequest) {
       );
     }
 
-    const specManagerAllowed = pathname === "/admin/specs" || pathname === "/admin/specs/qualify";
+    const specManagerAllowed = pathname === "/admin/specs" || pathname === "/admin/specs/qualify" || pathname === "/admin/game-data/specs";
     if (roleData.role === "spec_manager" && !specManagerAllowed) {
       logger.debug({ user_id: user.id, pathname }, "spec_manager redirected to specs");
       return NextResponse.redirect(
           new URL("/admin/specs", request.url)
+      );
+    }
+
+    const informationManagerAllowed = pathname.startsWith("/admin/game-data/") && !pathname.startsWith("/admin/game-data/import");
+    if (roleData.role === "information_manager" && !informationManagerAllowed) {
+      logger.debug({ user_id: user.id, pathname }, "information_manager redirected to information");
+      return NextResponse.redirect(
+          new URL("/admin/game-data/rollables", request.url)
       );
     }
 

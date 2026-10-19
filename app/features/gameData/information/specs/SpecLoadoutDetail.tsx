@@ -11,6 +11,7 @@ import { kitSections, requirementStatus, specPopLine } from '@/server/domains/ga
 import type { SpecLoadout } from '@/server/domains/gameData/types/datasets'
 import { SPEC_STARS, type SpecStars } from '@/server/domains/gameData/types/specLinks'
 import { useInformation } from '../InformationProvider'
+import { useUserRole } from '@/app/admin/AdminRoleProvider'
 import KitSection from './KitSection'
 
 const STAR_OPTIONS = SPEC_STARS.map(s => ({ value: String(s) as `${SpecStars}`, label: String(s) }))
@@ -29,6 +30,9 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 
 export default function SpecLoadoutDetail({ loadout }: { loadout: SpecLoadout }) {
     const { specByGameKey, skipped, regions, kitResolver, abilityByKey, saveSpecFacts } = useInformation()
+    const role = useUserRole()
+    const canImport = role === 'admin' || role === 'super_admin'
+    const showRequirements = role !== 'information_manager'
     const spec = specByGameKey.get(loadout.key)
     const kit = useMemo(() => resolveKit(loadout, kitResolver), [loadout, kitResolver])
     const tunes = useMemo(() => resolveTuning(loadout, kit, abilityByKey), [loadout, kit, abilityByKey])
@@ -44,8 +48,8 @@ export default function SpecLoadoutDetail({ loadout }: { loadout: SpecLoadout })
             <p className="mt-0.5 text-xs text-muted-foreground">
                 Game key <span className="font-mono">&ldquo;{loadout.key}&rdquo;</span>
                 {!spec && (skipped.has(loadout.key)
-                    ? <> · skipped · <Link href={IMPORT_HREF} className={LINK}>Restore on Import ›</Link></>
-                    : <> · not linked · <Link href={IMPORT_HREF} className={LINK}>Link on Import ›</Link></>)}
+                    ? <> · skipped{canImport && <> · <Link href={IMPORT_HREF} className={LINK}>Restore on Import ›</Link></>}</>
+                    : <> · not linked{canImport && <> · <Link href={IMPORT_HREF} className={LINK}>Link on Import ›</Link></>}</>)}
             </p>
 
             <dl className="mt-5 grid grid-cols-[120px_1fr] items-baseline gap-x-4 gap-y-2.5 text-sm">
@@ -74,7 +78,7 @@ export default function SpecLoadoutDetail({ loadout }: { loadout: SpecLoadout })
                 <Fact label="Height">
                     <span className="font-mono tabular-nums">{spec ? formatHeight(spec.height) : formatGameHeight(loadout.height)}</span>
                 </Fact>
-                {spec && (
+                {spec && showRequirements && (
                     <Fact label="Requirements">
                         <span className="grid grid-cols-[repeat(4,76px)_auto] items-baseline">
                             {requirements.map(r => (
