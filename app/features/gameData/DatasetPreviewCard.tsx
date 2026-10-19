@@ -6,7 +6,7 @@ import type { DatasetDiff } from '@/server/domains/gameData/types/datasets'
 import type { PreviewDataset } from '@/server/domains/gameData/types/preview'
 import { DATASET_LABELS } from '@/server/domains/gameData/helpers/datasets/registry'
 import IssueList from './IssueList'
-import { AbilityTable, AttributeTable, RarityTable, SpecLoadoutTable, type AttributeLinks } from './DatasetTables'
+import { AbilityTable, AttributeTable, BuildEffectsTable, BuildTable, HeightTable, RarityTable, SpecLoadoutTable, type AttributeLinks } from './DatasetTables'
 import { cn } from '@/lib/utils'
 
 export function diffParts(diff: DatasetDiff): string {
@@ -52,6 +52,9 @@ export default function DatasetPreviewCard({ dataset, links }: { dataset: Previe
                     {(dataset.kind === 'physicals' || dataset.kind === 'technicals') && <AttributeTable entries={dataset.payload} links={links} />}
                     {dataset.kind === 'abilities' && <AbilityTable abilities={dataset.payload} links={links} />}
                     {dataset.kind === 'specLoadouts' && <SpecLoadoutTable loadouts={dataset.payload} links={links} />}
+                    {dataset.kind === 'heights' && <HeightTable heights={dataset.payload} />}
+                    {dataset.kind === 'builds' && <BuildTable builds={dataset.payload} />}
+                    {dataset.kind === 'buildPassives' && <BuildEffectsTable entries={dataset.payload} />}
                 </div>
             )}
         </div>

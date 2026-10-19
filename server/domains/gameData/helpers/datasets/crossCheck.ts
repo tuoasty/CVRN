@@ -1,4 +1,5 @@
 import type { DatasetIssue, GameDatasetPayloads } from '../../types/datasets'
+import { crossCheckBuilds } from '../builds/crossCheckBuilds'
 
 export const NO_ROLL_VALUE = 'None'
 
@@ -40,6 +41,8 @@ export function crossCheck(sets: Partial<GameDatasetPayloads>): DatasetIssue[] {
             }
         }
     }
+
+    issues.push(...crossCheckBuilds(sets))
 
     return issues
 }

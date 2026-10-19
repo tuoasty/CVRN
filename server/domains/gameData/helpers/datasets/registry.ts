@@ -2,6 +2,9 @@ import type { LuaValue } from '../../types/luaValue'
 import type { GameDatasetKind, GameDatasetPayloads, NormalizeResult } from '../../types/datasets'
 import { normalizeAbilities } from './normalizeAbilities'
 import { normalizeAttributes } from './normalizeAttributes'
+import { normalizeBuildPassives } from './normalizeBuildPassives'
+import { normalizeBuilds } from './normalizeBuilds'
+import { normalizeHeights } from './normalizeHeights'
 import { normalizeRarities } from './normalizeRarities'
 import { normalizeSpecLoadouts } from './normalizeSpecLoadouts'
 
@@ -10,6 +13,9 @@ export const DATASET_ROOTS: Record<GameDatasetKind, string> = {
     abilities: 'AbilityCatalog.Abilities',
     physicals: 'Attributes.Physicals',
     technicals: 'Attributes.Technicals',
+    heights: 'Rerolls.Heights',
+    builds: 'Builds.Table',
+    buildPassives: 'BuildPassives.ByName',
     specLoadouts: 'SpecCatalog.Specs',
 }
 
@@ -18,6 +24,9 @@ export const DATASET_LABELS: Record<GameDatasetKind, string> = {
     abilities: 'Abilities',
     physicals: 'Physicals',
     technicals: 'Technicals',
+    heights: 'Heights',
+    builds: 'Builds',
+    buildPassives: 'Build effects',
     specLoadouts: 'Spec loadouts',
 }
 
@@ -28,6 +37,9 @@ const ENTRY_KEYS: EntryKeys = {
     abilities: a => a.key,
     physicals: e => e.value,
     technicals: e => e.value,
+    heights: h => String(h.value),
+    builds: b => b.name,
+    buildPassives: p => p.build,
     specLoadouts: l => l.key,
 }
 
@@ -50,6 +62,9 @@ const NORMALIZERS: Normalizers = {
     abilities: normalizeAbilities,
     physicals: normalizeAttributes,
     technicals: normalizeAttributes,
+    heights: normalizeHeights,
+    builds: normalizeBuilds,
+    buildPassives: normalizeBuildPassives,
     specLoadouts: normalizeSpecLoadouts,
 }
 

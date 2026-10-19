@@ -11,3 +11,9 @@ export function gameHeightToInches(height: number): number {
 export function formatGameHeight(height: number): string {
     return formatHeight(gameHeightToInches(height));
 }
+
+export function formatGameHeightRange(min: number, max: number): string {
+    const low = formatGameHeight(min);
+    const high = formatGameHeight(max);
+    return low === high ? low : `${low} to ${high}`;
+}

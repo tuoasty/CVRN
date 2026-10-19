@@ -1,26 +1,34 @@
 import type { Ability, DatasetIssue, KitSlot, SpecLoadout, SpecTune } from '../../types/datasets'
 import { createVariantResolver } from '../abilityIndex/resolveVariantBase'
 
-export type KitEntry = { name: string; slot: KitSlot } & (
+export type NameTier =
     | { tier: 'ability'; key: string }
     | { tier: 'variant'; base: string; modifier: string }
     | { tier: 'text' }
-)
+
+export type KitEntry = { name: string; slot: KitSlot } & NameTier
+
+export type NameResolver = (name: string) => NameTier
 
 export type KitResolver = (name: string, slot: KitSlot) => KitEntry
 
-export function createKitResolver(abilityKeys: Iterable<string>): KitResolver {
+export function createNameResolver(abilityKeys: Iterable<string>): NameResolver {
     const keys = [...abilityKeys]
     const byLower = new Map(keys.map(k => [k.toLowerCase(), k]))
     const resolveVariant = createVariantResolver(keys)
 
-    return (name, slot) => {
+    return name => {
         const key = byLower.get(name.trim().toLowerCase())
-        if (key) return { name, slot, tier: 'ability', key }
+        if (key) return { tier: 'ability', key }
         const variant = resolveVariant(name)
-        if (variant) return { name, slot, tier: 'variant', base: variant.base, modifier: variant.modifier }
-        return { name, slot, tier: 'text' }
+        if (variant) return { tier: 'variant', base: variant.base, modifier: variant.modifier }
+        return { tier: 'text' }
     }
+}
+
+export function createKitResolver(abilityKeys: Iterable<string>): KitResolver {
+    const resolveName = createNameResolver(abilityKeys)
+    return (name, slot) => ({ name, slot, ...resolveName(name) })
 }
 
 export function kitTarget(entry: KitEntry): string | undefined {

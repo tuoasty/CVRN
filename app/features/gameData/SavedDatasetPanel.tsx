@@ -4,7 +4,7 @@ import type { GameDatasetKind } from '@/server/domains/gameData/types/datasets'
 import type { StoredGameDatasets } from '@/server/domains/gameData/types/preview'
 import type { GameTerm } from '@/server/domains/gameData/terms/types'
 import { DATASET_LABELS, DATASET_ROOTS } from '@/server/domains/gameData/helpers/datasets/registry'
-import { AbilityTable, AttributeTable, RarityTable, SpecLoadoutTable } from './DatasetTables'
+import { AbilityTable, AttributeTable, BuildEffectsTable, BuildTable, HeightTable, RarityTable, SpecLoadoutTable } from './DatasetTables'
 
 export default function SavedDatasetPanel({ kind, stored, terms }: { kind: GameDatasetKind; stored: StoredGameDatasets; terms: GameTerm[] }) {
     const { payloads } = stored
@@ -21,6 +21,9 @@ export default function SavedDatasetPanel({ kind, stored, terms }: { kind: GameD
             {kind === 'specLoadouts' && payloads.specLoadouts && <SpecLoadoutTable loadouts={payloads.specLoadouts} links={links} />}
             {kind === 'physicals' && payloads.physicals && <AttributeTable entries={payloads.physicals} links={links} />}
             {kind === 'technicals' && payloads.technicals && <AttributeTable entries={payloads.technicals} links={links} />}
+            {kind === 'heights' && payloads.heights && <HeightTable heights={payloads.heights} />}
+            {kind === 'builds' && payloads.builds && <BuildTable builds={payloads.builds} />}
+            {kind === 'buildPassives' && payloads.buildPassives && <BuildEffectsTable entries={payloads.buildPassives} />}
         </div>
     )
 }

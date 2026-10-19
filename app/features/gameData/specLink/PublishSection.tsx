@@ -1,6 +1,5 @@
 "use client"
 
-import Link from 'next/link'
 import { Fragment, type ReactNode } from 'react'
 import { CircleX } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
@@ -132,10 +131,6 @@ function DoneLine({ done }: { done: PublishDone }) {
                     Published <span className="font-mono tabular-nums">{done.at}</span>
                     {parts.length > 0 && <>: {joinParts(parts)}</>}
                 </span>
-            </p>
-            <p className="mt-2.5 flex flex-wrap gap-x-6 gap-y-1 pl-[22px]">
-                <Link href="/admin/game-data/specs" className="font-medium text-primary hover:underline underline-offset-4">Open Spec loadouts ›</Link>
-                <Link href="/admin/specs" className="font-medium text-primary hover:underline underline-offset-4">Publish the spec snapshot on Specs ›</Link>
             </p>
         </div>
     )

@@ -17,6 +17,20 @@ function dataset<K extends PreviewDataset['kind']>(preview: Extract<GameDataPrev
     return preview.datasets.find(d => d.kind === kind) as Extract<PreviewDataset, { kind: K }>
 }
 
+describe('buildImportPreview with heights and builds', () => {
+    it('imports heights, builds and build effects alongside the catalog with no issues', () => {
+        const preview = okPreview([ALL, fixture('heights.txt'), fixture('builds.txt'), fixture('build-passives.txt')].join('\n\n'))
+        expect(preview.datasets.slice(4).map(d => [d.kind, d.count])).toEqual([
+            ['heights', 24],
+            ['builds', 54],
+            ['buildPassives', 52],
+        ])
+        expect(preview.datasets.flatMap(d => d.issues)).toEqual([])
+        expect(preview.crossIssues).toEqual([])
+        expect(preview.canPublish).toBe(true)
+    })
+})
+
 describe('buildImportPreview with the real files', () => {
     const preview = okPreview(ALL)
 

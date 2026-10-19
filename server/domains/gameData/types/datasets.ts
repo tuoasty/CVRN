@@ -1,4 +1,4 @@
-export const GAME_DATASET_KINDS = ['rarities', 'abilities', 'physicals', 'technicals', 'specLoadouts'] as const
+export const GAME_DATASET_KINDS = ['rarities', 'abilities', 'physicals', 'technicals', 'heights', 'builds', 'buildPassives', 'specLoadouts'] as const
 export type GameDatasetKind = (typeof GAME_DATASET_KINDS)[number]
 
 export type ScalarValue = string | number | boolean
@@ -55,6 +55,36 @@ export interface AttributeEntry {
     weight: number
 }
 
+export interface HeightEntry {
+    value: number
+    weight: number
+}
+
+export interface BuildCombo {
+    physical: string
+    technical: string
+    minHeight: number
+    maxHeight: number
+}
+
+export interface Build {
+    name: string
+    rarity: string
+    combos: BuildCombo[]
+}
+
+export const KNOWN_BUILD_STATS = ['MaxPower', 'FlexMaxPower'] as const
+
+export type BuildEffect =
+    | { type: 'named'; name: string }
+    | { type: 'bonus'; slot: string; name: string }
+    | { type: 'stat'; field: string; value: number }
+
+export interface BuildPassives {
+    build: string
+    effects: BuildEffect[]
+}
+
 export type KitSlot = 'Passive' | 'Active'
 
 export interface SpecTune {
@@ -84,6 +114,9 @@ export interface GameDatasetPayloads {
     abilities: Ability[]
     physicals: AttributeEntry[]
     technicals: AttributeEntry[]
+    heights: HeightEntry[]
+    builds: Build[]
+    buildPassives: BuildPassives[]
     specLoadouts: SpecLoadout[]
 }
 

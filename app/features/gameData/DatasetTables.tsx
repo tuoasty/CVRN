@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Badge } from '@/app/components/ui/badge'
 import { Input } from '@/app/components/ui/input'
-import type { Ability, AttributeEntry, Rarity } from '@/server/domains/gameData/types/datasets'
+import type { Ability, AttributeEntry, Build, BuildEffect, BuildPassives, HeightEntry, Rarity } from '@/server/domains/gameData/types/datasets'
 import type { AbilityIndexEntry } from '@/server/domains/gameData/types/abilityIndex'
 import { buildAbilityIndex } from '@/server/domains/gameData/helpers/abilityIndex/buildAbilityIndex'
 import type { AbilityBullet, GameTerm, TermBook } from '@/server/domains/gameData/terms/types'
@@ -13,7 +13,7 @@ import { NO_ROLL_VALUE } from '@/server/domains/gameData/helpers/datasets/crossC
 import { rarityForWeight } from '@/server/domains/gameData/helpers/datasets/rarityForWeight'
 import { createKitResolver, resolveKit, resolveTuning, type ResolvedTune } from '@/server/domains/gameData/helpers/specLoadouts/resolveKit'
 import type { SpecLoadout } from '@/server/domains/gameData/types/datasets'
-import { formatGameHeight } from '@/shared/utils/height'
+import { formatGameHeight, formatGameHeightRange } from '@/shared/utils/height'
 import { cn } from '@/lib/utils'
 
 const TH = 'px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground'
@@ -358,6 +358,119 @@ export function SpecLoadoutTable({ loadouts, links = {} }: { loadouts: SpecLoado
                             </tr>
                         )
                     })}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+export function HeightTable({ heights }: { heights: HeightEntry[] }) {
+    return (
+        <table className="w-full text-sm">
+            <thead>
+                <tr className="border-b border-border">
+                    <th className={TH}>Height</th>
+                    <th className={cn(TH, 'text-right')}>Game units</th>
+                    <th className={cn(TH, 'text-right')}>Weight</th>
+                </tr>
+            </thead>
+            <tbody>
+                {heights.map(h => (
+                    <tr key={h.value} className="border-b border-border last:border-b-0">
+                        <td className={cn(TD, 'font-mono tabular-nums')}>{formatGameHeight(h.value)}</td>
+                        <td className={cn(TD, NUM, 'text-muted-foreground')}>{h.value}</td>
+                        <td className={cn(TD, NUM)}>{h.weight}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    )
+}
+
+export function BuildTable({ builds }: { builds: Build[] }) {
+    const [query, setQuery] = useState('')
+    const q = query.trim().toLowerCase()
+    const shown = q ? builds.filter(b => b.name.toLowerCase().includes(q)) : builds
+
+    return (
+        <div>
+            <div className="p-3 border-b border-border">
+                <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Filter builds" className="h-8 max-w-xs rounded-sm" />
+            </div>
+            <table className="w-full table-fixed text-sm">
+                <colgroup>
+                    <col className="w-48" />
+                    <col className="w-28" />
+                    <col />
+                </colgroup>
+                <thead>
+                    <tr className="border-b border-border">
+                        <th className={TH}>Build</th>
+                        <th className={TH}>Rarity</th>
+                        <th className={TH}>Physical / Technical, height</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {shown.map(b => (
+                        <tr key={b.name} className="border-b border-border last:border-b-0">
+                            <td className={cn(TD, 'font-medium break-words')}>{b.name}</td>
+                            <td className={TD}>{b.rarity}</td>
+                            <td className={TD}>
+                                <ul className="space-y-0.5">
+                                    {b.combos.map((c, i) => (
+                                        <li key={i}>
+                                            {c.physical} / {c.technical}
+                                            <span className="ml-3 font-mono text-xs tabular-nums text-muted-foreground">{formatGameHeightRange(c.minHeight, c.maxHeight)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+function rawEffectText(effect: BuildEffect): string {
+    if (effect.type === 'named') return effect.name
+    if (effect.type === 'bonus') return `Bonus: ${effect.name}`
+    return `${effect.field} ${effect.value}`
+}
+
+export function BuildEffectsTable({ entries }: { entries: BuildPassives[] }) {
+    const [query, setQuery] = useState('')
+    const q = query.trim().toLowerCase()
+    const shown = q ? entries.filter(e => e.build.toLowerCase().includes(q)) : entries
+
+    return (
+        <div>
+            <div className="p-3 border-b border-border">
+                <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Filter builds" className="h-8 max-w-xs rounded-sm" />
+            </div>
+            <table className="w-full table-fixed text-sm">
+                <colgroup>
+                    <col className="w-48" />
+                    <col />
+                </colgroup>
+                <thead>
+                    <tr className="border-b border-border">
+                        <th className={TH}>Build</th>
+                        <th className={TH}>Effects</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {shown.map(e => (
+                        <tr key={e.build} className="border-b border-border last:border-b-0">
+                            <td className={cn(TD, 'font-medium break-words')}>{e.build}</td>
+                            <td className={TD}>
+                                {e.effects.length > 0
+                                    ? <ul className="space-y-0.5">{e.effects.map((effect, i) => <li key={i}>{rawEffectText(effect)}</li>)}</ul>
+                                    : <span className="text-muted-foreground">None</span>}
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </div>
