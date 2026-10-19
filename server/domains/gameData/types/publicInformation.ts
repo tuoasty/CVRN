@@ -1,4 +1,4 @@
-import type { EffectOp } from './datasets'
+import type { EffectOp, KitSlot } from './datasets'
 import type { HeightOdds } from './buildIndex'
 
 export type PublicAbilityKind = 'physical' | 'technical'
@@ -64,8 +64,23 @@ export interface HeightColumn {
     rows: HeightRow[]
 }
 
+export interface PublicKitEntry {
+    name: string
+    slot: KitSlot
+    target?: string
+    tuned?: TunedInspector
+}
+
+export interface PublicSpecKit {
+    cooldown: number
+    lifetime?: number
+    active: PublicKitEntry[]
+    passive: PublicKitEntry[]
+}
+
 export interface PublicInformation {
     abilities: PublicAbilityCatalog
     inspectors: Record<string, InspectorData>
     heights: HeightColumn[]
+    kits: Record<string, PublicSpecKit>
 }

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { fixtureAbilities, fixtureDataset } from '../../../__tests__/fixtures/loadFixtures'
+import { fixtureAbilities, fixtureDataset, fixtureSpecLoadouts } from '../../../__tests__/fixtures/loadFixtures'
 import type { GameTerm } from '../../../terms/types'
 import { buildPublicInformation } from '../buildPublicInformation'
 
@@ -13,6 +13,7 @@ const payloads = {
     physicals: fixtureDataset('attributes.txt', 'physicals'),
     technicals: fixtureDataset('attributes.txt', 'technicals'),
     heights: fixtureDataset('heights.txt', 'heights'),
+    specLoadouts: fixtureSpecLoadouts(),
 }
 
 describe('buildPublicInformation', () => {
@@ -21,6 +22,7 @@ describe('buildPublicInformation', () => {
             abilities: { physical: [], technical: [] },
             inspectors: {},
             heights: [],
+            kits: {},
         })
     })
 
@@ -40,8 +42,18 @@ describe('buildPublicInformation', () => {
 
     it('stops grant chains at the first level', () => {
         const chained = abilities.map(a => (a.key === "Captain's Jump" ? { ...a, params: { CallTeamNerfedStance: 1 } } : a))
-        const info = buildPublicInformation({ payloads: { ...payloads, abilities: chained }, terms, settings: { 'Captains Call': 'derived' } })
+        const info = buildPublicInformation({ payloads: { ...payloads, abilities: chained, specLoadouts: [] }, terms, settings: { 'Captains Call': 'derived' } })
         expect(info.inspectors["Captain's Jump"]).toBeDefined()
         expect(info.inspectors['Nerfed Stance']).toBeUndefined()
+    })
+
+    it('builds a kit per loadout and an inspector for every kit target', () => {
+        const info = buildPublicInformation({ payloads, terms, settings: {} })
+        expect(Object.keys(info.kits)).toHaveLength(fixtureSpecLoadouts().length)
+        for (const kit of Object.values(info.kits)) {
+            for (const entry of [...kit.active, ...kit.passive]) {
+                if (entry.target) expect(info.inspectors[entry.target], entry.target).toBeDefined()
+            }
+        }
     })
 })

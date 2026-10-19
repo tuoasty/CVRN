@@ -115,3 +115,5 @@ export type {
     SpecImportRegionDiff,
     SpecImportResult,
 } from "./specFile";
+
+export type {RecentWinnerPlayer, RecentWinnerRow, EndedSeason, RecentSpecWinners, RecentSpecWinnerEntry} from "./recentWinners";

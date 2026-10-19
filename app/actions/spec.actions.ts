@@ -94,7 +94,10 @@ export async function saveSpecIdentityAction(data: unknown) {
     if (!guard.ok) return guard;
 
     const result = await saveSpecIdentity(supabase, parsed.data);
-    if (result.ok) revalidatePath("/admin/specs");
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/specs");
+    }
     return result;
 }
 
@@ -112,7 +115,10 @@ export async function saveSpecFactsAction(data: unknown) {
     if (!guard.ok) return guard;
 
     const result = await saveSpecFacts(supabase, parsed.data);
-    if (result.ok) revalidatePath("/admin/specs");
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/specs");
+    }
     return result;
 }
 
@@ -223,7 +229,10 @@ export async function deleteSpecAction(id: string) {
     if (!guard.ok) return guard;
 
     const result = await removeSpec(supabase, id);
-    if (result.ok) revalidatePath("/admin/specs");
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/specs");
+    }
     return result;
 }
 
@@ -237,7 +246,7 @@ export async function generateSpecSnapshotAction(regionId: string) {
     const result = await generateSpecSnapshot(supabase, regionId);
     if (result.ok) {
         revalidatePublicData([CACHE_TAGS.specs]);
-        revalidatePath("/spec-requirements");
+        revalidatePath("/information/specs");
     }
     return result;
 }
@@ -252,7 +261,7 @@ export async function deleteSpecSnapshotAction(regionId: string) {
     const result = await deleteSpecSnapshot(supabase, regionId);
     if (result.ok) {
         revalidatePublicData([CACHE_TAGS.specs]);
-        revalidatePath("/spec-requirements");
+        revalidatePath("/information/specs");
     }
     return result;
 }
@@ -311,7 +320,10 @@ export async function awardSpecWinnerAction(data: unknown) {
     if (!guard.ok) return guard;
 
     const result = await awardSpecWinner(supabase, parsed.data);
-    if (result.ok) revalidatePath("/admin/seasons");
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/seasons");
+    }
     return result;
 }
 
@@ -329,7 +341,10 @@ export async function deleteSpecWinnerAction(data: unknown) {
     if (!guard.ok) return guard;
 
     const result = await deleteSpecWinner(supabase, parsed.data.id);
-    if (result.ok) revalidatePath("/admin/seasons");
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/admin/seasons");
+    }
     return result;
 }
 

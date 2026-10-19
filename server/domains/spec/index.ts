@@ -1,9 +1,14 @@
 export * from "./types";
-export {getSpecs, getSpecsAllRegions, getSpecCatalog} from "./queries/getSpecs";
+export {getSpecs, getSpecsAllRegions, getSpecCatalog, getPublicSpecs} from "./queries/getSpecs";
+export type {PublicSpecRow} from "@/server/db/specs.repo";
 export {exportSpecRequirements} from "./queries/exportSpecRequirements";
 export {getPublicSpecSnapshot, getPublishedSpecRegions} from "./queries/getPublicSpecSnapshot";
 export {getPlacementBonus} from "./queries/getPlacementBonus";
 export {getSpecWinners} from "./queries/getSpecWinners";
+export {getRecentSpecWinners} from "./queries/getRecentSpecWinners";
+export {winnersForSpec} from "./helpers/recentSpecWinners";
+export {withSpecSlugs, galleryFor, parseGalleryPosition, pickRequirementRegion, seasonForRegion} from "./helpers/publicSpecs";
+export type {PublicSpecCard} from "./helpers/publicSpecs";
 export {saveSpecIdentity} from "./commands/saveSpecIdentity";
 export {saveSpecFacts} from "./commands/saveSpecFacts";
 export {saveRegionRequirements} from "./commands/saveRegionRequirements";

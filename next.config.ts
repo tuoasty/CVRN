@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/updates", destination: "/information/updates", permanent: true },
       { source: "/updates/:version", destination: "/information/updates/:version", permanent: true },
+      { source: "/spec-requirements", destination: "/information/specs", permanent: true },
     ];
   },
   experimental: {

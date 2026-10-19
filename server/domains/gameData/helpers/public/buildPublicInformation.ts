@@ -8,6 +8,7 @@ import { buildAbilityIndex } from '../abilityIndex/buildAbilityIndex'
 import { buildAbilityCatalog } from './abilityCatalog'
 import { buildHeightColumns } from './heightColumns'
 import { buildInspector, type InspectorContext } from './inspector'
+import { buildSpecKits } from './specKits'
 
 export interface PublicInformationInput {
     payloads: Partial<GameDatasetPayloads>
@@ -33,5 +34,11 @@ export function buildPublicInformation({ payloads, terms, settings }: PublicInfo
     for (const ability of rollables) addInspector(ability.key)
     for (const ability of rollables) for (const line of ability.lines) if (line.grants) addInspector(line.grants)
 
-    return { abilities: catalog, inspectors, heights: buildHeightColumns(payloads.heights ?? []) }
+    const kits = buildSpecKits(payloads, ctx, key => {
+        addInspector(key)
+        return inspectors[key]
+    })
+    for (const kit of Object.values(kits)) for (const entry of [...kit.active, ...kit.passive]) if (entry.target) addInspector(entry.target)
+
+    return { abilities: catalog, inspectors, heights: buildHeightColumns(payloads.heights ?? []), kits }
 }

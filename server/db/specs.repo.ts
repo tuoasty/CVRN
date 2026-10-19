@@ -62,6 +62,17 @@ export async function findSpecCatalog(supabase: DBClient): Promise<Result<Spec[]
     return Ok(data ?? []);
 }
 
+export type PublicSpecRow = Pick<Spec, "id" | "name" | "stars" | "position" | "height" | "is_vaulted" | "game_key" | "photo_url" | "created_at">;
+
+export async function findPublicSpecs(supabase: DBClient): Promise<Result<PublicSpecRow[]>> {
+    const {data, error} = await supabase
+        .from("specs")
+        .select("id, name, stars, position, height, is_vaulted, game_key, photo_url, created_at")
+        .order("created_at", {ascending: true});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
 export async function findSpecById(supabase: DBClient, id: string): Promise<Result<Spec | null>> {
     const {data, error} = await supabase.from("specs").select("*").eq("id", id).maybeSingle();
     if (error) return Err(serializeError(error, "DB_ERROR"));

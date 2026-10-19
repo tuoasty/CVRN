@@ -1,6 +1,6 @@
 import {DBClient, Spec} from "@/shared/types/db";
 import {Result} from "@/shared/types/result";
-import {findSpecCatalog, findSpecsWithAllRegions, findSpecsWithRequirements} from "@/server/db/specs.repo";
+import {findPublicSpecs, findSpecCatalog, findSpecsWithAllRegions, findSpecsWithRequirements, type PublicSpecRow} from "@/server/db/specs.repo";
 import {SpecWithAllRegions, SpecWithRequirements} from "../types";
 
 export async function getSpecs(
@@ -16,4 +16,8 @@ export async function getSpecsAllRegions(supabase: DBClient): Promise<Result<Spe
 
 export async function getSpecCatalog(supabase: DBClient): Promise<Result<Spec[]>> {
     return findSpecCatalog(supabase);
+}
+
+export async function getPublicSpecs(supabase: DBClient): Promise<Result<PublicSpecRow[]>> {
+    return findPublicSpecs(supabase);
 }

@@ -37,13 +37,13 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Players",
         description:
             "Player profiles, avatars, and rosters. Also backs the identity (names, avatars, team logos) joined onto both leaderboards.",
-        readCount: 12,
+        readCount: 13,
         affects: "Players, player detail, teams, match detail, archive, leaderboards, records",
     },
     [CACHE_TAGS.seasons]: {
         label: "Seasons",
         description: "Season metadata, archive, and podium.",
-        readCount: 7,
+        readCount: 8,
         affects: "Archive, season routing, podium, records",
     },
     [CACHE_TAGS.regions]: {
@@ -86,8 +86,8 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     [CACHE_TAGS.specs]: {
         label: "Specs",
         description:
-            "The published public spec-requirements snapshots (masked difficulty tiers, one per region) and the list of published regions. Regenerated on Publish.",
-        readCount: 2,
+            "The public spec list (names, stars, photos), the published spec-requirements snapshots and their regions, and the recent spec winners. Regenerated on spec edits, photo changes, winner awards and snapshot Publish.",
+        readCount: 4,
         affects: "Spec requirements page",
     },
     [CACHE_TAGS.rawStats]: {

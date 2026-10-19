@@ -131,6 +131,23 @@
     @apply max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8;
   }
 
+  .spec-hero {
+    container-type: inline-size;
+  }
+  .spec-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 140px) minmax(0, 1fr);
+    column-gap: 20px;
+    row-gap: 28px;
+    align-items: end;
+  }
+  @container (min-width: 480px) {
+    .spec-hero-grid {
+      grid-template-columns: 190px minmax(0, 1fr);
+      column-gap: 28px;
+    }
+  }
+
   /* Panel Components */
   .panel {
     @apply bg-card border border-border rounded-sm;
