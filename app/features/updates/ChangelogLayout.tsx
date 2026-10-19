@@ -11,7 +11,8 @@ const GAP = 16
 
 interface Props {
     toc: ChangelogToc
-    title: string
+    version: string
+    title: string | null
     header: ReactNode
     footer: ReactNode
     rail?: ReactNode
@@ -44,7 +45,7 @@ function ExpandAllButton({ allOpen, onClick, className }: { allOpen: boolean; on
     )
 }
 
-export default function ChangelogLayout({ toc, title, header, footer, rail, children }: Props) {
+export default function ChangelogLayout({ toc, version, title, header, footer, rail, children }: Props) {
     const contentRef = useRef<HTMLDivElement>(null)
     const [navHeight, setNavHeight] = useState<number | null>(null)
     const entries = useMemo<TocEntry[]>(
@@ -189,17 +190,25 @@ export default function ChangelogLayout({ toc, title, header, footer, rail, chil
                     <div className={cn(stickyClass, 'space-y-4')} style={stickyStyle}>
                         {hasToc && (
                             <nav aria-label="On this page">
+                                <a
+                                    href="#top"
+                                    onClick={onTopClick}
+                                    className="group mb-6 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                >
+                                    <span className={cn(
+                                        'block font-mono tabular-nums',
+                                        title ? 'text-xs text-muted-foreground' : 'text-lg font-semibold text-foreground',
+                                    )}>
+                                        {version}
+                                    </span>
+                                    {title && (
+                                        <span className="mt-0.5 block text-balance text-lg font-semibold leading-snug tracking-[-0.01em] text-foreground decoration-muted-foreground decoration-1 underline-offset-4 group-hover:underline">
+                                            {title}
+                                        </span>
+                                    )}
+                                </a>
                                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">On this page</p>
                                 <ul className="mt-3 border-l border-border">
-                                    <li>
-                                        <a
-                                            href="#top"
-                                            onClick={onTopClick}
-                                            className="-ml-px block border-l-2 border-transparent py-1 pl-3 pr-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                                        >
-                                            {title}
-                                        </a>
-                                    </li>
                                     {entries.map(entry => {
                                         const isActive = entry.id === active
                                         return (

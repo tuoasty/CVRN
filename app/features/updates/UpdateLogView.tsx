@@ -61,7 +61,8 @@ export default function UpdateLogView({ log, index }: { log: UpdateLogPublic; in
             <ChangelogLayout
                 key={log.version}
                 toc={toc}
-                title={log.title ?? log.version}
+                version={log.version}
+                title={log.title}
                 header={header}
                 footer={footer}
                 rail={index.length > 1 ? <VersionRail index={index} current={log.version} newer={newer} older={older} /> : null}

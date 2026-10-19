@@ -8,18 +8,30 @@ const toc = {
     toggleCount: 0,
 }
 
-function tocLinks(html: string): string[] {
-    const nav = /<nav aria-label="On this page">([\s\S]*?)<\/nav>/.exec(html)![1]
-    return [...nav.matchAll(/<a ([^>]*)>([^<]*)<\/a>/g)].map(m => `${/href="([^"]+)"/.exec(m[1])![1]} ${m[2]}`)
+function render(title: string | null): string {
+    return renderToStaticMarkup(
+        <ChangelogLayout toc={toc} version="1.5" title={title} header={null} footer={null}>
+            <p>body</p>
+        </ChangelogLayout>,
+    )
+}
+
+function text(html: string): string {
+    return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
 describe('ChangelogLayout', () => {
-    it('lists the update title first, linking to the top of the page', () => {
-        const html = renderToStaticMarkup(
-            <ChangelogLayout toc={toc} title="Spring patch" header={null} footer={null}>
-                <p>body</p>
-            </ChangelogLayout>,
-        )
-        expect(tocLinks(html)).toEqual(['#top Spring patch', '#overview Overview', '#balance Balance'])
+    it('heads the sidebar with the update title, linking to the top of the page', () => {
+        const nav = /<nav aria-label="On this page">([\s\S]*?)<\/nav>/.exec(render('Spring patch'))![1]
+        const top = /<a href="#top"[^>]*>([\s\S]*?)<\/a>/.exec(nav)!
+        expect(text(top[1])).toBe('1.5 Spring patch')
+        expect(nav.indexOf('href="#top"')).toBeLessThan(nav.indexOf('On this page'))
+        expect(nav.indexOf('On this page')).toBeLessThan(nav.indexOf('href="#overview"'))
+    })
+
+    it('shows the version alone when the update has no title', () => {
+        const nav = /<nav aria-label="On this page">([\s\S]*?)<\/nav>/.exec(render(null))![1]
+        const top = /<a href="#top"[^>]*>([\s\S]*?)<\/a>/.exec(nav)!
+        expect(text(top[1])).toBe('1.5')
     })
 })
