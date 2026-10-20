@@ -12,8 +12,11 @@ import {
     getPlacementBonusAction,
     savePlacementBonusAction,
     resetPlacementBonusAction,
+    getHeightRangesAction,
+    saveHeightRangesAction,
 } from '@/app/actions/spec.actions';
 import {
+    HeightRangeByStar,
     PlacementBonusConfig,
     SaveRegionRequirementsInput,
     SaveSpecIdentityInput,
@@ -169,6 +172,36 @@ export function useSpecBonus(regionId: string | null) {
         error: error?.message ?? null,
         save,
         reset,
+    };
+}
+
+async function fetchHeightRanges([, regionId]: [string, string]): Promise<HeightRangeByStar> {
+    const result = await getHeightRangesAction(regionId);
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+export function useSpecHeightRanges(regionId: string | null) {
+    const key = regionId ? (['specHeightRanges', regionId] as const) : null;
+    const {data, error, isLoading} = useSWR(
+        key,
+        fetchHeightRanges as BareFetcher<HeightRangeByStar>,
+        {dedupingInterval: TTL, revalidateOnFocus: false}
+    );
+
+    const save = async (regionIds: string[], byStar: HeightRangeByStar) => {
+        const result = await saveHeightRangesAction({regionIds, byStar});
+        if (result.ok) {
+            await Promise.all(regionIds.map(id => globalMutate(['specHeightRanges', id], result.value, {revalidate: false})));
+        }
+        return result;
+    };
+
+    return {
+        byStar: (data as HeightRangeByStar | undefined) ?? null,
+        isLoading,
+        error: error?.message ?? null,
+        save,
     };
 }
 

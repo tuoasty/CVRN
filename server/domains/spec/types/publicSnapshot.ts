@@ -1,4 +1,5 @@
 import type {PlacementBonusConfig} from "../helpers/placementBonus";
+import type {HeightRangeByStar} from "../helpers/heightRange";
 
 export type SpecDifficultyTier = 1 | 2 | 3 | 4;
 
@@ -31,6 +32,7 @@ export interface SpecSnapshotPayload {
     tierCount: number;
     setsFloorByStar: Record<number, number>;
     placementBonus: PlacementBonusConfig;
+    heightRangeByStar: HeightRangeByStar;
     specs: PublicSpec[];
 }
 

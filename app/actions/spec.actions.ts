@@ -37,6 +37,9 @@ import {
     savePlacementBonus,
     resetPlacementBonus,
     SavePlacementBonusSchema,
+    getHeightRanges,
+    saveHeightRanges,
+    SaveHeightRangesSchema,
     getSpecWinners,
     awardSpecWinner,
     deleteSpecWinner,
@@ -324,6 +327,36 @@ export async function resetPlacementBonusAction(regionId: string) {
     if (!guard.ok) return guard;
 
     return resetPlacementBonus(supabase, regionId);
+}
+
+export async function getHeightRangesAction(regionId: string) {
+    if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    return getHeightRanges(supabase, regionId);
+}
+
+export async function saveHeightRangesAction(data: unknown) {
+    const parsed = SaveHeightRangesSchema.safeParse(data);
+    if (!parsed.success) {
+        return Err({
+            message: parsed.error.issues.map(i => i.message).join(", "),
+            code: "VALIDATION_ERROR" as const,
+        });
+    }
+
+    const supabase = await createServerSupabase();
+    const guard = await requireRoles(supabase, SPEC_ROLES);
+    if (!guard.ok) return guard;
+
+    const result = await saveHeightRanges(supabase, parsed.data);
+    if (result.ok) {
+        revalidatePublicData([CACHE_TAGS.specs]);
+        revalidatePath("/information/specs");
+    }
+    return result;
 }
 
 export async function getSpecWinnersAction(seasonId: string) {

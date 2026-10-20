@@ -68,6 +68,8 @@ export interface SpecWinnerWithRefs {
 }
 
 export type {PlacementBonusConfig, BonusScope} from "../helpers/placementBonus";
+export type {HeightRangeByStar} from "../helpers/heightRange";
+export {HEIGHT_RANGE_STARS, DEFAULT_HEIGHT_RANGE_BY_STAR, heightRangeFor} from "../helpers/heightRange";
 export {
     DEFAULT_PLACEMENT_BONUS,
     DEFAULT_BONUS_SCOPE,
@@ -76,8 +78,8 @@ export {
     formatPlacementBonus,
 } from "../helpers/placementBonus";
 
-export type {ExportSpecRequirementsInput, ImportSpecRequirementsInput, SaveSpecIdentityInput, SetSpecVaultedInput, SaveSpecFactsInput, RegionSpecRequirementsInput, SaveRegionRequirementsInput, SpecPositionInput, SpecRequirementInput, SpecQualificationInput, SavePlacementBonusInput, AwardSpecWinnerInput, DeleteSpecWinnerInput} from "./schemas";
-export {SpecImportFileSchema, SpecFileEntrySchema, ExportSpecRequirementsSchema, ImportSpecRequirementsSchema, SaveSpecIdentitySchema, SetSpecVaultedSchema, SaveSpecFactsSchema, RegionSpecRequirementsSchema, SaveRegionRequirementsSchema, SpecPositionSchema, SpecRequirementSchema, SpecQualificationSchema, SavePlacementBonusSchema, PlacementBonusConfigSchema, AwardSpecWinnerSchema, DeleteSpecWinnerSchema} from "./schemas";
+export type {ExportSpecRequirementsInput, ImportSpecRequirementsInput, SaveSpecIdentityInput, SetSpecVaultedInput, SaveSpecFactsInput, RegionSpecRequirementsInput, SaveRegionRequirementsInput, SpecPositionInput, SpecRequirementInput, SpecQualificationInput, SavePlacementBonusInput, SaveHeightRangesInput, AwardSpecWinnerInput, DeleteSpecWinnerInput} from "./schemas";
+export {SpecImportFileSchema, SpecFileEntrySchema, ExportSpecRequirementsSchema, ImportSpecRequirementsSchema, SaveSpecIdentitySchema, SetSpecVaultedSchema, SaveSpecFactsSchema, RegionSpecRequirementsSchema, SaveRegionRequirementsSchema, SpecPositionSchema, SpecRequirementSchema, SpecQualificationSchema, SavePlacementBonusSchema, SaveHeightRangesSchema, PlacementBonusConfigSchema, AwardSpecWinnerSchema, DeleteSpecWinnerSchema} from "./schemas";
 
 export {
     SPEC_STAT_KEYS,

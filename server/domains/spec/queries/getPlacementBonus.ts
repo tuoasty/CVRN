@@ -11,6 +11,6 @@ export async function getPlacementBonus(
     if (!res.ok) return res;
     return Ok({
         config: res.value ?? DEFAULT_PLACEMENT_BONUS,
-        isCustom: res.value !== null,
+        isCustom: res.value !== null && JSON.stringify(res.value) !== JSON.stringify(DEFAULT_PLACEMENT_BONUS),
     });
 }

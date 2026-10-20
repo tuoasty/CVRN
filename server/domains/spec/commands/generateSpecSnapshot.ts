@@ -4,20 +4,23 @@ import {createError} from "@/server/utils/serializeableError";
 import {findSpecsWithRequirements} from "@/server/db/specs.repo";
 import {upsertSpecSnapshot} from "@/server/db/specSnapshot.repo";
 import {getPlacementBonus} from "../queries/getPlacementBonus";
+import {getSpecHeightRanges} from "@/server/db/specBonuses.repo";
 import {buildSpecSnapshot} from "../helpers/buildSpecSnapshot";
 
 export async function generateSpecSnapshot(
     supabase: DBClient,
     regionId: string
 ): Promise<Result<{specCount: number; statCount: number; skippedSpecs: string[]; emptySpecCount: number}>> {
-    const [specsResult, bonusResult] = await Promise.all([
+    const [specsResult, bonusResult, heightResult] = await Promise.all([
         findSpecsWithRequirements(supabase, regionId),
         getPlacementBonus(supabase, regionId),
+        getSpecHeightRanges(supabase, regionId),
     ]);
     if (!specsResult.ok) return specsResult;
     if (!bonusResult.ok) return bonusResult;
+    if (!heightResult.ok) return heightResult;
 
-    const built = buildSpecSnapshot(specsResult.value, bonusResult.value.config, new Date().toISOString());
+    const built = buildSpecSnapshot(specsResult.value, bonusResult.value.config, new Date().toISOString(), heightResult.value);
     if (built.payload.specs.length === 0) {
         const reason = built.skippedSpecs.length > 0
             ? `every spec with requirements has unset values (${built.skippedSpecs.join(", ")})`

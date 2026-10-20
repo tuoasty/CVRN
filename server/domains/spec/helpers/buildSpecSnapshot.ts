@@ -7,6 +7,7 @@ import {
 import {SPEC_POSITIONS} from "./positions";
 import {SETS_FLOOR_BY_STAR, TIER_COUNT, tierForRequirement} from "./maskRequirement";
 import type {PlacementBonusConfig} from "./placementBonus";
+import {DEFAULT_HEIGHT_RANGE_BY_STAR, type HeightRangeByStar} from "./heightRange";
 import type {SpecWithRequirements} from "../types";
 import type {
     PublicParticipation,
@@ -35,7 +36,8 @@ export type SpecSnapshotBuild = {
 export function buildSpecSnapshot(
     allSpecs: SpecWithRequirements[],
     placementBonus: PlacementBonusConfig,
-    generatedAt: string
+    generatedAt: string,
+    heightRangeByStar: HeightRangeByStar = DEFAULT_HEIGHT_RANGE_BY_STAR
 ): SpecSnapshotBuild {
     const skippedSpecs: string[] = [];
     let emptySpecCount = 0;
@@ -121,6 +123,7 @@ export function buildSpecSnapshot(
             tierCount: TIER_COUNT,
             setsFloorByStar: SETS_FLOOR_BY_STAR,
             placementBonus,
+            heightRangeByStar,
             specs,
         },
         skippedSpecs: skippedSpecs.sort((a, b) => a.localeCompare(b)),

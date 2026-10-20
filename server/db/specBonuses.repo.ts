@@ -2,6 +2,7 @@ import {DBClient} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {PlacementBonusConfig} from "@/server/domains/spec/types";
+import {HeightRangeByStar, normalizeHeightRanges} from "@/server/domains/spec/helpers/heightRange";
 
 export async function getSpecBonus(
     supabase: DBClient,
@@ -45,11 +46,28 @@ export async function upsertSpecBonus(
     return Ok(true);
 }
 
-export async function deleteSpecBonus(
+export async function getSpecHeightRanges(
     supabase: DBClient,
     regionId: string
+): Promise<Result<HeightRangeByStar>> {
+    const {data, error} = await supabase
+        .from("spec_bonuses")
+        .select("height_range_by_star")
+        .eq("region_id", regionId)
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(normalizeHeightRanges(data?.height_range_by_star));
+}
+
+export async function upsertSpecHeightRanges(
+    supabase: DBClient,
+    regionIds: string[],
+    byStar: HeightRangeByStar
 ): Promise<Result<true>> {
-    const {error} = await supabase.from("spec_bonuses").delete().eq("region_id", regionId);
+    const updatedAt = new Date().toISOString();
+    const {error} = await supabase.from("spec_bonuses").upsert(
+        regionIds.map(regionId => ({region_id: regionId, height_range_by_star: byStar, updated_at: updatedAt}))
+    );
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(true);
 }

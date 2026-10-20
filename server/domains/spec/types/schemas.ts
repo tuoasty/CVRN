@@ -114,6 +114,13 @@ export const SavePlacementBonusSchema = z.object({
     config: PlacementBonusConfigSchema,
 });
 
+const heightRange = z.number().int().min(0).max(12);
+
+export const SaveHeightRangesSchema = z.object({
+    regionIds: z.array(z.string().uuid()).min(1),
+    byStar: z.object({"3": heightRange, "4": heightRange, "5": heightRange}),
+});
+
 export const AwardSpecWinnerSchema = z.object({
     seasonId: z.string().uuid(),
     specId: z.string().uuid(),
@@ -136,5 +143,6 @@ export type ExportSpecRequirementsInput = z.infer<typeof ExportSpecRequirementsS
 export type ImportSpecRequirementsInput = z.infer<typeof ImportSpecRequirementsSchema>;
 export type SpecQualificationInput = z.infer<typeof SpecQualificationSchema>;
 export type SavePlacementBonusInput = z.infer<typeof SavePlacementBonusSchema>;
+export type SaveHeightRangesInput = z.infer<typeof SaveHeightRangesSchema>;
 export type AwardSpecWinnerInput = z.infer<typeof AwardSpecWinnerSchema>;
 export type DeleteSpecWinnerInput = z.infer<typeof DeleteSpecWinnerSchema>;

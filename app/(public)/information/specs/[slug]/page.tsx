@@ -10,7 +10,7 @@ import {
     getCachedRegions,
     getCachedSeasons,
 } from '@/server/cache/publicReads'
-import { galleryFor, pickRequirementRegion, seasonForRegion, winnersForSpec, withSpecSlugs } from '@/server/domains/spec'
+import { galleryFor, heightRangeFor, pickRequirementRegion, seasonForRegion, winnersForSpec, withLoadouts, withSpecSlugs } from '@/server/domains/spec'
 import type { InspectorData } from '@/server/domains/gameData'
 import { REGION_ORDER } from '@/shared/volleyball/regions'
 import { formatHeight } from '@/shared/utils/height'
@@ -30,8 +30,9 @@ type PageProps = {
 }
 
 async function findCard(slug: string) {
-    const cards = withSpecSlugs((await getCachedPublicSpecs()) ?? [])
-    return { cards, card: cards.find(c => c.slug === slug.toLowerCase()) ?? null }
+    const [rows, info] = await Promise.all([getCachedPublicSpecs(), getCachedPublicInformation()])
+    const cards = withLoadouts(withSpecSlugs(rows ?? []), info.kits)
+    return { cards, info, card: cards.find(c => c.slug === slug.toLowerCase()) ?? null }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -56,11 +57,10 @@ function Fact({ label, value }: { label: string; value: string }) {
 
 export default async function SpecPage({ params, searchParams }: PageProps) {
     const [{ slug }, sp] = await Promise.all([params, searchParams])
-    const { cards, card } = await findCard(slug)
+    const { cards, info, card } = await findCard(slug)
     if (!card) redirect('/information/specs')
 
-    const [info, published, seasons, recent, allRegions, cookieStore] = await Promise.all([
-        getCachedPublicInformation(),
+    const [published, seasons, recent, allRegions, cookieStore] = await Promise.all([
         getCachedPublishedSpecRegions(),
         getCachedSeasons(),
         getCachedRecentSpecWinners(),
@@ -81,6 +81,7 @@ export default async function SpecPage({ params, searchParams }: PageProps) {
             requirement: snapshot?.specs?.find(s => s.id === card.id) ?? null,
             setsFloor: snapshot?.setsFloorByStar?.[card.stars] ?? 10,
             bonus: snapshot?.placementBonus ?? null,
+            heightRange: heightRangeFor(snapshot?.heightRangeByStar, card.stars),
         }
     })
     const winnerColumns: WinnerColumn[] = WINNER_REGIONS.map(code => {

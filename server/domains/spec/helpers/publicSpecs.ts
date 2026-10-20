@@ -25,6 +25,10 @@ export function withSpecSlugs(rows: PublicSpecRow[]): PublicSpecCard[] {
     return rows.map(spec => ({ ...spec, slug: slugById.get(spec.id) ?? toSlug(spec.name) }))
 }
 
+export function withLoadouts(cards: PublicSpecCard[], kits: Record<string, unknown> | undefined): PublicSpecCard[] {
+    return cards.filter(c => c.game_key !== null && kits?.[c.game_key] !== undefined)
+}
+
 function byStarsThenName(a: PublicSpecCard, b: PublicSpecCard): number {
     return b.stars - a.stars || a.name.localeCompare(b.name)
 }

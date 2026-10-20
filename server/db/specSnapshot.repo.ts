@@ -2,6 +2,7 @@ import {DBClient, PublicSpecSnapshotRow} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {SpecSnapshotPayload} from "@/server/domains/spec/types";
+import {HeightRangeByStar} from "@/server/domains/spec/helpers/heightRange";
 
 export async function getSpecSnapshot(
     supabase: DBClient,
@@ -43,6 +44,28 @@ export async function upsertSpecSnapshot(
         generated_at: new Date().toISOString(),
     });
     if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(true);
+}
+
+export async function patchSnapshotHeightRanges(
+    supabase: DBClient,
+    regionIds: string[],
+    byStar: HeightRangeByStar
+): Promise<Result<true>> {
+    const {data, error} = await supabase
+        .from("public_spec_snapshot")
+        .select("region_id, payload")
+        .in("region_id", regionIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+
+    for (const row of data ?? []) {
+        const payload = {...(row.payload as Record<string, unknown>), heightRangeByStar: byStar};
+        const {error: updateError} = await supabase
+            .from("public_spec_snapshot")
+            .update({payload: payload as unknown as PublicSpecSnapshotRow["payload"]})
+            .eq("region_id", row.region_id);
+        if (updateError) return Err(serializeError(updateError, "DB_ERROR"));
+    }
     return Ok(true);
 }
 

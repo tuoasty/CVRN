@@ -16,6 +16,7 @@ export interface RequirementRegion {
     requirement: PublicSpec | null
     setsFloor: number
     bonus: PlacementBonusConfig | null
+    heightRange: number
 }
 
 interface Props {
@@ -107,7 +108,7 @@ export default function RequirementsColumn({ regions, initial, vaulted }: Props)
                                 <span><b className="font-mono font-medium tabular-nums text-foreground">{region.setsFloor}</b> sets played</span>
                                 <span>
                                     <b className="font-mono font-medium tabular-nums text-foreground">
-                                        {formatHeight(spec.heightInches - 2)} to {formatHeight(spec.heightInches + 2)}
+                                        {formatHeight(spec.heightInches - region.heightRange)} to {formatHeight(spec.heightInches + region.heightRange)}
                                     </b>{' '}
                                     height
                                 </span>

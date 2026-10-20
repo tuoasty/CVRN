@@ -17,6 +17,7 @@ import {statCoverage} from './statView';
 import BySpecView, {RegionColumn} from './BySpecView';
 import SpecIdentityForm from './SpecIdentityForm';
 import DraftSaveBar from './DraftSaveBar';
+import HeightRangeTray from './HeightRangeTray';
 import ConfirmDialog from './ConfirmDialog';
 import ImportDialog, {ImportFile} from './ImportDialog';
 import {useSpecPublishing} from './useSpecPublishing';
@@ -49,6 +50,7 @@ export default function SpecCatalog() {
     const [creating, setCreating] = useState(false);
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [heightsOpen, setHeightsOpen] = useState(false);
     const [pending, setPending] = useState<Pending>(null);
     const [importFile, setImportFile] = useState<ImportFile | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -204,12 +206,22 @@ export default function SpecCatalog() {
                 onImport={requestImport}
                 onPublish={publishing.publish}
                 onUnpublish={() => setPending({kind: 'unpublish'})}
+                heightsOpen={heightsOpen}
+                onToggleHeights={() => setHeightsOpen(open => !open)}
                 exporting={publishing.exporting}
                 publishing={publishing.publishing}
                 unpublishing={publishing.unpublishing}
                 unsetSpecNames={unsetSpecNames}
                 dirtyChanges={summary.changes}
             />
+            {heightsOpen && (
+                <HeightRangeTray
+                    key={region.id}
+                    regionId={region.id}
+                    regionCode={params.region}
+                    allRegionIds={regions.map(r => r.id)}
+                />
+            )}
             <input
                 ref={fileInputRef}
                 type="file"

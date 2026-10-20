@@ -3,6 +3,7 @@ import {Ok, Result} from "@/shared/types/result";
 import {findSpecSnapshotRegions, getSpecSnapshot} from "@/server/db/specSnapshot.repo";
 import {findVaultedSpecIds} from "@/server/db/specs.repo";
 import {DEFAULT_PLACEMENT_BONUS} from "../helpers/placementBonus";
+import {normalizeHeightRanges} from "../helpers/heightRange";
 import {PublishedSpecRegion, SpecSnapshotPayload} from "../types";
 
 export async function getPublicSpecSnapshot(
@@ -23,6 +24,7 @@ export async function getPublicSpecSnapshot(
         ...payload,
         specs: payload.specs.filter(spec => !vaulted.has(spec.id)),
         placementBonus: payload.placementBonus ?? DEFAULT_PLACEMENT_BONUS,
+        heightRangeByStar: normalizeHeightRanges(payload.heightRangeByStar),
     });
 }
 

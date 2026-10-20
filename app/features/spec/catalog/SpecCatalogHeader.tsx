@@ -18,6 +18,8 @@ interface Props {
     onImport: () => void;
     onPublish: () => void;
     onUnpublish: () => void;
+    heightsOpen: boolean;
+    onToggleHeights: () => void;
     exporting: boolean;
     publishing: boolean;
     unpublishing: boolean;
@@ -41,6 +43,8 @@ export default function SpecCatalogHeader({
     onImport,
     onPublish,
     onUnpublish,
+    heightsOpen,
+    onToggleHeights,
     exporting,
     publishing,
     unpublishing,
@@ -100,6 +104,15 @@ export default function SpecCatalogHeader({
             </Button>
             <Button size="sm" variant="ghost" className="rounded-sm text-muted-foreground" onClick={onImport}>
                 Import
+            </Button>
+            <Button
+                size="sm"
+                variant="ghost"
+                aria-expanded={heightsOpen}
+                className={cn('rounded-sm', heightsOpen ? 'text-foreground' : 'text-muted-foreground')}
+                onClick={onToggleHeights}
+            >
+                Height ranges
             </Button>
             <Button asChild size="sm" variant="outline" className="rounded-sm">
                 <Link href="/admin/specs/qualify">Calibrate</Link>
