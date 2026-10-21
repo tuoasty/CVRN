@@ -1,176 +1,171 @@
 # CVRN
 
-League management platform for CVR, a Roblox volleyball game. It tracks standings, schedules, match results, per-set player stats, playoff brackets, awards, and season history for the game's four regional leagues (AS, EU, NA, SA).
+**The league platform for CVR, a competitive Roblox volleyball game.** Standings, schedules, box scores, playoff brackets, player stats, records, and season history for four regional leagues, kept in sync with the spreadsheets league staff already work in.
 
-League staff keep entering data in their existing Google Sheets; CVRN syncs from them and serves everything on one site.
-
-Live: [cvrn.net](https://cvrn.net)
+Live at **[cvrn.net](https://cvrn.net)**. Designed, built, and operated solo.
 
 ![Season home](.github/readme/home.png)
 
+---
+
+## The problem
+
+Before CVRN, the league lived in scattered Google Sheets, Discord messages, and memory. Each region's staff tracked results their own way, stats sat in per-match spreadsheets nobody could search, and a season's history disappeared once the next one started.
+
+CVRN pulls all of that into one place without asking staff to change how they work. The spreadsheets remain the input, and the site becomes the record.
+
+---
+
+## Engineering highlights
+
+**Playoff brackets that can't be left half-advanced.** Completing, voiding, or correcting a playoff result has to propagate through every downstream match. That logic lives in Postgres RPCs (`complete_match`, `void_match`, `reapply_match_result`) so each cascade runs in one transaction. Voiding a match resets everything downstream with a `WITH RECURSIVE` walk, and the grand final has a guard so a bracket reset is only created when the lower-bracket side wins.
+
+**Template-driven bracket generation.** Single and double elimination brackets, with play-ins, are expanded from a template in two in-memory passes. The generator assigns its own UUIDs, so forward pointers (winner and loser destinations) resolve before anything touches the database, and the whole bracket goes in as two batch inserts.
+
+**Syncing from spreadsheets the app doesn't own.** League staff own the sheets and their layouts, and the playoff sheet can't be restructured, so the parser anchor-scans for match codes and reads neighbouring cells instead of trusting fixed positions. Every sync run writes an audit log with per-row errors, a partial failure doesn't abort the run, unchanged rows are skipped, and roster changes can be reverted. Per-set player stats get a full preview first and are written atomically, so a re-sync replaces a match's stats in one transaction.
+
+**A Lua parser for game config.** The game's abilities, builds, heights, and spec loadouts live in Lua modules. Admins paste the source, and a hand-written tokenizer and parser reads the table subset the game uses. Each dataset is then normalized, diffed against what's published, and cross-checked for broken references before an atomic publish.
+
+**Stats modelled in SQL, served back to the game.** Box scores are stored at per-set grain, and every total, efficiency, and per-set rate is derived in views, never stored. A bearer-authenticated API feeds the Roblox game server six category ranks per player. Each rank is a percentile over per-set rates shrunk toward the league mean, with attempt gates on the efficiency stats and a separate prior for primary setters. Records (set, match, and season bests for players and teams) are pre-ranked in a materialized view that refreshes concurrently when stats are published.
+
+**Fast on a 1 GB box.** Public pages are server components that read through tagged `unstable_cache` wrappers, and each mutation revalidates only the tags it touched. Warm renders take 6 to 17 ms on the box, about 100 renders per second on one vCPU. Turning off runtime image optimization, since images are already sized at upload, cut resident memory by about 60%. Long-lived pages poll a `cache_versions` table and offer a refresh when new stats land.
+
+**Cutting storage egress.** Supabase bills every view of a stored image as egress. A Cloudflare Worker at `cdn.cvrn.net` now fronts storage with a long edge cache and tiered caching, so repeat views cost nothing. URLs are rewritten at upload time behind an env-var kill switch, and versioned query strings bust the cache on re-upload.
+
+**Moving off serverless.** The app moved from Vercel to a Linode VPS behind Cloudflare: CI builds a standalone artifact, deploys are gated on a health check plus real route checks, origin pulls are authenticated so only Cloudflare can reach the box, and cron jobs became systemd timers. Bad config at boot exits with code 78 so systemd stops instead of crash-looping.
+
+**Security at the database.** Row-level security is the enforcement boundary, not application code. Public reads go to `anon`, writes check `user_roles` across seven roles, stat trackers can write only stat tables, and batch-destructive actions require `super_admin` both at the action layer and in the UI. Spec thresholds have no public read; the public page renders from an admin-published snapshot that masks them as difficulty tiers.
+
+---
+
 ## Features
 
-### Public site
-
-- **Standings** per region and season, ranked by the region's method (LVR, points, or points without bonus)
-- **Matches** by week or playoff round, with per-set box scores, MVPs, officials, and linked GFX/VOD
-- **Playoffs** bracket view (single or double elimination, upper and lower brackets)
-- **Leaderboard** for every tracked stat, filterable by region, season, date range, position, and height
-- **Records** for set, match, and season bests, all-time or per region/season
-- **Players** search and profiles with season stats, team history, and awards
-- **Teams** with rosters, team stats, match history, and name history
-- **Archive** of past seasons: podium, awards, all-star teams
-- **Articles** and a **media** feed (GFX, clips, team/player of the week)
+### Public
 
 | | |
 |---|---|
 | ![Standings](.github/readme/standings.png) | ![Match detail](.github/readme/match-detail.png) |
+| **Standings.** Per region and season, computed from match results using each region's ranking method (LVR, points, or points without bonus). | **Matches.** Weekly schedule and playoff rounds with shareable URLs; each match has a per-set box score, MVPs, officials, and linked GFX or VOD. |
 | ![Playoffs](.github/readme/playoffs.png) | ![Leaderboard](.github/readme/leaderboard.png) |
+| **Playoffs.** Upper and lower bracket display with seeds and live advancement. | **Leaderboard.** Every tracked stat, filterable by region, season, date range, position, and height. |
 | ![Records](.github/readme/records.png) | ![Player profile](.github/readme/player.png) |
+| **Records.** Set, match, and season bests for players and teams, scoped all-time, by region, or by season. | **Players.** Search across every player ever rostered; profiles show season stats, team history, awards, and specs earned. |
 | ![Team](.github/readme/team.png) | ![Archive](.github/readme/archive.png) |
+| **Teams.** Rosters with roles and positions, team stats, match history, and name changes. | **Archive.** Every past season's podium, champion GFX, individual awards, and all-star teams. |
 
-### Admin dashboard
+Also: articles with inline image placement, and a media feed (GFX, clips, team and player of the week).
 
-- Create and schedule matches, record set scores, complete, void, or correct results; playoff winners advance automatically
-- Manage teams and rosters, with logo upload (resized to WebP, optional background removal)
-- Add players by Roblox username; profiles and avatars are fetched from the Roblox API and refreshed in the background
-- Configure Google Sheets sync per season (rosters, qualifier results, playoff results), run it manually or hourly, review per-row errors, and revert roster changes
-- Import per-set player stats from a match's stat sheet with a preview before writing
-- Generate playoff brackets from templates
-- Set season podiums and awards
-- Manage specs (stat-threshold player archetypes) and their per-region requirements
-- Import game data by pasting the game's Lua config
-- Write articles, media posts, and game update logs
-- Invite staff by email and assign roles (`super_admin`, `admin`, `stat_tracker`, `staff`, `spec_manager`, `information_manager`)
+### Admin
 
 | | |
 |---|---|
 | ![Match admin](.github/readme/admin-match.png) | ![Sheet sync](.github/readme/admin-sync.png) |
-| ![Stats import](.github/readme/admin-stats.png) | ![Game data import](.github/readme/admin-game-data.png) |
+| **Match lifecycle.** Schedule, record set scores, complete, void, or correct; assign referees and media officials. | **Sheets sync.** Per-season sheet configs, hourly auto-sync, per-run logs with row-level errors, and revert. |
+| ![Stats preview](.github/readme/admin-stats.png) | ![Game data import](.github/readme/admin-game-data.png) |
+| **Stats import.** Link a match to its stat sheet, preview every parsed row, then write and publish. | **Game data.** Paste Lua from the game, review the diff, publish. |
 
-### Game API
+Also: team and roster management with logo processing (resize plus optional background removal), Roblox player lookup with background profile refresh, season podiums and awards with avatar snapshots, spec catalog and per-region requirements, media and article editors, game update logs, cache controls, and email invites with role assignment.
 
-The Roblox game server reads player stats and rankings from bearer-authenticated endpoints (`ROBLOX_API_SECRET`):
+---
 
-| Endpoint | Returns |
-|---|---|
-| `GET /api/player/{robloxId}/stats?season={n\|all}` | Stat totals, per-set values, and six category percentile ranks |
-| `GET /api/player/{robloxId}/details?season={n\|all}` | Player profile and season detail |
-| `GET /api/stats/summary?season={n\|all}` | League-wide stat summary |
-| `GET /api/archives/get?season={n}` | Champion archives for a season |
+## Architecture
 
-## Tech stack
+```mermaid
+flowchart LR
+    Sheets[Google Sheets] -->|hourly sync| Cron["/api/cron/*"]
+    Roblox[Roblox API] -->|profiles, avatars| Domains
+    Game[Roblox game server] -->|bearer API| GameAPI["/api/player, /api/stats"]
+    Browser -->|RSC| Cache["unstable_cache + tags"]
+    Browser -->|Server Actions| Actions
+    Cache --> Domains
+    Actions --> Domains[Domain commands / queries]
+    Cron --> Domains
+    GameAPI --> Domains
+    Domains --> Repos[Repositories]
+    Repos --> PG[(Supabase Postgres + RLS)]
+    Storage[(Supabase Storage)] --> CDN[Cloudflare Worker CDN] --> Browser
+```
+
+**Vertical slices with command/query separation.** Eighteen domains under `server/domains/` (match, playoff, sheets, matchStats, spec, gameData, record, and more) each own their `commands/`, `queries/`, `helpers/`, and `types/`. There's no shared service layer. Server Actions validate input with Zod and call a command or query directly, and repositories in `server/db/` are plain Supabase queries.
+
+**Errors are values.** Every command, query, and action returns `Result<T, E>`. A closed `ErrorCode` union crosses the wire, and the client maps it to user-facing copy, so nothing throws across a boundary.
+
+**Logic sits where it's safest.** Multi-row invariants such as bracket cascades, atomic stat replacement, and requirement replacement are Postgres functions. Ranking and derived stats are views. TypeScript handles orchestration, parsing, and integrations.
+
+---
+
+## Stack
 
 | Layer | Technology |
 |---|---|
 | Framework | Next.js 16 (App Router, Server Components, Server Actions), React 19 |
 | Language | TypeScript 5, Zod 4 |
-| Database | Supabase (PostgreSQL, Row Level Security, RPC functions, views) |
-| Auth and storage | Supabase Auth, Supabase Storage |
+| Database | Supabase Postgres: RLS, RPCs, views, materialized views, `pg_trgm` |
+| Auth & storage | Supabase Auth (email invites, role-based routing), Supabase Storage behind a Cloudflare Worker |
 | Client data | SWR, Zustand |
-| UI | Tailwind CSS, shadcn/ui (Radix UI) |
+| UI | Tailwind CSS, shadcn/ui (Radix), IBM Plex Sans / Mono |
 | Integrations | Google Sheets API, Roblox Users and Thumbnails APIs |
-| Testing | Vitest |
-| Hosting | Linode VPS, nginx, Cloudflare, GitHub Actions |
+| Testing | Vitest (97 test files) |
+| Infra | Linode VPS, nginx, systemd timers, Cloudflare (DNS, caching, authenticated origin pulls), GitHub Actions |
 
-## Getting started
+---
 
-### Prerequisites
-
-- Node.js 22.x
-- A Supabase project and the [Supabase CLI](https://supabase.com/docs/guides/cli)
-- A Google Cloud service account with read access to the league sheets (only needed for sheet sync)
-
-### Setup
+## Running locally
 
 ```bash
-git clone <repo-url>
-cd cvrn
 npm install
-```
-
-Create `.env.local` in the project root:
-
-| Variable | Required | Purpose |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | Supabase publishable key |
-| `SUPABASE_URL` | yes | Supabase URL for the service-role client |
-| `SUPABASE_SERVICE_ROLE_KEY` | yes | Service-role key (cron jobs, invites) |
-| `SITE_URL` | yes | Public base URL, e.g. `http://localhost:3000` |
-| `GOOGLE_SHEETS_CREDENTIALS` | for sync | Service account JSON |
-| `CRON_SECRET` | for cron | Bearer token for `/api/cron/*` |
-| `ROBLOX_API_SECRET` | for game API | Bearer token for the game API |
-| `STORAGE_CDN_URL` | no | Rewrites uploaded storage URLs to a CDN host |
-
-Apply the database schema and start the dev server:
-
-```bash
-supabase link --project-ref <project-ref>
-supabase db push
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Requires `.env.local`:
 
-### Scripts
-
-| Command | Description |
+| Variable | Purpose |
 |---|---|
-| `npm run dev` | Start the dev server |
-| `npm run build` | Production build |
-| `npm start` | Serve the production build |
-| `npm run lint` | ESLint |
-| `npm test` | Run tests once |
-| `npm run test:watch` | Tests in watch mode |
-| `npm run test:coverage` | Tests with coverage |
-
-Run a single test file with `npm test -- path/to/file.test.ts`.
-
-### Database changes
-
-All schema changes, functions, and RLS policies live in `supabase/migrations/`. Don't edit them in the Supabase dashboard.
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase project |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Service-role client (cron, invites) |
+| `GOOGLE_SHEETS_CREDENTIALS` | Sheets service account JSON |
+| `CRON_SECRET` | Bearer for `/api/cron/*` |
+| `ROBLOX_API_SECRET` | Bearer for the game API |
+| `SITE_URL` | Absolute URLs, invite redirects, sitemap |
+| `STORAGE_CDN_URL` | Optional; rewrites storage URLs to the CDN at upload |
 
 ```bash
-supabase migration new <description>
-supabase db push
-supabase gen types typescript --linked > database.types.ts
+npm run build           # production build
+npm run lint
+npm test                # Vitest once
+npm run test:coverage
+
+supabase db push                                            # apply migrations
+supabase gen types typescript --linked > database.types.ts  # regenerate types
 ```
+
+Schema changes go through `supabase/migrations/` (139 migrations); nothing is edited in the dashboard.
+
+---
 
 ## Project structure
 
 ```
 app/
-  (public)/        public pages
-  admin/           admin dashboard
+  (public)/        standings, matches, teams, playoffs, leaderboard, records, players, archive, articles, media
+  admin/           match, team, season, playoff, sync, stats, specs, game-data, media, articles, cache, invite
   actions/         Server Actions, one file per domain
-  api/             cron jobs, health check, cache version, game API
-  hooks/           SWR data hooks
-  features/        feature UI components
-  components/      shared UI and layout
+  api/             cron jobs, health, cache version, game API
+  hooks/           SWR hooks
+  features/        feature UI (dialogs, forms, tables)
 server/
-  domains/         business logic, one folder per domain (commands/, queries/, helpers/, types/)
-  db/              repositories (Supabase queries)
-  cache/           cached public reads and revalidation
-  roblox/          Roblox API client
-  storage/         uploads and image processing
-  supabase/        Supabase clients and session handling
+  domains/         18 vertical slices: commands/ queries/ helpers/ types/
+  db/              repositories (Supabase queries returning Result)
+  cache/           tagged unstable_cache reads, revalidation, cache versions
+  roblox/          Roblox client with retry and circuit breaker
+  storage/         uploads, image processing, CDN URL rewrite
+  supabase/        server, public, browser, admin clients, middleware
 shared/types/      types shared by client and server
-supabase/
-  migrations/      schema, functions, RLS policies
+supabase/migrations/
 deploy/nginx/      nginx config
 ```
 
-Requests flow `Server Action → domain command/query → repository → Supabase`. Commands and queries return `Result<T, E>` values instead of throwing. Public pages are server-rendered from tagged caches that mutations revalidate. Multi-row operations, such as completing a match and advancing the playoff bracket, run as single-transaction Postgres functions.
-
-## Getting help
-
-- League questions: the CVRN [Discord](https://discord.gg/bXtNACsuWF)
-- Bugs or questions about the code: open an issue on this repository
-
-## Maintainer
-
-Built and maintained by [@tuoasty](https://github.com/tuoasty).
+---
 
 ## License
 
