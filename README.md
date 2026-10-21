@@ -1,148 +1,177 @@
-# CVRN — CVR Network League Platform
+# CVRN
 
-League management platform for CVR Network, a competitive Roblox volleyball game with
-an active league. Handles everything from match scheduling and results to player
-stats, media, and season history.
+League management platform for CVR, a Roblox volleyball game. It tracks standings, schedules, match results, per-set player stats, playoff brackets, awards, and season history for the game's four regional leagues (AS, EU, NA, SA).
 
-Live at [cvrn.net](https://cvrn.net).
+League staff keep entering data in their existing Google Sheets; CVRN syncs from them and serves everything on one site.
 
----
+Live: [cvrn.net](https://cvrn.net)
 
-## Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 15 (App Router, Server Actions, RSC) |
-| Language | TypeScript 5 |
-| Database | Supabase (PostgreSQL via PostgREST) |
-| Auth | Supabase SSR auth with role-based middleware |
-| Storage | Supabase Storage (team logos, award avatars) |
-| Styling | Tailwind CSS + shadcn/ui |
-| Data fetching | SWR (client), Server Actions (mutations) |
-| State | Zustand + localStorage |
-| Testing | Vitest |
-| Deployment | Vercel (cron jobs, `waitUntil` background tasks) |
-| External APIs | Roblox API, Google Sheets API |
-
----
-
-## Architecture
-
-Vertical-slice CQS (Command/Query Separation). Each domain owns its own read and write
-handlers with no shared service layer.
-
-```
-Server Action → Command or Query → Repository → Supabase (PostgreSQL)
-```
-
-Thirteen domain slices under `server/domains/`: `admin`, `auth`, `match`, `matchOfficial`,
-`matchStats`, `media`, `player`, `playoff`, `region`, `season`, `sheets`, `standing`, `team`.
-
-All commands and queries return `Result<T, E>` — errors are values, never thrown across
-boundaries. A closed `ErrorCode` union maps to user-facing copy at the client layer.
-
-Row-level security policies are the auth enforcement boundary, not application code.
-Public reads are granted to `anon`. Admin writes check `user_roles`. Stat tracker writes
-are scoped to stat tables. Deletes on high-blast-radius tables (regions, seasons, teams)
-are restricted to `super_admin`. All policies are version-controlled in `supabase/migrations/`.
-
----
+![Season home](.github/readme/home.png)
 
 ## Features
 
-### Public
+### Public site
 
-- **Standings** — live league table per region and season, computed directly from match results
-- **Matches** — browse by week (regular season) or round (playoffs) with shareable URLs;
-  each match has a full box score broken down by set, with a detailed stats toggle and a
-  side-by-side team comparison
-- **Teams** — team directory with logos and roster pages showing player roles and Roblox profiles
-- **Players** — per-player profile showing season statistics, teams played for, and awards won
-- **Playoffs** — bracket viewer showing progression per season
-- **Archive** — historical record of past seasons: champions, runner-ups, 3rd place, and
-  individual season awards with player avatars
-- **Media** — GFX gallery, video embeds, home page sidebar with pinned posts
+- **Standings** per region and season, ranked by the region's method (LVR, points, or points without bonus)
+- **Matches** by week or playoff round, with per-set box scores, MVPs, officials, and linked GFX/VOD
+- **Playoffs** bracket view (single or double elimination, upper and lower brackets)
+- **Leaderboard** for every tracked stat, filterable by region, season, date range, position, and height
+- **Records** for set, match, and season bests, all-time or per region/season
+- **Players** search and profiles with season stats, team history, and awards
+- **Teams** with rosters, team stats, match history, and name history
+- **Archive** of past seasons: podium, awards, all-star teams
+- **Articles** and a **media** feed (GFX, clips, team/player of the week)
 
-### Admin
+| | |
+|---|---|
+| ![Standings](.github/readme/standings.png) | ![Match detail](.github/readme/match-detail.png) |
+| ![Playoffs](.github/readme/playoffs.png) | ![Leaderboard](.github/readme/leaderboard.png) |
+| ![Records](.github/readme/records.png) | ![Player profile](.github/readme/player.png) |
+| ![Team](.github/readme/team.png) | ![Archive](.github/readme/archive.png) |
 
-- **Match lifecycle** — create and schedule matches, record set-by-set scores, mark complete
-  or void, assign referees and media officials; completing a playoff match automatically
-  advances the winner to the next round
-- **Team management** — create teams with logo upload (auto-compressed to WebP), manage
-  rosters, set player roles, transfer captaincy, soft-delete disbanded teams
-- **Google Sheets sync** — two separate pipelines share the same sheet infrastructure:
-  - *Results sync* — each region/season maps to a configured Google Sheet. A nightly
-    Vercel cron pulls qualifier match rows and positional playoff bracket data, resolves
-    team names, and writes results to the database. Admins can also trigger a sync manually.
-    Each sync run produces a per-row error log; partial failures don't abort the whole sync,
-    and previous syncs can be reverted.
-  - *Stats sync* — admins link individual matches to a specific sheet tab. The system
-    parses per-set player stats (kills, assists, blocks, receives, aces, errors, and more),
-    shows a full preview of what will be written before any data changes, and commits
-    atomically — re-syncing a match replaces the previous stats entirely.
-- **Roblox player sync** — players are added by Roblox username. On first add, their
-  profile and head avatar are fetched from the Roblox API and stored. On subsequent visits,
-  stale profiles are re-synced lazily in the background — the page load isn't blocked and
-  the update happens after the response is sent.
-- **Season results** — set the final podium (1st/2nd/3rd) and assign individual season
-  awards; award avatars are downloaded from Roblox and stored in Supabase for display
-  in the archive
-- **User management** — invite users by email; roles: `super_admin`, `admin`,
-  `stat_tracker`, `staff`
+### Admin dashboard
 
----
+- Create and schedule matches, record set scores, complete, void, or correct results; playoff winners advance automatically
+- Manage teams and rosters, with logo upload (resized to WebP, optional background removal)
+- Add players by Roblox username; profiles and avatars are fetched from the Roblox API and refreshed in the background
+- Configure Google Sheets sync per season (rosters, qualifier results, playoff results), run it manually or hourly, review per-row errors, and revert roster changes
+- Import per-set player stats from a match's stat sheet with a preview before writing
+- Generate playoff brackets from templates
+- Set season podiums and awards
+- Manage specs (stat-threshold player archetypes) and their per-region requirements
+- Import game data by pasting the game's Lua config
+- Write articles, media posts, and game update logs
+- Invite staff by email and assign roles (`super_admin`, `admin`, `stat_tracker`, `staff`, `spec_manager`, `information_manager`)
 
-## Development
+| | |
+|---|---|
+| ![Match admin](.github/readme/admin-match.png) | ![Sheet sync](.github/readme/admin-sync.png) |
+| ![Stats import](.github/readme/admin-stats.png) | ![Game data import](.github/readme/admin-game-data.png) |
+
+### Game API
+
+The Roblox game server reads player stats and rankings from bearer-authenticated endpoints (`ROBLOX_API_SECRET`):
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/player/{robloxId}/stats?season={n\|all}` | Stat totals, per-set values, and six category percentile ranks |
+| `GET /api/player/{robloxId}/details?season={n\|all}` | Player profile and season detail |
+| `GET /api/stats/summary?season={n\|all}` | League-wide stat summary |
+| `GET /api/archives/get?season={n}` | Champion archives for a season |
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router, Server Components, Server Actions), React 19 |
+| Language | TypeScript 5, Zod 4 |
+| Database | Supabase (PostgreSQL, Row Level Security, RPC functions, views) |
+| Auth and storage | Supabase Auth, Supabase Storage |
+| Client data | SWR, Zustand |
+| UI | Tailwind CSS, shadcn/ui (Radix UI) |
+| Integrations | Google Sheets API, Roblox Users and Thumbnails APIs |
+| Testing | Vitest |
+| Hosting | Linode VPS, nginx, Cloudflare, GitHub Actions |
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 22.x
+- A Supabase project and the [Supabase CLI](https://supabase.com/docs/guides/cli)
+- A Google Cloud service account with read access to the league sheets (only needed for sheet sync)
+
+### Setup
 
 ```bash
-npm run dev           # Start dev server
-npm run build         # Production build
-npm run lint          # ESLint
-npm test              # Vitest (once)
-npm run test:watch    # Vitest watch mode
-
-# Run a single test file
-npm test -- path/to/file.test.ts
+git clone <repo-url>
+cd cvrn
+npm install
 ```
 
+Create `.env.local` in the project root:
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | Supabase publishable key |
+| `SUPABASE_URL` | yes | Supabase URL for the service-role client |
+| `SUPABASE_SERVICE_ROLE_KEY` | yes | Service-role key (cron jobs, invites) |
+| `SITE_URL` | yes | Public base URL, e.g. `http://localhost:3000` |
+| `GOOGLE_SHEETS_CREDENTIALS` | for sync | Service account JSON |
+| `CRON_SECRET` | for cron | Bearer token for `/api/cron/*` |
+| `ROBLOX_API_SECRET` | for game API | Bearer token for the game API |
+| `STORAGE_CDN_URL` | no | Rewrites uploaded storage URLs to a CDN host |
+
+Apply the database schema and start the dev server:
+
 ```bash
-supabase migration new <description>   # New migration
-supabase db push                       # Apply pending migrations
-supabase db reset                      # Reset + replay all from scratch
+supabase link --project-ref <project-ref>
+supabase db push
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+### Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the dev server |
+| `npm run build` | Production build |
+| `npm start` | Serve the production build |
+| `npm run lint` | ESLint |
+| `npm test` | Run tests once |
+| `npm run test:watch` | Tests in watch mode |
+| `npm run test:coverage` | Tests with coverage |
+
+Run a single test file with `npm test -- path/to/file.test.ts`.
+
+### Database changes
+
+All schema changes, functions, and RLS policies live in `supabase/migrations/`. Don't edit them in the Supabase dashboard.
+
+```bash
+supabase migration new <description>
+supabase db push
 supabase gen types typescript --linked > database.types.ts
 ```
 
-Requires `.env.local` with Supabase URL/keys, Google Sheets service account credentials,
-and a `CRON_SECRET` for the sync endpoint.
-
----
-
-## Project Structure
+## Project structure
 
 ```
 app/
-  (public)/          # Public pages: home, standings, matches, teams, players, playoffs, archive, media
-  admin/             # Admin dashboard pages
-  actions/           # Server Actions — one file per domain
-  hooks/             # SWR data-fetching hooks
-  features/          # Feature-specific UI components (dialogs, forms, tables)
-  components/        # Shared UI: shadcn/ui primitives, layout
-  api/cron/          # Vercel Cron route handlers
-
+  (public)/        public pages
+  admin/           admin dashboard
+  actions/         Server Actions, one file per domain
+  api/             cron jobs, health check, cache version, game API
+  hooks/           SWR data hooks
+  features/        feature UI components
+  components/      shared UI and layout
 server/
-  domains/           # 13 vertical slices — commands/, queries/, helpers/, types/
-  db/                # Repository layer — direct Supabase queries, returns Result<T>
-  roblox/            # Roblox API client with retry + circuit breaker
-  supabase/          # Supabase clients (server, browser, admin, middleware)
-  utils/             # Logger (Pino), background runner, error serialization
-
-shared/types/        # Types shared across client and server
-supabase/migrations/ # All schema changes version-controlled here
-docs/                # Architecture reference, API inventory, database schema
+  domains/         business logic, one folder per domain (commands/, queries/, helpers/, types/)
+  db/              repositories (Supabase queries)
+  cache/           cached public reads and revalidation
+  roblox/          Roblox API client
+  storage/         uploads and image processing
+  supabase/        Supabase clients and session handling
+shared/types/      types shared by client and server
+supabase/
+  migrations/      schema, functions, RLS policies
+deploy/nginx/      nginx config
 ```
 
----
+Requests flow `Server Action → domain command/query → repository → Supabase`. Commands and queries return `Result<T, E>` values instead of throwing. Public pages are server-rendered from tagged caches that mutations revalidate. Multi-row operations, such as completing a match and advancing the playoff bracket, run as single-transaction Postgres functions.
+
+## Getting help
+
+- League questions: the CVRN [Discord](https://discord.gg/bXtNACsuWF)
+- Bugs or questions about the code: open an issue on this repository
+
+## Maintainer
+
+Built and maintained by [@tuoasty](https://github.com/tuoasty).
 
 ## License
 
-Private project. Not currently licensed for redistribution.
+Private project. Not licensed for redistribution.
