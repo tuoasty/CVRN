@@ -67,6 +67,35 @@ function describeChange(c: SyncChange): string {
     }
 }
 
+function isPositionWarning(e: SyncError): boolean {
+    return e.message.includes('has an unrecognized position');
+}
+
+function ErrorTable({errors, tone}: {errors: SyncError[]; tone: 'error' | 'warning'}) {
+    return (
+        <div className="rounded-md border">
+            <table className="w-full text-sm">
+                <thead>
+                    <tr className="border-b bg-muted/40">
+                        <th className="text-left px-3 py-1.5 font-medium w-16">Row</th>
+                        <th className="text-left px-3 py-1.5 font-medium">Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {errors.map((e, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                            <td className="px-3 py-1.5 text-muted-foreground">
+                                {e.row || '—'}
+                            </td>
+                            <td className={`px-3 py-1.5 ${tone === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>{e.message}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
 interface SyncHistoryContentProps {
     canRevert: boolean;
 }
@@ -120,6 +149,8 @@ export default function SyncHistoryContent({ canRevert }: SyncHistoryContentProp
 
     const logChanges = selectedLog ? (selectedLog.changes as unknown as SyncChange[]) : [];
     const logErrors = selectedLog ? (selectedLog.errors as unknown as SyncError[]) : [];
+    const generalErrors = logErrors.filter(e => !isPositionWarning(e));
+    const positionWarnings = logErrors.filter(isPositionWarning);
 
     const handleCopySummary = () => {
         if (!selectedLog) return;
@@ -133,10 +164,15 @@ export default function SyncHistoryContent({ canRevert }: SyncHistoryContentProp
             lines.push(`Changes (${logChanges.length}):`);
             for (const c of logChanges) lines.push(`• ${CHANGE_LABELS[c.type] ?? c.type}: ${describeChange(c)}`);
         }
-        if (logErrors.length > 0) {
+        if (generalErrors.length > 0) {
             lines.push('');
-            lines.push(`Errors (${logErrors.length}):`);
-            for (const e of logErrors) lines.push(`• ${e.row ? `Row ${e.row}: ` : ''}${e.message}`);
+            lines.push(`Errors (${generalErrors.length}):`);
+            for (const e of generalErrors) lines.push(`• ${e.row ? `Row ${e.row}: ` : ''}${e.message}`);
+        }
+        if (positionWarnings.length > 0) {
+            lines.push('');
+            lines.push(`Position warnings (${positionWarnings.length}):`);
+            for (const e of positionWarnings) lines.push(`• ${e.row ? `Row ${e.row}: ` : ''}${e.message}`);
         }
         navigator.clipboard.writeText(lines.join('\n'));
         setCopied(true);
@@ -306,31 +342,24 @@ export default function SyncHistoryContent({ canRevert }: SyncHistoryContentProp
                                 )}
                             </div>
 
-                            {logErrors.length > 0 && (
+                            {generalErrors.length > 0 && (
                                 <div>
                                     <p className="text-sm font-semibold text-destructive mb-2">
-                                        Errors ({logErrors.length})
+                                        Errors ({generalErrors.length})
                                     </p>
-                                    <div className="rounded-md border">
-                                        <table className="w-full text-sm">
-                                            <thead>
-                                                <tr className="border-b bg-muted/40">
-                                                    <th className="text-left px-3 py-1.5 font-medium w-16">Row</th>
-                                                    <th className="text-left px-3 py-1.5 font-medium">Message</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {logErrors.map((e, i) => (
-                                                    <tr key={i} className="border-b last:border-0">
-                                                        <td className="px-3 py-1.5 text-muted-foreground">
-                                                            {e.row || '—'}
-                                                        </td>
-                                                        <td className="px-3 py-1.5 text-destructive">{e.message}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    <ErrorTable errors={generalErrors} tone="error" />
+                                </div>
+                            )}
+
+                            {positionWarnings.length > 0 && (
+                                <div>
+                                    <p className="text-sm font-semibold mb-0.5">
+                                        Position warnings ({positionWarnings.length})
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                        Positions are not tracked yet. The sheet&apos;s position column currently holds spec stars.
+                                    </p>
+                                    <ErrorTable errors={positionWarnings} tone="warning" />
                                 </div>
                             )}
 

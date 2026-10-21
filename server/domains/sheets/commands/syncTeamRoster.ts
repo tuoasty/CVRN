@@ -400,7 +400,6 @@ export async function syncTeamRoster(
 
                 if (parsedPlayer.positionInvalid) {
                     errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] ${parsedPlayer.username} has an unrecognized position — must be OUT, OPP, MID, SET, or LIB`});
-                    rowsErrored++;
                     continue;
                 }
 
@@ -512,7 +511,6 @@ export async function syncTeamRoster(
 
                 if (parsedPlayer.positionInvalid) {
                     errors.push({row: parsedPlayer.rowNumber, message: `[${parsedTeam.teamName}] ${parsedPlayer.username} has an unrecognized position — must be OUT, OPP, MID, SET, or LIB`});
-                    rowsErrored++;
                 }
 
                 const addResult = await addPlayerToTeam(supabase, {
