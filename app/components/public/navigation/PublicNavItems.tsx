@@ -29,7 +29,7 @@ const NAV_ENTRIES: NavEntry[] = [
     { page: "records", label: "Records" },
     { page: "media", label: "Media" },
     { page: "archive", label: "Archive" },
-    // { page: "information", label: "Information" },
+    { page: "information", label: "Information" },
 ];
 
 const PANEL_SIDE_OFFSET = 13;

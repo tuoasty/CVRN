@@ -50,28 +50,8 @@ export async function updateSession(request: NextRequest) {
 
   const isAdmin = pathname.startsWith("/admin");
   const isInvite = pathname === "/admin/invite";
-  const isInformation = pathname === "/information" || pathname.startsWith("/information/");
 
   if (isHome || isCallback) {
-    return supabaseResponse;
-  }
-
-  if (isInformation) {
-    if (!user) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-
-    const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-
-    if (roleData?.role !== "admin" && roleData?.role !== "super_admin") {
-      logger.debug({ user_id: user.id, pathname }, "non-admin redirected from information");
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-
     return supabaseResponse;
   }
 

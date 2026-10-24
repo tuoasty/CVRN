@@ -57,7 +57,5 @@ export const config = {
         "/archive/:region/:slug",
 
         "/:region/:season/home",
-
-        "/information/:path*",
     ],
 };
