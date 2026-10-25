@@ -1,12 +1,21 @@
 import { notFound } from "next/navigation";
 import {
     getCachedRegionByCode,
+    getCachedRegions,
+    getCachedSeasons,
     getCachedSeasonBySlugAndRegion,
 } from "@/server/cache/publicReads";
 import { SeasonProvider } from "./context";
 
 export async function generateStaticParams() {
-    return [];
+    const [regions, seasons] = await Promise.all([getCachedRegions(), getCachedSeasons()]);
+    const regionById = new Map(regions.map((r) => [r.id, r]));
+
+    return seasons.flatMap((season) => {
+        const region = regionById.get(season.region_id);
+        if (!region?.code || !season.slug) return [];
+        return [{ region: region.code.toLowerCase(), season: season.slug }];
+    });
 }
 
 export default async function RegionSeasonLayout({
