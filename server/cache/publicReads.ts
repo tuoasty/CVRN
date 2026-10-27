@@ -59,6 +59,7 @@ import {getPublishedUpdateLogIndex, getPublishedUpdateLog} from "@/server/domain
 import {getGameDatasetPayloads, getPublicInformation} from "@/server/domains/gameData";
 import {getPublicSpecSnapshot, getPublishedSpecRegions, getPublicSpecs, getRecentSpecWinners} from "@/server/domains/spec";
 import {getRecords} from "@/server/domains/record";
+import {getSeasonOverallInputs} from "@/server/domains/overall";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS, RAW_STATS_REVALIDATE_SECONDS} from "./tags";
 
@@ -555,5 +556,15 @@ export const getCachedRecords = unstable_cache(
     {
         tags: [CACHE_TAGS.stats, CACHE_TAGS.players, CACHE_TAGS.teams, CACHE_TAGS.seasons],
         revalidate: STATS_REVALIDATE_SECONDS,
+    },
+);
+
+export const getCachedSeasonOverallInputs = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(await getSeasonOverallInputs(createPublicClient(), seasonId), "getCachedSeasonOverallInputs"),
+    ["admin:season-overall-inputs"],
+    {
+        tags: [CACHE_TAGS.rawStats, CACHE_TAGS.players, CACHE_TAGS.teams],
+        revalidate: RAW_STATS_REVALIDATE_SECONDS,
     },
 );

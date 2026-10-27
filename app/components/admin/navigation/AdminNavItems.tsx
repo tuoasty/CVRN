@@ -40,6 +40,7 @@ const DROPDOWN_GROUPS: { label: string; items: NavItem[] }[] = [
             { href: "/admin/playoffs",  label: "Playoffs" },
             { href: "/admin/specs",     label: "Specs" },
             { href: "/admin/specs/qualify", label: "Spec Calibration" },
+            { href: "/admin/overalls",  label: "Overalls" },
         ],
     },
     {
