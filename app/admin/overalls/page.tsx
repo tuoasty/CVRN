@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from 'react'
-import { Gauge, Search, SlidersHorizontal } from 'lucide-react'
-import { Button } from '@/app/components/ui/button'
+import { Search } from 'lucide-react'
 import { Input } from '@/app/components/ui/input'
 import { useAdminContextStore } from '@/app/stores/adminContextStore'
 import {
@@ -18,7 +17,7 @@ import { REGION_ORDER } from '@/shared/volleyball/regions'
 import { OVERALL_POSITIONS, SaveOverallScalingsSchema } from '@/server/domains/overall/types'
 import type { OverallPosition, OverallScaling, OverallScalingSet } from '@/server/domains/overall'
 import OverallBoardTable from '@/app/features/overall/OverallBoardTable'
-import OverallScalingsTray from '@/app/features/overall/OverallScalingsTray'
+import OverallProfileSidebar, { CopySource } from '@/app/features/overall/OverallProfileSidebar'
 import ConfirmDialog from '@/app/features/spec/catalog/ConfirmDialog'
 import { toast } from '@/app/utils/toast'
 import {
@@ -34,14 +33,12 @@ import { cn } from '@/lib/utils'
 type PositionFilter = OverallPosition | 'ALL'
 const POSITION_FILTERS: PositionFilter[] = ['ALL', ...OVERALL_POSITIONS]
 
-type CopySource = { id: string; name: string; regionCode: string }
+const toList = (set: OverallScalingSet): OverallScaling[] => OVERALL_POSITIONS.map(p => set[p])
 
 const regionRank = (code: string) => {
     const i = (REGION_ORDER as readonly string[]).indexOf(code)
     return i === -1 ? REGION_ORDER.length : i
 }
-
-const toList = (set: OverallScalingSet): OverallScaling[] => OVERALL_POSITIONS.map(p => set[p])
 
 function validationErrors(seasonId: string, set: OverallScalingSet): string[] {
     const parsed = SaveOverallScalingsSchema.safeParse({ seasonId, scalings: toList(set) })
@@ -64,7 +61,6 @@ export default function AdminOverallsPage() {
     const [sort, setSort] = useState<OverallSortKey>('ovr')
     const [desc, setDesc] = useState(true)
 
-    const [trayOpen, setTrayOpen] = useState(false)
     const [draft, setDraft] = useState<OverallScalingSet | null>(null)
     const [saving, setSaving] = useState(false)
     const [copying, setCopying] = useState(false)
@@ -73,6 +69,10 @@ export default function AdminOverallsPage() {
     useEffect(() => {
         setDraft(null)
     }, [seasonId])
+
+    const regionCodeById = useMemo(() => new Map(regions.map(r => [r.id, r.code])), [regions])
+    const season = seasons.find(s => s.id === seasonId) ?? null
+    const seasonLabel = season ? `${regionCodeById.get(season.region_id) ?? ''} · ${season.name}` : null
 
     const handleSort = (key: OverallSortKey) => {
         if (key === sort) setDesc(d => !d)
@@ -84,17 +84,29 @@ export default function AdminOverallsPage() {
 
     const savedScalings = board?.config.scalings ?? null
     const scalings = draft ?? savedScalings
-    const dirty = !!draft && !!savedScalings && JSON.stringify(toList(draft)) !== JSON.stringify(toList(savedScalings))
+    const dirtyPositions = useMemo(
+        () => (draft && savedScalings
+            ? OVERALL_POSITIONS.filter(p => JSON.stringify(draft[p]) !== JSON.stringify(savedScalings[p]))
+            : []),
+        [draft, savedScalings],
+    )
     const errors = useMemo(() => (seasonId && scalings ? validationErrors(seasonId, scalings) : []), [seasonId, scalings])
 
-    const copySources = useMemo<CopySource[]>(() => {
-        const codeById = new Map(regions.map(r => [r.id, r.code]))
-        return seasons
-            .filter(s => s.id !== seasonId)
-            .map(s => ({ id: s.id, name: s.name, regionCode: codeById.get(s.region_id) ?? '?', startDate: s.start_date }))
-            .sort((a, b) => regionRank(a.regionCode) - regionRank(b.regionCode) || b.startDate.localeCompare(a.startDate))
-            .map(({ id, name, regionCode }) => ({ id, name, regionCode }))
-    }, [seasons, regions, seasonId])
+    const copySources = useMemo<CopySource[]>(() => seasons
+        .filter(s => s.id !== seasonId)
+        .map(s => ({ id: s.id, name: s.name, regionCode: regionCodeById.get(s.region_id) ?? '?', startDate: s.start_date }))
+        .sort((a, b) => regionRank(a.regionCode) - regionRank(b.regionCode) || b.startDate.localeCompare(a.startDate))
+        .map(({ id, name, regionCode }) => ({ id, name, regionCode })),
+    [seasons, regionCodeById, seasonId])
+
+    const positionCounts = useMemo(() => {
+        const counts: Record<PositionFilter, number> = { ALL: 0, OUT: 0, OPP: 0, MID: 0, SET: 0, LIB: 0 }
+        for (const p of board?.players ?? []) {
+            counts.ALL += 1
+            if (p.position) counts[p.position] += 1
+        }
+        return counts
+    }, [board])
 
     const handleScalingChange = (scaling: OverallScaling) => {
         if (!savedScalings) return
@@ -107,11 +119,11 @@ export default function AdminOverallsPage() {
         try {
             const result = await saveOverallScalings(seasonId, toList(scalings))
             if (!result.ok) {
-                toast.error('Failed to save scalings', result.error.message)
+                toast.error('Failed to save profiles', result.error.message)
                 return
             }
             setDraft(null)
-            toast.success('Scalings saved')
+            toast.success('Profiles saved')
         } finally {
             setSaving(false)
         }
@@ -123,11 +135,11 @@ export default function AdminOverallsPage() {
         try {
             const result = await copyOverallScalings(seasonId, copyTarget.id)
             if (!result.ok) {
-                toast.error('Failed to copy scalings', result.error.message)
+                toast.error('Failed to copy profiles', result.error.message)
                 return
             }
             setDraft(null)
-            toast.success(`Copied scalings from ${copyTarget.regionCode} ${copyTarget.name}`)
+            toast.success(`Copied profiles from ${copyTarget.regionCode} ${copyTarget.name}`)
             setCopyTarget(null)
         } finally {
             setCopying(false)
@@ -155,134 +167,108 @@ export default function AdminOverallsPage() {
     }, [board, scalings, position, q, sort, desc])
 
     return (
-        <div className="admin-container">
-            <div className="admin-section">
-                <div className="flex items-center gap-4 pb-6 border-b-2 border-primary/20">
-                    <div className="flex items-center justify-center w-14 h-14 rounded-sm bg-primary/10 border border-primary/20">
-                        <Gauge className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                        <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">Player Overalls</h1>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Card ratings for the selected season. Attributes are ranked across all regions.
-                        </p>
-                    </div>
-                    {seasonId && board && (
-                        <Button
-                            variant={trayOpen ? 'secondary' : 'outline'}
-                            className="rounded-sm gap-2 shrink-0"
-                            aria-expanded={trayOpen}
-                            onClick={() => setTrayOpen(o => !o)}
-                        >
-                            <SlidersHorizontal className="h-4 w-4" />
-                            Scalings
-                            {dirty && <span className="h-1.5 w-1.5 rounded-full bg-foreground" aria-label="Unsaved changes" />}
-                        </Button>
-                    )}
-                </div>
+        <div className="page-wide py-6">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">Player Overalls</h1>
+                <span className="text-sm text-muted-foreground">
+                    {seasonLabel ? `${seasonLabel} · ` : ''}ranks pooled across all regions
+                </span>
+            </div>
 
-                {seasonId && board && scalings && trayOpen && (
-                    <div className="mt-6">
-                        <OverallScalingsTray
-                            scalings={scalings}
-                            savedPositions={board.config.savedPositions}
-                            dirty={dirty}
-                            errors={errors}
-                            saving={saving}
-                            copying={copying}
-                            copySources={copySources}
-                            onChange={handleScalingChange}
-                            onSave={handleSave}
-                            onDiscard={() => setDraft(null)}
-                            onCopy={setCopyTarget}
-                        />
-                    </div>
-                )}
+            {!seasonId && (
+                <p className="mt-8 text-sm text-muted-foreground">Select a season in the navbar to view its overalls.</p>
+            )}
 
-                {!seasonId && (
-                    <div className="panel p-6 mt-6 text-center">
-                        <p className="text-muted-foreground">Select a season to view its overalls.</p>
-                    </div>
-                )}
-
-                {seasonId && (
-                    <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
-                        <div className="flex items-center gap-4" role="tablist" aria-label="Filter by position">
-                            {POSITION_FILTERS.map(p => (
+            {seasonId && (
+                <div className="mt-4 flex flex-wrap items-end gap-x-5 gap-y-2 border-b border-border">
+                    <div className="flex items-end gap-5" role="tablist" aria-label="Position">
+                        {POSITION_FILTERS.map(p => {
+                            const selected = position === p
+                            const dirty = p !== 'ALL' && dirtyPositions.includes(p)
+                            return (
                                 <button
                                     key={p}
                                     type="button"
                                     role="tab"
-                                    aria-selected={position === p}
+                                    aria-selected={selected}
                                     onClick={() => setPosition(p)}
                                     className={cn(
-                                        'text-xs font-semibold uppercase tracking-wider transition-colors rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                                        position === p
-                                            ? 'text-foreground underline decoration-2 underline-offset-[6px]'
+                                        'pb-2 text-sm font-semibold transition-colors duration-150 rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                                        selected
+                                            ? 'text-foreground shadow-[inset_0_-2px_0_currentColor]'
                                             : 'text-muted-foreground hover:text-foreground',
                                     )}
                                 >
                                     {p === 'ALL' ? 'All' : p}
+                                    {board && <span className="ml-1 text-xs font-normal tabular-nums text-muted-foreground">{positionCounts[p]}</span>}
+                                    {dirty && <span className="ml-0.5 text-foreground" aria-label="unsaved changes">•</span>}
                                 </button>
-                            ))}
-                        </div>
-                        <div className="relative ml-auto w-full sm:w-64">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden />
-                            <Input
-                                value={q}
-                                onChange={e => setQ(e.target.value)}
-                                placeholder="Search player"
-                                aria-label="Search player"
-                                className="pl-8 rounded-sm"
-                            />
-                        </div>
+                            )
+                        })}
                     </div>
-                )}
+                    <div className="relative mb-1.5 ml-auto w-full sm:w-56">
+                        <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                        <Input
+                            value={q}
+                            onChange={e => setQ(e.target.value)}
+                            placeholder="Search player"
+                            aria-label="Search player"
+                            className="h-8 rounded-sm pl-8 text-sm"
+                        />
+                    </div>
+                </div>
+            )}
 
-                {seasonId && error && (
-                    <div className="panel p-6 mt-4 text-center">
-                        <p className="text-destructive text-sm">{error}</p>
-                    </div>
-                )}
+            {seasonId && error && <p className="mt-6 text-sm text-destructive">{error}</p>}
 
-                {seasonId && isLoading && (
-                    <div className="panel mt-4 p-4 space-y-3">
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} className="h-8 bg-muted/40 rounded animate-pulse" />
-                        ))}
-                    </div>
-                )}
+            {seasonId && isLoading && (
+                <div className="mt-4 space-y-2" aria-busy="true">
+                    {[...Array(8)].map((_, i) => (
+                        <div key={i} className="h-7 animate-pulse bg-muted/40" />
+                    ))}
+                </div>
+            )}
 
-                {seasonId && board && board.players.length === 0 && (
-                    <div className="panel p-6 mt-4 text-center">
-                        <p className="text-muted-foreground">No completed-match stats in this season yet.</p>
-                    </div>
-                )}
+            {seasonId && board && scalings && (
+                <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-start">
+                    <OverallProfileSidebar
+                        mode={position}
+                        scalings={scalings}
+                        savedPositions={board.config.savedPositions}
+                        dirtyPositions={dirtyPositions}
+                        errors={errors}
+                        saving={saving}
+                        copying={copying}
+                        copySources={copySources}
+                        onChange={handleScalingChange}
+                        onSelectPosition={setPosition}
+                        onSave={handleSave}
+                        onDiscard={() => setDraft(null)}
+                        onCopy={setCopyTarget}
+                    />
 
-                {seasonId && board && board.players.length > 0 && (
-                    <div className="mt-4">
-                        {ranked.length === 0 ? (
-                            <div className="panel p-6 text-center">
-                                <p className="text-muted-foreground text-sm">No players match these filters.</p>
-                            </div>
-                        ) : (
-                            <OverallBoardTable
-                                ranked={ranked}
-                                sort={sort}
-                                desc={desc}
-                                onSort={handleSort}
-                                onOverride={handleOverride}
-                                onClearOverride={handleClearOverride}
-                            />
-                        )}
-                    </div>
-                )}
-            </div>
+                    {board.players.length === 0 ? (
+                        <p className="flex-1 py-8 text-sm text-muted-foreground">No completed-match stats in this season yet.</p>
+                    ) : ranked.length === 0 ? (
+                        <p className="flex-1 py-8 text-sm text-muted-foreground">No players match these filters.</p>
+                    ) : (
+                        <OverallBoardTable
+                            ranked={ranked}
+                            sort={sort}
+                            desc={desc}
+                            showPosition={position === 'ALL'}
+                            onSort={handleSort}
+                            onOverride={handleOverride}
+                            onClearOverride={handleClearOverride}
+                        />
+                    )}
+                </div>
+            )}
 
             <ConfirmDialog
                 open={!!copyTarget}
-                title="Copy scalings"
-                description={<>Replace this season&apos;s saved scalings with the ones from <strong>{copyTarget?.regionCode} {copyTarget?.name}</strong>? Unsaved edits are discarded.</>}
+                title="Copy profiles"
+                description={<>Replace this season&apos;s saved profiles with the ones from <strong>{copyTarget?.regionCode} {copyTarget?.name}</strong>? Unsaved edits are discarded.</>}
                 cancelLabel="Cancel"
                 confirmLabel={copying ? 'Copying...' : 'Copy'}
                 busy={copying}

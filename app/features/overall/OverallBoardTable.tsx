@@ -17,8 +17,13 @@ type Props = OverrideHandlers & {
     ranked: { row: OverallDisplayRow; rank: number }[]
     sort: OverallSortKey
     desc: boolean
+    showPosition: boolean
     onSort: (key: OverallSortKey) => void
 }
+
+const TH = 'h-8 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border whitespace-nowrap'
+const TD = 'h-9 px-2 whitespace-nowrap'
+const FOCUS = 'rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
 
 function SortHeader({ label, title, sortKey, sort, desc, onSort, className }: {
     label: string
@@ -31,15 +36,15 @@ function SortHeader({ label, title, sortKey, sort, desc, onSort, className }: {
 }) {
     const active = sort === sortKey
     return (
-        <th aria-sort={active ? (desc ? 'descending' : 'ascending') : 'none'} className={cn('text-right', className)}>
+        <th
+            aria-sort={active ? (desc ? 'descending' : 'ascending') : 'none'}
+            className={cn(TH, 'text-right', active && 'text-foreground shadow-[inset_0_-2px_0_currentColor]', className)}
+        >
             <button
                 type="button"
                 title={title}
                 onClick={() => onSort(sortKey)}
-                className={cn(
-                    'inline-flex items-center gap-0.5 rounded-sm uppercase tracking-wider focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                    active ? 'text-foreground underline decoration-2 underline-offset-[6px]' : 'hover:text-foreground',
-                )}
+                className={cn('inline-flex items-center gap-0.5 uppercase tracking-wider hover:text-foreground', FOCUS)}
             >
                 {label}
                 {active && (desc ? <ArrowDown className="h-3 w-3" aria-hidden /> : <ArrowUp className="h-3 w-3" aria-hidden />)}
@@ -48,22 +53,22 @@ function SortHeader({ label, title, sortKey, sort, desc, onSort, className }: {
     )
 }
 
-export default function OverallBoardTable({ ranked, sort, desc, onSort, onOverride, onClearOverride }: Props) {
+export default function OverallBoardTable({ ranked, sort, desc, showPosition, onSort, onOverride, onClearOverride }: Props) {
     const headerProps = { sort, desc, onSort }
     return (
-        <div className="panel overflow-x-auto">
-            <table className="table-dense">
+        <div className="min-w-0 flex-1 overflow-x-auto">
+            <table className="w-full border-collapse">
                 <thead>
                     <tr>
-                        <th className="w-12 text-right">#</th>
-                        <th>Player</th>
-                        <th>Team</th>
-                        <th className="w-14">Pos</th>
-                        <SortHeader label="Sets" title="Sets played (all regions, this season number)" sortKey="sets" {...headerProps} className="w-16" />
-                        <SortHeader label="OVR" title="Overall. Click a value to override it." sortKey="ovr" {...headerProps} className="w-32" />
+                        <th className={cn(TH, 'w-10 text-right')}>#</th>
+                        <th className={cn(TH, 'text-left')}>Player</th>
+                        <th className={cn(TH, 'text-left')}>Team</th>
+                        {showPosition && <th className={cn(TH, 'w-12 text-left')}>Pos</th>}
+                        <SortHeader label="OVR" title="Overall. Click a value to override it." sortKey="ovr" {...headerProps} className="w-28" />
                         {CATEGORY_COLUMNS.map(col => (
                             <SortHeader key={col.key} label={col.label} title={col.title} sortKey={col.key} {...headerProps} className="w-14" />
                         ))}
+                        <SortHeader label="Sets" title="Sets played (all regions, this season number)" sortKey="sets" {...headerProps} className="w-14" />
                     </tr>
                 </thead>
                 <tbody>
@@ -73,6 +78,7 @@ export default function OverallBoardTable({ ranked, sort, desc, onSort, onOverri
                             row={row}
                             rank={rank}
                             sort={sort}
+                            showPosition={showPosition}
                             onOverride={onOverride}
                             onClearOverride={onClearOverride}
                         />
@@ -117,7 +123,7 @@ function OvrCell({ row, onOverride, onClearOverride }: OverrideHandlers & { row:
                     if (e.key === 'Escape') setEditing(false)
                 }}
                 onBlur={() => setEditing(false)}
-                className="w-14 h-8 rounded-sm border border-input bg-background px-1.5 text-right font-mono tabular-nums text-base font-semibold focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className="h-7 w-14 rounded-sm border border-primary bg-transparent px-1.5 text-right font-mono text-lg font-semibold tabular-nums ring-2 ring-primary/40 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
         )
     }
@@ -131,11 +137,11 @@ function OvrCell({ row, onOverride, onClearOverride }: OverrideHandlers & { row:
                         title="Revert to computed"
                         aria-label={`Revert ${row.username} to computed overall`}
                         onClick={() => onClearOverride(row)}
-                        className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        className={cn('text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100', FOCUS)}
                     >
                         <RotateCcw className="h-3.5 w-3.5" />
                     </button>
-                    <span className="font-mono tabular-nums text-xs text-muted-foreground" title={`Computed ${row.computedOvr}`}>
+                    <span className="font-mono text-xs tabular-nums text-muted-foreground" title={`Computed ${row.computedOvr}`}>
                         {row.computedOvr}
                     </span>
                 </>
@@ -144,42 +150,40 @@ function OvrCell({ row, onOverride, onClearOverride }: OverrideHandlers & { row:
                 type="button"
                 title={overridden ? `Overridden (computed ${row.computedOvr}). Click to edit.` : 'Click to override'}
                 onClick={startEdit}
-                className="inline-flex items-center gap-1 rounded-sm px-1 -mx-1 hover:bg-muted/60 focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className={cn('-mx-1 inline-flex items-center gap-1 px-1 hover:bg-foreground/[0.06]', FOCUS)}
             >
                 {overridden && <PenLine className="h-3 w-3 text-foreground" aria-label="Overridden" />}
-                <span className="font-mono tabular-nums text-base font-semibold text-foreground">{row.ovr}</span>
+                <span className="font-mono text-lg font-semibold tabular-nums text-foreground">{row.ovr}</span>
             </button>
         </div>
     )
 }
 
-function OverallRow({ row, rank, sort, onOverride, onClearOverride }: OverrideHandlers & {
+function OverallRow({ row, rank, sort, showPosition, onOverride, onClearOverride }: OverrideHandlers & {
     row: OverallDisplayRow
     rank: number
     sort: OverallSortKey
+    showPosition: boolean
 }) {
-    const hasDistinctDisplayName = !!row.displayName && row.displayName !== row.username
+    const name = row.displayName || row.username
     return (
-        <tr>
-            <td className="text-right font-mono tabular-nums text-muted-foreground">{rank}</td>
-            <td>
-                <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="relative w-9 h-9 shrink-0 rounded-full overflow-hidden bg-muted">
-                        {row.avatarUrl && <Image src={row.avatarUrl} alt="" fill sizes="36px" className="object-cover" unoptimized />}
+        <tr className="group border-b border-border/60 transition-colors duration-150 hover:bg-foreground/[0.03]">
+            <td className={cn(TD, 'text-right font-mono text-sm tabular-nums text-muted-foreground')}>{rank}</td>
+            <td className={TD}>
+                <div className="flex min-w-0 items-center gap-2">
+                    <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full bg-muted">
+                        {row.avatarUrl && <Image src={row.avatarUrl} alt="" fill sizes="24px" className="object-cover" unoptimized />}
                     </div>
-                    <div className="min-w-0 leading-tight">
-                        <span className="block truncate font-medium">{hasDistinctDisplayName ? row.displayName : row.username}</span>
-                        {hasDistinctDisplayName && <span className="block truncate text-xs text-muted-foreground">{row.username}</span>}
-                    </div>
+                    <span className="truncate text-sm font-medium" title={name !== row.username ? row.username : undefined}>{name}</span>
                 </div>
             </td>
-            <td>
+            <td className={TD}>
                 {row.teamName ? (
-                    <div className="flex items-center gap-2 min-w-0 text-muted-foreground">
-                        <div className="relative w-7 h-7 shrink-0">
+                    <div className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                        <div className="relative h-4 w-4 shrink-0">
                             {row.teamLogoUrl
-                                ? <Image src={row.teamLogoUrl} alt="" fill sizes="28px" className={getLogoClassName(false)} unoptimized />
-                                : <DefaultTeamLogo sizes="28px" />}
+                                ? <Image src={row.teamLogoUrl} alt="" fill sizes="16px" className={getLogoClassName(false)} unoptimized />
+                                : <DefaultTeamLogo sizes="16px" />}
                         </div>
                         <span className="truncate">{row.teamName}</span>
                     </div>
@@ -187,21 +191,23 @@ function OverallRow({ row, rank, sort, onOverride, onClearOverride }: OverrideHa
                     <span className="text-xs text-muted-foreground">Unrostered</span>
                 )}
             </td>
-            <td className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{row.position ?? '?'}</td>
-            <td className={cn('text-right font-mono tabular-nums', sort === 'sets' ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
-                {row.setsPlayed}
-            </td>
-            <td className="text-right">
+            {showPosition && (
+                <td className={cn(TD, 'text-xs font-semibold uppercase tracking-wider text-muted-foreground')}>{row.position ?? '?'}</td>
+            )}
+            <td className={cn(TD, 'text-right')}>
                 <OvrCell row={row} onOverride={onOverride} onClearOverride={onClearOverride} />
             </td>
             {CATEGORY_COLUMNS.map(col => (
                 <td
                     key={col.key}
-                    className={cn('text-right font-mono tabular-nums', sort === col.key ? 'font-semibold text-foreground' : 'text-foreground/70')}
+                    className={cn(TD, 'text-right font-mono text-sm tabular-nums', sort === col.key ? 'font-semibold text-foreground' : 'text-foreground/70')}
                 >
                     {row.attributes[col.key]}
                 </td>
             ))}
+            <td className={cn(TD, 'text-right font-mono text-sm tabular-nums', sort === 'sets' ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
+                {row.setsPlayed}
+            </td>
         </tr>
     )
 }

@@ -3,16 +3,16 @@ import { OverallPosition, OverallScaling, OverallScalingSet, CategoryWeights } f
 const BASE = { floor: 45, ceil: 99, curve: 1 }
 
 const DEFAULT_WEIGHTS: Record<OverallPosition, CategoryWeights> = {
-    OUT: { scoring: 2,   spiking: 3,   setting: 0.5, blocking: 1,   receiving: 2,   serving: 1 },
-    OPP: { scoring: 2,   spiking: 3,   setting: 0.5, blocking: 1.5, receiving: 1,   serving: 1 },
-    MID: { scoring: 1.5, spiking: 2,   setting: 0,   blocking: 3,   receiving: 0.5, serving: 1 },
-    SET: { scoring: 0.5, spiking: 0.5, setting: 4,   blocking: 1,   receiving: 1,   serving: 1 },
-    LIB: { scoring: 0,   spiking: 0,   setting: 1,   blocking: 0,   receiving: 4,   serving: 1 },
+    OUT: { scoring: 20, spiking: 30, setting: 5,  blocking: 10, receiving: 25, serving: 10 },
+    OPP: { scoring: 20, spiking: 35, setting: 5,  blocking: 20, receiving: 10, serving: 10 },
+    MID: { scoring: 15, spiking: 25, setting: 0,  blocking: 45, receiving: 5,  serving: 10 },
+    SET: { scoring: 5,  spiking: 5,  setting: 50, blocking: 15, receiving: 10, serving: 15 },
+    LIB: { scoring: 0,  spiking: 0,  setting: 15, blocking: 0,  receiving: 70, serving: 15 },
 }
 
 export const NEUTRAL_SCALING: Omit<OverallScaling, 'position'> = {
     ...BASE,
-    weights: { scoring: 1, spiking: 1, setting: 1, blocking: 1, receiving: 1, serving: 1 },
+    weights: { scoring: 17, spiking: 17, setting: 17, blocking: 17, receiving: 16, serving: 16 },
 }
 
 export function defaultScalingFor(position: OverallPosition): OverallScaling {

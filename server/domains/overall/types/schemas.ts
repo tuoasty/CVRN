@@ -5,7 +5,9 @@ const POSITIONS = ['OUT', 'OPP', 'MID', 'SET', 'LIB'] as const
 export const SeasonIdSchema = z.object({ seasonId: z.string().uuid() })
 export type SeasonIdInput = z.infer<typeof SeasonIdSchema>
 
-const WeightSchema = z.number().min(0, 'Weights cannot be negative').max(10, 'Weights max out at 10')
+export const WEIGHT_TOTAL = 100
+
+const WeightSchema = z.number().int('Weights must be whole numbers').min(0, 'Weights cannot be negative').max(WEIGHT_TOTAL)
 
 export const OverallScalingSchema = z.object({
     position: z.enum(POSITIONS),
@@ -20,7 +22,9 @@ export const OverallScalingSchema = z.object({
     floor: z.number().min(1, 'Floor must be at least 1').max(98),
     ceil:  z.number().min(2).max(99, 'Ceiling must be 99 or lower'),
     curve: z.number().min(0.2, 'Curve must be at least 0.2').max(5, 'Curve must be 5 or lower'),
-}).refine(s => s.floor < s.ceil, { message: 'Floor must be below the ceiling' })
+})
+    .refine(s => s.floor < s.ceil, { message: 'Floor must be below the ceiling' })
+    .refine(s => Object.values(s.weights).reduce((sum, w) => sum + w, 0) === WEIGHT_TOTAL, { message: `Weights must add up to ${WEIGHT_TOTAL}` })
 
 export const SaveOverallScalingsSchema = z.object({
     seasonId: z.string().uuid(),

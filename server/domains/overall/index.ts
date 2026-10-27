@@ -6,6 +6,7 @@ export { setOverallOverride } from './commands/setOverallOverride'
 export { clearOverallOverride } from './commands/clearOverallOverride'
 export { computeOverall } from './helpers/computeOverall'
 export { defaultScalingFor, defaultScalingSet, NEUTRAL_SCALING } from './helpers/defaultScalings'
+export { normalizeWeights, weightTotal } from './helpers/normalizeWeights'
 
 export type {
     OverallPosition,
@@ -27,6 +28,7 @@ export type {
 } from './types'
 
 export {
+    WEIGHT_TOTAL,
     OVERALL_POSITIONS,
     OVERALL_CATEGORIES,
     SeasonIdSchema,

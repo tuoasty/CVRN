@@ -1,6 +1,7 @@
 import { OverallScalingInsert, OverallScalingRow, PlayerOverallRow, SeasonOverallInputRow } from '@/shared/types/db'
 import { OVERALL_POSITIONS, OverallConfig, OverallInputRow, OverallPosition, OverallScaling } from '../types'
 import { defaultScalingSet } from './defaultScalings'
+import { normalizeWeights } from './normalizeWeights'
 
 function toPosition(value: string | null): OverallPosition | null {
     return (OVERALL_POSITIONS as readonly string[]).includes(value ?? '') ? value as OverallPosition : null
@@ -38,14 +39,14 @@ export function toOverallInputRow(row: SeasonOverallInputRow): OverallInputRow {
 function toOverallScaling(row: OverallScalingRow, position: OverallPosition): OverallScaling {
     return {
         position,
-        weights: {
+        weights: normalizeWeights({
             scoring: Number(row.w_scoring),
             spiking: Number(row.w_spiking),
             setting: Number(row.w_setting),
             blocking: Number(row.w_blocking),
             receiving: Number(row.w_receiving),
             serving: Number(row.w_serving),
-        },
+        }),
         floor: Number(row.floor),
         ceil: Number(row.ceil),
         curve: Number(row.curve),

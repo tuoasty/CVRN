@@ -49,6 +49,7 @@ export interface ComputedOverall {
 }
 
 export {
+    WEIGHT_TOTAL,
     SeasonIdSchema,
     SaveOverallScalingsSchema,
     CopyOverallScalingsSchema,
