@@ -27,7 +27,7 @@ export function buildOverallRows(
 ): OverallDisplayRow[] {
     return players.map(player => {
         const scaling = player.position ? scalings[player.position] : NEUTRAL_SCALING
-        const { ovr, attributes } = computeOverall(player.ranks, scaling)
+        const { ovr, attributes } = computeOverall(player.ranks, scaling, player.setsPlayed)
         const overrideOvr = overrides[player.playerId] ?? null
         return { ...player, computedOvr: ovr, overrideOvr, ovr: overrideOvr ?? ovr, attributes }
     })
