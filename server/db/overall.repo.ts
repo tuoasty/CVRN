@@ -1,4 +1,4 @@
-import { DBClient, OverallScalingRow, PlayerOverallRow, SeasonOverallInputRow } from '@/shared/types/db'
+import { DBClient, OverallScalingInsert, OverallScalingRow, PlayerOverallRow, SeasonOverallInputRow } from '@/shared/types/db'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { serializeError } from '@/server/utils/serializeableError'
 
@@ -24,4 +24,13 @@ export async function findPlayerOverallsBySeason(supabase: DBClient, seasonId: s
         .eq('season_id', seasonId)
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok((data ?? []) as PlayerOverallRow[])
+}
+
+export async function upsertOverallScalingRows(supabase: DBClient, rows: OverallScalingInsert[]): Promise<Result<OverallScalingRow[]>> {
+    const { data, error } = await supabase
+        .from('overall_scalings')
+        .upsert(rows, { onConflict: 'season_id,position' })
+        .select('*')
+    if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
+    return Ok((data ?? []) as OverallScalingRow[])
 }

@@ -1,13 +1,18 @@
 "use client"
 
-import { useMemo, useState } from 'react'
-import { Gauge, Search } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Gauge, Search, SlidersHorizontal } from 'lucide-react'
+import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { useAdminContextStore } from '@/app/stores/adminContextStore'
-import { useOverallBoard } from '@/app/hooks/useOverallBoard'
-import { OVERALL_POSITIONS } from '@/server/domains/overall/types'
-import type { OverallPosition } from '@/server/domains/overall'
+import { copyOverallScalings, saveOverallScalings, useOverallBoard } from '@/app/hooks/useOverallBoard'
+import { useSeasons } from '@/app/hooks/useSeasons'
+import { OVERALL_POSITIONS, SaveOverallScalingsSchema } from '@/server/domains/overall/types'
+import type { OverallPosition, OverallScaling, OverallScalingSet } from '@/server/domains/overall'
 import OverallBoardTable from '@/app/features/overall/OverallBoardTable'
+import OverallScalingsTray from '@/app/features/overall/OverallScalingsTray'
+import ConfirmDialog from '@/app/features/spec/catalog/ConfirmDialog'
+import { toast } from '@/app/utils/toast'
 import {
     buildOverallRows,
     matchesOverallFilters,
@@ -20,14 +25,39 @@ import { cn } from '@/lib/utils'
 type PositionFilter = OverallPosition | 'ALL'
 const POSITION_FILTERS: PositionFilter[] = ['ALL', ...OVERALL_POSITIONS]
 
+type CopySource = { id: string; name: string }
+
+const toList = (set: OverallScalingSet): OverallScaling[] => OVERALL_POSITIONS.map(p => set[p])
+
+function validationErrors(seasonId: string, set: OverallScalingSet): string[] {
+    const parsed = SaveOverallScalingsSchema.safeParse({ seasonId, scalings: toList(set) })
+    if (parsed.success) return []
+    return [...new Set(parsed.error.issues.map(issue => {
+        const index = issue.path[1]
+        const position = typeof index === 'number' ? OVERALL_POSITIONS[index] : null
+        return position ? `${position}: ${issue.message}` : issue.message
+    }))]
+}
+
 export default function AdminOverallsPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId)
     const { board, isLoading, error } = useOverallBoard(seasonId)
+    const { seasons } = useSeasons()
 
     const [position, setPosition] = useState<PositionFilter>('ALL')
     const [q, setQ] = useState('')
     const [sort, setSort] = useState<OverallSortKey>('ovr')
     const [desc, setDesc] = useState(true)
+
+    const [trayOpen, setTrayOpen] = useState(false)
+    const [draft, setDraft] = useState<OverallScalingSet | null>(null)
+    const [saving, setSaving] = useState(false)
+    const [copying, setCopying] = useState(false)
+    const [copyTarget, setCopyTarget] = useState<CopySource | null>(null)
+
+    useEffect(() => {
+        setDraft(null)
+    }, [seasonId])
 
     const handleSort = (key: OverallSortKey) => {
         if (key === sort) setDesc(d => !d)
@@ -37,13 +67,65 @@ export default function AdminOverallsPage() {
         }
     }
 
+    const savedScalings = board?.config.scalings ?? null
+    const scalings = draft ?? savedScalings
+    const dirty = !!draft && !!savedScalings && JSON.stringify(toList(draft)) !== JSON.stringify(toList(savedScalings))
+    const errors = useMemo(() => (seasonId && scalings ? validationErrors(seasonId, scalings) : []), [seasonId, scalings])
+
+    const copySources = useMemo<CopySource[]>(() => {
+        const current = seasons.find(s => s.id === seasonId)
+        if (!current) return []
+        return seasons
+            .filter(s => s.region_id === current.region_id && s.id !== current.id && s.start_date < current.start_date)
+            .sort((a, b) => b.start_date.localeCompare(a.start_date))
+            .map(s => ({ id: s.id, name: s.name }))
+    }, [seasons, seasonId])
+
+    const handleScalingChange = (scaling: OverallScaling) => {
+        if (!savedScalings) return
+        setDraft(prev => ({ ...(prev ?? savedScalings), [scaling.position]: scaling }))
+    }
+
+    const handleSave = async () => {
+        if (!seasonId || !scalings) return
+        setSaving(true)
+        try {
+            const result = await saveOverallScalings(seasonId, toList(scalings))
+            if (!result.ok) {
+                toast.error('Failed to save scalings', result.error.message)
+                return
+            }
+            setDraft(null)
+            toast.success('Scalings saved')
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleCopy = async () => {
+        if (!seasonId || !copyTarget) return
+        setCopying(true)
+        try {
+            const result = await copyOverallScalings(seasonId, copyTarget.id)
+            if (!result.ok) {
+                toast.error('Failed to copy scalings', result.error.message)
+                return
+            }
+            setDraft(null)
+            toast.success(`Copied scalings from ${copyTarget.name}`)
+            setCopyTarget(null)
+        } finally {
+            setCopying(false)
+        }
+    }
+
     const ranked = useMemo(() => {
-        if (!board) return []
-        const rows = buildOverallRows(board.players, board.config.scalings, board.config.overrides)
+        if (!board || !scalings) return []
+        const rows = buildOverallRows(board.players, scalings, board.config.overrides)
         const filtered = rows.filter(r => matchesOverallFilters(r, position, ''))
         return rankOverallRows(sortOverallRows(filtered, sort, desc), sort)
             .filter(({ row }) => matchesOverallFilters(row, 'ALL', q))
-    }, [board, position, q, sort, desc])
+    }, [board, scalings, position, q, sort, desc])
 
     return (
         <div className="admin-container">
@@ -58,7 +140,37 @@ export default function AdminOverallsPage() {
                             Card ratings for the selected season. Attributes are ranked across all regions.
                         </p>
                     </div>
+                    {seasonId && board && (
+                        <Button
+                            variant={trayOpen ? 'secondary' : 'outline'}
+                            className="rounded-sm gap-2 shrink-0"
+                            aria-expanded={trayOpen}
+                            onClick={() => setTrayOpen(o => !o)}
+                        >
+                            <SlidersHorizontal className="h-4 w-4" />
+                            Scalings
+                            {dirty && <span className="h-1.5 w-1.5 rounded-full bg-foreground" aria-label="Unsaved changes" />}
+                        </Button>
+                    )}
                 </div>
+
+                {seasonId && board && scalings && trayOpen && (
+                    <div className="mt-6">
+                        <OverallScalingsTray
+                            scalings={scalings}
+                            savedPositions={board.config.savedPositions}
+                            dirty={dirty}
+                            errors={errors}
+                            saving={saving}
+                            copying={copying}
+                            copySources={copySources}
+                            onChange={handleScalingChange}
+                            onSave={handleSave}
+                            onDiscard={() => setDraft(null)}
+                            onCopy={setCopyTarget}
+                        />
+                    </div>
+                )}
 
                 {!seasonId && (
                     <div className="panel p-6 mt-6 text-center">
@@ -132,6 +244,17 @@ export default function AdminOverallsPage() {
                     </div>
                 )}
             </div>
+
+            <ConfirmDialog
+                open={!!copyTarget}
+                title="Copy scalings"
+                description={<>Replace this season&apos;s saved scalings with the ones from <strong>{copyTarget?.name}</strong>? Unsaved edits are discarded.</>}
+                cancelLabel="Cancel"
+                confirmLabel={copying ? 'Copying...' : 'Copy'}
+                busy={copying}
+                onCancel={() => setCopyTarget(null)}
+                onConfirm={handleCopy}
+            />
         </div>
     )
 }

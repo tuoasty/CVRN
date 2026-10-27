@@ -104,8 +104,12 @@ export type PublicSpecSnapshotRow =
 
 export type SpecWinner =
     Database["public"]["Tables"]["spec_winners"]["Row"];
+
 export type OverallScalingRow =
     Database["public"]["Tables"]["overall_scalings"]["Row"];
+
+export type OverallScalingInsert =
+    Database["public"]["Tables"]["overall_scalings"]["Insert"];
 
 export type PlayerOverallRow =
     Database["public"]["Tables"]["player_overalls"]["Row"];

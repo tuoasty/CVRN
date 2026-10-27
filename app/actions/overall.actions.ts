@@ -4,8 +4,15 @@ import { Err, Ok, Result } from '@/shared/types/result'
 import { createServerSupabase } from '@/server/supabase/server'
 import { serializeError } from '@/server/utils/serializeableError'
 import { requireAdmin } from '@/server/domains/auth'
-import { getOverallConfig, SeasonIdSchema } from '@/server/domains/overall'
-import type { OverallBoard } from '@/server/domains/overall'
+import {
+    getOverallConfig,
+    saveOverallScalings,
+    copyOverallScalings,
+    SeasonIdSchema,
+    SaveOverallScalingsSchema,
+    CopyOverallScalingsSchema,
+} from '@/server/domains/overall'
+import type { OverallBoard, OverallConfig } from '@/server/domains/overall'
 import { getCachedSeasonOverallInputs } from '@/server/cache/publicReads'
 
 export async function getOverallBoardAction(seasonId: string): Promise<Result<OverallBoard>> {
@@ -26,4 +33,26 @@ export async function getOverallBoardAction(seasonId: string): Promise<Result<Ov
     } catch (error) {
         return Err(serializeError(error))
     }
+}
+
+export async function saveOverallScalingsAction(input: unknown): Promise<Result<OverallConfig>> {
+    const parsed = SaveOverallScalingsSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return saveOverallScalings(supabase, parsed.data)
+}
+
+export async function copyOverallScalingsAction(input: unknown): Promise<Result<OverallConfig>> {
+    const parsed = CopyOverallScalingsSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return copyOverallScalings(supabase, parsed.data)
 }

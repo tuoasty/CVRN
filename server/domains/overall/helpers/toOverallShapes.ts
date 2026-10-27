@@ -1,4 +1,4 @@
-import { OverallScalingRow, PlayerOverallRow, SeasonOverallInputRow } from '@/shared/types/db'
+import { OverallScalingInsert, OverallScalingRow, PlayerOverallRow, SeasonOverallInputRow } from '@/shared/types/db'
 import { OVERALL_POSITIONS, OverallConfig, OverallInputRow, OverallPosition, OverallScaling } from '../types'
 import { defaultScalingSet } from './defaultScalings'
 
@@ -64,4 +64,26 @@ export function toOverallConfig(scalingRows: OverallScalingRow[], overrideRows: 
     const overrides: Record<string, number> = {}
     for (const row of overrideRows) overrides[row.player_id] = row.overall
     return { scalings, savedPositions, overrides }
+}
+
+export function toOverallScalingInsert(seasonId: string, scaling: OverallScaling): OverallScalingInsert {
+    return {
+        season_id: seasonId,
+        position: scaling.position,
+        w_scoring: scaling.weights.scoring,
+        w_spiking: scaling.weights.spiking,
+        w_setting: scaling.weights.setting,
+        w_blocking: scaling.weights.blocking,
+        w_receiving: scaling.weights.receiving,
+        w_serving: scaling.weights.serving,
+        floor: scaling.floor,
+        ceil: scaling.ceil,
+        curve: scaling.curve,
+        updated_at: new Date().toISOString(),
+    }
+}
+
+export function withSeasonId(row: OverallScalingRow, seasonId: string): OverallScalingInsert {
+    const { id: _id, created_at: _created, ...rest } = row
+    return { ...rest, season_id: seasonId, updated_at: new Date().toISOString() }
 }
