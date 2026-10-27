@@ -8,12 +8,12 @@ import { getOverallConfig } from '../queries/getOverallConfig'
 
 export async function saveOverallScalings(
     supabase: DBClient,
-    p: { seasonId: string; scalings: OverallScaling[] },
+    p: { seasonNumber: number; scalings: OverallScaling[] },
 ): Promise<Result<OverallConfig>> {
     try {
-        const saved = await upsertOverallScalingRows(supabase, p.scalings.map(s => toOverallScalingInsert(p.seasonId, s)))
+        const saved = await upsertOverallScalingRows(supabase, p.scalings.map(s => toOverallScalingInsert(p.seasonNumber, s)))
         if (!saved.ok) return saved
-        return getOverallConfig(supabase, p.seasonId)
+        return getOverallConfig(supabase, p.seasonNumber)
     } catch (error) {
         return Err(serializeError(error))
     }

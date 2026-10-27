@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { Input } from '@/app/components/ui/input'
-import { useAdminContextStore } from '@/app/stores/adminContextStore'
 import {
     clearOverallOverride,
     copyOverallScalings,
@@ -17,8 +16,9 @@ import { REGION_ORDER } from '@/shared/volleyball/regions'
 import { OVERALL_POSITIONS, SaveOverallScalingsSchema } from '@/server/domains/overall/types'
 import type { OverallPosition, OverallScaling, OverallScalingSet } from '@/server/domains/overall'
 import OverallBoardTable from '@/app/features/overall/OverallBoardTable'
-import OverallProfileSidebar, { CopySource } from '@/app/features/overall/OverallProfileSidebar'
+import OverallProfileSidebar from '@/app/features/overall/OverallProfileSidebar'
 import ConfirmDialog from '@/app/features/spec/catalog/ConfirmDialog'
+import { REGION_ALL, useOverallParams } from '@/app/features/overall/useOverallParams'
 import { toast } from '@/app/utils/toast'
 import {
     buildOverallRows,
@@ -40,8 +40,37 @@ const regionRank = (code: string) => {
     return i === -1 ? REGION_ORDER.length : i
 }
 
-function validationErrors(seasonId: string, set: OverallScalingSet): string[] {
-    const parsed = SaveOverallScalingsSchema.safeParse({ seasonId, scalings: toList(set) })
+const TAB = 'pb-2 text-sm font-semibold transition-colors duration-150 rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
+const TAB_ON = 'text-foreground shadow-[inset_0_-2px_0_currentColor]'
+const TAB_OFF = 'text-muted-foreground hover:text-foreground'
+
+function ScopeTabs<T extends string | number>({ label, options, value, onSelect }: {
+    label: string
+    options: { value: T; label: string }[]
+    value: T | null
+    onSelect: (value: T) => void
+}) {
+    return (
+        <div className="flex items-end gap-4" role="tablist" aria-label={label}>
+            <span className="pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+            {options.map(o => (
+                <button
+                    key={o.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={o.value === value}
+                    onClick={() => onSelect(o.value)}
+                    className={cn(TAB, o.value === value ? TAB_ON : TAB_OFF)}
+                >
+                    {o.label}
+                </button>
+            ))}
+        </div>
+    )
+}
+
+function validationErrors(seasonNumber: number, set: OverallScalingSet): string[] {
+    const parsed = SaveOverallScalingsSchema.safeParse({ seasonNumber, scalings: toList(set) })
     if (parsed.success) return []
     return [...new Set(parsed.error.issues.map(issue => {
         const index = issue.path[1]
@@ -51,10 +80,21 @@ function validationErrors(seasonId: string, set: OverallScalingSet): string[] {
 }
 
 export default function AdminOverallsPage() {
-    const seasonId = useAdminContextStore(s => s.selectedSeasonId)
-    const { board, isLoading, error } = useOverallBoard(seasonId)
+    return (
+        <Suspense>
+            <AdminOverallsContent />
+        </Suspense>
+    )
+}
+
+function AdminOverallsContent() {
     const { seasons } = useSeasons()
     const { regions } = useRegions()
+
+    const seasonNumbers = useMemo(() => [...new Set(seasons.map(s => s.season_number))].sort((a, b) => a - b), [seasons])
+    const regionCodes = useMemo(() => regions.map(r => r.code).sort((a, b) => regionRank(a) - regionRank(b)), [regions])
+    const { seasonNumber, region, setSeason, setRegion } = useOverallParams(seasonNumbers, regionCodes)
+    const { board, isLoading, error } = useOverallBoard(seasonNumber)
 
     const [position, setPosition] = useState<PositionFilter>('ALL')
     const [q, setQ] = useState('')
@@ -64,15 +104,13 @@ export default function AdminOverallsPage() {
     const [draft, setDraft] = useState<OverallScalingSet | null>(null)
     const [saving, setSaving] = useState(false)
     const [copying, setCopying] = useState(false)
-    const [copyTarget, setCopyTarget] = useState<CopySource | null>(null)
+    const [copyTarget, setCopyTarget] = useState<number | null>(null)
 
     useEffect(() => {
         setDraft(null)
-    }, [seasonId])
+    }, [seasonNumber])
 
-    const regionCodeById = useMemo(() => new Map(regions.map(r => [r.id, r.code])), [regions])
-    const season = seasons.find(s => s.id === seasonId) ?? null
-    const seasonLabel = season ? `${regionCodeById.get(season.region_id) ?? ''} · ${season.name}` : null
+    const inRegion = (code: string | null) => region === REGION_ALL || code?.toLowerCase() === region
 
     const handleSort = (key: OverallSortKey) => {
         if (key === sort) setDesc(d => !d)
@@ -90,23 +128,22 @@ export default function AdminOverallsPage() {
             : []),
         [draft, savedScalings],
     )
-    const errors = useMemo(() => (seasonId && scalings ? validationErrors(seasonId, scalings) : []), [seasonId, scalings])
+    const errors = useMemo(() => (seasonNumber && scalings ? validationErrors(seasonNumber, scalings) : []), [seasonNumber, scalings])
 
-    const copySources = useMemo<CopySource[]>(() => seasons
-        .filter(s => s.id !== seasonId)
-        .map(s => ({ id: s.id, name: s.name, regionCode: regionCodeById.get(s.region_id) ?? '?', startDate: s.start_date }))
-        .sort((a, b) => regionRank(a.regionCode) - regionRank(b.regionCode) || b.startDate.localeCompare(a.startDate))
-        .map(({ id, name, regionCode }) => ({ id, name, regionCode })),
-    [seasons, regionCodeById, seasonId])
+    const copySources = useMemo(
+        () => seasonNumbers.filter(n => n !== seasonNumber).sort((a, b) => b - a),
+        [seasonNumbers, seasonNumber],
+    )
 
     const positionCounts = useMemo(() => {
         const counts: Record<PositionFilter, number> = { ALL: 0, OUT: 0, OPP: 0, MID: 0, SET: 0, LIB: 0 }
         for (const p of board?.players ?? []) {
+            if (region !== REGION_ALL && p.regionCode?.toLowerCase() !== region) continue
             counts.ALL += 1
             if (p.position) counts[p.position] += 1
         }
         return counts
-    }, [board])
+    }, [board, region])
 
     const handleScalingChange = (scaling: OverallScaling) => {
         if (!savedScalings) return
@@ -114,10 +151,10 @@ export default function AdminOverallsPage() {
     }
 
     const handleSave = async () => {
-        if (!seasonId || !scalings) return
+        if (!seasonNumber || !scalings) return
         setSaving(true)
         try {
-            const result = await saveOverallScalings(seasonId, toList(scalings))
+            const result = await saveOverallScalings(seasonNumber, toList(scalings))
             if (!result.ok) {
                 toast.error('Failed to save profiles', result.error.message)
                 return
@@ -130,16 +167,16 @@ export default function AdminOverallsPage() {
     }
 
     const handleCopy = async () => {
-        if (!seasonId || !copyTarget) return
+        if (!seasonNumber || copyTarget === null) return
         setCopying(true)
         try {
-            const result = await copyOverallScalings(seasonId, copyTarget.id)
+            const result = await copyOverallScalings(seasonNumber, copyTarget)
             if (!result.ok) {
                 toast.error('Failed to copy profiles', result.error.message)
                 return
             }
             setDraft(null)
-            toast.success(`Copied profiles from ${copyTarget.regionCode} ${copyTarget.name}`)
+            toast.success(`Copied profiles from Season ${copyTarget}`)
             setCopyTarget(null)
         } finally {
             setCopying(false)
@@ -147,39 +184,53 @@ export default function AdminOverallsPage() {
     }
 
     const handleOverride = async (row: OverallDisplayRow, overall: number) => {
-        if (!seasonId) return
-        const result = await setOverallOverride(seasonId, row.playerId, overall)
+        if (!seasonNumber) return
+        const result = await setOverallOverride(seasonNumber, row.playerId, overall)
         if (!result.ok) toast.error(`Failed to override ${row.username}`, result.error.message)
     }
 
     const handleClearOverride = async (row: OverallDisplayRow) => {
-        if (!seasonId) return
-        const result = await clearOverallOverride(seasonId, row.playerId)
+        if (!seasonNumber) return
+        const result = await clearOverallOverride(seasonNumber, row.playerId)
         if (!result.ok) toast.error(`Failed to revert ${row.username}`, result.error.message)
     }
 
     const ranked = useMemo(() => {
         if (!board || !scalings) return []
         const rows = buildOverallRows(board.players, scalings, board.config.overrides)
-        const filtered = rows.filter(r => matchesOverallFilters(r, position, ''))
+        const filtered = rows.filter(r => inRegion(r.regionCode) && matchesOverallFilters(r, position, ''))
         return rankOverallRows(sortOverallRows(filtered, sort, desc), sort)
             .filter(({ row }) => matchesOverallFilters(row, 'ALL', q))
-    }, [board, scalings, position, q, sort, desc])
+    }, [board, scalings, region, position, q, sort, desc])
 
     return (
         <div className="page-wide py-6">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <h1 className="text-xl font-semibold tracking-tight text-foreground">Player Overalls</h1>
                 <span className="text-sm text-muted-foreground">
-                    {seasonLabel ? `${seasonLabel} · ` : ''}ranks pooled across all regions
+                    {seasonNumber ? `Season ${seasonNumber} · ` : ''}profiles and ranks shared by all regions
                 </span>
             </div>
 
-            {!seasonId && (
-                <p className="mt-8 text-sm text-muted-foreground">Select a season in the navbar to view its overalls.</p>
-            )}
+            <div className="mt-3 flex flex-wrap items-end gap-x-8 gap-y-2">
+                <ScopeTabs
+                    label="Season"
+                    options={seasonNumbers.map(n => ({ value: n, label: `S${n}` }))}
+                    value={seasonNumber}
+                    onSelect={setSeason}
+                />
+                <ScopeTabs
+                    label="Region"
+                    options={[
+                        { value: REGION_ALL, label: 'All' },
+                        ...regionCodes.map(c => ({ value: c.toLowerCase(), label: c })),
+                    ]}
+                    value={region}
+                    onSelect={setRegion}
+                />
+            </div>
 
-            {seasonId && (
+            {seasonNumber && (
                 <div className="mt-4 flex flex-wrap items-end gap-x-5 gap-y-2 border-b border-border">
                     <div className="flex items-end gap-5" role="tablist" aria-label="Position">
                         {POSITION_FILTERS.map(p => {
@@ -219,9 +270,9 @@ export default function AdminOverallsPage() {
                 </div>
             )}
 
-            {seasonId && error && <p className="mt-6 text-sm text-destructive">{error}</p>}
+            {seasonNumber && error &&<p className="mt-6 text-sm text-destructive">{error}</p>}
 
-            {seasonId && isLoading && (
+            {seasonNumber && isLoading && (
                 <div className="mt-4 space-y-2" aria-busy="true">
                     {[...Array(8)].map((_, i) => (
                         <div key={i} className="h-7 animate-pulse bg-muted/40" />
@@ -229,7 +280,7 @@ export default function AdminOverallsPage() {
                 </div>
             )}
 
-            {seasonId && board && scalings && (
+            {seasonNumber && board && scalings && (
                 <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-start">
                     <OverallProfileSidebar
                         mode={position}
@@ -266,9 +317,9 @@ export default function AdminOverallsPage() {
             )}
 
             <ConfirmDialog
-                open={!!copyTarget}
+                open={copyTarget !== null}
                 title="Copy profiles"
-                description={<>Replace this season&apos;s saved profiles with the ones from <strong>{copyTarget?.regionCode} {copyTarget?.name}</strong>? Unsaved edits are discarded.</>}
+                description={<>Replace Season {seasonNumber}&apos;s saved profiles with the ones from <strong>Season {copyTarget}</strong>? Unsaved edits are discarded.</>}
                 cancelLabel="Cancel"
                 confirmLabel={copying ? 'Copying...' : 'Copy'}
                 busy={copying}

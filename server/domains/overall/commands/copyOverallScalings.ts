@@ -1,34 +1,25 @@
 import { Err, Result } from '@/shared/types/result'
 import { DBClient } from '@/shared/types/db'
 import { serializeError } from '@/server/utils/serializeableError'
-import { findSeasonById } from '@/server/db/seasons.repo'
-import { findOverallScalingsBySeason, upsertOverallScalingRows } from '@/server/db/overall.repo'
+import { findOverallScalingsBySeasonNumber, upsertOverallScalingRows } from '@/server/db/overall.repo'
 import { OverallConfig } from '../types'
-import { withSeasonId } from '../helpers/toOverallShapes'
+import { withSeasonNumber } from '../helpers/toOverallShapes'
 import { getOverallConfig } from '../queries/getOverallConfig'
 
 export async function copyOverallScalings(
     supabase: DBClient,
-    p: { seasonId: string; fromSeasonId: string },
+    p: { seasonNumber: number; fromSeasonNumber: number },
 ): Promise<Result<OverallConfig>> {
     try {
-        const [target, source] = await Promise.all([
-            findSeasonById(supabase, p.seasonId),
-            findSeasonById(supabase, p.fromSeasonId),
-        ])
-        if (!target.ok) return target
-        if (!source.ok) return source
-        if (!target.value || !source.value) return Err({ message: 'Season not found', code: 'NOT_FOUND' })
-
-        const rows = await findOverallScalingsBySeason(supabase, p.fromSeasonId)
+        const rows = await findOverallScalingsBySeasonNumber(supabase, p.fromSeasonNumber)
         if (!rows.ok) return rows
         if (rows.value.length === 0) {
-            return Err({ message: `${source.value.name} has no saved scalings to copy`, code: 'NOT_FOUND' })
+            return Err({ message: `Season ${p.fromSeasonNumber} has no saved scalings to copy`, code: 'NOT_FOUND' })
         }
 
-        const saved = await upsertOverallScalingRows(supabase, rows.value.map(r => withSeasonId(r, p.seasonId)))
+        const saved = await upsertOverallScalingRows(supabase, rows.value.map(r => withSeasonNumber(r, p.seasonNumber)))
         if (!saved.ok) return saved
-        return getOverallConfig(supabase, p.seasonId)
+        return getOverallConfig(supabase, p.seasonNumber)
     } catch (error) {
         return Err(serializeError(error))
     }

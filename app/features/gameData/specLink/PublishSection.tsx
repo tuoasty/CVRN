@@ -40,6 +40,7 @@ function specParts(s: SpecWriteSummary): ReactNode[] {
         )
     }
     if (s.created > 0) parts.push(<><N n={s.created} /> new</>)
+    if (s.custom > 0) parts.push(<><N n={s.custom} /> custom</>)
     if (s.skipped > 0) parts.push(<><N n={s.skipped} /> skipped</>)
     if (s.left > 0) parts.push(<><N n={s.left} /> left unlinked</>)
     if (s.renamed > 0) parts.push(<><N n={s.renamed} /> renamed</>)

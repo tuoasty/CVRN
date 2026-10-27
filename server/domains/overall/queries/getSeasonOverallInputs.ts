@@ -5,9 +5,9 @@ import { findSeasonOverallInputs } from '@/server/db/overall.repo'
 import { OverallInputRow } from '../types'
 import { toOverallInputRow } from '../helpers/toOverallShapes'
 
-export async function getSeasonOverallInputs(supabase: DBClient, seasonId: string): Promise<Result<OverallInputRow[]>> {
+export async function getSeasonOverallInputs(supabase: DBClient, seasonNumber: number): Promise<Result<OverallInputRow[]>> {
     try {
-        const result = await findSeasonOverallInputs(supabase, seasonId)
+        const result = await findSeasonOverallInputs(supabase, seasonNumber)
         if (!result.ok) return result
         return Ok(result.value.map(toOverallInputRow))
     } catch (error) {

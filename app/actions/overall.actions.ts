@@ -10,7 +10,7 @@ import {
     copyOverallScalings,
     setOverallOverride,
     clearOverallOverride,
-    SeasonIdSchema,
+    SeasonNumberSchema,
     SaveOverallScalingsSchema,
     CopyOverallScalingsSchema,
     SetOverallOverrideSchema,
@@ -19,8 +19,8 @@ import {
 import type { OverallBoard, OverallConfig } from '@/server/domains/overall'
 import { getCachedSeasonOverallInputs } from '@/server/cache/publicReads'
 
-export async function getOverallBoardAction(seasonId: string): Promise<Result<OverallBoard>> {
-    const parsed = SeasonIdSchema.safeParse({ seasonId })
+export async function getOverallBoardAction(seasonNumber: number): Promise<Result<OverallBoard>> {
+    const parsed = SeasonNumberSchema.safeParse({ seasonNumber })
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
@@ -29,8 +29,8 @@ export async function getOverallBoardAction(seasonId: string): Promise<Result<Ov
 
     try {
         const [players, config] = await Promise.all([
-            getCachedSeasonOverallInputs(parsed.data.seasonId),
-            getOverallConfig(supabase, parsed.data.seasonId),
+            getCachedSeasonOverallInputs(parsed.data.seasonNumber),
+            getOverallConfig(supabase, parsed.data.seasonNumber),
         ])
         if (!config.ok) return config
         return Ok({ players, config: config.value })

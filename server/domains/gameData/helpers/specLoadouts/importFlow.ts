@@ -5,6 +5,7 @@ export interface SpecWriteSummary {
     proposed: number
     picked: number
     created: number
+    custom: number
     skipped: number
     left: number
     renamed: number
@@ -22,7 +23,7 @@ export function seedProposalDecisions(plan: SpecLinkPlan): Record<string, SpecLi
 }
 
 export function summarizeSpecWrites(plan: SpecLinkPlan, decisions: Record<string, SpecLinkDecision>): SpecWriteSummary {
-    const summary: SpecWriteSummary = { links: 0, proposed: 0, picked: 0, created: 0, skipped: 0, left: 0, renamed: 0 }
+    const summary: SpecWriteSummary = { links: 0, proposed: 0, picked: 0, created: 0, custom: 0, skipped: 0, left: 0, renamed: 0 }
     for (const item of plan.items) {
         if (item.status === 'linked') continue
         const decision = decisions[item.gameKey]
@@ -32,6 +33,7 @@ export function summarizeSpecWrites(plan: SpecLinkPlan, decisions: Record<string
             else summary.picked++
             if (decision.rename) summary.renamed++
         } else if (decision.action === 'create') summary.created++
+        else if (decision.action === 'custom') summary.custom++
         else if (decision.action === 'leave') summary.left++
         else if (item.status !== 'skipped') summary.skipped++
     }

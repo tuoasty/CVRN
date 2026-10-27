@@ -560,9 +560,9 @@ export const getCachedRecords = unstable_cache(
 );
 
 export const getCachedSeasonOverallInputs = unstable_cache(
-    async (seasonId: string) =>
-        unwrap(await getSeasonOverallInputs(createPublicClient(), seasonId), "getCachedSeasonOverallInputs"),
-    ["admin:season-overall-inputs"],
+    async (seasonNumber: number) =>
+        unwrap(await getSeasonOverallInputs(createPublicClient(), seasonNumber), "getCachedSeasonOverallInputs"),
+    ["admin:overall-inputs-by-season-number"],
     {
         tags: [CACHE_TAGS.rawStats, CACHE_TAGS.players, CACHE_TAGS.teams],
         revalidate: RAW_STATS_REVALIDATE_SECONDS,

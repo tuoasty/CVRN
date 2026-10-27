@@ -46,6 +46,7 @@ export default function SpecLoadoutDetail({ loadout }: { loadout: SpecLoadout })
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
                 {spec ? spec.name : loadout.name}
                 {spec?.is_vaulted && <span className="ml-2.5 text-sm font-medium tracking-normal text-muted-foreground">vaulted</span>}
+                {spec?.is_custom && <span className="ml-2.5 text-sm font-medium tracking-normal text-muted-foreground">custom</span>}
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
                 Game key <span className="font-mono">&ldquo;{loadout.key}&rdquo;</span>
@@ -62,30 +63,34 @@ export default function SpecLoadoutDetail({ loadout }: { loadout: SpecLoadout })
                                 <SpecPhotoControl spec={spec} />
                             </Fact>
                         )}
-                        <Fact label="Stars">
-                            <InlineSwitch
-                                label="Stars"
-                                className="-ml-2"
-                                options={STAR_OPTIONS}
-                                value={String(spec.stars) as `${SpecStars}`}
-                                onChange={v => void saveSpecFacts(spec.id, { stars: Number(v) as SpecStars })}
-                            />
-                        </Fact>
-                        <Fact label="Position">
-                            <InlineSwitch
-                                label="Position"
-                                className="-ml-2"
-                                options={POSITION_OPTIONS}
-                                value={spec.position as PositionCode}
-                                onChange={v => void saveSpecFacts(spec.id, { position: v })}
-                            />
-                        </Fact>
+                        {!spec.is_custom && (
+                            <>
+                                <Fact label="Stars">
+                                    <InlineSwitch
+                                        label="Stars"
+                                        className="-ml-2"
+                                        options={STAR_OPTIONS}
+                                        value={String(spec.stars) as `${SpecStars}`}
+                                        onChange={v => void saveSpecFacts(spec.id, { stars: Number(v) as SpecStars })}
+                                    />
+                                </Fact>
+                                <Fact label="Position">
+                                    <InlineSwitch
+                                        label="Position"
+                                        className="-ml-2"
+                                        options={POSITION_OPTIONS}
+                                        value={spec.position as PositionCode}
+                                        onChange={v => void saveSpecFacts(spec.id, { position: v })}
+                                    />
+                                </Fact>
+                            </>
+                        )}
                     </>
                 )}
                 <Fact label="Height">
                     <span className="font-mono tabular-nums">{spec ? formatHeight(spec.height) : formatGameHeight(loadout.height)}</span>
                 </Fact>
-                {spec && showRequirements && (
+                {spec && !spec.is_custom && showRequirements && (
                     <Fact label="Requirements">
                         <span className="grid grid-cols-[repeat(4,76px)_auto] items-baseline">
                             {requirements.map(r => (

@@ -4,11 +4,11 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { InlineSwitch } from '@/app/components/filters/InlineSwitch'
 import { POSITIONS, type PositionCode } from '@/shared/volleyball/positions'
 import { formatHeight } from '@/shared/utils/height'
-import { SPEC_STARS, type LinkSpec, type SpecLinkDecision, type SpecLinkItem, type SpecStars } from '@/server/domains/gameData/types/specLinks'
+import { SPEC_STARS, type LeagueLinkSpec, type SpecLinkDecision, type SpecLinkItem, type SpecStars } from '@/server/domains/gameData/types/specLinks'
 import { cn } from '@/lib/utils'
 import { CANDIDATE_LIMIT, SEARCH_LIMIT, SPEC_PICK_GRID } from './pickGrid'
 
-type Option = 'search' | 'create' | 'leave' | 'skip'
+type Option = 'search' | 'create' | 'custom' | 'leave' | 'skip'
 
 interface ShownSpec {
     id: string
@@ -21,7 +21,7 @@ interface ShownSpec {
 interface SpecPickRowProps {
     item: SpecLinkItem
     mode: 'pick' | 'proposed'
-    linkable: LinkSpec[]
+    linkable: LeagueLinkSpec[]
     claims: ReadonlyMap<string, string>
     value: SpecLinkDecision | undefined
     onChange: (decision: SpecLinkDecision | undefined) => void
@@ -82,7 +82,7 @@ export default function SpecPickRow({ item, mode, linkable, claims, value, onCha
         return linked ? [linked] : []
     }, [q, linkable, linkedId, specById])
 
-    const selected: Option | null = open ?? (value?.action === 'leave' || value?.action === 'skip' ? value.action : null)
+    const selected: Option | null = open ?? (value?.action === 'custom' || value?.action === 'leave' || value?.action === 'skip' ? value.action : null)
     const fallback: SpecLinkDecision | undefined = mode === 'proposed' && item.specId
         ? { gameKey: item.gameKey, action: 'link', specId: item.specId, rename: false }
         : undefined
@@ -178,11 +178,12 @@ export default function SpecPickRow({ item, mode, linkable, claims, value, onCha
 
             <Choice selected={selected === 'search'} onClick={() => choose('search')}>Search</Choice>
             <Choice selected={selected === 'create'} onClick={() => choose('create')}>Create new</Choice>
+            <Choice selected={selected === 'custom'} onClick={() => choose('custom')}>Custom</Choice>
             <Choice selected={selected === 'leave'} onClick={() => choose('leave')}>Leave unlinked</Choice>
             <Choice selected={selected === 'skip'} onClick={() => choose('skip')}>Skip</Choice>
 
             {open === 'create' && (
-                <div className="col-span-5 col-start-2 mt-2.5 flex flex-wrap items-center gap-x-7 gap-y-1 bg-muted px-3 py-2.5">
+                <div className="col-span-6 col-start-2 mt-2.5 flex flex-wrap items-center gap-x-7 gap-y-1 bg-muted px-3 py-2.5">
                     <div className="flex items-center gap-1">
                         <FieldLabel>Stars</FieldLabel>
                         <InlineSwitch

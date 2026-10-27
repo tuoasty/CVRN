@@ -11,27 +11,27 @@ import type { Result } from '@/shared/types/result'
 
 const OVERALL_BOARD_TTL = 60 * 1000
 
-export const overallBoardKey = (seasonId: string) => ['overall-board', seasonId] as const
+export const overallBoardKey = (seasonNumber: number) => ['overall-board', seasonNumber] as const
 
-async function fetchBoard([, seasonId]: readonly [string, string]): Promise<OverallBoard> {
-    const result = await getOverallBoardAction(seasonId)
+async function fetchBoard([, seasonNumber]: readonly [string, number]): Promise<OverallBoard> {
+    const result = await getOverallBoardAction(seasonNumber)
     if (!result.ok) throw new Error(result.error.message)
     return result.value
 }
 
-export function useOverallBoard(seasonId: string | null) {
+export function useOverallBoard(seasonNumber: number | null) {
     const { data, error, isLoading, mutate } = useSWR(
-        seasonId ? overallBoardKey(seasonId) : null,
+        seasonNumber ? overallBoardKey(seasonNumber) : null,
         fetchBoard,
         { dedupingInterval: OVERALL_BOARD_TTL, revalidateOnFocus: false },
     )
     return { board: data ?? null, isLoading, error: error?.message ?? null, mutate }
 }
 
-async function applyConfig(seasonId: string, result: Result<OverallConfig>): Promise<Result<OverallConfig>> {
+async function applyConfig(seasonNumber: number, result: Result<OverallConfig>): Promise<Result<OverallConfig>> {
     if (result.ok) {
         await globalMutate(
-            overallBoardKey(seasonId),
+            overallBoardKey(seasonNumber),
             (board: OverallBoard | undefined) => (board ? { ...board, config: result.value } : board),
             { revalidate: false },
         )
@@ -39,21 +39,21 @@ async function applyConfig(seasonId: string, result: Result<OverallConfig>): Pro
     return result
 }
 
-export async function saveOverallScalings(seasonId: string, scalings: OverallScaling[]) {
-    return applyConfig(seasonId, await saveOverallScalingsAction({ seasonId, scalings }))
+export async function saveOverallScalings(seasonNumber: number, scalings: OverallScaling[]) {
+    return applyConfig(seasonNumber, await saveOverallScalingsAction({ seasonNumber, scalings }))
 }
 
-export async function copyOverallScalings(seasonId: string, fromSeasonId: string) {
-    return applyConfig(seasonId, await copyOverallScalingsAction({ seasonId, fromSeasonId }))
+export async function copyOverallScalings(seasonNumber: number, fromSeasonNumber: number) {
+    return applyConfig(seasonNumber, await copyOverallScalingsAction({ seasonNumber, fromSeasonNumber }))
 }
 
 async function withOptimisticOverride(
-    seasonId: string,
+    seasonNumber: number,
     playerId: string,
     overall: number | null,
     run: () => Promise<Result<OverallConfig>>,
 ): Promise<Result<OverallConfig>> {
-    const key = overallBoardKey(seasonId)
+    const key = overallBoardKey(seasonNumber)
     let previous: OverallBoard | undefined
     await globalMutate(
         key,
@@ -72,13 +72,13 @@ async function withOptimisticOverride(
         await globalMutate(key, previous, { revalidate: false })
         return result
     }
-    return applyConfig(seasonId, result)
+    return applyConfig(seasonNumber, result)
 }
 
-export async function setOverallOverride(seasonId: string, playerId: string, overall: number) {
-    return withOptimisticOverride(seasonId, playerId, overall, () => setOverallOverrideAction({ seasonId, playerId, overall }))
+export async function setOverallOverride(seasonNumber: number, playerId: string, overall: number) {
+    return withOptimisticOverride(seasonNumber, playerId, overall, () => setOverallOverrideAction({ seasonNumber, playerId, overall }))
 }
 
-export async function clearOverallOverride(seasonId: string, playerId: string) {
-    return withOptimisticOverride(seasonId, playerId, null, () => clearOverallOverrideAction({ seasonId, playerId }))
+export async function clearOverallOverride(seasonNumber: number, playerId: string) {
+    return withOptimisticOverride(seasonNumber, playerId, null, () => clearOverallOverrideAction({ seasonNumber, playerId }))
 }

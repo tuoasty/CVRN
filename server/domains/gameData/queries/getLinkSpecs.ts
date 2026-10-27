@@ -7,7 +7,7 @@ import type { LinkSpec } from '../types'
 export async function getLinkSpecs(supabase: DBClient): Promise<Result<LinkSpec[]>> {
     const specs = await findSpecCatalog(supabase)
     if (!specs.ok) return specs
-    return Ok(specs.value.map(s => ({ id: s.id, name: s.name, stars: s.stars, position: s.position, height: s.height, game_key: s.game_key })))
+    return Ok(specs.value.map(s => ({ id: s.id, name: s.name, stars: s.stars, position: s.position, height: s.height, game_key: s.game_key, is_custom: s.is_custom })))
 }
 
 export async function getSkippedSpecKeys(supabase: DBClient): Promise<Result<Set<string>>> {

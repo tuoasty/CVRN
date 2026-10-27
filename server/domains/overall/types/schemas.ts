@@ -2,8 +2,10 @@ import { z } from "zod"
 
 const POSITIONS = ['OUT', 'OPP', 'MID', 'SET', 'LIB'] as const
 
-export const SeasonIdSchema = z.object({ seasonId: z.string().uuid() })
-export type SeasonIdInput = z.infer<typeof SeasonIdSchema>
+const SeasonNumber = z.number().int('Season must be a whole number').min(1, 'Season must be at least 1')
+
+export const SeasonNumberSchema = z.object({ seasonNumber: SeasonNumber })
+export type SeasonNumberInput = z.infer<typeof SeasonNumberSchema>
 
 export const WEIGHT_TOTAL = 100
 
@@ -27,27 +29,27 @@ export const OverallScalingSchema = z.object({
     .refine(s => Object.values(s.weights).reduce((sum, w) => sum + w, 0) === WEIGHT_TOTAL, { message: `Weights must add up to ${WEIGHT_TOTAL}` })
 
 export const SaveOverallScalingsSchema = z.object({
-    seasonId: z.string().uuid(),
+    seasonNumber: SeasonNumber,
     scalings: z.array(OverallScalingSchema).min(1).max(POSITIONS.length)
         .refine(list => new Set(list.map(s => s.position)).size === list.length, { message: 'Each position can only appear once' }),
 })
 export type SaveOverallScalingsInput = z.infer<typeof SaveOverallScalingsSchema>
 
 export const CopyOverallScalingsSchema = z.object({
-    seasonId:     z.string().uuid(),
-    fromSeasonId: z.string().uuid(),
-}).refine(v => v.seasonId !== v.fromSeasonId, { message: 'Pick a different season to copy from' })
+    seasonNumber:     SeasonNumber,
+    fromSeasonNumber: SeasonNumber,
+}).refine(v => v.seasonNumber !== v.fromSeasonNumber, { message: 'Pick a different season to copy from' })
 export type CopyOverallScalingsInput = z.infer<typeof CopyOverallScalingsSchema>
 
 export const SetOverallOverrideSchema = z.object({
-    seasonId: z.string().uuid(),
+    seasonNumber: SeasonNumber,
     playerId: z.string().uuid(),
     overall:  z.number().int('Overall must be a whole number').min(1, 'Overall must be at least 1').max(99, 'Overall must be 99 or lower'),
 })
 export type SetOverallOverrideInput = z.infer<typeof SetOverallOverrideSchema>
 
 export const ClearOverallOverrideSchema = z.object({
-    seasonId: z.string().uuid(),
+    seasonNumber: SeasonNumber,
     playerId: z.string().uuid(),
 })
 export type ClearOverallOverrideInput = z.infer<typeof ClearOverallOverrideSchema>

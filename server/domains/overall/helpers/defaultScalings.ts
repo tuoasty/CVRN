@@ -1,6 +1,6 @@
 import { OverallPosition, OverallScaling, OverallScalingSet, CategoryWeights } from '../types'
 
-const BASE = { floor: 45, ceil: 99, curve: 1 }
+const BASE = { floor: 60, ceil: 99, curve: 1 }
 
 const DEFAULT_WEIGHTS: Record<OverallPosition, CategoryWeights> = {
     OUT: { scoring: 20, spiking: 30, setting: 5,  blocking: 10, receiving: 25, serving: 10 },

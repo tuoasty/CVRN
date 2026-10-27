@@ -7,12 +7,12 @@ import { getOverallConfig } from '../queries/getOverallConfig'
 
 export async function setOverallOverride(
     supabase: DBClient,
-    p: { seasonId: string; playerId: string; overall: number },
+    p: { seasonNumber: number; playerId: string; overall: number },
 ): Promise<Result<OverallConfig>> {
     try {
         const saved = await upsertPlayerOverall(supabase, p)
         if (!saved.ok) return saved
-        return getOverallConfig(supabase, p.seasonId)
+        return getOverallConfig(supabase, p.seasonNumber)
     } catch (error) {
         return Err(serializeError(error))
     }

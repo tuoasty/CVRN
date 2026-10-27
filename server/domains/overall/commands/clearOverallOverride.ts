@@ -7,12 +7,12 @@ import { getOverallConfig } from '../queries/getOverallConfig'
 
 export async function clearOverallOverride(
     supabase: DBClient,
-    p: { seasonId: string; playerId: string },
+    p: { seasonNumber: number; playerId: string },
 ): Promise<Result<OverallConfig>> {
     try {
         const deleted = await deletePlayerOverall(supabase, p)
         if (!deleted.ok) return deleted
-        return getOverallConfig(supabase, p.seasonId)
+        return getOverallConfig(supabase, p.seasonNumber)
     } catch (error) {
         return Err(serializeError(error))
     }

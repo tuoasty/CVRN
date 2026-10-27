@@ -17,6 +17,7 @@ export async function findAllGameDatasets(supabase: DBClient): Promise<Result<Ga
 function toSpecOpRow(op: SpecLinkOp): Record<string, string | number | null> {
     if (op.op === 'link') return { op: 'link', game_key: op.gameKey, spec_id: op.specId, name: op.name, height: op.height }
     if (op.op === 'skip' || op.op === 'unskip') return { op: op.op, game_key: op.gameKey }
+    if (op.op === 'custom') return { op: 'custom', game_key: op.gameKey, name: op.name, height: op.height }
     return { op: 'create', game_key: op.gameKey, name: op.name, stars: op.stars, position: op.position, height: op.height }
 }
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
-import type { SpecLinkDecision, SpecLinkItem, SpecLinkPlan } from '@/server/domains/gameData/types/specLinks'
+import { isLeagueLinkSpec, type SpecLinkDecision, type SpecLinkItem, type SpecLinkPlan } from '@/server/domains/gameData/types/specLinks'
 import { cn } from '@/lib/utils'
 import SpecPickRow from './SpecPickRow'
 
@@ -62,7 +62,7 @@ export default function SpecLinkSections({ plan, decisions, onDecide, restored, 
     const specById = useMemo(() => new Map(plan.specs.map(s => [s.id, s])), [plan.specs])
     const linkable = useMemo(() => {
         const keys = new Set(plan.items.map(i => i.gameKey))
-        return plan.specs.filter(s => s.game_key === null || !keys.has(s.game_key))
+        return plan.specs.filter(isLeagueLinkSpec).filter(s => s.game_key === null || !keys.has(s.game_key))
     }, [plan])
     const claims = useMemo(() => {
         const owners = new Map<string, string>()

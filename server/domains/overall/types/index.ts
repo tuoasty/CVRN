@@ -24,6 +24,7 @@ export interface OverallInputRow {
     username: string
     displayName: string | null
     avatarUrl: string | null
+    regionCode: string | null
     teamId: string | null
     teamName: string | null
     teamLogoUrl: string | null
@@ -50,14 +51,14 @@ export interface ComputedOverall {
 
 export {
     WEIGHT_TOTAL,
-    SeasonIdSchema,
+    SeasonNumberSchema,
     SaveOverallScalingsSchema,
     CopyOverallScalingsSchema,
     SetOverallOverrideSchema,
     ClearOverallOverrideSchema,
 } from './schemas'
 export type {
-    SeasonIdInput,
+    SeasonNumberInput,
     SaveOverallScalingsInput,
     CopyOverallScalingsInput,
     SetOverallOverrideInput,

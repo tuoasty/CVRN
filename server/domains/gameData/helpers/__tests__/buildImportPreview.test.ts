@@ -152,7 +152,7 @@ describe('buildImportPreview spec links', () => {
 
     it('proposes exact matches against DB specs', () => {
         const parsed = buildImportPreview(fixture('spec-loadouts.txt'), {}, undefined, [
-            { id: 'a', name: 'Wilfredo León', stars: 5, position: 'OUT', height: 79, game_key: null },
+            { id: 'a', name: 'Wilfredo León', stars: 5, position: 'OUT', height: 79, game_key: null, is_custom: false },
         ])
         if (parsed.status !== 'ok') throw new Error('parse')
         expect(parsed.specLinks?.items.find(i => i.gameKey === 'Wilfredo Leon')).toMatchObject({ status: 'exact', specId: 'a', height: 79 })

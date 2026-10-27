@@ -19,7 +19,7 @@ export default function SpecLoadoutBrowser() {
     const [openVaulted, setOpenVaulted] = useState<ReadonlySet<string>>(() => {
         const key = searchParams.get('spec')
         const spec = key ? specByGameKey.get(key) : undefined
-        return spec?.is_vaulted ? new Set([positionShortLabel(spec.position)]) : new Set()
+        return spec?.is_vaulted && spec.position ? new Set([positionShortLabel(spec.position)]) : new Set()
     })
 
     const groups = useMemo(() => groupLoadouts(loadouts, specByGameKey, skipped, filter), [loadouts, specByGameKey, skipped, filter])

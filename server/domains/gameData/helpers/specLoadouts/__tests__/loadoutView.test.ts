@@ -30,6 +30,16 @@ describe('groupLoadouts', () => {
         expect(groups[0].rows.map(r => r.label)).toEqual(['Earvin Ngapeth', 'TJ Defalco', 'Wilfredo León'])
     })
 
+    it('groups custom specs under Custom after the positions and before Not linked', () => {
+        const withCustom = new Map<string, { name: string; stars: number | null; position: string | null; is_vaulted?: boolean; is_custom?: boolean }>([
+            ...linked,
+            ['Austin', { name: 'Austin', stars: null, position: null, is_custom: true }],
+        ])
+        const groups = groupLoadouts(loadouts, withCustom, new Set(), '')
+        expect(groups.map(g => g.label)).toEqual(['Outside', 'Opposite', 'Custom', 'Not linked'])
+        expect(groups[2].rows).toEqual([{ gameKey: 'Austin', label: 'Austin', stars: null, state: 'linked', vaulted: false }])
+    })
+
     it('keeps a linked spec out of skipped', () => {
         const groups = groupLoadouts(loadouts, linked, new Set(['Wilfredo Leon']), '')
         expect(groups.find(g => g.label === 'Skipped')).toBeUndefined()

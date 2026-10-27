@@ -4,10 +4,10 @@ import { nameDistance } from '../nameDistance'
 import type { SpecLoadout } from '../../../types/datasets'
 
 const specs: LinkSpec[] = [
-    { id: 'a', name: 'Wilfredo León', stars: 5, position: 'OUT', height: 79, game_key: null },
-    { id: 'b', name: 'TJ Defalco', stars: 4, position: 'OUT', height: 77, game_key: null },
-    { id: 'c', name: 'Earvin Ngapeth', stars: 5, position: 'OUT', height: 76, game_key: 'Earvin Ngapeth' },
-    { id: 'd', name: 'Old Spec', stars: 3, position: 'MID', height: 80, game_key: 'Gone Spec' },
+    { id: 'a', name: 'Wilfredo León', stars: 5, position: 'OUT', height: 79, game_key: null, is_custom: false },
+    { id: 'b', name: 'TJ Defalco', stars: 4, position: 'OUT', height: 77, game_key: null, is_custom: false },
+    { id: 'c', name: 'Earvin Ngapeth', stars: 5, position: 'OUT', height: 76, game_key: 'Earvin Ngapeth', is_custom: false },
+    { id: 'd', name: 'Old Spec', stars: 3, position: 'MID', height: 80, game_key: 'Gone Spec', is_custom: false },
 ]
 
 const loadout = (key: string, height: number): SpecLoadout => ({
@@ -139,12 +139,48 @@ describe('planSpecOps', () => {
 
     it('refuses a rename to a taken name', () => {
         const pool: LinkSpec[] = [
-            { id: 'd', name: 'Old Spec', stars: 3, position: 'MID', height: 80, game_key: null },
-            { id: 'e', name: 'Spare', stars: 3, position: 'LIB', height: 70, game_key: null },
+            { id: 'd', name: 'Old Spec', stars: 3, position: 'MID', height: 80, game_key: null, is_custom: false },
+            { id: 'e', name: 'Spare', stars: 3, position: 'LIB', height: 70, game_key: null, is_custom: false },
         ]
         const plan = buildSpecLinkPlan([loadout('Old Spec', 1.2)], pool)
         expect(plan.items[0]).toMatchObject({ status: 'exact', specId: 'd' })
         const result = planSpecOps(plan, [{ gameKey: 'Old Spec', action: 'link', specId: 'e', rename: true }], pool)
         expect(result).toEqual({ ok: false, error: ['Old Spec: Name "Old Spec" is already used by another spec'] })
+    })
+})
+
+describe('custom specs', () => {
+    const featherfall: LinkSpec = { id: 'e', name: 'Featherfall', stars: null, position: null, height: 50, game_key: 'Featherfall', is_custom: true }
+    const withCustom: LinkSpec[] = [...specs, featherfall]
+
+    it('never offers custom specs as candidates or exact matches', () => {
+        const loose: LinkSpec[] = [...specs, { id: 'f', name: 'Nova', stars: null, position: null, height: 72, game_key: null, is_custom: true }]
+        const plan = buildSpecLinkPlan([loadout('Nova', 1.2)], loose)
+        expect(plan.items[0].status).toBe('ambiguous')
+        expect(plan.items[0].candidates.map(c => c.specId)).not.toContain('f')
+    })
+
+    it('plans a custom op from a custom decision', () => {
+        const plan = buildSpecLinkPlan([loadout('Blitz', 1.3)], specs)
+        const result = planSpecOps(plan, [{ gameKey: 'Blitz', action: 'custom' }], specs)
+        expect(result).toEqual({ ok: true, value: { ops: [{ op: 'custom', gameKey: 'Blitz', name: 'Blitz', height: plan.items[0].height }], heightChanges: [], undecided: [] } })
+    })
+
+    it('unskips then customs a skipped loadout', () => {
+        const plan = buildSpecLinkPlan([loadout('Blitz', 1.3)], specs, new Set(['Blitz']))
+        const result = planSpecOps(plan, [{ gameKey: 'Blitz', action: 'custom' }], specs)
+        expect(result.ok && result.value.ops.map(o => o.op)).toEqual(['unskip', 'custom'])
+    })
+
+    it('refuses a custom name already used by another spec', () => {
+        const plan = buildSpecLinkPlan([loadout('TJ Defalco', 1.3)], specs)
+        expect(planSpecOps(plan, [{ gameKey: 'TJ Defalco', action: 'custom' }], specs)).toEqual({ ok: false, error: ['TJ Defalco: Name "TJ Defalco" is already used by another spec'] })
+    })
+
+    it('keeps a linked custom spec linked and carries height changes', () => {
+        const plan = buildSpecLinkPlan([loadout('Featherfall', 1.4)], withCustom)
+        expect(plan.items[0]).toMatchObject({ status: 'linked', specId: 'e' })
+        const result = planSpecOps(plan, [], withCustom)
+        expect(result.ok && result.value.ops[0]).toMatchObject({ op: 'link', gameKey: 'Featherfall', specId: 'e', name: null })
     })
 })

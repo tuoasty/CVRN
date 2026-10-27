@@ -26,7 +26,7 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
         setOpen(false);
     }, [pathname]);
 
-    const showRegionSeasonSelector = !pathname.startsWith("/admin/teams") && pathname !== "/admin/specs";
+    const showRegionSeasonSelector = !pathname.startsWith("/admin/teams") && pathname !== "/admin/specs" && pathname !== "/admin/overalls";
 
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-card">

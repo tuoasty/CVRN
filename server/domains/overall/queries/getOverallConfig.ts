@@ -1,15 +1,15 @@
 import { Err, Ok, Result } from '@/shared/types/result'
 import { DBClient } from '@/shared/types/db'
 import { serializeError } from '@/server/utils/serializeableError'
-import { findOverallScalingsBySeason, findPlayerOverallsBySeason } from '@/server/db/overall.repo'
+import { findOverallScalingsBySeasonNumber, findPlayerOverallsBySeasonNumber } from '@/server/db/overall.repo'
 import { OverallConfig } from '../types'
 import { toOverallConfig } from '../helpers/toOverallShapes'
 
-export async function getOverallConfig(supabase: DBClient, seasonId: string): Promise<Result<OverallConfig>> {
+export async function getOverallConfig(supabase: DBClient, seasonNumber: number): Promise<Result<OverallConfig>> {
     try {
         const [scalings, overrides] = await Promise.all([
-            findOverallScalingsBySeason(supabase, seasonId),
-            findPlayerOverallsBySeason(supabase, seasonId),
+            findOverallScalingsBySeasonNumber(supabase, seasonNumber),
+            findPlayerOverallsBySeasonNumber(supabase, seasonNumber),
         ])
         if (!scalings.ok) return scalings
         if (!overrides.ok) return overrides

@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils'
 import NumberField, { CEIL_RANGE, CURVE_RANGE, FLOOR_RANGE, ScrubLabel, WEIGHT_RANGE } from './NumberField'
 import { CATEGORY_COLUMNS } from './overallRows'
 
-export type CopySource = { id: string; name: string; regionCode: string }
 
 type Props = {
     mode: OverallPosition | 'ALL'
@@ -20,12 +19,12 @@ type Props = {
     errors: string[]
     saving: boolean
     copying: boolean
-    copySources: CopySource[]
+    copySources: number[]
     onChange: (scaling: OverallScaling) => void
     onSelectPosition: (position: OverallPosition) => void
     onSave: () => void
     onDiscard: () => void
-    onCopy: (source: CopySource) => void
+    onCopy: (seasonNumber: number) => void
 }
 
 const SECTION_LABEL = 'text-xs font-semibold uppercase tracking-wider text-muted-foreground'
@@ -189,13 +188,6 @@ export default function OverallProfileSidebar({
                 ? 'All profiles saved.'
                 : `Saved: ${savedPositions.join(', ')}. Others use defaults.`
 
-    const copyGroups = copySources.reduce<{ regionCode: string; sources: CopySource[] }[]>((groups, source) => {
-        const last = groups[groups.length - 1]
-        if (last && last.regionCode === source.regionCode) last.sources.push(source)
-        else groups.push({ regionCode: source.regionCode, sources: [source] })
-        return groups
-    }, [])
-
     return (
         <aside className="shrink-0 lg:sticky lg:top-6 lg:w-[23rem]" aria-label="Overall profiles">
             {mode === 'ALL' ? (
@@ -232,22 +224,17 @@ export default function OverallProfileSidebar({
                     </button>
                 )}
                 {copyOpen && (
-                    <div className="w-full space-y-1 text-xs">
-                        {copyGroups.map(group => (
-                            <div key={group.regionCode} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                                <span className="w-7 shrink-0 font-semibold text-foreground">{group.regionCode}</span>
-                                {group.sources.map(s => (
-                                    <button
-                                        key={s.id}
-                                        type="button"
-                                        disabled={copying || saving}
-                                        onClick={() => onCopy(s)}
-                                        className={LINK}
-                                    >
-                                        {s.name}
-                                    </button>
-                                ))}
-                            </div>
+                    <div className="flex w-full flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
+                        {copySources.map(n => (
+                            <button
+                                key={n}
+                                type="button"
+                                disabled={copying || saving}
+                                onClick={() => onCopy(n)}
+                                className={LINK}
+                            >
+                                Season {n}
+                            </button>
                         ))}
                     </div>
                 )}

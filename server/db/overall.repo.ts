@@ -2,26 +2,26 @@ import { DBClient, OverallScalingInsert, OverallScalingRow, PlayerOverallRow, Se
 import { Err, Ok, Result } from '@/shared/types/result'
 import { serializeError } from '@/server/utils/serializeableError'
 
-export async function findSeasonOverallInputs(supabase: DBClient, seasonId: string): Promise<Result<SeasonOverallInputRow[]>> {
-    const { data, error } = await supabase.rpc('get_season_overall_inputs', { p_season_id: seasonId })
+export async function findSeasonOverallInputs(supabase: DBClient, seasonNumber: number): Promise<Result<SeasonOverallInputRow[]>> {
+    const { data, error } = await supabase.rpc('get_overall_inputs', { p_season_number: seasonNumber })
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok((data ?? []) as SeasonOverallInputRow[])
 }
 
-export async function findOverallScalingsBySeason(supabase: DBClient, seasonId: string): Promise<Result<OverallScalingRow[]>> {
+export async function findOverallScalingsBySeasonNumber(supabase: DBClient, seasonNumber: number): Promise<Result<OverallScalingRow[]>> {
     const { data, error } = await supabase
         .from('overall_scalings')
         .select('*')
-        .eq('season_id', seasonId)
+        .eq('season_number', seasonNumber)
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok((data ?? []) as OverallScalingRow[])
 }
 
-export async function findPlayerOverallsBySeason(supabase: DBClient, seasonId: string): Promise<Result<PlayerOverallRow[]>> {
+export async function findPlayerOverallsBySeasonNumber(supabase: DBClient, seasonNumber: number): Promise<Result<PlayerOverallRow[]>> {
     const { data, error } = await supabase
         .from('player_overalls')
         .select('*')
-        .eq('season_id', seasonId)
+        .eq('season_number', seasonNumber)
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok((data ?? []) as PlayerOverallRow[])
 }
@@ -29,28 +29,28 @@ export async function findPlayerOverallsBySeason(supabase: DBClient, seasonId: s
 export async function upsertOverallScalingRows(supabase: DBClient, rows: OverallScalingInsert[]): Promise<Result<OverallScalingRow[]>> {
     const { data, error } = await supabase
         .from('overall_scalings')
-        .upsert(rows, { onConflict: 'season_id,position' })
+        .upsert(rows, { onConflict: 'season_number,position' })
         .select('*')
     if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
     return Ok((data ?? []) as OverallScalingRow[])
 }
 
-export async function upsertPlayerOverall(supabase: DBClient, p: { seasonId: string; playerId: string; overall: number }): Promise<Result<true>> {
+export async function upsertPlayerOverall(supabase: DBClient, p: { seasonNumber: number; playerId: string; overall: number }): Promise<Result<true>> {
     const { error } = await supabase
         .from('player_overalls')
         .upsert(
-            { season_id: p.seasonId, player_id: p.playerId, overall: p.overall, updated_at: new Date().toISOString() },
-            { onConflict: 'player_id,season_id' },
+            { season_number: p.seasonNumber, player_id: p.playerId, overall: p.overall, updated_at: new Date().toISOString() },
+            { onConflict: 'player_id,season_number' },
         )
     if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
     return Ok(true)
 }
 
-export async function deletePlayerOverall(supabase: DBClient, p: { seasonId: string; playerId: string }): Promise<Result<true>> {
+export async function deletePlayerOverall(supabase: DBClient, p: { seasonNumber: number; playerId: string }): Promise<Result<true>> {
     const { error } = await supabase
         .from('player_overalls')
         .delete()
-        .eq('season_id', p.seasonId)
+        .eq('season_number', p.seasonNumber)
         .eq('player_id', p.playerId)
     if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
     return Ok(true)

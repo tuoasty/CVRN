@@ -20,6 +20,7 @@ export function toOverallInputRow(row: SeasonOverallInputRow): OverallInputRow {
         username: row.username,
         displayName: row.display_name ?? null,
         avatarUrl: row.avatar_url ?? null,
+        regionCode: row.region_code ?? null,
         teamId: row.team_id ?? null,
         teamName: row.team_name ?? null,
         teamLogoUrl: row.team_logo_url ?? null,
@@ -67,9 +68,9 @@ export function toOverallConfig(scalingRows: OverallScalingRow[], overrideRows: 
     return { scalings, savedPositions, overrides }
 }
 
-export function toOverallScalingInsert(seasonId: string, scaling: OverallScaling): OverallScalingInsert {
+export function toOverallScalingInsert(seasonNumber: number, scaling: OverallScaling): OverallScalingInsert {
     return {
-        season_id: seasonId,
+        season_number: seasonNumber,
         position: scaling.position,
         w_scoring: scaling.weights.scoring,
         w_spiking: scaling.weights.spiking,
@@ -84,7 +85,7 @@ export function toOverallScalingInsert(seasonId: string, scaling: OverallScaling
     }
 }
 
-export function withSeasonId(row: OverallScalingRow, seasonId: string): OverallScalingInsert {
+export function withSeasonNumber(row: OverallScalingRow, seasonNumber: number): OverallScalingInsert {
     const { id: _id, created_at: _created, ...rest } = row
-    return { ...rest, season_id: seasonId, updated_at: new Date().toISOString() }
+    return { ...rest, season_number: seasonNumber, updated_at: new Date().toISOString() }
 }

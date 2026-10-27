@@ -15,6 +15,7 @@ const POSITION_CODES = POSITIONS.map(p => p.code) as [PositionCode, ...PositionC
 export const SpecLinkDecisionSchema = z.discriminatedUnion('action', [
     z.object({ gameKey: z.string().min(1).max(200), action: z.literal('link'), specId: z.string().uuid(), rename: z.boolean() }),
     z.object({ gameKey: z.string().min(1).max(200), action: z.literal('create'), stars: z.union(SPEC_STARS.map(s => z.literal(s)) as [z.ZodLiteral<3>, z.ZodLiteral<4>, z.ZodLiteral<5>]), position: z.enum(POSITION_CODES) }),
+    z.object({ gameKey: z.string().min(1).max(200), action: z.literal('custom') }),
     z.object({ gameKey: z.string().min(1).max(200), action: z.literal('leave') }),
     z.object({ gameKey: z.string().min(1).max(200), action: z.literal('skip') }),
 ])

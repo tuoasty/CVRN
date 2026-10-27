@@ -1,7 +1,7 @@
 import type { Result } from '@/shared/types/result'
 import { gameHeightToInches } from '@/shared/utils/height'
 import type { SpecLoadout } from '../../types/datasets'
-import type { LinkSpec, SpecCandidate, SpecLinkDecision, SpecLinkItem, SpecLinkOp, SpecLinkPlan, SpecOpsPlan, HeightChange } from '../../types/specLinks'
+import { isLeagueLinkSpec, type HeightChange, type LeagueLinkSpec, type LinkSpec, type SpecCandidate, type SpecLinkDecision, type SpecLinkItem, type SpecLinkOp, type SpecLinkPlan, type SpecOpsPlan } from '../../types/specLinks'
 import { nameDistance, normalizeSpecName } from './nameDistance'
 
 export type { LinkSpec } from '../../types/specLinks'
@@ -9,7 +9,7 @@ export { normalizeSpecName } from './nameDistance'
 
 const CANDIDATE_LIMIT = 5
 
-const toCandidate = (spec: LinkSpec): SpecCandidate => ({ specId: spec.id, name: spec.name, stars: spec.stars, position: spec.position, height: spec.height })
+const toCandidate = (spec: LeagueLinkSpec): SpecCandidate => ({ specId: spec.id, name: spec.name, stars: spec.stars, position: spec.position, height: spec.height })
 
 export function buildSpecLinkPlan(loadouts: SpecLoadout[], specs: LinkSpec[], skipped: ReadonlySet<string> = new Set()): SpecLinkPlan {
     const keys = new Set(loadouts.map(l => l.key))
@@ -20,7 +20,7 @@ export function buildSpecLinkPlan(loadouts: SpecLoadout[], specs: LinkSpec[], sk
         const norm = normalizeSpecName(l.name)
         nameCounts.set(norm, (nameCounts.get(norm) ?? 0) + 1)
     }
-    const linkable = specs.filter(s => s.game_key === null || !keys.has(s.game_key))
+    const linkable = specs.filter(isLeagueLinkSpec).filter(s => s.game_key === null || !keys.has(s.game_key))
 
     const items = loadouts.map((l): SpecLinkItem => {
         const base = { gameKey: l.key, gameName: l.name, height: gameHeightToInches(l.height), candidates: [] }
@@ -35,7 +35,7 @@ export function buildSpecLinkPlan(loadouts: SpecLoadout[], specs: LinkSpec[], sk
         if (skipped.has(l.key)) return { ...base, status: 'skipped', candidates }
 
         const norm = normalizeSpecName(l.name)
-        const matches = specs.filter(s => s.game_key === null && normalizeSpecName(s.name) === norm)
+        const matches = specs.filter(s => isLeagueLinkSpec(s) && s.game_key === null && normalizeSpecName(s.name) === norm)
         if (matches.length === 1 && nameCounts.get(norm) === 1) return { ...base, status: 'exact', specId: matches[0].id }
         return { ...base, status: 'ambiguous', candidates }
     })
@@ -93,13 +93,15 @@ export function planSpecOps(plan: SpecLinkPlan, decisions: SpecLinkDecision[], s
         }
         if (decision.action === 'leave') continue
 
-        if (decision.action === 'create') {
+        if (decision.action === 'create' || decision.action === 'custom') {
             if (nameTaken(item.gameName, null)) {
                 errors.push(`${item.gameKey}: Name "${item.gameName}" is already used by another spec`)
                 continue
             }
             plannedNames.set(normalizeSpecName(item.gameName), `new:${item.gameKey}`)
-            ops.push({ op: 'create', gameKey: item.gameKey, name: item.gameName, stars: decision.stars, position: decision.position, height: item.height })
+            ops.push(decision.action === 'create'
+                ? { op: 'create', gameKey: item.gameKey, name: item.gameName, stars: decision.stars, position: decision.position, height: item.height }
+                : { op: 'custom', gameKey: item.gameKey, name: item.gameName, height: item.height })
             continue
         }
 

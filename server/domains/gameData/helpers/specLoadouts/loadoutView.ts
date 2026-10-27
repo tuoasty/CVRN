@@ -29,12 +29,13 @@ const byStarsThenLabel = (a: LoadoutRow, b: LoadoutRow) =>
 
 export function groupLoadouts(
     loadouts: SpecLoadout[],
-    specByGameKey: ReadonlyMap<string, { name: string; stars: number; position: string; is_vaulted?: boolean }>,
+    specByGameKey: ReadonlyMap<string, { name: string; stars: number | null; position: string | null; is_vaulted?: boolean; is_custom?: boolean }>,
     skipped: ReadonlySet<string>,
     filter: string,
 ): LoadoutGroup[] {
     const q = filter.trim().toLowerCase()
     const byPosition = new Map<string, LoadoutRow[]>()
+    const custom: LoadoutRow[] = []
     const unlinked: LoadoutRow[] = []
     const skippedRows: LoadoutRow[] = []
 
@@ -42,7 +43,9 @@ export function groupLoadouts(
         const spec = specByGameKey.get(l.key)
         const label = spec ? spec.name : l.name
         if (q && !label.toLowerCase().includes(q) && !l.key.toLowerCase().includes(q)) continue
-        if (spec) {
+        if (spec && (spec.is_custom || spec.position === null)) {
+            custom.push({ gameKey: l.key, label, stars: null, state: 'linked', vaulted: false })
+        } else if (spec && spec.position !== null) {
             const rows = byPosition.get(spec.position) ?? []
             rows.push({ gameKey: l.key, label, stars: spec.stars, state: 'linked', vaulted: spec.is_vaulted === true })
             byPosition.set(spec.position, rows)
@@ -52,7 +55,7 @@ export function groupLoadouts(
 
     const groups: LoadoutGroup[] = POSITIONS.map(p => ({ label: p.shortLabel, rows: byPosition.get(p.code) ?? [] }))
     for (const [code, rows] of byPosition) if (!POSITIONS.some(p => p.code === code)) groups.push({ label: code, rows })
-    groups.push({ label: 'Not linked', rows: unlinked }, { label: 'Skipped', rows: skippedRows })
+    groups.push({ label: 'Custom', rows: custom }, { label: 'Not linked', rows: unlinked }, { label: 'Skipped', rows: skippedRows })
     return groups.filter(g => g.rows.length > 0).map(g => ({ ...g, rows: [...g.rows].sort(byStarsThenLabel) }))
 }
 
