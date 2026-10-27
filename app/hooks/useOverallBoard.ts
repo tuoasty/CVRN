@@ -1,5 +1,11 @@
 import useSWR, { mutate as globalMutate } from 'swr'
-import { copyOverallScalingsAction, getOverallBoardAction, saveOverallScalingsAction } from '@/app/actions/overall.actions'
+import {
+    clearOverallOverrideAction,
+    copyOverallScalingsAction,
+    getOverallBoardAction,
+    saveOverallScalingsAction,
+    setOverallOverrideAction,
+} from '@/app/actions/overall.actions'
 import type { OverallBoard, OverallConfig, OverallScaling } from '@/server/domains/overall'
 import type { Result } from '@/shared/types/result'
 
@@ -39,4 +45,40 @@ export async function saveOverallScalings(seasonId: string, scalings: OverallSca
 
 export async function copyOverallScalings(seasonId: string, fromSeasonId: string) {
     return applyConfig(seasonId, await copyOverallScalingsAction({ seasonId, fromSeasonId }))
+}
+
+async function withOptimisticOverride(
+    seasonId: string,
+    playerId: string,
+    overall: number | null,
+    run: () => Promise<Result<OverallConfig>>,
+): Promise<Result<OverallConfig>> {
+    const key = overallBoardKey(seasonId)
+    let previous: OverallBoard | undefined
+    await globalMutate(
+        key,
+        (board: OverallBoard | undefined) => {
+            previous = board
+            if (!board) return board
+            const overrides = { ...board.config.overrides }
+            if (overall === null) delete overrides[playerId]
+            else overrides[playerId] = overall
+            return { ...board, config: { ...board.config, overrides } }
+        },
+        { revalidate: false },
+    )
+    const result = await run()
+    if (!result.ok) {
+        await globalMutate(key, previous, { revalidate: false })
+        return result
+    }
+    return applyConfig(seasonId, result)
+}
+
+export async function setOverallOverride(seasonId: string, playerId: string, overall: number) {
+    return withOptimisticOverride(seasonId, playerId, overall, () => setOverallOverrideAction({ seasonId, playerId, overall }))
+}
+
+export async function clearOverallOverride(seasonId: string, playerId: string) {
+    return withOptimisticOverride(seasonId, playerId, null, () => clearOverallOverrideAction({ seasonId, playerId }))
 }

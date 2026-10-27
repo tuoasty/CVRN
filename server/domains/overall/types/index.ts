@@ -48,5 +48,17 @@ export interface ComputedOverall {
     attributes: CategoryRatings
 }
 
-export { SeasonIdSchema, SaveOverallScalingsSchema, CopyOverallScalingsSchema } from './schemas'
-export type { SeasonIdInput, SaveOverallScalingsInput, CopyOverallScalingsInput } from './schemas'
+export {
+    SeasonIdSchema,
+    SaveOverallScalingsSchema,
+    CopyOverallScalingsSchema,
+    SetOverallOverrideSchema,
+    ClearOverallOverrideSchema,
+} from './schemas'
+export type {
+    SeasonIdInput,
+    SaveOverallScalingsInput,
+    CopyOverallScalingsInput,
+    SetOverallOverrideInput,
+    ClearOverallOverrideInput,
+} from './schemas'

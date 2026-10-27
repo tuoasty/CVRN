@@ -9,7 +9,7 @@ import type { OverallCategory, OverallPosition, OverallScaling, OverallScalingSe
 import { cn } from '@/lib/utils'
 import { CATEGORY_COLUMNS } from './overallRows'
 
-type CopySource = { id: string; name: string }
+type CopySource = { id: string; name: string; regionCode: string }
 
 type Props = {
     scalings: OverallScalingSet
@@ -78,6 +78,13 @@ export default function OverallScalingsTray({
 
     const setWeight = (category: OverallCategory, n: number) =>
         onChange({ ...scaling, weights: { ...scaling.weights, [category]: n } })
+
+    const copyGroups = copySources.reduce<{ regionCode: string; sources: CopySource[] }[]>((groups, source) => {
+        const last = groups[groups.length - 1]
+        if (last && last.regionCode === source.regionCode) last.sources.push(source)
+        else groups.push({ regionCode: source.regionCode, sources: [source] })
+        return groups
+    }, [])
 
     const status = dirty
         ? 'Unsaved changes. The board is previewing them.'
@@ -148,25 +155,30 @@ export default function OverallScalingsTray({
                 </ul>
             )}
 
+            {copyGroups.length > 0 && (
+                <div className="border-t border-border pt-3 space-y-1.5 text-xs">
+                    <span className="block font-semibold uppercase tracking-wider text-muted-foreground">Copy from</span>
+                    {copyGroups.map(group => (
+                        <div key={group.regionCode} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span className="w-7 shrink-0 font-semibold text-foreground">{group.regionCode}</span>
+                            {group.sources.map(s => (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    disabled={copying || saving}
+                                    onClick={() => onCopy(s)}
+                                    className="text-primary hover:underline underline-offset-4 disabled:opacity-40 rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                >
+                                    {s.name}
+                                </button>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border pt-3">
                 <span className={cn('text-xs', dirty ? 'text-foreground font-medium' : 'text-muted-foreground')}>{status}</span>
-
-                {copySources.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                        <span className="text-muted-foreground">Copy from</span>
-                        {copySources.map(s => (
-                            <button
-                                key={s.id}
-                                type="button"
-                                disabled={copying || saving}
-                                onClick={() => onCopy(s)}
-                                className="text-primary hover:underline underline-offset-4 disabled:opacity-40 rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                            >
-                                {s.name}
-                            </button>
-                        ))}
-                    </div>
-                )}
 
                 <div className="ml-auto flex items-center gap-2">
                     <Button variant="ghost" size="sm" className="rounded-sm" disabled={!dirty || saving} onClick={onDiscard}>

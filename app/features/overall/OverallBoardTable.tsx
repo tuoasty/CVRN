@@ -1,13 +1,19 @@
 "use client"
 
+import { useState } from 'react'
 import Image from 'next/image'
-import { ArrowDown, ArrowUp } from 'lucide-react'
+import { ArrowDown, ArrowUp, PenLine, RotateCcw } from 'lucide-react'
 import { DefaultTeamLogo } from '@/app/components/ui/DefaultTeamLogo'
 import { getLogoClassName } from '@/app/lib/logoClass'
 import { cn } from '@/lib/utils'
 import { CATEGORY_COLUMNS, OverallDisplayRow, OverallSortKey } from './overallRows'
 
-type Props = {
+type OverrideHandlers = {
+    onOverride: (row: OverallDisplayRow, overall: number) => void
+    onClearOverride: (row: OverallDisplayRow) => void
+}
+
+type Props = OverrideHandlers & {
     ranked: { row: OverallDisplayRow; rank: number }[]
     sort: OverallSortKey
     desc: boolean
@@ -42,7 +48,7 @@ function SortHeader({ label, title, sortKey, sort, desc, onSort, className }: {
     )
 }
 
-export default function OverallBoardTable({ ranked, sort, desc, onSort }: Props) {
+export default function OverallBoardTable({ ranked, sort, desc, onSort, onOverride, onClearOverride }: Props) {
     const headerProps = { sort, desc, onSort }
     return (
         <div className="panel overflow-x-auto">
@@ -54,7 +60,7 @@ export default function OverallBoardTable({ ranked, sort, desc, onSort }: Props)
                         <th>Team</th>
                         <th className="w-14">Pos</th>
                         <SortHeader label="Sets" title="Sets played (all regions, this season number)" sortKey="sets" {...headerProps} className="w-16" />
-                        <SortHeader label="OVR" title="Overall" sortKey="ovr" {...headerProps} className="w-16" />
+                        <SortHeader label="OVR" title="Overall. Click a value to override it." sortKey="ovr" {...headerProps} className="w-32" />
                         {CATEGORY_COLUMNS.map(col => (
                             <SortHeader key={col.key} label={col.label} title={col.title} sortKey={col.key} {...headerProps} className="w-14" />
                         ))}
@@ -62,7 +68,14 @@ export default function OverallBoardTable({ ranked, sort, desc, onSort }: Props)
                 </thead>
                 <tbody>
                     {ranked.map(({ row, rank }) => (
-                        <OverallRow key={row.playerId} row={row} rank={rank} sort={sort} />
+                        <OverallRow
+                            key={row.playerId}
+                            row={row}
+                            rank={rank}
+                            sort={sort}
+                            onOverride={onOverride}
+                            onClearOverride={onClearOverride}
+                        />
                     ))}
                 </tbody>
             </table>
@@ -70,7 +83,81 @@ export default function OverallBoardTable({ ranked, sort, desc, onSort }: Props)
     )
 }
 
-function OverallRow({ row, rank, sort }: { row: OverallDisplayRow; rank: number; sort: OverallSortKey }) {
+function OvrCell({ row, onOverride, onClearOverride }: OverrideHandlers & { row: OverallDisplayRow }) {
+    const [editing, setEditing] = useState(false)
+    const [text, setText] = useState('')
+    const overridden = row.overrideOvr !== null
+
+    const startEdit = () => {
+        setText(String(row.ovr))
+        setEditing(true)
+    }
+
+    const commit = () => {
+        const n = Number(text)
+        setEditing(false)
+        if (!Number.isInteger(n) || n < 1 || n > 99 || n === row.ovr) return
+        onOverride(row, n)
+    }
+
+    if (editing) {
+        return (
+            <input
+                autoFocus
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={99}
+                step={1}
+                value={text}
+                aria-label={`Override overall for ${row.username}`}
+                onChange={e => setText(e.target.value)}
+                onKeyDown={e => {
+                    if (e.key === 'Enter') commit()
+                    if (e.key === 'Escape') setEditing(false)
+                }}
+                onBlur={() => setEditing(false)}
+                className="w-14 h-8 rounded-sm border border-input bg-background px-1.5 text-right font-mono tabular-nums text-base font-semibold focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            />
+        )
+    }
+
+    return (
+        <div className="inline-flex items-center justify-end gap-1.5">
+            {overridden && (
+                <>
+                    <button
+                        type="button"
+                        title="Revert to computed"
+                        aria-label={`Revert ${row.username} to computed overall`}
+                        onClick={() => onClearOverride(row)}
+                        className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="font-mono tabular-nums text-xs text-muted-foreground" title={`Computed ${row.computedOvr}`}>
+                        {row.computedOvr}
+                    </span>
+                </>
+            )}
+            <button
+                type="button"
+                title={overridden ? `Overridden (computed ${row.computedOvr}). Click to edit.` : 'Click to override'}
+                onClick={startEdit}
+                className="inline-flex items-center gap-1 rounded-sm px-1 -mx-1 hover:bg-muted/60 focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            >
+                {overridden && <PenLine className="h-3 w-3 text-foreground" aria-label="Overridden" />}
+                <span className="font-mono tabular-nums text-base font-semibold text-foreground">{row.ovr}</span>
+            </button>
+        </div>
+    )
+}
+
+function OverallRow({ row, rank, sort, onOverride, onClearOverride }: OverrideHandlers & {
+    row: OverallDisplayRow
+    rank: number
+    sort: OverallSortKey
+}) {
     const hasDistinctDisplayName = !!row.displayName && row.displayName !== row.username
     return (
         <tr>
@@ -104,7 +191,9 @@ function OverallRow({ row, rank, sort }: { row: OverallDisplayRow; rank: number;
             <td className={cn('text-right font-mono tabular-nums', sort === 'sets' ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
                 {row.setsPlayed}
             </td>
-            <td className="text-right font-mono tabular-nums text-base font-semibold text-foreground">{row.ovr}</td>
+            <td className="text-right">
+                <OvrCell row={row} onOverride={onOverride} onClearOverride={onClearOverride} />
+            </td>
             {CATEGORY_COLUMNS.map(col => (
                 <td
                     key={col.key}

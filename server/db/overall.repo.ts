@@ -34,3 +34,24 @@ export async function upsertOverallScalingRows(supabase: DBClient, rows: Overall
     if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
     return Ok((data ?? []) as OverallScalingRow[])
 }
+
+export async function upsertPlayerOverall(supabase: DBClient, p: { seasonId: string; playerId: string; overall: number }): Promise<Result<true>> {
+    const { error } = await supabase
+        .from('player_overalls')
+        .upsert(
+            { season_id: p.seasonId, player_id: p.playerId, overall: p.overall, updated_at: new Date().toISOString() },
+            { onConflict: 'player_id,season_id' },
+        )
+    if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
+    return Ok(true)
+}
+
+export async function deletePlayerOverall(supabase: DBClient, p: { seasonId: string; playerId: string }): Promise<Result<true>> {
+    const { error } = await supabase
+        .from('player_overalls')
+        .delete()
+        .eq('season_id', p.seasonId)
+        .eq('player_id', p.playerId)
+    if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
+    return Ok(true)
+}

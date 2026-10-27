@@ -5,8 +5,16 @@ import { Gauge, Search, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { useAdminContextStore } from '@/app/stores/adminContextStore'
-import { copyOverallScalings, saveOverallScalings, useOverallBoard } from '@/app/hooks/useOverallBoard'
+import {
+    clearOverallOverride,
+    copyOverallScalings,
+    saveOverallScalings,
+    setOverallOverride,
+    useOverallBoard,
+} from '@/app/hooks/useOverallBoard'
 import { useSeasons } from '@/app/hooks/useSeasons'
+import { useRegions } from '@/app/hooks/useRegions'
+import { REGION_ORDER } from '@/shared/volleyball/regions'
 import { OVERALL_POSITIONS, SaveOverallScalingsSchema } from '@/server/domains/overall/types'
 import type { OverallPosition, OverallScaling, OverallScalingSet } from '@/server/domains/overall'
 import OverallBoardTable from '@/app/features/overall/OverallBoardTable'
@@ -16,6 +24,7 @@ import { toast } from '@/app/utils/toast'
 import {
     buildOverallRows,
     matchesOverallFilters,
+    OverallDisplayRow,
     OverallSortKey,
     rankOverallRows,
     sortOverallRows,
@@ -25,7 +34,12 @@ import { cn } from '@/lib/utils'
 type PositionFilter = OverallPosition | 'ALL'
 const POSITION_FILTERS: PositionFilter[] = ['ALL', ...OVERALL_POSITIONS]
 
-type CopySource = { id: string; name: string }
+type CopySource = { id: string; name: string; regionCode: string }
+
+const regionRank = (code: string) => {
+    const i = (REGION_ORDER as readonly string[]).indexOf(code)
+    return i === -1 ? REGION_ORDER.length : i
+}
 
 const toList = (set: OverallScalingSet): OverallScaling[] => OVERALL_POSITIONS.map(p => set[p])
 
@@ -43,6 +57,7 @@ export default function AdminOverallsPage() {
     const seasonId = useAdminContextStore(s => s.selectedSeasonId)
     const { board, isLoading, error } = useOverallBoard(seasonId)
     const { seasons } = useSeasons()
+    const { regions } = useRegions()
 
     const [position, setPosition] = useState<PositionFilter>('ALL')
     const [q, setQ] = useState('')
@@ -73,13 +88,13 @@ export default function AdminOverallsPage() {
     const errors = useMemo(() => (seasonId && scalings ? validationErrors(seasonId, scalings) : []), [seasonId, scalings])
 
     const copySources = useMemo<CopySource[]>(() => {
-        const current = seasons.find(s => s.id === seasonId)
-        if (!current) return []
+        const codeById = new Map(regions.map(r => [r.id, r.code]))
         return seasons
-            .filter(s => s.region_id === current.region_id && s.id !== current.id && s.start_date < current.start_date)
-            .sort((a, b) => b.start_date.localeCompare(a.start_date))
-            .map(s => ({ id: s.id, name: s.name }))
-    }, [seasons, seasonId])
+            .filter(s => s.id !== seasonId)
+            .map(s => ({ id: s.id, name: s.name, regionCode: codeById.get(s.region_id) ?? '?', startDate: s.start_date }))
+            .sort((a, b) => regionRank(a.regionCode) - regionRank(b.regionCode) || b.startDate.localeCompare(a.startDate))
+            .map(({ id, name, regionCode }) => ({ id, name, regionCode }))
+    }, [seasons, regions, seasonId])
 
     const handleScalingChange = (scaling: OverallScaling) => {
         if (!savedScalings) return
@@ -112,11 +127,23 @@ export default function AdminOverallsPage() {
                 return
             }
             setDraft(null)
-            toast.success(`Copied scalings from ${copyTarget.name}`)
+            toast.success(`Copied scalings from ${copyTarget.regionCode} ${copyTarget.name}`)
             setCopyTarget(null)
         } finally {
             setCopying(false)
         }
+    }
+
+    const handleOverride = async (row: OverallDisplayRow, overall: number) => {
+        if (!seasonId) return
+        const result = await setOverallOverride(seasonId, row.playerId, overall)
+        if (!result.ok) toast.error(`Failed to override ${row.username}`, result.error.message)
+    }
+
+    const handleClearOverride = async (row: OverallDisplayRow) => {
+        if (!seasonId) return
+        const result = await clearOverallOverride(seasonId, row.playerId)
+        if (!result.ok) toast.error(`Failed to revert ${row.username}`, result.error.message)
     }
 
     const ranked = useMemo(() => {
@@ -239,7 +266,14 @@ export default function AdminOverallsPage() {
                                 <p className="text-muted-foreground text-sm">No players match these filters.</p>
                             </div>
                         ) : (
-                            <OverallBoardTable ranked={ranked} sort={sort} desc={desc} onSort={handleSort} />
+                            <OverallBoardTable
+                                ranked={ranked}
+                                sort={sort}
+                                desc={desc}
+                                onSort={handleSort}
+                                onOverride={handleOverride}
+                                onClearOverride={handleClearOverride}
+                            />
                         )}
                     </div>
                 )}
@@ -248,7 +282,7 @@ export default function AdminOverallsPage() {
             <ConfirmDialog
                 open={!!copyTarget}
                 title="Copy scalings"
-                description={<>Replace this season&apos;s saved scalings with the ones from <strong>{copyTarget?.name}</strong>? Unsaved edits are discarded.</>}
+                description={<>Replace this season&apos;s saved scalings with the ones from <strong>{copyTarget?.regionCode} {copyTarget?.name}</strong>? Unsaved edits are discarded.</>}
                 cancelLabel="Cancel"
                 confirmLabel={copying ? 'Copying...' : 'Copy'}
                 busy={copying}

@@ -8,9 +8,13 @@ import {
     getOverallConfig,
     saveOverallScalings,
     copyOverallScalings,
+    setOverallOverride,
+    clearOverallOverride,
     SeasonIdSchema,
     SaveOverallScalingsSchema,
     CopyOverallScalingsSchema,
+    SetOverallOverrideSchema,
+    ClearOverallOverrideSchema,
 } from '@/server/domains/overall'
 import type { OverallBoard, OverallConfig } from '@/server/domains/overall'
 import { getCachedSeasonOverallInputs } from '@/server/cache/publicReads'
@@ -55,4 +59,26 @@ export async function copyOverallScalingsAction(input: unknown): Promise<Result<
     if (!guard.ok) return guard
 
     return copyOverallScalings(supabase, parsed.data)
+}
+
+export async function setOverallOverrideAction(input: unknown): Promise<Result<OverallConfig>> {
+    const parsed = SetOverallOverrideSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return setOverallOverride(supabase, parsed.data)
+}
+
+export async function clearOverallOverrideAction(input: unknown): Promise<Result<OverallConfig>> {
+    const parsed = ClearOverallOverrideSchema.safeParse(input)
+    if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return clearOverallOverride(supabase, parsed.data)
 }
