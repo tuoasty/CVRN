@@ -7,10 +7,12 @@ import {
     getCachedPublishedSpecRegions,
     getCachedSeasons,
 } from '@/server/cache/publicReads'
-import { galleryFor, pickRequirementRegion, seasonForRegion, withLoadouts, withSpecSlugs } from '@/server/domains/spec'
+import { customGallery, galleryFor, pickRequirementRegion, seasonForRegion, withLoadouts, withSpecSlugs } from '@/server/domains/spec'
 import { REGION_ORDER } from '@/shared/volleyball/regions'
 import { POSITIONS } from '@/shared/volleyball/positions'
 import SpecRail from '@/app/features/information/specs/SpecRail'
+import SpecDetailGrid from '@/app/features/information/specs/SpecDetailGrid'
+import { CUSTOM_GALLERY } from '@/app/features/information/specs/galleryKey'
 import SpecRequirements, { type SnapshotRegion } from '@/app/features/information/specs/SpecRequirements'
 
 function regionRank(code: string): number {
@@ -47,10 +49,13 @@ function RequirementsSkeleton() {
 
 async function RailSlot() {
     const cards = await loadCards()
-    const galleries = Object.fromEntries(POSITIONS.map(p => {
-        const gallery = galleryFor(cards, p.code)
-        return [p.code, [...gallery.active, ...gallery.vaulted]]
-    }))
+    const galleries = Object.fromEntries([
+        ...POSITIONS.map(p => {
+            const gallery = galleryFor(cards, p.code)
+            return [p.code, [...gallery.active, ...gallery.vaulted]]
+        }),
+        [CUSTOM_GALLERY, customGallery(cards)],
+    ])
     return <SpecRail cards={cards} galleries={galleries} />
 }
 
@@ -78,20 +83,17 @@ async function RequirementsSlot() {
     return <SpecRequirements cards={cards} regions={regions} fallback={initial?.code.toUpperCase() ?? regions[0]?.code ?? ''} />
 }
 
-export default function SpecDetailLayout({ children }: { children: React.ReactNode }) {
+export default async function SpecDetailLayout({ children }: { children: React.ReactNode }) {
+    const cards = await loadCards()
+    const customSlugs = cards.filter(c => c.is_custom).map(c => c.slug)
+
     return (
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-10 min-[900px]:grid-cols-[230px_minmax(0,1fr)] min-[1200px]:grid-cols-[230px_minmax(0,1fr)_330px]">
-            <Suspense fallback={<RailSkeleton />}>
-                <RailSlot />
-            </Suspense>
-
-            <div className="min-w-0">{children}</div>
-
-            <div className="min-[900px]:col-start-2 min-[1200px]:col-start-auto">
-                <Suspense fallback={<RequirementsSkeleton />}>
-                    <RequirementsSlot />
-                </Suspense>
-            </div>
-        </div>
+        <SpecDetailGrid
+            customSlugs={customSlugs}
+            rail={<Suspense fallback={<RailSkeleton />}><RailSlot /></Suspense>}
+            requirements={<Suspense fallback={<RequirementsSkeleton />}><RequirementsSlot /></Suspense>}
+        >
+            {children}
+        </SpecDetailGrid>
     )
 }

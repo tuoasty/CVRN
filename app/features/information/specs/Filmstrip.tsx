@@ -1,29 +1,30 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { formatHeight } from '@/shared/utils/height'
-import { positionShortLabel } from '@/shared/volleyball/positions'
 import SpecPhoto from '@/app/features/spec/SpecPhoto'
 import type { PublicSpecCard } from '@/server/domains/spec'
 import FilmstripScroller from './FilmstripScroller'
 import Stars from './Stars'
+import { galleryHref, galleryLabel, type GalleryKey } from './galleryKey'
 
 const LABEL = 'text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground'
 
 interface Props {
-    position: string
+    group: GalleryKey
     specs: PublicSpecCard[]
     currentId: string
 }
 
-export default function Filmstrip({ position, specs, currentId }: Props) {
-    const back = `/information/specs${position === 'OUT' ? '' : `?pos=${position.toLowerCase()}`}`
+export default function Filmstrip({ group, specs, currentId }: Props) {
+    const back = galleryHref(group)
+    const label = galleryLabel(group)
     const startsVaulted = (i: number) => specs[i].is_vaulted && (i === 0 || !specs[i - 1].is_vaulted)
     const hasVaulted = specs.some(s => s.is_vaulted)
 
     return (
-        <nav aria-label={`${positionShortLabel(position)} specs`}>
+        <nav aria-label={`${label} specs`}>
             <Link href={back} className="mb-3.5 inline-block text-xs text-muted-foreground transition-colors hover:text-foreground">
-                ‹ All {positionShortLabel(position)}
+                ‹ All {label}
             </Link>
 
             <ul className="hidden min-[900px]:block">

@@ -34,11 +34,15 @@ function byStarsThenName(a: PublicSpecCard, b: PublicSpecCard): number {
 }
 
 export function galleryFor(cards: PublicSpecCard[], position: PositionCode): { active: PublicSpecCard[]; vaulted: PublicSpecCard[] } {
-    const inPosition = cards.filter(c => c.position === position)
+    const inPosition = cards.filter(c => !c.is_custom && c.position === position)
     return {
         active: inPosition.filter(c => !c.is_vaulted).sort(byStarsThenName),
         vaulted: inPosition.filter(c => c.is_vaulted).sort(byStarsThenName),
     }
+}
+
+export function customGallery(cards: PublicSpecCard[]): PublicSpecCard[] {
+    return cards.filter(c => c.is_custom).sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export function parseGalleryPosition(raw: string | undefined): PositionCode {

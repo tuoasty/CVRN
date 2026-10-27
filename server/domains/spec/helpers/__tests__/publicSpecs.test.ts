@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Season } from '@/shared/types/db'
 import type { PublicSpecRow } from '@/server/db/specs.repo'
-import { galleryFor, parseGalleryPosition, pickRequirementRegion, seasonForRegion, withSpecSlugs } from '../publicSpecs'
+import { customGallery, galleryFor, parseGalleryPosition, pickRequirementRegion, seasonForRegion, withSpecSlugs } from '../publicSpecs'
 
 function row(patch: Partial<PublicSpecRow>): PublicSpecRow {
     return { id: patch.name ?? 'x', name: 'Spec', stars: 3, position: 'OUT', height: 78, is_vaulted: false, is_custom: false, game_key: null, photo_url: null, created_at: '2026-01-01T00:00:00Z', ...patch }
@@ -124,5 +124,17 @@ describe('seasonForRegion', () => {
 
     it('returns null for a region with no seasons', () => {
         expect(seasonForRegion('as', [season({})])).toBeNull()
+    })
+})
+
+describe('customGallery', () => {
+    it('keeps custom specs out of position galleries and sorts them by name', () => {
+        const cards = withSpecSlugs([
+            row({ id: 'l', name: 'League', position: 'OUT' }),
+            row({ id: 'z', name: 'Zed', position: null, stars: null, is_custom: true }),
+            row({ id: 'b', name: 'Blitz', position: null, stars: null, is_custom: true }),
+        ])
+        expect(galleryFor(cards, 'OUT').active.map(c => c.id)).toEqual(['l'])
+        expect(customGallery(cards).map(c => c.id)).toEqual(['b', 'z'])
     })
 })

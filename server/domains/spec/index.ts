@@ -7,7 +7,7 @@ export {getPlacementBonus} from "./queries/getPlacementBonus";
 export {getSpecWinners} from "./queries/getSpecWinners";
 export {getRecentSpecWinners} from "./queries/getRecentSpecWinners";
 export {winnersForSpec} from "./helpers/recentSpecWinners";
-export {withSpecSlugs, withLoadouts, galleryFor, parseGalleryPosition, pickRequirementRegion, seasonForRegion} from "./helpers/publicSpecs";
+export {withSpecSlugs, withLoadouts, galleryFor, customGallery, parseGalleryPosition, pickRequirementRegion, seasonForRegion} from "./helpers/publicSpecs";
 export type {PublicSpecCard} from "./helpers/publicSpecs";
 export {saveSpecIdentity} from "./commands/saveSpecIdentity";
 export {setSpecVaulted} from "./commands/setSpecVaulted";

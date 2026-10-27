@@ -2,8 +2,8 @@
 
 import { useParams } from 'next/navigation'
 import type { PublicSpecCard } from '@/server/domains/spec'
-import { isPositionCode } from '@/shared/volleyball/positions'
 import Filmstrip from './Filmstrip'
+import { galleryKeyOf } from './galleryKey'
 
 interface Props {
     cards: PublicSpecCard[]
@@ -15,6 +15,6 @@ export default function SpecRail({ cards, galleries }: Props) {
     const card = cards.find(c => c.slug === slug?.toLowerCase())
     if (!card) return null
 
-    const position = card.position && isPositionCode(card.position) ? card.position : 'OUT'
-    return <Filmstrip position={position} specs={galleries[position] ?? []} currentId={card.id} />
+    const group = galleryKeyOf(card)
+    return <Filmstrip group={group} specs={galleries[group] ?? []} currentId={card.id} />
 }
