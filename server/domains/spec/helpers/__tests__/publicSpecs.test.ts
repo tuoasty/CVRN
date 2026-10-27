@@ -4,7 +4,7 @@ import type { PublicSpecRow } from '@/server/db/specs.repo'
 import { galleryFor, parseGalleryPosition, pickRequirementRegion, seasonForRegion, withSpecSlugs } from '../publicSpecs'
 
 function row(patch: Partial<PublicSpecRow>): PublicSpecRow {
-    return { id: patch.name ?? 'x', name: 'Spec', stars: 3, position: 'OUT', height: 78, is_vaulted: false, game_key: null, photo_url: null, created_at: '2026-01-01T00:00:00Z', ...patch }
+    return { id: patch.name ?? 'x', name: 'Spec', stars: 3, position: 'OUT', height: 78, is_vaulted: false, is_custom: false, game_key: null, photo_url: null, created_at: '2026-01-01T00:00:00Z', ...patch }
 }
 
 function season(patch: Partial<Season>): Season {

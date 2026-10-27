@@ -1,11 +1,11 @@
 import {PlayerWithTeamInfo} from "@/server/domains/player";
 import {BatchUpsertSeasonAwardsInput} from "@/server/domains/season";
-import {Spec} from "@/shared/types/db";
+import type {LeagueSpec} from "@/server/domains/spec/types";
 import {BarTarget, CATEGORY_LABELS, StagedAward, StagedItem, isStagedAward} from "./types";
 
 export type StagedAction =
     | {type: "add"; tempId: string; target: BarTarget; awardName: string; player: PlayerWithTeamInfo}
-    | {type: "addSpec"; tempId: string; spec: Spec; stars: number; player: PlayerWithTeamInfo}
+    | {type: "addSpec"; tempId: string; spec: LeagueSpec; stars: number; player: PlayerWithTeamInfo}
     | {type: "remove"; tempId: string}
     | {type: "removeMany"; tempIds: readonly string[]}
     | {type: "clear"};

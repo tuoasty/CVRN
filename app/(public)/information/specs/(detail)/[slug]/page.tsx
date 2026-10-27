@@ -49,7 +49,7 @@ export default async function SpecPage({ params }: PageProps) {
         return { code, seasons: region ? winners[region.id] ?? [] : [] }
     })
 
-    const position = isPositionCode(card.position) ? card.position : 'OUT'
+    const position = card.position && isPositionCode(card.position) ? card.position : 'OUT'
     const kit = card.game_key ? info.kits?.[card.game_key] : undefined
     const allInspectors = info.inspectors ?? {}
     const inspectors: Record<string, InspectorData> = {}
@@ -63,7 +63,7 @@ export default async function SpecPage({ params }: PageProps) {
                 <div className="spec-hero-grid">
                     <SpecPhoto url={card.photo_url} name={card.name} sizes="190px" />
                     <div className="min-w-0">
-                        <Stars stars={card.stars} className="text-base tracking-[2px]" />
+                        {card.stars !== null && <Stars stars={card.stars} className="text-base tracking-[2px]" />}
                         <h1 className="text-balance text-2xl font-semibold tracking-[-0.025em] text-foreground">{card.name}</h1>
                         <p className="text-sm text-muted-foreground">
                             {positionShortLabel(position)}

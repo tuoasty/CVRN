@@ -30,7 +30,7 @@ export function withLoadouts(cards: PublicSpecCard[], kits: Record<string, unkno
 }
 
 function byStarsThenName(a: PublicSpecCard, b: PublicSpecCard): number {
-    return b.stars - a.stars || a.name.localeCompare(b.name)
+    return (b.stars ?? 0) - (a.stars ?? 0) || a.name.localeCompare(b.name)
 }
 
 export function galleryFor(cards: PublicSpecCard[], position: PositionCode): { active: PublicSpecCard[]; vaulted: PublicSpecCard[] } {

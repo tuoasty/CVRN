@@ -1,15 +1,20 @@
 import {Spec, SpecRegionRule, SpecRequirement} from "@/shared/types/db";
+import type {LeagueFields} from "../helpers/league";
 
 export type SpecTier = "main" | "secondary";
 
-export interface SpecWithRequirements extends Spec {
+export type LeagueSpec = Spec & LeagueFields;
+
+export type SpecWithRequirements = LeagueSpec & {
     requirements: SpecRequirement[];
-}
+};
 
 export interface SpecWithAllRegions extends Spec {
     requirements: SpecRequirement[];
     rules: SpecRegionRule[];
 }
+
+export type LeagueSpecWithAllRegions = SpecWithAllRegions & LeagueFields;
 
 export interface SpecRequirementCheck {
     statKey: string;
@@ -92,6 +97,8 @@ export {
     formatSpecStatValue,
 } from "./statKeys";
 export type {SpecStatFormat, SpecStatKeyMeta} from "./statKeys";
+export {isLeagueSpec} from "../helpers/league";
+export type {LeagueFields} from "../helpers/league";
 export {SPEC_POSITIONS, positionLabel, formatHeight, parseHeight, parseHeightString} from "../helpers/positions";
 export type {SpecPosition} from "../helpers/positions";
 export type {

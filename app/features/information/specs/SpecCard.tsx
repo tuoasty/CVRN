@@ -20,7 +20,7 @@ export default function SpecCard({ spec, dimmed }: { spec: PublicSpecCard; dimme
             <span className="absolute inset-x-0 bottom-0 px-3 pb-3">
                 <span className="block text-sm font-semibold leading-[18px] text-white">{spec.name}</span>
                 <span className="mt-1 flex items-center justify-between gap-2">
-                    <Stars stars={spec.stars} className="text-xs" />
+                    {spec.stars !== null ? <Stars stars={spec.stars} className="text-xs" /> : <span />}
                     <span className="shrink-0 font-mono text-xs tabular-nums text-white">{formatHeight(spec.height)}</span>
                 </span>
             </span>

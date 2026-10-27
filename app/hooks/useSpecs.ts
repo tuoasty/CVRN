@@ -21,7 +21,8 @@ import {
     SaveRegionRequirementsInput,
     SaveSpecIdentityInput,
     SpecImportMode,
-    SpecWithAllRegions,
+    LeagueSpecWithAllRegions,
+    isLeagueSpec,
     SpecWithRequirements,
 } from '@/server/domains/spec/types';
 import {PlayerLeaderboardRow} from '@/server/domains/player';
@@ -49,20 +50,20 @@ export function useSpecs(regionId: string | null) {
     };
 }
 
-async function fetchSpecsAllRegions(): Promise<SpecWithAllRegions[]> {
+async function fetchSpecsAllRegions(): Promise<LeagueSpecWithAllRegions[]> {
     const result = await getSpecsAllRegionsAction();
     if (!result.ok) throw new Error(result.error.message);
-    return result.value;
+    return result.value.filter(isLeagueSpec);
 }
 
 export function useSpecsAllRegions() {
     const {data, error, isLoading, mutate} = useSWR(
         ['specs', '__all__'] as const,
-        fetchSpecsAllRegions as BareFetcher<SpecWithAllRegions[]>,
+        fetchSpecsAllRegions as BareFetcher<LeagueSpecWithAllRegions[]>,
         {dedupingInterval: TTL, revalidateOnFocus: false}
     );
     return {
-        specs: (data as SpecWithAllRegions[] | undefined) ?? [],
+        specs: (data as LeagueSpecWithAllRegions[] | undefined) ?? [],
         isLoading,
         error: error?.message ?? null,
         mutate,

@@ -22,16 +22,17 @@ export default function SpecRequirements({ cards, regions, fallback }: Props) {
     const { slug } = useParams<{ slug: string }>()
     const query = useSearchParams().get('region')?.toUpperCase()
     const card = cards.find(c => c.slug === slug?.toLowerCase())
-    if (!card) return null
+    if (!card || card.stars === null) return null
+    const stars = card.stars
 
     const forCard: RequirementRegion[] = regions.map(r => ({
         code: r.code,
         regionId: r.regionId,
         season: r.season,
         requirement: r.snapshot?.specs?.find(s => s.id === card.id) ?? null,
-        setsFloor: r.snapshot?.setsFloorByStar?.[card.stars] ?? 10,
+        setsFloor: r.snapshot?.setsFloorByStar?.[stars] ?? 10,
         bonus: r.snapshot?.placementBonus ?? null,
-        heightRange: heightRangeFor(r.snapshot?.heightRangeByStar, card.stars),
+        heightRange: heightRangeFor(r.snapshot?.heightRangeByStar, stars),
     }))
     const initial = query && regions.some(r => r.code === query) ? query : fallback
 

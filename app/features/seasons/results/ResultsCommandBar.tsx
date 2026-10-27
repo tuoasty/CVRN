@@ -6,7 +6,7 @@ import {Button} from "@/app/components/ui/button";
 import {Input} from "@/app/components/ui/input";
 import {OptionButton} from "@/app/components/filters/OptionRow";
 import {AllStarSlot, AllStarTeamCode, SeasonAllStarTeam, SeasonAwardEntryWithPlayer} from "@/server/domains/season";
-import {Spec} from "@/shared/types/db";
+import type {LeagueSpec} from "@/server/domains/spec/types";
 import {cn} from "@/lib/utils";
 import {AwardNameCombobox} from "./AwardNameCombobox";
 import {PlayerPicker} from "./PlayerPicker";
@@ -55,7 +55,7 @@ interface Props {
     editor: AwardEditor;
     awards: SeasonAwardEntryWithPlayer[];
     allStarTeams: SeasonAllStarTeam[];
-    specs: Spec[];
+    specs: LeagueSpec[];
     winnerBySpec: ReadonlyMap<string, string>;
     specEditor: SpecWinnerEditor;
     stickyTop: number;

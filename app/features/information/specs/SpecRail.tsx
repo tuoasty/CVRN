@@ -15,6 +15,6 @@ export default function SpecRail({ cards, galleries }: Props) {
     const card = cards.find(c => c.slug === slug?.toLowerCase())
     if (!card) return null
 
-    const position = isPositionCode(card.position) ? card.position : 'OUT'
+    const position = card.position && isPositionCode(card.position) ? card.position : 'OUT'
     return <Filmstrip position={position} specs={galleries[position] ?? []} currentId={card.id} />
 }

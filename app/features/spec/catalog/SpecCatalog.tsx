@@ -7,7 +7,7 @@ import {deleteSpec, saveRegionRequirements, useSpecsAllRegions} from '@/app/hook
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
 import {toast} from '@/app/utils/toast';
 import {clientLogger} from '@/app/utils/clientLogger';
-import {SpecPosition, SpecWithAllRegions, isSpecStatKey, positionLabel} from '@/server/domains/spec/types';
+import {SpecPosition, LeagueSpecWithAllRegions, isSpecStatKey, positionLabel} from '@/server/domains/spec/types';
 import SpecCatalogHeader from './SpecCatalogHeader';
 import SpecCatalogList from './SpecCatalogList';
 import SpecBandList from './SpecBandList';
@@ -32,7 +32,7 @@ import {buildSavePayload} from './regionDraft';
 type Pending =
     | {kind: 'region'; code: string}
     | {kind: 'leave'; href: string}
-    | {kind: 'delete'; spec: SpecWithAllRegions}
+    | {kind: 'delete'; spec: LeagueSpecWithAllRegions}
     | {kind: 'import'}
     | {kind: 'unpublish'}
     | null;
@@ -147,7 +147,7 @@ export default function SpecCatalog() {
         }
     };
 
-    const handleDelete = async (spec: SpecWithAllRegions) => {
+    const handleDelete = async (spec: LeagueSpecWithAllRegions) => {
         setDeleting(true);
         try {
             const result = await deleteSpec(spec.id);

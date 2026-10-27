@@ -6,7 +6,7 @@ import {cn} from '@/lib/utils';
 import {
     SpecPosition,
     SpecTier,
-    SpecWithAllRegions,
+    LeagueSpecWithAllRegions,
     isLowerIsBetterStatKey,
     positionLabel,
     specStatLabel,
@@ -22,7 +22,7 @@ interface Props {
     statKey: string;
     pos: SpecPosition;
     regionCode: string;
-    specs: SpecWithAllRegions[];
+    specs: LeagueSpecWithAllRegions[];
     columns: RegionColumn[];
     baseline: RegionState;
     stateOf: (specId: string) => RegionSpecState;
@@ -61,7 +61,7 @@ export default function ByStatView({statKey, pos, regionCode, specs, columns, ba
         setFocusSpecId(specId);
     };
 
-    const row = (spec: SpecWithAllRegions) => {
+    const row = (spec: LeagueSpecWithAllRegions) => {
         const req = reqOf(spec.id)!;
         const base = baseOf(spec.id);
         const changed = !base || base.tier !== req.tier || base.minValue !== req.minValue;

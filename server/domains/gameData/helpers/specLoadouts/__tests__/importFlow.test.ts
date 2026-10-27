@@ -34,13 +34,13 @@ describe('summarizeSpecWrites', () => {
             'New Guy': { gameKey: 'New Guy', action: 'create', stars: 4, position: 'SET' },
             'Old Twin': { gameKey: 'Old Twin', action: 'skip' },
         }
-        expect(summarizeSpecWrites(plan, decisions)).toEqual({ links: 2, proposed: 2, picked: 0, created: 1, custom: 0, skipped: 0, left: 0, renamed: 1 })
+        expect(summarizeSpecWrites(plan, decisions)).toEqual({ links: 2, proposed: 2, picked: 0, created: 1, custom: 0, unlinked: 0, skipped: 0, left: 0, renamed: 1 })
     })
 
     it('counts an overridden proposal with no decision as nothing', () => {
         const decisions = seedProposalDecisions(plan)
         delete decisions['T.J DeFalco']
-        expect(summarizeSpecWrites(plan, decisions)).toEqual({ links: 1, proposed: 1, picked: 0, created: 0, custom: 0, skipped: 0, left: 0, renamed: 0 })
+        expect(summarizeSpecWrites(plan, decisions)).toEqual({ links: 1, proposed: 1, picked: 0, created: 0, custom: 0, unlinked: 0, skipped: 0, left: 0, renamed: 0 })
     })
 
     it('counts a link to another spec as picked and a new skip as skipped', () => {
@@ -49,12 +49,17 @@ describe('summarizeSpecWrites', () => {
             'T.J DeFalco': { gameKey: 'T.J DeFalco', action: 'skip' },
             'New Guy': { gameKey: 'New Guy', action: 'leave' },
         }
-        expect(summarizeSpecWrites(plan, decisions)).toEqual({ links: 1, proposed: 0, picked: 1, created: 0, custom: 0, skipped: 1, left: 1, renamed: 0 })
+        expect(summarizeSpecWrites(plan, decisions)).toEqual({ links: 1, proposed: 0, picked: 1, created: 0, custom: 0, unlinked: 0, skipped: 1, left: 1, renamed: 0 })
+    })
+
+    it('counts skipping a linked spec as unlinked', () => {
+        const decisions: Record<string, SpecLinkDecision> = { 'Earvin Ngapeth': { gameKey: 'Earvin Ngapeth', action: 'skip' } }
+        expect(summarizeSpecWrites(plan, decisions)).toEqual({ links: 0, proposed: 0, picked: 0, created: 0, custom: 0, unlinked: 1, skipped: 0, left: 0, renamed: 0 })
     })
 
     it('counts a custom decision as custom, not skipped', () => {
         const decisions: Record<string, SpecLinkDecision> = { 'New Guy': { gameKey: 'New Guy', action: 'custom' } }
-        expect(summarizeSpecWrites(plan, decisions)).toEqual({ links: 0, proposed: 0, picked: 0, created: 0, custom: 1, skipped: 0, left: 0, renamed: 0 })
+        expect(summarizeSpecWrites(plan, decisions)).toEqual({ links: 0, proposed: 0, picked: 0, created: 0, custom: 1, unlinked: 0, skipped: 0, left: 0, renamed: 0 })
     })
 })
 

@@ -2,16 +2,16 @@
 
 import {useId, useMemo, useState, type KeyboardEvent, type RefObject} from "react";
 import {Input} from "@/app/components/ui/input";
-import {Spec} from "@/shared/types/db";
+import type {LeagueSpec} from "@/server/domains/spec/types";
 import {cn} from "@/lib/utils";
 
 const MAX_RESULTS = 8;
 
-export function filterSpecs(specs: readonly Spec[], query: string): Spec[] {
+export function filterSpecs(specs: readonly LeagueSpec[], query: string): LeagueSpec[] {
     const q = query.trim().toLowerCase();
     if (!q) return specs.slice(0, MAX_RESULTS);
-    const prefix: Spec[] = [];
-    const inner: Spec[] = [];
+    const prefix: LeagueSpec[] = [];
+    const inner: LeagueSpec[] = [];
     for (const s of specs) {
         const name = s.name.toLowerCase();
         if (name.startsWith(q)) prefix.push(s);
@@ -21,11 +21,11 @@ export function filterSpecs(specs: readonly Spec[], query: string): Spec[] {
 }
 
 interface Props {
-    specs: readonly Spec[];
+    specs: readonly LeagueSpec[];
     query: string;
     onQueryChange: (query: string) => void;
-    selected: Spec | null;
-    onSelect: (spec: Spec | null) => void;
+    selected: LeagueSpec | null;
+    onSelect: (spec: LeagueSpec | null) => void;
     onEnter: () => void;
     winnerBySpec: ReadonlyMap<string, string>;
     inputRef: RefObject<HTMLInputElement | null>;
@@ -43,7 +43,7 @@ export function SpecCombobox({specs, query, onQueryChange, selected, onSelect, o
     const open = focused && !dismissed && !selected && results.length > 0;
     const highlighted = Math.min(active, results.length - 1);
 
-    const pick = (spec: Spec) => {
+    const pick = (spec: LeagueSpec) => {
         setActive(0);
         setDismissed(true);
         onSelect(spec);

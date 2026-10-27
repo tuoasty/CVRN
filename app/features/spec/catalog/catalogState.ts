@@ -1,4 +1,4 @@
-import {SpecTier, SpecWithAllRegions} from '@/server/domains/spec/types';
+import {SpecTier, LeagueSpecWithAllRegions} from '@/server/domains/spec/types';
 
 export interface DraftRequirement {
     statKey: string;
@@ -15,7 +15,7 @@ export type RegionState = Record<string, RegionSpecState>;
 
 const TIER_RANK: Record<SpecTier, number> = {main: 0, secondary: 1};
 
-export function buildRegionState(specs: SpecWithAllRegions[], regionId: string): RegionState {
+export function buildRegionState(specs: LeagueSpecWithAllRegions[], regionId: string): RegionState {
     const state: RegionState = {};
     for (const spec of specs) {
         const requirements = spec.requirements

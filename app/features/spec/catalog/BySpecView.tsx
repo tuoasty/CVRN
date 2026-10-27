@@ -4,7 +4,7 @@ import {useState} from 'react';
 import {ChevronDown, X} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import {Spec} from '@/shared/types/db';
-import {formatHeight, specStatLabel, SpecPosition, SpecTier, SpecWithAllRegions} from '@/server/domains/spec/types';
+import {formatHeight, specStatLabel, SpecPosition, SpecTier, LeagueSpecWithAllRegions} from '@/server/domains/spec/types';
 import SpecStatCombobox from '@/app/features/spec/SpecStatCombobox';
 import {DraftRequirement, RegionSpecState, RegionState, referenceValue} from './catalogState';
 import {
@@ -34,7 +34,7 @@ export interface RegionColumn {
 }
 
 interface Props {
-    spec: SpecWithAllRegions;
+    spec: LeagueSpecWithAllRegions;
     regionCode: string;
     state: RegionSpecState;
     baseline: RegionSpecState | undefined;

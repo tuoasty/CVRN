@@ -72,6 +72,10 @@ export function planSpecOps(plan: SpecLinkPlan, decisions: SpecLinkDecision[], s
 
     for (const item of plan.items) {
         if (item.status === 'linked') {
+            if (decisionByKey.get(item.gameKey)?.action === 'skip') {
+                ops.push({ op: 'skip', gameKey: item.gameKey }, { op: 'unlink', gameKey: item.gameKey, specId: item.specId as string })
+                continue
+            }
             const spec = specById.get(item.specId as string)
             if (spec && spec.height !== item.height) {
                 ops.push({ op: 'link', gameKey: item.gameKey, specId: spec.id, name: null, height: item.height })

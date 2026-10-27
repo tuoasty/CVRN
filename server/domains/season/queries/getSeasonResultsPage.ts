@@ -1,9 +1,9 @@
-import {DBClient, Season, Spec, Team} from "@/shared/types/db";
+import {DBClient, Season, Team} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {findTeamsBySeasonId} from "@/server/db/teams.repo";
-import {getSpecCatalog, getSpecWinners, SpecWinnerWithRefs} from "@/server/domains/spec";
+import {getSpecCatalog, getSpecWinners, LeagueSpec, SpecWinnerWithRefs} from "@/server/domains/spec";
 import {getAllMediaPosts, MediaPost} from "@/server/domains/media";
 import {getAllRegions} from "@/server/domains/region";
 import {AwardCategory, SeasonAllStarTeam, SeasonAwardEntryWithPlayer, SeasonPodiumEntryWithTeam} from "../types";
@@ -19,7 +19,7 @@ export interface SeasonResultsPageData {
     podium: SeasonPodiumEntryWithTeam[];
     awards: SeasonAwardEntryWithPlayer[];
     allStarTeams: SeasonAllStarTeam[];
-    specs: Spec[];
+    specs: LeagueSpec[];
     specWinners: SpecWinnerWithRefs[];
     teams: Team[];
     championGfx: MediaPost | null;

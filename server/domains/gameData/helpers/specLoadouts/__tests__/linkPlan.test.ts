@@ -184,3 +184,22 @@ describe('custom specs', () => {
         expect(result.ok && result.value.ops[0]).toMatchObject({ op: 'link', gameKey: 'Featherfall', specId: 'e', name: null })
     })
 })
+
+describe('skipping a linked spec', () => {
+    it('unlinks and skips a linked spec without writing its height', () => {
+        const plan = buildSpecLinkPlan([loadout('Earvin Ngapeth', 1.35)], specs)
+        expect(planSpecOps(plan, [{ gameKey: 'Earvin Ngapeth', action: 'skip' }], specs)).toEqual({ ok: true, value: {
+            ops: [{ op: 'skip', gameKey: 'Earvin Ngapeth' }, { op: 'unlink', gameKey: 'Earvin Ngapeth', specId: 'c' }],
+            heightChanges: [],
+            undecided: [],
+        } })
+    })
+
+    it('unlinks a linked custom spec the same way', () => {
+        const featherfall: LinkSpec = { id: 'e', name: 'Featherfall', stars: null, position: null, height: 50, game_key: 'Featherfall', is_custom: true }
+        const pool = [...specs, featherfall]
+        const plan = buildSpecLinkPlan([loadout('Featherfall', 1.3)], pool)
+        const result = planSpecOps(plan, [{ gameKey: 'Featherfall', action: 'skip' }], pool)
+        expect(result.ok && result.value.ops).toEqual([{ op: 'skip', gameKey: 'Featherfall' }, { op: 'unlink', gameKey: 'Featherfall', specId: 'e' }])
+    })
+})

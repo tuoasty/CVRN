@@ -1,12 +1,12 @@
 'use client';
 
-import {SpecWithAllRegions} from '@/server/domains/spec/types';
+import {LeagueSpecWithAllRegions} from '@/server/domains/spec/types';
 import {ListBandLabel, ListItem} from './SpecCatalogList';
 import {RegionState, StarBand, specListMarker} from './catalogState';
 
 interface Props {
-    bands: StarBand<SpecWithAllRegions>[];
-    vaulted: SpecWithAllRegions[];
+    bands: StarBand<LeagueSpecWithAllRegions>[];
+    vaulted: LeagueSpecWithAllRegions[];
     state: RegionState;
     selectedId: string | null;
     onSelect: (id: string) => void;

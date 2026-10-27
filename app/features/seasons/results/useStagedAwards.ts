@@ -6,7 +6,7 @@ import {awardSpecWinnerAction} from "@/app/actions/spec.actions";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
 import {SeasonAwardEntryWithPlayer} from "@/server/domains/season";
 import {SpecWinnerWithRefs} from "@/server/domains/spec";
-import {Spec} from "@/shared/types/db";
+import type {LeagueSpec} from "@/server/domains/spec/types";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
 import {stagedAwardsReducer, toBatchAwards} from "./stagedAwards";
@@ -26,7 +26,7 @@ interface Options {
 export function useStagedAwards({seasonId, awards, specWinners, initialSuggestions = {}, onAwardsSaved, onSpecSaved}: Options) {
     const [target, setTarget] = useState<BarTarget>(DEFAULT_TARGET);
     const [name, setName] = useState("");
-    const [spec, setSpec] = useState<Spec | null>(null);
+    const [spec, setSpec] = useState<LeagueSpec | null>(null);
     const [specQuery, setSpecQuery] = useState("");
     const [stars, setStars] = useState(0);
     const [playerQuery, setPlayerQuery] = useState("");
@@ -65,7 +65,7 @@ export function useStagedAwards({seasonId, awards, specWinners, initialSuggestio
         focusName();
     }, [focusName]);
 
-    const selectSpec = useCallback((next: Spec | null) => {
+    const selectSpec = useCallback((next: LeagueSpec | null) => {
         setSpec(next);
         if (next) setStars(next.stars);
     }, []);

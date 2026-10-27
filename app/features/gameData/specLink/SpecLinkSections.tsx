@@ -154,7 +154,42 @@ export default function SpecLinkSections({ plan, decisions, onDecide, restored, 
                                 </ul>
                             </Fold>
                         )}
-                        {linked.length > 0 && <Fold label={<Count n={linked.length}>already linked</Count>}><NameColumns names={linkedNames} /></Fold>}
+                        {linked.length > 0 && (
+                            <Fold label={<Count n={linked.length}>already linked</Count>}>
+                                <ul className="space-y-1 text-sm">
+                                    {linked.map(i => {
+                                        const spec = specById.get(i.specId!)
+                                        const skipping = decisions[i.gameKey]?.action === 'skip'
+                                        return (
+                                            <li key={i.gameKey} className="flex items-baseline gap-3">
+                                                <span className="text-muted-foreground">
+                                                    {i.gameName} → {spec?.name ?? i.gameName}
+                                                    {spec?.is_custom && <span className="ml-1.5 text-xs">custom</span>}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    aria-pressed={skipping}
+                                                    onClick={() => onDecide(i.gameKey, skipping ? undefined : { gameKey: i.gameKey, action: 'skip' })}
+                                                    className={cn(
+                                                        'transition-colors duration-150 motion-reduce:transition-none',
+                                                        skipping
+                                                            ? 'font-semibold text-foreground underline decoration-2 underline-offset-[6px]'
+                                                            : 'font-medium text-muted-foreground hover:text-foreground',
+                                                    )}
+                                                >
+                                                    Skip
+                                                </button>
+                                                {skipping && (
+                                                    <span className="text-xs text-secondary">
+                                                        {spec?.is_custom ? 'Deletes this custom spec on publish' : 'Unlinks on publish, keeps the spec'}
+                                                    </span>
+                                                )}
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
+                            </Fold>
+                        )}
                     </div>
                 </Section>
             )}

@@ -2,7 +2,7 @@ import {describe, it, expect} from "vitest";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
 import {stagedAwardsReducer, stagedChipLabel, toBatchAwards} from "../stagedAwards";
 import {BarTarget, StagedItem} from "../types";
-import {Spec} from "@/shared/types/db";
+import type {LeagueSpec} from "@/server/domains/spec/types";
 
 function player(id: string, username: string): PlayerWithTeamInfo {
     return {
@@ -56,8 +56,8 @@ describe("stagedAwardsReducer", () => {
     });
 });
 
-function spec(id: string, name: string): Spec {
-    return {id, name, stars: 4, position: "OH", is_vaulted: false} as Spec;
+function spec(id: string, name: string): LeagueSpec {
+    return {id, name, stars: 4, position: "OH", is_vaulted: false} as LeagueSpec;
 }
 
 describe("spec staging", () => {

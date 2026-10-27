@@ -46,7 +46,7 @@ export default function Filmstrip({ position, specs, currentId }: Props) {
                                     <span className={cn('block truncate text-sm leading-[17px]', current ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground')}>
                                         {spec.name}
                                     </span>
-                                    <Stars stars={spec.stars} className="text-xs" />
+                                    {spec.stars !== null && <Stars stars={spec.stars} className="text-xs" />}
                                 </span>
                                 <span className="font-mono text-xs tabular-nums text-muted-foreground">{formatHeight(spec.height)}</span>
                             </Link>

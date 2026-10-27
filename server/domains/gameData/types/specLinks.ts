@@ -60,6 +60,7 @@ export type SpecLinkOp =
     | { op: 'create'; gameKey: string; name: string; stars: number; position: PositionCode; height: number }
     | { op: 'custom'; gameKey: string; name: string; height: number }
     | { op: 'skip'; gameKey: string }
+    | { op: 'unlink'; gameKey: string; specId: string }
     | { op: 'unskip'; gameKey: string }
 
 export interface HeightChange {

@@ -4,7 +4,7 @@ import {createError} from "@/server/utils/serializeableError";
 import {findSpecsWithAllRegions, replaceRegionSpecRequirements} from "@/server/db/specs.repo";
 import {findAllRegions} from "@/server/db/regions.repo";
 import {applyImportMode, diffSpecImport, validateSpecImport} from "../helpers/specRequirementsFile";
-import {ImportSpecRequirementsInput, SpecImportResult} from "../types";
+import {ImportSpecRequirementsInput, SpecImportResult, isLeagueSpec} from "../types";
 
 export async function importSpecRequirements(
     supabase: DBClient,
@@ -20,11 +20,12 @@ export async function importSpecRequirements(
     const region = regionsRes.value.find(r => r.id === input.regionId);
     if (!region) return Err(createError("Region does not exist", "VALIDATION_ERROR", 400));
 
-    const validation = validateSpecImport(input.file, {specs: specsRes.value});
+    const specs = specsRes.value.filter(isLeagueSpec);
+    const validation = validateSpecImport(input.file, {specs});
     if (!validation.ok) return Ok({status: "rejected", issues: validation.issues});
 
-    const incoming = applyImportMode(validation.specs, input.mode, region.id, specsRes.value);
-    const diff = diffSpecImport(region, incoming, specsRes.value, input.mode);
+    const incoming = applyImportMode(validation.specs, input.mode, region.id, specs);
+    const diff = diffSpecImport(region, incoming, specs, input.mode);
     if (input.dryRun) return Ok({status: "preview", diff});
 
     const res = await replaceRegionSpecRequirements(supabase, region.id, incoming);

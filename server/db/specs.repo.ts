@@ -2,7 +2,7 @@ import {DBClient, Spec, SpecRegionRule, SpecRequirement} from "@/shared/types/db
 import type {Json} from "@/database.types";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
-import {ResolvedRequirement, SpecWithAllRegions, SpecWithRequirements} from "@/server/domains/spec/types";
+import {ResolvedRequirement, SpecWithAllRegions, SpecWithRequirements, isLeagueSpec} from "@/server/domains/spec/types";
 
 type SpecEmbedRow = Spec & {spec_requirements: SpecRequirement[] | null; spec_region_rules: SpecRegionRule[] | null};
 
@@ -15,13 +15,14 @@ export async function findSpecsWithRequirements(
         .select("*, spec_requirements(*), spec_region_rules(*)")
         .eq("spec_requirements.region_id", regionId)
         .eq("spec_region_rules.region_id", regionId)
+        .eq("is_custom", false)
         .order("position", {ascending: true})
         .order("stars", {ascending: false})
         .order("name", {ascending: true});
     if (error) return Err(serializeError(error, "DB_ERROR"));
 
     return Ok(
-        ((data ?? []) as unknown as SpecEmbedRow[]).map(row => {
+        ((data ?? []) as unknown as SpecEmbedRow[]).filter(isLeagueSpec).map(row => {
             const {spec_requirements, spec_region_rules, ...spec} = row;
             return {
                 ...spec,
@@ -79,12 +80,12 @@ export async function updateSpecVaulted(supabase: DBClient, id: string, isVaulte
     return Ok(data);
 }
 
-export type PublicSpecRow = Pick<Spec, "id" | "name" | "stars" | "position" | "height" | "is_vaulted" | "game_key" | "photo_url" | "created_at">;
+export type PublicSpecRow = Pick<Spec, "id" | "name" | "stars" | "position" | "height" | "is_vaulted" | "is_custom" | "game_key" | "photo_url" | "created_at">;
 
 export async function findPublicSpecs(supabase: DBClient): Promise<Result<PublicSpecRow[]>> {
     const {data, error} = await supabase
         .from("specs")
-        .select("id, name, stars, position, height, is_vaulted, game_key, photo_url, created_at")
+        .select("id, name, stars, position, height, is_vaulted, is_custom, game_key, photo_url, created_at")
         .order("created_at", {ascending: true});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);

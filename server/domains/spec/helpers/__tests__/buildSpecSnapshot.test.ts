@@ -14,6 +14,7 @@ function spec(name: string, stars: number, reqs: Req[], regionId = "r1"): SpecWi
         height: 79,
         secondary_required: 0,
         is_vaulted: false,
+        is_custom: false,
         game_key: null,
         photo_url: null,
         created_at: "",

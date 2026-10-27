@@ -4,7 +4,7 @@ import {createError} from "@/server/utils/serializeableError";
 import {findSpecsWithAllRegions} from "@/server/db/specs.repo";
 import {findAllRegions} from "@/server/db/regions.repo";
 import {buildSpecExport, specExportFilename} from "../helpers/specRequirementsFile";
-import {ExportSpecRequirementsInput, SpecExportFile} from "../types";
+import {ExportSpecRequirementsInput, SpecExportFile, isLeagueSpec} from "../types";
 
 export async function exportSpecRequirements(
     supabase: DBClient,
@@ -22,7 +22,7 @@ export async function exportSpecRequirements(
 
     const now = new Date();
     const file = buildSpecExport({
-        specs: specsRes.value,
+        specs: specsRes.value.filter(isLeagueSpec),
         regionId: region.id,
         exportedAt: now.toISOString(),
     });

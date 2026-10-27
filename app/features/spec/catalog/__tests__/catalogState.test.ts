@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {SpecWithAllRegions} from '@/server/domains/spec/types';
+import {LeagueSpecWithAllRegions} from '@/server/domains/spec/types';
 import {buildRegionState, groupByStars, referenceValue, specListMarker} from '../catalogState';
 
 const NA = 'na-id';
@@ -17,7 +17,7 @@ function req(regionId: string, statKey: string, tier: string, minValue: number |
     };
 }
 
-function spec(overrides: Partial<SpecWithAllRegions> = {}): SpecWithAllRegions {
+function spec(overrides: Partial<LeagueSpecWithAllRegions> = {}): LeagueSpecWithAllRegions {
     return {
         id: 's1',
         name: 'Leon',
@@ -26,6 +26,7 @@ function spec(overrides: Partial<SpecWithAllRegions> = {}): SpecWithAllRegions {
         height: 79,
         secondary_required: 0,
         is_vaulted: false,
+        is_custom: false,
         game_key: null,
         photo_url: null,
         created_at: '',

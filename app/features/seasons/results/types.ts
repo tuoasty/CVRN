@@ -1,6 +1,6 @@
 import {AllStarSlot, AllStarTeamCode, AwardCategory} from "@/server/domains/season";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
-import {Spec} from "@/shared/types/db";
+import type {LeagueSpec} from "@/server/domains/spec/types";
 
 export type AwardBarCategory = Extract<AwardCategory, "individual_winners" | "all_star" | "staff_team">;
 export type BarCategory = AwardBarCategory | "spec";
@@ -23,7 +23,7 @@ export interface StagedAward {
 export interface StagedSpec {
     tempId: string;
     category: "spec";
-    spec: Spec;
+    spec: LeagueSpec;
     stars: number;
     player: PlayerWithTeamInfo;
 }
