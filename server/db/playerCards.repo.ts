@@ -1,4 +1,5 @@
 import { CardGroupRow, CardTemplateRow, DBClient, PlayerCardInsert, PlayerCardRow } from '@/shared/types/db'
+import type { Json } from '@/database.types'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { serializeError } from '@/server/utils/serializeableError'
 
@@ -63,4 +64,26 @@ export async function upsertPlayerCard(supabase: DBClient, row: PlayerCardInsert
         .single()
     if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
     return Ok(data as PlayerCardRow)
+}
+
+export async function findCardTemplateById(supabase: DBClient, templateId: string): Promise<Result<CardTemplateRow | null>> {
+    const { data, error } = await supabase
+        .from('card_templates')
+        .select('*')
+        .eq('id', templateId)
+        .maybeSingle()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as CardTemplateRow | null)
+}
+
+export async function updateCardTemplateLayers(supabase: DBClient, p: { templateId: string; layers: Json }): Promise<Result<CardTemplateRow>> {
+    const { data, error } = await supabase
+        .from('card_templates')
+        .update({ layers: p.layers })
+        .eq('id', p.templateId)
+        .select('*')
+        .maybeSingle()
+    if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
+    if (!data) return Err({ message: 'Card template not found or not editable', code: 'NOT_FOUND' })
+    return Ok(data as CardTemplateRow)
 }

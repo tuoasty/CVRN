@@ -21,6 +21,7 @@ export interface CardTemplateSummary {
     width: number
     height: number
     layerCount: number
+    layers: CardLayer[] | null
     previewUrl: string | null
     problem: string | null
 }
@@ -59,16 +60,27 @@ export interface PlayerCard {
 export {
     CARD_TEXT_FIELDS,
     CARD_IMAGE_FIELDS,
+    CARD_STAT_LABELS,
+    CARD_STAT_FIELDS,
+    CARD_STAT_ORDERS,
     CardLayerSchema,
     CardLayersSchema,
+    CardOverridesSchema,
     GeneratePlayerCardSchema,
     PlayerCardsQuerySchema,
+    PreviewPlayerCardSchema,
+    UpdateCardTemplateLayersSchema,
 } from './schemas'
 export type {
     CardLayer,
     CardArtLayer,
     CardImageLayer,
     CardTextLayer,
+    CardStatField,
+    CardStatOrder,
+    CardOverrides,
     GeneratePlayerCardInput,
     PlayerCardsQueryInput,
+    PreviewPlayerCardInput,
+    UpdateCardTemplateLayersInput,
 } from './schemas'

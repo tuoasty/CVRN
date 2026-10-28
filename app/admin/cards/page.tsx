@@ -11,7 +11,7 @@ import { REGION_ORDER } from '@/shared/volleyball/regions'
 import { REGION_ALL, useOverallParams } from '@/app/features/overall/useOverallParams'
 import { buildOverallRows, matchesOverallFilters, sortOverallRows } from '@/app/features/overall/overallRows'
 import CardTemplateCatalog from '@/app/features/playerCard/CardTemplateCatalog'
-import PlayerCardWorkbench from '@/app/features/playerCard/PlayerCardWorkbench'
+import PlayerCardWorkbench, { type LayoutDrafts } from '@/app/features/playerCard/PlayerCardWorkbench'
 import { pickTierTemplate } from '@/server/domains/playerCard/helpers/toCardShapes'
 import { cn } from '@/lib/utils'
 
@@ -71,6 +71,7 @@ function AdminCardsContent() {
     const [groupId, setGroupId] = useState<string | null>(null)
     const [playerId, setPlayerId] = useState<string | null>(null)
     const [q, setQ] = useState('')
+    const [drafts, setDrafts] = useState<LayoutDrafts>({})
 
     const generatorGroups = useMemo(() => groups.filter(g => g.isActive && g.templates.length > 0), [groups])
     const group = generatorGroups.find(g => g.id === groupId) ?? generatorGroups[0] ?? null
@@ -135,7 +136,7 @@ function AdminCardsContent() {
                     <p className="mt-4 text-sm text-destructive">{boardError}</p>
                 ) : (
                     <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-start">
-                        <div className="flex w-full shrink-0 flex-col lg:w-[26rem]">
+                        <div className="flex w-full shrink-0 flex-col lg:w-[20rem]">
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
                                 <Input
@@ -183,7 +184,15 @@ function AdminCardsContent() {
 
                         <div className="min-w-0 flex-1">
                             {selected && group && seasonNumber ? (
-                                <PlayerCardWorkbench player={selected} seasonNumber={seasonNumber} group={group} groups={groups} />
+                                <PlayerCardWorkbench
+                                    key={selected.playerId}
+                                    player={selected}
+                                    seasonNumber={seasonNumber}
+                                    group={group}
+                                    groups={groups}
+                                    drafts={drafts}
+                                    onDraftsChange={setDrafts}
+                                />
                             ) : (
                                 <p className="py-6 text-sm text-muted-foreground">Pick a player to generate their card.</p>
                             )}

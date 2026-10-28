@@ -22,13 +22,20 @@ async function solidPng(w: number, h: number, color: string) {
 describe('CardLayersSchema', () => {
     it('applies defaults to text layers', () => {
         const parsed = CardLayersSchema.parse([{ kind: 'text', field: 'ovr', x: 0, y: 0, w: 100, h: 50, size: 40 }])
-        expect(parsed[0]).toMatchObject({ color: '#ffffff', align: 'left', uppercase: false, letterSpacing: 0 })
+        expect(parsed[0]).toMatchObject({ color: '#ffffff', statOrder: 'valueFirst', uppercase: false, letterSpacing: 0 })
     })
 
     it('rejects unknown fields and kinds', () => {
         expect(CardLayersSchema.safeParse([{ kind: 'text', field: 'height', x: 0, y: 0, w: 1, h: 1, size: 1 }]).success).toBe(false)
         expect(CardLayersSchema.safeParse([{ kind: 'video', x: 0, y: 0, w: 1, h: 1 }]).success).toBe(false)
         expect(CardLayersSchema.safeParse([]).success).toBe(false)
+    })
+
+    it('requires text on custom text layers and drops the old align key', () => {
+        expect(CardLayersSchema.safeParse([{ kind: 'text', field: 'custom', x: 0, y: 0, w: 1, h: 1, size: 1 }]).success).toBe(false)
+        expect(CardLayersSchema.safeParse([{ kind: 'text', field: 'custom', text: '  ', x: 0, y: 0, w: 1, h: 1, size: 1 }]).success).toBe(false)
+        const parsed = CardLayersSchema.parse([{ kind: 'text', field: 'ovr', align: 'left', x: 0, y: 0, w: 1, h: 1, size: 1 }])
+        expect(parsed[0]).not.toHaveProperty('align')
     })
 
     it('toCardTemplate surfaces a VALIDATION_ERROR for a bad manual insert', () => {
@@ -74,12 +81,17 @@ describe('resolveArtLocation', () => {
 })
 
 describe('resolveCardText', () => {
-    const base = { kind: 'text' as const, x: 0, y: 0, w: 1, h: 1, size: 1, color: '#fff', align: 'left' as const, letterSpacing: 0 }
+    const base = { kind: 'text' as const, x: 0, y: 0, w: 1, h: 1, size: 1, color: '#fff', statOrder: 'valueFirst' as const, letterSpacing: 0 }
 
     it('maps fields and uppercases on request', () => {
         expect(resolveCardText({ ...base, field: 'ovr', uppercase: false }, data)).toBe('87')
-        expect(resolveCardText({ ...base, field: 'blocking', uppercase: false }, data)).toBe('72')
+        expect(resolveCardText({ ...base, field: 'blocking', uppercase: false }, data)).toBe('72 BLK')
         expect(resolveCardText({ ...base, field: 'username', uppercase: true }, data)).toBe('SPIKERMAN')
+    })
+
+    it('flips stat order and prints custom text', () => {
+        expect(resolveCardText({ ...base, field: 'spiking', uppercase: false, statOrder: 'labelFirst' }, data)).toBe('SPK 88')
+        expect(resolveCardText({ ...base, field: 'custom', text: 'OVR', uppercase: false }, data)).toBe('OVR')
     })
 
     it('falls back to username when display name is missing', () => {

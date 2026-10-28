@@ -1,7 +1,7 @@
 import { CardGroupRow, CardTemplateRow, PlayerCardRow } from '@/shared/types/db'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { STORAGE_PATHS } from '@/server/storage/storage.paths'
-import { CardData, CardGroup, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
+import { CARD_STAT_LABELS, CardData, CardGroup, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
 
 export type ArtLocation = { url: string } | { path: string }
 
@@ -61,6 +61,7 @@ export function toCardGroup(
                     width: row.canvas_width,
                     height: row.canvas_height,
                     layerCount: parsed.ok ? parsed.value.layers.length : 0,
+                    layers: parsed.ok ? parsed.value.layers : null,
                     previewUrl: firstArt?.kind === 'art' ? toPublicUrl(resolveArtLocation(firstArt.src, group.slug, row.tier)) : null,
                     problem: parsed.ok ? null : parsed.error.message,
                 }
@@ -98,7 +99,12 @@ export function resolveCardText(layer: CardTextLayer, data: CardData): string {
             case 'ovr': return String(data.ovr)
             case 'position': return data.position ?? ''
             case 'teamName': return data.teamName ?? ''
-            default: return String(data.attributes[layer.field])
+            case 'custom': return layer.text ?? ''
+            default: {
+                const value = String(data.attributes[layer.field])
+                const label = CARD_STAT_LABELS[layer.field]
+                return layer.statOrder === 'labelFirst' ? `${label} ${value}` : `${value} ${label}`
+            }
         }
     })()
     return layer.uppercase ? raw.toUpperCase() : raw
