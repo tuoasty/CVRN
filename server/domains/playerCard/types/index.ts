@@ -4,9 +4,7 @@ import type { CardLayer } from './schemas'
 export interface CardTemplate {
     id: string
     groupId: string
-    groupSlug: string
     name: string
-    tier: number
     minOvr: number
     width: number
     height: number
@@ -16,22 +14,22 @@ export interface CardTemplate {
 export interface CardTemplateSummary {
     id: string
     name: string
-    tier: number
+    rank: number
     minOvr: number
-    width: number
-    height: number
-    layerCount: number
-    layers: CardLayer[] | null
     previewUrl: string | null
-    problem: string | null
 }
 
 export interface CardGroup {
     id: string
-    slug: string
     name: string
     isLimited: boolean
     isActive: boolean
+    sortOrder: number
+    width: number
+    height: number
+    layers: CardLayer[] | null
+    layersProblem: string | null
+    problem: string | null
     templates: CardTemplateSummary[]
 }
 
@@ -66,10 +64,16 @@ export {
     CardLayerSchema,
     CardLayersSchema,
     CardOverridesSchema,
+    CardGroupIdSchema,
+    CardTemplateIdSchema,
+    CreateCardGroupSchema,
+    CreateCardTemplateSchema,
+    UpdateCardGroupSchema,
+    UpdateCardTemplateSchema,
     GeneratePlayerCardSchema,
     PlayerCardsQuerySchema,
     PreviewPlayerCardSchema,
-    UpdateCardTemplateLayersSchema,
+    UpdateCardGroupLayersSchema,
 } from './schemas'
 export type {
     CardLayer,
@@ -79,8 +83,12 @@ export type {
     CardStatField,
     CardStatsLayer,
     CardOverrides,
+    CreateCardGroupInput,
+    CreateCardTemplateInput,
+    UpdateCardGroupInput,
+    UpdateCardTemplateInput,
     GeneratePlayerCardInput,
     PlayerCardsQueryInput,
     PreviewPlayerCardInput,
-    UpdateCardTemplateLayersInput,
+    UpdateCardGroupLayersInput,
 } from './schemas'

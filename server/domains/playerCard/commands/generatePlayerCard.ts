@@ -47,11 +47,11 @@ export async function generatePlayerCard(
 
         const templateRows = await findCardTemplates(supabase, groupId)
         if (!templateRows.ok) return templateRows
-        const templateRow = pickTierTemplate(templateRows.value.map(row => ({ row, tier: row.tier, minOvr: row.min_ovr })), data.ovr)?.row
+        const templateRow = pickTierTemplate(templateRows.value.map(row => ({ row, minOvr: row.min_ovr })), data.ovr)?.row
         if (!templateRow) {
             return Err({ message: `${group.value.name} has no tier for OVR ${data.ovr}`, code: 'NOT_FOUND' })
         }
-        const template = toCardTemplate(templateRow, group.value.slug)
+        const template = toCardTemplate(templateRow, group.value)
         if (!template.ok) return template
 
         const art = await loadTemplateArt(template.value, { cached: false })

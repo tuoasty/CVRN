@@ -115,8 +115,40 @@ export const PreviewPlayerCardSchema = PlayerCardsQuerySchema.extend({
 })
 export type PreviewPlayerCardInput = z.infer<typeof PreviewPlayerCardSchema>
 
-export const UpdateCardTemplateLayersSchema = z.object({
-    templateId: z.string().uuid(),
+export const UpdateCardGroupLayersSchema = z.object({
+    groupId: z.string().uuid(),
     layers: CardLayersSchema,
 })
-export type UpdateCardTemplateLayersInput = z.infer<typeof UpdateCardTemplateLayersSchema>
+export type UpdateCardGroupLayersInput = z.infer<typeof UpdateCardGroupLayersSchema>
+
+const CanvasSide = z.number().int().min(100, 'Canvas sides must be at least 100px').max(4000, 'Canvas sides must be 4000px or less')
+
+const CardGroupFieldsSchema = z.object({
+    name: z.string().trim().min(1, 'Group name is required').max(40, 'Group name must be 40 characters or fewer'),
+    isLimited: z.boolean(),
+    isActive: z.boolean(),
+    sortOrder: z.number().int(),
+    width: CanvasSide,
+    height: CanvasSide,
+})
+
+export const CreateCardGroupSchema = CardGroupFieldsSchema
+export type CreateCardGroupInput = z.infer<typeof CreateCardGroupSchema>
+
+export const UpdateCardGroupSchema = CardGroupFieldsSchema.extend({ groupId: z.string().uuid() })
+export type UpdateCardGroupInput = z.infer<typeof UpdateCardGroupSchema>
+
+export const CardGroupIdSchema = z.object({ groupId: z.string().uuid() })
+
+const CardTemplateFieldsSchema = z.object({
+    name: z.string().trim().min(1, 'Tier name is required').max(40, 'Tier name must be 40 characters or fewer'),
+    minOvr: z.number().int().min(1, 'Floor must be between 1 and 99').max(99, 'Floor must be between 1 and 99'),
+})
+
+export const CreateCardTemplateSchema = CardTemplateFieldsSchema.extend({ groupId: z.string().uuid() })
+export type CreateCardTemplateInput = z.infer<typeof CreateCardTemplateSchema>
+
+export const UpdateCardTemplateSchema = CardTemplateFieldsSchema.extend({ templateId: z.string().uuid() })
+export type UpdateCardTemplateInput = z.infer<typeof UpdateCardTemplateSchema>
+
+export const CardTemplateIdSchema = z.object({ templateId: z.string().uuid() })

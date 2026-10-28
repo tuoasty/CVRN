@@ -1,11 +1,27 @@
 import useSWR, { mutate as globalMutate, type BareFetcher } from "swr";
 import {
+    createCardGroupAction,
+    createCardTemplateAction,
+    deleteCardGroupAction,
+    deleteCardTemplateAction,
     getCardCatalogAction,
     getPlayerCardsAction,
     previewPlayerCardAction,
-    updateCardTemplateLayersAction,
+    updateCardGroupAction,
+    updateCardTemplateAction,
+    updateCardGroupLayersAction,
 } from "@/app/actions/playerCard.actions";
-import type { CardGroup, CardLayer, CardOverrides, PlayerCard } from "@/server/domains/playerCard";
+import type {
+    CardGroup,
+    CardLayer,
+    CardOverrides,
+    CreateCardGroupInput,
+    CreateCardTemplateInput,
+    PlayerCard,
+    UpdateCardGroupInput,
+    UpdateCardTemplateInput,
+} from "@/server/domains/playerCard";
+import type { Result } from "@/shared/types/result";
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
 export const cardCatalogKey = ["cardCatalog"] as const;
@@ -78,19 +94,27 @@ export function useCardPreview(request: CardPreviewRequest | null, delayMs = 400
     };
 }
 
-export async function saveCardTemplateLayers(templateId: string, layers: CardLayer[]) {
-    const result = await updateCardTemplateLayersAction({ templateId, layers });
+export async function saveCardGroupLayers(groupId: string, layers: CardLayer[]) {
+    const result = await updateCardGroupLayersAction({ groupId, layers });
     if (result.ok) {
         await globalMutate(
             cardCatalogKey,
-            (groups: CardGroup[] | undefined) => groups?.map(g => ({
-                ...g,
-                templates: g.templates.map(t => (t.id === templateId
-                    ? { ...t, layers: result.value, layerCount: result.value.length, problem: null }
-                    : t)),
-            })),
-            { revalidate: false }
+            (groups: CardGroup[] | undefined) => groups?.map(g => (g.id === groupId ? { ...g, layers: result.value, layersProblem: null } : g)),
+            { revalidate: true }
         );
     }
     return result;
 }
+
+async function thenRefreshCatalog<T>(result: Promise<Result<T>>): Promise<Result<T>> {
+    const settled = await result;
+    if (settled.ok) void globalMutate(cardCatalogKey);
+    return settled;
+}
+
+export const createCardGroup = (input: CreateCardGroupInput) => thenRefreshCatalog(createCardGroupAction(input));
+export const updateCardGroup = (input: UpdateCardGroupInput) => thenRefreshCatalog(updateCardGroupAction(input));
+export const deleteCardGroup = (groupId: string) => thenRefreshCatalog(deleteCardGroupAction({ groupId }));
+export const createCardTemplate = (input: CreateCardTemplateInput) => thenRefreshCatalog(createCardTemplateAction(input));
+export const updateCardTemplate = (input: UpdateCardTemplateInput) => thenRefreshCatalog(updateCardTemplateAction(input));
+export const deleteCardTemplate = (templateId: string) => thenRefreshCatalog(deleteCardTemplateAction({ templateId }));

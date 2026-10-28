@@ -23,8 +23,11 @@ export const STORAGE_PATHS = {
     specPhoto(specId: string) {
         return `specs/${specId}_${Date.now()}.webp`;
     },
-    cardTemplateAsset(groupSlug: string, tier: number, file: string) {
-        return `card-templates/${groupSlug}/${tier}/${file}`;
+    cardTemplateFolder(templateId: string) {
+        return `card-templates/${templateId}`;
+    },
+    cardTemplateAsset(templateId: string, file: string) {
+        return `card-templates/${templateId}/${file}`;
     },
     playerCard(playerId: string, seasonNumber: number) {
         return `cards/${seasonNumber}/${playerId}_${Date.now()}.png`;

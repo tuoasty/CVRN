@@ -37,12 +37,10 @@ export async function previewPlayerCard(
         const template: CardTemplate = {
             id: row.value.id,
             groupId: row.value.group_id,
-            groupSlug: group.value.slug,
             name: row.value.name,
-            tier: row.value.tier,
             minOvr: row.value.min_ovr,
-            width: row.value.canvas_width,
-            height: row.value.canvas_height,
+            width: group.value.canvas_width,
+            height: group.value.canvas_height,
             layers: p.layers,
         }
 

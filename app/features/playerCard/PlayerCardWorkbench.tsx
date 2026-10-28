@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Button } from '@/app/components/ui/button'
 import { generatePlayerCardAction } from '@/app/actions/playerCard.actions'
-import { saveCardTemplateLayers, useCardPreview, usePlayerCards } from '@/app/hooks/usePlayerCard'
+import { saveCardGroupLayers, useCardPreview, usePlayerCards } from '@/app/hooks/usePlayerCard'
 import { toast } from '@/app/utils/toast'
 import { pickTierTemplate } from '@/server/domains/playerCard/helpers/toCardShapes'
 import type { CardGroup, CardLayer, CardOverrides, PlayerCard } from '@/server/domains/playerCard'
@@ -58,8 +58,8 @@ export default function PlayerCardWorkbench({
     const effectiveOvr = cleaned.ovr ?? player.ovr
     const template = pickTierTemplate(group.templates, effectiveOvr)
 
-    const savedLayers = template?.layers ?? []
-    const draft = template ? drafts[template.id] : undefined
+    const savedLayers = group.layers ?? []
+    const draft = drafts[group.id]
     const layers = draft ?? savedLayers
     const dirty = draft !== undefined && JSON.stringify(draft) !== JSON.stringify(savedLayers)
     const layoutProblem = layers.length === 0 ? 'Add at least one segment' : layers.map(layerProblem).find(Boolean) ?? null
@@ -72,29 +72,27 @@ export default function PlayerCardWorkbench({
     const otherCards = cards.filter(c => c.groupId !== group.id)
 
     const setLayers = (next: CardLayer[]) => {
-        if (!template) return
-        onDraftsChange({ ...drafts, [template.id]: next })
+        onDraftsChange({ ...drafts, [group.id]: next })
     }
 
     const discardDraft = () => {
-        if (!template) return
-        const { [template.id]: _discarded, ...rest } = drafts
+        const { [group.id]: _discarded, ...rest } = drafts
         onDraftsChange(rest)
         setActiveIndex(null)
     }
 
     async function handleSave() {
-        if (!template || !draft) return
+        if (!draft) return
         setSaving(true)
         try {
-            const result = await saveCardTemplateLayers(template.id, draft)
+            const result = await saveCardGroupLayers(group.id, draft)
             if (!result.ok) {
                 toast.error('Failed to save layout', result.error.message)
                 return
             }
-            const { [template.id]: _saved, ...rest } = drafts
+            const { [group.id]: _saved, ...rest } = drafts
             onDraftsChange(rest)
-            toast.success(`Saved layout for ${group.name} tier ${template.tier}`)
+            toast.success(`Saved ${group.name} layout for all its tiers`)
         } finally {
             setSaving(false)
         }
@@ -139,7 +137,7 @@ export default function PlayerCardWorkbench({
                 </span>
                 <span className="text-xs text-muted-foreground">
                     {template
-                        ? <>{group.name} tier {template.tier} ({template.name}){cleaned.ovr !== undefined && ` · from overridden OVR ${cleaned.ovr}`}</>
+                        ? <>{group.name} T{template.rank} {template.name} art{cleaned.ovr !== undefined && ` · from overridden OVR ${cleaned.ovr}`}</>
                         : <span className="text-destructive">{group.name} has no tier for OVR {effectiveOvr}</span>}
                 </span>
             </div>
@@ -148,7 +146,7 @@ export default function PlayerCardWorkbench({
                 <div className="flex min-w-0 flex-1 flex-col gap-8">
                     <div className="flex flex-col gap-2">
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            <span className={SECTION}>Layout{template ? ` · tier ${template.tier}` : ''}</span>
+                            <span className={SECTION}>Layout · all {group.name} tiers</span>
                             {dirty && <span className="text-xs text-foreground">Unsaved changes</span>}
                             <button type="button" className={LINK} disabled={!dirty || saving} onClick={handleSave}>
                                 {saving ? 'Saving...' : 'Save layout'}
@@ -157,17 +155,15 @@ export default function PlayerCardWorkbench({
                                 Discard
                             </button>
                         </div>
-                        {template && template.problem && !draft && (
-                            <p className="text-xs text-destructive">{template.problem}</p>
+                        {group.layersProblem && !draft && (
+                            <p className="text-xs text-destructive">{group.layersProblem}</p>
                         )}
-                        {template && (
-                            <CardLayoutEditor
-                                layers={layers}
-                                activeIndex={activeIndex}
-                                onChange={setLayers}
-                                onActivate={setActiveIndex}
-                            />
-                        )}
+                        <CardLayoutEditor
+                            layers={layers}
+                            activeIndex={activeIndex}
+                            onChange={setLayers}
+                            onActivate={setActiveIndex}
+                        />
                     </div>
 
                     <CardOverridesForm
@@ -187,8 +183,8 @@ export default function PlayerCardWorkbench({
                     {template ? (
                         <CardLayoutPreview
                             image={preview.image}
-                            width={template.width}
-                            height={template.height}
+                            width={group.width}
+                            height={group.height}
                             layers={layers}
                             activeIndex={activeIndex}
                             isRendering={preview.isRendering}

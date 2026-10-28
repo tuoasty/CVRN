@@ -1,15 +1,15 @@
 import { Err, Ok, Result } from '@/shared/types/result'
 import { DBClient } from '@/shared/types/db'
 import { serializeError } from '@/server/utils/serializeableError'
-import { updateCardTemplateLayers as updateLayers } from '@/server/db/playerCards.repo'
+import { updateCardGroupLayers as updateLayers } from '@/server/db/playerCards.repo'
 import { CardLayer } from '../types'
 
-export async function updateCardTemplateLayers(
+export async function updateCardGroupLayers(
     supabase: DBClient,
-    p: { templateId: string; layers: CardLayer[] },
+    p: { groupId: string; layers: CardLayer[] },
 ): Promise<Result<CardLayer[]>> {
     try {
-        const saved = await updateLayers(supabase, { templateId: p.templateId, layers: p.layers })
+        const saved = await updateLayers(supabase, { groupId: p.groupId, layers: p.layers })
         if (!saved.ok) return saved
         return Ok(p.layers)
     } catch (error) {

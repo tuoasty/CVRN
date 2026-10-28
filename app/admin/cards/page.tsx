@@ -157,7 +157,7 @@ function AdminCardsContent() {
                                 <ul className="mt-2 max-h-[34rem] overflow-y-auto border-y border-border" role="listbox" aria-label="Players">
                                     {visibleRows.map(row => {
                                         const isSelected = row.playerId === playerId
-                                        const tier = group ? pickTierTemplate(group.templates, row.ovr)?.tier : undefined
+                                        const tier = group ? pickTierTemplate(group.templates, row.ovr)?.rank : undefined
                                         return (
                                             <li key={row.playerId} role="option" aria-selected={isSelected}>
                                                 <button

@@ -3,17 +3,29 @@
 import { Err, Ok, Result } from '@/shared/types/result'
 import { createServerSupabase } from '@/server/supabase/server'
 import { serializeError } from '@/server/utils/serializeableError'
-import { requireAdmin } from '@/server/domains/auth'
+import { requireAdmin, requireSuperAdmin } from '@/server/domains/auth'
 import {
+    createCardGroup,
+    createCardTemplate,
+    deleteCardGroup,
+    deleteCardTemplate,
     generatePlayerCard,
     getCardCatalog,
     getPlayerCards,
     previewPlayerCard,
-    updateCardTemplateLayers,
+    updateCardGroup,
+    updateCardTemplate,
+    updateCardGroupLayers,
+    CardGroupIdSchema,
+    CardTemplateIdSchema,
+    CreateCardGroupSchema,
+    CreateCardTemplateSchema,
     GeneratePlayerCardSchema,
     PlayerCardsQuerySchema,
     PreviewPlayerCardSchema,
-    UpdateCardTemplateLayersSchema,
+    UpdateCardGroupSchema,
+    UpdateCardGroupLayersSchema,
+    UpdateCardTemplateSchema,
 } from '@/server/domains/playerCard'
 import type { CardGroup, CardLayer, PlayerCard } from '@/server/domains/playerCard'
 import type { OverallInputRow } from '@/server/domains/overall'
@@ -66,15 +78,15 @@ export async function previewPlayerCardAction(input: unknown): Promise<Result<st
     }
 }
 
-export async function updateCardTemplateLayersAction(input: unknown): Promise<Result<CardLayer[]>> {
-    const parsed = UpdateCardTemplateLayersSchema.safeParse(input)
+export async function updateCardGroupLayersAction(input: unknown): Promise<Result<CardLayer[]>> {
+    const parsed = UpdateCardGroupLayersSchema.safeParse(input)
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
     const guard = await requireAdmin(supabase)
     if (!guard.ok) return guard
 
-    return updateCardTemplateLayers(supabase, parsed.data)
+    return updateCardGroupLayers(supabase, parsed.data)
 }
 
 export async function generatePlayerCardAction(input: unknown): Promise<Result<PlayerCard>> {
@@ -97,4 +109,70 @@ export async function generatePlayerCardAction(input: unknown): Promise<Result<P
     } catch (error) {
         return Err(serializeError(error))
     }
+}
+
+export async function createCardGroupAction(input: unknown): Promise<Result<{ id: string }>> {
+    const parsed = CreateCardGroupSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return createCardGroup(supabase, parsed.data)
+}
+
+export async function updateCardGroupAction(input: unknown): Promise<Result<null>> {
+    const parsed = UpdateCardGroupSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return updateCardGroup(supabase, parsed.data)
+}
+
+export async function deleteCardGroupAction(input: unknown): Promise<Result<null>> {
+    const parsed = CardGroupIdSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireSuperAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return deleteCardGroup(supabase, parsed.data.groupId)
+}
+
+export async function createCardTemplateAction(input: unknown): Promise<Result<{ id: string }>> {
+    const parsed = CreateCardTemplateSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return createCardTemplate(supabase, parsed.data)
+}
+
+export async function updateCardTemplateAction(input: unknown): Promise<Result<null>> {
+    const parsed = UpdateCardTemplateSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return updateCardTemplate(supabase, parsed.data)
+}
+
+export async function deleteCardTemplateAction(input: unknown): Promise<Result<null>> {
+    const parsed = CardTemplateIdSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireSuperAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return deleteCardTemplate(supabase, parsed.data.templateId)
 }

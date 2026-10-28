@@ -5,7 +5,7 @@ import type { CardData, CardTemplate } from '../../types'
 import { renderCard } from '../renderCard'
 import { fontKeyForField } from '../cardFont'
 import { loadTestFonts } from './testFonts'
-import { pickTierTemplate, resolveArtLocation, resolveCardText, statCellText, toCardTemplate } from '../toCardShapes'
+import { ladderProblem, pickTierTemplate, rankTemplates, resolveArtLocation, resolveCardText, statCellText, toCardTemplate, withArtVersion } from '../toCardShapes'
 
 const data: CardData = {
     username: 'spikerman',
@@ -46,45 +46,85 @@ describe('CardLayersSchema', () => {
         expect(parsed[0]).not.toHaveProperty('align')
     })
 
-    it('toCardTemplate surfaces a VALIDATION_ERROR for a bad manual insert', () => {
-        const result = toCardTemplate({
-            id: 't', name: 'Bad', canvas_width: 10, canvas_height: 10, group_id: 'g', tier: 1, min_ovr: 1,
-            created_at: '', fonts: [], layers: [{ kind: 'text', field: 'ovr' }],
-        }, 'base')
+    const tier = { id: 't', name: 'Gold', group_id: 'g', min_ovr: 85, created_at: '' }
+    const group = {
+        id: 'g', name: 'Base', is_limited: false, is_active: true, sort_order: 0, created_at: '',
+        canvas_width: 500, canvas_height: 700,
+    }
+
+    it('toCardTemplate surfaces a VALIDATION_ERROR for a bad group layout', () => {
+        const result = toCardTemplate(tier, { ...group, layers: [{ kind: 'text', field: 'ovr' }] })
         expect(result.ok).toBe(false)
         if (!result.ok) expect(result.error.code).toBe('VALIDATION_ERROR')
+    })
+
+    it('toCardTemplate takes the layout and canvas from the group and the art folder from the tier', () => {
+        const result = toCardTemplate(tier, { ...group, layers: [{ kind: 'art', src: 'bg.png', x: 0, y: 0, w: 500, h: 700 }] })
+        expect(result.ok && { id: result.value.id, width: result.value.width, height: result.value.height, layers: result.value.layers.length })
+            .toEqual({ id: 't', width: 500, height: 700, layers: 1 })
     })
 })
 
 describe('pickTierTemplate', () => {
     const tiers = [
-        { tier: 3, minOvr: 1 },
-        { tier: 1, minOvr: 85 },
-        { tier: 2, minOvr: 70 },
+        { name: 'bronze', minOvr: 1 },
+        { name: 'gold', minOvr: 85 },
+        { name: 'silver', minOvr: 70 },
     ]
 
-    it('picks the highest tier whose floor the OVR reaches', () => {
-        expect(pickTierTemplate(tiers, 99)?.tier).toBe(1)
-        expect(pickTierTemplate(tiers, 85)?.tier).toBe(1)
-        expect(pickTierTemplate(tiers, 84)?.tier).toBe(2)
-        expect(pickTierTemplate(tiers, 70)?.tier).toBe(2)
-        expect(pickTierTemplate(tiers, 45)?.tier).toBe(3)
+    it('picks the highest floor the OVR reaches, whatever the input order', () => {
+        expect(pickTierTemplate(tiers, 99)?.name).toBe('gold')
+        expect(pickTierTemplate(tiers, 85)?.name).toBe('gold')
+        expect(pickTierTemplate(tiers, 84)?.name).toBe('silver')
+        expect(pickTierTemplate(tiers, 70)?.name).toBe('silver')
+        expect(pickTierTemplate(tiers, 45)?.name).toBe('bronze')
     })
 
     it('returns null when no tier covers the OVR', () => {
-        expect(pickTierTemplate([{ tier: 1, minOvr: 90 }], 89)).toBeNull()
+        expect(pickTierTemplate([{ minOvr: 90 }], 89)).toBeNull()
         expect(pickTierTemplate([], 99)).toBeNull()
     })
 })
 
+describe('rankTemplates', () => {
+    it('ranks by floor, highest floor first', () => {
+        const ranked = rankTemplates([{ id: 'b', minOvr: 1 }, { id: 'g', minOvr: 85 }, { id: 's', minOvr: 70 }])
+        expect(ranked.map(t => [t.id, t.rank])).toEqual([['g', 1], ['s', 2], ['b', 3]])
+    })
+})
+
+describe('ladderProblem', () => {
+    it('passes when the lowest floor is 1', () => {
+        expect(ladderProblem([{ minOvr: 1 }])).toBeNull()
+        expect(ladderProblem([{ minOvr: 90 }, { minOvr: 1 }])).toBeNull()
+    })
+
+    it('names the uncovered OVR range', () => {
+        expect(ladderProblem([{ minOvr: 90 }, { minOvr: 40 }])).toBe("OVR 1–39 has no card. Set the lowest tier's floor to 1.")
+        expect(ladderProblem([{ minOvr: 2 }])).toBe("OVR 1 has no card. Set the lowest tier's floor to 1.")
+    })
+
+    it('flags a group without tiers', () => {
+        expect(ladderProblem([])).toBe('No tiers')
+    })
+})
+
 describe('resolveArtLocation', () => {
-    it('puts bare file names in the group tier folder', () => {
-        expect(resolveArtLocation('bg.png', 'halloween', 2)).toEqual({ path: 'card-templates/halloween/2/bg.png' })
+    it('puts bare file names in the template folder', () => {
+        expect(resolveArtLocation('bg.png', 'tpl-1')).toEqual({ path: 'card-templates/tpl-1/bg.png' })
     })
 
     it('keeps explicit storage paths and URLs', () => {
-        expect(resolveArtLocation('shared/frame.png', 'base', 1)).toEqual({ path: 'shared/frame.png' })
-        expect(resolveArtLocation('https://cdn.example.com/a.png', 'base', 1)).toEqual({ url: 'https://cdn.example.com/a.png' })
+        expect(resolveArtLocation('shared/frame.png', 'tpl-1')).toEqual({ path: 'shared/frame.png' })
+        expect(resolveArtLocation('https://cdn.example.com/a.png', 'tpl-1')).toEqual({ url: 'https://cdn.example.com/a.png' })
+    })
+})
+
+describe('withArtVersion', () => {
+    it('appends the file version as a cache buster', () => {
+        expect(withArtVersion('https://cdn.example.com/a.png', 123)).toBe('https://cdn.example.com/a.png?v=123')
+        expect(withArtVersion('https://cdn.example.com/a.png?x=1', 123)).toBe('https://cdn.example.com/a.png?x=1&v=123')
+        expect(withArtVersion('https://cdn.example.com/a.png', undefined)).toBe('https://cdn.example.com/a.png')
     })
 })
 
@@ -122,8 +162,6 @@ describe('renderCard', () => {
         const template: CardTemplate = {
             id: 't',
             groupId: 'g',
-            groupSlug: 'base',
-            tier: 1,
             minOvr: 1,
             name: 'Test',
             width: 500,
