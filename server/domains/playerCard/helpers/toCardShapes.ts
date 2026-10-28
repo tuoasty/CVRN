@@ -1,7 +1,7 @@
 import { CardGroupRow, CardTemplateRow, PlayerCardRow } from '@/shared/types/db'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { STORAGE_PATHS } from '@/server/storage/storage.paths'
-import { CARD_STAT_LABELS, CardData, CardGroup, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
+import { CARD_STAT_LABELS, CardData, CardStatField, CardGroup, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
 
 export type ArtLocation = { url: string } | { path: string }
 
@@ -91,6 +91,10 @@ export function toPlayerCard(row: PlayerCardRow): PlayerCard {
     }
 }
 
+export function statCellText(field: CardStatField, data: CardData): string {
+    return `${data.attributes[field]} ${CARD_STAT_LABELS[field]}`
+}
+
 export function resolveCardText(layer: CardTextLayer, data: CardData): string {
     const raw = (() => {
         switch (layer.field) {
@@ -100,11 +104,6 @@ export function resolveCardText(layer: CardTextLayer, data: CardData): string {
             case 'position': return data.position ?? ''
             case 'teamName': return data.teamName ?? ''
             case 'custom': return layer.text ?? ''
-            default: {
-                const value = String(data.attributes[layer.field])
-                const label = CARD_STAT_LABELS[layer.field]
-                return layer.statOrder === 'labelFirst' ? `${label} ${value}` : `${value} ${label}`
-            }
         }
     })()
     return layer.uppercase ? raw.toUpperCase() : raw

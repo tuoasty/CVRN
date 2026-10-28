@@ -15,6 +15,7 @@ import { loadImageAsPngDataUri } from '../helpers/loadImage'
 import { loadTemplateArt } from '../helpers/loadTemplateArt'
 import { buildCardData } from '../helpers/buildCardData'
 import { renderCard } from '../helpers/renderCard'
+import { loadCardFonts } from '../helpers/cardFont'
 
 async function resolveHeadshotUrl(player: OverallInputRow): Promise<string | null> {
     const large = await getRobloxLargeHeadshot(player.robloxUserId)
@@ -61,7 +62,10 @@ export async function generatePlayerCard(
             loadOptional(player.teamLogoUrl),
         ])
 
-        const png = await renderCard(template.value, data, { art: art.value, headshot, teamLogo })
+        const fonts = await loadCardFonts()
+        if (!fonts.ok) return fonts
+
+        const png = await renderCard(template.value, data, { art: art.value, headshot, teamLogo }, fonts.value)
 
         const admin = getSupabaseAdmin()
         const path = STORAGE_PATHS.playerCard(player.playerId, seasonNumber)

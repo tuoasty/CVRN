@@ -11,6 +11,7 @@ import { loadImageCached } from '../helpers/loadImage'
 import { loadTemplateArt } from '../helpers/loadTemplateArt'
 import { buildCardData } from '../helpers/buildCardData'
 import { renderCard } from '../helpers/renderCard'
+import { loadCardFonts } from '../helpers/cardFont'
 
 const PREVIEW_MAX_WIDTH = 640
 
@@ -57,7 +58,10 @@ export async function previewPlayerCard(
             loadOptionalCached(p.player.teamLogoUrl),
         ])
 
-        const png = await renderCard(template, data, { art: art.value, headshot, teamLogo })
+        const fonts = await loadCardFonts()
+        if (!fonts.ok) return fonts
+
+        const png = await renderCard(template, data, { art: art.value, headshot, teamLogo }, fonts.value)
         const webp = await sharp(png)
             .resize({ width: Math.min(PREVIEW_MAX_WIDTH, template.width), withoutEnlargement: true })
             .webp({ quality: 82 })

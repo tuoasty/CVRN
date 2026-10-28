@@ -1,6 +1,7 @@
 export const BUCKETS = {
     PUBLIC: "public-assets",
     MEDIA:  "public-assets",
+    CARD_FONTS: "card-fonts",
 } as const
 
 export const STORAGE_PATHS = {

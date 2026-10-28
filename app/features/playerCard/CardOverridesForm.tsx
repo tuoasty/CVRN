@@ -5,9 +5,8 @@ import { Input } from '@/app/components/ui/input'
 import { OVERALL_POSITIONS } from '@/server/domains/overall/types'
 import type { CategoryRatings, OverallPosition } from '@/server/domains/overall'
 import type { CardOverrides } from '@/server/domains/playerCard'
-import { CARD_STAT_LABELS } from '@/server/domains/playerCard/types/schemas'
+import { CARD_STAT_FIELDS, CARD_STAT_LABELS } from '@/server/domains/playerCard/types/schemas'
 import { cn } from '@/lib/utils'
-import { STAT_ORDER } from './cardSegments'
 
 const LABEL = 'text-xs font-semibold uppercase tracking-wider text-muted-foreground'
 const LINK = 'text-xs text-primary hover:underline underline-offset-4 rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40 disabled:no-underline'
@@ -119,7 +118,7 @@ export default function CardOverridesForm({
             </div>
 
             <div className="flex flex-wrap items-end gap-x-3 gap-y-3">
-                {STAT_ORDER.map(key => (
+                {CARD_STAT_FIELDS.map(key => (
                     <RatingInput
                         key={key}
                         label={CARD_STAT_LABELS[key]}

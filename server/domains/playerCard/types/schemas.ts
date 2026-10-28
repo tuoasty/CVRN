@@ -1,16 +1,14 @@
 import { z } from "zod"
 
-export const CARD_TEXT_FIELDS = [
-    'username', 'displayName', 'ovr', 'position', 'teamName',
-    'scoring', 'spiking', 'setting', 'blocking', 'receiving', 'serving',
-    'custom',
-] as const
+export const CARD_TEXT_FIELDS = ['username', 'displayName', 'ovr', 'position', 'teamName', 'custom'] as const
 
-export const CARD_STAT_FIELDS = ['scoring', 'spiking', 'setting', 'blocking', 'receiving', 'serving'] as const
+export const CARD_STAT_FIELDS = ['scoring', 'spiking', 'blocking', 'setting', 'receiving', 'serving'] as const
 export type CardStatField = typeof CARD_STAT_FIELDS[number]
 
-export const CARD_STAT_ORDERS = ['valueFirst', 'labelFirst'] as const
-export type CardStatOrder = typeof CARD_STAT_ORDERS[number]
+export const CARD_STATS_COLUMNS: CardStatField[][] = [
+    ['scoring', 'spiking', 'blocking'],
+    ['setting', 'receiving', 'serving'],
+]
 
 export const CARD_IMAGE_FIELDS = ['headshot', 'teamLogo'] as const
 
@@ -52,17 +50,26 @@ const TextLayerSchema = z.object({
     minSize: z.number().positive().optional(),
     color: z.string().default('#ffffff'),
     text: z.string().max(60, 'Custom text must be 60 characters or fewer').optional(),
-    statOrder: z.enum(CARD_STAT_ORDERS).default('valueFirst'),
     uppercase: z.boolean().default(false),
     letterSpacing: z.number().default(0),
     ...Box,
 })
 
-export const CardLayerSchema = z.discriminatedUnion('kind', [ArtLayerSchema, ImageLayerSchema, TextLayerSchema])
+const StatsLayerSchema = z.object({
+    kind: z.literal('stats'),
+    size: z.number().positive(),
+    minSize: z.number().positive().optional(),
+    color: z.string().default('#ffffff'),
+    letterSpacing: z.number().default(0),
+    ...Box,
+})
+
+export const CardLayerSchema = z.discriminatedUnion('kind', [ArtLayerSchema, ImageLayerSchema, TextLayerSchema, StatsLayerSchema])
 export type CardLayer = z.infer<typeof CardLayerSchema>
 export type CardArtLayer = z.infer<typeof ArtLayerSchema>
 export type CardImageLayer = z.infer<typeof ImageLayerSchema>
 export type CardTextLayer = z.infer<typeof TextLayerSchema>
+export type CardStatsLayer = z.infer<typeof StatsLayerSchema>
 
 export const CardLayersSchema = z.array(CardLayerSchema).min(1, 'Template has no layers').superRefine((layers, ctx) => {
     layers.forEach((layer, i) => {

@@ -13,7 +13,7 @@ export type {
     PlayerCard,
     CardLayer,
     CardOverrides,
-    CardStatOrder,
+    CardStatsLayer,
     GeneratePlayerCardInput,
     PlayerCardsQueryInput,
     PreviewPlayerCardInput,

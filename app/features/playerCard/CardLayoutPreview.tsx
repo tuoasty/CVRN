@@ -43,7 +43,7 @@ export default function CardLayoutPreview({
                             aria-label={`Select ${layerLabel(layer)}`}
                             onClick={() => onActivate(i)}
                             className={cn(
-                                'absolute border focus:outline-none',
+                                'group absolute border focus:outline-none hover:z-20',
                                 layer.kind === 'art' && !active && 'pointer-events-none',
                                 active
                                     ? 'z-10 border-2 border-primary bg-primary/10'
@@ -56,10 +56,17 @@ export default function CardLayoutPreview({
                                 height: pct(layer.h, height),
                             }}
                         >
+                            {layer.kind === 'stats' && (
+                                <span className="pointer-events-none absolute inset-0 grid grid-cols-2 grid-rows-3">
+                                    {[...Array(6)].map((_, cell) => (
+                                        <span key={cell} className="border border-dashed border-white/35" />
+                                    ))}
+                                </span>
+                            )}
                             {layer.kind !== 'art' && (
                                 <span
                                     className={cn(
-                                        'absolute left-0 top-0 whitespace-nowrap px-1 font-mono text-xs leading-4',
+                                        'pointer-events-none absolute left-0 top-0 hidden whitespace-nowrap px-1 font-mono text-xs leading-4 group-hover:block',
                                         active ? 'bg-primary text-primary-foreground' : 'bg-black/70 text-white',
                                     )}
                                 >
