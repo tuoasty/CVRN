@@ -12,7 +12,8 @@ export async function getPlayerAchievements(
         const teamSeasonsRes = await supabase
             .from("player_team_seasons")
             .select("team_id, season_id, role")
-            .eq("player_id", p.playerId);
+            .eq("player_id", p.playerId)
+            .is("left_at", null);
 
         if (teamSeasonsRes.error) {
             logger.error({playerId: p.playerId, error: teamSeasonsRes.error}, "Failed to fetch team seasons for achievements");

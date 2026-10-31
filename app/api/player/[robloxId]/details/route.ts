@@ -27,6 +27,5 @@ export async function GET(req: Request, {params}: {params: Promise<{robloxId: st
     }
 
     const result = await getCachedPlayerDetailByRobloxId(parsedId.data.robloxId, seasonNumber);
-    console.log(result)
     return toApiResponse(result);
 }
