@@ -1,4 +1,5 @@
 export { generatePlayerCard } from './commands/generatePlayerCard'
+export { generateCustomPlayerCard } from './commands/generateCustomPlayerCard'
 export { updateCardGroupLayers } from './commands/updateCardGroupLayers'
 export { createCardGroup } from './commands/createCardGroup'
 export { updateCardGroup } from './commands/updateCardGroup'
@@ -9,6 +10,7 @@ export { deleteCardTemplate } from './commands/deleteCardTemplate'
 export { getPlayerCards } from './queries/getPlayerCards'
 export { getCardCatalog } from './queries/getCardCatalog'
 export { previewPlayerCard } from './queries/previewPlayerCard'
+export { previewCustomPlayerCard } from './queries/previewCustomPlayerCard'
 export { ladderProblem, pickTierTemplate, rankTemplates } from './helpers/toCardShapes'
 
 export type {
@@ -19,6 +21,10 @@ export type {
     PlayerCard,
     CardLayer,
     CardOverrides,
+    CustomCardPlayer,
+    CustomCardValues,
+    GenerateCustomPlayerCardInput,
+    PreviewCustomPlayerCardInput,
     CardStatsLayer,
     CreateCardGroupInput,
     CreateCardTemplateInput,
@@ -36,6 +42,8 @@ export {
     CARD_STAT_LABELS,
     CardLayersSchema,
     CardOverridesSchema,
+    GenerateCustomPlayerCardSchema,
+    PreviewCustomPlayerCardSchema,
     CardGroupIdSchema,
     CardTemplateIdSchema,
     CreateCardGroupSchema,

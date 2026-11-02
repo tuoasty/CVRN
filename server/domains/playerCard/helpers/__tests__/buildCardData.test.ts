@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { computeOverall } from '@/server/domains/overall/helpers/computeOverall'
 import { defaultScalingSet } from '@/server/domains/overall/helpers/defaultScalings'
 import type { OverallConfig, OverallInputRow } from '@/server/domains/overall/types'
-import { buildCardData, seasonLabel } from '../buildCardData'
+import { buildCardData, buildCustomCardData, seasonLabel } from '../buildCardData'
+import { pickSeasonRoster, trustedRobloxAvatarUrl } from '../customSubject'
+import { CustomCardValuesSchema } from '../../types'
 
 const player: OverallInputRow = {
     playerId: 'p1',
@@ -58,5 +60,74 @@ describe('buildCardData', () => {
         expect(data.position).toBe('LIB')
         expect(data.attributes.spiking).toBe(99)
         expect(data.attributes.scoring).toBe(computed.attributes.scoring)
+    })
+})
+
+describe('custom player cards', () => {
+    const subject = {
+        playerId: null,
+        robloxUserId: '1',
+        username: 'newguy',
+        displayName: 'New Guy',
+        avatarUrl: null,
+        regionCode: 'AS',
+        teamId: null,
+        teamName: null,
+        teamLogoUrl: null,
+    }
+    const attributes = { scoring: 70, spiking: 71, setting: 72, blocking: 73, receiving: 74, serving: 75 }
+
+    it('prints the typed values and the subject identity', () => {
+        const data = buildCustomCardData(subject, { ovr: 88, position: 'ACE', attributes }, 2)
+        expect(data).toEqual({
+            username: 'newguy',
+            displayName: 'New Guy',
+            ovr: 88,
+            position: 'ACE',
+            teamName: null,
+            season: 'AS S2',
+            attributes,
+        })
+    })
+
+    it('stores a blank position as empty', () => {
+        expect(buildCustomCardData(subject, { ovr: 88, position: '  ', attributes }, 2).position).toBeNull()
+    })
+
+    it('accepts any 3 characters for position and rejects longer ones', () => {
+        expect(CustomCardValuesSchema.safeParse({ ovr: 88, position: 'A1!', attributes }).success).toBe(true)
+        expect(CustomCardValuesSchema.safeParse({ ovr: 88, position: '', attributes }).success).toBe(true)
+        expect(CustomCardValuesSchema.safeParse({ ovr: 88, position: 'ABCD', attributes }).success).toBe(false)
+    })
+
+    it('requires the OVR and all six attributes', () => {
+        const { serving: _serving, ...missing } = attributes
+        expect(CustomCardValuesSchema.safeParse({ ovr: 88, position: '', attributes: missing }).success).toBe(false)
+        expect(CustomCardValuesSchema.safeParse({ position: '', attributes }).success).toBe(false)
+    })
+
+    it('only trusts https avatar urls on the Roblox CDN', () => {
+        expect(trustedRobloxAvatarUrl('https://tr.rbxcdn.com/abc/150/150/AvatarHeadshot/Png')).toBe('https://tr.rbxcdn.com/abc/150/150/AvatarHeadshot/Png')
+        expect(trustedRobloxAvatarUrl('http://tr.rbxcdn.com/abc')).toBeNull()
+        expect(trustedRobloxAvatarUrl('https://169.254.169.254/latest/meta-data')).toBeNull()
+        expect(trustedRobloxAvatarUrl('https://rbxcdn.com.evil.test/a.png')).toBeNull()
+        expect(trustedRobloxAvatarUrl('https://evilrbxcdn.com/a.png')).toBeNull()
+        expect(trustedRobloxAvatarUrl('not a url')).toBeNull()
+        expect(trustedRobloxAvatarUrl(null)).toBeNull()
+    })
+
+    it('prefers the current roster, then the latest joined', () => {
+        const roster = (id: string, joined_at: string, left_at: string | null) => ({
+            joined_at,
+            left_at,
+            team: { id, name: id, logo_url: null, deleted_at: null },
+            season: { region: { code: 'AS' } },
+        })
+        const old = roster('old', '2026-01-01', '2026-02-01')
+        const left = roster('left', '2026-03-01', '2026-04-01')
+        const current = roster('current', '2026-02-01', null)
+        expect(pickSeasonRoster([old, left, current])?.team?.id).toBe('current')
+        expect(pickSeasonRoster([old, left])?.team?.id).toBe('left')
+        expect(pickSeasonRoster([])).toBeNull()
     })
 })

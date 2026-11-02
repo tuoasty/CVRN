@@ -12,6 +12,8 @@ import { REGION_ALL, useOverallParams } from '@/app/features/overall/useOverallP
 import { buildOverallRows, matchesOverallFilters, sortOverallRows } from '@/app/features/overall/overallRows'
 import CardTemplateCatalog from '@/app/features/playerCard/CardTemplateCatalog'
 import PlayerCardWorkbench, { type LayoutDrafts } from '@/app/features/playerCard/PlayerCardWorkbench'
+import CustomCardWorkbench from '@/app/features/playerCard/CustomCardWorkbench'
+import CustomPlayerPicker, { type CustomPlayerChoice } from '@/app/features/playerCard/CustomPlayerPicker'
 import { pickTierTemplate } from '@/server/domains/playerCard/helpers/toCardShapes'
 import { cn } from '@/lib/utils'
 
@@ -72,6 +74,8 @@ function AdminCardsContent() {
     const [playerId, setPlayerId] = useState<string | null>(null)
     const [q, setQ] = useState('')
     const [drafts, setDrafts] = useState<LayoutDrafts>({})
+    const [source, setSource] = useState<'board' | 'custom'>('board')
+    const [customPlayer, setCustomPlayer] = useState<CustomPlayerChoice | null>(null)
 
     const generatorGroups = useMemo(() => groups.filter(g => g.isActive && g.templates.length > 0), [groups])
     const group = generatorGroups.find(g => g.id === groupId) ?? generatorGroups[0] ?? null
@@ -128,10 +132,39 @@ function AdminCardsContent() {
                             onSelect={setGroupId}
                         />
                     )}
+                    <ScopeTabs
+                        label="Player"
+                        options={[{ value: 'board' as const, label: 'From board' }, { value: 'custom' as const, label: 'Custom' }]}
+                        value={source}
+                        onSelect={setSource}
+                    />
                 </div>
 
                 {!catalogLoading && generatorGroups.length === 0 ? (
                     <p className="mt-4 text-sm text-muted-foreground">No active group with tiers to generate from.</p>
+                ) : source === 'custom' ? (
+                    <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-start">
+                        <div className="w-full shrink-0 lg:w-[20rem]">
+                            <CustomPlayerPicker selected={customPlayer} onSelect={setCustomPlayer} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            {customPlayer && group && seasonNumber ? (
+                                <CustomCardWorkbench
+                                    key={customPlayer.robloxUserId}
+                                    player={customPlayer}
+                                    seasonNumber={seasonNumber}
+                                    regionCode={region === REGION_ALL ? null : region.toUpperCase()}
+                                    group={group}
+                                    groups={groups}
+                                    drafts={drafts}
+                                    onDraftsChange={setDrafts}
+                                    onGenerated={card => setCustomPlayer(current => current && { ...current, playerId: card.playerId })}
+                                />
+                            ) : (
+                                <p className="py-6 text-sm text-muted-foreground">Pick a player to make a custom card.</p>
+                            )}
+                        </div>
+                    </div>
                 ) : boardError ? (
                     <p className="mt-4 text-sm text-destructive">{boardError}</p>
                 ) : (

@@ -9,9 +9,11 @@ import {
     createCardTemplate,
     deleteCardGroup,
     deleteCardTemplate,
+    generateCustomPlayerCard,
     generatePlayerCard,
     getCardCatalog,
     getPlayerCards,
+    previewCustomPlayerCard,
     previewPlayerCard,
     updateCardGroup,
     updateCardTemplate,
@@ -20,8 +22,10 @@ import {
     CardTemplateIdSchema,
     CreateCardGroupSchema,
     CreateCardTemplateSchema,
+    GenerateCustomPlayerCardSchema,
     GeneratePlayerCardSchema,
     PlayerCardsQuerySchema,
+    PreviewCustomPlayerCardSchema,
     PreviewPlayerCardSchema,
     UpdateCardGroupSchema,
     UpdateCardGroupLayersSchema,
@@ -30,6 +34,8 @@ import {
 import type { CardGroup, CardLayer, PlayerCard } from '@/server/domains/playerCard'
 import type { OverallInputRow } from '@/server/domains/overall'
 import { getCachedSeasonOverallInputs } from '@/server/cache/publicReads'
+import { revalidatePublicData } from '@/server/cache/revalidate'
+import { CACHE_TAGS } from '@/server/cache/tags'
 
 function validationError(issues: { message: string }[]) {
     return Err({ message: issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' as const })
@@ -109,6 +115,31 @@ export async function generatePlayerCardAction(input: unknown): Promise<Result<P
     } catch (error) {
         return Err(serializeError(error))
     }
+}
+
+export async function previewCustomPlayerCardAction(input: unknown): Promise<Result<string>> {
+    const parsed = PreviewCustomPlayerCardSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return previewCustomPlayerCard(supabase, parsed.data)
+}
+
+export async function generateCustomPlayerCardAction(input: unknown): Promise<Result<PlayerCard>> {
+    const parsed = GenerateCustomPlayerCardSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const result = await generateCustomPlayerCard(supabase, parsed.data)
+    if (!result.ok) return result
+    if (result.value.registered) revalidatePublicData([CACHE_TAGS.players])
+    return Ok(result.value.card)
 }
 
 export async function createCardGroupAction(input: unknown): Promise<Result<{ id: string }>> {

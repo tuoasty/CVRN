@@ -2,10 +2,22 @@ import { computeOverall } from '@/server/domains/overall/helpers/computeOverall'
 import { NEUTRAL_SCALING } from '@/server/domains/overall/helpers/defaultScalings'
 import { OVERALL_CATEGORIES } from '@/server/domains/overall/types'
 import type { OverallConfig, OverallInputRow } from '@/server/domains/overall/types'
-import type { CardData, CardOverrides } from '../types'
+import type { CardData, CardOverrides, CardSubject, CustomCardValues } from '../types'
 
 export function seasonLabel(regionCode: string | null, seasonNumber: number): string {
     return regionCode ? `${regionCode} S${seasonNumber}` : `S${seasonNumber}`
+}
+
+export function buildCustomCardData(subject: CardSubject, values: CustomCardValues, seasonNumber: number): CardData {
+    return {
+        username: subject.username,
+        displayName: subject.displayName,
+        ovr: values.ovr,
+        position: values.position.trim() || null,
+        teamName: subject.teamName,
+        season: seasonLabel(subject.regionCode, seasonNumber),
+        attributes: values.attributes,
+    }
 }
 
 export function buildCardData(player: OverallInputRow, config: OverallConfig, seasonNumber: number, overrides: CardOverrides = {}): CardData {

@@ -6,6 +6,7 @@ import {
     deleteCardTemplateAction,
     getCardCatalogAction,
     getPlayerCardsAction,
+    previewCustomPlayerCardAction,
     previewPlayerCardAction,
     updateCardGroupAction,
     updateCardTemplateAction,
@@ -18,6 +19,7 @@ import type {
     CreateCardGroupInput,
     CreateCardTemplateInput,
     PlayerCard,
+    PreviewCustomPlayerCardInput,
     UpdateCardGroupInput,
     UpdateCardTemplateInput,
 } from "@/server/domains/playerCard";
@@ -30,13 +32,16 @@ export function playerCardsKey(playerId: string, seasonNumber: number) {
     return ["playerCards", playerId, seasonNumber] as const;
 }
 
-export interface CardPreviewRequest {
-    playerId: string;
-    seasonNumber: number;
-    templateId: string;
-    layers: CardLayer[];
-    overrides: CardOverrides;
-}
+export type CardPreviewRequest =
+    | {
+        kind: "board";
+        playerId: string;
+        seasonNumber: number;
+        templateId: string;
+        layers: CardLayer[];
+        overrides: CardOverrides;
+    }
+    | ({ kind: "custom" } & PreviewCustomPlayerCardInput);
 
 async function fetchCardCatalog(): Promise<CardGroup[]> {
     const result = await getCardCatalogAction();
@@ -51,7 +56,8 @@ async function fetchPlayerCards([, playerId, seasonNumber]: ReturnType<typeof pl
 }
 
 async function fetchCardPreview([, body]: readonly [string, string]): Promise<string> {
-    const result = await previewPlayerCardAction(JSON.parse(body));
+    const { kind, ...input } = JSON.parse(body) as CardPreviewRequest;
+    const result = kind === "custom" ? await previewCustomPlayerCardAction(input) : await previewPlayerCardAction(input);
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
 }
@@ -92,6 +98,14 @@ export function useCardPreview(request: CardPreviewRequest | null, delayMs = 400
         isRendering: isValidating || body !== debounced,
         error: error instanceof Error ? error.message : null,
     };
+}
+
+export function storePlayerCard(card: PlayerCard) {
+    return globalMutate(
+        playerCardsKey(card.playerId, card.seasonNumber),
+        (current: PlayerCard[] | undefined) => [...(current ?? []).filter(c => c.groupId !== card.groupId), card],
+        { revalidate: false }
+    );
 }
 
 export async function saveCardGroupLayers(groupId: string, layers: CardLayer[]) {

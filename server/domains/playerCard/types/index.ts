@@ -1,4 +1,4 @@
-import type { CategoryRatings, OverallPosition } from '@/server/domains/overall'
+import type { CategoryRatings } from '@/server/domains/overall'
 import type { CardLayer } from './schemas'
 
 export interface CardTemplate {
@@ -37,10 +37,22 @@ export interface CardData {
     username: string
     displayName: string | null
     ovr: number
-    position: OverallPosition | null
+    position: string | null
     teamName: string | null
     season: string
     attributes: CategoryRatings
+}
+
+export interface CardSubject {
+    playerId: string | null
+    robloxUserId: string
+    username: string
+    displayName: string | null
+    avatarUrl: string | null
+    regionCode: string | null
+    teamId: string | null
+    teamName: string | null
+    teamLogoUrl: string | null
 }
 
 export interface PlayerCard {
@@ -65,6 +77,9 @@ export {
     CardLayerSchema,
     CardLayersSchema,
     CardOverridesSchema,
+    CustomCardValuesSchema,
+    GenerateCustomPlayerCardSchema,
+    PreviewCustomPlayerCardSchema,
     CardGroupIdSchema,
     CardTemplateIdSchema,
     CreateCardGroupSchema,
@@ -84,6 +99,10 @@ export type {
     CardStatField,
     CardStatsLayer,
     CardOverrides,
+    CustomCardPlayer,
+    CustomCardValues,
+    GenerateCustomPlayerCardInput,
+    PreviewCustomPlayerCardInput,
     CreateCardGroupInput,
     CreateCardTemplateInput,
     UpdateCardGroupInput,

@@ -12,10 +12,10 @@ const LABEL = 'text-xs font-semibold uppercase tracking-wider text-muted-foregro
 const LINK = 'text-xs text-primary hover:underline underline-offset-4 rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40 disabled:no-underline'
 const FIELD = 'h-8 rounded-sm font-mono text-sm tabular-nums'
 
-function RatingInput({ label, value, placeholder, onChange }: {
+export function RatingInput({ label, value, placeholder, onChange }: {
     label: string
     value: number | undefined
-    placeholder: number
+    placeholder?: number
     onChange: (value: number | undefined) => void
 }) {
     const [text, setText] = useState(value === undefined ? '' : String(value))
@@ -32,7 +32,7 @@ function RatingInput({ label, value, placeholder, onChange }: {
             <Input
                 inputMode="numeric"
                 value={text}
-                placeholder={String(placeholder)}
+                placeholder={placeholder === undefined ? undefined : String(placeholder)}
                 aria-invalid={invalid || undefined}
                 onChange={e => {
                     const next = e.target.value

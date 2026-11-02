@@ -121,6 +121,44 @@ export const UpdateCardGroupLayersSchema = z.object({
 })
 export type UpdateCardGroupLayersInput = z.infer<typeof UpdateCardGroupLayersSchema>
 
+const CustomCardPlayerSchema = z.object({
+    robloxUserId: z.string().regex(/^\d+$/, 'Invalid Roblox user id'),
+    username: z.string().trim().min(1, 'Player name is required').max(64),
+    displayName: z.string().max(64).nullable(),
+    avatarUrl: z.string().max(2048).nullable(),
+})
+export type CustomCardPlayer = z.infer<typeof CustomCardPlayerSchema>
+
+export const CustomCardValuesSchema = z.object({
+    ovr: Rating,
+    position: z.string().trim().max(3, 'Position must be 3 characters or fewer'),
+    attributes: z.object({
+        scoring: Rating,
+        spiking: Rating,
+        setting: Rating,
+        blocking: Rating,
+        receiving: Rating,
+        serving: Rating,
+    }),
+})
+export type CustomCardValues = z.infer<typeof CustomCardValuesSchema>
+
+const CustomCardBaseSchema = z.object({
+    seasonNumber: z.number().int('Season must be a whole number').min(1, 'Season must be at least 1'),
+    regionCode: z.string().trim().min(1).max(8).nullable(),
+    player: CustomCardPlayerSchema,
+    values: CustomCardValuesSchema,
+})
+
+export const GenerateCustomPlayerCardSchema = CustomCardBaseSchema.extend({ groupId: z.string().uuid() })
+export type GenerateCustomPlayerCardInput = z.infer<typeof GenerateCustomPlayerCardSchema>
+
+export const PreviewCustomPlayerCardSchema = CustomCardBaseSchema.extend({
+    templateId: z.string().uuid(),
+    layers: CardLayersSchema,
+})
+export type PreviewCustomPlayerCardInput = z.infer<typeof PreviewCustomPlayerCardSchema>
+
 const CanvasSide = z.number().int().min(100, 'Canvas sides must be at least 100px').max(4000, 'Canvas sides must be 4000px or less')
 
 const CardGroupFieldsSchema = z.object({
