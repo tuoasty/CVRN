@@ -117,5 +117,23 @@ export type PlayerOverallRow =
 export type SeasonOverallInputRow =
     Database["public"]["Functions"]["get_overall_inputs"]["Returns"][number];
 
+export type CardGroupRow =
+    Database["public"]["Tables"]["card_groups"]["Row"];
+
+export type CardGroupInsert =
+    Database["public"]["Tables"]["card_groups"]["Insert"];
+
+export type CardTemplateRow =
+    Database["public"]["Tables"]["card_templates"]["Row"];
+
+export type CardTemplateInsert =
+    Database["public"]["Tables"]["card_templates"]["Insert"];
+
+export type PlayerCardRow =
+    Database["public"]["Tables"]["player_cards"]["Row"];
+
+export type PlayerCardInsert =
+    Database["public"]["Tables"]["player_cards"]["Insert"];
+
 export type GameAbilitySettingRow =
     Database["public"]["Tables"]["game_ability_settings"]["Row"];

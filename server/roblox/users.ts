@@ -74,6 +74,29 @@ export async function getRobloxAvatarsById(userIds: string[]): Promise<Result<Ro
     });
 }
 
+export async function getRobloxLargeHeadshot(userId: string): Promise<Result<string | null>> {
+    return withBreaker(async () => {
+        try {
+            const {data} = await robloxThumbnailsApi.get<{data: RobloxThumbnail[]}>(
+                "/v1/users/avatar-headshot", {
+                    params: {
+                        userIds: userId,
+                        size: "420x420",
+                        format: "Png",
+                        isCircular: false,
+                    },
+                }
+            );
+
+            const thumb = data.data[0];
+            return Ok(thumb?.state === "Completed" ? thumb.imageUrl : null);
+        } catch (error) {
+            logger.error({error, userId}, "Failed to fetch large Roblox headshot");
+            return Err({message: "Roblox API is temporarily unavailable", code: "INTEGRATION_ERROR"});
+        }
+    });
+}
+
 export async function getRobloxFullAvatarsById(userIds: string[]): Promise<Result<RobloxThumbnail[]>> {
     return withBreaker(async () => {
         try {

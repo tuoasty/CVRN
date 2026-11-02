@@ -1,6 +1,7 @@
 export const BUCKETS = {
     PUBLIC: "public-assets",
     MEDIA:  "public-assets",
+    CARD_FONTS: "card-fonts",
 } as const
 
 export const STORAGE_PATHS = {
@@ -21,6 +22,15 @@ export const STORAGE_PATHS = {
     },
     specPhoto(specId: string) {
         return `specs/${specId}_${Date.now()}.webp`;
+    },
+    cardTemplateFolder(templateId: string) {
+        return `card-templates/${templateId}`;
+    },
+    cardTemplateAsset(templateId: string, file: string) {
+        return `card-templates/${templateId}/${file}`;
+    },
+    playerCard(playerId: string, seasonNumber: number) {
+        return `cards/${seasonNumber}/${playerId}_${Date.now()}.png`;
     },
 }
 export function extractStoragePath(url: string, bucket: string): string {
