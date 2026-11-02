@@ -8,6 +8,7 @@ import { uploadFile, deleteFile } from '@/server/storage/storage.service'
 import { insertMediaPost } from '@/server/db/mediaPost.repo'
 import { assertMatchSlotFree } from '../helpers/assertMatchSlotFree'
 import { assertChampionSlotFree } from '../helpers/assertChampionSlotFree'
+import { assertRoundSlotFree, isMediaRoundKey, isRoundSlotViolation, roundSlotTakenError } from '../helpers/assertRoundSlotFree'
 import { getYoutubeId } from '@/shared/utils/youtube'
 import { CreateMediaInput, MediaPost } from '../types'
 
@@ -116,6 +117,20 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
             if (!free.ok) return free
         }
 
+        if (p.roundKey) {
+            if (p.type !== 'potw' && p.type !== 'totw') {
+                return Err({ message: 'Only POTW and TOTW posts can fill a round spot', code: 'VALIDATION_ERROR' })
+            }
+            if (!p.seasonId) {
+                return Err({ message: 'A season is required to fill a round spot', code: 'VALIDATION_ERROR' })
+            }
+            if (!isMediaRoundKey(p.roundKey)) {
+                return Err({ message: 'Invalid round', code: 'VALIDATION_ERROR' })
+            }
+            const free = await assertRoundSlotFree(supabase, p.seasonId, p.type, p.roundKey)
+            if (!free.ok) return free
+        }
+
         if (p.imageFile && p.imageFile.size > 0) {
             const ext = p.imageFile.name.split('.').pop() ?? 'jpg'
             const path = STORAGE_PATHS.mediaPost(postId, ext)
@@ -151,11 +166,15 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
             team_id:     p.teamId ?? null,
             player_id:   p.playerId ?? null,
             season_id:   p.seasonId ?? null,
+            round_key:   p.roundKey ?? null,
             created_by:  p.userId,
         })
 
         if (!insertResult.ok) {
             logger.error({ postId, error: insertResult.error }, 'Failed to insert media post')
+            if ((p.type === 'potw' || p.type === 'totw') && isRoundSlotViolation(insertResult.error)) {
+                return Err(roundSlotTakenError(p.type))
+            }
             return insertResult
         }
 

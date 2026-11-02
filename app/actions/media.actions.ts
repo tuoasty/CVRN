@@ -42,6 +42,7 @@ export async function createMediaPostAction(formData: FormData): Promise<Result<
         teamId:      formData.get('teamId') || undefined,
         playerId:    formData.get('playerId') || undefined,
         seasonId:    formData.get('seasonId') || undefined,
+        roundKey:    formData.get('roundKey') || undefined,
     })
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
@@ -62,6 +63,7 @@ export async function createMediaPostAction(formData: FormData): Promise<Result<
         teamId:      parsed.data.teamId || null,
         playerId:    parsed.data.playerId || null,
         seasonId:    parsed.data.seasonId || null,
+        roundKey:    parsed.data.roundKey || null,
         userId:      user.id,
     })
     if (result.ok) revalidatePublicData([CACHE_TAGS.media])

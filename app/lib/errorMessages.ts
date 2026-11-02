@@ -11,6 +11,7 @@ const messages: Record<ErrorCode, string> = {
     UNKNOWN: "Something went wrong. Please try again.",
     MEDIA_PIN_LIMIT_EXCEEDED: "Only 3 posts can be pinned at a time. Unpin one first.",
     MEDIA_MATCH_SLOT_TAKEN: "This match already has a GFX/VOD attached. Remove it first.",
+    MEDIA_ROUND_SLOT_TAKEN: "This round already has a POTW or TOTW. Edit it instead.",
     INVITE_EXPIRED: "This invite has expired. Ask an admin to send a new one.",
     UPDATE_LOG_VERSION_TAKEN: "That version already has an update log. Choose another.",
     UPDATE_LOG_IMAGE_NAME_TAKEN: "Another image in this log already uses that name.",

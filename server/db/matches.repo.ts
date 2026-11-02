@@ -1,5 +1,6 @@
 import {DBClient, Match, MatchSet, Player} from "@/shared/types/db";
 import {InsertMatchDto, MatchSitemapRow} from "@/server/domains/match";
+import type {DashboardMatchRow} from "@/server/domains/admin/types/dashboard";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {createError, serializeError} from "@/server/utils/serializeableError";
 
@@ -520,4 +521,28 @@ export async function findDefaultWeekForSeason(
         .maybeSingle();
     if (latestErr) return Err(serializeError(latestErr, "DB_ERROR"));
     return Ok(latest?.week ?? 1);
+}
+
+type DashboardMatchQueryRow = Omit<DashboardMatchRow, "playoff_round"> & {
+    playoff_brackets: {round: string} | {round: string}[] | null;
+};
+
+export async function findDashboardMatchRows(
+    supabase: DBClient,
+    seasonIds: string[],
+    fromIso: string,
+    toIso: string,
+): Promise<Result<DashboardMatchRow[]>> {
+    if (seasonIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("matches")
+        .select("id, season_id, match_type, status, week, match_code, scheduled_at, home_team_id, away_team_id, playoff_brackets (round)")
+        .in("season_id", seasonIds)
+        .or(`and(scheduled_at.gte."${fromIso}",scheduled_at.lte."${toIso}"),and(match_type.eq.playoffs,status.neq.completed,home_team_id.not.is.null,away_team_id.not.is.null)`);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+
+    return Ok(((data ?? []) as unknown as DashboardMatchQueryRow[]).map(({playoff_brackets, ...row}) => {
+        const bracket = Array.isArray(playoff_brackets) ? playoff_brackets[0] : playoff_brackets;
+        return {...row, playoff_round: bracket?.round ?? null};
+    }));
 }
