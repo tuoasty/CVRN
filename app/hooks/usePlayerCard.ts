@@ -130,7 +130,7 @@ export async function saveCardGroupLayers(groupId: string, layers: CardLayer[]) 
 
 async function thenRefreshCatalog<T>(result: Promise<Result<T>>): Promise<Result<T>> {
     const settled = await result;
-    if (settled.ok) void globalMutate(cardCatalogKey);
+    if (settled.ok) await globalMutate(cardCatalogKey);
     return settled;
 }
 

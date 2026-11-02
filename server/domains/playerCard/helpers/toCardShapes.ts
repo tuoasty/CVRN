@@ -54,6 +54,10 @@ function parseLayers(group: CardGroupRow, opts: { allowEmpty: boolean }): Result
     return Ok(layers.data)
 }
 
+export function copyableLayers(group: CardGroupRow): Result<CardLayer[]> {
+    return parseLayers(group, { allowEmpty: true })
+}
+
 export function toCardTemplate(tier: CardTemplateRow, group: CardGroupRow): Result<CardTemplate> {
     const layers = parseLayers(group, { allowEmpty: false })
     if (!layers.ok) return layers
@@ -78,7 +82,6 @@ export function toCardGroup(
     return {
         id: group.id,
         name: group.name,
-        isLimited: group.is_limited,
         isActive: group.is_active,
         sortOrder: group.sort_order,
         width: group.canvas_width,

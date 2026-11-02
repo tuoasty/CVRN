@@ -10,7 +10,6 @@ export async function updateCardGroup(supabase: DBClient, p: UpdateCardGroupInpu
             groupId: p.groupId,
             patch: {
                 name: p.name,
-                is_limited: p.isLimited,
                 is_active: p.isActive,
                 sort_order: p.sortOrder,
                 canvas_width: p.width,

@@ -62,7 +62,7 @@ export default function CardTemplateCatalog({ groups }: { groups: CardGroup[] })
     const trayFor = (group: CardGroup) => {
         if (!tray || tray.kind === 'newGroup' || tray.groupId !== group.id) return null
         if (tray.kind === 'group') {
-            return <CardGroupForm key={group.id} group={group} nextSortOrder={nextSortOrder} onDone={close} onCancel={close} />
+            return <CardGroupForm key={group.id} group={group} groups={groups} nextSortOrder={nextSortOrder} onDone={close} onCancel={close} />
         }
         const template = tray.kind === 'tier' ? group.templates.find(t => t.id === tray.templateId) ?? null : null
         if (tray.kind === 'tier' && !template) return null
@@ -86,7 +86,7 @@ export default function CardTemplateCatalog({ groups }: { groups: CardGroup[] })
 
             {tray?.kind === 'newGroup' && (
                 <div className="border-t border-border pt-4">
-                    <CardGroupForm group={null} nextSortOrder={nextSortOrder} onDone={close} onCancel={close} />
+                    <CardGroupForm group={null} groups={groups} nextSortOrder={nextSortOrder} onDone={close} onCancel={close} />
                 </div>
             )}
 
@@ -102,7 +102,7 @@ export default function CardTemplateCatalog({ groups }: { groups: CardGroup[] })
                                     <div className="flex w-48 shrink-0 flex-col items-start gap-0.5">
                                         <span className="text-sm font-semibold text-foreground">{group.name}</span>
                                         <span className="text-xs text-muted-foreground">
-                                            {[group.isLimited && 'Limited', !group.isActive && 'Inactive', `${group.templates.length} tier${group.templates.length === 1 ? '' : 's'}`]
+                                            {[!group.isActive && 'Inactive', `${group.templates.length} tier${group.templates.length === 1 ? '' : 's'}`]
                                                 .filter(Boolean)
                                                 .join(' · ')}
                                         </span>

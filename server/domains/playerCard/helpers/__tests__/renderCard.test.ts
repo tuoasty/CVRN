@@ -49,7 +49,7 @@ describe('CardLayersSchema', () => {
 
     const tier = { id: 't', name: 'Gold', group_id: 'g', min_ovr: 85, created_at: '' }
     const group = {
-        id: 'g', name: 'Base', is_limited: false, is_active: true, sort_order: 0, created_at: '',
+        id: 'g', name: 'Base', is_active: true, sort_order: 0, created_at: '',
         canvas_width: 500, canvas_height: 700,
     }
 

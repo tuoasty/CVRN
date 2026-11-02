@@ -22,7 +22,6 @@ export interface CardTemplateSummary {
 export interface CardGroup {
     id: string
     name: string
-    isLimited: boolean
     isActive: boolean
     sortOrder: number
     width: number
