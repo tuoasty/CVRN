@@ -8,7 +8,6 @@ export interface FitFontSizeInput {
     maxSize: number
     minSize: number
     letterSpacing: number
-    strokeRatio?: number
 }
 
 export interface FitRun {
@@ -16,20 +15,20 @@ export interface FitRun {
     font: opentype.Font
 }
 
-export function measureTextWidth(text: string, font: opentype.Font, size: number, letterSpacing: number, strokeRatio = 0): number {
-    return font.getAdvanceWidth(text, size, { kerning: false }) + strokeRatio * size + letterSpacing * [...text].length
+export function measureTextWidth(text: string, font: opentype.Font, size: number, letterSpacing: number): number {
+    return font.getAdvanceWidth(text, size, { kerning: false }) + letterSpacing * [...text].length
 }
 
 export function fitRunsFontSize(
     runs: FitRun[],
-    { width, height, maxSize, minSize, letterSpacing, strokeRatio = 0 }: Omit<FitFontSizeInput, 'text' | 'font'>,
+    { width, height, maxSize, minSize, letterSpacing }: Omit<FitFontSizeInput, 'text' | 'font'>,
 ): number {
     const ceiling = Math.min(maxSize, height)
     const floor = Math.min(minSize, ceiling)
     const chars = runs.reduce((n, run) => n + [...run.text].length, 0)
     if (chars === 0) return ceiling
 
-    const advanceAtOne = runs.reduce((sum, run) => sum + run.font.getAdvanceWidth(run.text, 1, { kerning: false }), 0) + strokeRatio
+    const advanceAtOne = runs.reduce((sum, run) => sum + run.font.getAdvanceWidth(run.text, 1, { kerning: false }), 0)
     if (advanceAtOne <= 0) return ceiling
 
     const room = width - letterSpacing * chars

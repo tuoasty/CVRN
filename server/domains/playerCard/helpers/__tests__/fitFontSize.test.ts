@@ -41,14 +41,6 @@ describe('fitFontSize', () => {
         expect(measureTextWidth(text, font, spaced, 4)).toBeLessThanOrEqual(300)
     })
 
-    it('leaves room for a stroke that scales with the font size', () => {
-        const text = '87'
-        const plain = fitFontSize({ ...box, width: 60, height: 200, maxSize: 200, text, font })
-        const stroked = fitFontSize({ ...box, width: 60, height: 200, maxSize: 200, strokeRatio: 0.04, text, font })
-        expect(stroked).toBeLessThan(plain)
-        expect(measureTextWidth(text, font, stroked, 0, 0.04)).toBeLessThanOrEqual(60)
-    })
-
     it('returns the ceiling for empty text and the floor when spacing alone overflows', () => {
         expect(fitFontSize({ ...box, text: '', font })).toBe(48)
         expect(fitFontSize({ ...box, width: 10, letterSpacing: 5, text: 'ABCDE', font })).toBe(20)
