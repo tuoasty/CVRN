@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CardLayer } from '@/server/domains/playerCard'
 import { CARD_ART_MAX_BYTES } from '@/server/domains/playerCard/types/schemas'
-import { artFitWarning, checkArtFile, formatArtSize, generateBlocker, layoutArtSlots, missingArt, pickPreviewImage, readPngSize, tierRangeLabels } from '../cardArt'
+import { artFitWarning, checkArtFile, formatArtSize, generateBlocker, layoutArtSlots, missingArt, pickPreviewImage, readPngSize, tierHasArt, tierRangeLabels } from '../cardArt'
 
 const art = (src: string, w = 1000, h = 1400): CardLayer => ({ kind: 'art', src, x: 0, y: 0, w, h })
 const ovr: CardLayer = { kind: 'text', field: 'ovr', x: 0, y: 0, w: 1, h: 1, size: 1, color: '#fff', uppercase: false, letterSpacing: 0 }
@@ -22,6 +22,14 @@ describe('layoutArtSlots', () => {
             { name: 'bg.png', w: 1000, h: 1400 },
             { name: 'frame.png', w: 10, h: 10 },
         ])
+    })
+})
+
+describe('tierHasArt', () => {
+    it('needs a layout art slot and its file', () => {
+        expect(tierHasArt([art('bg.png')], [{ name: 'bg.png' }])).toBe(true)
+        expect(tierHasArt([art('bg.png')], [])).toBe(false)
+        expect(tierHasArt([ovr], [{ name: 'bg.png' }])).toBe(false)
     })
 })
 

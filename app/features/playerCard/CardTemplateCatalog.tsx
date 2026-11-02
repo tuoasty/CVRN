@@ -6,12 +6,14 @@ import type { CardGroup, CardTemplateSummary } from '@/server/domains/playerCard
 import { cn } from '@/lib/utils'
 import { missingArt, tierRangeLabels } from './cardArt'
 import CardGroupForm from './CardGroupForm'
+import CardTemplateDownload from './CardTemplateDownload'
 import CardTierForm from './CardTierForm'
 import { LINK } from './cardFormStyles'
 
 type Tray =
     | { kind: 'newGroup' }
     | { kind: 'group'; groupId: string }
+    | { kind: 'template'; groupId: string }
     | { kind: 'newTier'; groupId: string }
     | { kind: 'tier'; groupId: string; templateId: string }
     | null
@@ -61,6 +63,7 @@ export default function CardTemplateCatalog({ groups }: { groups: CardGroup[] })
         if (tray.kind === 'group') {
             return <CardGroupForm key={group.id} group={group} groups={groups} nextSortOrder={nextSortOrder} onDone={close} onCancel={close} />
         }
+        if (tray.kind === 'template') return <CardTemplateDownload group={group} onClose={close} />
         const template = tray.kind === 'tier' ? group.templates.find(t => t.id === tray.templateId) ?? null : null
         if (tray.kind === 'tier' && !template) return null
         return (
@@ -108,11 +111,14 @@ export default function CardTemplateCatalog({ groups }: { groups: CardGroup[] })
                                         {group.layersProblem
                                             ? <span className="text-xs text-destructive" title={group.layersProblem}>Invalid layout</span>
                                             : group.layers?.length === 0 && <span className="text-xs text-muted-foreground">No layout yet</span>}
-                                        <div className="mt-1 flex items-baseline gap-3">
+                                        <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                                             <button type="button" className={LINK} onClick={() => setTray({ kind: 'group', groupId: group.id })}>
                                                 Edit group
                                             </button>
                                             <Link href={`/admin/cards?group=${group.id}`} className={LINK}>Layout</Link>
+                                            <button type="button" className={LINK} onClick={() => setTray({ kind: 'template', groupId: group.id })}>
+                                                Download template
+                                            </button>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-4 overflow-x-auto pb-1">

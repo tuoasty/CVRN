@@ -14,6 +14,7 @@ import {
     generateCustomPlayerCard,
     generatePlayerCard,
     getCardCatalog,
+    getCardTierTemplate,
     getPlayerCards,
     previewCustomPlayerCard,
     previewPlayerCard,
@@ -216,6 +217,17 @@ export async function uploadCardTemplateArtAction(formData: FormData): Promise<R
 
     const admin = getSupabaseAdmin() as unknown as DBClient
     return uploadCardTemplateArt(admin, { ...parsed.data, file, userId: guard.value })
+}
+
+export async function downloadCardTierTemplateAction(input: unknown): Promise<Result<{ fileName: string; dataUri: string }>> {
+    const parsed = CardTemplateIdSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return getCardTierTemplate(supabase, parsed.data.templateId)
 }
 
 export async function deletePlayerCardAction(input: unknown): Promise<Result<null>> {

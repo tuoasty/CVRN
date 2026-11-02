@@ -23,6 +23,10 @@ export function missingArt(layers: CardLayer[], files: Pick<CardArtFile, 'name'>
     return layoutArtSlots(layers).map(slot => slot.name).filter(name => !files.some(file => file.name === name))
 }
 
+export function tierHasArt(layers: CardLayer[], files: Pick<CardArtFile, 'name'>[]): boolean {
+    return layoutArtSlots(layers).length > 0 && missingArt(layers, files).length === 0
+}
+
 export function artFitWarning(image: { width: number; height: number }, box: { w: number; h: number }): string | null {
     const shape = Math.abs(image.width / image.height - box.w / box.h) / (box.w / box.h) > SHAPE_TOLERANCE
     const small = image.width < box.w || image.height < box.h
