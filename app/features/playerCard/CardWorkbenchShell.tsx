@@ -17,6 +17,7 @@ import CardLayoutEditor from './CardLayoutEditor'
 import CardLayoutPreview from './CardLayoutPreview'
 import { layerProblem } from './cardSegments'
 import ConfirmDeleteLink from './ConfirmDeleteLink'
+import { saveDataUri } from './saveDataUri'
 
 const LINK = 'text-xs text-primary hover:underline underline-offset-4 rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40 disabled:no-underline'
 const SECTION = 'text-xs font-semibold uppercase tracking-wider text-muted-foreground'
@@ -45,6 +46,7 @@ export default function CardWorkbenchShell({
     generateNote,
     buildPreview,
     generate,
+    downloadTemplate,
     onGenerated,
 }: {
     playerId: string | null
@@ -63,6 +65,7 @@ export default function CardWorkbenchShell({
     generateNote?: string
     buildPreview: (templateId: string, layers: CardLayer[], previewOvr: number | null) => CardPreviewRequest | null
     generate: () => Promise<Result<PlayerCard>>
+    downloadTemplate: () => Promise<Result<{ fileName: string; dataUri: string }>>
     onGenerated: (card: PlayerCard) => void
 }) {
     const [active, setActive] = useState<{ groupId: string; index: number } | null>(null)
@@ -70,6 +73,7 @@ export default function CardWorkbenchShell({
     const [showBorders, setShowBorders] = useState(true)
     const [saving, setSaving] = useState(false)
     const [generating, setGenerating] = useState(false)
+    const [downloading, setDownloading] = useState(false)
     const isSuperAdmin = useIsSuperAdmin()
 
     const activeIndex = active?.groupId === group.id ? active.index : null
@@ -139,6 +143,22 @@ export default function CardWorkbenchShell({
             toast.success(`${group.name} card generated for ${username}`)
         } finally {
             setGenerating(false)
+        }
+    }
+
+    async function handleDownloadTemplate() {
+        setDownloading(true)
+        try {
+            const result = await downloadTemplate()
+            if (!result.ok) {
+                toast.error('Template not downloaded', result.error.message)
+                return
+            }
+            saveDataUri(result.value.dataUri, result.value.fileName)
+        } catch {
+            toast.error('Template not downloaded', 'The connection dropped. Try again.')
+        } finally {
+            setDownloading(false)
         }
     }
 
@@ -284,6 +304,9 @@ export default function CardWorkbenchShell({
                         <Button size="sm" className="rounded-sm" disabled={generating || !!blocker} onClick={handleGenerate}>
                             {generating ? 'Generating...' : card ? 'Regenerate' : 'Generate'}
                         </Button>
+                        <button type="button" className={LINK} disabled={downloading || !!blocker} onClick={handleDownloadTemplate}>
+                            {downloading ? 'Preparing...' : 'Download template'}
+                        </button>
                         {generateNote && <span className="text-xs text-foreground">{generateNote}</span>}
                     </div>
                     {blocker && <p className="text-xs text-muted-foreground">{blocker}</p>}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Input } from '@/app/components/ui/input'
-import { generateCustomPlayerCardAction } from '@/app/actions/playerCard.actions'
+import { downloadCustomPlayerCardTemplateAction, generateCustomPlayerCardAction } from '@/app/actions/playerCard.actions'
 import { CARD_STAT_FIELDS, CARD_STAT_LABELS } from '@/server/domains/playerCard/types/schemas'
 import type { CardGroup, CustomCardValues, PlayerCard } from '@/server/domains/playerCard'
 import type { CategoryRatings } from '@/server/domains/overall'
@@ -116,6 +116,13 @@ export default function CustomCardWorkbench({
                 values: previewOvr === null ? values : { ...values, ovr: previewOvr },
             }}
             generate={() => generateCustomPlayerCardAction({
+                player: identity,
+                seasonNumber,
+                regionCode,
+                groupId: group.id,
+                values,
+            })}
+            downloadTemplate={() => downloadCustomPlayerCardTemplateAction({
                 player: identity,
                 seasonNumber,
                 regionCode,

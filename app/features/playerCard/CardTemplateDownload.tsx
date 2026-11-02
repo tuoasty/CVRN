@@ -6,13 +6,7 @@ import { toast } from '@/app/utils/toast'
 import type { CardGroup } from '@/server/domains/playerCard'
 import { tierHasArt } from './cardArt'
 import { FIELD_LABEL, LINK } from './cardFormStyles'
-
-function saveFile(dataUri: string, fileName: string) {
-    const link = document.createElement('a')
-    link.href = dataUri
-    link.download = fileName
-    link.click()
-}
+import { saveDataUri } from './saveDataUri'
 
 export default function CardTemplateDownload({ group, onClose }: { group: CardGroup; onClose: () => void }) {
     const [busyId, setBusyId] = useState<string | null>(null)
@@ -25,7 +19,7 @@ export default function CardTemplateDownload({ group, onClose }: { group: CardGr
                 toast.error(`${tierName} template not downloaded`, result.error.message)
                 return
             }
-            saveFile(result.value.dataUri, result.value.fileName)
+            saveDataUri(result.value.dataUri, result.value.fileName)
         } catch {
             toast.error(`${tierName} template not downloaded`, 'The connection dropped. Try again.')
         } finally {

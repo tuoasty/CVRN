@@ -14,7 +14,9 @@ import {
     generateCustomPlayerCard,
     generatePlayerCard,
     getCardCatalog,
+    getBoardPlayerCardTemplate,
     getCardTierTemplate,
+    getCustomPlayerCardTemplate,
     getPlayerCards,
     previewCustomPlayerCard,
     previewPlayerCard,
@@ -228,6 +230,39 @@ export async function downloadCardTierTemplateAction(input: unknown): Promise<Re
     if (!guard.ok) return guard
 
     return getCardTierTemplate(supabase, parsed.data.templateId)
+}
+
+export async function downloadPlayerCardTemplateAction(input: unknown): Promise<Result<{ fileName: string; dataUri: string }>> {
+    const parsed = GeneratePlayerCardSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    try {
+        const player = await findSeasonPlayer(parsed.data.seasonNumber, parsed.data.playerId)
+        if (!player.ok) return player
+        return getBoardPlayerCardTemplate(supabase, {
+            seasonNumber: parsed.data.seasonNumber,
+            groupId: parsed.data.groupId,
+            overrides: parsed.data.overrides,
+            player: player.value,
+        })
+    } catch (error) {
+        return Err(serializeError(error))
+    }
+}
+
+export async function downloadCustomPlayerCardTemplateAction(input: unknown): Promise<Result<{ fileName: string; dataUri: string }>> {
+    const parsed = GenerateCustomPlayerCardSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return getCustomPlayerCardTemplate(supabase, parsed.data)
 }
 
 export async function deletePlayerCardAction(input: unknown): Promise<Result<null>> {

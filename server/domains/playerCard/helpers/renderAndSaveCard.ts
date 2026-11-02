@@ -6,9 +6,10 @@ import { getSupabaseAdmin } from '@/server/supabase/admin'
 import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
 import { toCdnUrl } from '@/server/storage/toCdnUrl'
 import { getRobloxLargeHeadshot } from '@/server/roblox/users'
-import { findCardGroupById, findCardTemplates, findPlayerCard, upsertPlayerCard } from '@/server/db/playerCards.repo'
+import { findPlayerCard, upsertPlayerCard } from '@/server/db/playerCards.repo'
 import { CardData, CardSubject, PlayerCard } from '../types'
-import { pickTierTemplate, toCardTemplate, toPlayerCard } from './toCardShapes'
+import { resolveCardTier } from './resolveCardTier'
+import { toCardTemplate, toPlayerCard } from './toCardShapes'
 import { loadImageAsPngDataUri } from './loadImage'
 import { loadTemplateArt } from './loadTemplateArt'
 import { renderCard } from './renderCard'
@@ -39,18 +40,9 @@ export async function renderAndSaveCard(
 ): Promise<Result<PlayerCard>> {
     const { seasonNumber, groupId, subject, data } = p
 
-    const group = await findCardGroupById(supabase, groupId)
-    if (!group.ok) return group
-    if (!group.value) return Err({ message: 'Card group not found', code: 'NOT_FOUND' })
-    if (!group.value.is_active) return Err({ message: `${group.value.name} is inactive`, code: 'VALIDATION_ERROR' })
-
-    const templateRows = await findCardTemplates(supabase, groupId)
-    if (!templateRows.ok) return templateRows
-    const templateRow = pickTierTemplate(templateRows.value.map(row => ({ row, minOvr: row.min_ovr })), data.ovr)?.row
-    if (!templateRow) {
-        return Err({ message: `${group.value.name} has no tier for OVR ${data.ovr}`, code: 'NOT_FOUND' })
-    }
-    const template = toCardTemplate(templateRow, group.value)
+    const resolved = await resolveCardTier(supabase, { groupId, ovr: data.ovr })
+    if (!resolved.ok) return resolved
+    const template = toCardTemplate(resolved.value.tier, resolved.value.group)
     if (!template.ok) return template
     if (!template.value.layers.some(layer => layer.kind === 'art')) {
         return Err({ message: 'This layout has no art layer, so a card would have no background', code: 'VALIDATION_ERROR' })
