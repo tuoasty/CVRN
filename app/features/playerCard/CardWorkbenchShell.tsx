@@ -6,6 +6,7 @@ import { Button } from '@/app/components/ui/button'
 import { useIsSuperAdmin } from '@/app/admin/AdminRoleProvider'
 import { deletePlayerCard, saveCardGroupLayers, storePlayerCard, useCardPreview, usePlayerCards } from '@/app/hooks/usePlayerCard'
 import type { CardPreviewRequest } from '@/app/hooks/usePlayerCard'
+import { useCardBulkStatus } from '@/app/hooks/useCardBulk'
 import { toast } from '@/app/utils/toast'
 import { pickTierTemplate } from '@/server/domains/playerCard/helpers/toCardShapes'
 import type { CardGroup, CardLayer, PlayerCard } from '@/server/domains/playerCard'
@@ -75,6 +76,7 @@ export default function CardWorkbenchShell({
     const [generating, setGenerating] = useState(false)
     const [downloading, setDownloading] = useState(false)
     const isSuperAdmin = useIsSuperAdmin()
+    const { isRunning: bulkRunning } = useCardBulkStatus()
 
     const activeIndex = active?.groupId === group.id ? active.index : null
     const setActiveIndex = (index: number | null) => setActive(index === null ? null : { groupId: group.id, index })
@@ -181,7 +183,7 @@ export default function CardWorkbenchShell({
         />
     )
 
-    const blocker = generateBlocker({
+    const blockerInput = {
         notReady: generateProblem,
         inputProblem,
         inactiveGroup: group.isActive ? null : `${group.name} is inactive. Turn it on in Card Groups to generate.`,
@@ -192,7 +194,9 @@ export default function CardWorkbenchShell({
         layers,
         tierName: template?.name ?? null,
         missing,
-    })
+    }
+    const downloadBlocker = generateBlocker(blockerInput)
+    const blocker = generateBlocker({ ...blockerInput, bulkRunning: bulkRunning ? 'A bulk generation is running' : null })
 
     return (
         <div className="flex flex-col gap-6">
@@ -304,7 +308,7 @@ export default function CardWorkbenchShell({
                         <Button size="sm" className="rounded-sm" disabled={generating || !!blocker} onClick={handleGenerate}>
                             {generating ? 'Generating...' : card ? 'Regenerate' : 'Generate'}
                         </Button>
-                        <button type="button" className={LINK} disabled={downloading || !!blocker} onClick={handleDownloadTemplate}>
+                        <button type="button" className={LINK} disabled={downloading || !!downloadBlocker} onClick={handleDownloadTemplate}>
                             {downloading ? 'Preparing...' : 'Download template'}
                         </button>
                         {generateNote && <span className="text-xs text-foreground">{generateNote}</span>}

@@ -87,7 +87,9 @@ export function generateBlocker(p: {
     layers: CardLayer[]
     tierName: string | null
     missing: string[]
+    bulkRunning?: string | null
 }): string | null {
+    if (p.bulkRunning) return p.bulkRunning
     if (p.notReady) return p.notReady
     if (p.inputProblem) return p.inputProblem
     if (p.inactiveGroup) return p.inactiveGroup

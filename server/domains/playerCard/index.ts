@@ -9,12 +9,17 @@ export { updateCardTemplate } from './commands/updateCardTemplate'
 export { deleteCardTemplate } from './commands/deleteCardTemplate'
 export { uploadCardTemplateArt } from './commands/uploadCardTemplateArt'
 export { deletePlayerCard } from './commands/deletePlayerCard'
+export { startCardBulkJob } from './commands/startCardBulkJob'
+export { stopCardBulkJob } from './commands/stopCardBulkJob'
 export { getPlayerCards } from './queries/getPlayerCards'
 export { getCardCatalog } from './queries/getCardCatalog'
 export { getCardTierTemplate } from './queries/getCardTierTemplate'
 export { getBoardPlayerCardTemplate, getCustomPlayerCardTemplate } from './queries/getPlayerCardTemplate'
 export { previewPlayerCard } from './queries/previewPlayerCard'
 export { previewCustomPlayerCard } from './queries/previewCustomPlayerCard'
+export { getCardBulkStatus } from './queries/getCardBulkStatus'
+export { getCardPlayerIds } from './queries/getCardPlayerIds'
+export { assertNoRunningBulk } from './helpers/bulkLock'
 export { ladderProblem, pickTierTemplate, rankTemplates } from './helpers/toCardShapes'
 
 export type {
@@ -41,6 +46,12 @@ export type {
     UpdateCardGroupLayersInput,
     UploadCardArtInput,
     DeletePlayerCardInput,
+    CardBulkMode,
+    CardBulkJobStatus,
+    CardBulkFailure,
+    CardBulkJob,
+    StartCardBulkInput,
+    CardPlayerIdsInput,
 } from './types'
 
 export {
@@ -63,4 +74,7 @@ export {
     UpdateCardGroupLayersSchema,
     UploadCardArtSchema,
     DeletePlayerCardSchema,
+    StartCardBulkSchema,
+    CardBulkJobIdSchema,
+    CardPlayerIdsSchema,
 } from './types'

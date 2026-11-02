@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Ok } from '@/shared/types/result'
+import { Err, Ok } from '@/shared/types/result'
 import type { DBClient } from '@/shared/types/db'
 import type { CardData, CardSubject } from '../../types'
 import { renderAndSaveCard } from '../renderAndSaveCard'
@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
     renderCard: vi.fn(),
     loadCardFonts: vi.fn(),
     upload: vi.fn(),
+    getRobloxLargeHeadshot: vi.fn(),
+    loadImageAsPngDataUri: vi.fn(),
 }))
 
 vi.mock('@/server/db/playerCards.repo', () => ({
@@ -27,8 +29,8 @@ vi.mock('@/server/supabase/admin', () => ({
     }),
 }))
 vi.mock('@/server/storage/toCdnUrl', () => ({ toCdnUrl: (url: string) => url }))
-vi.mock('@/server/roblox/users', () => ({ getRobloxLargeHeadshot: vi.fn().mockResolvedValue({ ok: true, value: null }) }))
-vi.mock('../loadImage', () => ({ loadImageAsPngDataUri: vi.fn() }))
+vi.mock('@/server/roblox/users', () => ({ getRobloxLargeHeadshot: mocks.getRobloxLargeHeadshot }))
+vi.mock('../loadImage', () => ({ loadImageAsPngDataUri: mocks.loadImageAsPngDataUri }))
 vi.mock('../loadTemplateArt', () => ({ loadTemplateArt: mocks.loadTemplateArt }))
 vi.mock('../renderCard', () => ({ renderCard: mocks.renderCard }))
 vi.mock('../cardFont', () => ({ loadCardFonts: mocks.loadCardFonts }))
@@ -48,6 +50,7 @@ describe('renderAndSaveCard guards', () => {
         mocks.findCardGroupById.mockResolvedValue(Ok(groupRow))
         mocks.findCardTemplates.mockResolvedValue(Ok([tierRow]))
         mocks.loadTemplateArt.mockResolvedValue(Ok({ 'bg.png': 'uri' }))
+        mocks.getRobloxLargeHeadshot.mockResolvedValue(Ok(null))
     })
 
     it('refuses a layout with no art layer before loading or uploading anything', async () => {
@@ -74,5 +77,83 @@ describe('renderAndSaveCard guards', () => {
         expect(mocks.loadTemplateArt).toHaveBeenCalledWith(expect.objectContaining({ id: 't' }), { cached: false, allowMissing: false })
         expect(mocks.upload).not.toHaveBeenCalled()
         expect(mocks.upsertPlayerCard).not.toHaveBeenCalled()
+    })
+})
+
+describe('renderAndSaveCard images', () => {
+    const logoSubject = { ...subject, avatarUrl: 'https://x/avatar.png', teamLogoUrl: 'https://x/logo.png' } as CardSubject
+    const strict = { ...input, strictImages: true, generatedBy: 'u' }
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mocks.findCardGroupById.mockResolvedValue(Ok(groupRow))
+        mocks.findCardTemplates.mockResolvedValue(Ok([tierRow]))
+        mocks.findPlayerCard.mockResolvedValue(Ok(null))
+        mocks.upsertPlayerCard.mockResolvedValue(Ok({ player_id: 'p', season_number: 2, group_id: 'g', template_id: 't', ovr: 80, image_url: 'u', generated_at: 'now' }))
+        mocks.loadTemplateArt.mockResolvedValue(Ok({ 'bg.png': 'uri' }))
+        mocks.loadCardFonts.mockResolvedValue(Ok([]))
+        mocks.renderCard.mockResolvedValue(Buffer.from('png'))
+        mocks.upload.mockResolvedValue({ error: null })
+        mocks.getRobloxLargeHeadshot.mockResolvedValue(Ok('https://x/large.png'))
+        mocks.loadImageAsPngDataUri.mockResolvedValue(Ok('data:image/png;base64,x'))
+    })
+
+    describe('strict images', () => {
+        it('fails with no upload when Roblox errors', async () => {
+            mocks.getRobloxLargeHeadshot.mockResolvedValue(Err({ message: 'down', code: 'INTEGRATION_ERROR' }))
+            const result = await renderAndSaveCard(supabase, strict)
+            expect(!result.ok && result.error.code).toBe('INTEGRATION_ERROR')
+            expect(!result.ok && result.error.message).toContain('headshot')
+            expect(mocks.upload).not.toHaveBeenCalled()
+            expect(mocks.upsertPlayerCard).not.toHaveBeenCalled()
+        })
+
+        it('fails when Roblox has no completed headshot, even with a stored avatar', async () => {
+            mocks.getRobloxLargeHeadshot.mockResolvedValue(Ok(null))
+            const result = await renderAndSaveCard(supabase, { ...strict, subject: logoSubject })
+            expect(!result.ok && result.error.message).toContain('headshot')
+            expect(mocks.loadImageAsPngDataUri).not.toHaveBeenCalledWith('https://x/avatar.png')
+            expect(mocks.upload).not.toHaveBeenCalled()
+        })
+
+        it('fails when the headshot image does not load', async () => {
+            mocks.loadImageAsPngDataUri.mockResolvedValue(Err({ message: 'bad', code: 'INTEGRATION_ERROR' }))
+            const result = await renderAndSaveCard(supabase, strict)
+            expect(!result.ok && result.error.message).toContain('headshot')
+            expect(mocks.upload).not.toHaveBeenCalled()
+        })
+
+        it('fails when a team logo URL does not load', async () => {
+            mocks.loadImageAsPngDataUri.mockImplementation(async (url: string) =>
+                url === 'https://x/logo.png' ? Err({ message: 'bad', code: 'INTEGRATION_ERROR' }) : Ok('data:image/png;base64,x'))
+            const result = await renderAndSaveCard(supabase, { ...strict, subject: logoSubject })
+            expect(!result.ok && result.error.code).toBe('INTEGRATION_ERROR')
+            expect(!result.ok && result.error.message).toContain('logo')
+            expect(mocks.upload).not.toHaveBeenCalled()
+        })
+
+        it('succeeds for a player with no team logo URL', async () => {
+            const result = await renderAndSaveCard(supabase, strict)
+            expect(result.ok).toBe(true)
+            expect(mocks.upload).toHaveBeenCalledOnce()
+        })
+
+        it('saves generated_by when given', async () => {
+            await renderAndSaveCard(supabase, strict)
+            expect(mocks.upsertPlayerCard.mock.calls[0][1]).toMatchObject({ generated_by: 'u' })
+        })
+    })
+
+    it('single generate still falls back to the stored avatar', async () => {
+        mocks.getRobloxLargeHeadshot.mockResolvedValue(Ok(null))
+        const result = await renderAndSaveCard(supabase, { ...input, subject: { ...logoSubject, teamLogoUrl: null } })
+        expect(result.ok).toBe(true)
+        expect(mocks.loadImageAsPngDataUri).toHaveBeenCalledWith('https://x/avatar.png')
+        expect(mocks.upload).toHaveBeenCalledOnce()
+    })
+
+    it('leaves generated_by out when not given', async () => {
+        await renderAndSaveCard(supabase, input)
+        expect(mocks.upsertPlayerCard.mock.calls[0][1]).not.toHaveProperty('generated_by')
     })
 })

@@ -204,6 +204,24 @@ export type UpdateCardTemplateInput = z.infer<typeof UpdateCardTemplateSchema>
 
 export const CardTemplateIdSchema = z.object({ templateId: z.string().uuid() })
 
+const BulkSeasonNumber = z.number().int('Season must be a whole number').min(1, 'Season must be at least 1')
+
+export const StartCardBulkSchema = z.object({
+    seasonNumber: BulkSeasonNumber,
+    regionCode: z.string().trim().min(1).max(8),
+    groupId: z.string().uuid(),
+    mode: z.enum(['missing', 'all']),
+})
+export type StartCardBulkInput = z.infer<typeof StartCardBulkSchema>
+
+export const CardBulkJobIdSchema = z.object({ jobId: z.string().uuid() })
+
+export const CardPlayerIdsSchema = z.object({
+    seasonNumber: BulkSeasonNumber,
+    groupId: z.string().uuid(),
+})
+export type CardPlayerIdsInput = z.infer<typeof CardPlayerIdsSchema>
+
 export const UploadCardArtSchema = z.object({
     templateId: z.string().uuid(),
     fileName: z.string().regex(CARD_ART_FILE_NAME, CARD_ART_FILE_NAME_MESSAGE),

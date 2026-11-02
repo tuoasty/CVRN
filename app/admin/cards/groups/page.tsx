@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useCardCatalog } from '@/app/hooks/usePlayerCard'
 import CardTemplateCatalog from '@/app/features/playerCard/CardTemplateCatalog'
+import CardBulkStatus from '@/app/features/playerCard/CardBulkStatus'
 import { LINK } from '@/app/features/playerCard/cardFormStyles'
 
 export default function AdminCardGroupsPage() {
@@ -15,6 +16,8 @@ export default function AdminCardGroupsPage() {
                 <span className="text-sm text-muted-foreground">Groups and their OVR tiers · tier 1 is the highest</span>
                 <Link href="/admin/cards" className={LINK}>Layout and generate</Link>
             </div>
+
+            <CardBulkStatus />
 
             <div className="mt-6">
                 {isLoading ? (

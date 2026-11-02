@@ -36,6 +36,10 @@ export function playerCardsKey(playerId: string, seasonNumber: number) {
     return ["playerCards", playerId, seasonNumber] as const;
 }
 
+export function cardPlayerIdsKey(seasonNumber: number, groupId: string) {
+    return ["cardPlayerIds", seasonNumber, groupId] as const;
+}
+
 export type CardPreviewRequest =
     | {
         kind: "board";
@@ -114,7 +118,8 @@ export function useCardPreview(request: CardPreviewRequest | null, scope: string
     };
 }
 
-export function storePlayerCard(card: PlayerCard) {
+export async function storePlayerCard(card: PlayerCard) {
+    await globalMutate(cardPlayerIdsKey(card.seasonNumber, card.groupId));
     return globalMutate(
         playerCardsKey(card.playerId, card.seasonNumber),
         (current: PlayerCard[] | undefined) => [...(current ?? []).filter(c => c.groupId !== card.groupId), card],
@@ -130,6 +135,7 @@ export async function deletePlayerCard(card: Pick<PlayerCard, "playerId" | "seas
             (current: PlayerCard[] | undefined) => (current ?? []).filter(c => c.groupId !== card.groupId),
             { revalidate: false }
         );
+        await globalMutate(cardPlayerIdsKey(card.seasonNumber, card.groupId));
     }
     return result;
 }

@@ -135,5 +135,14 @@ export type PlayerCardRow =
 export type PlayerCardInsert =
     Database["public"]["Tables"]["player_cards"]["Insert"];
 
+export type CardBulkJobRow =
+    Database["public"]["Tables"]["card_bulk_jobs"]["Row"];
+
+export type CardBulkJobInsert =
+    Database["public"]["Tables"]["card_bulk_jobs"]["Insert"];
+
+export type CardBulkJobUpdate =
+    Database["public"]["Tables"]["card_bulk_jobs"]["Update"];
+
 export type GameAbilitySettingRow =
     Database["public"]["Tables"]["game_ability_settings"]["Row"];

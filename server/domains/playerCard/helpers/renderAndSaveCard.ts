@@ -28,6 +28,28 @@ async function loadOptional(url: string | null): Promise<string | null> {
     return loaded.ok ? loaded.value : null
 }
 
+async function loadImages(subject: CardSubject): Promise<Result<{ headshot: string | null; teamLogo: string | null }>> {
+    const [headshot, teamLogo] = await Promise.all([
+        resolveHeadshotUrl(subject).then(loadOptional),
+        loadOptional(subject.teamLogoUrl),
+    ])
+    return Ok({ headshot, teamLogo })
+}
+
+async function loadImagesStrict(subject: CardSubject): Promise<Result<{ headshot: string | null; teamLogo: string | null }>> {
+    const noHeadshot = Err({ message: 'Roblox headshot unavailable', code: 'INTEGRATION_ERROR' as const })
+    const large = await getRobloxLargeHeadshot(subject.robloxUserId)
+    if (!large.ok || !large.value) return noHeadshot
+
+    const [headshot, teamLogo] = await Promise.all([
+        loadImageAsPngDataUri(large.value),
+        subject.teamLogoUrl ? loadImageAsPngDataUri(subject.teamLogoUrl) : Promise.resolve(Ok(null)),
+    ])
+    if (!headshot.ok) return noHeadshot
+    if (!teamLogo.ok) return Err({ message: 'Team logo could not be loaded', code: 'INTEGRATION_ERROR' })
+    return Ok({ headshot: headshot.value, teamLogo: teamLogo.value })
+}
+
 export async function renderAndSaveCard(
     supabase: DBClient,
     p: {
@@ -36,6 +58,8 @@ export async function renderAndSaveCard(
         subject: CardSubject
         data: CardData
         ensurePlayerId: () => Promise<Result<string>>
+        strictImages?: boolean
+        generatedBy?: string | null
     },
 ): Promise<Result<PlayerCard>> {
     const { seasonNumber, groupId, subject, data } = p
@@ -51,15 +75,13 @@ export async function renderAndSaveCard(
     const art = await loadTemplateArt(template.value, { cached: false, allowMissing: false })
     if (!art.ok) return art
 
-    const [headshot, teamLogo] = await Promise.all([
-        resolveHeadshotUrl(subject).then(loadOptional),
-        loadOptional(subject.teamLogoUrl),
-    ])
+    const images = await (p.strictImages ? loadImagesStrict(subject) : loadImages(subject))
+    if (!images.ok) return images
 
     const fonts = await loadCardFonts()
     if (!fonts.ok) return fonts
 
-    const png = await renderCard(template.value, data, { art: art.value, headshot, teamLogo }, fonts.value)
+    const png = await renderCard(template.value, data, { art: art.value, ...images.value }, fonts.value)
 
     const playerId = await p.ensurePlayerId()
     if (!playerId.ok) return playerId
@@ -89,6 +111,7 @@ export async function renderAndSaveCard(
         image_path: path,
         image_url: imageUrl,
         generated_at: new Date().toISOString(),
+        ...(p.generatedBy !== undefined ? { generated_by: p.generatedBy } : {}),
     })
     if (!saved.ok) {
         await admin.storage.from(BUCKETS.PUBLIC).remove([path])

@@ -63,6 +63,19 @@ export async function findPlayerCard(
     return Ok(data as PlayerCardRow | null)
 }
 
+export async function findPlayerIdsWithCards(
+    supabase: DBClient,
+    p: { seasonNumber: number; groupId: string },
+): Promise<Result<string[]>> {
+    const { data, error } = await supabase
+        .from('player_cards')
+        .select('player_id')
+        .eq('season_number', p.seasonNumber)
+        .eq('group_id', p.groupId)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []).map(row => row.player_id))
+}
+
 export interface PlayerSeasonRoster {
     left_at: string | null
     joined_at: string
