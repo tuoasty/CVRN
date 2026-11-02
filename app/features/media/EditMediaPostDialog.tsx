@@ -17,9 +17,10 @@ interface EditMediaPostDialogProps {
     post: MediaPost | null
     open: boolean
     onOpenChange: (open: boolean) => void
+    onSaved?: () => void
 }
 
-export default function EditMediaPostDialog({ post, open, onOpenChange }: EditMediaPostDialogProps) {
+export default function EditMediaPostDialog({ post, open, onOpenChange, onSaved }: EditMediaPostDialogProps) {
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [author, setAuthor] = useState<AuthorSelection | null>(null)
@@ -68,6 +69,7 @@ export default function EditMediaPostDialog({ post, open, onOpenChange }: EditMe
             if (!result.ok) { toast.error(result.error.message); return }
             toast.success('Post updated')
             await mutateAllMedia()
+            onSaved?.()
             onOpenChange(false)
         } catch (err) {
             clientLogger.error('EditMediaPostDialog', 'Unexpected error', { err })

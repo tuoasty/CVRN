@@ -240,3 +240,43 @@ export async function updateMediaPostFields(
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok(data as unknown as MediaPost)
 }
+
+export async function findMatchMediaByMatchIds(supabase: DBClient, matchIds: string[]): Promise<Result<MediaPost[]>> {
+    if (matchIds.length === 0) return Ok([])
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .in('type', ['gfx', 'video'])
+        .in('match_id', matchIds)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []) as unknown as MediaPost[])
+}
+
+export async function findRoundMediaPost(
+    supabase: DBClient,
+    seasonId: string,
+    type: 'potw' | 'totw',
+    roundKey: string,
+): Promise<Result<MediaPost | null>> {
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .eq('season_id', seasonId)
+        .eq('type', type)
+        .eq('round_key', roundKey)
+        .maybeSingle()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as unknown as MediaPost | null)
+}
+
+export async function findRoundMediaBySeasonIds(supabase: DBClient, seasonIds: string[]): Promise<Result<MediaPost[]>> {
+    if (seasonIds.length === 0) return Ok([])
+    const { data, error } = await supabase
+        .from('media_posts')
+        .select('*')
+        .in('season_id', seasonIds)
+        .in('type', ['potw', 'totw'])
+        .not('round_key', 'is', null)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []) as unknown as MediaPost[])
+}

@@ -10,6 +10,7 @@ export const CreateMediaFormSchema = z.object({
     teamId:      z.string().uuid().optional().or(z.literal('')),
     playerId:    z.string().uuid().optional().or(z.literal('')),
     seasonId:    z.string().uuid().optional().or(z.literal('')),
+    roundKey:    z.string().optional().or(z.literal('')),
 })
 export type CreateMediaFormInput = z.infer<typeof CreateMediaFormSchema>
 

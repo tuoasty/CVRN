@@ -21,10 +21,19 @@ type MediaFormType = 'gfx' | 'video' | 'feature' | 'clip' | 'totw' | 'potw'
 interface CreateMediaPostDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
+    lockedType?: 'potw' | 'totw'
+    seasonId?: string
+    roundKey?: string
+    onCreated?: () => void
 }
 
-export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMediaPostDialogProps) {
-    const [type, setType] = useState<MediaFormType>('gfx')
+const LOCKED_TITLES: Record<'potw' | 'totw', string> = {
+    potw: 'New Player of the Week',
+    totw: 'New Team of the Week',
+}
+
+export default function CreateMediaPostDialog({ open, onOpenChange, lockedType, seasonId: forcedSeasonId, roundKey, onCreated }: CreateMediaPostDialogProps) {
+    const [type, setType] = useState<MediaFormType>(lockedType ?? 'gfx')
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [videoUrl, setVideoUrl] = useState('')
@@ -37,7 +46,8 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
     const [playerId, setPlayerId] = useState('')
     const [author, setAuthor] = useState<AuthorSelection | null>(null)
 
-    const seasonId = useAdminContextStore(s => s.selectedSeasonId)
+    const storeSeasonId = useAdminContextStore(s => s.selectedSeasonId)
+    const seasonId = forcedSeasonId ?? storeSeasonId
     const { teams } = useTeamsBySeason(type === 'totw' || type === 'potw' ? seasonId : null)
     const { players } = useTeamPlayers(type === 'potw' && teamId ? teamId : null, seasonId)
 
@@ -45,7 +55,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
     const isUrlType = type === 'video' || type === 'feature' || type === 'clip'
 
     function reset() {
-        setType('gfx')
+        setType(lockedType ?? 'gfx')
         setTitle('')
         setDescription('')
         setVideoUrl('')
@@ -120,14 +130,20 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
             if (type === 'potw' && playerId) formData.set('playerId', playerId)
             if ((type === 'totw' || type === 'potw') && seasonId) formData.set('seasonId', seasonId)
             if (type !== 'clip' && author) formData.set('authorId', author.id)
+            if (roundKey) formData.set('roundKey', roundKey)
 
             const result = await createMediaPostAction(formData)
             if (!result.ok) {
                 toast.error(result.error.message)
+                if (result.error.code === 'MEDIA_ROUND_SLOT_TAKEN') {
+                    onCreated?.()
+                    handleOpenChange(false)
+                }
                 return
             }
             toast.success('Media post created')
             await mutateAllMedia()
+            onCreated?.()
             handleOpenChange(false)
         } catch (err) {
             clientLogger.error('CreateMediaPostDialog', 'Unexpected error', { err })
@@ -141,26 +157,28 @@ export default function CreateMediaPostDialog({ open, onOpenChange }: CreateMedi
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>New Media Post</DialogTitle>
+                    <DialogTitle>{lockedType ? LOCKED_TITLES[lockedType] : 'New Media Post'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className={`grid gap-3 ${type !== 'clip' ? 'sm:grid-cols-[180px_1fr]' : ''}`}>
-                        <div className="space-y-1">
-                            <Label>Type</Label>
-                            <Select value={type} onValueChange={(v) => { setType(v as MediaFormType); setTeamId(''); setPlayerId('') }}>
-                                <SelectTrigger className="rounded-sm w-full">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="gfx">GFX</SelectItem>
-                                    <SelectItem value="video">Video (Match VOD)</SelectItem>
-                                    <SelectItem value="feature">Feature (YouTube / Shorts)</SelectItem>
-                                    <SelectItem value="clip">Clip (TikTok / Short-form)</SelectItem>
-                                    <SelectItem value="totw">Team of the Week</SelectItem>
-                                    <SelectItem value="potw">Player of the Week</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    <div className={`grid gap-3 ${type !== 'clip' && !lockedType ? 'sm:grid-cols-[180px_1fr]' : ''}`}>
+                        {!lockedType && (
+                            <div className="space-y-1">
+                                <Label>Type</Label>
+                                <Select value={type} onValueChange={(v) => { setType(v as MediaFormType); setTeamId(''); setPlayerId('') }}>
+                                    <SelectTrigger className="rounded-sm w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="gfx">GFX</SelectItem>
+                                        <SelectItem value="video">Video (Match VOD)</SelectItem>
+                                        <SelectItem value="feature">Feature (YouTube / Shorts)</SelectItem>
+                                        <SelectItem value="clip">Clip (TikTok / Short-form)</SelectItem>
+                                        <SelectItem value="totw">Team of the Week</SelectItem>
+                                        <SelectItem value="potw">Player of the Week</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
 
                         {type !== 'clip' && (
                             <div className="space-y-1">

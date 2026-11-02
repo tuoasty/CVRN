@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import type { CSSProperties } from 'react'
 import { CARD_STAT_LABELS, CARD_STATS_COLUMNS, CardData, CardLayer, CardStatsLayer, CardTemplate } from '../types'
 import { resolveCardText } from './toCardShapes'
-import { CardFont, CardFonts, fontKeyForField, strokeRatioForField } from './cardFont'
+import { CardFont, CardFonts, fontKeyForField } from './cardFont'
 import { fitFontSize, fitRunsFontSize, measureTextWidth } from './fitFontSize'
 
 export interface CardAssets {
@@ -12,7 +12,6 @@ export interface CardAssets {
 }
 
 const MIN_SIZE_RATIO = 0.5
-const INVISIBLE_FILL = 'rgba(0, 0, 0, 0.001)'
 
 function boxStyle(layer: CardLayer): CSSProperties {
     return { position: 'absolute', left: layer.x, top: layer.y, width: layer.w, height: layer.h, display: 'flex' }
@@ -110,7 +109,6 @@ function renderLayer(layer: CardLayer, index: number, data: CardData, assets: Ca
     const text = resolveCardText(layer, data)
     if (!text) return null
     const font = fonts[fontKeyForField(layer.field)]
-    const strokeRatio = strokeRatioForField(layer.field)
     const fontSize = fitFontSize({
         text,
         font: font.font,
@@ -119,11 +117,7 @@ function renderLayer(layer: CardLayer, index: number, data: CardData, assets: Ca
         maxSize: layer.size,
         minSize: layer.minSize ?? layer.size * MIN_SIZE_RATIO,
         letterSpacing: layer.letterSpacing,
-        strokeRatio,
     })
-    const stroke: CSSProperties = strokeRatio > 0
-        ? { color: INVISIBLE_FILL, WebkitTextStroke: `${Math.round(fontSize * strokeRatio * 10) / 10}px ${layer.color}` }
-        : { color: layer.color }
     return (
         <div
             key={index}
@@ -133,7 +127,7 @@ function renderLayer(layer: CardLayer, index: number, data: CardData, assets: Ca
                 justifyContent: 'center',
                 fontFamily: font.name,
                 fontSize,
-                ...stroke,
+                color: layer.color,
                 letterSpacing: layer.letterSpacing,
                 lineHeight: 1,
                 whiteSpace: 'nowrap',

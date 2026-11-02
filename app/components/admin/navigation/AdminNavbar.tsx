@@ -17,6 +17,7 @@ import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import { LogoutButton } from "@/app/components/ui/LogoutButton";
 import AdminNavItems from "@/app/components/admin/navigation/AdminNavItems";
 import AdminRegionSeasonSelector from "@/app/components/admin/navigation/AdminRegionSeasonSelector";
+import { showsRegionSeasonPicker } from "@/app/components/admin/navigation/adminNav";
 
 export default function AdminNavbar({ userRole }: { userRole: string | null }) {
     const pathname = usePathname();
@@ -26,14 +27,14 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
         setOpen(false);
     }, [pathname]);
 
-    const showRegionSeasonSelector = !pathname.startsWith("/admin/teams") && pathname !== "/admin/specs" && pathname !== "/admin/overalls" && !pathname.startsWith("/admin/cards");
+    const showRegionSeasonSelector = showsRegionSeasonPicker(pathname);
 
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-card">
             <div className="page-wide">
                 {}
-                <div className="hidden lg:flex items-center justify-between py-3">
-                    <div className="flex items-center gap-8">
+                <div className="hidden h-[52px] lg:flex items-center justify-between">
+                    <div className="flex items-center gap-4 xl:gap-8">
                         <Link href="/admin/dashboard">
                             <h1 className="text-lg font-semibold tracking-tight">
                                 CVRN
@@ -43,7 +44,7 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
                         <AdminNavItems userRole={userRole} />
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center gap-1.5 xl:gap-3">
                         {showRegionSeasonSelector && (
                             <>
                                 <AdminRegionSeasonSelector />
@@ -100,7 +101,7 @@ export default function AdminNavbar({ userRole }: { userRole: string | null }) {
                                         Admin navigation menu
                                     </SheetDescription>
                                 </SheetHeader>
-                                <div className="flex flex-col gap-4 px-4 pb-4">
+                                <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
                                     <AdminNavItems
                                         layout="vertical"
                                         userRole={userRole}

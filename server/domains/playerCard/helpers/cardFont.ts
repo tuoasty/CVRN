@@ -7,12 +7,10 @@ import type { CardTextLayer } from '../types'
 
 export const CARD_FONTS = {
     bebas: { name: 'card-bebas-neue', file: 'BebasNeue-Regular.ttf' },
-    teko: { name: 'card-teko-bold', file: 'Teko-Bold.ttf' },
+    sunbornSans: { name: 'card-sunborn-sans', file: 'sunborn-sans-one.otf' },
     norms: { name: 'card-tt-norms', file: 'TTNormsPro-Regular.otf' },
     normsBold: { name: 'card-tt-norms-bold', file: 'TTNormsPro-Bold.otf' },
 } as const
-
-export const OVR_STROKE_RATIO = 0.04
 
 export type CardFontKey = keyof typeof CARD_FONTS
 
@@ -26,12 +24,8 @@ export type CardFonts = Record<CardFontKey, CardFont>
 
 export function fontKeyForField(field: CardTextLayer['field']): CardFontKey {
     if (field === 'username' || field === 'displayName') return 'bebas'
-    if (field === 'ovr') return 'teko'
+    if (field === 'ovr') return 'sunbornSans'
     return 'norms'
-}
-
-export function strokeRatioForField(field: CardTextLayer['field']): number {
-    return field === 'ovr' ? OVR_STROKE_RATIO : 0
 }
 
 async function loadOne(key: CardFontKey): Promise<Result<CardFont>> {

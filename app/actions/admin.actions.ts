@@ -1,10 +1,18 @@
 "use server"
 
-import {Err} from "@/shared/types/result";
-import {inviteUser} from "@/server/domains/admin";
+import {Err, Result} from "@/shared/types/result";
+import {DashboardColumn, getAdminDashboard, inviteUser} from "@/server/domains/admin";
 import {createServerSupabase} from "@/server/supabase/server";
 import {InviteUserSchema, InvitableRole} from "@/server/domains/admin";
-import {requireSuperAdmin} from "@/server/domains/auth";
+import {requireAdmin, requireSuperAdmin} from "@/server/domains/auth";
+
+export async function getAdminDashboardAction(): Promise<Result<DashboardColumn[]>> {
+    const supabase = await createServerSupabase();
+    const guard = await requireAdmin(supabase);
+    if (!guard.ok) return guard;
+
+    return getAdminDashboard(supabase);
+}
 
 export async function inviteUserAction(email: string, role: InvitableRole) {
     const parsed = InviteUserSchema.safeParse({email, role});

@@ -426,3 +426,15 @@ export async function findTeamsByIds(supabase: DBClient, teamIds: string[]): Pro
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as TeamWithRegionRow[]);
 }
+
+export type DashboardTeamRow = Pick<Team, "id" | "season_id" | "name" | "logo_url" | "is_bye" | "deleted_at">;
+
+export async function findDashboardTeamsBySeasonIds(supabase: DBClient, seasonIds: string[]): Promise<Result<DashboardTeamRow[]>> {
+    if (seasonIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("teams")
+        .select("id, season_id, name, logo_url, is_bye, deleted_at")
+        .in("season_id", seasonIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as DashboardTeamRow[]);
+}

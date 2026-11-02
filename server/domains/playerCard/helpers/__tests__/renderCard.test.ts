@@ -171,10 +171,10 @@ describe('resolveCardText', () => {
 })
 
 describe('fontKeyForField', () => {
-    it('uses Bebas for names, Teko for OVR and TT Norms for everything else', () => {
+    it('uses Bebas for names, Sunborn Sans for OVR and TT Norms for everything else', () => {
         expect(fontKeyForField('username')).toBe('bebas')
         expect(fontKeyForField('displayName')).toBe('bebas')
-        expect(fontKeyForField('ovr')).toBe('teko')
+        expect(fontKeyForField('ovr')).toBe('sunbornSans')
         expect(fontKeyForField('position')).toBe('norms')
         expect(fontKeyForField('custom')).toBe('norms')
     })
