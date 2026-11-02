@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { downloadPlayerCardTemplateAction, generatePlayerCardAction } from '@/app/actions/playerCard.actions'
+import { uploadPlayerCardGfx } from '@/app/hooks/usePlayerCard'
 import type { CardGroup, CardOverrides } from '@/server/domains/playerCard'
 import type { OverallDisplayRow } from '@/app/features/overall/overallRows'
 import { Err } from '@/shared/types/result'
@@ -87,6 +88,9 @@ export default function PlayerCardWorkbench({
                 : Promise.resolve(Err({ message: 'Pick a player first', code: 'VALIDATION_ERROR' }))}
             downloadTemplate={() => player
                 ? downloadPlayerCardTemplateAction({ playerId: player.playerId, seasonNumber, groupId: group.id, overrides: cleaned })
+                : Promise.resolve(Err({ message: 'Pick a player first', code: 'VALIDATION_ERROR' }))}
+            uploadGfx={file => player
+                ? uploadPlayerCardGfx({ kind: 'board', playerId: player.playerId, seasonNumber, groupId: group.id, overrides: cleaned }, file)
                 : Promise.resolve(Err({ message: 'Pick a player first', code: 'VALIDATION_ERROR' }))}
             onGenerated={() => setOverrides({})}
         />

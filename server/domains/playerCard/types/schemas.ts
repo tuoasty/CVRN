@@ -171,6 +171,12 @@ export const PreviewCustomPlayerCardSchema = CustomCardBaseSchema.extend({
 })
 export type PreviewCustomPlayerCardInput = z.infer<typeof PreviewCustomPlayerCardSchema>
 
+export const UploadPlayerCardGfxSchema = z.discriminatedUnion('kind', [
+    PlayerCardsQuerySchema.extend({ kind: z.literal('board'), groupId: z.string().uuid(), overrides: CardOverridesSchema.optional() }),
+    CustomCardBaseSchema.extend({ kind: z.literal('custom'), groupId: z.string().uuid() }),
+])
+export type UploadPlayerCardGfxInput = z.infer<typeof UploadPlayerCardGfxSchema>
+
 const CanvasSide = z.number({ error: 'Canvas sides must be numbers' }).int('Canvas sides must be whole numbers').min(100, 'Canvas sides must be at least 100px').max(4000, 'Canvas sides must be 4000px or less')
 
 const CardGroupFieldsSchema = z.object({

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CardLayer } from '@/server/domains/playerCard'
 import { CARD_ART_MAX_BYTES } from '@/server/domains/playerCard/types/schemas'
-import { artFitWarning, checkArtFile, formatArtSize, generateBlocker, layoutArtSlots, missingArt, pickPreviewImage, readPngSize, tierHasArt, tierRangeLabels } from '../cardArt'
+import { artFitWarning, checkArtFile, checkGfxFile, formatArtSize, generateBlocker, gfxBlocker, layoutArtSlots, missingArt, pickPreviewImage, readPngSize, tierHasArt, tierRangeLabels } from '../cardArt'
 
 const art = (src: string, w = 1000, h = 1400): CardLayer => ({ kind: 'art', src, x: 0, y: 0, w, h })
 const ovr: CardLayer = { kind: 'text', field: 'ovr', x: 0, y: 0, w: 1, h: 1, size: 1, color: '#fff', uppercase: false, letterSpacing: 0 }
@@ -178,5 +178,51 @@ describe('generateBlocker', () => {
 describe('formatArtSize', () => {
     it('shows megabytes', () => {
         expect(formatArtSize(1.5 * 1024 * 1024)).toBe('1.50 MB')
+    })
+})
+
+describe('checkGfxFile', () => {
+    const canvas = { width: 1000, height: 1400 }
+    const png = (width: number, height: number) => new File([pngHeader(width, height)], 'gfx.png', { type: 'image/png' })
+
+    it('accepts a PNG at the exact canvas size', async () => {
+        expect(await checkGfxFile(png(1000, 1400), canvas)).toBeNull()
+    })
+
+    it('names both sizes when it does not match', async () => {
+        expect(await checkGfxFile(png(819, 1024), canvas)).toBe('GFX must be exactly 1000 × 1400. This file is 819 × 1024.')
+    })
+
+    it('rejects the right shape at the wrong size', async () => {
+        expect(await checkGfxFile(png(2000, 2800), canvas)).toBe('GFX must be exactly 1000 × 1400. This file is 2000 × 2800.')
+    })
+
+    it('rejects a non-PNG', async () => {
+        const jpeg = new File([new Uint8Array(24)], 'gfx.jpg', { type: 'image/jpeg' })
+        expect(await checkGfxFile(jpeg, canvas)).toBe('GFX must be a PNG file')
+    })
+
+    it('rejects a file over 2.9 MB', async () => {
+        const big = new File([new Uint8Array(CARD_ART_MAX_BYTES + 1)], 'gfx.png', { type: 'image/png' })
+        expect(await checkGfxFile(big, canvas)).toContain('2.9 MB')
+    })
+})
+
+describe('gfxBlocker', () => {
+    const clear = { notReady: null, inputProblem: null, inactiveGroup: null, noTier: null, bulkRunning: null }
+
+    it('ignores layout and art problems', () => {
+        expect(gfxBlocker(clear)).toBeNull()
+    })
+
+    it('reports the bulk run first', () => {
+        expect(gfxBlocker({ ...clear, notReady: 'Pick a player', noTier: 'No tier', bulkRunning: 'A bulk generation is running' })).toBe('A bulk generation is running')
+    })
+
+    it('reports each remaining problem', () => {
+        expect(gfxBlocker({ ...clear, notReady: 'Pick a player' })).toBe('Pick a player')
+        expect(gfxBlocker({ ...clear, inputProblem: 'Enter values' })).toBe('Enter values')
+        expect(gfxBlocker({ ...clear, inactiveGroup: 'Off' })).toBe('Off')
+        expect(gfxBlocker({ ...clear, noTier: 'No tier' })).toBe('No tier')
     })
 })

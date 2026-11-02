@@ -26,6 +26,12 @@ import {
     uploadCardTemplateArt,
     deletePlayerCard,
     assertNoRunningBulk,
+    buildCardData,
+    buildCustomCardData,
+    customPlayerIdResolver,
+    resolveCustomSubject,
+    uploadPlayerCardGfx,
+    UploadPlayerCardGfxSchema,
     getCardBulkStatus,
     getCardPlayerIds,
     startCardBulkJob,
@@ -49,6 +55,7 @@ import {
     UploadCardArtSchema,
 } from '@/server/domains/playerCard'
 import type { CardBulkJob, CardGroup, CardLayer, PlayerCard } from '@/server/domains/playerCard'
+import { getOverallConfig } from '@/server/domains/overall'
 import type { OverallInputRow } from '@/server/domains/overall'
 import { getCachedSeasonOverallInputs } from '@/server/cache/publicReads'
 import { revalidatePublicData } from '@/server/cache/revalidate'
@@ -372,4 +379,61 @@ export async function getCardPlayerIdsAction(input: unknown): Promise<Result<str
     if (!guard.ok) return guard
 
     return getCardPlayerIds(supabase, parsed.data)
+}
+
+export async function uploadPlayerCardGfxAction(formData: FormData): Promise<Result<PlayerCard>> {
+    const file = formData.get('file')
+    if (!(file instanceof File) || file.size === 0) return Err({ message: 'Choose a PNG file', code: 'VALIDATION_ERROR' })
+
+    let payload: unknown
+    try {
+        payload = JSON.parse(String(formData.get('payload')))
+    } catch {
+        return Err({ message: 'Upload details could not be read', code: 'VALIDATION_ERROR' })
+    }
+    const parsed = UploadPlayerCardGfxSchema.safeParse(payload)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const lock = await assertNoRunningBulk(supabase)
+    if (!lock.ok) return lock
+
+    try {
+        const { seasonNumber, groupId } = parsed.data
+
+        if (parsed.data.kind === 'board') {
+            const player = await findSeasonPlayer(seasonNumber, parsed.data.playerId)
+            if (!player.ok) return player
+            const config = await getOverallConfig(supabase, seasonNumber)
+            if (!config.ok) return config
+            const boardPlayerId = player.value.playerId
+            return await uploadPlayerCardGfx(supabase, {
+                seasonNumber,
+                groupId,
+                subject: player.value,
+                data: buildCardData(player.value, config.value, seasonNumber, parsed.data.overrides),
+                file,
+                ensurePlayerId: async () => Ok(boardPlayerId),
+            })
+        }
+
+        const subject = await resolveCustomSubject(supabase, parsed.data)
+        if (!subject.ok) return subject
+        const playerId = customPlayerIdResolver(supabase, parsed.data.player, subject.value)
+        const card = await uploadPlayerCardGfx(supabase, {
+            seasonNumber,
+            groupId,
+            subject: subject.value,
+            data: buildCustomCardData(subject.value, parsed.data.values, seasonNumber),
+            file,
+            ensurePlayerId: playerId.ensure,
+        })
+        if (playerId.wasRegistered()) revalidatePublicData([CACHE_TAGS.players])
+        return card
+    } catch (error) {
+        return Err(serializeError(error))
+    }
 }

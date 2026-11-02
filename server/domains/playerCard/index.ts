@@ -11,6 +11,7 @@ export { uploadCardTemplateArt } from './commands/uploadCardTemplateArt'
 export { deletePlayerCard } from './commands/deletePlayerCard'
 export { startCardBulkJob } from './commands/startCardBulkJob'
 export { stopCardBulkJob } from './commands/stopCardBulkJob'
+export { uploadPlayerCardGfx } from './commands/uploadPlayerCardGfx'
 export { getPlayerCards } from './queries/getPlayerCards'
 export { getCardCatalog } from './queries/getCardCatalog'
 export { getCardTierTemplate } from './queries/getCardTierTemplate'
@@ -20,6 +21,9 @@ export { previewCustomPlayerCard } from './queries/previewCustomPlayerCard'
 export { getCardBulkStatus } from './queries/getCardBulkStatus'
 export { getCardPlayerIds } from './queries/getCardPlayerIds'
 export { assertNoRunningBulk } from './helpers/bulkLock'
+export { buildCardData, buildCustomCardData } from './helpers/buildCardData'
+export { resolveCustomSubject } from './helpers/customSubject'
+export { customPlayerIdResolver } from './helpers/customPlayerIdResolver'
 export { ladderProblem, pickTierTemplate, rankTemplates } from './helpers/toCardShapes'
 
 export type {
@@ -52,6 +56,7 @@ export type {
     CardBulkJob,
     StartCardBulkInput,
     CardPlayerIdsInput,
+    UploadPlayerCardGfxInput,
 } from './types'
 
 export {
@@ -77,4 +82,5 @@ export {
     StartCardBulkSchema,
     CardBulkJobIdSchema,
     CardPlayerIdsSchema,
+    UploadPlayerCardGfxSchema,
 } from './types'

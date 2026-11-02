@@ -132,6 +132,7 @@ export {
     StartCardBulkSchema,
     CardBulkJobIdSchema,
     CardPlayerIdsSchema,
+    UploadPlayerCardGfxSchema,
 } from './schemas'
 export type {
     CardLayer,
@@ -157,4 +158,5 @@ export type {
     DeletePlayerCardInput,
     StartCardBulkInput,
     CardPlayerIdsInput,
+    UploadPlayerCardGfxInput,
 } from './schemas'

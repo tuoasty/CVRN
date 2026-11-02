@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useState } from 'react'
+import { ChangeEvent, ReactNode, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/app/components/ui/button'
 import { useIsSuperAdmin } from '@/app/admin/AdminRoleProvider'
@@ -12,7 +12,7 @@ import { pickTierTemplate } from '@/server/domains/playerCard/helpers/toCardShap
 import type { CardGroup, CardLayer, PlayerCard } from '@/server/domains/playerCard'
 import type { Result } from '@/shared/types/result'
 import { cn } from '@/lib/utils'
-import { generateBlocker, missingArt, tierRangeLabels } from './cardArt'
+import { checkGfxFile, generateBlocker, gfxBlocker, missingArt, tierRangeLabels } from './cardArt'
 import { OPTION, OPTION_OFF, OPTION_ON } from './cardFormStyles'
 import CardLayoutEditor from './CardLayoutEditor'
 import CardLayoutPreview from './CardLayoutPreview'
@@ -48,6 +48,7 @@ export default function CardWorkbenchShell({
     buildPreview,
     generate,
     downloadTemplate,
+    uploadGfx,
     onGenerated,
 }: {
     playerId: string | null
@@ -67,6 +68,7 @@ export default function CardWorkbenchShell({
     buildPreview: (templateId: string, layers: CardLayer[], previewOvr: number | null) => CardPreviewRequest | null
     generate: () => Promise<Result<PlayerCard>>
     downloadTemplate: () => Promise<Result<{ fileName: string; dataUri: string }>>
+    uploadGfx: (file: File) => Promise<Result<PlayerCard>>
     onGenerated: (card: PlayerCard) => void
 }) {
     const [active, setActive] = useState<{ groupId: string; index: number } | null>(null)
@@ -75,6 +77,8 @@ export default function CardWorkbenchShell({
     const [saving, setSaving] = useState(false)
     const [generating, setGenerating] = useState(false)
     const [downloading, setDownloading] = useState(false)
+    const [uploading, setUploading] = useState(false)
+    const gfxInput = useRef<HTMLInputElement>(null)
     const isSuperAdmin = useIsSuperAdmin()
     const { isRunning: bulkRunning } = useCardBulkStatus()
 
@@ -164,6 +168,30 @@ export default function CardWorkbenchShell({
         }
     }
 
+    async function handleGfxFile(event: ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0]
+        event.target.value = ''
+        if (!file) return
+        setUploading(true)
+        try {
+            const problem = await checkGfxFile(file, { width: group.width, height: group.height })
+            if (problem) {
+                toast.error('GFX not saved', problem)
+                return
+            }
+            const result = await uploadGfx(file)
+            if (!result.ok) {
+                toast.error('GFX not saved', result.error.message)
+                return
+            }
+            await storePlayerCard(result.value)
+            onGenerated(result.value)
+            toast.success(`GFX card saved for ${username}`)
+        } finally {
+            setUploading(false)
+        }
+    }
+
     async function handleDeleteCard(saved: PlayerCard, groupName: string) {
         const result = await deletePlayerCard(saved)
         if (!result.ok) {
@@ -196,7 +224,15 @@ export default function CardWorkbenchShell({
         missing,
     }
     const downloadBlocker = generateBlocker(blockerInput)
-    const blocker = generateBlocker({ ...blockerInput, bulkRunning: bulkRunning ? 'A bulk generation is running' : null })
+    const bulkNote = bulkRunning ? 'A bulk generation is running' : null
+    const blocker = generateBlocker({ ...blockerInput, bulkRunning: bulkNote })
+    const uploadBlocker = gfxBlocker({
+        notReady: generateProblem,
+        inputProblem,
+        inactiveGroup: blockerInput.inactiveGroup,
+        noTier: blockerInput.noTier,
+        bulkRunning: bulkNote,
+    })
 
     return (
         <div className="flex flex-col gap-6">
@@ -308,12 +344,26 @@ export default function CardWorkbenchShell({
                         <Button size="sm" className="rounded-sm" disabled={generating || !!blocker} onClick={handleGenerate}>
                             {generating ? 'Generating...' : card ? 'Regenerate' : 'Generate'}
                         </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-sm"
+                            disabled={uploading || !!uploadBlocker}
+                            onClick={() => gfxInput.current?.click()}
+                        >
+                            {uploading ? 'Uploading...' : 'Upload GFX'}
+                        </Button>
+                        <input ref={gfxInput} type="file" accept="image/png" className="hidden" aria-label="GFX card PNG" onChange={handleGfxFile} />
                         <button type="button" className={LINK} disabled={downloading || !!downloadBlocker} onClick={handleDownloadTemplate}>
                             {downloading ? 'Preparing...' : 'Download template'}
                         </button>
                         {generateNote && <span className="text-xs text-foreground">{generateNote}</span>}
                     </div>
                     {blocker && <p className="text-xs text-muted-foreground">{blocker}</p>}
+                    {uploadBlocker && uploadBlocker !== blocker && <p className="text-xs text-muted-foreground">{uploadBlocker}</p>}
+                    <p className="text-xs text-muted-foreground">
+                        PNG at exactly <span className="font-mono tabular-nums">{group.width} × {group.height}</span>, up to 2.9 MB. Stored exactly as uploaded.
+                    </p>
 
                     {!generateProblem && (
                         <div className="flex flex-col gap-2 border-t border-border pt-3">

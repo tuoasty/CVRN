@@ -3,9 +3,11 @@
 import { useMemo, useState } from 'react'
 import { Input } from '@/app/components/ui/input'
 import { downloadCustomPlayerCardTemplateAction, generateCustomPlayerCardAction } from '@/app/actions/playerCard.actions'
+import { uploadPlayerCardGfx } from '@/app/hooks/usePlayerCard'
 import { CARD_STAT_FIELDS, CARD_STAT_LABELS } from '@/server/domains/playerCard/types/schemas'
 import type { CardGroup, CustomCardValues, PlayerCard } from '@/server/domains/playerCard'
 import type { CategoryRatings } from '@/server/domains/overall'
+import { Err } from '@/shared/types/result'
 import { RatingInput } from './CardOverridesForm'
 import CardWorkbenchShell, { type LayoutDrafts } from './CardWorkbenchShell'
 import { FIELD_LABEL, LINK } from './cardFormStyles'
@@ -66,7 +68,7 @@ export default function CustomCardWorkbench({
                 <>
                     <span className="text-base font-semibold text-foreground">{player.username}</span>
                     <span className="text-xs text-muted-foreground">
-                        {player.playerId ? 'Custom card' : 'Custom card · Generate adds this player to the league database'}
+                        {player.playerId ? 'Custom card' : 'Custom card · Generate or Upload GFX adds this player to the league database'}
                     </span>
                 </>
             )}
@@ -129,6 +131,9 @@ export default function CustomCardWorkbench({
                 groupId: group.id,
                 values,
             })}
+            uploadGfx={file => values
+                ? uploadPlayerCardGfx({ kind: 'custom', player: identity, seasonNumber, regionCode, groupId: group.id, values }, file)
+                : Promise.resolve(Err({ message: 'Enter the OVR and all 6 attributes', code: 'VALIDATION_ERROR' }))}
             onGenerated={card => {
                 setDraft(EMPTY_DRAFT)
                 onGenerated(card)

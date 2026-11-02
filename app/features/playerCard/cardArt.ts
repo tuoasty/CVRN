@@ -52,6 +52,16 @@ export async function checkArtFile(file: File): Promise<string | null> {
     return null
 }
 
+export async function checkGfxFile(file: File, canvas: { width: number; height: number }): Promise<string | null> {
+    if (file.size > CARD_ART_MAX_BYTES) return 'GFX must be 2.9 MB or smaller. It is stored as uploaded, so export a smaller PNG.'
+    const size = readPngSize(new Uint8Array(await file.slice(0, 24).arrayBuffer()))
+    if (!size) return 'GFX must be a PNG file'
+    if (size.width !== canvas.width || size.height !== canvas.height) {
+        return `GFX must be exactly ${canvas.width} × ${canvas.height}. This file is ${size.width} × ${size.height}.`
+    }
+    return null
+}
+
 export function formatArtSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
 }
@@ -100,4 +110,14 @@ export function generateBlocker(p: {
     if (layoutArtSlots(p.layers).length === 0) return 'This layout has no art layer, so a card would have no background'
     if (p.missing.length > 0) return `${p.tierName} has no ${p.missing.join(', ')} yet. Upload it on Card Groups.`
     return null
+}
+
+export function gfxBlocker(p: {
+    notReady: string | null
+    inputProblem: string | null
+    inactiveGroup: string | null
+    noTier: string | null
+    bulkRunning: string | null
+}): string | null {
+    return p.bulkRunning ?? p.notReady ?? p.inputProblem ?? p.inactiveGroup ?? p.noTier
 }
