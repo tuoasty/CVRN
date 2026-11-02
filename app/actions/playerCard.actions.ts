@@ -21,6 +21,8 @@ import {
     updateCardTemplate,
     updateCardGroupLayers,
     uploadCardTemplateArt,
+    deletePlayerCard,
+    DeletePlayerCardSchema,
     CardGroupIdSchema,
     CardTemplateIdSchema,
     CreateCardGroupSchema,
@@ -214,6 +216,17 @@ export async function uploadCardTemplateArtAction(formData: FormData): Promise<R
 
     const admin = getSupabaseAdmin() as unknown as DBClient
     return uploadCardTemplateArt(admin, { ...parsed.data, file, userId: guard.value })
+}
+
+export async function deletePlayerCardAction(input: unknown): Promise<Result<null>> {
+    const parsed = DeletePlayerCardSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireSuperAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return deletePlayerCard(supabase, parsed.data)
 }
 
 export async function deleteCardTemplateAction(input: unknown): Promise<Result<null>> {

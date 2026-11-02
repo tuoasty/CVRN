@@ -3,7 +3,8 @@
 import { ReactNode, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/app/components/ui/button'
-import { saveCardGroupLayers, storePlayerCard, useCardPreview, usePlayerCards } from '@/app/hooks/usePlayerCard'
+import { useIsSuperAdmin } from '@/app/admin/AdminRoleProvider'
+import { deletePlayerCard, saveCardGroupLayers, storePlayerCard, useCardPreview, usePlayerCards } from '@/app/hooks/usePlayerCard'
 import type { CardPreviewRequest } from '@/app/hooks/usePlayerCard'
 import { toast } from '@/app/utils/toast'
 import { pickTierTemplate } from '@/server/domains/playerCard/helpers/toCardShapes'
@@ -15,6 +16,7 @@ import { OPTION, OPTION_OFF, OPTION_ON } from './cardFormStyles'
 import CardLayoutEditor from './CardLayoutEditor'
 import CardLayoutPreview from './CardLayoutPreview'
 import { layerProblem } from './cardSegments'
+import ConfirmDeleteLink from './ConfirmDeleteLink'
 
 const LINK = 'text-xs text-primary hover:underline underline-offset-4 rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-40 disabled:no-underline'
 const SECTION = 'text-xs font-semibold uppercase tracking-wider text-muted-foreground'
@@ -68,6 +70,7 @@ export default function CardWorkbenchShell({
     const [showBorders, setShowBorders] = useState(true)
     const [saving, setSaving] = useState(false)
     const [generating, setGenerating] = useState(false)
+    const isSuperAdmin = useIsSuperAdmin()
 
     const activeIndex = active?.groupId === group.id ? active.index : null
     const setActiveIndex = (index: number | null) => setActive(index === null ? null : { groupId: group.id, index })
@@ -138,6 +141,25 @@ export default function CardWorkbenchShell({
             setGenerating(false)
         }
     }
+
+    async function handleDeleteCard(saved: PlayerCard, groupName: string) {
+        const result = await deletePlayerCard(saved)
+        if (!result.ok) {
+            toast.error(`Failed to delete ${groupName} card`, result.error.message)
+            return false
+        }
+        toast.success(`Deleted ${username}'s ${groupName} card`)
+        return true
+    }
+
+    const deleteLink = (saved: PlayerCard, groupName: string) => isSuperAdmin && (
+        <ConfirmDeleteLink
+            label="Delete card"
+            title={`Delete ${username}'s ${groupName} card?`}
+            description="Removes the saved card and its PNG. This cannot be undone. You can generate a new one afterwards."
+            onConfirm={() => handleDeleteCard(saved, groupName)}
+        />
+    )
 
     const blocker = generateBlocker({
         notReady: generateProblem,
@@ -278,18 +300,23 @@ export default function CardWorkbenchShell({
                                         <span className="text-foreground">{group.name}</span>
                                         <span className="font-mono tabular-nums text-muted-foreground">OVR {card.ovr} · {formatDate(card.generatedAt)}</span>
                                         <a href={card.imageUrl} target="_blank" rel="noreferrer" className={LINK}>Open PNG</a>
+                                        {deleteLink(card, group.name)}
                                     </div>
                                 </div>
                             ) : (
                                 <span className="text-xs text-muted-foreground">No {group.name} card yet</span>
                             )}
-                            {otherCards.map(c => (
-                                <div key={c.groupId} className="flex items-baseline gap-3 text-xs">
-                                    <span className="text-foreground">{groups.find(g => g.id === c.groupId)?.name ?? 'Unknown group'}</span>
-                                    <span className="font-mono tabular-nums text-muted-foreground">OVR {c.ovr} · {formatDate(c.generatedAt)}</span>
-                                    <a href={c.imageUrl} target="_blank" rel="noreferrer" className={LINK}>Open</a>
-                                </div>
-                            ))}
+                            {otherCards.map(c => {
+                                const otherName = groups.find(g => g.id === c.groupId)?.name ?? 'Unknown group'
+                                return (
+                                    <div key={c.groupId} className="flex flex-wrap items-baseline gap-x-3 text-xs">
+                                        <span className="text-foreground">{otherName}</span>
+                                        <span className="font-mono tabular-nums text-muted-foreground">OVR {c.ovr} · {formatDate(c.generatedAt)}</span>
+                                        <a href={c.imageUrl} target="_blank" rel="noreferrer" className={LINK}>Open</a>
+                                        {deleteLink(c, otherName)}
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
                 </div>

@@ -5,6 +5,7 @@ import {
     createCardTemplateAction,
     deleteCardGroupAction,
     deleteCardTemplateAction,
+    deletePlayerCardAction,
     getCardCatalogAction,
     getPlayerCardsAction,
     previewCustomPlayerCardAction,
@@ -119,6 +120,18 @@ export function storePlayerCard(card: PlayerCard) {
         (current: PlayerCard[] | undefined) => [...(current ?? []).filter(c => c.groupId !== card.groupId), card],
         { revalidate: false }
     );
+}
+
+export async function deletePlayerCard(card: Pick<PlayerCard, "playerId" | "seasonNumber" | "groupId">) {
+    const result = await deletePlayerCardAction({ playerId: card.playerId, seasonNumber: card.seasonNumber, groupId: card.groupId });
+    if (result.ok) {
+        await globalMutate(
+            playerCardsKey(card.playerId, card.seasonNumber),
+            (current: PlayerCard[] | undefined) => (current ?? []).filter(c => c.groupId !== card.groupId),
+            { revalidate: false }
+        );
+    }
+    return result;
 }
 
 export async function saveCardGroupLayers(groupId: string, layers: CardLayer[]) {

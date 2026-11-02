@@ -83,6 +83,22 @@ export async function findPlayerSeasonRosters(
     return Ok((data ?? []) as unknown as PlayerSeasonRoster[])
 }
 
+export async function deletePlayerCard(
+    supabase: DBClient,
+    p: { playerId: string; seasonNumber: number; groupId: string },
+): Promise<Result<PlayerCardRow | null>> {
+    const { data, error } = await supabase
+        .from('player_cards')
+        .delete()
+        .eq('player_id', p.playerId)
+        .eq('season_number', p.seasonNumber)
+        .eq('group_id', p.groupId)
+        .select('*')
+        .maybeSingle()
+    if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
+    return Ok(data as PlayerCardRow | null)
+}
+
 export async function upsertPlayerCard(supabase: DBClient, row: PlayerCardInsert): Promise<Result<PlayerCardRow>> {
     const { data, error } = await supabase
         .from('player_cards')

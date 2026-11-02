@@ -107,6 +107,9 @@ export const CardOverridesSchema = z.object({
 })
 export type CardOverrides = z.infer<typeof CardOverridesSchema>
 
+export const DeletePlayerCardSchema = PlayerCardsQuerySchema.extend({ groupId: z.string().uuid() })
+export type DeletePlayerCardInput = z.infer<typeof DeletePlayerCardSchema>
+
 export const GeneratePlayerCardSchema = PlayerCardsQuerySchema.extend({
     groupId: z.string().uuid(),
     overrides: CardOverridesSchema.optional(),

@@ -1,20 +1,30 @@
 import sharp from 'sharp'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { logger } from '@/server/utils/logger'
+import { CARD_ART_MAX_PIXELS } from '../types'
 import { createByteCache } from './byteCache'
 
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000
 const CACHE_MAX_BYTES = 50 * 1024 * 1024
+const FETCH_TIMEOUT_MS = 15_000
+const IMAGE_MAX_BYTES = 10 * 1024 * 1024
 
 const cache = createByteCache({ maxBytes: CACHE_MAX_BYTES, ttlMs: CACHE_TTL_MS })
 
+const tooLarge = () => Err({ message: 'Card image is over the 10 MB limit', code: 'INTEGRATION_ERROR' as const })
+
 export async function loadImageAsPngDataUri(url: string): Promise<Result<string>> {
     try {
-        const response = await fetch(url)
+        const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
         if (!response.ok) {
             return Err({ message: `Failed to fetch card image (${response.status})`, code: 'INTEGRATION_ERROR' })
         }
-        const png = await sharp(Buffer.from(await response.arrayBuffer())).png().toBuffer()
+        if (Number(response.headers.get('content-length') ?? 0) > IMAGE_MAX_BYTES) return tooLarge()
+
+        const bytes = Buffer.from(await response.arrayBuffer())
+        if (bytes.length > IMAGE_MAX_BYTES) return tooLarge()
+
+        const png = await sharp(bytes, { limitInputPixels: CARD_ART_MAX_PIXELS }).png().toBuffer()
         return Ok(`data:image/png;base64,${png.toString('base64')}`)
     } catch (error) {
         logger.error({ error, url }, 'loadImageAsPngDataUri: failed')

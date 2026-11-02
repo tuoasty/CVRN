@@ -84,6 +84,7 @@ export {
     CARD_ART_MAX_PIXELS,
     CARD_ART_FILE_NAME,
     hasPinnedArt,
+    DeletePlayerCardSchema,
     UploadCardArtSchema,
     CardLayerSchema,
     CardLayersSchema,
@@ -123,4 +124,5 @@ export type {
     PreviewPlayerCardInput,
     UpdateCardGroupLayersInput,
     UploadCardArtInput,
+    DeletePlayerCardInput,
 } from './schemas'

@@ -8,6 +8,7 @@ export { createCardTemplate } from './commands/createCardTemplate'
 export { updateCardTemplate } from './commands/updateCardTemplate'
 export { deleteCardTemplate } from './commands/deleteCardTemplate'
 export { uploadCardTemplateArt } from './commands/uploadCardTemplateArt'
+export { deletePlayerCard } from './commands/deletePlayerCard'
 export { getPlayerCards } from './queries/getPlayerCards'
 export { getCardCatalog } from './queries/getCardCatalog'
 export { previewPlayerCard } from './queries/previewPlayerCard'
@@ -37,6 +38,7 @@ export type {
     PreviewPlayerCardInput,
     UpdateCardGroupLayersInput,
     UploadCardArtInput,
+    DeletePlayerCardInput,
 } from './types'
 
 export {
@@ -58,4 +60,5 @@ export {
     PreviewPlayerCardSchema,
     UpdateCardGroupLayersSchema,
     UploadCardArtSchema,
+    DeletePlayerCardSchema,
 } from './types'
