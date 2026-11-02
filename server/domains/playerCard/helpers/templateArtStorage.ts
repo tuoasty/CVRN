@@ -12,6 +12,21 @@ export interface StoredArtFile {
     version: number
 }
 
+const LISTING_TTL_MS = 30 * 24 * 60 * 60 * 1000
+const LISTING_MAX_ENTRIES = 40
+
+const listings = new Map<string, { at: number; files: StoredArtFile[] }>()
+
+function rememberListing(templateId: string, files: StoredArtFile[]) {
+    listings.delete(templateId)
+    listings.set(templateId, { at: Date.now(), files })
+    while (listings.size > LISTING_MAX_ENTRIES) {
+        const oldest = listings.keys().next().value
+        if (oldest === undefined) break
+        listings.delete(oldest)
+    }
+}
+
 function artBucket() {
     return getSupabaseAdmin().storage.from(BUCKETS.PUBLIC)
 }
@@ -26,7 +41,7 @@ export async function listTemplateArtFiles(templateId: string): Promise<Result<S
         sortBy: { column: 'name', order: 'asc' },
     })
     if (error) return Err(serializeError(error, 'INTEGRATION_ERROR'))
-    return Ok((data ?? [])
+    const files = (data ?? [])
         .filter(o => o.id !== null && !o.name.startsWith('.'))
         .map(o => {
             const changed = o.updated_at ?? o.created_at ?? null
@@ -36,11 +51,26 @@ export async function listTemplateArtFiles(templateId: string): Promise<Result<S
                 uploadedAt: changed,
                 version: changed ? Date.parse(changed) : 0,
             }
-        }))
+        })
+    rememberListing(templateId, files)
+    return Ok(files)
 }
 
-export async function resolveTemplateArtUrls(templateId: string, srcs: string[]): Promise<Result<Record<string, string | null>>> {
-    const files = srcs.some(isBareArtSrc) ? await listTemplateArtFiles(templateId) : Ok<StoredArtFile[]>([])
+async function readArtListing(templateId: string, required: string[], cached: boolean): Promise<Result<StoredArtFile[]>> {
+    const hit = cached ? listings.get(templateId) : undefined
+    const usable = hit
+        && Date.now() - hit.at < LISTING_TTL_MS
+        && required.every(name => hit.files.some(f => f.name === name))
+    return usable ? Ok(hit.files) : listTemplateArtFiles(templateId)
+}
+
+export async function resolveTemplateArtUrls(
+    templateId: string,
+    srcs: string[],
+    opts: { cached?: boolean } = {},
+): Promise<Result<Record<string, string | null>>> {
+    const required = srcs.filter(isBareArtSrc)
+    const files = required.length > 0 ? await readArtListing(templateId, required, opts.cached ?? false) : Ok<StoredArtFile[]>([])
     if (!files.ok) return files
     const versions = new Map(files.value.map(f => [f.name, f.version]))
 
@@ -59,5 +89,6 @@ export async function removeTemplateArtFolder(templateId: string): Promise<Resul
     if (files.value.length === 0) return Ok(null)
     const { error } = await artBucket().remove(files.value.map(f => STORAGE_PATHS.cardTemplateAsset(templateId, f.name)))
     if (error) return Err(serializeError(error, 'INTEGRATION_ERROR'))
+    listings.delete(templateId)
     return Ok(null)
 }

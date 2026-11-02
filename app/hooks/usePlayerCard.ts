@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import useSWR, { mutate as globalMutate, type BareFetcher } from "swr";
 import {
     createCardGroupAction,
@@ -85,17 +86,24 @@ export function usePlayerCards(playerId: string | null, seasonNumber: number | n
     };
 }
 
+let lastPreviewImage: string | null = null;
+
 export function useCardPreview(request: CardPreviewRequest | null, delayMs = 400) {
     const body = request ? JSON.stringify(request) : null;
     const debounced = useDebouncedValue(body, delayMs);
+    const [active, setActive] = useState(debounced);
     const { data, isValidating, error } = useSWR(
-        debounced ? (["cardPreview", debounced] as const) : null,
+        active ? (["cardPreview", active] as const) : null,
         fetchCardPreview,
         { revalidateOnFocus: false, keepPreviousData: true, shouldRetryOnError: false }
     );
+    if (!isValidating && debounced !== active) setActive(debounced);
+    useEffect(() => {
+        if (data) lastPreviewImage = data;
+    }, [data]);
     return {
-        image: data ?? null,
-        isRendering: isValidating || body !== debounced,
+        image: data ?? lastPreviewImage,
+        isRendering: isValidating || body !== active,
         error: error instanceof Error ? error.message : null,
     };
 }

@@ -8,7 +8,7 @@ export async function loadTemplateArt(template: CardTemplate, opts: { cached: bo
     const srcs = [...new Set(template.layers.flatMap(layer => (layer.kind === 'art' ? [layer.src] : [])))]
     if (srcs.length === 0) return Ok({})
 
-    const urls = await resolveTemplateArtUrls(template.id, srcs)
+    const urls = await resolveTemplateArtUrls(template.id, srcs, { cached: opts.cached })
     if (!urls.ok) return urls
 
     const art: Record<string, string> = {}

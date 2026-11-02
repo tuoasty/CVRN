@@ -56,7 +56,6 @@ export default function CardWorkbenchShell({
     generate: () => Promise<Result<PlayerCard>>
     onGenerated: (card: PlayerCard) => void
 }) {
-    const { cards } = usePlayerCards(playerId, seasonNumber)
     const [activeIndex, setActiveIndex] = useState<number | null>(null)
     const [showBorders, setShowBorders] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -71,6 +70,7 @@ export default function CardWorkbenchShell({
     const layoutProblem = layers.length === 0 ? 'Add at least one segment' : layers.map(layerProblem).find(Boolean) ?? null
 
     const preview = useCardPreview(template && !layoutProblem ? buildPreview(template.id, layers) : null)
+    const { cards } = usePlayerCards(playerId, seasonNumber)
 
     const card = cards.find(c => c.groupId === group.id) ?? null
     const otherCards = cards.filter(c => c.groupId !== group.id)

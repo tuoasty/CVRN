@@ -1,11 +1,12 @@
 import sharp from 'sharp'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { logger } from '@/server/utils/logger'
+import { createByteCache } from './byteCache'
 
-const CACHE_TTL_MS = 5 * 60 * 1000
-const CACHE_MAX_ENTRIES = 40
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000
+const CACHE_MAX_BYTES = 50 * 1024 * 1024
 
-const cache = new Map<string, { at: number; value: string }>()
+const cache = createByteCache({ maxBytes: CACHE_MAX_BYTES, ttlMs: CACHE_TTL_MS })
 
 export async function loadImageAsPngDataUri(url: string): Promise<Result<string>> {
     try {
@@ -23,17 +24,9 @@ export async function loadImageAsPngDataUri(url: string): Promise<Result<string>
 
 export async function loadImageCached(url: string): Promise<Result<string>> {
     const hit = cache.get(url)
-    if (hit && Date.now() - hit.at < CACHE_TTL_MS) return Ok(hit.value)
+    if (hit !== undefined) return Ok(hit)
 
     const loaded = await loadImageAsPngDataUri(url)
-    if (!loaded.ok) return loaded
-
-    cache.delete(url)
-    cache.set(url, { at: Date.now(), value: loaded.value })
-    while (cache.size > CACHE_MAX_ENTRIES) {
-        const oldest = cache.keys().next().value
-        if (oldest === undefined) break
-        cache.delete(oldest)
-    }
+    if (loaded.ok) cache.set(url, loaded.value)
     return loaded
 }
