@@ -42,6 +42,7 @@ const DROPDOWN_GROUPS: { label: string; items: NavItem[] }[] = [
             { href: "/admin/specs/qualify", label: "Spec Calibration" },
             { href: "/admin/overalls",  label: "Overalls" },
             { href: "/admin/cards",     label: "Player Cards" },
+            { href: "/admin/cards/groups", label: "Card Groups" },
         ],
     },
     {

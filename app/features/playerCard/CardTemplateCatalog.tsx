@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { CardGroup, CardTemplateSummary } from '@/server/domains/playerCard'
 import { cn } from '@/lib/utils'
+import { missingArt } from './cardArt'
 import CardGroupForm from './CardGroupForm'
 import CardTierForm from './CardTierForm'
 import { LINK } from './cardFormStyles'
@@ -28,6 +29,8 @@ function TierTile({ group, template, range, selected, onSelect }: {
     selected: boolean
     onSelect: () => void
 }) {
+    const missing = template.art.length === 0 || missingArt(group.layers ?? [], template.art).length > 0
+
     return (
         <button
             type="button"
@@ -48,7 +51,7 @@ function TierTile({ group, template, range, selected, onSelect }: {
                     T{template.rank} · {range}
                 </span>
                 <span className="truncate text-xs text-muted-foreground" title={template.name}>{template.name}</span>
-                {!template.previewUrl && <span className="text-xs text-muted-foreground">No art found</span>}
+                {missing && <span className="text-xs font-medium text-foreground">Missing art</span>}
             </span>
         </button>
     )

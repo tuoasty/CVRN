@@ -7,6 +7,7 @@ export { deleteCardGroup } from './commands/deleteCardGroup'
 export { createCardTemplate } from './commands/createCardTemplate'
 export { updateCardTemplate } from './commands/updateCardTemplate'
 export { deleteCardTemplate } from './commands/deleteCardTemplate'
+export { uploadCardTemplateArt } from './commands/uploadCardTemplateArt'
 export { getPlayerCards } from './queries/getPlayerCards'
 export { getCardCatalog } from './queries/getCardCatalog'
 export { previewPlayerCard } from './queries/previewPlayerCard'
@@ -16,6 +17,7 @@ export { ladderProblem, pickTierTemplate, rankTemplates } from './helpers/toCard
 export type {
     CardTemplate,
     CardTemplateSummary,
+    CardArtFile,
     CardGroup,
     CardData,
     PlayerCard,
@@ -34,6 +36,7 @@ export type {
     PlayerCardsQueryInput,
     PreviewPlayerCardInput,
     UpdateCardGroupLayersInput,
+    UploadCardArtInput,
 } from './types'
 
 export {
@@ -54,4 +57,5 @@ export {
     PlayerCardsQuerySchema,
     PreviewPlayerCardSchema,
     UpdateCardGroupLayersSchema,
+    UploadCardArtSchema,
 } from './types'

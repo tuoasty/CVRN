@@ -1,6 +1,7 @@
 "use client"
 
 import { Suspense, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { Input } from '@/app/components/ui/input'
 import { useSeasons } from '@/app/hooks/useSeasons'
@@ -10,7 +11,7 @@ import { useCardCatalog } from '@/app/hooks/usePlayerCard'
 import { REGION_ORDER } from '@/shared/volleyball/regions'
 import { REGION_ALL, useOverallParams } from '@/app/features/overall/useOverallParams'
 import { buildOverallRows, matchesOverallFilters, sortOverallRows } from '@/app/features/overall/overallRows'
-import CardTemplateCatalog from '@/app/features/playerCard/CardTemplateCatalog'
+import { LINK } from '@/app/features/playerCard/cardFormStyles'
 import PlayerCardWorkbench, { type LayoutDrafts } from '@/app/features/playerCard/PlayerCardWorkbench'
 import CustomCardWorkbench from '@/app/features/playerCard/CustomCardWorkbench'
 import CustomPlayerPicker, { type CustomPlayerChoice } from '@/app/features/playerCard/CustomPlayerPicker'
@@ -25,7 +26,6 @@ const regionRank = (code: string) => {
 const TAB = 'pb-2 text-sm font-semibold transition-colors duration-150 rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
 const TAB_ON = 'text-foreground shadow-[inset_0_-2px_0_currentColor]'
 const TAB_OFF = 'text-muted-foreground hover:text-foreground'
-const SECTION = 'text-xs font-semibold uppercase tracking-wider text-muted-foreground'
 
 function ScopeTabs<T extends string | number>({ label, options, value, onSelect }: {
     label: string
@@ -93,25 +93,12 @@ function AdminCardsContent() {
         <div className="page-wide py-6">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <h1 className="text-xl font-semibold tracking-tight text-foreground">Player Cards</h1>
-                <span className="text-sm text-muted-foreground">Templates by group and OVR tier · tier 1 is the highest</span>
+                <span className="text-sm text-muted-foreground">Layout and generation</span>
+                <Link href="/admin/cards/groups" className={LINK}>Manage groups and tiers</Link>
             </div>
 
             <section className="mt-6">
-                <h2 className={SECTION}>Templates</h2>
-                <div className="mt-2">
-                    {catalogLoading ? (
-                        <div className="h-40 animate-pulse bg-muted/40" />
-                    ) : catalogError ? (
-                        <p className="text-sm text-destructive">{catalogError}</p>
-                    ) : (
-                        <CardTemplateCatalog groups={groups} />
-                    )}
-                </div>
-            </section>
-
-            <section className="mt-8">
-                <h2 className={SECTION}>Generate</h2>
-                <div className="mt-2 flex flex-wrap items-end gap-x-8 gap-y-2">
+                <div className="flex flex-wrap items-end gap-x-8 gap-y-2">
                     <ScopeTabs
                         label="Season"
                         options={seasonNumbers.map(n => ({ value: n, label: `S${n}` }))}
@@ -140,8 +127,12 @@ function AdminCardsContent() {
                     />
                 </div>
 
-                {!catalogLoading && generatorGroups.length === 0 ? (
-                    <p className="mt-4 text-sm text-muted-foreground">No active group with tiers to generate from.</p>
+                {catalogError ? (
+                    <p className="mt-4 text-sm text-destructive">{catalogError}</p>
+                ) : !catalogLoading && generatorGroups.length === 0 ? (
+                    <p className="mt-4 text-sm text-muted-foreground">
+                        No active group with tiers yet. <Link href="/admin/cards/groups" className={LINK}>Manage groups and tiers</Link>
+                    </p>
                 ) : source === 'custom' ? (
                     <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-start">
                         <div className="w-full shrink-0 lg:w-[20rem]">

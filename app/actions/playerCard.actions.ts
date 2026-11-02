@@ -1,7 +1,9 @@
 "use server"
 
 import { Err, Ok, Result } from '@/shared/types/result'
+import { DBClient } from '@/shared/types/db'
 import { createServerSupabase } from '@/server/supabase/server'
+import { getSupabaseAdmin } from '@/server/supabase/admin'
 import { serializeError } from '@/server/utils/serializeableError'
 import { requireAdmin, requireSuperAdmin } from '@/server/domains/auth'
 import {
@@ -18,6 +20,7 @@ import {
     updateCardGroup,
     updateCardTemplate,
     updateCardGroupLayers,
+    uploadCardTemplateArt,
     CardGroupIdSchema,
     CardTemplateIdSchema,
     CreateCardGroupSchema,
@@ -30,6 +33,7 @@ import {
     UpdateCardGroupSchema,
     UpdateCardGroupLayersSchema,
     UpdateCardTemplateSchema,
+    UploadCardArtSchema,
 } from '@/server/domains/playerCard'
 import type { CardGroup, CardLayer, PlayerCard } from '@/server/domains/playerCard'
 import type { OverallInputRow } from '@/server/domains/overall'
@@ -195,6 +199,21 @@ export async function updateCardTemplateAction(input: unknown): Promise<Result<n
     if (!guard.ok) return guard
 
     return updateCardTemplate(supabase, parsed.data)
+}
+
+export async function uploadCardTemplateArtAction(formData: FormData): Promise<Result<{ width: number; height: number }>> {
+    const parsed = UploadCardArtSchema.safeParse({ templateId: formData.get('templateId'), fileName: formData.get('fileName') })
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const file = formData.get('file')
+    if (!(file instanceof File) || file.size === 0) return Err({ message: 'Choose a PNG file', code: 'VALIDATION_ERROR' })
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const admin = getSupabaseAdmin() as unknown as DBClient
+    return uploadCardTemplateArt(admin, { ...parsed.data, file, userId: guard.value })
 }
 
 export async function deleteCardTemplateAction(input: unknown): Promise<Result<null>> {

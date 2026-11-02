@@ -1,7 +1,7 @@
 import { CardGroupRow, CardTemplateRow, PlayerCardRow } from '@/shared/types/db'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { STORAGE_PATHS } from '@/server/storage/storage.paths'
-import { CARD_STAT_LABELS, CardData, CardStatField, CardGroup, CardLayer, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
+import { CARD_STAT_LABELS, CardArtFile, CardData, CardStatField, CardGroup, CardLayer, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
 
 export type ArtLocation = { url: string } | { path: string }
 
@@ -36,10 +36,10 @@ export function withArtVersion(url: string, version: number | undefined): string
     return `${url}${url.includes('?') ? '&' : '?'}v=${version}`
 }
 
-export function firstArtSrc(group: CardGroupRow): string | null {
-    const parsed = parseLayers(group, { allowEmpty: true })
-    const art = parsed.ok ? parsed.value.find(l => l.kind === 'art') : undefined
-    return art?.kind === 'art' ? art.src : null
+export function tierPreviewUrl(layers: CardLayer[], files: CardArtFile[]): string | null {
+    const firstArt = layers.find(l => l.kind === 'art')
+    const match = firstArt?.kind === 'art' ? files.find(f => f.name === firstArt.src) : undefined
+    return (match ?? files[0])?.url ?? null
 }
 
 function parseLayers(group: CardGroupRow, opts: { allowEmpty: boolean }): Result<CardLayer[]> {
@@ -75,7 +75,7 @@ export function toCardTemplate(tier: CardTemplateRow, group: CardGroupRow): Resu
 export function toCardGroup(
     group: CardGroupRow,
     templates: CardTemplateRow[],
-    artUrl: (templateId: string) => string | null,
+    art: (templateId: string) => CardArtFile[],
 ): CardGroup {
     const own = rankTemplates(templates.filter(t => t.group_id === group.id).map(row => ({ row, minOvr: row.min_ovr })))
     const parsed = parseLayers(group, { allowEmpty: true })
@@ -94,7 +94,8 @@ export function toCardGroup(
             name: row.name,
             rank,
             minOvr: row.min_ovr,
-            previewUrl: artUrl(row.id),
+            previewUrl: tierPreviewUrl(parsed.ok ? parsed.value : [], art(row.id)),
+            art: art(row.id),
         })),
     }
 }

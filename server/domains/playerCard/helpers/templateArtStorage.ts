@@ -3,6 +3,7 @@ import { serializeError } from '@/server/utils/serializeableError'
 import { getSupabaseAdmin } from '@/server/supabase/admin'
 import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
 import { toCdnUrl } from '@/server/storage/toCdnUrl'
+import { CardArtFile } from '../types'
 import { ArtLocation, isBareArtSrc, resolveArtLocation, withArtVersion } from './toCardShapes'
 
 export interface StoredArtFile {
@@ -54,6 +55,20 @@ export async function listTemplateArtFiles(templateId: string): Promise<Result<S
         })
     rememberListing(templateId, files)
     return Ok(files)
+}
+
+export function forgetTemplateArtListing(templateId: string) {
+    listings.delete(templateId)
+}
+
+export async function listTemplateArt(templateId: string): Promise<Result<CardArtFile[]>> {
+    const files = await listTemplateArtFiles(templateId)
+    if (!files.ok) return files
+    return Ok(files.value.map(file => ({
+        name: file.name,
+        size: file.size,
+        url: withArtVersion(publicArtUrl({ path: STORAGE_PATHS.cardTemplateAsset(templateId, file.name) }), file.version),
+    })))
 }
 
 async function readArtListing(templateId: string, required: string[], cached: boolean): Promise<Result<StoredArtFile[]>> {

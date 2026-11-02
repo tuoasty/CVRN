@@ -12,7 +12,9 @@ import {
     updateCardGroupAction,
     updateCardTemplateAction,
     updateCardGroupLayersAction,
+    uploadCardTemplateArtAction,
 } from "@/app/actions/playerCard.actions";
+import { checkArtFile } from "@/app/features/playerCard/cardArt";
 import type {
     CardGroup,
     CardLayer,
@@ -24,7 +26,7 @@ import type {
     UpdateCardGroupInput,
     UpdateCardTemplateInput,
 } from "@/server/domains/playerCard";
-import type { Result } from "@/shared/types/result";
+import { Err, Ok, type Result } from "@/shared/types/result";
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
 export const cardCatalogKey = ["cardCatalog"] as const;
@@ -140,3 +142,55 @@ export const deleteCardGroup = (groupId: string) => thenRefreshCatalog(deleteCar
 export const createCardTemplate = (input: CreateCardTemplateInput) => thenRefreshCatalog(createCardTemplateAction(input));
 export const updateCardTemplate = (input: UpdateCardTemplateInput) => thenRefreshCatalog(updateCardTemplateAction(input));
 export const deleteCardTemplate = (templateId: string) => thenRefreshCatalog(deleteCardTemplateAction({ templateId }));
+
+async function sendCardArt(templateId: string, fileName: string, file: File): Promise<Result<{ width: number; height: number }>> {
+    const problem = await checkArtFile(file);
+    if (problem) return Err({ message: problem, code: "VALIDATION_ERROR" });
+    const body = new FormData();
+    body.set("templateId", templateId);
+    body.set("fileName", fileName);
+    body.set("file", file);
+    try {
+        return await uploadCardTemplateArtAction(body);
+    } catch {
+        return Err({ message: "Upload failed. The file may be over the 2.9 MB limit, or the connection dropped.", code: "INTEGRATION_ERROR" });
+    }
+}
+
+async function refreshAfterArtChange() {
+    await globalMutate(cardCatalogKey);
+    await globalMutate((key: unknown) => Array.isArray(key) && key[0] === "cardPreview", undefined, { revalidate: true });
+}
+
+export async function uploadCardArt(templateId: string, fileName: string, file: File) {
+    const result = await sendCardArt(templateId, fileName, file);
+    if (result.ok) await refreshAfterArtChange();
+    return result;
+}
+
+export interface CardArtUploadFailure {
+    name: string;
+    message: string;
+}
+
+export async function createCardTierWithArt(
+    input: CreateCardTemplateInput,
+    files: { name: string; file: File }[],
+): Promise<Result<{ templateId: string; failed: CardArtUploadFailure[] }>> {
+    for (const { file } of files) {
+        const problem = await checkArtFile(file);
+        if (problem) return Err({ message: problem, code: "VALIDATION_ERROR" });
+    }
+
+    const created = await createCardTemplateAction(input);
+    if (!created.ok) return created;
+
+    const failed: CardArtUploadFailure[] = [];
+    for (const { name, file } of files) {
+        const uploaded = await sendCardArt(created.value.id, name, file);
+        if (!uploaded.ok) failed.push({ name, message: uploaded.error.message });
+    }
+
+    await refreshAfterArtChange();
+    return Ok({ templateId: created.value.id, failed });
+}

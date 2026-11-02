@@ -4,24 +4,13 @@ import { useState } from 'react'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { useIsSuperAdmin } from '@/app/admin/AdminRoleProvider'
-import { createCardTemplate, deleteCardTemplate, updateCardTemplate } from '@/app/hooks/usePlayerCard'
+import { createCardTierWithArt, deleteCardTemplate, updateCardTemplate } from '@/app/hooks/usePlayerCard'
 import { toast } from '@/app/utils/toast'
 import type { CardGroup, CardTemplateSummary } from '@/server/domains/playerCard'
+import { layoutArtSlots } from './cardArt'
+import CardTierArt, { CardTierArtPicker } from './CardTierArt'
 import ConfirmDeleteLink from './ConfirmDeleteLink'
 import { FIELD_INPUT, FIELD_LABEL, LINK, NUMBER_INPUT, toInt } from './cardFormStyles'
-
-async function copyFolder(templateId: string) {
-    try {
-        await navigator.clipboard.writeText(`card-templates/${templateId}/`)
-        toast.success('Copied art folder path')
-    } catch {
-        toast.error('Copy failed', 'Select the path and copy it manually')
-    }
-}
-
-function layoutArtFiles(group: CardGroup): string[] {
-    return [...new Set((group.layers ?? []).flatMap(l => (l.kind === 'art' && !l.src.includes('/') ? [l.src] : [])))]
-}
 
 export default function CardTierForm({ group, template, onSaved, onDeleted, onCancel }: {
     group: CardGroup
@@ -33,22 +22,45 @@ export default function CardTierForm({ group, template, onSaved, onDeleted, onCa
     const isSuperAdmin = useIsSuperAdmin()
     const [name, setName] = useState(template?.name ?? '')
     const [floor, setFloor] = useState(template ? String(template.minOvr) : group.templates.length === 0 ? '1' : '')
+    const [files, setFiles] = useState<Record<string, File>>({})
     const [saving, setSaving] = useState(false)
-    const artFiles = layoutArtFiles(group)
+
+    const slots = layoutArtSlots(group.layers ?? [])
+    const artReady = slots.length > 0 && slots.every(slot => files[slot.name])
+    const blocked = saving || name.trim() === '' || (!template && !artReady)
+
+    async function saveExisting(existing: CardTemplateSummary) {
+        const result = await updateCardTemplate({ templateId: existing.id, name, minOvr: toInt(floor) })
+        if (!result.ok) {
+            toast.error('Failed to save tier', result.error.message)
+            return
+        }
+        toast.success(`Saved ${name.trim()}`)
+        onSaved(existing.id)
+    }
+
+    async function createWithArt() {
+        const result = await createCardTierWithArt(
+            { groupId: group.id, name, minOvr: toInt(floor) },
+            slots.map(slot => ({ name: slot.name, file: files[slot.name] })),
+        )
+        if (!result.ok) {
+            toast.error('Failed to add tier', result.error.message)
+            return
+        }
+        const { templateId, failed } = result.value
+        if (failed.length > 0) {
+            toast.error(`${name.trim()} added, but ${failed.map(f => f.name).join(', ')} did not upload`, failed[0].message)
+        } else {
+            toast.success(`Added ${name.trim()} to ${group.name}`)
+        }
+        onSaved(templateId)
+    }
 
     async function handleSave() {
         setSaving(true)
         try {
-            const fields = { name, minOvr: toInt(floor) }
-            const result = template
-                ? await updateCardTemplate({ templateId: template.id, ...fields })
-                : await createCardTemplate({ groupId: group.id, ...fields })
-            if (!result.ok) {
-                toast.error(template ? 'Failed to save tier' : 'Failed to add tier', result.error.message)
-                return
-            }
-            toast.success(template ? `Saved ${name.trim()}` : `Added ${name.trim()} to ${group.name}`)
-            onSaved(result.value?.id ?? template?.id ?? '')
+            await (template ? saveExisting(template) : createWithArt())
         } finally {
             setSaving(false)
         }
@@ -79,30 +91,22 @@ export default function CardTierForm({ group, template, onSaved, onDeleted, onCa
                 </label>
             </div>
 
-            {template && (
-                <div className="flex flex-col gap-1">
-                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <span className={FIELD_LABEL}>Art folder</span>
-                        <span className="break-all font-mono text-xs text-foreground">card-templates/{template.id}/</span>
-                        <button type="button" className={LINK} onClick={() => copyFolder(template.id)}>Copy</button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                        {artFiles.length > 0
-                            ? <>The {group.name} layout expects <span className="font-mono text-foreground">{artFiles.join(', ')}</span> in this folder.</>
-                            : `The ${group.name} layout has no art layers yet.`}
-                    </p>
-                </div>
-            )}
+            {template
+                ? <CardTierArt group={group} template={template} />
+                : <CardTierArtPicker group={group} files={files} onChange={setFiles} />}
 
             <p className="text-xs text-muted-foreground">
-                The floor is the lowest OVR that gets this tier. Tiers rank by floor, highest first, and every group needs a tier at floor 1. All tiers share the {group.name} layout and differ only by their art files.
+                The floor is the lowest OVR that gets this tier. Tiers rank by floor, highest first, and every group needs a tier at floor 1. All tiers share the {group.name} layout and differ only by their art.
             </p>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <Button size="sm" className="h-8 rounded-sm" onClick={handleSave} disabled={saving || name.trim() === ''}>
+                <Button size="sm" className="h-8 rounded-sm" onClick={handleSave} disabled={blocked}>
                     {saving ? 'Saving…' : template ? 'Save tier' : 'Add tier'}
                 </Button>
                 <button type="button" className={LINK} onClick={onCancel}>Cancel</button>
+                {!template && !artReady && slots.length > 0 && (
+                    <span className="text-xs text-muted-foreground">Choose the art to add this tier</span>
+                )}
                 {template && isSuperAdmin && (
                     <span className="ml-auto">
                         <ConfirmDeleteLink

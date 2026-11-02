@@ -87,6 +87,25 @@ describe('template art listing cache', () => {
         expect(retried.ok).toBe(true)
     })
 
+    it('serves the new version after a listing is forgotten and re-read', async () => {
+        const before = await storage.resolveTemplateArtUrls('t1', ['bg.png'], { cached: true })
+        list.mockResolvedValue({ data: [file('bg.png', '2026-11-02T00:00:05.000Z')], error: null })
+        storage.forgetTemplateArtListing('t1')
+        await storage.listTemplateArtFiles('t1')
+        const after = await storage.resolveTemplateArtUrls('t1', ['bg.png'], { cached: true })
+        expect(after.ok && after.value['bg.png']).not.toEqual(before.ok && before.value['bg.png'])
+        expect(list).toHaveBeenCalledTimes(2)
+    })
+
+    it('lists art with versioned urls and sizes', async () => {
+        const art = await storage.listTemplateArt('t1')
+        expect(art.ok && art.value).toEqual([{
+            name: 'bg.png',
+            size: 1,
+            url: `https://storage.test/card-templates/t1/bg.png?v=${Date.parse('2026-11-02T00:00:00.000Z')}`,
+        }])
+    })
+
     it('forgets a listing when the tier folder is removed', async () => {
         await storage.resolveTemplateArtUrls('t1', ['bg.png'], { cached: true })
         await storage.removeTemplateArtFolder('t1')

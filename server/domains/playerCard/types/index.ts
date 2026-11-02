@@ -11,12 +11,19 @@ export interface CardTemplate {
     layers: CardLayer[]
 }
 
+export interface CardArtFile {
+    name: string
+    url: string
+    size: number
+}
+
 export interface CardTemplateSummary {
     id: string
     name: string
     rank: number
     minOvr: number
     previewUrl: string | null
+    art: CardArtFile[]
 }
 
 export interface CardGroup {
@@ -73,6 +80,10 @@ export {
     CARD_STAT_LABELS,
     CARD_STAT_FIELDS,
     CARD_STATS_COLUMNS,
+    CARD_ART_MAX_BYTES,
+    CARD_ART_MAX_PIXELS,
+    CARD_ART_FILE_NAME,
+    UploadCardArtSchema,
     CardLayerSchema,
     CardLayersSchema,
     CardOverridesSchema,
@@ -110,4 +121,5 @@ export type {
     PlayerCardsQueryInput,
     PreviewPlayerCardInput,
     UpdateCardGroupLayersInput,
+    UploadCardArtInput,
 } from './schemas'

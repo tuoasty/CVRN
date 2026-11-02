@@ -191,3 +191,13 @@ export const UpdateCardTemplateSchema = CardTemplateFieldsSchema.extend({ templa
 export type UpdateCardTemplateInput = z.infer<typeof UpdateCardTemplateSchema>
 
 export const CardTemplateIdSchema = z.object({ templateId: z.string().uuid() })
+
+export const CARD_ART_MAX_BYTES = Math.floor(2.9 * 1024 * 1024)
+export const CARD_ART_MAX_PIXELS = 16_000_000
+export const CARD_ART_FILE_NAME = /^[a-z0-9][a-z0-9_-]{0,39}\.png$/i
+
+export const UploadCardArtSchema = z.object({
+    templateId: z.string().uuid(),
+    fileName: z.string().regex(CARD_ART_FILE_NAME, 'Art file names use letters, numbers, dashes or underscores and end in .png'),
+})
+export type UploadCardArtInput = z.infer<typeof UploadCardArtSchema>
