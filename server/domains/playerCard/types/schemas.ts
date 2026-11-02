@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const CARD_TEXT_FIELDS = ['username', 'displayName', 'ovr', 'position', 'teamName', 'custom'] as const
+export const CARD_TEXT_FIELDS = ['username', 'displayName', 'ovr', 'position', 'teamName', 'season', 'custom'] as const
 
 export const CARD_STAT_FIELDS = ['scoring', 'spiking', 'blocking', 'setting', 'receiving', 'serving'] as const
 export type CardStatField = typeof CARD_STAT_FIELDS[number]

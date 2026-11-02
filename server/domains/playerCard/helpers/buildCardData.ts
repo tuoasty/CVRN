@@ -4,7 +4,11 @@ import { OVERALL_CATEGORIES } from '@/server/domains/overall/types'
 import type { OverallConfig, OverallInputRow } from '@/server/domains/overall/types'
 import type { CardData, CardOverrides } from '../types'
 
-export function buildCardData(player: OverallInputRow, config: OverallConfig, overrides: CardOverrides = {}): CardData {
+export function seasonLabel(regionCode: string | null, seasonNumber: number): string {
+    return regionCode ? `${regionCode} S${seasonNumber}` : `S${seasonNumber}`
+}
+
+export function buildCardData(player: OverallInputRow, config: OverallConfig, seasonNumber: number, overrides: CardOverrides = {}): CardData {
     const scaling = player.position ? config.scalings[player.position] : NEUTRAL_SCALING
     const computed = computeOverall(player.ranks, scaling, player.setsPlayed)
 
@@ -20,6 +24,7 @@ export function buildCardData(player: OverallInputRow, config: OverallConfig, ov
         ovr: overrides.ovr ?? config.overrides[player.playerId] ?? computed.ovr,
         position: overrides.position ?? player.position,
         teamName: player.teamName,
+        season: seasonLabel(player.regionCode, seasonNumber),
         attributes,
     }
 }

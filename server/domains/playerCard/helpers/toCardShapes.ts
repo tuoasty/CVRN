@@ -130,6 +130,7 @@ export function resolveCardText(layer: CardTextLayer, data: CardData): string {
             case 'ovr': return String(data.ovr)
             case 'position': return data.position ?? ''
             case 'teamName': return data.teamName ?? ''
+            case 'season': return data.season
             case 'custom': return layer.text ?? ''
         }
     })()

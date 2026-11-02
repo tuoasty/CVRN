@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { computeOverall } from '@/server/domains/overall/helpers/computeOverall'
 import { defaultScalingSet } from '@/server/domains/overall/helpers/defaultScalings'
 import type { OverallConfig, OverallInputRow } from '@/server/domains/overall/types'
-import { buildCardData } from '../buildCardData'
+import { buildCardData, seasonLabel } from '../buildCardData'
 
 const player: OverallInputRow = {
     playerId: 'p1',
@@ -24,7 +24,7 @@ const computed = computeOverall(player.ranks, config.scalings.OUT, player.setsPl
 
 describe('buildCardData', () => {
     it('uses computed values when there are no overrides', () => {
-        const data = buildCardData(player, config)
+        const data = buildCardData(player, config, 2)
         expect(data.ovr).toBe(computed.ovr)
         expect(data.attributes).toEqual(computed.attributes)
         expect(data.username).toBe('spikerman')
@@ -33,13 +33,23 @@ describe('buildCardData', () => {
     })
 
     it('prefers the admin board override over the computed OVR', () => {
-        expect(buildCardData(player, { ...config, overrides: { p1: 77 } }).ovr).toBe(77)
+        expect(buildCardData(player, { ...config, overrides: { p1: 77 } }, 2).ovr).toBe(77)
+    })
+
+    it('labels the season with the region code and season number', () => {
+        expect(buildCardData(player, config, 2).season).toBe('NA S2')
+        expect(seasonLabel('AS', 2)).toBe('AS S2')
+    })
+
+    it('drops the region from the season label when the player has none', () => {
+        expect(buildCardData({ ...player, regionCode: null }, config, 3).season).toBe('S3')
     })
 
     it('applies one-time overrides above everything else', () => {
         const data = buildCardData(
             { ...player },
             { ...config, overrides: { p1: 77 } },
+            2,
             { username: 'Custom', ovr: 95, position: 'LIB', attributes: { spiking: 99 } },
         )
         expect(data.ovr).toBe(95)

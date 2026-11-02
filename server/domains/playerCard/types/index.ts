@@ -39,6 +39,7 @@ export interface CardData {
     ovr: number
     position: OverallPosition | null
     teamName: string | null
+    season: string
     attributes: CategoryRatings
 }
 

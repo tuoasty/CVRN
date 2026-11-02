@@ -46,7 +46,7 @@ export async function previewPlayerCard(
 
         const config = await getOverallConfig(supabase, p.seasonNumber)
         if (!config.ok) return config
-        const data = buildCardData(p.player, config.value, p.overrides)
+        const data = buildCardData(p.player, config.value, p.seasonNumber, p.overrides)
 
         const art = await loadTemplateArt(template, { cached: true })
         if (!art.ok) return art

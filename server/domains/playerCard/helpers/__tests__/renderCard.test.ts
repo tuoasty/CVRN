@@ -13,6 +13,7 @@ const data: CardData = {
     ovr: 87,
     position: 'OUT',
     teamName: 'Volley Kings',
+    season: 'NA S2',
     attributes: { scoring: 90, spiking: 88, setting: 60, blocking: 72, receiving: 81, serving: 79 },
 }
 

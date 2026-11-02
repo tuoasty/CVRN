@@ -29,6 +29,7 @@ export const CARD_SEGMENTS: { key: string; label: string; make: () => CardLayer 
     { key: 'headshot', label: 'Avatar', make: () => imageLayer('headshot', 500, 500, 'cover') },
     { key: 'username', label: 'Name', make: () => textLayer('username', 700, 90, 72) },
     { key: 'stats', label: 'Stats', make: statsLayer },
+    { key: 'season', label: 'Season', make: () => textLayer('season', 180, 40, 32) },
 ]
 
 const EXTRA_LABELS: Record<string, string> = { displayName: 'Display name', teamName: 'Team name' }

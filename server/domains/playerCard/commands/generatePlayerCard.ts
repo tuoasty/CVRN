@@ -43,7 +43,7 @@ export async function generatePlayerCard(
 
         const config = await getOverallConfig(supabase, seasonNumber)
         if (!config.ok) return config
-        const data = buildCardData(player, config.value, p.overrides)
+        const data = buildCardData(player, config.value, seasonNumber, p.overrides)
 
         const templateRows = await findCardTemplates(supabase, groupId)
         if (!templateRows.ok) return templateRows
