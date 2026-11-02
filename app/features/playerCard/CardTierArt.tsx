@@ -115,7 +115,7 @@ export function CardTierArtPicker({ group, files, onChange }: {
             <span className={FIELD_LABEL}>Art</span>
             {slots.length === 0 ? (
                 <p className="text-xs text-destructive">
-                    The {group.name} layout has no art layer, so a tier cannot get its art yet. Add one on the Player Cards page first.
+                    The {group.name} layout has no art layer, so it cannot take tiers. Create a new group copied from one that has art.
                 </p>
             ) : (
                 <>
@@ -156,7 +156,7 @@ export default function CardTierArt({ group, template }: { group: CardGroup; tem
         <div className="flex flex-col gap-2">
             <span className={FIELD_LABEL}>Art</span>
             {slots.length === 0 ? (
-                <p className="text-xs text-muted-foreground">The {group.name} layout has no art layer yet. Add one on the Player Cards page.</p>
+                <p className="text-xs text-muted-foreground">The {group.name} layout has no art layer, so this tier has nothing to upload.</p>
             ) : (
                 <>
                     {slots.map(slot => {

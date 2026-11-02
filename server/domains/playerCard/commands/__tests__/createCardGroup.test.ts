@@ -52,11 +52,15 @@ describe('createCardGroup', () => {
         expect(repo.insertCardGroup).not.toHaveBeenCalled()
     })
 
-    it('copies an empty layout as empty', async () => {
-        repo.findCardGroupById.mockResolvedValue(Ok({ ...sourceRow, layers: [] }))
+    it.each([
+        ['empty', []],
+        ['art-less', [{ kind: 'text', field: 'ovr', x: 0, y: 0, w: 1, h: 1, size: 1 }]],
+        ['art-on-top', [{ kind: 'text', field: 'ovr', x: 0, y: 0, w: 1, h: 1, size: 1 }, layers[0]]],
+    ])('refuses to copy an %s layout, because the new group could never get art', async (_label, sourceLayers) => {
+        repo.findCardGroupById.mockResolvedValue(Ok({ ...sourceRow, layers: sourceLayers }))
         const result = await createCardGroup(supabase, input)
-        expect(result.ok).toBe(true)
-        expect(repo.insertCardGroup).toHaveBeenCalledWith(supabase, expect.objectContaining({ layers: [], canvas_width: 800 }))
+        expect(!result.ok && result.error.message).toContain('no art layer')
+        expect(repo.insertCardGroup).not.toHaveBeenCalled()
     })
 
     it('requires a source while groups exist', async () => {
@@ -66,13 +70,15 @@ describe('createCardGroup', () => {
         expect(repo.insertCardGroup).not.toHaveBeenCalled()
     })
 
-    it('leaves the database defaults for the very first group', async () => {
+    it('starts the very first group with a full-canvas art layer', async () => {
         repo.findCardGroups.mockResolvedValue(Ok([]))
         const result = await createCardGroup(supabase, { ...input, sourceGroupId: null })
         expect(result.ok).toBe(true)
-        const row = repo.insertCardGroup.mock.calls[0][1]
-        expect(row).not.toHaveProperty('layers')
-        expect(row).not.toHaveProperty('canvas_width')
+        expect(repo.insertCardGroup).toHaveBeenCalledWith(supabase, expect.objectContaining({
+            layers: [{ kind: 'art', src: 'bg.png', x: 0, y: 0, w: 1000, h: 1400 }],
+            canvas_width: 1000,
+            canvas_height: 1400,
+        }))
     })
 })
 

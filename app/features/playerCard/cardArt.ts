@@ -51,3 +51,47 @@ export async function checkArtFile(file: File): Promise<string | null> {
 export function formatArtSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
 }
+
+export function tierRangeLabels<T extends { minOvr: number }>(templates: T[]): { template: T; label: string }[] {
+    return templates.map((template, i) => {
+        const max = i === 0 ? 99 : templates[i - 1].minOvr - 1
+        const label = max <= template.minOvr ? `${template.minOvr}` : max === 99 ? `${template.minOvr}+` : `${template.minOvr}–${max}`
+        return { template, label }
+    })
+}
+
+export function pickPreviewImage(p: {
+    hasRequest: boolean
+    error: unknown
+    data: string | undefined
+    last: { scope: string; image: string } | null
+    scope: string
+}): string | null {
+    if (!p.hasRequest || p.error) return null
+    if (p.data) return p.data
+    return p.last?.scope === p.scope ? p.last.image : null
+}
+
+export function generateBlocker(p: {
+    notReady: string | null
+    inputProblem: string | null
+    inactiveGroup: string | null
+    noTier: string | null
+    previewingTier: string | null
+    dirty: boolean
+    layoutProblem: string | null
+    layers: CardLayer[]
+    tierName: string | null
+    missing: string[]
+}): string | null {
+    if (p.notReady) return p.notReady
+    if (p.inputProblem) return p.inputProblem
+    if (p.inactiveGroup) return p.inactiveGroup
+    if (p.previewingTier) return `Previewing ${p.previewingTier}. Go back to the player's tier to generate.`
+    if (p.noTier) return p.noTier
+    if (p.dirty) return 'Save or discard layout changes before generating'
+    if (p.layoutProblem) return p.layoutProblem
+    if (layoutArtSlots(p.layers).length === 0) return 'This layout has no art layer, so a card would have no background'
+    if (p.missing.length > 0) return `${p.tierName} has no ${p.missing.join(', ')} yet. Upload it on Card Groups.`
+    return null
+}

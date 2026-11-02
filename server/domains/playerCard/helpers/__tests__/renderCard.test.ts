@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import sharp from 'sharp'
-import { CardLayersSchema } from '../../types'
+import { CardLayersSchema, UpdateCardGroupLayersSchema } from '../../types'
 import type { CardData, CardTemplate } from '../../types'
 import { renderCard } from '../renderCard'
 import { fontKeyForField } from '../cardFont'
 import { loadTestFonts } from './testFonts'
-import { ladderProblem, pickTierTemplate, rankTemplates, resolveArtLocation, resolveCardText, statCellText, toCardTemplate, withArtVersion } from '../toCardShapes'
+import { ladderProblem, pickTierTemplate, rankTemplates, resolveCardText, statCellText, toCardTemplate, withArtVersion } from '../toCardShapes'
 
 const data: CardData = {
     username: 'spikerman',
@@ -110,14 +110,36 @@ describe('ladderProblem', () => {
     })
 })
 
-describe('resolveArtLocation', () => {
-    it('puts bare file names in the template folder', () => {
-        expect(resolveArtLocation('bg.png', 'tpl-1')).toEqual({ path: 'card-templates/tpl-1/bg.png' })
+describe('art layer rules', () => {
+    const artLayer = (src: string) => ({ kind: 'art', src, x: 0, y: 0, w: 1, h: 1 })
+    const ovrLayer = { kind: 'text', field: 'ovr', x: 0, y: 0, w: 1, h: 1, size: 1 }
+
+    it.each(['https://cdn.example.com/a.png', 'shared/frame.png', '../x.png', 'x.jpg', 'bg'])('rejects the art source %s', src => {
+        expect(CardLayersSchema.safeParse([artLayer(src)]).success).toBe(false)
     })
 
-    it('keeps explicit storage paths and URLs', () => {
-        expect(resolveArtLocation('shared/frame.png', 'tpl-1')).toEqual({ path: 'shared/frame.png' })
-        expect(resolveArtLocation('https://cdn.example.com/a.png', 'tpl-1')).toEqual({ url: 'https://cdn.example.com/a.png' })
+    it('accepts a bare png file name', () => {
+        expect(CardLayersSchema.safeParse([artLayer('bg.png')]).success).toBe(true)
+    })
+
+    describe('saving a layout', () => {
+        const save = (layers: unknown[]) => UpdateCardGroupLayersSchema.safeParse({ groupId: '33333333-3333-4333-8333-333333333333', layers }).success
+
+        it('accepts one art layer at the bottom', () => {
+            expect(save([artLayer('bg.png'), ovrLayer])).toBe(true)
+        })
+
+        it('rejects no art layer', () => {
+            expect(save([ovrLayer])).toBe(false)
+        })
+
+        it('rejects art above other layers', () => {
+            expect(save([ovrLayer, artLayer('bg.png')])).toBe(false)
+        })
+
+        it('rejects a second art layer', () => {
+            expect(save([artLayer('bg.png'), artLayer('frame.png')])).toBe(false)
+        })
     })
 })
 
@@ -168,7 +190,7 @@ describe('renderCard', () => {
             width: 500,
             height: 700,
             layers: CardLayersSchema.parse([
-                { kind: 'art', src: 'bg', x: 0, y: 0, w: 500, h: 700 },
+                { kind: 'art', src: 'bg.png', x: 0, y: 0, w: 500, h: 700 },
                 { kind: 'image', field: 'headshot', x: 100, y: 100, w: 300, h: 300, fit: 'cover' },
                 { kind: 'image', field: 'teamLogo', x: 20, y: 20, w: 60, h: 60 },
                 { kind: 'text', field: 'ovr', x: 20, y: 100, w: 80, h: 60, size: 48 },
@@ -177,7 +199,7 @@ describe('renderCard', () => {
             ]),
         }
         const png = await renderCard(template, data, {
-            art: { bg: await solidPng(500, 700, '#101010') },
+            art: { 'bg.png': await solidPng(500, 700, '#101010') },
             headshot: await solidPng(420, 420, '#3355ff'),
             teamLogo: null,
         }, await loadTestFonts())

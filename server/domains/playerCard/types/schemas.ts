@@ -30,9 +30,14 @@ const Box = {
     h: z.number().positive(),
 }
 
+export const CARD_ART_MAX_BYTES = Math.floor(2.9 * 1024 * 1024)
+export const CARD_ART_MAX_PIXELS = 16_000_000
+export const CARD_ART_FILE_NAME = /^[a-z0-9][a-z0-9_-]{0,39}\.png$/i
+const CARD_ART_FILE_NAME_MESSAGE = 'Art file names use letters, numbers, dashes or underscores and end in .png'
+
 const ArtLayerSchema = z.object({
     kind: z.literal('art'),
-    src: z.string().min(1),
+    src: z.string().regex(CARD_ART_FILE_NAME, CARD_ART_FILE_NAME_MESSAGE),
     ...Box,
 })
 
@@ -115,9 +120,13 @@ export const PreviewPlayerCardSchema = PlayerCardsQuerySchema.extend({
 })
 export type PreviewPlayerCardInput = z.infer<typeof PreviewPlayerCardSchema>
 
+export function hasPinnedArt(layers: CardLayer[]): boolean {
+    return layers[0]?.kind === 'art' && layers.filter(layer => layer.kind === 'art').length === 1
+}
+
 export const UpdateCardGroupLayersSchema = z.object({
     groupId: z.string().uuid(),
-    layers: CardLayersSchema,
+    layers: CardLayersSchema.refine(hasPinnedArt, 'A layout needs exactly one art layer, at the bottom'),
 })
 export type UpdateCardGroupLayersInput = z.infer<typeof UpdateCardGroupLayersSchema>
 
@@ -192,12 +201,8 @@ export type UpdateCardTemplateInput = z.infer<typeof UpdateCardTemplateSchema>
 
 export const CardTemplateIdSchema = z.object({ templateId: z.string().uuid() })
 
-export const CARD_ART_MAX_BYTES = Math.floor(2.9 * 1024 * 1024)
-export const CARD_ART_MAX_PIXELS = 16_000_000
-export const CARD_ART_FILE_NAME = /^[a-z0-9][a-z0-9_-]{0,39}\.png$/i
-
 export const UploadCardArtSchema = z.object({
     templateId: z.string().uuid(),
-    fileName: z.string().regex(CARD_ART_FILE_NAME, 'Art file names use letters, numbers, dashes or underscores and end in .png'),
+    fileName: z.string().regex(CARD_ART_FILE_NAME, CARD_ART_FILE_NAME_MESSAGE),
 })
 export type UploadCardArtInput = z.infer<typeof UploadCardArtSchema>

@@ -1,19 +1,6 @@
 import { CardGroupRow, CardTemplateRow, PlayerCardRow } from '@/shared/types/db'
 import { Err, Ok, Result } from '@/shared/types/result'
-import { STORAGE_PATHS } from '@/server/storage/storage.paths'
-import { CARD_STAT_LABELS, CardArtFile, CardData, CardStatField, CardGroup, CardLayer, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
-
-export type ArtLocation = { url: string } | { path: string }
-
-export function resolveArtLocation(src: string, templateId: string): ArtLocation {
-    if (/^https?:\/\//.test(src)) return { url: src }
-    if (src.includes('/')) return { path: src.replace(/^\/+/, '') }
-    return { path: STORAGE_PATHS.cardTemplateAsset(templateId, src) }
-}
-
-export function isBareArtSrc(src: string): boolean {
-    return !/^https?:\/\//.test(src) && !src.includes('/')
-}
+import { CARD_STAT_LABELS, hasPinnedArt, CardArtFile, CardData, CardStatField, CardGroup, CardLayer, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
 
 export function rankTemplates<T extends { minOvr: number }>(templates: T[]): (T & { rank: number })[] {
     return [...templates].sort((a, b) => b.minOvr - a.minOvr).map((t, i) => ({ ...t, rank: i + 1 }))
@@ -55,7 +42,12 @@ function parseLayers(group: CardGroupRow, opts: { allowEmpty: boolean }): Result
 }
 
 export function copyableLayers(group: CardGroupRow): Result<CardLayer[]> {
-    return parseLayers(group, { allowEmpty: true })
+    const layers = parseLayers(group, { allowEmpty: true })
+    if (!layers.ok) return layers
+    if (!hasPinnedArt(layers.value)) {
+        return Err({ message: `${group.name} has no art layer at the bottom, so it cannot be copied`, code: 'VALIDATION_ERROR' })
+    }
+    return layers
 }
 
 export function toCardTemplate(tier: CardTemplateRow, group: CardGroupRow): Result<CardTemplate> {

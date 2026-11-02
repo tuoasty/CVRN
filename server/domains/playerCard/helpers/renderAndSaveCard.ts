@@ -42,6 +42,7 @@ export async function renderAndSaveCard(
     const group = await findCardGroupById(supabase, groupId)
     if (!group.ok) return group
     if (!group.value) return Err({ message: 'Card group not found', code: 'NOT_FOUND' })
+    if (!group.value.is_active) return Err({ message: `${group.value.name} is inactive`, code: 'VALIDATION_ERROR' })
 
     const templateRows = await findCardTemplates(supabase, groupId)
     if (!templateRows.ok) return templateRows
@@ -51,8 +52,11 @@ export async function renderAndSaveCard(
     }
     const template = toCardTemplate(templateRow, group.value)
     if (!template.ok) return template
+    if (!template.value.layers.some(layer => layer.kind === 'art')) {
+        return Err({ message: 'This layout has no art layer, so a card would have no background', code: 'VALIDATION_ERROR' })
+    }
 
-    const art = await loadTemplateArt(template.value, { cached: false })
+    const art = await loadTemplateArt(template.value, { cached: false, allowMissing: false })
     if (!art.ok) return art
 
     const [headshot, teamLogo] = await Promise.all([

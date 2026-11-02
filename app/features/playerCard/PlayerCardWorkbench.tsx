@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { generatePlayerCardAction } from '@/app/actions/playerCard.actions'
 import type { CardGroup, CardOverrides } from '@/server/domains/playerCard'
 import type { OverallDisplayRow } from '@/app/features/overall/overallRows'
+import { Err } from '@/shared/types/result'
 import CardOverridesForm, { hasOverrides } from './CardOverridesForm'
 import CardWorkbenchShell, { type LayoutDrafts } from './CardWorkbenchShell'
 
@@ -21,13 +22,17 @@ function cleanOverrides(overrides: CardOverrides): CardOverrides {
 
 export default function PlayerCardWorkbench({
     player,
+    sampleNote,
+    emptyNote,
     seasonNumber,
     group,
     groups,
     drafts,
     onDraftsChange,
 }: {
-    player: OverallDisplayRow
+    player: OverallDisplayRow | null
+    sampleNote: string | null
+    emptyNote: string
     seasonNumber: number
     group: CardGroup
     groups: CardGroup[]
@@ -36,49 +41,50 @@ export default function PlayerCardWorkbench({
 }) {
     const [overrides, setOverrides] = useState<CardOverrides>({})
     const cleaned = useMemo(() => cleanOverrides(overrides), [overrides])
+    const isSample = sampleNote !== null
 
     return (
         <CardWorkbenchShell
-            playerId={player.playerId}
-            username={player.username}
+            playerId={player?.playerId ?? null}
+            username={player?.username ?? ''}
             seasonNumber={seasonNumber}
             group={group}
             groups={groups}
             drafts={drafts}
             onDraftsChange={onDraftsChange}
-            heading={(
+            heading={player ? (
                 <>
-                    <span className="text-base font-semibold text-foreground">{player.username}</span>
+                    <span className="text-base font-semibold text-foreground">{isSample ? `Previewing with ${player.username}` : player.username}</span>
                     <span className="font-mono text-xs tabular-nums text-muted-foreground">
                         OVR {player.ovr}{player.position ? ` · ${player.position}` : ''}{player.teamName ? ` · ${player.teamName}` : ''}
                     </span>
                 </>
+            ) : (
+                <span className="text-base font-semibold text-foreground">{group.name} layout</span>
             )}
-            form={(
+            form={player && !isSample ? (
                 <CardOverridesForm
                     overrides={overrides}
                     onChange={setOverrides}
                     computed={{ username: player.username, ovr: player.ovr, position: player.position, attributes: player.attributes }}
                 />
-            )}
-            effectiveOvr={cleaned.ovr ?? player.ovr}
+            ) : null}
+            effectiveOvr={player ? cleaned.ovr ?? player.ovr : null}
             tierNote={cleaned.ovr !== undefined ? `from overridden OVR ${cleaned.ovr}` : undefined}
-            inputProblem={null}
-            generateNote={hasOverrides(cleaned) ? 'With overrides' : undefined}
-            buildPreview={(templateId, layers) => ({
+            inputProblem={player ? null : emptyNote}
+            generateProblem={sampleNote}
+            generateNote={!isSample && hasOverrides(cleaned) ? 'With overrides' : undefined}
+            buildPreview={(templateId, layers, previewOvr) => player && {
                 kind: 'board',
                 playerId: player.playerId,
                 seasonNumber,
                 templateId,
                 layers,
-                overrides: cleaned,
-            })}
-            generate={() => generatePlayerCardAction({
-                playerId: player.playerId,
-                seasonNumber,
-                groupId: group.id,
-                overrides: cleaned,
-            })}
+                overrides: previewOvr === null ? cleaned : { ...cleaned, ovr: previewOvr },
+            }}
+            generate={() => player
+                ? generatePlayerCardAction({ playerId: player.playerId, seasonNumber, groupId: group.id, overrides: cleaned })
+                : Promise.resolve(Err({ message: 'Pick a player first', code: 'VALIDATION_ERROR' }))}
             onGenerated={() => setOverrides({})}
         />
     )

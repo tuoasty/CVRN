@@ -83,6 +83,7 @@ export {
     CARD_ART_MAX_BYTES,
     CARD_ART_MAX_PIXELS,
     CARD_ART_FILE_NAME,
+    hasPinnedArt,
     UploadCardArtSchema,
     CardLayerSchema,
     CardLayersSchema,

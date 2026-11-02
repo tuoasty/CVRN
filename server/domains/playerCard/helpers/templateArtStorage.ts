@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from '@/server/supabase/admin'
 import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
 import { toCdnUrl } from '@/server/storage/toCdnUrl'
 import { CardArtFile } from '../types'
-import { ArtLocation, isBareArtSrc, resolveArtLocation, withArtVersion } from './toCardShapes'
+import { withArtVersion } from './toCardShapes'
 
 export interface StoredArtFile {
     name: string
@@ -32,8 +32,8 @@ function artBucket() {
     return getSupabaseAdmin().storage.from(BUCKETS.PUBLIC)
 }
 
-export function publicArtUrl(location: ArtLocation): string {
-    return 'url' in location ? location.url : toCdnUrl(artBucket().getPublicUrl(location.path).data.publicUrl)
+function publicArtUrl(templateId: string, file: string): string {
+    return toCdnUrl(artBucket().getPublicUrl(STORAGE_PATHS.cardTemplateAsset(templateId, file)).data.publicUrl)
 }
 
 export async function listTemplateArtFiles(templateId: string): Promise<Result<StoredArtFile[]>> {
@@ -67,7 +67,7 @@ export async function listTemplateArt(templateId: string): Promise<Result<CardAr
     return Ok(files.value.map(file => ({
         name: file.name,
         size: file.size,
-        url: withArtVersion(publicArtUrl({ path: STORAGE_PATHS.cardTemplateAsset(templateId, file.name) }), file.version),
+        url: withArtVersion(publicArtUrl(templateId, file.name), file.version),
     })))
 }
 
@@ -84,16 +84,13 @@ export async function resolveTemplateArtUrls(
     srcs: string[],
     opts: { cached?: boolean } = {},
 ): Promise<Result<Record<string, string | null>>> {
-    const required = srcs.filter(isBareArtSrc)
-    const files = required.length > 0 ? await readArtListing(templateId, required, opts.cached ?? false) : Ok<StoredArtFile[]>([])
+    const files = srcs.length > 0 ? await readArtListing(templateId, srcs, opts.cached ?? false) : Ok<StoredArtFile[]>([])
     if (!files.ok) return files
     const versions = new Map(files.value.map(f => [f.name, f.version]))
 
     const urls: Record<string, string | null> = {}
     for (const src of srcs) {
-        const url = publicArtUrl(resolveArtLocation(src, templateId))
-        if (!isBareArtSrc(src)) urls[src] = url
-        else urls[src] = versions.has(src) ? withArtVersion(url, versions.get(src)) : null
+        urls[src] = versions.has(src) ? withArtVersion(publicArtUrl(templateId, src), versions.get(src)) : null
     }
     return Ok(urls)
 }

@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import type { CardGroup, CardTemplateSummary } from '@/server/domains/playerCard'
 import { cn } from '@/lib/utils'
-import { missingArt } from './cardArt'
+import { missingArt, tierRangeLabels } from './cardArt'
 import CardGroupForm from './CardGroupForm'
 import CardTierForm from './CardTierForm'
 import { LINK } from './cardFormStyles'
@@ -14,13 +15,6 @@ type Tray =
     | { kind: 'newTier'; groupId: string }
     | { kind: 'tier'; groupId: string; templateId: string }
     | null
-
-function tierRanges(templates: CardTemplateSummary[]) {
-    return templates.map((t, i) => {
-        const max = i === 0 ? 99 : templates[i - 1].minOvr - 1
-        return { template: t, label: max <= t.minOvr ? `${t.minOvr}` : max === 99 ? `${t.minOvr}+` : `${t.minOvr}–${max}` }
-    })
-}
 
 function TierTile({ group, template, range, selected, onSelect }: {
     group: CardGroup
@@ -114,12 +108,15 @@ export default function CardTemplateCatalog({ groups }: { groups: CardGroup[] })
                                         {group.layersProblem
                                             ? <span className="text-xs text-destructive" title={group.layersProblem}>Invalid layout</span>
                                             : group.layers?.length === 0 && <span className="text-xs text-muted-foreground">No layout yet</span>}
-                                        <button type="button" className={cn(LINK, 'mt-1')} onClick={() => setTray({ kind: 'group', groupId: group.id })}>
-                                            Edit group
-                                        </button>
+                                        <div className="mt-1 flex items-baseline gap-3">
+                                            <button type="button" className={LINK} onClick={() => setTray({ kind: 'group', groupId: group.id })}>
+                                                Edit group
+                                            </button>
+                                            <Link href={`/admin/cards?group=${group.id}`} className={LINK}>Layout</Link>
+                                        </div>
                                     </div>
                                     <div className="flex items-start gap-4 overflow-x-auto pb-1">
-                                        {tierRanges(group.templates).map(({ template, label }) => (
+                                        {tierRangeLabels(group.templates).map(({ template, label }) => (
                                             <TierTile
                                                 key={template.id}
                                                 group={group}

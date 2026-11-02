@@ -38,7 +38,7 @@ export async function renderCardPreview(
         layers: p.layers,
     }
 
-    const art = await loadTemplateArt(template, { cached: true })
+    const art = await loadTemplateArt(template, { cached: true, allowMissing: true })
     if (!art.ok) return art
 
     const [headshot, teamLogo] = await Promise.all([

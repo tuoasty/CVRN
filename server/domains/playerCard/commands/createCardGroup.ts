@@ -7,12 +7,18 @@ import { copyableLayers } from '../helpers/toCardShapes'
 
 type CopiedTemplate = Pick<CardGroupInsert, 'layers' | 'canvas_width' | 'canvas_height'>
 
+const FIRST_GROUP_TEMPLATE: CopiedTemplate = {
+    layers: [{ kind: 'art', src: 'bg.png', x: 0, y: 0, w: 1000, h: 1400 }],
+    canvas_width: 1000,
+    canvas_height: 1400,
+}
+
 async function resolveCopiedTemplate(supabase: DBClient, sourceGroupId: string | null): Promise<Result<CopiedTemplate>> {
     if (sourceGroupId === null) {
         const groups = await findCardGroups(supabase)
         if (!groups.ok) return groups
         if (groups.value.length > 0) return Err({ message: 'Choose a group to copy from', code: 'VALIDATION_ERROR' })
-        return Ok({})
+        return Ok(FIRST_GROUP_TEMPLATE)
     }
 
     const source = await findCardGroupById(supabase, sourceGroupId)

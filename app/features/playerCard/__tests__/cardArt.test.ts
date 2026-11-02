@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CardLayer } from '@/server/domains/playerCard'
 import { CARD_ART_MAX_BYTES } from '@/server/domains/playerCard/types/schemas'
-import { artFitWarning, checkArtFile, formatArtSize, layoutArtSlots, missingArt, readPngSize } from '../cardArt'
+import { artFitWarning, checkArtFile, formatArtSize, generateBlocker, layoutArtSlots, missingArt, pickPreviewImage, readPngSize, tierRangeLabels } from '../cardArt'
 
 const art = (src: string, w = 1000, h = 1400): CardLayer => ({ kind: 'art', src, x: 0, y: 0, w, h })
 const ovr: CardLayer = { kind: 'text', field: 'ovr', x: 0, y: 0, w: 1, h: 1, size: 1, color: '#fff', uppercase: false, letterSpacing: 0 }
@@ -89,6 +89,81 @@ describe('checkArtFile', () => {
 
     it('rejects enormous dimensions', async () => {
         expect(await checkArtFile(new File([pngHeader(5000, 5000)], 'a.png'))).toContain('too large')
+    })
+})
+
+describe('tierRangeLabels', () => {
+    it('labels the ranges from the highest floor down', () => {
+        const labels = tierRangeLabels([{ minOvr: 93 }, { minOvr: 90 }, { minOvr: 1 }]).map(t => t.label)
+        expect(labels).toEqual(['93+', '90–92', '1–89'])
+    })
+})
+
+describe('pickPreviewImage', () => {
+    const last = { scope: 'a', image: 'old' }
+    const base = { hasRequest: true, error: undefined, data: undefined, last, scope: 'a' }
+
+    it('shows nothing with no request', () => {
+        expect(pickPreviewImage({ ...base, hasRequest: false })).toBeNull()
+    })
+
+    it('shows nothing on an error, instead of an old card', () => {
+        expect(pickPreviewImage({ ...base, error: new Error('x'), data: 'new' })).toBeNull()
+    })
+
+    it('prefers fresh data', () => {
+        expect(pickPreviewImage({ ...base, data: 'new' })).toBe('new')
+    })
+
+    it('keeps the last image in the same group while rendering', () => {
+        expect(pickPreviewImage(base)).toBe('old')
+    })
+
+    it('never shows another group\'s image', () => {
+        expect(pickPreviewImage({ ...base, scope: 'b' })).toBeNull()
+    })
+})
+
+describe('generateBlocker', () => {
+    const base = {
+        notReady: null,
+        inputProblem: null,
+        inactiveGroup: null,
+        noTier: null,
+        previewingTier: null,
+        dirty: false,
+        layoutProblem: null,
+        layers: [art('bg.png')],
+        tierName: 'Ruby',
+        missing: [],
+    }
+
+    it('allows generating when everything is ready', () => {
+        expect(generateBlocker(base)).toBeNull()
+    })
+
+    it('blocks with no player chosen', () => {
+        expect(generateBlocker({ ...base, notReady: 'Pick a player' })).toBe('Pick a player')
+    })
+
+    it('blocks while previewing another tier', () => {
+        expect(generateBlocker({ ...base, previewingTier: 'T1 Ruby' })).toContain('Previewing T1 Ruby')
+    })
+
+    it('blocks an inactive group', () => {
+        expect(generateBlocker({ ...base, inactiveGroup: 'Off' })).toBe('Off')
+    })
+
+    it('blocks unsaved layout changes', () => {
+        expect(generateBlocker({ ...base, dirty: true })).toContain('Save or discard')
+    })
+
+    it('blocks a layout with no art layer', () => {
+        expect(generateBlocker({ ...base, layers: [ovr] })).toContain('no art layer')
+    })
+
+    it('blocks a tier missing a file and names it', () => {
+        expect(generateBlocker({ ...base, missing: ['bg.png'] })).toBe('Ruby has no bg.png yet. Upload it on Card Groups.')
     })
 })
 

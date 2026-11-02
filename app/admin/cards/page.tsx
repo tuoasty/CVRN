@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
 import { Input } from '@/app/components/ui/input'
 import { useSeasons } from '@/app/hooks/useSeasons'
@@ -70,15 +71,18 @@ function AdminCardsContent() {
     const { board, isLoading: boardLoading, error: boardError } = useOverallBoard(seasonNumber)
     const { groups, isLoading: catalogLoading, error: catalogError } = useCardCatalog()
 
-    const [groupId, setGroupId] = useState<string | null>(null)
+    const searchParams = useSearchParams()
+    const [groupId, setGroupId] = useState<string | null>(() => searchParams.get('group'))
     const [playerId, setPlayerId] = useState<string | null>(null)
     const [q, setQ] = useState('')
     const [drafts, setDrafts] = useState<LayoutDrafts>({})
     const [source, setSource] = useState<'board' | 'custom'>('board')
     const [customPlayer, setCustomPlayer] = useState<CustomPlayerChoice | null>(null)
 
-    const generatorGroups = useMemo(() => groups.filter(g => g.isActive && g.templates.length > 0), [groups])
-    const group = generatorGroups.find(g => g.id === groupId) ?? generatorGroups[0] ?? null
+    const group = groups.find(g => g.id === groupId)
+        ?? groups.find(g => g.isActive && g.templates.length > 0)
+        ?? groups[0]
+        ?? null
 
     const rows = useMemo(() => {
         if (!board) return []
@@ -88,6 +92,7 @@ function AdminCardsContent() {
     }, [board, region])
     const visibleRows = useMemo(() => rows.filter(r => matchesOverallFilters(r, 'ALL', q)), [rows, q])
     const selected = rows.find(r => r.playerId === playerId) ?? null
+    const emptyNote = boardLoading ? 'Loading players...' : 'No player on this board to preview with'
 
     return (
         <div className="page-wide py-6">
@@ -111,10 +116,10 @@ function AdminCardsContent() {
                         value={region}
                         onSelect={setRegion}
                     />
-                    {generatorGroups.length > 0 && (
+                    {groups.length > 0 && (
                         <ScopeTabs
                             label="Group"
-                            options={generatorGroups.map(g => ({ value: g.id, label: g.name }))}
+                            options={groups.map(g => ({ value: g.id, label: g.isActive ? g.name : `${g.name} (inactive)` }))}
                             value={group?.id ?? null}
                             onSelect={setGroupId}
                         />
@@ -129,37 +134,17 @@ function AdminCardsContent() {
 
                 {catalogError ? (
                     <p className="mt-4 text-sm text-destructive">{catalogError}</p>
-                ) : !catalogLoading && generatorGroups.length === 0 ? (
+                ) : !catalogLoading && groups.length === 0 ? (
                     <p className="mt-4 text-sm text-muted-foreground">
-                        No active group with tiers yet. <Link href="/admin/cards/groups" className={LINK}>Manage groups and tiers</Link>
+                        No card groups yet. <Link href="/admin/cards/groups" className={LINK}>Manage groups and tiers</Link>
                     </p>
-                ) : source === 'custom' ? (
-                    <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-start">
-                        <div className="w-full shrink-0 lg:w-[20rem]">
-                            <CustomPlayerPicker selected={customPlayer} onSelect={setCustomPlayer} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            {customPlayer && group && seasonNumber ? (
-                                <CustomCardWorkbench
-                                    key={customPlayer.robloxUserId}
-                                    player={customPlayer}
-                                    seasonNumber={seasonNumber}
-                                    regionCode={region === REGION_ALL ? null : region.toUpperCase()}
-                                    group={group}
-                                    groups={groups}
-                                    drafts={drafts}
-                                    onDraftsChange={setDrafts}
-                                    onGenerated={card => setCustomPlayer(current => current && { ...current, playerId: card.playerId })}
-                                />
-                            ) : (
-                                <p className="py-6 text-sm text-muted-foreground">Pick a player to make a custom card.</p>
-                            )}
-                        </div>
-                    </div>
-                ) : boardError ? (
-                    <p className="mt-4 text-sm text-destructive">{boardError}</p>
                 ) : (
                     <div className="mt-4 flex flex-col gap-8 lg:flex-row lg:items-start">
+                        {source === 'custom' ? (
+                            <div className="w-full shrink-0 lg:w-[20rem]">
+                                <CustomPlayerPicker selected={customPlayer} onSelect={setCustomPlayer} />
+                            </div>
+                        ) : (
                         <div className="flex w-full shrink-0 flex-col lg:w-[20rem]">
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -171,7 +156,9 @@ function AdminCardsContent() {
                                     className="h-8 rounded-sm pl-8 text-sm"
                                 />
                             </div>
-                            {boardLoading ? (
+                            {boardError ? (
+                                <p className="py-6 text-sm text-destructive">{boardError}</p>
+                            ) : boardLoading ? (
                                 <div className="mt-2 space-y-1" aria-busy="true">
                                     {[...Array(8)].map((_, i) => <div key={i} className="h-8 animate-pulse bg-muted/40" />)}
                                 </div>
@@ -205,20 +192,37 @@ function AdminCardsContent() {
                                 </ul>
                             )}
                         </div>
+                        )}
 
                         <div className="min-w-0 flex-1">
-                            {selected && group && seasonNumber ? (
+                            {!group || !seasonNumber ? null : source === 'custom' && customPlayer ? (
+                                <CustomCardWorkbench
+                                    key={customPlayer.robloxUserId}
+                                    player={customPlayer}
+                                    seasonNumber={seasonNumber}
+                                    regionCode={region === REGION_ALL ? null : region.toUpperCase()}
+                                    group={group}
+                                    groups={groups}
+                                    drafts={drafts}
+                                    onDraftsChange={setDrafts}
+                                    onGenerated={card => setCustomPlayer(current => current && { ...current, playerId: card.playerId })}
+                                />
+                            ) : (
                                 <PlayerCardWorkbench
-                                    key={selected.playerId}
-                                    player={selected}
+                                    key={source === 'board' && selected ? selected.playerId : 'sample'}
+                                    player={source === 'board' && selected ? selected : rows[0] ?? null}
+                                    sampleNote={
+                                        source === 'custom'
+                                            ? 'Pick a player to make a custom card'
+                                            : selected ? null : 'Pick a player to generate their card'
+                                    }
+                                    emptyNote={emptyNote}
                                     seasonNumber={seasonNumber}
                                     group={group}
                                     groups={groups}
                                     drafts={drafts}
                                     onDraftsChange={setDrafts}
                                 />
-                            ) : (
-                                <p className="py-6 text-sm text-muted-foreground">Pick a player to generate their card.</p>
                             )}
                         </div>
                     </div>

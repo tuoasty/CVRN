@@ -14,7 +14,7 @@ import {
     updateCardGroupLayersAction,
     uploadCardTemplateArtAction,
 } from "@/app/actions/playerCard.actions";
-import { checkArtFile } from "@/app/features/playerCard/cardArt";
+import { checkArtFile, pickPreviewImage } from "@/app/features/playerCard/cardArt";
 import type {
     CardGroup,
     CardLayer,
@@ -88,25 +88,28 @@ export function usePlayerCards(playerId: string | null, seasonNumber: number | n
     };
 }
 
-let lastPreviewImage: string | null = null;
+let lastPreview: { scope: string; image: string } | null = null;
 
-export function useCardPreview(request: CardPreviewRequest | null, delayMs = 400) {
+export function useCardPreview(request: CardPreviewRequest | null, scope: string, delayMs = 400) {
     const body = request ? JSON.stringify(request) : null;
     const debounced = useDebouncedValue(body, delayMs);
     const [active, setActive] = useState(debounced);
     const { data, isValidating, error } = useSWR(
         active ? (["cardPreview", active] as const) : null,
         fetchCardPreview,
-        { revalidateOnFocus: false, keepPreviousData: true, shouldRetryOnError: false }
+        { revalidateOnFocus: false, shouldRetryOnError: false }
     );
     if (!isValidating && debounced !== active) setActive(debounced);
+    const settled = body === active;
+    const settledData = settled ? data : undefined;
+    const settledError = settled ? error : undefined;
     useEffect(() => {
-        if (data) lastPreviewImage = data;
-    }, [data]);
+        if (settledData) lastPreview = { scope, image: settledData };
+    }, [settledData, scope]);
     return {
-        image: data ?? lastPreviewImage,
-        isRendering: isValidating || body !== active,
-        error: error instanceof Error ? error.message : null,
+        image: pickPreviewImage({ hasRequest: request !== null, error: settledError, data: settledData, last: lastPreview, scope }),
+        isRendering: isValidating || !settled,
+        error: settledError instanceof Error ? settledError.message : null,
     };
 }
 

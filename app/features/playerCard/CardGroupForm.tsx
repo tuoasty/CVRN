@@ -7,12 +7,18 @@ import { useIsSuperAdmin } from '@/app/admin/AdminRoleProvider'
 import { createCardGroup, deleteCardGroup, updateCardGroup } from '@/app/hooks/usePlayerCard'
 import { toast } from '@/app/utils/toast'
 import type { CardGroup } from '@/server/domains/playerCard'
+import { hasPinnedArt } from '@/server/domains/playerCard/types/schemas'
 import { cn } from '@/lib/utils'
 import ConfirmDeleteLink from './ConfirmDeleteLink'
 import { FIELD_INPUT, FIELD_LABEL, LINK, NUMBER_INPUT, OPTION, OPTION_OFF, OPTION_ON, toInt } from './cardFormStyles'
 
+function copyProblem(group: CardGroup): string | null {
+    if (group.layersProblem) return group.layersProblem
+    return hasPinnedArt(group.layers ?? []) ? null : `${group.name} has no art layer at the bottom`
+}
+
 function defaultCopySource(groups: CardGroup[]): string | null {
-    const copyable = groups.filter(g => !g.layersProblem)
+    const copyable = groups.filter(g => !copyProblem(g))
     return (copyable.find(g => g.name.trim().toLowerCase() === 'base') ?? copyable[0])?.id ?? null
 }
 
@@ -108,8 +114,8 @@ export default function CardGroupForm({ group, groups, nextSortOrder, onDone, on
                                 type="button"
                                 role="radio"
                                 aria-checked={g.id === source?.id}
-                                disabled={!!g.layersProblem}
-                                title={g.layersProblem ?? undefined}
+                                disabled={!!copyProblem(g)}
+                                title={copyProblem(g) ?? undefined}
                                 onClick={() => setSourceGroupId(g.id)}
                                 className={cn(OPTION, g.id === source?.id ? OPTION_ON : OPTION_OFF, 'disabled:opacity-40')}
                             >
@@ -124,14 +130,14 @@ export default function CardGroupForm({ group, groups, nextSortOrder, onDone, on
                     ? 'Canvas is the pixel size of the art and the layout, shared by every tier in the group. Layout boxes are in canvas pixels, so changing it does not rescale them.'
                     : source
                         ? `Copies the full layout and canvas from ${source.name}. Tiers, floors and art are not copied, so add those to the new group.`
-                        : 'This is the first group, so it starts with an empty layout.'}
+                        : 'This is the first group, so its layout starts with just the background art.'}
             </p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                 <Button size="sm" className="h-8 rounded-sm" onClick={handleSave} disabled={saving || name.trim() === '' || needsSource}>
                     {saving ? 'Saving…' : group ? 'Save group' : 'Create group'}
                 </Button>
                 <button type="button" className={LINK} onClick={onCancel}>Cancel</button>
-                {needsSource && <span className="text-xs text-destructive">No group has a valid layout to copy.</span>}
+                {needsSource && <span className="text-xs text-destructive">No group has a layout with art to copy.</span>}
                 {group && isSuperAdmin && (
                     <span className="ml-auto">
                         <ConfirmDeleteLink

@@ -106,14 +106,14 @@ export default function CustomCardWorkbench({
             )}
             effectiveOvr={draft.ovr ?? null}
             inputProblem={values ? null : 'Enter the OVR and all 6 attributes'}
-            buildPreview={(templateId, layers) => values && {
+            buildPreview={(templateId, layers, previewOvr) => values && {
                 kind: 'custom',
                 player: identity,
                 seasonNumber,
                 regionCode,
                 templateId,
                 layers,
-                values,
+                values: previewOvr === null ? values : { ...values, ovr: previewOvr },
             }}
             generate={() => generateCustomPlayerCardAction({
                 player: identity,
