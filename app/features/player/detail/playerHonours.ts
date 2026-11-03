@@ -29,9 +29,9 @@ function classify(award: PlayerAward): Omit<Tally, "count"> | null {
         case "individual_winners":
             return {label: award.award_name, group: GROUP.individual, place: 0};
         case "all_star":
-            return {label: award.all_star_captain ? "All-Star Captain" : "All-Star", group: GROUP.allStar, place: 0};
+            return {label: "All-Star", group: GROUP.allStar, place: 0};
         case "first_team":
-            return {label: `First Team ${award.award_name}`, group: GROUP.firstTeam, place: 0};
+            return {label: "First-Team", group: GROUP.firstTeam, place: 0};
         default:
             return null;
     }
@@ -49,7 +49,7 @@ export function buildPlayerHonours(awards: PlayerAward[], specs: PlayerSpecEntry
         const entry = classify(award);
         if (entry) add(entry);
     }
-    for (const spec of specs) add({label: spec.spec_name, group: GROUP.spec, place: 0});
+    for (let i = 0; i < specs.length; i += 1) add({label: "Spec Winner", group: GROUP.spec, place: 0});
 
     return [...tallies.values()]
         .sort((a, b) =>

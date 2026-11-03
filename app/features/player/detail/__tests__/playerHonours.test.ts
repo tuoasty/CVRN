@@ -72,8 +72,8 @@ describe("buildPlayerHonours", () => {
             "Third Place",
             "Best Setter",
             "All-Star",
-            "First Team Setter",
-            "Quick Hands",
+            "First-Team",
+            "Spec Winner",
         ]);
     });
 
@@ -109,12 +109,21 @@ describe("buildPlayerHonours", () => {
         ]);
     });
 
-    it("keeps all-star captain separate from all-star", () => {
+    it("counts all-star rows as one label across positions and captaincy", () => {
         const honours = buildPlayerHonours(
-            [award("all_star", "Setter", {all_star_captain: true}), award("all_star", "Setter")],
+            [award("all_star", "Setter", {all_star_captain: true}), award("all_star", "Libero")],
             [],
         );
-        expect(honours.map(h => h.label).sort()).toEqual(["All-Star", "All-Star Captain"]);
+        expect(honours).toEqual([{label: "All-Star", count: 2}]);
+    });
+
+    it("counts first team rows as one label across positions", () => {
+        const honours = buildPlayerHonours([award("first_team", "Setter"), award("first_team", "Libero")], []);
+        expect(honours).toEqual([{label: "First-Team", count: 2}]);
+    });
+
+    it("counts specs as one label across spec names", () => {
+        expect(buildPlayerHonours([], [spec("Quick Hands"), spec("Iron Wall")])).toEqual([{label: "Spec Winner", count: 2}]);
     });
 
     it("ignores staff team awards", () => {

@@ -1,5 +1,6 @@
 import {DBClient, Match, MatchSet, Player} from "@/shared/types/db";
 import {InsertMatchDto, MatchSitemapRow} from "@/server/domains/match";
+import type {PlayerMatchCandidate, PlayerMatchSide, PlayerRosterWindow} from "@/server/domains/match";
 import type {DashboardMatchRow} from "@/server/domains/admin/types/dashboard";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {createError, serializeError} from "@/server/utils/serializeableError";
@@ -545,4 +546,127 @@ export async function findDashboardMatchRows(
         const bracket = Array.isArray(playoff_brackets) ? playoff_brackets[0] : playoff_brackets;
         return {...row, playoff_round: bracket?.round ?? null};
     }));
+}
+
+const PLAYER_MATCH_SELECT = `
+    id, season_id, match_code, match_type, week, scheduled_at, is_forfeit, home_sets_won, away_sets_won,
+    season:seasons!season_id(season_number, slug, region:regions!region_id(code)),
+    home:teams!home_team_id(id, name, logo_url, logo_bg_removed, is_bye),
+    away:teams!away_team_id(id, name, logo_url, logo_bg_removed, is_bye),
+    match_sets(set_number, home_score, away_score)
+`;
+
+type PlayerMatchSideRow = {id: string; name: string; logo_url: string | null; logo_bg_removed: boolean; is_bye: boolean};
+
+type PlayerMatchRow = {
+    id: string;
+    season_id: string;
+    match_code: string | null;
+    match_type: "season" | "playoffs";
+    week: number | null;
+    scheduled_at: string | null;
+    is_forfeit: boolean | null;
+    home_sets_won: number | null;
+    away_sets_won: number | null;
+    season: {season_number: number; slug: string; region: {code: string}};
+    home: PlayerMatchSideRow | null;
+    away: PlayerMatchSideRow | null;
+    match_sets: {set_number: number; home_score: number; away_score: number}[];
+};
+
+function toPlayerMatchSide(row: PlayerMatchSideRow | null): PlayerMatchSide | null {
+    if (!row) return null;
+    return {id: row.id, name: row.name, logoUrl: row.logo_url, logoBgRemoved: row.logo_bg_removed, isBye: row.is_bye};
+}
+
+function toPlayerMatchCandidate(row: PlayerMatchRow): PlayerMatchCandidate {
+    return {
+        id: row.id,
+        seasonId: row.season_id,
+        seasonNumber: row.season.season_number,
+        seasonSlug: row.season.slug,
+        regionCode: row.season.region.code,
+        matchCode: row.match_code,
+        matchType: row.match_type,
+        week: row.week,
+        scheduledAt: row.scheduled_at,
+        isForfeit: row.is_forfeit ?? false,
+        home: toPlayerMatchSide(row.home),
+        away: toPlayerMatchSide(row.away),
+        homeSetsWon: row.home_sets_won,
+        awaySetsWon: row.away_sets_won,
+        sets: row.match_sets.map(set => ({setNumber: set.set_number, homeScore: set.home_score, awayScore: set.away_score})),
+    };
+}
+
+export async function findPlayerRosterWindows(
+    supabase: DBClient,
+    playerId: string
+): Promise<Result<PlayerRosterWindow[]>> {
+    const {data, error} = await supabase
+        .from("player_team_seasons")
+        .select("team_id, season_id, joined_at, left_at")
+        .eq("player_id", playerId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(r => ({teamId: r.team_id, seasonId: r.season_id, joinedAt: r.joined_at, leftAt: r.left_at})));
+}
+
+export async function findPlayerOwnMatchRows(
+    supabase: DBClient,
+    playerId: string
+): Promise<Result<{matchId: string; teamId: string}[]>> {
+    const {data, error} = await supabase
+        .from("player_match_stats")
+        .select("match_id, team_id")
+        .eq("player_id", playerId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    const byMatch = new Map<string, string>();
+    for (const row of data ?? []) {
+        if (!byMatch.has(row.match_id)) byMatch.set(row.match_id, row.team_id);
+    }
+    return Ok([...byMatch].map(([matchId, teamId]) => ({matchId, teamId})));
+}
+
+export async function findCompletedMatchesForRosters(
+    supabase: DBClient,
+    p: {seasonIds: string[]; teamIds: string[]}
+): Promise<Result<PlayerMatchCandidate[]>> {
+    if (p.seasonIds.length === 0 || p.teamIds.length === 0) return Ok([]);
+    const teams = p.teamIds.join(",");
+    const {data, error} = await supabase
+        .from("matches")
+        .select(PLAYER_MATCH_SELECT)
+        .eq("status", "completed")
+        .in("season_id", p.seasonIds)
+        .or(`home_team_id.in.(${teams}),away_team_id.in.(${teams})`);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(((data ?? []) as unknown as PlayerMatchRow[]).map(toPlayerMatchCandidate));
+}
+
+export async function findCompletedMatchesByIds(
+    supabase: DBClient,
+    ids: string[]
+): Promise<Result<PlayerMatchCandidate[]>> {
+    if (ids.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("matches")
+        .select(PLAYER_MATCH_SELECT)
+        .eq("status", "completed")
+        .in("id", ids);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(((data ?? []) as unknown as PlayerMatchRow[]).map(toPlayerMatchCandidate));
+}
+
+export async function findMatchIdsWithStats(
+    supabase: DBClient,
+    ids: string[]
+): Promise<Result<Set<string>>> {
+    if (ids.length === 0) return Ok(new Set());
+    const {data, error} = await supabase
+        .from("player_match_stats")
+        .select("match_id")
+        .eq("set_number", 1)
+        .in("match_id", ids);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(new Set((data ?? []).map(row => row.match_id)));
 }

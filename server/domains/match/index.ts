@@ -14,6 +14,7 @@ export {getPlayoffMatchesBySeason} from "./queries/getPlayoffMatchesBySeason";
 export {getUpcomingMatches} from "./queries/getUpcomingMatches";
 export {getRecentMatches} from "./queries/getRecentMatches";
 export {getTeamMatches} from "./queries/getTeamMatches";
+export {getPlayerRecentMatches} from "./queries/getPlayerRecentMatches";
 export {getMatchDetail, getMatchDetailById} from "./queries/getMatchDetail";
 export type {MatchDetail} from "./queries/getMatchDetail";
 export type {TeamRosters, RosterPlayer} from "./queries/getTeamRosters";
@@ -26,6 +27,10 @@ export {deleteMatchService} from "./commands/deleteMatch";
 export {validateAndCalculateMatchResult} from "./helpers/validateAndCalculateMatchResult";
 export {toMatchWithDetails} from "./helpers/toMatchWithDetails";
 export type {
+    PlayerMatchCandidate,
+    PlayerMatchSide,
+    PlayerRecentMatch,
+    PlayerRosterWindow,
     MatchResultInput,
     MatchContext,
     MatchResultOutput,

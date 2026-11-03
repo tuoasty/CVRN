@@ -3,6 +3,7 @@
 import {useMemo, useState, type ReactNode} from "react";
 import {cn} from "@/lib/utils";
 import type {PlayerDetail} from "@/server/domains/player";
+import type {PlayerRecentMatch} from "@/server/domains/match";
 import type {PublicPlayerCard} from "@/server/domains/playerCard";
 import PlayerSeasonStatsTable from "@/app/features/player/PlayerSeasonStatsTable";
 import BackButton from "@/app/components/public/BackButton";
@@ -13,6 +14,7 @@ import {AwardsSection} from "@/app/features/player/detail/AwardsSection";
 import {HonoursSection} from "@/app/features/player/detail/HonoursSection";
 import {PlayerBanner} from "@/app/features/player/detail/PlayerBanner";
 import {AllPlayerCards, CARD_CAP, PlayerCardsSection} from "@/app/features/player/detail/PlayerCardsSection";
+import {RecentMatchesSection} from "@/app/features/player/detail/RecentMatchesSection";
 import {TeamHistorySection} from "@/app/features/player/detail/TeamHistorySection";
 import {PODIUM_CATEGORIES} from "@/app/features/player/detail/awardDisplay";
 import {planPlayerLayout, type SectionKey} from "@/app/features/player/detail/planPlayerLayout";
@@ -37,9 +39,10 @@ function Columns({columns, render}: {columns: SectionKey[][]; render: (key: Sect
 type Props = {
     detail: PlayerDetail;
     cards: PublicPlayerCard[];
+    matches: PlayerRecentMatch[];
 };
 
-export default function PlayerDetailPage({detail, cards}: Props) {
+export default function PlayerDetailPage({detail, cards, matches}: Props) {
     const {player, seasonStats, awards, specs, activeSpec, teamHistory} = detail;
     const [failedCards, setFailedCards] = useState<ReadonlySet<string>>(new Set());
     const [showAllCards, setShowAllCards] = useState(false);
@@ -73,7 +76,7 @@ export default function PlayerDetailPage({detail, cards}: Props) {
         cards: visibleCards.length,
         achievements: achievements.length > 0,
         awards: awardList.length > 0,
-        matches: false,
+        matches: matches.length > 0,
         teams: teamHistory.length > 0,
     });
 
@@ -88,7 +91,7 @@ export default function PlayerDetailPage({detail, cards}: Props) {
             case "teams":
                 return <TeamHistorySection history={teamHistory} careerHref={careerBase} />;
             case "matches":
-                return null;
+                return <RecentMatchesSection matches={matches} />;
         }
     };
 

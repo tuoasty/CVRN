@@ -39,6 +39,7 @@ import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 import {getPlayoffBracketBySeasonId} from "@/server/domains/playoff";
 import type {PlayoffRound} from "@/server/domains/playoff";
 import {
+    getPlayerRecentMatches,
     getUpcomingMatches,
     getRecentMatches,
     getMatchDetail,
@@ -54,7 +55,7 @@ import {
     getTeamMatches,
     getMatchSitemapRows,
 } from "@/server/domains/match";
-import type {MatchWithDetails} from "@/server/domains/match";
+import type {MatchWithDetails, PlayerRecentMatch} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
@@ -188,6 +189,16 @@ export const getCachedPlayerCards = unstable_cache(
         unwrap(await getPublicPlayerCards(createPublicClient(), {playerId}), "getCachedPlayerCards"),
     ["public:player-cards"],
     {tags: [CACHE_TAGS.playerCards], revalidate: CARDS_REVALIDATE_SECONDS},
+);
+
+export const getCachedPlayerRecentMatches = unstable_cache(
+    async (playerId: string): Promise<PlayerRecentMatch[]> =>
+        unwrap(await getPlayerRecentMatches(createPublicClient(), {playerId}), "getCachedPlayerRecentMatches"),
+    ["public:player-recent-matches"],
+    {
+        tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.stats, CACHE_TAGS.rawStats],
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+    },
 );
 
 export const getCachedTeamsWithRegions = unstable_cache(
