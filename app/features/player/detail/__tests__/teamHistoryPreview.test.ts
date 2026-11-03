@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 import type {PlayerTeamHistoryEntry} from "@/server/domains/player";
-import {otherActiveTeams, selectTeamHistoryPreview} from "../teamHistoryPreview";
+import {careerStatus, otherActiveTeams, selectTeamHistoryPreview} from "../teamHistoryPreview";
 
 const NOW = new Date("2026-11-03T00:00:00.000Z");
 
@@ -87,5 +87,20 @@ describe("otherActiveTeams", () => {
 
     it("returns every active team when there is no main team", () => {
         expect(otherActiveTeams([entry("a", "s3")], null, NOW)).toHaveLength(1);
+    });
+});
+
+describe("careerStatus", () => {
+    it("is Active while signed in a running season", () => {
+        expect(careerStatus(entry("a", "s3"), NOW)).toBe("Active");
+    });
+
+    it("is Left once the player has left, even after the season ended", () => {
+        expect(careerStatus(entry("a", "s3", {left_at: "2026-10-10T00:00:00.000Z"}), NOW)).toBe("Left");
+        expect(careerStatus(ended("a", "s2", {left_at: "2026-04-01T00:00:00.000Z"}), NOW)).toBe("Left");
+    });
+
+    it("is blank for a team kept until the season ended", () => {
+        expect(careerStatus(ended("a", "s2"), NOW)).toBeNull();
     });
 });

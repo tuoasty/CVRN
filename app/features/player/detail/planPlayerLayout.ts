@@ -13,16 +13,16 @@ export function planPlayerLayout(p: {
     cards: number;
     achievements: boolean;
     awards: boolean;
+    honours: boolean;
     matches: boolean;
     teams: boolean;
 }): PlayerLayout {
-    const hasHonours = p.achievements || p.awards;
     const matches: SectionKey[] = p.matches ? ["matches"] : [];
     const record: SectionKey[] = [
         ...(p.achievements ? ["achievements" as const] : []),
         ...(p.awards ? ["awards" as const] : []),
     ];
-    const honours: SectionKey[] = hasHonours ? ["honours"] : [];
+    const honours: SectionKey[] = p.honours ? ["honours"] : [];
     const teams: SectionKey[] = p.teams ? ["teams"] : [];
 
     if (p.cards === 0) {
@@ -30,12 +30,12 @@ export function planPlayerLayout(p: {
     }
 
     if (p.cards === 1) {
-        if (p.matches && hasHonours) return {beside: [matches, honours], below: columns(record, teams)};
-        if (p.matches) return {beside: columns(matches, teams), below: []};
+        if (p.matches && p.honours) return {beside: [matches, honours], below: columns(record, teams)};
+        if (p.matches) return {beside: columns(matches, teams), below: columns(record)};
         return {beside: columns(record, [...honours, ...teams]), below: []};
     }
 
     if (p.matches) return {beside: [matches], below: columns(record, [...honours, ...teams])};
-    if (hasHonours) return {beside: [record], below: columns([...honours, ...teams])};
+    if (record.length > 0) return {beside: [record], below: columns([...honours, ...teams])};
     return {beside: columns(teams), below: []};
 }

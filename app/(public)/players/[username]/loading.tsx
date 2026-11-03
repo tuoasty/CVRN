@@ -1,12 +1,12 @@
 import {Skeleton} from "@/app/components/ui/skeleton";
 
-function RuledSkeleton({rows, titleWidth}: {rows: number; titleWidth: string}) {
+function RuledSkeleton({rows, titleWidth, rowClassName}: {rows: number; titleWidth: string; rowClassName?: string}) {
     return (
         <div>
             <Skeleton className={`h-4 ${titleWidth}`} />
             <div className="mt-2 border-t border-border">
                 {Array.from({length: rows}).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 border-b border-border/60 py-2 last:border-b-0">
+                    <div key={i} className={`flex items-center gap-3 border-b border-border/60 py-2 last:border-b-0 ${rowClassName ?? ""}`}>
                         <Skeleton className="size-7 shrink-0 rounded-sm" />
                         <div className="min-w-0 flex-1 space-y-1.5">
                             <Skeleton className="h-4 w-32" />
@@ -45,10 +45,10 @@ export default function PlayerPageLoading() {
             <div className="flex flex-col gap-11 lg:flex-row lg:items-start lg:gap-12">
                 <div className="min-w-0 shrink-0">
                     <Skeleton className="h-4 w-24" />
-                    <Skeleton className="mt-5 h-[420px] w-full rounded-sm sm:w-[300px]" />
+                    <Skeleton className="mt-[21px] h-[364px] w-full rounded-sm sm:w-[260px]" />
                 </div>
                 <div className="grid min-w-0 flex-1 gap-x-12 gap-y-11 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-                    <RuledSkeleton rows={5} titleWidth="w-36" />
+                    <RuledSkeleton rows={5} titleWidth="w-36" rowClassName="h-[72px] lg:h-[75.2px]" />
                     <RuledSkeleton rows={4} titleWidth="w-20" />
                 </div>
             </div>

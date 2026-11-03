@@ -17,6 +17,7 @@ import {AllPlayerCards, CARD_CAP, PlayerCardsSection} from "@/app/features/playe
 import {RecentMatchesSection} from "@/app/features/player/detail/RecentMatchesSection";
 import {TeamHistorySection} from "@/app/features/player/detail/TeamHistorySection";
 import {PODIUM_CATEGORIES} from "@/app/features/player/detail/awardDisplay";
+import {matchRowHeight} from "@/app/features/player/detail/matchRowHeight";
 import {planPlayerLayout, type SectionKey} from "@/app/features/player/detail/planPlayerLayout";
 import {buildPlayerHonours} from "@/app/features/player/detail/playerHonours";
 import {otherActiveTeams} from "@/app/features/player/detail/teamHistoryPreview";
@@ -76,6 +77,7 @@ export default function PlayerDetailPage({detail, cards, matches}: Props) {
         cards: visibleCards.length,
         achievements: achievements.length > 0,
         awards: awardList.length > 0,
+        honours: honours.length > 0,
         matches: matches.length > 0,
         teams: teamHistory.length > 0,
     });
@@ -91,7 +93,7 @@ export default function PlayerDetailPage({detail, cards, matches}: Props) {
             case "teams":
                 return <TeamHistorySection history={teamHistory} careerHref={careerBase} />;
             case "matches":
-                return <RecentMatchesSection matches={matches} />;
+                return <RecentMatchesSection matches={matches} rowHeight={matchRowHeight(visibleCards)} />;
         }
     };
 

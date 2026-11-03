@@ -60,16 +60,12 @@ describe("buildPlayerHonours", () => {
                 award("first_team", "Setter"),
                 award("all_star", "Setter"),
                 award("individual_winners", "Best Setter"),
-                award("third_place", "Third"),
-                award("runner_up", "Runner"),
                 award("champion_roster", "Captain"),
             ],
             [spec("Quick Hands")],
         );
         expect(honours.map(h => h.label)).toEqual([
             "Champion",
-            "Runner Up",
-            "Third Place",
             "Best Setter",
             "All-Star",
             "First-Team",
@@ -94,19 +90,16 @@ describe("buildPlayerHonours", () => {
         ]);
     });
 
-    it("labels placements with their range, best first", () => {
+    it("leaves every placement below first out", () => {
         const honours = buildPlayerHonours(
             [
-                award("placement", "", {place: 9, place_end: 12}),
-                award("placement", "", {place: 5, place_end: 8}),
+                award("runner_up", "Runner"),
+                award("third_place", "Third"),
                 award("placement", "", {place: 5, place_end: 8}),
             ],
             [],
         );
-        expect(honours).toEqual([
-            {label: "5th–8th", count: 2},
-            {label: "9th–12th", count: 1},
-        ]);
+        expect(honours).toEqual([]);
     });
 
     it("counts all-star rows as one label across positions and captaincy", () => {

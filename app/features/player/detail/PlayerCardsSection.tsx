@@ -1,6 +1,7 @@
+import type {CSSProperties} from "react";
 import Image from "next/image";
 import type {PublicPlayerCard} from "@/server/domains/playerCard";
-import {cn} from "@/lib/utils";
+import {MULTI_CARD_WIDTH, SINGLE_CARD_WIDTH} from "./matchRowHeight";
 import {RuledSection} from "./RuledSection";
 
 export const CARD_CAP = 3;
@@ -42,9 +43,12 @@ export function PlayerCardsSection({cards, playerName, showAll, onToggleAll, onF
     ) : undefined;
     return (
         <RuledSection title={single ? "Player Card" : "Player Cards"} action={action}>
-            <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:flex-wrap lg:flex-nowrap">
+            <div
+                className="mt-3 flex flex-col gap-4 sm:flex-row sm:flex-wrap lg:flex-nowrap"
+                style={{"--card-width": `${single ? SINGLE_CARD_WIDTH : MULTI_CARD_WIDTH}px`} as CSSProperties}
+            >
                 {shown.map(card => (
-                    <div key={card.imageUrl} className={cn("w-full shrink-0", single ? "sm:w-[300px]" : "sm:w-[240px]")}>
+                    <div key={card.imageUrl} className="w-full shrink-0 sm:w-[var(--card-width)]">
                         <PlayerCardFigure card={card} playerName={playerName} onFailed={onFailed} />
                     </div>
                 ))}

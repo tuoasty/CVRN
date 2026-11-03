@@ -548,6 +548,12 @@ export async function findDashboardMatchRows(
     }));
 }
 
+const PLAYED_STATS_FILTER = [
+    "ape_kills", "ape_attempts", "delay_kills", "quick_kills", "wipes_tools", "kill_attempts", "spiking_errors",
+    "assists", "setting_errors", "kill_blocks", "block_touches", "serve_receives", "digs", "block_follows",
+    "dives", "aces", "jump_serve_aces", "float_aces", "service_errors", "misc_errors", "receive_errors",
+].map(column => `${column}.gt.0`).join(",");
+
 const PLAYER_MATCH_SELECT = `
     id, season_id, match_code, match_type, week, scheduled_at, is_forfeit, home_sets_won, away_sets_won,
     season:seasons!season_id(season_number, slug, region:regions!region_id(code)),
@@ -618,7 +624,8 @@ export async function findPlayerOwnMatchRows(
     const {data, error} = await supabase
         .from("player_match_stats")
         .select("match_id, team_id")
-        .eq("player_id", playerId);
+        .eq("player_id", playerId)
+        .or(PLAYED_STATS_FILTER);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     const byMatch = new Map<string, string>();
     for (const row of data ?? []) {
@@ -666,7 +673,8 @@ export async function findMatchIdsWithStats(
         .from("player_match_stats")
         .select("match_id")
         .eq("set_number", 1)
-        .in("match_id", ids);
+        .in("match_id", ids)
+        .or(PLAYED_STATS_FILTER);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(new Set((data ?? []).map(row => row.match_id)));
 }

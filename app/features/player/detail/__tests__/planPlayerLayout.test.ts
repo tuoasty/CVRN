@@ -30,6 +30,7 @@ describe("planPlayerLayout", () => {
             cards,
             achievements: flags.includes("a"),
             awards: flags.includes("w"),
+            honours: flags.includes("a") || flags.includes("w"),
             matches: flags.includes("m"),
             teams: flags.includes("t"),
         });
@@ -37,17 +38,37 @@ describe("planPlayerLayout", () => {
     });
 
     it("keeps achievements and awards together beside one card when there are no matches", () => {
-        const layout = planPlayerLayout({cards: 1, achievements: true, awards: true, matches: false, teams: false});
+        const layout = planPlayerLayout({cards: 1, achievements: true, awards: true, honours: true, matches: false, teams: false});
         expect(layout).toEqual({beside: expand(["aw", "h"]), below: []});
     });
 
     it("drops an empty below column beside one card", () => {
-        const layout = planPlayerLayout({cards: 1, achievements: true, awards: false, matches: true, teams: false});
+        const layout = planPlayerLayout({cards: 1, achievements: true, awards: false, honours: true, matches: true, teams: false});
         expect(layout).toEqual({beside: expand(["m", "h"]), below: expand(["a"])});
     });
 
     it("keeps awards beside two cards when there are no matches", () => {
-        const layout = planPlayerLayout({cards: 2, achievements: true, awards: true, matches: false, teams: true});
+        const layout = planPlayerLayout({cards: 2, achievements: true, awards: true, honours: true, matches: false, teams: true});
         expect(layout).toEqual({beside: expand(["aw"]), below: expand(["ht"])});
+    });
+
+    describe("with only placements below first, so no honours", () => {
+        const base = {achievements: true, awards: false, honours: false, teams: true};
+
+        it("keeps achievements below matches and team history beside one card", () => {
+            expect(planPlayerLayout({...base, cards: 1, matches: true})).toEqual({beside: expand(["m", "t"]), below: expand(["a"])});
+        });
+
+        it("puts achievements and team history beside one card with no matches", () => {
+            expect(planPlayerLayout({...base, cards: 1, matches: false})).toEqual({beside: expand(["a", "t"]), below: []});
+        });
+
+        it("keeps achievements beside two cards with no matches", () => {
+            expect(planPlayerLayout({...base, cards: 2, matches: false})).toEqual({beside: expand(["a"]), below: expand(["t"])});
+        });
+
+        it("shows no honours section with no cards", () => {
+            expect(planPlayerLayout({...base, cards: 0, matches: true})).toEqual({beside: [], below: expand(["ma", "t"])});
+        });
     });
 });

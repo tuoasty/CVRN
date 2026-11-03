@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {DefaultTeamLogo} from "@/app/components/ui/DefaultTeamLogo";
 import {getLogoClassName} from "@/app/lib/logoClass";
+import {cn} from "@/lib/utils";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
 
 export interface TeamLogoRef {
@@ -14,10 +15,10 @@ export interface TeamLogoRef {
     team_logo_bg_removed: boolean;
 }
 
-export function TeamLogo({team, size = 28}: {team: Pick<TeamLogoRef, "team_name" | "team_logo_url" | "team_logo_bg_removed">; size?: number}) {
+export function TeamLogo({team, size = 28, className}: {team: Pick<TeamLogoRef, "team_name" | "team_logo_url" | "team_logo_bg_removed">; size?: number; className?: string}) {
     const sizes = `${size}px`;
     return (
-        <span className="relative block shrink-0" style={{width: size, height: size}}>
+        <span className={cn("relative block shrink-0", className)} style={className ? undefined : {width: size, height: size}}>
             {team.team_logo_url ? (
                 <Image
                     src={team.team_logo_url}
