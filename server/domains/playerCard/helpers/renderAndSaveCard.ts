@@ -2,7 +2,7 @@ import { Err, Ok, Result } from '@/shared/types/result'
 import { DBClient } from '@/shared/types/db'
 import { logger } from '@/server/utils/logger'
 import { getRobloxLargeHeadshot } from '@/server/roblox/users'
-import { CardData, CardSubject, PlayerCard } from '../types'
+import { CardData, CardSubject, CardTemplate, PlayerCard } from '../types'
 import { resolveCardTier } from './resolveCardTier'
 import { toCardTemplate } from './toCardShapes'
 import { saveCardImage } from './saveCardImage'
@@ -10,6 +10,16 @@ import { loadImageAsPngDataUri } from './loadImage'
 import { loadTemplateArt } from './loadTemplateArt'
 import { renderCard } from './renderCard'
 import { loadCardFonts } from './cardFont'
+
+export type CardArtCache = Map<string, Record<string, string>>
+
+async function loadArt(template: CardTemplate, cache?: CardArtCache): Promise<Result<Record<string, string>>> {
+    const hit = cache?.get(template.id)
+    if (hit) return Ok(hit)
+    const art = await loadTemplateArt(template, { cached: false, allowMissing: false })
+    if (art.ok) cache?.set(template.id, art.value)
+    return art
+}
 
 async function resolveHeadshotUrl(subject: CardSubject): Promise<string | null> {
     const large = await getRobloxLargeHeadshot(subject.robloxUserId)
@@ -56,6 +66,7 @@ export async function renderAndSaveCard(
         ensurePlayerId: () => Promise<Result<string>>
         strictImages?: boolean
         generatedBy?: string | null
+        artCache?: CardArtCache
     },
 ): Promise<Result<PlayerCard>> {
     const { seasonNumber, groupId, subject, data } = p
@@ -68,7 +79,7 @@ export async function renderAndSaveCard(
         return Err({ message: 'This layout has no art layer, so a card would have no background', code: 'VALIDATION_ERROR' })
     }
 
-    const art = await loadTemplateArt(template.value, { cached: false, allowMissing: false })
+    const art = await loadArt(template.value, p.artCache)
     if (!art.ok) return art
 
     const images = await (p.strictImages ? loadImagesStrict(subject) : loadImages(subject))

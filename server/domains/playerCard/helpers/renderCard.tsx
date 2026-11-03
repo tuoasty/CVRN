@@ -11,7 +11,24 @@ export interface CardAssets {
     teamLogo: string | null
 }
 
+interface OgFont {
+    name: string
+    data: ArrayBuffer
+    weight: 400
+    style: 'normal'
+}
+
 const MIN_SIZE_RATIO = 0.5
+
+const ogFontsBySet = new WeakMap<CardFonts, OgFont[]>()
+
+function toOgFonts(fonts: CardFonts): OgFont[] {
+    const existing = ogFontsBySet.get(fonts)
+    if (existing) return existing
+    const built = Object.values(fonts).map((f): OgFont => ({ name: f.name, data: f.data, weight: 400, style: 'normal' }))
+    ogFontsBySet.set(fonts, built)
+    return built
+}
 
 function boxStyle(layer: CardLayer): CSSProperties {
     return { position: 'absolute', left: layer.x, top: layer.y, width: layer.w, height: layer.h, display: 'flex' }
@@ -149,7 +166,7 @@ export async function renderCard(template: CardTemplate, data: CardData, assets:
         {
             width: template.width,
             height: template.height,
-            fonts: Object.values(fonts).map(f => ({ name: f.name, data: f.data, weight: 400 as const, style: 'normal' as const })),
+            fonts: toOgFonts(fonts),
         },
     )
     return Buffer.from(await response.arrayBuffer())

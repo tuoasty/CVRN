@@ -152,6 +152,29 @@ describe('renderAndSaveCard images', () => {
         expect(mocks.upload).toHaveBeenCalledOnce()
     })
 
+    it('loads each tier art once when given an art cache', async () => {
+        const artCache = new Map<string, Record<string, string>>()
+        await renderAndSaveCard(supabase, { ...input, artCache })
+        await renderAndSaveCard(supabase, { ...input, artCache })
+        expect(mocks.loadTemplateArt).toHaveBeenCalledOnce()
+        expect(mocks.renderCard.mock.calls[1][2].art).toEqual({ 'bg.png': 'uri' })
+    })
+
+    it('tries again after a failed art load', async () => {
+        const artCache = new Map<string, Record<string, string>>()
+        mocks.loadTemplateArt.mockResolvedValueOnce(Err({ message: 'art failed', code: 'INTEGRATION_ERROR' as const }))
+        const first = await renderAndSaveCard(supabase, { ...input, artCache })
+        await renderAndSaveCard(supabase, { ...input, artCache })
+        expect(first.ok).toBe(false)
+        expect(mocks.loadTemplateArt).toHaveBeenCalledTimes(2)
+    })
+
+    it('loads art every time without an art cache', async () => {
+        await renderAndSaveCard(supabase, input)
+        await renderAndSaveCard(supabase, input)
+        expect(mocks.loadTemplateArt).toHaveBeenCalledTimes(2)
+    })
+
     it('leaves generated_by out when not given', async () => {
         await renderAndSaveCard(supabase, input)
         expect(mocks.upsertPlayerCard.mock.calls[0][1]).not.toHaveProperty('generated_by')

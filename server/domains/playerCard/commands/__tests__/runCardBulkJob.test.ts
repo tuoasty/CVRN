@@ -68,6 +68,15 @@ describe('runCardBulkJob', () => {
         expect(mocks.renderAndSaveCard.mock.calls[0][1]).toMatchObject({ strictImages: true, generatedBy: 'u', seasonNumber: 3, groupId: 'g' })
     })
 
+    it('shares one art cache across the job and starts fresh for the next job', async () => {
+        await runCardBulkJob(admin, input(2))
+        const first = mocks.renderAndSaveCard.mock.calls[0][1].artCache
+        expect(first).toBeInstanceOf(Map)
+        expect(mocks.renderAndSaveCard.mock.calls[1][1].artCache).toBe(first)
+        await runCardBulkJob(admin, input(1))
+        expect(mocks.renderAndSaveCard.mock.calls[2][1].artCache).not.toBe(first)
+    })
+
     it('saves under the player it renders', async () => {
         await runCardBulkJob(admin, input(1))
         const ensured = await mocks.renderAndSaveCard.mock.calls[0][1].ensurePlayerId()

@@ -7,6 +7,13 @@ const fetchMock = vi.fn()
 const solid = (width: number, height: number) => sharp({ create: { width, height, channels: 4, background: '#808080' } }).png().toBuffer()
 const respond = (bytes: Uint8Array, headers: Record<string, string> = {}) => new Response(new Uint8Array(bytes), { status: 200, headers })
 
+describe('sharp settings', () => {
+    it('turns the libvips operation cache off', () => {
+        expect(sharp.cache().memory.max).toBe(0)
+        expect(sharp.cache().items.max).toBe(0)
+    })
+})
+
 describe('loadImageAsPngDataUri', () => {
     beforeEach(() => {
         fetchMock.mockReset()

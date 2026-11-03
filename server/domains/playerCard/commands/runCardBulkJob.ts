@@ -7,7 +7,7 @@ import { findCardBulkJobById, updateCardBulkJob } from '@/server/db/cardBulkJobs
 import type { OverallConfig, OverallInputRow } from '@/server/domains/overall/types'
 import { CardBulkFailure, PlayerCard } from '../types'
 import { buildCardData } from '../helpers/buildCardData'
-import { renderAndSaveCard } from '../helpers/renderAndSaveCard'
+import { CardArtCache, renderAndSaveCard } from '../helpers/renderAndSaveCard'
 
 export const BULK_PAUSE_MS = 1500
 export const BULK_MAX_CONSECUTIVE_FAILURES = 10
@@ -50,6 +50,7 @@ export async function runCardBulkJob(admin: DBClient, p: {
     let failed = 0
     let streak = 0
     const failures: CardBulkFailure[] = []
+    const artCache: CardArtCache = new Map()
 
     const progress = () => ({ done, failed, failures: failures as unknown as Json })
     const finish = (status: 'completed' | 'stopped', stopReason: string | null = null) =>
@@ -71,6 +72,7 @@ export async function runCardBulkJob(admin: DBClient, p: {
                 ensurePlayerId: async () => Ok(player.playerId),
                 strictImages: true,
                 generatedBy: startedBy,
+                artCache,
             })
         } catch (error) {
             return Err(serializeError(error))
