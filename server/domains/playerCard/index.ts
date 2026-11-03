@@ -13,6 +13,7 @@ export { startCardBulkJob } from './commands/startCardBulkJob'
 export { stopCardBulkJob } from './commands/stopCardBulkJob'
 export { uploadPlayerCardGfx } from './commands/uploadPlayerCardGfx'
 export { getPlayerCards } from './queries/getPlayerCards'
+export { getPublicPlayerCards } from './queries/getPublicPlayerCards'
 export { getCardCatalog } from './queries/getCardCatalog'
 export { getCardTierTemplate } from './queries/getCardTierTemplate'
 export { getBoardPlayerCardTemplate, getCustomPlayerCardTemplate } from './queries/getPlayerCardTemplate'
@@ -33,6 +34,7 @@ export type {
     CardGroup,
     CardData,
     PlayerCard,
+    PublicPlayerCard,
     CardLayer,
     CardOverrides,
     CustomCardPlayer,

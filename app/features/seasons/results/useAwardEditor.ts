@@ -14,6 +14,7 @@ import {SeasonAwardEntryWithPlayer} from "@/server/domains/season";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
 import {reorderGroup} from "./awardGroups";
+import {resolveListedName} from "./stagedAwards";
 
 export type EditBusy = "apply" | "captain" | "move" | "remove" | null;
 
@@ -22,9 +23,10 @@ interface Options {
     setAwards: Dispatch<SetStateAction<SeasonAwardEntryWithPlayer[]>>;
     refreshAwards: () => Promise<void>;
     onRemoved: () => void;
+    awardList: readonly string[];
 }
 
-export function useAwardEditor({awards, setAwards, refreshAwards, onRemoved}: Options) {
+export function useAwardEditor({awards, setAwards, refreshAwards, onRemoved, awardList}: Options) {
     const [busy, setBusy] = useState<EditBusy>(null);
     const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
@@ -41,8 +43,10 @@ export function useAwardEditor({awards, setAwards, refreshAwards, onRemoved}: Op
     }, []);
 
     const apply = useCallback((award: SeasonAwardEntryWithPlayer, awardName: string, player?: PlayerWithTeamInfo) => run("apply", async () => {
-        const name = awardName.trim();
-        if (!name) { toast.error("Award name is required"); return; }
+        const typed = awardName.trim();
+        if (!typed) { toast.error("Award name is required"); return; }
+        const name = award.category === "individual_winners" ? resolveListedName(typed, awardList) : typed;
+        if (name === null) { toast.error("Pick a name from the award list"); return; }
         const playerChanged = player && player.id !== award.player_id;
         if (name === award.award_name && !playerChanged) return;
         const previous = awards;
@@ -62,7 +66,7 @@ export function useAwardEditor({awards, setAwards, refreshAwards, onRemoved}: Op
         }
         if (playerChanged) await refreshAwards();
         toast.success(playerChanged ? `Award moved to @${player.username}` : "Award renamed");
-    }), [awards, setAwards, refreshAwards, run]);
+    }), [awards, awardList, setAwards, refreshAwards, run]);
 
     const toggleCaptain = useCallback((award: SeasonAwardEntryWithPlayer) => run("captain", async () => {
         const isCaptain = !award.all_star_captain;

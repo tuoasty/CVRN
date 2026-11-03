@@ -189,6 +189,7 @@ export type {
     SetAllStarCaptainInput,
     SeasonNumberQueryInput,
     AwardNameSuggestionsInput,
+    AddAwardNameInput,
 } from "./schemas";
 
 export {
@@ -211,4 +212,5 @@ export {
     SetAllStarCaptainSchema,
     SeasonNumberQuerySchema,
     AwardNameSuggestionsSchema,
+    AddAwardNameSchema,
 } from "./schemas";

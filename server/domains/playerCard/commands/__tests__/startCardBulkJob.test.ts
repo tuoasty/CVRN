@@ -107,6 +107,16 @@ describe('startCardBulkJob', () => {
         expect(mocks.insertCardBulkJob.mock.calls[0][1]).toMatchObject({ region_code: 'AS', total: 3 })
     })
 
+    it('hands the worker to schedule instead of running it in the background', async () => {
+        const schedule = vi.fn()
+        await startCardBulkJob(admin, input({ schedule }))
+        expect(schedule).toHaveBeenCalledOnce()
+        expect(mocks.runInBackground).not.toHaveBeenCalled()
+        expect(mocks.runCardBulkJob).not.toHaveBeenCalled()
+        await schedule.mock.calls[0][0]()
+        expect(mocks.runCardBulkJob.mock.calls[0][1]).toMatchObject({ jobId: 'j' })
+    })
+
     it('starts the worker once with the captured players and config', async () => {
         await startCardBulkJob(admin, input())
         expect(mocks.runInBackground).toHaveBeenCalledOnce()

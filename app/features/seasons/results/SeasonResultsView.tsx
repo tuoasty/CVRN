@@ -111,7 +111,7 @@ export function SeasonResultsView({seasonId, initial}: {seasonId: string; initia
 
     const onSpecSaved = useCallback((winner: SpecWinnerWithRefs) => setSpecWinners(prev => mergeSpecWinner(prev, winner)), []);
     const bar = useStagedAwards({seasonId, awards, specWinners, initialSuggestions: initial.suggestions, onAwardsSaved: setAwards, onSpecSaved});
-    const editor = useAwardEditor({awards, setAwards, refreshAwards, onRemoved: bar.stopEdit});
+    const editor = useAwardEditor({awards, setAwards, refreshAwards, onRemoved: bar.stopEdit, awardList: bar.awardList});
     const editingSpecId = bar.editingSpec?.id ?? null;
     const stopEdit = bar.stopEdit;
     const onSpecRemoved = useCallback((winnerId: string) => {

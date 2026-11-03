@@ -1,5 +1,5 @@
 import {notFound} from "next/navigation";
-import {getCachedPlayerDetail} from "@/server/cache/publicReads";
+import {getCachedPlayerCards, getCachedPlayerDetail} from "@/server/cache/publicReads";
 import PlayerDetailPage from "./PlayerDetailPage";
 
 type Props = {
@@ -18,5 +18,7 @@ export default async function PlayerPage({params}: Props) {
         notFound();
     }
 
-    return <PlayerDetailPage detail={detail} />;
+    const cards = await getCachedPlayerCards(detail.player.id);
+
+    return <PlayerDetailPage detail={detail} cards={cards} />;
 }

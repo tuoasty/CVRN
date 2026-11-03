@@ -206,6 +206,7 @@ export interface PlayerTeamHistoryEntry {
     season_id: string;
     season_name: string;
     region_code: string;
+    region_name: string;
     season_slug: string;
     league_type: "main" | "side";
     role: "captain" | "vice_captain" | "court_captain" | "player";

@@ -8,6 +8,12 @@ export type CacheTagInfo = {
 };
 
 export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
+    [CACHE_TAGS.playerCards]: {
+        label: "Player Cards",
+        description: "Generated and uploaded player cards shown publicly.",
+        readCount: 1,
+        affects: "Player detail",
+    },
     [CACHE_TAGS.standings]: {
         label: "Standings",
         description: "Standings table ordering and totals.",
@@ -114,4 +120,5 @@ export const CACHE_TAG_ORDER: CacheTag[] = [
     CACHE_TAGS.gameData,
     CACHE_TAGS.specs,
     CACHE_TAGS.rawStats,
+    CACHE_TAGS.playerCards,
 ];

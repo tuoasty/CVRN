@@ -117,6 +117,9 @@ export type PlayerOverallRow =
 export type SeasonOverallInputRow =
     Database["public"]["Functions"]["get_overall_inputs"]["Returns"][number];
 
+export type AwardNameRow =
+    Database["public"]["Tables"]["award_names"]["Row"];
+
 export type CardGroupRow =
     Database["public"]["Tables"]["card_groups"]["Row"];
 

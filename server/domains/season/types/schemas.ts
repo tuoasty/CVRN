@@ -130,6 +130,11 @@ export const AwardNameSuggestionsSchema = z.object({
 })
 export type AwardNameSuggestionsInput = z.infer<typeof AwardNameSuggestionsSchema>
 
+export const AddAwardNameSchema = z.object({
+    name: z.string().trim().min(1, "Award name is required").max(60, "Award name is too long"),
+})
+export type AddAwardNameInput = z.infer<typeof AddAwardNameSchema>
+
 export const ReorderSeasonAwardsSchema = z.object({
     updates: z.array(z.object({
         id: z.uuid(),

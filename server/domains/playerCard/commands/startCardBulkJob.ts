@@ -20,6 +20,7 @@ export async function startCardBulkJob(admin: DBClient, p: {
     mode: CardBulkMode
     rows: OverallInputRow[]
     startedBy: string
+    schedule?: (task: () => Promise<void>) => void
 }): Promise<Result<CardBulkJob>> {
     try {
         const { seasonNumber, groupId, mode, startedBy } = p
@@ -59,10 +60,11 @@ export async function startCardBulkJob(admin: DBClient, p: {
         })
         if (!job.ok) return job
 
-        runInBackground(
-            () => runCardBulkJob(admin, { jobId: job.value.id, seasonNumber, groupId, players, config: config.value, startedBy }),
-            'runCardBulkJob',
-        )
+        const task = async () => {
+            await runCardBulkJob(admin, { jobId: job.value.id, seasonNumber, groupId, players, config: config.value, startedBy })
+        }
+        if (p.schedule) p.schedule(task)
+        else runInBackground(task, 'runCardBulkJob')
 
         return Ok(toCardBulkJob(job.value))
     } catch (error) {

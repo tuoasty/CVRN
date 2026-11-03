@@ -203,6 +203,8 @@ export function ResultsCommandBar({seasonId, bar, editor, awards, allStarTeams, 
                         suggestions={bar.suggestions}
                         categoryLabel={CATEGORY_LABELS[target.category]}
                         inputRef={bar.nameRef}
+                        strict={target.category === "individual_winners"}
+                        onAddToList={bar.addToAwardList}
                     />
                 )}
                 <PlayerPicker

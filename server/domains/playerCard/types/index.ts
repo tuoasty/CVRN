@@ -74,6 +74,17 @@ export interface PlayerCard {
     generatedAt: string
 }
 
+export interface PublicPlayerCard {
+    seasonNumber: number
+    groupId: string
+    groupName: string
+    ovr: number
+    teamName: string | null
+    imageUrl: string
+    width: number
+    height: number
+}
+
 export type CardBulkMode = 'missing' | 'all'
 export type CardBulkJobStatus = 'running' | 'completed' | 'stopped' | 'interrupted'
 

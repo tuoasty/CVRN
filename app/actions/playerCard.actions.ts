@@ -1,5 +1,6 @@
 "use server"
 
+import { after } from 'next/server'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { DBClient } from '@/shared/types/db'
 import { createServerSupabase } from '@/server/supabase/server'
@@ -136,12 +137,14 @@ export async function generatePlayerCardAction(input: unknown): Promise<Result<P
     try {
         const player = await findSeasonPlayer(parsed.data.seasonNumber, parsed.data.playerId)
         if (!player.ok) return player
-        return generatePlayerCard(supabase, {
+        const result = await generatePlayerCard(supabase, {
             seasonNumber: parsed.data.seasonNumber,
             groupId: parsed.data.groupId,
             overrides: parsed.data.overrides,
             player: player.value,
         })
+        if (result.ok) revalidatePublicData([CACHE_TAGS.playerCards])
+        return result
     } catch (error) {
         return Err(serializeError(error))
     }
@@ -172,6 +175,7 @@ export async function generateCustomPlayerCardAction(input: unknown): Promise<Re
     const result = await generateCustomPlayerCard(supabase, parsed.data)
     if (!result.ok) return result
     if (result.value.registered) revalidatePublicData([CACHE_TAGS.players])
+    revalidatePublicData([CACHE_TAGS.playerCards])
     return Ok(result.value.card)
 }
 
@@ -197,7 +201,9 @@ export async function updateCardGroupAction(input: unknown): Promise<Result<null
     const lock = await assertNoRunningBulk(supabase, { groupId: parsed.data.groupId })
     if (!lock.ok) return lock
 
-    return updateCardGroup(supabase, parsed.data)
+    const result = await updateCardGroup(supabase, parsed.data)
+    if (result.ok) revalidatePublicData([CACHE_TAGS.playerCards])
+    return result
 }
 
 export async function deleteCardGroupAction(input: unknown): Promise<Result<null>> {
@@ -315,7 +321,9 @@ export async function deletePlayerCardAction(input: unknown): Promise<Result<nul
     const lock = await assertNoRunningBulk(supabase)
     if (!lock.ok) return lock
 
-    return deletePlayerCard(supabase, parsed.data)
+    const result = await deletePlayerCard(supabase, parsed.data)
+    if (result.ok) revalidatePublicData([CACHE_TAGS.playerCards])
+    return result
 }
 
 export async function deleteCardTemplateAction(input: unknown): Promise<Result<null>> {
@@ -343,7 +351,18 @@ export async function startCardBulkJobAction(input: unknown): Promise<Result<Car
     try {
         const rows = await getCachedSeasonOverallInputs(parsed.data.seasonNumber)
         const admin = getSupabaseAdmin() as unknown as DBClient
-        return startCardBulkJob(admin, { ...parsed.data, rows, startedBy: guard.value })
+        return startCardBulkJob(admin, {
+            ...parsed.data,
+            rows,
+            startedBy: guard.value,
+            schedule: task => after(async () => {
+                try {
+                    await task()
+                } finally {
+                    revalidatePublicData([CACHE_TAGS.playerCards])
+                }
+            }),
+        })
     } catch (error) {
         return Err(serializeError(error))
     }
@@ -410,7 +429,7 @@ export async function uploadPlayerCardGfxAction(formData: FormData): Promise<Res
             const config = await getOverallConfig(supabase, seasonNumber)
             if (!config.ok) return config
             const boardPlayerId = player.value.playerId
-            return await uploadPlayerCardGfx(supabase, {
+            const uploaded = await uploadPlayerCardGfx(supabase, {
                 seasonNumber,
                 groupId,
                 subject: player.value,
@@ -418,6 +437,8 @@ export async function uploadPlayerCardGfxAction(formData: FormData): Promise<Res
                 file,
                 ensurePlayerId: async () => Ok(boardPlayerId),
             })
+            if (uploaded.ok) revalidatePublicData([CACHE_TAGS.playerCards])
+            return uploaded
         }
 
         const subject = await resolveCustomSubject(supabase, parsed.data)
@@ -432,6 +453,7 @@ export async function uploadPlayerCardGfxAction(formData: FormData): Promise<Res
             ensurePlayerId: playerId.ensure,
         })
         if (playerId.wasRegistered()) revalidatePublicData([CACHE_TAGS.players])
+        if (card.ok) revalidatePublicData([CACHE_TAGS.playerCards])
         return card
     } catch (error) {
         return Err(serializeError(error))

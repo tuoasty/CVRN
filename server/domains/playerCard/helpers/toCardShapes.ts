@@ -1,6 +1,7 @@
 import { CardGroupRow, CardTemplateRow, PlayerCardRow } from '@/shared/types/db'
 import { Err, Ok, Result } from '@/shared/types/result'
-import { CARD_STAT_LABELS, hasPinnedArt, CardArtFile, CardData, CardStatField, CardGroup, CardLayer, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
+import type { PublicPlayerCardRow } from '@/server/db/playerCards.repo'
+import { CARD_STAT_LABELS, hasPinnedArt, PublicPlayerCard, CardArtFile, CardData, CardStatField, CardGroup, CardLayer, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
 
 export function rankTemplates<T extends { minOvr: number }>(templates: T[]): (T & { rank: number })[] {
     return [...templates].sort((a, b) => b.minOvr - a.minOvr).map((t, i) => ({ ...t, rank: i + 1 }))
@@ -112,6 +113,26 @@ export function toPlayerCard(row: PlayerCardRow): PlayerCard {
         imageUrl: row.image_url,
         generatedAt: row.generated_at,
     }
+}
+
+export type { PublicPlayerCardRow }
+
+export function toPublicPlayerCards(rows: PublicPlayerCardRow[]): PublicPlayerCard[] {
+    return [...rows]
+        .sort((a, b) =>
+            b.season_number - a.season_number
+            || a.group.sort_order - b.group.sort_order
+            || a.group.name.localeCompare(b.group.name))
+        .map(row => ({
+            seasonNumber: row.season_number,
+            groupId: row.group_id,
+            groupName: row.group.name,
+            ovr: row.ovr,
+            teamName: row.team?.name ?? null,
+            imageUrl: row.image_url,
+            width: row.group.canvas_width,
+            height: row.group.canvas_height,
+        }))
 }
 
 export function statCellText(field: CardStatField, data: CardData): string {
