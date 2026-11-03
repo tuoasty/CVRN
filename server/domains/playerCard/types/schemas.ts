@@ -171,6 +171,12 @@ export const PreviewCustomPlayerCardSchema = CustomCardBaseSchema.extend({
 })
 export type PreviewCustomPlayerCardInput = z.infer<typeof PreviewCustomPlayerCardSchema>
 
+export const UploadPlayerCardGfxSchema = z.discriminatedUnion('kind', [
+    PlayerCardsQuerySchema.extend({ kind: z.literal('board'), groupId: z.string().uuid(), overrides: CardOverridesSchema.optional() }),
+    CustomCardBaseSchema.extend({ kind: z.literal('custom'), groupId: z.string().uuid() }),
+])
+export type UploadPlayerCardGfxInput = z.infer<typeof UploadPlayerCardGfxSchema>
+
 const CanvasSide = z.number({ error: 'Canvas sides must be numbers' }).int('Canvas sides must be whole numbers').min(100, 'Canvas sides must be at least 100px').max(4000, 'Canvas sides must be 4000px or less')
 
 const CardGroupFieldsSchema = z.object({
@@ -203,6 +209,24 @@ export const UpdateCardTemplateSchema = CardTemplateFieldsSchema.extend({ templa
 export type UpdateCardTemplateInput = z.infer<typeof UpdateCardTemplateSchema>
 
 export const CardTemplateIdSchema = z.object({ templateId: z.string().uuid() })
+
+const BulkSeasonNumber = z.number().int('Season must be a whole number').min(1, 'Season must be at least 1')
+
+export const StartCardBulkSchema = z.object({
+    seasonNumber: BulkSeasonNumber,
+    regionCode: z.string().trim().min(1).max(8),
+    groupId: z.string().uuid(),
+    mode: z.enum(['missing', 'all']),
+})
+export type StartCardBulkInput = z.infer<typeof StartCardBulkSchema>
+
+export const CardBulkJobIdSchema = z.object({ jobId: z.string().uuid() })
+
+export const CardPlayerIdsSchema = z.object({
+    seasonNumber: BulkSeasonNumber,
+    groupId: z.string().uuid(),
+})
+export type CardPlayerIdsInput = z.infer<typeof CardPlayerIdsSchema>
 
 export const UploadCardArtSchema = z.object({
     templateId: z.string().uuid(),

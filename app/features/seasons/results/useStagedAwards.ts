@@ -1,7 +1,7 @@
 "use client";
 
 import {useCallback, useEffect, useReducer, useRef, useState} from "react";
-import {batchUpsertSeasonAwardsAction, getAwardNameSuggestionsAction} from "@/app/actions/season.actions";
+import {addAwardNameAction, batchUpsertSeasonAwardsAction, getAwardNameSuggestionsAction} from "@/app/actions/season.actions";
 import {awardSpecWinnerAction} from "@/app/actions/spec.actions";
 import {PlayerWithTeamInfo} from "@/server/domains/player";
 import {SeasonAwardEntryWithPlayer} from "@/server/domains/season";
@@ -9,10 +9,11 @@ import {SpecWinnerWithRefs} from "@/server/domains/spec";
 import type {LeagueSpec} from "@/server/domains/spec/types";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
-import {stagedAwardsReducer, toBatchAwards} from "./stagedAwards";
+import {resolveListedName, stagedAwardsReducer, toBatchAwards} from "./stagedAwards";
 import {AwardBarCategory, BarCategory, BarTarget, isBarCategory, isStagedAward, isStagedSpec} from "./types";
 
 const DEFAULT_TARGET: BarTarget = {category: "individual_winners", team: "A", slot: "starter"};
+const EMPTY_LIST: string[] = [];
 
 interface Options {
     seasonId: string;
@@ -38,6 +39,7 @@ export function useStagedAwards({seasonId, awards, specWinners, initialSuggestio
     const requested = useRef(new Set(Object.keys(initialSuggestions) as AwardBarCategory[]));
     const nameRef = useRef<HTMLInputElement | null>(null);
     const playerRef = useRef<HTMLInputElement | null>(null);
+    const awardList = suggestions.individual_winners ?? EMPTY_LIST;
 
     useEffect(() => {
         const category = target.category;
@@ -85,13 +87,37 @@ export function useStagedAwards({seasonId, awards, specWinners, initialSuggestio
                 nameRef.current?.focus();
                 return false;
             }
-            dispatch({type: "add", tempId: crypto.randomUUID(), target, awardName: name, player});
+            const awardName = target.category === "individual_winners"
+                ? resolveListedName(name, awardList)
+                : name;
+            if (awardName === null) {
+                toast.error("Pick a name from the award list");
+                nameRef.current?.focus();
+                return false;
+            }
+            dispatch({type: "add", tempId: crypto.randomUUID(), target, awardName, player});
             setName("");
         }
         setPlayerQuery("");
         focusName();
         return true;
-    }, [name, spec, stars, target, focusName]);
+    }, [name, spec, stars, target, awardList, focusName]);
+
+    const addToAwardList = useCallback(async (value: string) => {
+        try {
+            const result = await addAwardNameAction({name: value});
+            if (!result.ok) {
+                toast.error("Failed to add award", result.error.message);
+                return;
+            }
+            setSuggestions(prev => ({...prev, individual_winners: [...(prev.individual_winners ?? []), result.value]}));
+            setName(result.value);
+            focusName();
+        } catch (err) {
+            clientLogger.error("useStagedAwards", "Failed to add award name", {err});
+            toast.error("Something went wrong");
+        }
+    }, [focusName]);
 
     const removeStaged = useCallback((tempId: string) => dispatch({type: "remove", tempId}), []);
 
@@ -112,7 +138,7 @@ export function useStagedAwards({seasonId, awards, specWinners, initialSuggestio
                         const next = {...prev};
                         for (const a of [...awardItems].reverse()) {
                             const list = next[a.category];
-                            if (!list) continue;
+                            if (!list || a.category === "individual_winners") continue;
                             next[a.category] = [a.awardName, ...list.filter(n => n.toLowerCase() !== a.awardName.toLowerCase())];
                         }
                         return next;
@@ -202,6 +228,8 @@ export function useStagedAwards({seasonId, awards, specWinners, initialSuggestio
         startSpecEdit,
         stopEdit,
         suggestions: target.category === "spec" ? [] : suggestions[target.category] ?? [],
+        awardList,
+        addToAwardList,
         nameRef,
         playerRef,
     };

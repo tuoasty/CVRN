@@ -17,7 +17,7 @@ export async function getPlayerTeamHistory(
                 joined_at,
                 left_at,
                 team:teams!team_id(id, name, slug, logo_url, logo_bg_removed, brick_color, deleted_at),
-                season:seasons!season_id(id, name, slug, start_date, end_date, region:regions!region_id(code), league_type)
+                season:seasons!season_id(id, name, slug, start_date, end_date, region:regions!region_id(code, name), league_type)
             `)
             .eq("player_id", p.playerId)
             .order("joined_at", {ascending: false});
@@ -29,7 +29,7 @@ export async function getPlayerTeamHistory(
 
         const rows: PlayerTeamHistoryEntry[] = (data ?? []).map(r => {
             const team = r.team as {id: string; name: string; slug: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null; deleted_at: string | null} | null;
-            const season = r.season as {id: string; name: string; slug: string; start_date: string; end_date: string | null; league_type:"main" | "side"; region: {code: string}} | null;
+            const season = r.season as {id: string; name: string; slug: string; start_date: string; end_date: string | null; league_type:"main" | "side"; region: {code: string; name: string}} | null;
             return {
                 team_id: team?.id ?? "",
                 team_name: team?.name ?? "",
@@ -42,6 +42,7 @@ export async function getPlayerTeamHistory(
                 season_name: season?.name ?? "",
                 season_slug: season?.slug ?? "",
                 region_code: season?.region?.code ?? "",
+                region_name: season?.region?.name ?? "",
                 league_type: season?.league_type ?? "main",
                 role: r.role as PlayerTeamHistoryEntry["role"],
                 position: (r.position ?? null) as PlayerTeamHistoryEntry["position"],

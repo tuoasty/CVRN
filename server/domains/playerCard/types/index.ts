@@ -74,6 +74,44 @@ export interface PlayerCard {
     generatedAt: string
 }
 
+export interface PublicPlayerCard {
+    seasonNumber: number
+    groupId: string
+    groupName: string
+    ovr: number
+    teamName: string | null
+    imageUrl: string
+    width: number
+    height: number
+}
+
+export type CardBulkMode = 'missing' | 'all'
+export type CardBulkJobStatus = 'running' | 'completed' | 'stopped' | 'interrupted'
+
+export interface CardBulkFailure {
+    playerId: string
+    username: string
+    message: string
+}
+
+export interface CardBulkJob {
+    id: string
+    seasonNumber: number
+    regionCode: string
+    groupId: string
+    mode: CardBulkMode
+    status: CardBulkJobStatus
+    stopRequested: boolean
+    stopReason: string | null
+    total: number
+    done: number
+    failed: number
+    failures: CardBulkFailure[]
+    currentUsername: string | null
+    startedAt: string
+    finishedAt: string | null
+}
+
 export {
     CARD_TEXT_FIELDS,
     CARD_IMAGE_FIELDS,
@@ -102,6 +140,10 @@ export {
     PlayerCardsQuerySchema,
     PreviewPlayerCardSchema,
     UpdateCardGroupLayersSchema,
+    StartCardBulkSchema,
+    CardBulkJobIdSchema,
+    CardPlayerIdsSchema,
+    UploadPlayerCardGfxSchema,
 } from './schemas'
 export type {
     CardLayer,
@@ -125,4 +167,7 @@ export type {
     UpdateCardGroupLayersInput,
     UploadCardArtInput,
     DeletePlayerCardInput,
+    StartCardBulkInput,
+    CardPlayerIdsInput,
+    UploadPlayerCardGfxInput,
 } from './schemas'

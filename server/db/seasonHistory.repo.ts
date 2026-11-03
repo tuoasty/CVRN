@@ -1,4 +1,4 @@
-import {DBClient} from "@/shared/types/db";
+import {AwardNameRow, DBClient} from "@/shared/types/db";
 import {Database} from "@/database.types";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
@@ -83,6 +83,33 @@ export async function findAwardNamesByCategory(
         .order("created_at", {ascending: false});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data ?? []);
+}
+
+export async function findAwardNames(
+    supabase: DBClient
+): Promise<Result<AwardNameRow[]>> {
+    const {data, error} = await supabase
+        .from("award_names")
+        .select("*")
+        .order("sort_order");
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+export async function insertAwardName(
+    supabase: DBClient,
+    p: {name: string; sortOrder: number}
+): Promise<Result<AwardNameRow>> {
+    const {data, error} = await supabase
+        .from("award_names")
+        .insert({name: p.name, sort_order: p.sortOrder})
+        .select()
+        .single();
+    if (error) {
+        if (error.code === "23505") return Err({message: "That award is already on the list", code: "CONFLICT"});
+        return Err(serializeError(error, "DB_ERROR"));
+    }
+    return Ok(data);
 }
 
 export async function insertSeasonAwards(

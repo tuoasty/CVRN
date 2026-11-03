@@ -1,18 +1,25 @@
 import { Err, Ok, Result } from '@/shared/types/result'
 import { DBClient } from '@/shared/types/db'
-import { serializeError } from '@/server/utils/serializeableError'
 import { logger } from '@/server/utils/logger'
-import { getSupabaseAdmin } from '@/server/supabase/admin'
-import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
-import { toCdnUrl } from '@/server/storage/toCdnUrl'
 import { getRobloxLargeHeadshot } from '@/server/roblox/users'
-import { findCardGroupById, findCardTemplates, findPlayerCard, upsertPlayerCard } from '@/server/db/playerCards.repo'
-import { CardData, CardSubject, PlayerCard } from '../types'
-import { pickTierTemplate, toCardTemplate, toPlayerCard } from './toCardShapes'
+import { CardData, CardSubject, CardTemplate, PlayerCard } from '../types'
+import { resolveCardTier } from './resolveCardTier'
+import { toCardTemplate } from './toCardShapes'
+import { saveCardImage } from './saveCardImage'
 import { loadImageAsPngDataUri } from './loadImage'
 import { loadTemplateArt } from './loadTemplateArt'
 import { renderCard } from './renderCard'
 import { loadCardFonts } from './cardFont'
+
+export type CardArtCache = Map<string, Record<string, string>>
+
+async function loadArt(template: CardTemplate, cache?: CardArtCache): Promise<Result<Record<string, string>>> {
+    const hit = cache?.get(template.id)
+    if (hit) return Ok(hit)
+    const art = await loadTemplateArt(template, { cached: false, allowMissing: false })
+    if (art.ok) cache?.set(template.id, art.value)
+    return art
+}
 
 async function resolveHeadshotUrl(subject: CardSubject): Promise<string | null> {
     const large = await getRobloxLargeHeadshot(subject.robloxUserId)
@@ -27,6 +34,28 @@ async function loadOptional(url: string | null): Promise<string | null> {
     return loaded.ok ? loaded.value : null
 }
 
+async function loadImages(subject: CardSubject): Promise<Result<{ headshot: string | null; teamLogo: string | null }>> {
+    const [headshot, teamLogo] = await Promise.all([
+        resolveHeadshotUrl(subject).then(loadOptional),
+        loadOptional(subject.teamLogoUrl),
+    ])
+    return Ok({ headshot, teamLogo })
+}
+
+async function loadImagesStrict(subject: CardSubject): Promise<Result<{ headshot: string | null; teamLogo: string | null }>> {
+    const noHeadshot = Err({ message: 'Roblox headshot unavailable', code: 'INTEGRATION_ERROR' as const })
+    const large = await getRobloxLargeHeadshot(subject.robloxUserId)
+    if (!large.ok || !large.value) return noHeadshot
+
+    const [headshot, teamLogo] = await Promise.all([
+        loadImageAsPngDataUri(large.value),
+        subject.teamLogoUrl ? loadImageAsPngDataUri(subject.teamLogoUrl) : Promise.resolve(Ok(null)),
+    ])
+    if (!headshot.ok) return noHeadshot
+    if (!teamLogo.ok) return Err({ message: 'Team logo could not be loaded', code: 'INTEGRATION_ERROR' })
+    return Ok({ headshot: headshot.value, teamLogo: teamLogo.value })
+}
+
 export async function renderAndSaveCard(
     supabase: DBClient,
     p: {
@@ -35,79 +64,40 @@ export async function renderAndSaveCard(
         subject: CardSubject
         data: CardData
         ensurePlayerId: () => Promise<Result<string>>
+        strictImages?: boolean
+        generatedBy?: string | null
+        artCache?: CardArtCache
     },
 ): Promise<Result<PlayerCard>> {
     const { seasonNumber, groupId, subject, data } = p
 
-    const group = await findCardGroupById(supabase, groupId)
-    if (!group.ok) return group
-    if (!group.value) return Err({ message: 'Card group not found', code: 'NOT_FOUND' })
-    if (!group.value.is_active) return Err({ message: `${group.value.name} is inactive`, code: 'VALIDATION_ERROR' })
-
-    const templateRows = await findCardTemplates(supabase, groupId)
-    if (!templateRows.ok) return templateRows
-    const templateRow = pickTierTemplate(templateRows.value.map(row => ({ row, minOvr: row.min_ovr })), data.ovr)?.row
-    if (!templateRow) {
-        return Err({ message: `${group.value.name} has no tier for OVR ${data.ovr}`, code: 'NOT_FOUND' })
-    }
-    const template = toCardTemplate(templateRow, group.value)
+    const resolved = await resolveCardTier(supabase, { groupId, ovr: data.ovr })
+    if (!resolved.ok) return resolved
+    const template = toCardTemplate(resolved.value.tier, resolved.value.group)
     if (!template.ok) return template
     if (!template.value.layers.some(layer => layer.kind === 'art')) {
         return Err({ message: 'This layout has no art layer, so a card would have no background', code: 'VALIDATION_ERROR' })
     }
 
-    const art = await loadTemplateArt(template.value, { cached: false, allowMissing: false })
+    const art = await loadArt(template.value, p.artCache)
     if (!art.ok) return art
 
-    const [headshot, teamLogo] = await Promise.all([
-        resolveHeadshotUrl(subject).then(loadOptional),
-        loadOptional(subject.teamLogoUrl),
-    ])
+    const images = await (p.strictImages ? loadImagesStrict(subject) : loadImages(subject))
+    if (!images.ok) return images
 
     const fonts = await loadCardFonts()
     if (!fonts.ok) return fonts
 
-    const png = await renderCard(template.value, data, { art: art.value, headshot, teamLogo }, fonts.value)
+    const png = await renderCard(template.value, data, { art: art.value, ...images.value }, fonts.value)
 
-    const playerId = await p.ensurePlayerId()
-    if (!playerId.ok) return playerId
-
-    const admin = getSupabaseAdmin()
-    const path = STORAGE_PATHS.playerCard(playerId.value, seasonNumber)
-    const { error: uploadError } = await admin.storage
-        .from(BUCKETS.PUBLIC)
-        .upload(path, png, { contentType: 'image/png', cacheControl: '31536000', upsert: false })
-    if (uploadError) {
-        logger.error({ error: uploadError, path }, 'renderAndSaveCard: upload failed')
-        return Err(serializeError(uploadError, 'INTEGRATION_ERROR'))
-    }
-    const imageUrl = toCdnUrl(admin.storage.from(BUCKETS.PUBLIC).getPublicUrl(path).data.publicUrl)
-
-    const previous = await findPlayerCard(supabase, { playerId: playerId.value, seasonNumber, groupId })
-
-    const saved = await upsertPlayerCard(supabase, {
-        player_id: playerId.value,
-        season_number: seasonNumber,
-        group_id: groupId,
-        template_id: template.value.id,
-        ovr: data.ovr,
-        ...data.attributes,
-        position: data.position,
-        team_id: subject.teamId,
-        image_path: path,
-        image_url: imageUrl,
-        generated_at: new Date().toISOString(),
+    return saveCardImage(supabase, {
+        seasonNumber,
+        groupId,
+        templateId: template.value.id,
+        subject,
+        data,
+        png,
+        ensurePlayerId: p.ensurePlayerId,
+        generatedBy: p.generatedBy,
     })
-    if (!saved.ok) {
-        await admin.storage.from(BUCKETS.PUBLIC).remove([path])
-        return saved
-    }
-
-    const oldPath = previous.ok ? previous.value?.image_path : null
-    if (oldPath && oldPath !== path) {
-        const { error: removeError } = await admin.storage.from(BUCKETS.PUBLIC).remove([oldPath])
-        if (removeError) logger.warn({ error: removeError, oldPath }, 'renderAndSaveCard: old card cleanup failed')
-    }
-
-    return Ok(toPlayerCard(saved.value))
 }

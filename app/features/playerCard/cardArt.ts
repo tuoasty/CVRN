@@ -23,6 +23,10 @@ export function missingArt(layers: CardLayer[], files: Pick<CardArtFile, 'name'>
     return layoutArtSlots(layers).map(slot => slot.name).filter(name => !files.some(file => file.name === name))
 }
 
+export function tierHasArt(layers: CardLayer[], files: Pick<CardArtFile, 'name'>[]): boolean {
+    return layoutArtSlots(layers).length > 0 && missingArt(layers, files).length === 0
+}
+
 export function artFitWarning(image: { width: number; height: number }, box: { w: number; h: number }): string | null {
     const shape = Math.abs(image.width / image.height - box.w / box.h) / (box.w / box.h) > SHAPE_TOLERANCE
     const small = image.width < box.w || image.height < box.h
@@ -45,6 +49,16 @@ export async function checkArtFile(file: File): Promise<string | null> {
     const size = readPngSize(new Uint8Array(await file.slice(0, 24).arrayBuffer()))
     if (!size) return 'Art must be a PNG file'
     if (size.width * size.height > CARD_ART_MAX_PIXELS) return `${size.width} × ${size.height} is too large. Art can be up to 16 megapixels.`
+    return null
+}
+
+export async function checkGfxFile(file: File, canvas: { width: number; height: number }): Promise<string | null> {
+    if (file.size > CARD_ART_MAX_BYTES) return 'GFX must be 2.9 MB or smaller. It is stored as uploaded, so export a smaller PNG.'
+    const size = readPngSize(new Uint8Array(await file.slice(0, 24).arrayBuffer()))
+    if (!size) return 'GFX must be a PNG file'
+    if (size.width !== canvas.width || size.height !== canvas.height) {
+        return `GFX must be exactly ${canvas.width} × ${canvas.height}. This file is ${size.width} × ${size.height}.`
+    }
     return null
 }
 
@@ -83,7 +97,9 @@ export function generateBlocker(p: {
     layers: CardLayer[]
     tierName: string | null
     missing: string[]
+    bulkRunning?: string | null
 }): string | null {
+    if (p.bulkRunning) return p.bulkRunning
     if (p.notReady) return p.notReady
     if (p.inputProblem) return p.inputProblem
     if (p.inactiveGroup) return p.inactiveGroup
@@ -94,4 +110,14 @@ export function generateBlocker(p: {
     if (layoutArtSlots(p.layers).length === 0) return 'This layout has no art layer, so a card would have no background'
     if (p.missing.length > 0) return `${p.tierName} has no ${p.missing.join(', ')} yet. Upload it on Card Groups.`
     return null
+}
+
+export function gfxBlocker(p: {
+    notReady: string | null
+    inputProblem: string | null
+    inactiveGroup: string | null
+    noTier: string | null
+    bulkRunning: string | null
+}): string | null {
+    return p.bulkRunning ?? p.notReady ?? p.inputProblem ?? p.inactiveGroup ?? p.noTier
 }

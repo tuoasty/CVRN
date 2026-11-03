@@ -4,6 +4,8 @@ import { logger } from '@/server/utils/logger'
 import { CARD_ART_MAX_PIXELS } from '../types'
 import { createByteCache } from './byteCache'
 
+sharp.cache(false)
+
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000
 const CACHE_MAX_BYTES = 50 * 1024 * 1024
 const FETCH_TIMEOUT_MS = 15_000

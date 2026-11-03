@@ -8,7 +8,7 @@ import type { AbilityIndexEntry } from '../../../types/abilityIndex'
 
 const fixture = (name: string) => readFileSync(join(__dirname, '../../../__tests__/fixtures', name), 'utf8')
 
-function loadPayloads(): Omit<GameDatasetPayloads, 'specLoadouts'> {
+function loadPayloads(): Pick<GameDatasetPayloads, 'rarities' | 'abilities' | 'physicals' | 'technicals'> {
     const preview = buildImportPreview([fixture('rarities.txt'), fixture('abilities.txt'), fixture('attributes.txt')].join('\n\n'))
     if (preview.status !== 'ok') throw new Error(preview.error.message)
     const payload = <K extends keyof GameDatasetPayloads>(kind: K) =>

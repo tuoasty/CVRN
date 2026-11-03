@@ -30,6 +30,7 @@ export {fetchChampionRosterAwards} from "./commands/fetchChampionRosterAwards";
 export {batchUpsertSeasonAwards} from "./commands/batchUpsertSeasonAwards";
 export {updateSeasonAward} from "./commands/updateSeasonAward";
 export {reorderSeasonAwards} from "./commands/reorderSeasonAwards";
+export {addAwardName} from "./commands/addAwardName";
 export {upsertSeasonAllStarTeamName} from "./commands/upsertSeasonAllStarTeamName";
 export {setAllStarCaptain} from "./commands/setAllStarCaptain";
 export type {
@@ -52,6 +53,7 @@ export type {
     UpsertSeasonAllStarTeamNameInput,
     SetAllStarCaptainInput,
     AwardNameSuggestionsInput,
+    AddAwardNameInput,
 } from "./types";
 export {
     UpsertSeasonPodiumSlotSchema,
@@ -68,4 +70,5 @@ export {
     UpsertSeasonAllStarTeamNameSchema,
     SetAllStarCaptainSchema,
     AwardNameSuggestionsSchema,
+    AddAwardNameSchema,
 } from "./types";

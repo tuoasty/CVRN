@@ -86,18 +86,10 @@ export default function PublicFooter() {
                     </div>
                     <div className="pt-2 border-t border-border/50">
                         <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                            Logo Design
+                            Logo and Hero Banner Design
                         </p>
                         <p className="text-xs text-muted-foreground">
                             by <span className="font-medium text-foreground/80">CH332Y (@slayden_dirksz)</span>
-                        </p>
-                    </div>
-                    <div className="pt-2 border-t border-border/50">
-                        <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                            Hero Banner Design
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            by <span className="font-medium text-foreground/80">nightmoon (@nightmoon_vb)</span>
                         </p>
                     </div>
                 </div>

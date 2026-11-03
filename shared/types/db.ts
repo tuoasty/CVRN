@@ -117,6 +117,9 @@ export type PlayerOverallRow =
 export type SeasonOverallInputRow =
     Database["public"]["Functions"]["get_overall_inputs"]["Returns"][number];
 
+export type AwardNameRow =
+    Database["public"]["Tables"]["award_names"]["Row"];
+
 export type CardGroupRow =
     Database["public"]["Tables"]["card_groups"]["Row"];
 
@@ -134,6 +137,15 @@ export type PlayerCardRow =
 
 export type PlayerCardInsert =
     Database["public"]["Tables"]["player_cards"]["Insert"];
+
+export type CardBulkJobRow =
+    Database["public"]["Tables"]["card_bulk_jobs"]["Row"];
+
+export type CardBulkJobInsert =
+    Database["public"]["Tables"]["card_bulk_jobs"]["Insert"];
+
+export type CardBulkJobUpdate =
+    Database["public"]["Tables"]["card_bulk_jobs"]["Update"];
 
 export type GameAbilitySettingRow =
     Database["public"]["Tables"]["game_ability_settings"]["Row"];

@@ -8,6 +8,12 @@ export type CacheTagInfo = {
 };
 
 export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
+    [CACHE_TAGS.playerCards]: {
+        label: "Player Cards",
+        description: "Generated and uploaded player cards shown publicly.",
+        readCount: 1,
+        affects: "Player detail",
+    },
     [CACHE_TAGS.standings]: {
         label: "Standings",
         description: "Standings table ordering and totals.",
@@ -18,7 +24,7 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Matches",
         description:
             "Match lists, schedules, match detail pages, box scores, standings and playoff rounds. Widest blast radius.",
-        readCount: 16,
+        readCount: 17,
         affects: "Matches, match detail, standings, playoffs, home",
     },
     [CACHE_TAGS.playoffs]: {
@@ -30,14 +36,14 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     [CACHE_TAGS.teams]: {
         label: "Teams",
         description: "Team pages, logos, and rosters.",
-        readCount: 14,
+        readCount: 16,
         affects: "Teams, team detail, matches, match detail, archive, home, records",
     },
     [CACHE_TAGS.players]: {
         label: "Players",
         description:
             "Player profiles, avatars, and rosters. Also backs the identity (names, avatars, team logos) joined onto both leaderboards.",
-        readCount: 13,
+        readCount: 15,
         affects: "Players, player detail, teams, match detail, archive, leaderboards, records",
     },
     [CACHE_TAGS.seasons]: {
@@ -80,7 +86,7 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Stats",
         description:
             "Player box-score numbers behind both leaderboards and the records page. Held for 30 days and purged only by a stats sync, so this is the tag to press after uploading match sheets. Purging it also rebuilds the records table first.",
-        readCount: 4,
+        readCount: 5,
         affects: "Season leaderboard, all-time leaderboard, records page, spec calibration",
     },
     [CACHE_TAGS.specs]: {
@@ -94,7 +100,7 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Raw Stats",
         description:
             "Raw (unpublished) per-player box-score totals and percentile ranks read directly off player_match_stats, independent of the Publish gate on the Stats tag. Ranks are strength-of-schedule adjusted, so match result changes regenerate it too. Held for 7 days.",
-        readCount: 3,
+        readCount: 5,
         affects: "Player detail API, stats summary API",
     },
 };
@@ -114,4 +120,5 @@ export const CACHE_TAG_ORDER: CacheTag[] = [
     CACHE_TAGS.gameData,
     CACHE_TAGS.specs,
     CACHE_TAGS.rawStats,
+    CACHE_TAGS.playerCards,
 ];

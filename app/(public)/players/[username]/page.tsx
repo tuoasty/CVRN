@@ -1,5 +1,6 @@
 import {notFound} from "next/navigation";
-import {getCachedPlayerDetail} from "@/server/cache/publicReads";
+import {getCachedPlayerCards, getCachedPlayerDetail, getCachedPlayerRecentMatches} from "@/server/cache/publicReads";
+import {readOrEmpty} from "@/server/cache/readOrEmpty";
 import PlayerDetailPage from "./PlayerDetailPage";
 
 type Props = {
@@ -18,5 +19,10 @@ export default async function PlayerPage({params}: Props) {
         notFound();
     }
 
-    return <PlayerDetailPage detail={detail} />;
+    const [cards, matches] = await Promise.all([
+        readOrEmpty(getCachedPlayerCards(detail.player.id), "player cards"),
+        readOrEmpty(getCachedPlayerRecentMatches(detail.player.id), "recent matches"),
+    ]);
+
+    return <PlayerDetailPage detail={detail} cards={cards} matches={matches} />;
 }

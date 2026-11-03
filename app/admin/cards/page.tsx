@@ -16,6 +16,8 @@ import { LINK } from '@/app/features/playerCard/cardFormStyles'
 import PlayerCardWorkbench, { type LayoutDrafts } from '@/app/features/playerCard/PlayerCardWorkbench'
 import CustomCardWorkbench from '@/app/features/playerCard/CustomCardWorkbench'
 import CustomPlayerPicker, { type CustomPlayerChoice } from '@/app/features/playerCard/CustomPlayerPicker'
+import CardBulkStatus from '@/app/features/playerCard/CardBulkStatus'
+import CardBulkControls from '@/app/features/playerCard/CardBulkControls'
 import { pickTierTemplate } from '@/server/domains/playerCard/helpers/toCardShapes'
 import { cn } from '@/lib/utils'
 
@@ -93,6 +95,8 @@ function AdminCardsContent() {
     const visibleRows = useMemo(() => rows.filter(r => matchesOverallFilters(r, 'ALL', q)), [rows, q])
     const selected = rows.find(r => r.playerId === playerId) ?? null
     const emptyNote = boardLoading ? 'Loading players...' : 'No player on this board to preview with'
+    const groupDraft = group ? drafts[group.id] : undefined
+    const layoutDirty = groupDraft !== undefined && JSON.stringify(groupDraft) !== JSON.stringify(group?.layers ?? [])
 
     return (
         <div className="page-wide py-6">
@@ -101,6 +105,8 @@ function AdminCardsContent() {
                 <span className="text-sm text-muted-foreground">Layout and generation</span>
                 <Link href="/admin/cards/groups" className={LINK}>Manage groups and tiers</Link>
             </div>
+
+            <CardBulkStatus />
 
             <section className="mt-6">
                 <div className="flex flex-wrap items-end gap-x-8 gap-y-2">
@@ -131,6 +137,14 @@ function AdminCardsContent() {
                         onSelect={setSource}
                     />
                 </div>
+
+                <CardBulkControls
+                    seasonNumber={seasonNumber}
+                    region={region === REGION_ALL ? null : region}
+                    group={group}
+                    rows={rows}
+                    dirty={layoutDirty}
+                />
 
                 {catalogError ? (
                     <p className="mt-4 text-sm text-destructive">{catalogError}</p>

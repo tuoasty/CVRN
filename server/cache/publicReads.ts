@@ -22,6 +22,9 @@ import {
     getPlayerRawStatsBySeasonNumber,
     getRawStatSummaryBySeasonNumber,
 } from "@/server/domains/player";
+import {pickMainTeam} from "@/server/domains/player/helpers/pickMainTeam";
+import {getPublicPlayerCards} from "@/server/domains/playerCard";
+import type {PublicPlayerCard} from "@/server/domains/playerCard";
 import {findHeldSpecSeasonId} from "@/server/db/seasons.repo";
 import type {PlayerDetail} from "@/server/domains/player";
 import {
@@ -36,6 +39,7 @@ import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 import {getPlayoffBracketBySeasonId} from "@/server/domains/playoff";
 import type {PlayoffRound} from "@/server/domains/playoff";
 import {
+    getPlayerRecentMatches,
     getUpcomingMatches,
     getRecentMatches,
     getMatchDetail,
@@ -51,7 +55,7 @@ import {
     getTeamMatches,
     getMatchSitemapRows,
 } from "@/server/domains/match";
-import type {MatchWithDetails} from "@/server/domains/match";
+import type {MatchWithDetails, PlayerRecentMatch} from "@/server/domains/match";
 import {getSeasonPodium} from "@/server/domains/season";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
@@ -61,7 +65,7 @@ import {getPublicSpecSnapshot, getPublishedSpecRegions, getPublicSpecs, getRecen
 import {getRecords} from "@/server/domains/record";
 import {getSeasonOverallInputs} from "@/server/domains/overall";
 import {Result} from "@/shared/types/result";
-import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS, RAW_STATS_REVALIDATE_SECONDS} from "./tags";
+import {CACHE_TAGS, CARDS_REVALIDATE_SECONDS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS, RAW_STATS_REVALIDATE_SECONDS} from "./tags";
 
 function unwrap<T>(result: Result<T, {message: string}>, label: string): T {
     if (!result.ok) {
@@ -123,20 +127,39 @@ export const getCachedPlayerDetail = unstable_cache(
     async (username: string): Promise<PlayerDetail | null> => {
         const supabase = createPublicClient();
 
-        const player = unwrapNullable(
+        const found = unwrapNullable(
             await getPlayerByUsername(supabase, {username}),
             "getCachedPlayerDetail",
         );
-        if (!player) return null;
+        if (!found) return null;
 
         const [stats, awards, specs, teamHistory] = await Promise.all([
-            getPlayerSeasonStats(supabase, {playerId: player.id}),
-            getPlayerAwards(supabase, {playerId: player.id}),
-            getPlayerSpecs(supabase, {playerId: player.id}),
-            getPlayerTeamHistory(supabase, {playerId: player.id}),
+            getPlayerSeasonStats(supabase, {playerId: found.id}),
+            getPlayerAwards(supabase, {playerId: found.id}),
+            getPlayerSpecs(supabase, {playerId: found.id}),
+            getPlayerTeamHistory(supabase, {playerId: found.id}),
         ]);
 
         const specList = unwrap(specs, "getCachedPlayerDetail.specs");
+        const seasonStats = unwrap(stats, "getCachedPlayerDetail.seasonStats");
+        const history = unwrap(teamHistory, "getCachedPlayerDetail.teamHistory");
+
+        const main = pickMainTeam(history, seasonStats);
+        const player = main ? {
+            ...found,
+            current_team: {
+                team_id: main.team_id,
+                season_id: main.season_id,
+                team_name: main.team_name,
+                team_logo_url: main.team_logo_url,
+                team_logo_bg_removed: main.team_logo_bg_removed,
+                team_brick_color: main.team_brick_color,
+                season_name: main.season_name,
+                region_code: main.region_code,
+                region_name: main.region_name,
+            },
+            current_position: main.position,
+        } : found;
 
         let activeSpec: PlayerDetail["activeSpec"] = null;
         const currentSeasonId = player.current_team?.season_id;
@@ -150,15 +173,32 @@ export const getCachedPlayerDetail = unstable_cache(
 
         return {
             player,
-            seasonStats: unwrap(stats, "getCachedPlayerDetail.seasonStats"),
+            seasonStats,
             awards: unwrap(awards, "getCachedPlayerDetail.awards"),
             specs: specList,
             activeSpec,
-            teamHistory: unwrap(teamHistory, "getCachedPlayerDetail.teamHistory"),
+            teamHistory: history,
         };
     },
     ["public:player-detail"],
     {tags: [CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedPlayerCards = unstable_cache(
+    async (playerId: string): Promise<PublicPlayerCard[]> =>
+        unwrap(await getPublicPlayerCards(createPublicClient(), {playerId}), "getCachedPlayerCards"),
+    ["public:player-cards"],
+    {tags: [CACHE_TAGS.playerCards], revalidate: CARDS_REVALIDATE_SECONDS},
+);
+
+export const getCachedPlayerRecentMatches = unstable_cache(
+    async (playerId: string): Promise<PlayerRecentMatch[]> =>
+        unwrap(await getPlayerRecentMatches(createPublicClient(), {playerId}), "getCachedPlayerRecentMatches"),
+    ["public:player-recent-matches"],
+    {
+        tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.stats, CACHE_TAGS.rawStats],
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+    },
 );
 
 export const getCachedTeamsWithRegions = unstable_cache(

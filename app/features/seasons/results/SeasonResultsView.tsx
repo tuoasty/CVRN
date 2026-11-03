@@ -1,6 +1,6 @@
 "use client";
 
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useMemo, useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {ChevronLeft} from "lucide-react";
@@ -24,6 +24,7 @@ import {SpecWinnersSection, mergeSpecWinner} from "@/app/features/seasons/result
 import {AwardRows} from "@/app/features/seasons/results/AwardRows";
 import {AllStarColumns} from "@/app/features/seasons/results/AllStarColumns";
 import {ChampionRosterColumns} from "@/app/features/seasons/results/ChampionRosterColumns";
+import {useStickyOffset} from "@/app/hooks/useStickyOffset";
 import {useStagedAwards} from "@/app/features/seasons/results/useStagedAwards";
 import {useAwardEditor} from "@/app/features/seasons/results/useAwardEditor";
 import {useSpecWinnerEditor} from "@/app/features/seasons/results/useSpecWinnerEditor";
@@ -39,20 +40,6 @@ function statusMeta(season: Season) {
     if (status === "ended" && season.end_date) return `Ended ${formatDay(season.end_date)}`;
     if (status === "upcoming") return `Starts ${formatDay(season.start_date)}`;
     return season.end_date ? `In progress · ends ${formatDay(season.end_date)}` : "In progress";
-}
-
-function useStickyOffset() {
-    const [top, setTop] = useState(0);
-    useEffect(() => {
-        const header = document.querySelector("header");
-        if (!header) return;
-        const update = () => setTop(header.getBoundingClientRect().height);
-        update();
-        const observer = new ResizeObserver(update);
-        observer.observe(header);
-        return () => observer.disconnect();
-    }, []);
-    return top;
 }
 
 export type SeasonResultsData = SeasonResultsPageData;
@@ -111,7 +98,7 @@ export function SeasonResultsView({seasonId, initial}: {seasonId: string; initia
 
     const onSpecSaved = useCallback((winner: SpecWinnerWithRefs) => setSpecWinners(prev => mergeSpecWinner(prev, winner)), []);
     const bar = useStagedAwards({seasonId, awards, specWinners, initialSuggestions: initial.suggestions, onAwardsSaved: setAwards, onSpecSaved});
-    const editor = useAwardEditor({awards, setAwards, refreshAwards, onRemoved: bar.stopEdit});
+    const editor = useAwardEditor({awards, setAwards, refreshAwards, onRemoved: bar.stopEdit, awardList: bar.awardList});
     const editingSpecId = bar.editingSpec?.id ?? null;
     const stopEdit = bar.stopEdit;
     const onSpecRemoved = useCallback((winnerId: string) => {

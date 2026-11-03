@@ -38,6 +38,24 @@ export async function findCardTemplates(supabase: DBClient, groupId?: string): P
     return Ok((data ?? []) as CardTemplateRow[])
 }
 
+export interface PublicPlayerCardRow {
+    season_number: number
+    group_id: string
+    ovr: number
+    image_url: string
+    group: { name: string; sort_order: number; canvas_width: number; canvas_height: number }
+    team: { name: string } | null
+}
+
+export async function findPublicPlayerCards(supabase: DBClient, p: { playerId: string }): Promise<Result<PublicPlayerCardRow[]>> {
+    const { data, error } = await supabase
+        .from('player_cards')
+        .select('season_number, group_id, ovr, image_url, group:card_groups!group_id(name, sort_order, canvas_width, canvas_height), team:teams!team_id(name)')
+        .eq('player_id', p.playerId)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []) as unknown as PublicPlayerCardRow[])
+}
+
 export async function findPlayerCards(supabase: DBClient, p: { playerId: string; seasonNumber: number }): Promise<Result<PlayerCardRow[]>> {
     const { data, error } = await supabase
         .from('player_cards')
@@ -61,6 +79,19 @@ export async function findPlayerCard(
         .maybeSingle()
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok(data as PlayerCardRow | null)
+}
+
+export async function findPlayerIdsWithCards(
+    supabase: DBClient,
+    p: { seasonNumber: number; groupId: string },
+): Promise<Result<string[]>> {
+    const { data, error } = await supabase
+        .from('player_cards')
+        .select('player_id')
+        .eq('season_number', p.seasonNumber)
+        .eq('group_id', p.groupId)
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok((data ?? []).map(row => row.player_id))
 }
 
 export interface PlayerSeasonRoster {

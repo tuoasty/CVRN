@@ -208,4 +208,23 @@ describe('renderCard', () => {
         expect(meta.width).toBe(500)
         expect(meta.height).toBe(700)
     }, 30000)
+
+    it('renders the same card twice from one set of fonts', async () => {
+        const template: CardTemplate = {
+            id: 't',
+            groupId: 'g',
+            name: 'Base',
+            minOvr: 1,
+            width: 200,
+            height: 100,
+            layers: CardLayersSchema.parse([
+                { kind: 'text', field: 'username', x: 0, y: 0, w: 200, h: 50, size: 30, align: 'center' },
+            ]),
+        }
+        const fonts = await loadTestFonts()
+        const assets = { art: {}, headshot: null, teamLogo: null }
+        const first = await renderCard(template, data, assets, fonts)
+        const second = await renderCard(template, data, assets, fonts)
+        expect(second.equals(first)).toBe(true)
+    }, 30000)
 })

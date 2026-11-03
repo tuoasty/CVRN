@@ -100,3 +100,50 @@ export type MatchWithDetailsRow = {
 };
 
 export type MatchSitemapRow = Pick<Match, "match_code" | "season_id" | "home_team_id" | "away_team_id" | "updated_at">;
+
+export interface PlayerMatchSide {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+    logoBgRemoved: boolean;
+    isBye: boolean;
+}
+
+export interface PlayerMatchCandidate {
+    id: string;
+    seasonId: string;
+    seasonNumber: number;
+    seasonSlug: string;
+    regionCode: string;
+    matchCode: string | null;
+    matchType: "season" | "playoffs";
+    week: number | null;
+    scheduledAt: string | null;
+    isForfeit: boolean;
+    home: PlayerMatchSide | null;
+    away: PlayerMatchSide | null;
+    homeSetsWon: number | null;
+    awaySetsWon: number | null;
+    sets: {setNumber: number; homeScore: number; awayScore: number}[];
+}
+
+export interface PlayerRosterWindow {
+    teamId: string;
+    seasonId: string;
+    joinedAt: string;
+    leftAt: string | null;
+}
+
+export interface PlayerRecentMatch {
+    id: string;
+    href: {matchCode: string | null; homeTeamName: string; awayTeamName: string; regionCode: string; seasonSlug: string};
+    roundLabel: string;
+    scheduledAt: string | null;
+    regionCode: string;
+    isForfeit: boolean;
+    team: PlayerMatchSide;
+    opponent: PlayerMatchSide;
+    teamSets: number | null;
+    opponentSets: number | null;
+    setScores: {team: number; opponent: number}[];
+}

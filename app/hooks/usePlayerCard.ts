@@ -14,6 +14,7 @@ import {
     updateCardTemplateAction,
     updateCardGroupLayersAction,
     uploadCardTemplateArtAction,
+    uploadPlayerCardGfxAction,
 } from "@/app/actions/playerCard.actions";
 import { checkArtFile, pickPreviewImage } from "@/app/features/playerCard/cardArt";
 import type {
@@ -26,6 +27,7 @@ import type {
     PreviewCustomPlayerCardInput,
     UpdateCardGroupInput,
     UpdateCardTemplateInput,
+    UploadPlayerCardGfxInput,
 } from "@/server/domains/playerCard";
 import { Err, Ok, type Result } from "@/shared/types/result";
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
@@ -34,6 +36,10 @@ export const cardCatalogKey = ["cardCatalog"] as const;
 
 export function playerCardsKey(playerId: string, seasonNumber: number) {
     return ["playerCards", playerId, seasonNumber] as const;
+}
+
+export function cardPlayerIdsKey(seasonNumber: number, groupId: string) {
+    return ["cardPlayerIds", seasonNumber, groupId] as const;
 }
 
 export type CardPreviewRequest =
@@ -114,7 +120,8 @@ export function useCardPreview(request: CardPreviewRequest | null, scope: string
     };
 }
 
-export function storePlayerCard(card: PlayerCard) {
+export async function storePlayerCard(card: PlayerCard) {
+    await globalMutate(cardPlayerIdsKey(card.seasonNumber, card.groupId));
     return globalMutate(
         playerCardsKey(card.playerId, card.seasonNumber),
         (current: PlayerCard[] | undefined) => [...(current ?? []).filter(c => c.groupId !== card.groupId), card],
@@ -130,8 +137,20 @@ export async function deletePlayerCard(card: Pick<PlayerCard, "playerId" | "seas
             (current: PlayerCard[] | undefined) => (current ?? []).filter(c => c.groupId !== card.groupId),
             { revalidate: false }
         );
+        await globalMutate(cardPlayerIdsKey(card.seasonNumber, card.groupId));
     }
     return result;
+}
+
+export async function uploadPlayerCardGfx(payload: UploadPlayerCardGfxInput, file: File): Promise<Result<PlayerCard>> {
+    const body = new FormData();
+    body.set("payload", JSON.stringify(payload));
+    body.set("file", file);
+    try {
+        return await uploadPlayerCardGfxAction(body);
+    } catch {
+        return Err({ message: "Upload failed. The file may be over the 2.9 MB limit, or the connection dropped.", code: "INTEGRATION_ERROR" });
+    }
 }
 
 export async function saveCardGroupLayers(groupId: string, layers: CardLayer[]) {

@@ -3,6 +3,12 @@ import {BatchUpsertSeasonAwardsInput} from "@/server/domains/season";
 import type {LeagueSpec} from "@/server/domains/spec/types";
 import {BarTarget, CATEGORY_LABELS, StagedAward, StagedItem, isStagedAward} from "./types";
 
+export function resolveListedName(value: string, list: readonly string[]): string | null {
+    const key = value.trim().toLowerCase();
+    if (!key) return null;
+    return list.find(name => name.toLowerCase() === key) ?? null;
+}
+
 export type StagedAction =
     | {type: "add"; tempId: string; target: BarTarget; awardName: string; player: PlayerWithTeamInfo}
     | {type: "addSpec"; tempId: string; spec: LeagueSpec; stars: number; player: PlayerWithTeamInfo}

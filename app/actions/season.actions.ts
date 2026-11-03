@@ -15,9 +15,10 @@ import {
     DeriveSeasonPodiumSchema, UpsertSeasonAwardSchema, DeleteSeasonAwardSchema,
     BatchUpsertSeasonAwardsSchema, UpdateSeasonAwardSchema, ReorderSeasonAwardsSchema,
     getAwardNameSuggestions, AwardNameSuggestionsSchema, getSeasonResultsPage,
+    addAwardName, AddAwardNameSchema,
 } from "@/server/domains/season";
 import {getRobloxFullAvatarsById} from "@/server/roblox/users";
-import {requireSuperAdmin} from "@/server/domains/auth";
+import {requireAdmin, requireSuperAdmin} from "@/server/domains/auth";
 import {revalidatePath} from "next/cache";
 import {z} from "zod";
 
@@ -108,6 +109,15 @@ export async function getAwardNameSuggestionsAction(input: unknown) {
     const user = await requireAuth(supabase);
     if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
     return getAwardNameSuggestions(supabase, parsed.data);
+}
+
+export async function addAwardNameAction(input: unknown) {
+    const parsed = AddAwardNameSchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    const guard = await requireAdmin(supabase);
+    if (!guard.ok) return guard;
+    return addAwardName(supabase, parsed.data);
 }
 
 export async function getSeasonHistoryDetailAction(slug: string, regionCode:string) {
