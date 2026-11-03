@@ -36,6 +36,14 @@ const stat = (seasonId: string, regionCode: string, setsPlayed: number) => ({
 });
 
 describe("pickMainTeam", () => {
+    it("does not count a team whose season ends at this exact instant as active", () => {
+        const history = [
+            entry("na-team", "NA", {season_end_date: "2026-11-03T00:00:00.000Z"}),
+            entry("eu-team", "EU"),
+        ];
+        expect(pickMainTeam(history, [stat("s2-NA", "NA", 50)], NOW)).toBeNull();
+    });
+
     it("picks the team in the region with the most sets, even when another joined later", () => {
         const history = [
             entry("na-team", "NA", {joined_at: "2026-10-20T00:00:00.000Z"}),

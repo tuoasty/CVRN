@@ -1,6 +1,7 @@
 import type {PlayerAward, PlayerSpecEntry} from "@/server/domains/player";
 import {buildPlayerAwardList, type PlayerAwardListItem} from "@/app/utils/playerAwardList";
 import {formatPlacement} from "@/app/utils/placement";
+import {getRegionTimezone} from "@/app/utils/timezoneOptions";
 
 export const ROLE_LABELS: Record<string, string> = {
     captain: "Captain",
@@ -23,10 +24,10 @@ export function selectPlayerRecord(
     };
 }
 
-export function formatDate(isoString: string | null): string {
+export function formatDate(isoString: string | null, regionCode: string): string {
     if (!isoString) return "-";
     const d = new Date(isoString);
-    return d.toLocaleDateString("en-US", {year: "numeric", month: "short", day: "numeric"});
+    return d.toLocaleDateString("en-US", {timeZone: getRegionTimezone(regionCode), year: "numeric", month: "short", day: "numeric"});
 }
 
 export function placeLabel(award: PlayerAward): {text: string; className: string} {

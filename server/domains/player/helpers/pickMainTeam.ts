@@ -1,3 +1,4 @@
+import {isSeasonActiveAt} from "@/server/domains/season/helpers/isSeasonActive";
 import type {PlayerSeasonStat, PlayerTeamHistoryEntry} from "../types";
 
 export function pickMainTeam(
@@ -5,9 +6,7 @@ export function pickMainTeam(
     stats: Pick<PlayerSeasonStat, "season_id" | "region_code" | "sets_played">[],
     now: Date = new Date(),
 ): PlayerTeamHistoryEntry | null {
-    const active = history.filter(e =>
-        e.left_at === null && (e.season_end_date === null || new Date(e.season_end_date) >= now),
-    );
+    const active = history.filter(e => e.left_at === null && isSeasonActiveAt({end_date: e.season_end_date}, now));
     if (active.length < 2) return null;
 
     const mainLeague = active.filter(e => e.league_type === "main");

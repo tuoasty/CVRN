@@ -37,5 +37,5 @@ export function planPlayerLayout(p: {
 
     if (p.matches) return {beside: [matches], below: columns(record, [...honours, ...teams])};
     if (record.length > 0) return {beside: [record], below: columns([...honours, ...teams])};
-    return {beside: columns(teams), below: []};
+    return {beside: columns([...honours, ...teams]), below: []};
 }

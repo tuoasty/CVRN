@@ -1,17 +1,10 @@
 "use client";
 
 import {useEffect, useState} from "react";
+import {watchHeaderHeight} from "./watchHeaderHeight";
 
 export function useStickyOffset() {
     const [top, setTop] = useState(0);
-    useEffect(() => {
-        const header = document.querySelector("header");
-        if (!header) return;
-        const update = () => setTop(header.getBoundingClientRect().height);
-        update();
-        const observer = new ResizeObserver(update);
-        observer.observe(header);
-        return () => observer.disconnect();
-    }, []);
+    useEffect(() => watchHeaderHeight(() => document.querySelector("header"), setTop), []);
     return top;
 }

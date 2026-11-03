@@ -1,7 +1,12 @@
 import type {PlayerTeamHistoryEntry} from "@/server/domains/player";
+import {isSeasonActiveAt} from "@/server/domains/season/helpers/isSeasonActive";
 
 export function isSeasonEnded(entry: Pick<PlayerTeamHistoryEntry, "season_end_date">, now: Date = new Date()): boolean {
-    return entry.season_end_date !== null && new Date(entry.season_end_date) < now;
+    return !isSeasonActiveAt({end_date: entry.season_end_date}, now);
+}
+
+export function teamRowKey(entry: Pick<PlayerTeamHistoryEntry, "team_id" | "season_id">, index: number): string {
+    return `${entry.team_id}-${entry.season_id}-${index}`;
 }
 
 export function careerStatus(entry: PlayerTeamHistoryEntry, now: Date = new Date()): "Active" | "Left" | null {

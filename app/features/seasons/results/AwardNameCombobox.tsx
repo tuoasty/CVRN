@@ -23,14 +23,16 @@ interface Props {
 export function filterSuggestions(suggestions: readonly string[], value: string, limit: number = MAX_SUGGESTIONS): string[] {
     const q = value.trim().toLowerCase();
     if (!q) return suggestions.slice(0, limit);
+    const exact: string[] = [];
     const prefix: string[] = [];
     const inner: string[] = [];
     for (const s of suggestions) {
         const lower = s.toLowerCase();
-        if (lower.startsWith(q)) prefix.push(s);
+        if (lower === q) exact.push(s);
+        else if (lower.startsWith(q)) prefix.push(s);
         else if (lower.includes(q)) inner.push(s);
     }
-    return [...prefix, ...inner].slice(0, limit);
+    return [...exact, ...prefix, ...inner].slice(0, limit);
 }
 
 function Highlighted({text, query}: {text: string; query: string}) {

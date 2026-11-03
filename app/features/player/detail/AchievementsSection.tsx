@@ -19,7 +19,7 @@ export function AchievementsSection({achievements, careerHref}: {achievements: P
                         <li key={award.id} className="flex items-center gap-3 border-b border-border/60 py-2 text-sm last:border-b-0">
                             <span className={cn("w-16 shrink-0 font-mono tabular-nums", place.className)}>{place.text}</span>
                             <span className="min-w-0 flex-1 truncate text-muted-foreground">{award.region_code} · {award.season_name}</span>
-                            <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{formatDate(award.awarded_at)}</span>
+                            <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{formatDate(award.awarded_at, award.region_code)}</span>
                             <TeamLogoLink team={award} />
                         </li>
                     );

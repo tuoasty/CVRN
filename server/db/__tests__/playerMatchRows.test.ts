@@ -10,19 +10,33 @@ const STAT_COLUMNS = [
 
 function stubClient(rows: Record<string, unknown>[]) {
     const orFilters: string[] = [];
-    const builder = {
-        select: () => builder,
-        eq: () => builder,
-        in: () => builder,
-        or(filter: string) {
-            orFilters.push(filter);
-            return builder;
-        },
-        then(resolve: (value: {data: unknown; error: null}) => unknown) {
-            return Promise.resolve({data: rows, error: null}).then(resolve);
-        },
+    const startQuery = () => {
+        let matching = rows;
+        let window: [number, number] | null = null;
+        const builder = {
+            select: () => builder,
+            order: () => builder,
+            in: () => builder,
+            eq(column: string, value: unknown) {
+                matching = matching.filter(row => row[column] === undefined || row[column] === value);
+                return builder;
+            },
+            range(from: number, to: number) {
+                window = [from, to];
+                return builder;
+            },
+            or(filter: string) {
+                orFilters.push(filter);
+                return builder;
+            },
+            then(resolve: (value: {data: unknown; error: null}) => unknown) {
+                const data = window ? matching.slice(window[0], window[1] + 1) : matching.slice(0, 1000);
+                return Promise.resolve({data, error: null}).then(resolve);
+            },
+        };
+        return builder;
     };
-    return {client: {from: () => builder} as unknown as DBClient, orFilters};
+    return {client: {from: startQuery} as unknown as DBClient, orFilters};
 }
 
 function expectPlayedFilter(filter: string | undefined) {
@@ -45,5 +59,21 @@ describe("played stat rows", () => {
         const result = await findMatchIdsWithStats(client, ["m1", "m2"]);
         expectPlayedFilter(orFilters[0]);
         expect(result.ok && [...result.value]).toEqual(["m1"]);
+    });
+
+    it("counts a match whose first set was forfeited, where played rows start at set 2", async () => {
+        const {client} = stubClient([{match_id: "forfeited-set-1", set_number: 2}]);
+        const result = await findMatchIdsWithStats(client, ["forfeited-set-1"]);
+        expect(result.ok && [...result.value]).toEqual(["forfeited-set-1"]);
+    });
+
+    it("keeps reading past PostgREST's 1000 row page", async () => {
+        const rows = [
+            ...Array.from({length: 2300}, () => ({match_id: "m1", set_number: 1})),
+            {match_id: "last-page-match", set_number: 1},
+        ];
+        const {client} = stubClient(rows);
+        const result = await findMatchIdsWithStats(client, ["m1", "last-page-match"]);
+        expect(result.ok && [...result.value].sort()).toEqual(["last-page-match", "m1"]);
     });
 });

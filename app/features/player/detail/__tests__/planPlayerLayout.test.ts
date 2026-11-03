@@ -52,6 +52,11 @@ describe("planPlayerLayout", () => {
         expect(layout).toEqual({beside: expand(["aw"]), below: expand(["ht"])});
     });
 
+    it("never drops honours beside two cards when nothing else is there", () => {
+        const layout = planPlayerLayout({cards: 2, achievements: false, awards: false, honours: true, matches: false, teams: true});
+        expect(layout).toEqual({beside: expand(["ht"]), below: []});
+    });
+
     describe("with only placements below first, so no honours", () => {
         const base = {achievements: true, awards: false, honours: false, teams: true};
 

@@ -4,12 +4,13 @@ import type {MouseEvent} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
-import {isPlayerBehind} from "@/app/features/player/detail/careerBack";
+import {isPlainLeftClick, isPlayerBehind} from "@/app/features/player/detail/careerBack";
 import {useStickyOffset} from "@/app/hooks/useStickyOffset";
 
 const NAV_LINK = "font-medium text-foreground hover:underline";
 
 function jumpToSection(event: MouseEvent<HTMLAnchorElement>, id: string) {
+    if (!isPlainLeftClick(event)) return;
     event.preventDefault();
     document.getElementById(id)?.scrollIntoView();
     window.history.replaceState(window.history.state, "", `#${id}`);
@@ -38,7 +39,7 @@ export function CareerHeader({name, username, avatarUrl, playerHref, sections}: 
     const router = useRouter();
 
     const goBack = (event: MouseEvent<HTMLAnchorElement>) => {
-        if (!playerHref || !playerIsPreviousEntry(playerHref)) return;
+        if (!isPlainLeftClick(event) || !playerHref || !playerIsPreviousEntry(playerHref)) return;
         event.preventDefault();
         router.back();
     };

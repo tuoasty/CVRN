@@ -23,6 +23,11 @@ describe("filterSuggestions", () => {
         expect(filterSuggestions(list, "")).toHaveLength(8);
     });
 
+    it("puts an exact match first, so Enter cannot pick a longer name", () => {
+        const names = ["Most Valuable Player", "Most Valuable"];
+        expect(filterSuggestions(names, "most valuable", names.length)[0]).toBe("Most Valuable");
+    });
+
     it("can show a whole list in its order", () => {
         expect(filterSuggestions(list, "", list.length)).toEqual(list);
     });

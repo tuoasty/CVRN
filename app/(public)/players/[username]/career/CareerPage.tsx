@@ -7,7 +7,7 @@ import {AwardTitle} from "@/app/features/player/detail/AwardsSection";
 import {RuledSection} from "@/app/features/player/detail/RuledSection";
 import {TeamLogoLink, type TeamLogoRef} from "@/app/features/player/detail/TeamLogoLink";
 import {formatDate, placeLabel, ROLE_LABELS, selectPlayerRecord} from "@/app/features/player/detail/awardDisplay";
-import {careerStatus} from "@/app/features/player/detail/teamHistoryPreview";
+import {careerStatus, teamRowKey} from "@/app/features/player/detail/teamHistoryPreview";
 import {CareerHeader} from "./CareerHeader";
 
 const CELL = "py-2 pr-4 align-middle last:pr-0";
@@ -77,7 +77,7 @@ export default function CareerPage({detail}: {detail: PlayerDetail}) {
                                 <tr key={award.id} className={ROW}>
                                     <td className={cn(CELL, "whitespace-nowrap font-mono tabular-nums", place.className)}>{place.text}</td>
                                     <td className={MUTED_CELL}>{award.region_code} · {award.season_name}</td>
-                                    <td className={DATE_CELL}>{formatDate(award.awarded_at)}</td>
+                                    <td className={DATE_CELL}>{formatDate(award.awarded_at, award.region_code)}</td>
                                     <TeamCell team={award} />
                                 </tr>
                             );
@@ -95,7 +95,7 @@ export default function CareerPage({detail}: {detail: PlayerDetail}) {
                                 <tr key={item.key} className={ROW}>
                                     <td className={CELL}><AwardTitle item={item} /></td>
                                     <td className={MUTED_CELL}>{source.region_code} · {source.season_name}</td>
-                                    <td className={DATE_CELL}>{formatDate(source.awarded_at)}</td>
+                                    <td className={DATE_CELL}>{formatDate(source.awarded_at, source.region_code)}</td>
                                     <TeamCell team={source} />
                                 </tr>
                             );
@@ -107,10 +107,10 @@ export default function CareerPage({detail}: {detail: PlayerDetail}) {
             {teamHistory.length > 0 && (
                 <RuledSection id="team-history" title="Team History">
                     <CareerTable headers={["Team", "Position", "Role", "Season", "Status"]}>
-                        {teamHistory.map(entry => {
+                        {teamHistory.map((entry, index) => {
                             const status = careerStatus(entry);
                             return (
-                                <tr key={`${entry.team_id}-${entry.season_id}`} className={ROW}>
+                                <tr key={teamRowKey(entry, index)} className={ROW}>
                                     <TeamCell team={entry} tag={entry.league_type === "side" ? "Side League" : undefined} />
                                     <td className={cn(CELL, "font-mono text-xs text-muted-foreground")}>
                                         {entry.position && <span title={positionLabel(entry.position)}>{entry.position}</span>}

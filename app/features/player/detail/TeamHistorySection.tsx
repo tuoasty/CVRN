@@ -5,7 +5,7 @@ import {positionLabel} from "@/shared/volleyball/positions";
 import {ROLE_LABELS} from "./awardDisplay";
 import {RuledSection, CareerLink} from "./RuledSection";
 import {TeamLogo} from "./TeamLogoLink";
-import {isSeasonEnded, selectTeamHistoryPreview} from "./teamHistoryPreview";
+import {isSeasonEnded, selectTeamHistoryPreview, teamRowKey} from "./teamHistoryPreview";
 
 function TeamRow({entry}: {entry: PlayerTeamHistoryEntry}) {
     const role = entry.role !== "player" ? ROLE_LABELS[entry.role] : null;
@@ -53,7 +53,7 @@ export function TeamHistorySection({history, careerHref}: {history: PlayerTeamHi
     return (
         <RuledSection title="Team History" action={action}>
             <ul className="grid gap-x-12 [grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr))]">
-                {visible.map(entry => <TeamRow key={`${entry.team_id}-${entry.season_id}`} entry={entry} />)}
+                {visible.map((entry, index) => <TeamRow key={teamRowKey(entry, index)} entry={entry} />)}
             </ul>
         </RuledSection>
     );

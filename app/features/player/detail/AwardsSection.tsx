@@ -1,5 +1,7 @@
 import type {PlayerAwardListItem} from "@/app/utils/playerAwardList";
 import {positionShortLabel} from "@/shared/volleyball/positions";
+import {cn} from "@/lib/utils";
+import {specStarClass} from "@/app/features/information/specs/Stars";
 import {awardDetail, awardLabel, formatDate} from "./awardDisplay";
 import {RuledSection, CareerLink} from "./RuledSection";
 import {TeamLogoLink} from "./TeamLogoLink";
@@ -15,7 +17,7 @@ export function AwardTitle({item}: {item: PlayerAwardListItem}) {
             <div className="flex min-w-0 items-center gap-2">
                 <span className="truncate font-medium">{item.kind === "award" ? awardLabel(item.award) : item.spec.spec_name}</span>
                 {item.kind === "spec" && (
-                    <span className="shrink-0 font-mono text-xs tabular-nums text-secondary">{item.spec.stars}★</span>
+                    <span className={cn("shrink-0 font-mono text-xs tabular-nums", specStarClass(item.spec.stars))}>{item.spec.stars}★</span>
                 )}
                 {item.kind === "spec" && item.spec.dropped && (
                     <span className="shrink-0 text-xs italic text-muted-foreground">dropped</span>
@@ -36,7 +38,7 @@ function AwardRow({item}: {item: PlayerAwardListItem}) {
                 <p className="truncate text-xs text-muted-foreground [@container(min-width:30rem)]:hidden">{season}</p>
             </div>
             <span className="hidden w-32 shrink-0 truncate text-muted-foreground [@container(min-width:30rem)]:block">{season}</span>
-            <span className="hidden shrink-0 font-mono text-xs tabular-nums text-muted-foreground [@container(min-width:30rem)]:block">{formatDate(source.awarded_at)}</span>
+            <span className="hidden shrink-0 font-mono text-xs tabular-nums text-muted-foreground [@container(min-width:30rem)]:block">{formatDate(source.awarded_at, source.region_code)}</span>
             <TeamLogoLink team={source} />
         </li>
     );
