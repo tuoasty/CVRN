@@ -39,14 +39,12 @@ export function selectTeamHistoryPreview(
     return {visible, hiddenCount: history.length - visible.length};
 }
 
-export function otherActiveTeams(
+export function activeTeamsMainFirst(
     history: PlayerTeamHistoryEntry[],
     main: {team_id: string; season_id: string} | null,
     now: Date = new Date(),
 ): PlayerTeamHistoryEntry[] {
-    return history.filter(e =>
-        e.left_at === null
-        && !isSeasonEnded(e, now)
-        && !(main && e.team_id === main.team_id && e.season_id === main.season_id),
-    );
+    const active = history.filter(e => e.left_at === null && !isSeasonEnded(e, now));
+    const isMain = (e: PlayerTeamHistoryEntry) => main !== null && e.team_id === main.team_id && e.season_id === main.season_id;
+    return [...active.filter(isMain), ...active.filter(e => !isMain(e))];
 }

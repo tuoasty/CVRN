@@ -14,7 +14,7 @@ import {Database} from "@/database.types";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {isSeasonActive} from "@/server/domains/season/helpers/isSeasonActive";
+import {isActiveStint, pickActiveTeam, type RegionSets} from "@/server/domains/player/helpers/pickMainTeam";
 
 type PlayerTeamSeasonWithPlayer = PlayerTeamSeason & {player: Player | null};
 type PlayerTeamSeasonWithRefs = PlayerTeamSeason & {
@@ -411,7 +411,20 @@ type SearchStintRow = {
     joined_at: string;
     left_at: string | null;
     team: {id: string; name: string; logo_url: string | null; logo_bg_removed: boolean; brick_color: string | null} | null;
-    season: {name: string; league_type: string; end_date: string | null; region: {code: string; name: string} | null} | null;
+    season: {id: string; name: string; league_type: "main" | "side"; start_date: string; end_date: string | null; region: {code: string; name: string} | null} | null;
+};
+
+type SearchStint = {
+    season_id: string;
+    season_name: string;
+    region_code: string;
+    region: {code: string; name: string} | null;
+    league_type: "main" | "side";
+    joined_at: string;
+    left_at: string | null;
+    season_start_date: string;
+    season_end_date: string | null;
+    team: NonNullable<SearchStintRow["team"]>;
 };
 
 type SearchBaseRow = {
@@ -421,6 +434,25 @@ type SearchBaseRow = {
     display_name: string | null;
     avatar_url: string | null;
 };
+
+async function findRegionSetsByPlayer(supabase: DBClient, playerIds: string[]): Promise<Result<Map<string, RegionSets[]>>> {
+    const setsByPlayer = new Map<string, RegionSets[]>();
+    if (playerIds.length === 0) return Ok(setsByPlayer);
+
+    const {data, error} = await supabase
+        .from("v_player_leaderboard")
+        .select("player_id, season_id, region_code, sets_played")
+        .in("player_id", playerIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+
+    for (const row of data ?? []) {
+        if (!row.player_id || !row.season_id) continue;
+        const rows = setsByPlayer.get(row.player_id) ?? [];
+        rows.push({season_id: row.season_id, region_code: row.region_code ?? "", sets_played: row.sets_played});
+        setsByPlayer.set(row.player_id, rows);
+    }
+    return Ok(setsByPlayer);
+}
 
 async function enrichPlayerHits(supabase: DBClient, base: SearchBaseRow[]): Promise<Result<PlayerSearchHit[]>> {
     if (base.length === 0) return Ok([]);
@@ -433,39 +465,45 @@ async function enrichPlayerHits(supabase: DBClient, base: SearchBaseRow[]): Prom
             joined_at,
             left_at,
             team:teams!team_id(id, name, logo_url, logo_bg_removed, brick_color),
-            season:seasons!season_id(name, league_type, end_date, region:regions!region_id(code, name))
+            season:seasons!season_id(id, name, league_type, start_date, end_date, region:regions!region_id(code, name))
         `)
         .in("player_id", playerIds)
         .order("joined_at", {ascending: false});
 
     if (stintError) return Err(serializeError(stintError, "DB_ERROR"));
 
-    const regionByPlayer = new Map<string, {code: string; name: string} | null>();
-    const teamByPlayer = new Map<string, PlayerSearchHit["team"]>();
+    const latestRegionByPlayer = new Map<string, {code: string; name: string} | null>();
+    const stintsByPlayer = new Map<string, SearchStint[]>();
 
     for (const row of (stints ?? []) as SearchStintRow[]) {
-        if (!regionByPlayer.has(row.player_id)) {
-            regionByPlayer.set(row.player_id, row.season?.region ?? null);
+        if (!latestRegionByPlayer.has(row.player_id)) {
+            latestRegionByPlayer.set(row.player_id, row.season?.region ?? null);
         }
-        if (!teamByPlayer.has(row.player_id)
-            && row.left_at === null
-            && row.season?.league_type === "main"
-            && isSeasonActive(row.season)
-            && row.team) {
-            teamByPlayer.set(row.player_id, {
-                id: row.team.id,
-                name: row.team.name,
-                logo_url: row.team.logo_url,
-                logo_bg_removed: row.team.logo_bg_removed,
-                brick_color: row.team.brick_color,
-                season_name: row.season.name,
-                joined_at: row.joined_at,
-            });
-        }
+        if (!row.team || !row.season) continue;
+        const playerStints = stintsByPlayer.get(row.player_id) ?? [];
+        playerStints.push({
+            season_id: row.season.id,
+            season_name: row.season.name,
+            region_code: row.season.region?.code ?? "",
+            region: row.season.region,
+            league_type: row.season.league_type,
+            joined_at: row.joined_at,
+            left_at: row.left_at,
+            season_start_date: row.season.start_date,
+            season_end_date: row.season.end_date,
+            team: row.team,
+        });
+        stintsByPlayer.set(row.player_id, playerStints);
     }
 
+    const now = new Date();
+    const multiTeamIds = playerIds.filter(id => (stintsByPlayer.get(id) ?? []).filter(s => isActiveStint(s, now)).length > 1);
+    const setsResult = await findRegionSetsByPlayer(supabase, multiTeamIds);
+    if (!setsResult.ok) return setsResult;
+
     const results: PlayerSearchHit[] = base.map(p => {
-        const region = regionByPlayer.get(p.id) ?? null;
+        const picked = pickActiveTeam(stintsByPlayer.get(p.id) ?? [], setsResult.value.get(p.id) ?? [], now);
+        const region = picked?.region ?? latestRegionByPlayer.get(p.id) ?? null;
         return {
             id: p.id,
             roblox_user_id: p.roblox_user_id,
@@ -474,7 +512,15 @@ async function enrichPlayerHits(supabase: DBClient, base: SearchBaseRow[]): Prom
             avatar_url: p.avatar_url,
             region_code: region?.code ?? null,
             region_name: region?.name ?? null,
-            team: teamByPlayer.get(p.id) ?? null,
+            team: picked ? {
+                id: picked.team.id,
+                name: picked.team.name,
+                logo_url: picked.team.logo_url,
+                logo_bg_removed: picked.team.logo_bg_removed,
+                brick_color: picked.team.brick_color,
+                season_name: picked.season_name,
+                joined_at: picked.joined_at,
+            } : null,
         };
     });
 

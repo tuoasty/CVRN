@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 import type {PlayerTeamHistoryEntry} from "../../types";
-import {pickMainTeam} from "../pickMainTeam";
+import {pickActiveTeam, pickMainTeam} from "../pickMainTeam";
 
 const NOW = new Date("2026-11-03T00:00:00.000Z");
 
@@ -109,5 +109,51 @@ describe("pickMainTeam", () => {
             entry("na-team", "NA"),
         ];
         expect(pickMainTeam(history, [stat("s2-EU", "EU", 40)], NOW)).toBeNull();
+    });
+
+    it("breaks equal sets by newest season then newest join, whatever the input order", () => {
+        const older = entry("eu-team", "EU", {season_start_date: "2026-09-01"});
+        const newer = entry("na-team", "NA", {season_start_date: "2026-10-01"});
+        expect(pickMainTeam([older, newer], [], NOW)?.team_id).toBe("na-team");
+        expect(pickMainTeam([newer, older], [], NOW)?.team_id).toBe("na-team");
+
+        const joinedFirst = entry("eu-team", "EU", {joined_at: "2026-10-01T00:00:00.000Z"});
+        const joinedLater = entry("na-team", "NA", {joined_at: "2026-10-20T00:00:00.000Z"});
+        expect(pickMainTeam([joinedFirst, joinedLater], [], NOW)?.team_id).toBe("na-team");
+    });
+
+    it("does not reorder the history it was given", () => {
+        const history = [
+            entry("eu-team", "EU", {season_start_date: "2026-09-01"}),
+            entry("na-team", "NA", {season_start_date: "2026-10-01"}),
+        ];
+        pickMainTeam(history, [], NOW);
+        expect(history.map(e => e.team_id)).toEqual(["eu-team", "na-team"]);
+    });
+});
+
+describe("pickActiveTeam", () => {
+    it("keeps the priority region over a newer transaction", () => {
+        const history = [
+            entry("na-team", "NA", {joined_at: "2026-10-30T00:00:00.000Z"}),
+            entry("eu-team", "EU"),
+        ];
+        expect(pickActiveTeam(history, [stat("s2-EU", "EU", 33)], NOW)?.team_id).toBe("eu-team");
+    });
+
+    it("returns the only active team, even in a side league", () => {
+        const history = [
+            entry("side-team", "EU", {season_id: "side-EU", league_type: "side"}),
+            entry("old-team", "NA", {season_end_date: "2026-06-01"}),
+        ];
+        expect(pickActiveTeam(history, [], NOW)?.team_id).toBe("side-team");
+    });
+
+    it("returns null when no team is active", () => {
+        const history = [
+            entry("left-team", "EU", {left_at: "2026-10-15T00:00:00.000Z"}),
+            entry("old-team", "NA", {season_end_date: "2026-06-01"}),
+        ];
+        expect(pickActiveTeam(history, [], NOW)).toBeNull();
     });
 });
