@@ -30,14 +30,14 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
     [CACHE_TAGS.teams]: {
         label: "Teams",
         description: "Team pages, logos, and rosters.",
-        readCount: 14,
+        readCount: 15,
         affects: "Teams, team detail, matches, match detail, archive, home, records",
     },
     [CACHE_TAGS.players]: {
         label: "Players",
         description:
             "Player profiles, avatars, and rosters. Also backs the identity (names, avatars, team logos) joined onto both leaderboards.",
-        readCount: 13,
+        readCount: 14,
         affects: "Players, player detail, teams, match detail, archive, leaderboards, records",
     },
     [CACHE_TAGS.seasons]: {
@@ -94,7 +94,7 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Raw Stats",
         description:
             "Raw (unpublished) per-player box-score totals and percentile ranks read directly off player_match_stats, independent of the Publish gate on the Stats tag. Ranks are strength-of-schedule adjusted, so match result changes regenerate it too. Held for 7 days.",
-        readCount: 3,
+        readCount: 4,
         affects: "Player detail API, stats summary API",
     },
 };
