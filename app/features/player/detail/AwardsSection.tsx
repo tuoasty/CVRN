@@ -1,7 +1,7 @@
 import type {PlayerAwardListItem} from "@/app/utils/playerAwardList";
 import {positionShortLabel} from "@/shared/volleyball/positions";
 import {awardDetail, awardLabel, formatDate} from "./awardDisplay";
-import {RuledSection, SectionLink} from "./RuledSection";
+import {RuledSection, CareerLink} from "./RuledSection";
 import {TeamLogoLink} from "./TeamLogoLink";
 
 const AWARD_CAP = 5;
@@ -44,7 +44,7 @@ function AwardRow({item}: {item: PlayerAwardListItem}) {
 
 export function AwardsSection({items, careerHref}: {items: PlayerAwardListItem[]; careerHref: string | null}) {
     const action = careerHref && items.length > AWARD_CAP
-        ? <SectionLink href={`${careerHref}#awards`}>View all {items.length}</SectionLink>
+        ? <CareerLink href={`${careerHref}#awards`}>View all {items.length}</CareerLink>
         : undefined;
     return (
         <RuledSection title="Awards" action={action}>

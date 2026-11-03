@@ -3,7 +3,7 @@ import type {PlayerTeamHistoryEntry} from "@/server/domains/player";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
 import {positionLabel} from "@/shared/volleyball/positions";
 import {ROLE_LABELS} from "./awardDisplay";
-import {RuledSection, SectionLink} from "./RuledSection";
+import {RuledSection, CareerLink} from "./RuledSection";
 import {TeamLogo} from "./TeamLogoLink";
 import {isSeasonEnded, selectTeamHistoryPreview} from "./teamHistoryPreview";
 
@@ -48,7 +48,7 @@ function TeamRow({entry}: {entry: PlayerTeamHistoryEntry}) {
 export function TeamHistorySection({history, careerHref}: {history: PlayerTeamHistoryEntry[]; careerHref: string | null}) {
     const {visible, hiddenCount} = selectTeamHistoryPreview(history);
     const action = careerHref && hiddenCount > 0
-        ? <SectionLink href={`${careerHref}#team-history`}>View all {history.length}</SectionLink>
+        ? <CareerLink href={`${careerHref}#team-history`}>View all {history.length}</CareerLink>
         : undefined;
     return (
         <RuledSection title="Team History" action={action}>

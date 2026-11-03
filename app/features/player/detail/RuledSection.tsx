@@ -13,7 +13,7 @@ export function RuledSection({title, action, id, children}: {title: string; acti
     );
 }
 
-export function SectionLink({href, children}: {href: string; children: ReactNode}) {
+export function CareerLink({href, children}: {href: string; children: ReactNode}) {
     return (
         <Link href={href} prefetch={false} className="shrink-0 text-xs font-medium text-primary hover:underline">
             {children}

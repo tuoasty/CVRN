@@ -1,6 +1,4 @@
 import type {ReactNode} from "react";
-import Image from "next/image";
-import Link from "next/link";
 import type {PlayerDetail} from "@/server/domains/player";
 import {cn} from "@/lib/utils";
 import {buildPublicPlayerHref} from "@/app/utils/matchDetailHref";
@@ -10,6 +8,7 @@ import {RuledSection} from "@/app/features/player/detail/RuledSection";
 import {TeamLogoLink, type TeamLogoRef} from "@/app/features/player/detail/TeamLogoLink";
 import {formatDate, placeLabel, ROLE_LABELS, selectPlayerRecord} from "@/app/features/player/detail/awardDisplay";
 import {careerStatus} from "@/app/features/player/detail/teamHistoryPreview";
+import {CareerHeader} from "./CareerHeader";
 
 const CELL = "py-2 pr-4 align-middle last:pr-0";
 const ROW = "border-b border-border/60 last:border-b-0";
@@ -60,32 +59,14 @@ export default function CareerPage({detail}: {detail: PlayerDetail}) {
     ].filter(section => section.present);
 
     return (
-        <div className="max-w-[1440px] mx-auto px-4 py-6 space-y-11">
-            <div className="space-y-4">
-                {playerHref && (
-                    <Link href={playerHref} prefetch={false} className="inline-block text-sm font-medium text-primary hover:underline">
-                        Back to {name}
-                    </Link>
-                )}
-                <div className="flex items-center gap-4">
-                    <span className="relative block size-16 shrink-0">
-                        {player.avatar_url && (
-                            <Image src={player.avatar_url} alt={player.username ?? ""} fill sizes="64px" className="object-contain" unoptimized />
-                        )}
-                    </span>
-                    <div className="min-w-0">
-                        <h1 className="truncate text-2xl font-semibold">{name}</h1>
-                        {player.username && <p className="text-sm text-muted-foreground">@{player.username}</p>}
-                    </div>
-                </div>
-                {sections.length > 0 && (
-                    <nav aria-label="Career sections" className="flex flex-wrap gap-x-6 gap-y-1 text-sm font-medium">
-                        {sections.map(section => (
-                            <a key={section.id} href={`#${section.id}`} className="text-primary hover:underline">{section.label}</a>
-                        ))}
-                    </nav>
-                )}
-            </div>
+        <div className="max-w-[1440px] mx-auto px-4 pb-6 pt-2 space-y-11 [&_section]:scroll-mt-40">
+            <CareerHeader
+                name={name}
+                username={player.username}
+                avatarUrl={player.avatar_url}
+                playerHref={playerHref}
+                sections={sections}
+            />
 
             {achievements.length > 0 && (
                 <RuledSection id="achievements" title="Achievements">

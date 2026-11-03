@@ -20,17 +20,16 @@ function TableSkeleton({rows, titleWidth}: {rows: number; titleWidth: string}) {
 
 export default function CareerLoading() {
     return (
-        <div className="max-w-[1440px] mx-auto px-4 py-6 space-y-11">
-            <div className="space-y-4">
-                <Skeleton className="h-5 w-32" />
-                <div className="flex items-center gap-4">
-                    <Skeleton className="size-16 shrink-0 rounded-sm" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-7 w-48" />
+        <div className="max-w-[1440px] mx-auto px-4 pb-6 pt-2 space-y-11">
+            <div className="-mx-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-border px-4 py-2">
+                <Skeleton className="h-4 w-72" />
+                <div className="flex items-center gap-3">
+                    <Skeleton className="size-10 shrink-0 rounded-sm" />
+                    <div className="space-y-1">
                         <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-20" />
                     </div>
                 </div>
-                <Skeleton className="h-4 w-64" />
             </div>
             <TableSkeleton rows={3} titleWidth="w-28" />
             <TableSkeleton rows={5} titleWidth="w-16" />

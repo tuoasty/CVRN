@@ -1,14 +1,14 @@
 import type {PlayerAward} from "@/server/domains/player";
 import {cn} from "@/lib/utils";
 import {formatDate, placeLabel} from "./awardDisplay";
-import {RuledSection, SectionLink} from "./RuledSection";
+import {RuledSection, CareerLink} from "./RuledSection";
 import {TeamLogoLink} from "./TeamLogoLink";
 
 const ACHIEVEMENT_CAP = 3;
 
 export function AchievementsSection({achievements, careerHref}: {achievements: PlayerAward[]; careerHref: string | null}) {
     const action = careerHref && achievements.length > ACHIEVEMENT_CAP
-        ? <SectionLink href={`${careerHref}#achievements`}>View all {achievements.length}</SectionLink>
+        ? <CareerLink href={`${careerHref}#achievements`}>View all {achievements.length}</CareerLink>
         : undefined;
     return (
         <RuledSection title="Achievements" action={action}>

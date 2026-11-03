@@ -56,24 +56,23 @@ function nameClass(own: number | null, other: number | null): string {
 function MatchRow({match}: {match: PlayerRecentMatch}) {
     const date = formatMatchDate(match);
     const href = buildPublicMatchHref(match.href);
+    const setScores = match.setScores.map(set => `${set.team}-${set.opponent}`).join(" ");
     const body = (
         <div className="flex h-full items-center gap-3">
             <MatchLogo team={match.team} />
             <div className="min-w-0 flex-1">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 text-base">
-                    <span className={cn("truncate", nameClass(match.teamSets, match.opponentSets))}>{match.team.name}</span>
-                    <Score match={match} />
-                    <span className={cn("truncate text-right", nameClass(match.opponentSets, match.teamSets))}>{match.opponent.name}</span>
-                </div>
-                <div className="mt-1 flex items-baseline justify-between gap-3 text-xs text-muted-foreground">
-                    <span className="min-w-0 truncate">{match.roundLabel}{date && ` · ${date}`}</span>
-                    {match.isForfeit ? (
-                        <span className="shrink-0">Forfeit</span>
-                    ) : match.setScores.length > 0 && (
-                        <span className="shrink-0 font-mono tabular-nums">
-                            {match.setScores.map(set => `${set.team}-${set.opponent}`).join(" ")}
-                        </span>
-                    )}
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1">
+                    <span className={cn("col-start-1 row-start-1 truncate text-base", nameClass(match.teamSets, match.opponentSets))}>{match.team.name}</span>
+                    <span className="col-start-2 row-start-1 self-center sm:row-span-2"><Score match={match} /></span>
+                    <span className={cn("col-start-3 row-start-1 truncate text-right text-base", nameClass(match.opponentSets, match.teamSets))}>{match.opponent.name}</span>
+                    <div className="col-span-3 row-start-2 flex items-baseline justify-between gap-3 text-xs text-muted-foreground sm:contents">
+                        <span className="min-w-0 truncate sm:col-start-1 sm:row-start-2">{match.roundLabel}{date && ` · ${date}`}</span>
+                        {match.isForfeit ? (
+                            <span className="shrink-0 sm:col-start-3 sm:row-start-2 sm:text-right">Forfeit</span>
+                        ) : setScores && (
+                            <span title={setScores} className="shrink-0 font-mono tabular-nums sm:col-start-3 sm:row-start-2 sm:truncate sm:text-right">{setScores}</span>
+                        )}
+                    </div>
                 </div>
             </div>
             <MatchLogo team={match.opponent} />
