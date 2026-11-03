@@ -1,4 +1,5 @@
-import type {PlayerAward} from "@/server/domains/player";
+import type {PlayerAward, PlayerSpecEntry} from "@/server/domains/player";
+import {buildPlayerAwardList, type PlayerAwardListItem} from "@/app/utils/playerAwardList";
 import {formatPlacement} from "@/app/utils/placement";
 
 export const ROLE_LABELS: Record<string, string> = {
@@ -8,6 +9,19 @@ export const ROLE_LABELS: Record<string, string> = {
 };
 
 export const PODIUM_CATEGORIES = new Set(["champion_roster", "runner_up", "third_place", "placement"]);
+
+export function selectPlayerRecord(
+    awards: PlayerAward[],
+    specs: PlayerSpecEntry[],
+): {achievements: PlayerAward[]; awardList: PlayerAwardListItem[]} {
+    return {
+        achievements: awards.filter(a => PODIUM_CATEGORIES.has(a.category)),
+        awardList: buildPlayerAwardList(
+            awards.filter(a => !PODIUM_CATEGORIES.has(a.category) && a.category !== "staff_team"),
+            specs,
+        ),
+    };
+}
 
 export function formatDate(isoString: string | null): string {
     if (!isoString) return "-";

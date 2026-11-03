@@ -8,7 +8,6 @@ import type {PublicPlayerCard} from "@/server/domains/playerCard";
 import PlayerSeasonStatsTable from "@/app/features/player/PlayerSeasonStatsTable";
 import BackButton from "@/app/components/public/BackButton";
 import {buildPublicPlayerHref} from "@/app/utils/matchDetailHref";
-import {buildPlayerAwardList} from "@/app/utils/playerAwardList";
 import {AchievementsSection} from "@/app/features/player/detail/AchievementsSection";
 import {AwardsSection} from "@/app/features/player/detail/AwardsSection";
 import {HonoursSection} from "@/app/features/player/detail/HonoursSection";
@@ -16,7 +15,7 @@ import {PlayerBanner} from "@/app/features/player/detail/PlayerBanner";
 import {AllPlayerCards, CARD_CAP, PlayerCardsSection} from "@/app/features/player/detail/PlayerCardsSection";
 import {RecentMatchesSection} from "@/app/features/player/detail/RecentMatchesSection";
 import {TeamHistorySection} from "@/app/features/player/detail/TeamHistorySection";
-import {PODIUM_CATEGORIES} from "@/app/features/player/detail/awardDisplay";
+import {selectPlayerRecord} from "@/app/features/player/detail/awardDisplay";
 import {matchRowHeight} from "@/app/features/player/detail/matchRowHeight";
 import {planPlayerLayout, type SectionKey} from "@/app/features/player/detail/planPlayerLayout";
 import {buildPlayerHonours} from "@/app/features/player/detail/playerHonours";
@@ -51,11 +50,7 @@ export default function PlayerDetailPage({detail, cards, matches}: Props) {
     const visibleCards = useMemo(() => cards.filter(card => !failedCards.has(card.imageUrl)), [cards, failedCards]);
     const onCardFailed = (imageUrl: string) => setFailedCards(prev => new Set(prev).add(imageUrl));
 
-    const achievements = awards.filter(a => PODIUM_CATEGORIES.has(a.category));
-    const awardList = buildPlayerAwardList(
-        awards.filter(a => !PODIUM_CATEGORIES.has(a.category) && a.category !== "staff_team"),
-        specs,
-    );
+    const {achievements, awardList} = selectPlayerRecord(awards, specs);
     const honours = buildPlayerHonours(awards, specs);
     const otherTeams = otherActiveTeams(teamHistory, player.current_team);
     const playerName = player.display_name || player.username || "Player";

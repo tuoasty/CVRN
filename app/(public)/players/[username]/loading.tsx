@@ -48,7 +48,7 @@ export default function PlayerPageLoading() {
                     <Skeleton className="mt-[21px] h-[364px] w-full rounded-sm sm:w-[260px]" />
                 </div>
                 <div className="grid min-w-0 flex-1 gap-x-12 gap-y-11 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-                    <RuledSkeleton rows={5} titleWidth="w-36" rowClassName="h-[72px] lg:h-[75.2px]" />
+                    <RuledSkeleton rows={6} titleWidth="w-36" rowClassName="h-[72px] lg:h-[62.67px]" />
                     <RuledSkeleton rows={4} titleWidth="w-20" />
                 </div>
             </div>

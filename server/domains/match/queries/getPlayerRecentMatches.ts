@@ -13,7 +13,7 @@ import {PlayerRecentMatch} from "../types";
 import {compareMatchesNewestFirst, selectPlayerMatches} from "../helpers/selectPlayerMatches";
 
 const CANDIDATE_CAP = 40;
-const RECENT_MATCH_LIMIT = 5;
+const RECENT_MATCH_LIMIT = 6;
 
 export async function getPlayerRecentMatches(
     supabase: DBClient,

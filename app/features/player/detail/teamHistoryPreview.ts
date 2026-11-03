@@ -4,6 +4,11 @@ export function isSeasonEnded(entry: Pick<PlayerTeamHistoryEntry, "season_end_da
     return entry.season_end_date !== null && new Date(entry.season_end_date) < now;
 }
 
+export function careerStatus(entry: PlayerTeamHistoryEntry, now: Date = new Date()): "Active" | "Left" | null {
+    if (entry.left_at !== null) return "Left";
+    return isSeasonEnded(entry, now) ? null : "Active";
+}
+
 function newestFirst(a: PlayerTeamHistoryEntry, b: PlayerTeamHistoryEntry): number {
     return b.season_start_date.localeCompare(a.season_start_date) || b.joined_at.localeCompare(a.joined_at);
 }
