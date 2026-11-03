@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
 import type {PlayerTeamHistoryEntry} from "@/server/domains/player";
-import {careerStatus, otherActiveTeams, selectTeamHistoryPreview} from "../teamHistoryPreview";
+import {activeTeamsMainFirst, careerStatus, selectTeamHistoryPreview} from "../teamHistoryPreview";
 
 const NOW = new Date("2026-11-03T00:00:00.000Z");
 
@@ -73,20 +73,25 @@ describe("selectTeamHistoryPreview", () => {
     });
 });
 
-describe("otherActiveTeams", () => {
-    it("excludes the main team, left teams and ended seasons", () => {
+describe("activeTeamsMainFirst", () => {
+    it("leads with the main team and excludes left teams and ended seasons", () => {
         const history = [
-            entry("main", "s3"),
             entry("other", "s3-na"),
+            entry("main", "s3"),
             entry("left", "s3-sa", {left_at: "2026-10-10T00:00:00.000Z"}),
             ended("old", "s2"),
         ];
-        const result = otherActiveTeams(history, {team_id: "main", season_id: "s3"}, NOW);
-        expect(ids(result)).toEqual(["other/s3-na"]);
+        const result = activeTeamsMainFirst(history, {team_id: "main", season_id: "s3"}, NOW);
+        expect(ids(result)).toEqual(["main/s3", "other/s3-na"]);
     });
 
     it("returns every active team when there is no main team", () => {
-        expect(otherActiveTeams([entry("a", "s3")], null, NOW)).toHaveLength(1);
+        expect(activeTeamsMainFirst([entry("a", "s3")], null, NOW)).toHaveLength(1);
+    });
+
+    it("is empty when the main team is no longer active", () => {
+        const result = activeTeamsMainFirst([ended("old", "s2")], {team_id: "old", season_id: "s2"}, NOW);
+        expect(result).toEqual([]);
     });
 });
 

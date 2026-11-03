@@ -59,7 +59,7 @@ export default function CareerPage({detail}: {detail: PlayerDetail}) {
     ].filter(section => section.present);
 
     return (
-        <div className="max-w-[1440px] mx-auto px-4 pb-6 pt-2 space-y-11 [&_section]:scroll-mt-40">
+        <div className="max-w-[1440px] mx-auto px-4 pb-6 space-y-11 [&_section]:scroll-mt-40">
             <CareerHeader
                 name={name}
                 username={player.username}

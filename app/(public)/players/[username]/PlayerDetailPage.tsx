@@ -19,7 +19,7 @@ import {selectPlayerRecord} from "@/app/features/player/detail/awardDisplay";
 import {matchRowHeight} from "@/app/features/player/detail/matchRowHeight";
 import {planPlayerLayout, type SectionKey} from "@/app/features/player/detail/planPlayerLayout";
 import {buildPlayerHonours} from "@/app/features/player/detail/playerHonours";
-import {otherActiveTeams} from "@/app/features/player/detail/teamHistoryPreview";
+import {activeTeamsMainFirst} from "@/app/features/player/detail/teamHistoryPreview";
 
 const TWO_COLUMNS = "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]";
 
@@ -52,7 +52,7 @@ export default function PlayerDetailPage({detail, cards, matches}: Props) {
 
     const {achievements, awardList} = selectPlayerRecord(awards, specs);
     const honours = buildPlayerHonours(awards, specs);
-    const otherTeams = otherActiveTeams(teamHistory, player.current_team);
+    const activeTeams = activeTeamsMainFirst(teamHistory, player.current_team);
     const playerName = player.display_name || player.username || "Player";
     const careerHref = buildPublicPlayerHref(player.username);
     const careerBase = careerHref ? `${careerHref}/career` : null;
@@ -100,7 +100,7 @@ export default function PlayerDetailPage({detail, cards, matches}: Props) {
         <div className="max-w-[1440px] mx-auto px-4 py-6 space-y-11">
             <BackButton />
 
-            <PlayerBanner player={player} activeSpec={activeSpec} otherTeams={otherTeams} />
+            <PlayerBanner player={player} activeSpec={activeSpec} activeTeams={activeTeams} />
 
             {seasonStats.length > 0 && (
                 <PlayerSeasonStatsTable rows={seasonStats} teamLogoBySeasonId={teamLogoBySeasonId} />

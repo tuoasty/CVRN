@@ -87,7 +87,7 @@ function MatchRow({match}: {match: PlayerRecentMatch}) {
 
 export function RecentMatchesSection({matches, rowHeight}: {matches: PlayerRecentMatch[]; rowHeight: number}) {
     return (
-        <RuledSection title="Recent Team Matches">
+        <RuledSection title="Recent Matches">
             <ul style={{"--match-row": `${rowHeight}px`} as CSSProperties}>
                 {matches.map(match => <MatchRow key={match.id} match={match} />)}
             </ul>

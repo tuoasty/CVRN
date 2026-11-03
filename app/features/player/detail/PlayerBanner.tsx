@@ -19,7 +19,7 @@ function ActiveSpecLine({spec}: {spec: PlayerSpecEntry}) {
     );
 }
 
-function OtherTeamsLine({teams}: {teams: PlayerTeamHistoryEntry[]}) {
+function ActiveTeamsLine({teams}: {teams: PlayerTeamHistoryEntry[]}) {
     if (teams.length === 0) return null;
     return (
         <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
@@ -47,10 +47,10 @@ function OtherTeamsLine({teams}: {teams: PlayerTeamHistoryEntry[]}) {
     );
 }
 
-export function PlayerBanner({player, activeSpec, otherTeams}: {
+export function PlayerBanner({player, activeSpec, activeTeams}: {
     player: PlayerDetail["player"];
     activeSpec: PlayerSpecEntry | null;
-    otherTeams: PlayerTeamHistoryEntry[];
+    activeTeams: PlayerTeamHistoryEntry[];
 }) {
     const team = player.current_team;
     return (
@@ -79,15 +79,9 @@ export function PlayerBanner({player, activeSpec, otherTeams}: {
                         </div>
                     )}
                     <div className="mt-auto pt-2">
-                        {team && (
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-0.5">
-                                {team.team_name}
-                                {player.current_position && (
-                                    <span>
-                                        <span className="text-muted-foreground/30 mx-1">·</span>
-                                        <span title={positionLabel(player.current_position)} className="text-foreground/85">{player.current_position}</span>
-                                    </span>
-                                )}
+                        {player.current_position && (
+                            <p title={positionLabel(player.current_position)} className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/85 mb-0.5">
+                                {player.current_position}
                             </p>
                         )}
                         <h1 className="text-2xl font-black leading-none tracking-tight">
@@ -96,7 +90,7 @@ export function PlayerBanner({player, activeSpec, otherTeams}: {
                         {player.username && (
                             <p className="text-xs text-muted-foreground mt-1">@{player.username}</p>
                         )}
-                        <OtherTeamsLine teams={otherTeams} />
+                        <ActiveTeamsLine teams={activeTeams} />
                         {activeSpec && <ActiveSpecLine spec={activeSpec} />}
                     </div>
                 </div>
@@ -144,15 +138,9 @@ export function PlayerBanner({player, activeSpec, otherTeams}: {
                     )}
                 </div>
                 <div className="self-center flex flex-col gap-0.5 pl-8 min-w-0 flex-1">
-                    {team && (
-                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">
-                            {team.team_name}
-                            {player.current_position && (
-                                <span>
-                                    <span className="text-muted-foreground/30 mx-1">·</span>
-                                    <span title={positionLabel(player.current_position)} className="text-foreground/85">{player.current_position}</span>
-                                </span>
-                            )}
+                    {player.current_position && (
+                        <p title={positionLabel(player.current_position)} className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/85 mb-1">
+                            {player.current_position}
                         </p>
                     )}
                     <h1 className="text-4xl lg:text-5xl font-black leading-none tracking-tight truncate">
@@ -161,7 +149,7 @@ export function PlayerBanner({player, activeSpec, otherTeams}: {
                     {player.username && (
                         <p className="text-sm text-muted-foreground mt-2">@{player.username}</p>
                     )}
-                    <OtherTeamsLine teams={otherTeams} />
+                    <ActiveTeamsLine teams={activeTeams} />
                     {activeSpec && <ActiveSpecLine spec={activeSpec} />}
                 </div>
             </div>
