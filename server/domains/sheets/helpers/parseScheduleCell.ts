@@ -1,47 +1,16 @@
 export type ParsedSchedule = { iso: string };
 
-function toIsoOffset(offsetNum: number): string {
-    const absHours = Math.floor(Math.abs(offsetNum));
-    const absMinutes = Math.round((Math.abs(offsetNum) - absHours) * 60);
-    const sign = offsetNum >= 0 ? '+' : '-';
-    return `${sign}${String(absHours).padStart(2, '0')}:${String(absMinutes).padStart(2, '0')}`;
-}
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
-export function parseScheduleCell(value: string, year: number): ParsedSchedule | null {
-    if (!value?.trim()) return null;
+const OFFSET = String.raw`[+-]\d{1,2}(?::\d{2}|\.\d+)?`;
+const TIME_AND_ZONE = String.raw`(\d{1,2})(?::(\d{2}))?(?:\s*(AM|PM))?\s*\[?\s*([A-Za-z]{2,4})\b(?:\s*\(?\s*(${OFFSET})\s*\)?)?(?!\s*\(?\s*[+-]?\d{1,4}\b)`;
 
-    const fullMatch = value.trim().match(
-        /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*(?:\[GMT([+-]\d+(?:\.\d+)?)\]|GMT\s*\(([+-]\d+(?:\.\d+)?)\))/i
-    );
-    if (fullMatch) {
-        const [, month, day, time, bracketOffset, parenOffset] = fullMatch;
-        const offsetStr = bracketOffset ?? parenOffset;
-        const offsetNum = parseFloat(offsetStr);
-        if (isNaN(offsetNum)) return null;
-
-        const isoOffset = toIsoOffset(offsetNum);
-
-        const normalizedTime = time.replace(/\s*(AM|PM)$/i, ' $1');
-        const dateStr = `${month} ${day} ${year} ${normalizedTime} GMT${isoOffset}`;
-        const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return null;
-        return { iso: date.toISOString() };
-    }
-
-    const dateOnlyMatch = value.trim().match(/^(\w+)\s+(\d+)(?:st|nd|rd|th)?(?:\s*-\s*\w+\s+\d+(?:st|nd|rd|th)?)?$/i);
-    if (dateOnlyMatch) {
-        const [, month, day] = dateOnlyMatch;
-        const date = new Date(`${month} ${day} ${year} 00:00:00 UTC`);
-        if (isNaN(date.getTime())) return null;
-        return { iso: date.toISOString() };
-    }
-
-    return parseNamedTzCell(value.trim(), year);
-}
-
-const SLASH_DATE = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\s*GMT\s*\(?\s*([+-]\d+(?:\.\d+)?)\s*\)?$/i;
+const MONTH_DAY_TIME = new RegExp(String.raw`\b([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,\s*${TIME_AND_ZONE}`, 'i');
+const SLASH_DATE_TIME = new RegExp(String.raw`\b(\d{1,2})/(\d{1,2})/(\d{4})\s+${TIME_AND_ZONE}`, 'i');
+const DATE_ONLY = /^(\w+)\s+(\d+)(?:st|nd|rd|th)?(?:\s*-\s*\w+\s+\d+(?:st|nd|rd|th)?)?$/i;
 
 const TZ_ABBREV_OFFSETS: Record<string, number> = {
+    UTC: 0,
     EST: -5, EDT: -4,
     CST: -6, CDT: -5,
     MST: -7, MDT: -6,
@@ -49,30 +18,42 @@ const TZ_ABBREV_OFFSETS: Record<string, number> = {
     BRT: -3,
 };
 
-const NAMED_TZ = /^(\w+)\s+(\d+)(?:st|nd|rd|th)?,\s*(\d+:\d+\s*(?:AM|PM))\s*([A-Za-z]{2,4})$/i;
-
 const IANA_ZONE_LABELS: Record<string, string> = {
     UK: 'Europe/London',
     GMT: 'Europe/London',
     BST: 'Europe/London',
 };
 
+type WallClock = { year: number; monthIdx: number; day: number; hour: number; minute: number };
+
 function monthIndex(name: string): number {
-    const d = new Date(`${name} 1, 2000`);
-    return isNaN(d.getTime()) ? -1 : d.getMonth();
+    return MONTHS.indexOf(name.slice(0, 3).toLowerCase());
 }
 
-function to24Hour(time: string): { hour: number; minute: number } | null {
-    const m = time.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-    if (!m) return null;
-    const [, hh, mm, meridiem] = m;
-    const h = parseInt(hh, 10);
-    if (h < 1 || h > 12) return null;
-    const minute = parseInt(mm, 10);
+function to24Hour(
+    hourRaw: string,
+    minuteRaw: string | undefined,
+    meridiem: string | undefined,
+): { hour: number; minute: number } | null {
+    if (minuteRaw === undefined && !meridiem) return null;
+    const hour = parseInt(hourRaw, 10);
+    const minute = minuteRaw === undefined ? 0 : parseInt(minuteRaw, 10);
     if (minute > 59) return null;
+    if (!meridiem) return hour <= 23 ? { hour, minute } : null;
+    if (hour < 1 || hour > 12) return null;
     const isPM = meridiem.toUpperCase() === 'PM';
-    const hour = isPM ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
-    return { hour, minute };
+    return { hour: isPM ? (hour === 12 ? 12 : hour + 12) : (hour === 12 ? 0 : hour), minute };
+}
+
+function parseOffsetHours(raw: string): number | null {
+    const [hours, minutes] = raw.slice(1).split(':');
+    const magnitude = parseFloat(hours) + (minutes ? parseInt(minutes, 10) / 60 : 0);
+    if (isNaN(magnitude) || magnitude > 14) return null;
+    return raw.startsWith('-') ? -magnitude : magnitude;
+}
+
+function fixedOffsetToIso({ year, monthIdx, day, hour, minute }: WallClock, offsetHours: number): string {
+    return new Date(Date.UTC(year, monthIdx, day, hour, minute) - offsetHours * 3600000).toISOString();
 }
 
 function zoneOffsetMinutes(timeZone: string, at: Date): number {
@@ -88,49 +69,65 @@ function zoneOffsetMinutes(timeZone: string, at: Date): number {
     return sign * (hours * 60 + minutes);
 }
 
-function wallClockToIso(
-    timeZone: string,
+function wallClockToIso(timeZone: string, { year, monthIdx, day, hour, minute }: WallClock): string {
+    const guess = Date.UTC(year, monthIdx, day, hour, minute, 0);
+    const offset = zoneOffsetMinutes(timeZone, new Date(guess));
+    return new Date(guess - offset * 60000).toISOString();
+}
+
+function zonedToIso(wallClock: WallClock, zoneRaw: string, offsetRaw: string | undefined): string | null {
+    const zone = zoneRaw.toUpperCase();
+
+    if (offsetRaw) {
+        if (zone !== 'GMT' && zone !== 'UTC') return null;
+        const offsetHours = parseOffsetHours(offsetRaw);
+        return offsetHours === null ? null : fixedOffsetToIso(wallClock, offsetHours);
+    }
+
+    const ianaZone = IANA_ZONE_LABELS[zone];
+    if (ianaZone) return wallClockToIso(ianaZone, wallClock);
+
+    const offsetHours = TZ_ABBREV_OFFSETS[zone];
+    return offsetHours === undefined ? null : fixedOffsetToIso(wallClock, offsetHours);
+}
+
+function buildSchedule(
     year: number,
     monthIdx: number,
     day: number,
-    hour: number,
-    minute: number,
-): string | null {
-    const guess = Date.UTC(year, monthIdx, day, hour, minute, 0);
-    if (isNaN(guess)) return null;
-    const offset = zoneOffsetMinutes(timeZone, new Date(guess));
-    const utc = guess - offset * 60000;
-    const date = new Date(utc);
-    if (isNaN(date.getTime())) return null;
-    return date.toISOString();
+    [hourRaw, minuteRaw, meridiem, zone, offset]: (string | undefined)[],
+): ParsedSchedule | null {
+    if (monthIdx < 0 || !hourRaw || !zone) return null;
+
+    const dateOnly = new Date(Date.UTC(year, monthIdx, day));
+    if (dateOnly.getUTCMonth() !== monthIdx || dateOnly.getUTCDate() !== day) return null;
+
+    const time = to24Hour(hourRaw, minuteRaw, meridiem);
+    if (!time) return null;
+
+    const iso = zonedToIso({ year, monthIdx, day, ...time }, zone, offset);
+    return iso ? { iso } : null;
 }
 
-function parseNamedTzCell(value: string, year: number): ParsedSchedule | null {
-    const namedMatch = value.match(NAMED_TZ);
-    if (!namedMatch) return null;
+export function parseScheduleCell(value: string, year: number): ParsedSchedule | null {
+    const trimmed = value?.trim();
+    if (!trimmed) return null;
 
-    const [, month, day, time, abbrev] = namedMatch;
-    const upper = abbrev.toUpperCase();
-
-    const zone = IANA_ZONE_LABELS[upper];
-    if (zone) {
-        const monthIdx = monthIndex(month);
-        if (monthIdx < 0) return null;
-        const parsedTime = to24Hour(time);
-        if (!parsedTime) return null;
-        const iso = wallClockToIso(zone, year, monthIdx, parseInt(day, 10), parsedTime.hour, parsedTime.minute);
-        if (!iso) return null;
-        return { iso };
+    const timed = trimmed.match(MONTH_DAY_TIME);
+    if (timed) {
+        const [, month, day, ...rest] = timed;
+        return buildSchedule(year, monthIndex(month), parseInt(day, 10), rest);
     }
 
-    const offsetNum = TZ_ABBREV_OFFSETS[upper];
-    if (offsetNum === undefined) return null;
+    const dateOnly = trimmed.match(DATE_ONLY);
+    if (dateOnly) {
+        const [, month, day] = dateOnly;
+        const date = new Date(`${month} ${day} ${year} 00:00:00 UTC`);
+        if (isNaN(date.getTime())) return null;
+        return { iso: date.toISOString() };
+    }
 
-    const normalizedTime = time.replace(/\s*(AM|PM)$/i, ' $1');
-    const dateStr = `${month} ${day} ${year} ${normalizedTime} GMT${toIsoOffset(offsetNum)}`;
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return null;
-    return { iso: date.toISOString() };
+    return null;
 }
 
 export function parsePlayoffScheduleCell(value: string, year: number): ParsedSchedule | null {
@@ -139,29 +136,11 @@ export function parsePlayoffScheduleCell(value: string, year: number): ParsedSch
     const stripped = value.trim().replace(/^date\s*:\s*/i, '').trim();
     if (!stripped) return null;
 
-    const slashMatch = stripped.match(SLASH_DATE);
-    if (slashMatch) {
-        const [, month, day, fullYear, hour12, minutes, meridiem, offsetStr] = slashMatch;
-
-        const offsetNum = parseFloat(offsetStr);
-        if (isNaN(offsetNum)) return null;
-
-        const h = parseInt(hour12, 10);
-        if (h < 1 || h > 12) return null;
-        const isPM = meridiem.toUpperCase() === 'PM';
-        const hour24 = isPM ? (h === 12 ? 12 : h + 12) : (h === 12 ? 0 : h);
-
-        const iso = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-            + `T${String(hour24).padStart(2, '0')}:${(minutes ?? '00').padStart(2, '0')}:00`
-            + toIsoOffset(offsetNum);
-
-        const date = new Date(iso);
-        if (isNaN(date.getTime())) return null;
-        return { iso: date.toISOString() };
+    const slash = stripped.match(SLASH_DATE_TIME);
+    if (slash) {
+        const [, month, day, fullYear, ...rest] = slash;
+        return buildSchedule(parseInt(fullYear, 10), parseInt(month, 10) - 1, parseInt(day, 10), rest);
     }
-
-    const named = parseNamedTzCell(stripped, year);
-    if (named) return named;
 
     return parseScheduleCell(stripped, year);
 }

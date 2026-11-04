@@ -115,7 +115,7 @@ export async function syncMatchResults(
 
             const parsed = result.scheduleRaw ? parseScheduleCell(result.scheduleRaw, year) : null;
             if (result.scheduleRaw && !parsed) {
-                errors.push({row: result.rowNumber, message: `[${mc}] Schedule "${result.scheduleRaw}": unrecognized format — expected "Month Dth, H:MM AM/PM [GMT±N]", "Month Dth", or "Month Dth - Month Dth" (e.g. "May 2nd, 5:00 PM [GMT+8]", "May 2nd", or "May 2nd - May 5th").`});
+                errors.push({row: result.rowNumber, message: `[${mc}] Schedule "${result.scheduleRaw}": unrecognized format. Expected "Month Dth, H:MM AM/PM [GMT±N]", "Month Dth, HH:MM UTC", "Month Dth", or "Month Dth - Month Dth" (e.g. "May 2nd, 5:00 PM [GMT+8]", "May 2nd, 20:00 UTC", "May 2nd", or "May 2nd - May 5th").`});
                 rowsErrored++;
             }
             const scheduledAt = parsed?.iso ?? null;
