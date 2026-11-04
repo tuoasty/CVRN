@@ -138,6 +138,12 @@ export type PlayerCardRow =
 export type PlayerCardInsert =
     Database["public"]["Tables"]["player_cards"]["Insert"];
 
+export type PlayerCardOverlayRow =
+    Database["public"]["Tables"]["player_card_overlays"]["Row"];
+
+export type PlayerCardOverlayInsert =
+    Database["public"]["Tables"]["player_card_overlays"]["Insert"];
+
 export type CardBulkJobRow =
     Database["public"]["Tables"]["card_bulk_jobs"]["Row"];
 

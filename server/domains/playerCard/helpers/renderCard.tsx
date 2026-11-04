@@ -9,6 +9,7 @@ export interface CardAssets {
     art: Record<string, string>
     headshot: string | null
     teamLogo: string | null
+    rig?: string | null
 }
 
 interface OgFont {
@@ -107,6 +108,11 @@ function renderLayer(layer: CardLayer, index: number, data: CardData, assets: Ca
     }
 
     if (layer.kind === 'image') {
+        if (layer.field === 'rig') {
+            if (!assets.rig) return null
+            return <img key={index} src={assets.rig} alt="" width={layer.w} height={layer.h} style={boxStyle(layer)} />
+        }
+        if (layer.field === 'headshot' && assets.rig) return null
         const src = layer.field === 'headshot' ? assets.headshot : assets.teamLogo
         if (!src) return null
         return (

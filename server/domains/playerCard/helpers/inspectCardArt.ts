@@ -4,6 +4,11 @@ import { CARD_ART_MAX_PIXELS } from '../types'
 
 const notPng = () => Err({ message: 'Art must be a PNG file', code: 'VALIDATION_ERROR' as const })
 
+export async function isFullyOpaque(bytes: Buffer): Promise<boolean> {
+    const { isOpaque } = await sharp(bytes, { limitInputPixels: CARD_ART_MAX_PIXELS }).stats()
+    return isOpaque
+}
+
 export async function inspectCardArt(bytes: Buffer): Promise<Result<{ width: number; height: number }>> {
     try {
         const { format, width, height } = await sharp(bytes, { limitInputPixels: false }).metadata()

@@ -32,6 +32,9 @@ export const STORAGE_PATHS = {
     playerCard(playerId: string, seasonNumber: number) {
         return `cards/${seasonNumber}/${playerId}_${Date.now()}.png`;
     },
+    playerCardRig(playerId: string, seasonNumber: number, groupId: string) {
+        return `card-rigs/${seasonNumber}/${playerId}_${groupId}_${Date.now()}.png`;
+    },
 }
 export function extractStoragePath(url: string, bucket: string): string {
     const marker = `/object/public/${bucket}/`

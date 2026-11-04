@@ -6,15 +6,19 @@ import {
     deleteCardGroupAction,
     deleteCardTemplateAction,
     deletePlayerCardAction,
+    deletePlayerCardRigAction,
     getCardCatalogAction,
+    getPlayerCardRigAction,
     getPlayerCardsAction,
     previewCustomPlayerCardAction,
     previewPlayerCardAction,
     updateCardGroupAction,
     updateCardTemplateAction,
     updateCardGroupLayersAction,
+    updatePlayerCardRigPlacementAction,
     uploadCardTemplateArtAction,
     uploadPlayerCardGfxAction,
+    uploadPlayerCardRigAction,
 } from "@/app/actions/playerCard.actions";
 import { checkArtFile, pickPreviewImage } from "@/app/features/playerCard/cardArt";
 import type {
@@ -24,10 +28,14 @@ import type {
     CreateCardGroupInput,
     CreateCardTemplateInput,
     PlayerCard,
+    PlayerCardRig,
+    PlayerCardRigKey,
     PreviewCustomPlayerCardInput,
+    RigPlacement,
     UpdateCardGroupInput,
     UpdateCardTemplateInput,
     UploadPlayerCardGfxInput,
+    UploadPlayerCardRigInput,
 } from "@/server/domains/playerCard";
 import { Err, Ok, type Result } from "@/shared/types/result";
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
@@ -42,7 +50,11 @@ export function cardPlayerIdsKey(seasonNumber: number, groupId: string) {
     return ["cardPlayerIds", seasonNumber, groupId] as const;
 }
 
-export type CardPreviewRequest =
+export function playerCardRigKey(playerId: string, seasonNumber: number, groupId: string) {
+    return ["playerCardRig", playerId, seasonNumber, groupId] as const;
+}
+
+export type CardPreviewRequest = (
     | {
         kind: "board";
         playerId: string;
@@ -51,7 +63,8 @@ export type CardPreviewRequest =
         layers: CardLayer[];
         overrides: CardOverrides;
     }
-    | ({ kind: "custom" } & PreviewCustomPlayerCardInput);
+    | ({ kind: "custom" } & PreviewCustomPlayerCardInput)
+) & { rigVersion?: string | null; rigPlacement?: RigPlacement | null };
 
 async function fetchCardCatalog(): Promise<CardGroup[]> {
     const result = await getCardCatalogAction();
@@ -61,6 +74,12 @@ async function fetchCardCatalog(): Promise<CardGroup[]> {
 
 async function fetchPlayerCards([, playerId, seasonNumber]: ReturnType<typeof playerCardsKey>): Promise<PlayerCard[]> {
     const result = await getPlayerCardsAction({ playerId, seasonNumber });
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+async function fetchPlayerCardRig([, playerId, seasonNumber, groupId]: ReturnType<typeof playerCardRigKey>): Promise<PlayerCardRig | null> {
+    const result = await getPlayerCardRigAction({ playerId, seasonNumber, groupId });
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
 }
@@ -93,6 +112,15 @@ export function usePlayerCards(playerId: string | null, seasonNumber: number | n
         error: error instanceof Error ? error.message : null,
         mutate,
     };
+}
+
+export function useCardRig(playerId: string | null, seasonNumber: number, groupId: string) {
+    const { data } = useSWR(
+        playerId ? playerCardRigKey(playerId, seasonNumber, groupId) : null,
+        fetchPlayerCardRig as BareFetcher<PlayerCardRig | null>,
+        { revalidateOnFocus: false }
+    );
+    return { rig: (data as PlayerCardRig | null | undefined) ?? null };
 }
 
 let lastPreview: { scope: string; image: string } | null = null;
@@ -151,6 +179,38 @@ export async function uploadPlayerCardGfx(payload: UploadPlayerCardGfxInput, fil
     } catch {
         return Err({ message: "Upload failed. The file may be over the 2.9 MB limit, or the connection dropped.", code: "INTEGRATION_ERROR" });
     }
+}
+
+export async function uploadPlayerCardRig(payload: UploadPlayerCardRigInput, file: File): Promise<Result<PlayerCardRig>> {
+    const body = new FormData();
+    body.set("payload", JSON.stringify(payload));
+    body.set("file", file);
+    try {
+        const result = await uploadPlayerCardRigAction(body);
+        if (result.ok) {
+            const { playerId, seasonNumber, groupId } = result.value;
+            await globalMutate(playerCardRigKey(playerId, seasonNumber, groupId), result.value, { revalidate: false });
+        }
+        return result;
+    } catch {
+        return Err({ message: "Upload failed. The file may be over the 2.9 MB limit, or the connection dropped.", code: "INTEGRATION_ERROR" });
+    }
+}
+
+export async function savePlayerCardRigPlacement(key: PlayerCardRigKey, placement: RigPlacement): Promise<Result<PlayerCardRig>> {
+    const result = await updatePlayerCardRigPlacementAction({ ...key, placement });
+    if (result.ok) {
+        await globalMutate(playerCardRigKey(key.playerId, key.seasonNumber, key.groupId), result.value, { revalidate: false });
+    }
+    return result;
+}
+
+export async function removePlayerCardRig(key: PlayerCardRigKey): Promise<Result<null>> {
+    const result = await deletePlayerCardRigAction(key);
+    if (result.ok) {
+        await globalMutate(playerCardRigKey(key.playerId, key.seasonNumber, key.groupId), null, { revalidate: false });
+    }
+    return result;
 }
 
 export async function saveCardGroupLayers(groupId: string, layers: CardLayer[]) {

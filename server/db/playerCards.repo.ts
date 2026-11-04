@@ -1,4 +1,4 @@
-import { CardGroupInsert, CardGroupRow, CardTemplateInsert, CardTemplateRow, DBClient, PlayerCardInsert, PlayerCardRow } from '@/shared/types/db'
+import { CardGroupInsert, CardGroupRow, CardTemplateInsert, CardTemplateRow, DBClient, PlayerCardInsert, PlayerCardOverlayInsert, PlayerCardOverlayRow, PlayerCardRow } from '@/shared/types/db'
 import type { Json } from '@/database.types'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { serializeError } from '@/server/utils/serializeableError'
@@ -140,6 +140,73 @@ export async function upsertPlayerCard(supabase: DBClient, row: PlayerCardInsert
     return Ok(data as PlayerCardRow)
 }
 
+interface PlayerCardOverlayKey {
+    playerId: string
+    seasonNumber: number
+    groupId: string
+    slot: 'rig'
+}
+
+export async function findPlayerCardOverlay(supabase: DBClient, p: PlayerCardOverlayKey): Promise<Result<PlayerCardOverlayRow | null>> {
+    const { data, error } = await supabase
+        .from('player_card_overlays')
+        .select('*')
+        .eq('player_id', p.playerId)
+        .eq('season_number', p.seasonNumber)
+        .eq('group_id', p.groupId)
+        .eq('slot', p.slot)
+        .maybeSingle()
+    if (error) return Err(serializeError(error, 'DB_ERROR'))
+    return Ok(data as PlayerCardOverlayRow | null)
+}
+
+export async function upsertPlayerCardOverlay(supabase: DBClient, row: PlayerCardOverlayInsert): Promise<Result<PlayerCardOverlayRow>> {
+    const { data, error } = await supabase
+        .from('player_card_overlays')
+        .upsert(row, { onConflict: 'player_id,season_number,group_id,slot' })
+        .select('*')
+        .single()
+    if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
+    return Ok(data as PlayerCardOverlayRow)
+}
+
+export async function updatePlayerCardOverlayPlacement(
+    supabase: DBClient,
+    p: PlayerCardOverlayKey & {
+        placement: { imageX: number; imageY: number; imageW: number }
+    },
+): Promise<Result<PlayerCardOverlayRow | null>> {
+    const { data, error } = await supabase
+        .from('player_card_overlays')
+        .update({
+            image_x: p.placement.imageX,
+            image_y: p.placement.imageY,
+            image_w: p.placement.imageW,
+        })
+        .eq('player_id', p.playerId)
+        .eq('season_number', p.seasonNumber)
+        .eq('group_id', p.groupId)
+        .eq('slot', p.slot)
+        .select('*')
+        .maybeSingle()
+    if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
+    return Ok(data as PlayerCardOverlayRow | null)
+}
+
+export async function deletePlayerCardOverlay(supabase: DBClient, p: PlayerCardOverlayKey): Promise<Result<PlayerCardOverlayRow | null>> {
+    const { data, error } = await supabase
+        .from('player_card_overlays')
+        .delete()
+        .eq('player_id', p.playerId)
+        .eq('season_number', p.seasonNumber)
+        .eq('group_id', p.groupId)
+        .eq('slot', p.slot)
+        .select('*')
+        .maybeSingle()
+    if (error) return Err(serializeError(error, error.code === '42501' ? 'FORBIDDEN' : 'DB_ERROR'))
+    return Ok(data as PlayerCardOverlayRow | null)
+}
+
 export async function findCardTemplateById(supabase: DBClient, templateId: string): Promise<Result<CardTemplateRow | null>> {
     const { data, error } = await supabase
         .from('card_templates')
@@ -180,7 +247,7 @@ export async function updateCardGroup(
 
 export async function deleteCardGroup(supabase: DBClient, groupId: string): Promise<Result<null>> {
     const { data, error } = await supabase.from('card_groups').delete().eq('id', groupId).select('id')
-    if (error) return Err(writeError(error, 'Card group still has tiers or generated cards'))
+    if (error) return Err(writeError(error, 'Card group still has tiers, generated cards or rigs'))
     if (!data || data.length === 0) return Err({ message: 'Card group not found or not deletable', code: 'NOT_FOUND' })
     return Ok(null)
 }

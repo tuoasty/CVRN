@@ -33,6 +33,13 @@ import {
     resolveCustomSubject,
     uploadPlayerCardGfx,
     UploadPlayerCardGfxSchema,
+    uploadPlayerCardRig,
+    deletePlayerCardRig,
+    updatePlayerCardRigPlacement,
+    getPlayerCardRig,
+    PlayerCardRigKeySchema,
+    UploadPlayerCardRigSchema,
+    UpdatePlayerCardRigPlacementSchema,
     getCardBulkStatus,
     getCardPlayerIds,
     startCardBulkJob,
@@ -55,7 +62,7 @@ import {
     UpdateCardTemplateSchema,
     UploadCardArtSchema,
 } from '@/server/domains/playerCard'
-import type { CardBulkJob, CardGroup, CardLayer, PlayerCard } from '@/server/domains/playerCard'
+import type { CardBulkJob, CardGroup, CardLayer, PlayerCard, PlayerCardRig } from '@/server/domains/playerCard'
 import { getOverallConfig } from '@/server/domains/overall'
 import type { OverallInputRow } from '@/server/domains/overall'
 import { getCachedSeasonOverallInputs } from '@/server/cache/publicReads'
@@ -458,4 +465,92 @@ export async function uploadPlayerCardGfxAction(formData: FormData): Promise<Res
     } catch (error) {
         return Err(serializeError(error))
     }
+}
+
+export async function getPlayerCardRigAction(input: unknown): Promise<Result<PlayerCardRig | null>> {
+    const parsed = PlayerCardRigKeySchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    return getPlayerCardRig(supabase, parsed.data)
+}
+
+export async function uploadPlayerCardRigAction(formData: FormData): Promise<Result<PlayerCardRig>> {
+    const file = formData.get('file')
+    if (!(file instanceof File) || file.size === 0) return Err({ message: 'Choose a PNG file', code: 'VALIDATION_ERROR' })
+
+    let payload: unknown
+    try {
+        payload = JSON.parse(String(formData.get('payload')))
+    } catch {
+        return Err({ message: 'Upload details could not be read', code: 'VALIDATION_ERROR' })
+    }
+    const parsed = UploadPlayerCardRigSchema.safeParse(payload)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const lock = await assertNoRunningBulk(supabase)
+    if (!lock.ok) return lock
+
+    try {
+        const { seasonNumber, groupId } = parsed.data
+
+        if (parsed.data.kind === 'board') {
+            const boardPlayerId = parsed.data.playerId
+            return await uploadPlayerCardRig(supabase, {
+                seasonNumber,
+                groupId,
+                file,
+                ensurePlayerId: async () => Ok(boardPlayerId),
+            })
+        }
+
+        const subject = await resolveCustomSubject(supabase, parsed.data)
+        if (!subject.ok) return subject
+        const playerId = customPlayerIdResolver(supabase, parsed.data.player, subject.value)
+        const rig = await uploadPlayerCardRig(supabase, {
+            seasonNumber,
+            groupId,
+            file,
+            ensurePlayerId: playerId.ensure,
+        })
+        if (playerId.wasRegistered()) revalidatePublicData([CACHE_TAGS.players])
+        return rig
+    } catch (error) {
+        return Err(serializeError(error))
+    }
+}
+
+export async function updatePlayerCardRigPlacementAction(input: unknown): Promise<Result<PlayerCardRig>> {
+    const parsed = UpdatePlayerCardRigPlacementSchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const lock = await assertNoRunningBulk(supabase)
+    if (!lock.ok) return lock
+
+    return updatePlayerCardRigPlacement(supabase, parsed.data)
+}
+
+export async function deletePlayerCardRigAction(input: unknown): Promise<Result<null>> {
+    const parsed = PlayerCardRigKeySchema.safeParse(input)
+    if (!parsed.success) return validationError(parsed.error.issues)
+
+    const supabase = await createServerSupabase()
+    const guard = await requireAdmin(supabase)
+    if (!guard.ok) return guard
+
+    const lock = await assertNoRunningBulk(supabase)
+    if (!lock.ok) return lock
+
+    return deletePlayerCardRig(supabase, parsed.data)
 }

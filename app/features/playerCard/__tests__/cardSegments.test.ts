@@ -55,6 +55,11 @@ describe('CARD_SEGMENTS', () => {
         expect(team && layerLabel(team.make())).toBe('Team name')
     })
 
+    it('offers a Rig box separate from Avatar', () => {
+        const rig = CARD_SEGMENTS.find(s => s.key === 'rig')
+        expect(rig && layerLabel(rig.make())).toBe('Rig')
+    })
+
     it('never offers an art layer', () => {
         expect(CARD_SEGMENTS.every(s => s.make().kind !== 'art')).toBe(true)
     })

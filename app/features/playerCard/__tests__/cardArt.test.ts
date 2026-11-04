@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CardLayer } from '@/server/domains/playerCard'
 import { CARD_ART_MAX_BYTES } from '@/server/domains/playerCard/types/schemas'
-import { artFitWarning, checkArtFile, checkGfxFile, formatArtSize, generateBlocker, gfxBlocker, layoutArtSlots, missingArt, pickPreviewImage, readPngSize, tierHasArt, tierRangeLabels } from '../cardArt'
+import { artFitWarning, checkArtFile, checkGfxFile, checkRigFile, formatArtSize, generateBlocker, gfxBlocker, layoutArtSlots, missingArt, pickPreviewImage, readPngSize, tierHasArt, tierRangeLabels } from '../cardArt'
 
 const art = (src: string, w = 1000, h = 1400): CardLayer => ({ kind: 'art', src, x: 0, y: 0, w, h })
 const ovr: CardLayer = { kind: 'text', field: 'ovr', x: 0, y: 0, w: 1, h: 1, size: 1, color: '#fff', uppercase: false, letterSpacing: 0 }
@@ -224,5 +224,27 @@ describe('gfxBlocker', () => {
         expect(gfxBlocker({ ...clear, inputProblem: 'Enter values' })).toBe('Enter values')
         expect(gfxBlocker({ ...clear, inactiveGroup: 'Off' })).toBe('Off')
         expect(gfxBlocker({ ...clear, noTier: 'No tier' })).toBe('No tier')
+    })
+})
+
+describe('checkRigFile', () => {
+    const png = (width: number, height: number) => new File([pngHeader(width, height)], 'rig.png', { type: 'image/png' })
+
+    it('accepts a PNG of any shape', async () => {
+        expect(await checkRigFile(png(819, 1024))).toBeNull()
+        expect(await checkRigFile(png(3000, 2000))).toBeNull()
+    })
+
+    it('rejects enormous dimensions', async () => {
+        expect(await checkRigFile(png(5000, 5000))).toBe('5000 × 5000 is too large. A rig can be up to 16 megapixels.')
+    })
+
+    it('rejects a file that is not a PNG', async () => {
+        expect(await checkRigFile(new File([new Uint8Array(24)], 'rig.png'))).toBe('Rig must be a PNG file')
+    })
+
+    it('rejects a file over the limit', async () => {
+        const big = new File([new Uint8Array(3 * 1024 * 1024)], 'rig.png', { type: 'image/png' })
+        expect(await checkRigFile(big)).toBe('Rig must be 2.9 MB or smaller. Export a smaller PNG.')
     })
 })

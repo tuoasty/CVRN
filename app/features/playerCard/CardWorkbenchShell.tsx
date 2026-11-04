@@ -4,18 +4,20 @@ import { ChangeEvent, ReactNode, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/app/components/ui/button'
 import { useIsSuperAdmin } from '@/app/admin/AdminRoleProvider'
-import { deletePlayerCard, saveCardGroupLayers, storePlayerCard, useCardPreview, usePlayerCards } from '@/app/hooks/usePlayerCard'
+import { deletePlayerCard, removePlayerCardRig, saveCardGroupLayers, savePlayerCardRigPlacement, storePlayerCard, useCardPreview, useCardRig, usePlayerCards } from '@/app/hooks/usePlayerCard'
 import type { CardPreviewRequest } from '@/app/hooks/usePlayerCard'
 import { useCardBulkStatus } from '@/app/hooks/useCardBulk'
 import { toast } from '@/app/utils/toast'
 import { pickTierTemplate } from '@/server/domains/playerCard/helpers/toCardShapes'
-import type { CardGroup, CardLayer, PlayerCard } from '@/server/domains/playerCard'
+import type { CardGroup, CardLayer, PlayerCard, PlayerCardRig, RigPlacement } from '@/server/domains/playerCard'
 import type { Result } from '@/shared/types/result'
 import { cn } from '@/lib/utils'
-import { checkGfxFile, generateBlocker, gfxBlocker, missingArt, tierRangeLabels } from './cardArt'
+import { checkGfxFile, checkRigFile, generateBlocker, gfxBlocker, missingArt, tierRangeLabels } from './cardArt'
 import { OPTION, OPTION_OFF, OPTION_ON } from './cardFormStyles'
 import CardLayoutEditor from './CardLayoutEditor'
 import CardLayoutPreview from './CardLayoutPreview'
+import { defaultRigPlacement } from '@/server/domains/playerCard/helpers/rigPlacement'
+import CardRigRow from './CardRigRow'
 import { layerProblem } from './cardSegments'
 import ConfirmDeleteLink from './ConfirmDeleteLink'
 import { saveDataUri } from './saveDataUri'
@@ -49,6 +51,8 @@ export default function CardWorkbenchShell({
     generate,
     downloadTemplate,
     uploadGfx,
+    uploadRig,
+    onRigSaved,
     onGenerated,
 }: {
     playerId: string | null
@@ -69,6 +73,8 @@ export default function CardWorkbenchShell({
     generate: () => Promise<Result<PlayerCard>>
     downloadTemplate: () => Promise<Result<{ fileName: string; dataUri: string }>>
     uploadGfx: (file: File) => Promise<Result<PlayerCard>>
+    uploadRig: ((file: File) => Promise<Result<PlayerCardRig>>) | null
+    onRigSaved?: (rig: PlayerCardRig) => void
     onGenerated: (card: PlayerCard) => void
 }) {
     const [active, setActive] = useState<{ groupId: string; index: number } | null>(null)
@@ -78,7 +84,11 @@ export default function CardWorkbenchShell({
     const [generating, setGenerating] = useState(false)
     const [downloading, setDownloading] = useState(false)
     const [uploading, setUploading] = useState(false)
+    const [uploadingRig, setUploadingRig] = useState(false)
+    const [savingRig, setSavingRig] = useState(false)
+    const [rigDraft, setRigDraft] = useState<{ uploadedAt: string; placement: RigPlacement } | null>(null)
     const gfxInput = useRef<HTMLInputElement>(null)
+    const rigInput = useRef<HTMLInputElement>(null)
     const isSuperAdmin = useIsSuperAdmin()
     const { isRunning: bulkRunning } = useCardBulkStatus()
 
@@ -96,9 +106,16 @@ export default function CardWorkbenchShell({
     const dirty = draft !== undefined && JSON.stringify(draft) !== JSON.stringify(savedLayers)
     const layoutProblem = layers.length === 0 ? 'Add at least one segment' : layers.map(layerProblem).find(Boolean) ?? null
 
-    const previewRequest = template && !layoutProblem
+    const { rig } = useCardRig(generateProblem ? null : playerId, seasonNumber, group.id)
+    const builtPreview = template && !layoutProblem
         ? buildPreview(template.id, layers, previewingOther ? template.minOvr : null)
         : null
+    const draftPlacement = rig && rigDraft?.uploadedAt === rig.uploadedAt ? rigDraft.placement : null
+    const rigPlacement = draftPlacement ?? rig?.placement ?? null
+    const rigDirty = draftPlacement !== null
+    const rigLayer = layers.find(layer => layer.kind === 'image' && layer.field === 'rig') ?? null
+    const shownRigPlacement = rig && rigLayer ? rigPlacement ?? defaultRigPlacement(rig, rigLayer) : null
+    const previewRequest = builtPreview && { ...builtPreview, rigVersion: rig?.uploadedAt ?? null, rigPlacement }
     const preview = useCardPreview(previewRequest, group.id)
     const { cards } = usePlayerCards(generateProblem ? null : playerId, seasonNumber)
 
@@ -192,6 +209,56 @@ export default function CardWorkbenchShell({
         }
     }
 
+    async function handleRigFile(event: ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0]
+        event.target.value = ''
+        if (!file || !uploadRig) return
+        setUploadingRig(true)
+        try {
+            const problem = await checkRigFile(file)
+            if (problem) {
+                toast.error('Rig not saved', problem)
+                return
+            }
+            const result = await uploadRig(file)
+            if (!result.ok) {
+                toast.error('Rig not saved', result.error.message)
+                return
+            }
+            onRigSaved?.(result.value)
+            toast.success('Rig saved. Regenerate to update the card.')
+        } finally {
+            setUploadingRig(false)
+        }
+    }
+
+    async function handleSaveRigPlacement() {
+        if (!rig || !draftPlacement) return
+        setSavingRig(true)
+        try {
+            const result = await savePlayerCardRigPlacement({ playerId: rig.playerId, seasonNumber: rig.seasonNumber, groupId: rig.groupId }, draftPlacement)
+            if (!result.ok) {
+                toast.error('Rig position not saved', result.error.message)
+                return
+            }
+            setRigDraft(null)
+            toast.success('Rig position saved. Regenerate to update the card.')
+        } finally {
+            setSavingRig(false)
+        }
+    }
+
+    async function handleRemoveRig() {
+        if (!rig) return false
+        const result = await removePlayerCardRig({ playerId: rig.playerId, seasonNumber: rig.seasonNumber, groupId: rig.groupId })
+        if (!result.ok) {
+            toast.error('Rig not removed', result.error.message)
+            return false
+        }
+        toast.success(`Removed ${username}'s rig`)
+        return true
+    }
+
     async function handleDeleteCard(saved: PlayerCard, groupName: string) {
         const result = await deletePlayerCard(saved)
         if (!result.ok) {
@@ -225,7 +292,7 @@ export default function CardWorkbenchShell({
     }
     const downloadBlocker = generateBlocker(blockerInput)
     const bulkNote = bulkRunning ? 'A bulk generation is running' : null
-    const blocker = generateBlocker({ ...blockerInput, bulkRunning: bulkNote })
+    const blocker = generateBlocker({ ...blockerInput, dirty: dirty || rigDirty, bulkRunning: bulkNote })
     const uploadBlocker = gfxBlocker({
         notReady: generateProblem,
         inputProblem,
@@ -233,6 +300,7 @@ export default function CardWorkbenchShell({
         noTier: blockerInput.noTier,
         bulkRunning: bulkNote,
     })
+    const rigBlocker = bulkNote ?? blockerInput.inactiveGroup ?? (rigLayer ? null : 'Add the Rig segment to this layout to upload a rig')
 
     return (
         <div className="flex flex-col gap-6">
@@ -270,6 +338,18 @@ export default function CardWorkbenchShell({
                             activeIndex={activeIndex}
                             onChange={setLayers}
                             onActivate={setActiveIndex}
+                            rigRow={rig && shownRigPlacement ? (
+                                <CardRigRow
+                                    username={username}
+                                    rig={rig}
+                                    placement={shownRigPlacement}
+                                    dirty={rigDirty}
+                                    saving={savingRig}
+                                    onChange={placement => setRigDraft({ uploadedAt: rig.uploadedAt, placement })}
+                                    onSave={handleSaveRigPlacement}
+                                    onDiscard={() => setRigDraft(null)}
+                                />
+                            ) : null}
                         />
                     </div>
 
@@ -354,6 +434,20 @@ export default function CardWorkbenchShell({
                             {uploading ? 'Uploading...' : 'Upload GFX'}
                         </Button>
                         <input ref={gfxInput} type="file" accept="image/png" className="hidden" aria-label="GFX card PNG" onChange={handleGfxFile} />
+                        {uploadRig && (
+                            <>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="rounded-sm"
+                                    disabled={uploadingRig || !!rigBlocker}
+                                    onClick={() => rigInput.current?.click()}
+                                >
+                                    {uploadingRig ? 'Uploading...' : 'Upload rig'}
+                                </Button>
+                                <input ref={rigInput} type="file" accept="image/png" className="hidden" aria-label="Transparent rig PNG" onChange={handleRigFile} />
+                            </>
+                        )}
                         <button type="button" className={LINK} disabled={downloading || !!downloadBlocker} onClick={handleDownloadTemplate}>
                             {downloading ? 'Preparing...' : 'Download template'}
                         </button>
@@ -361,9 +455,30 @@ export default function CardWorkbenchShell({
                     </div>
                     {blocker && <p className="text-xs text-muted-foreground">{blocker}</p>}
                     {uploadBlocker && uploadBlocker !== blocker && <p className="text-xs text-muted-foreground">{uploadBlocker}</p>}
+                    {uploadRig && rigBlocker && rigBlocker !== blocker && rigBlocker !== uploadBlocker && <p className="text-xs text-muted-foreground">{rigBlocker}</p>}
                     <p className="text-xs text-muted-foreground">
                         PNG at exactly <span className="font-mono tabular-nums">{group.width} × {group.height}</span>, up to 2.9 MB. Stored exactly as uploaded.
                     </p>
+                    {uploadRig && (
+                        <p className="text-xs text-muted-foreground">
+                            Rig: transparent PNG, up to 2.9 MB. Position it in the Rig image row.
+                        </p>
+                    )}
+                    {rig && (
+                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
+                            <span className="text-foreground">Rig</span>
+                            <span className="font-mono tabular-nums text-muted-foreground">uploaded {formatDate(rig.uploadedAt)}</span>
+                            <a href={rig.imageUrl} target="_blank" rel="noreferrer" className={LINK}>Open</a>
+                            {!bulkRunning && (
+                                <ConfirmDeleteLink
+                                    label="Remove"
+                                    title={`Remove ${username}'s rig?`}
+                                    description="Their card goes back to the headshot the next time it is generated. The saved card does not change until then."
+                                    onConfirm={handleRemoveRig}
+                                />
+                            )}
+                        </div>
+                    )}
 
                     {!generateProblem && (
                         <div className="flex flex-col gap-2 border-t border-border pt-3">

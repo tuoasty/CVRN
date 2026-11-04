@@ -10,7 +10,7 @@ export const CARD_STATS_COLUMNS: CardStatField[][] = [
     ['setting', 'receiving', 'serving'],
 ]
 
-export const CARD_IMAGE_FIELDS = ['headshot', 'teamLogo'] as const
+export const CARD_IMAGE_FIELDS = ['headshot', 'teamLogo', 'rig'] as const
 
 export const CARD_STAT_LABELS = {
     scoring: 'SCR',
@@ -116,10 +116,21 @@ export const GeneratePlayerCardSchema = PlayerCardsQuerySchema.extend({
 })
 export type GeneratePlayerCardInput = z.infer<typeof GeneratePlayerCardSchema>
 
+const RigPosition = z.number().int('Rig positions must be whole pixels').min(-5000).max(5000)
+const RigSize = z.number().int('Rig sizes must be whole pixels').min(1, 'Rig sizes must be at least 1').max(5000)
+
+export const RigPlacementSchema = z.object({
+    imageX: RigPosition,
+    imageY: RigPosition,
+    imageW: RigSize,
+})
+export type RigPlacement = z.infer<typeof RigPlacementSchema>
+
 export const PreviewPlayerCardSchema = PlayerCardsQuerySchema.extend({
     templateId: z.string().uuid(),
     layers: CardLayersSchema,
     overrides: CardOverridesSchema.optional(),
+    rigPlacement: RigPlacementSchema.nullable().optional(),
 })
 export type PreviewPlayerCardInput = z.infer<typeof PreviewPlayerCardSchema>
 
@@ -168,6 +179,7 @@ export type GenerateCustomPlayerCardInput = z.infer<typeof GenerateCustomPlayerC
 export const PreviewCustomPlayerCardSchema = CustomCardBaseSchema.extend({
     templateId: z.string().uuid(),
     layers: CardLayersSchema,
+    rigPlacement: RigPlacementSchema.nullable().optional(),
 })
 export type PreviewCustomPlayerCardInput = z.infer<typeof PreviewCustomPlayerCardSchema>
 
@@ -176,6 +188,24 @@ export const UploadPlayerCardGfxSchema = z.discriminatedUnion('kind', [
     CustomCardBaseSchema.extend({ kind: z.literal('custom'), groupId: z.string().uuid() }),
 ])
 export type UploadPlayerCardGfxInput = z.infer<typeof UploadPlayerCardGfxSchema>
+
+export const PlayerCardRigKeySchema = DeletePlayerCardSchema
+export type PlayerCardRigKey = z.infer<typeof PlayerCardRigKeySchema>
+
+export const UpdatePlayerCardRigPlacementSchema = PlayerCardRigKeySchema.extend({ placement: RigPlacementSchema })
+export type UpdatePlayerCardRigPlacementInput = z.infer<typeof UpdatePlayerCardRigPlacementSchema>
+
+export const UploadPlayerCardRigSchema = z.discriminatedUnion('kind', [
+    PlayerCardRigKeySchema.extend({ kind: z.literal('board') }),
+    z.object({
+        kind: z.literal('custom'),
+        player: CustomCardPlayerSchema,
+        seasonNumber: z.number().int('Season must be a whole number').min(1, 'Season must be at least 1'),
+        regionCode: z.string().trim().min(1).max(8).nullable(),
+        groupId: z.string().uuid(),
+    }),
+])
+export type UploadPlayerCardRigInput = z.infer<typeof UploadPlayerCardRigSchema>
 
 const CanvasSide = z.number({ error: 'Canvas sides must be numbers' }).int('Canvas sides must be whole numbers').min(100, 'Canvas sides must be at least 100px').max(4000, 'Canvas sides must be 4000px or less')
 

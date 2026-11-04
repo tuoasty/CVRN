@@ -1,5 +1,5 @@
 import type { CategoryRatings } from '@/server/domains/overall'
-import type { CardLayer } from './schemas'
+import type { CardLayer, RigPlacement } from './schemas'
 
 export interface CardTemplate {
     id: string
@@ -74,6 +74,17 @@ export interface PlayerCard {
     generatedAt: string
 }
 
+export interface PlayerCardRig {
+    playerId: string
+    seasonNumber: number
+    groupId: string
+    imageUrl: string
+    width: number
+    height: number
+    uploadedAt: string
+    placement: RigPlacement | null
+}
+
 export interface PublicPlayerCard {
     seasonNumber: number
     groupId: string
@@ -144,6 +155,10 @@ export {
     CardBulkJobIdSchema,
     CardPlayerIdsSchema,
     UploadPlayerCardGfxSchema,
+    PlayerCardRigKeySchema,
+    UploadPlayerCardRigSchema,
+    RigPlacementSchema,
+    UpdatePlayerCardRigPlacementSchema,
 } from './schemas'
 export type {
     CardLayer,
@@ -170,4 +185,8 @@ export type {
     StartCardBulkInput,
     CardPlayerIdsInput,
     UploadPlayerCardGfxInput,
+    PlayerCardRigKey,
+    UploadPlayerCardRigInput,
+    RigPlacement,
+    UpdatePlayerCardRigPlacementInput,
 } from './schemas'

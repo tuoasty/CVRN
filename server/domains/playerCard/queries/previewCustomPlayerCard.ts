@@ -18,6 +18,9 @@ export async function previewCustomPlayerCard(supabase: DBClient, p: PreviewCust
             avatarUrl: subject.value.avatarUrl,
             teamLogoUrl: subject.value.teamLogoUrl,
             data: buildCustomCardData(subject.value, p.values, p.seasonNumber),
+            rigPlayerId: subject.value.playerId,
+            seasonNumber: p.seasonNumber,
+            rigPlacement: p.rigPlacement,
         })
     } catch (error) {
         logger.error({ error }, 'previewCustomPlayerCard: unexpected error')

@@ -1,7 +1,7 @@
-import { CardGroupRow, CardTemplateRow, PlayerCardRow } from '@/shared/types/db'
+import { CardGroupRow, CardTemplateRow, PlayerCardOverlayRow, PlayerCardRow } from '@/shared/types/db'
 import { Err, Ok, Result } from '@/shared/types/result'
 import type { PublicPlayerCardRow } from '@/server/db/playerCards.repo'
-import { CARD_STAT_LABELS, hasPinnedArt, PublicPlayerCard, CardArtFile, CardData, CardStatField, CardGroup, CardLayer, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard } from '../types'
+import { CARD_STAT_LABELS, hasPinnedArt, PublicPlayerCard, CardArtFile, CardData, CardStatField, CardGroup, CardLayer, CardLayersSchema, CardTemplate, CardTextLayer, PlayerCard, PlayerCardRig } from '../types'
 
 export function rankTemplates<T extends { minOvr: number }>(templates: T[]): (T & { rank: number })[] {
     return [...templates].sort((a, b) => b.minOvr - a.minOvr).map((t, i) => ({ ...t, rank: i + 1 }))
@@ -112,6 +112,21 @@ export function toPlayerCard(row: PlayerCardRow): PlayerCard {
         teamId: row.team_id,
         imageUrl: row.image_url,
         generatedAt: row.generated_at,
+    }
+}
+
+export function toPlayerCardRig(row: PlayerCardOverlayRow): PlayerCardRig {
+    return {
+        playerId: row.player_id,
+        seasonNumber: row.season_number,
+        groupId: row.group_id,
+        imageUrl: row.image_url,
+        width: row.width,
+        height: row.height,
+        uploadedAt: row.uploaded_at,
+        placement: row.image_w === null || row.image_w === undefined
+            ? null
+            : { imageX: row.image_x ?? 0, imageY: row.image_y ?? 0, imageW: row.image_w },
     }
 }
 

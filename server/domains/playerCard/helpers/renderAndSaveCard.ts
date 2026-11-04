@@ -8,6 +8,7 @@ import { toCardTemplate } from './toCardShapes'
 import { saveCardImage } from './saveCardImage'
 import { loadImageAsPngDataUri } from './loadImage'
 import { loadTemplateArt } from './loadTemplateArt'
+import { loadCardRig } from './loadCardRig'
 import { renderCard } from './renderCard'
 import { loadCardFonts } from './cardFont'
 
@@ -82,13 +83,22 @@ export async function renderAndSaveCard(
     const art = await loadArt(template.value, p.artCache)
     if (!art.ok) return art
 
+    const rig = await loadCardRig(supabase, {
+        playerId: subject.playerId,
+        seasonNumber,
+        groupId,
+        layers: template.value.layers,
+        cached: false,
+    })
+    if (!rig.ok) return rig
+
     const images = await (p.strictImages ? loadImagesStrict(subject) : loadImages(subject))
     if (!images.ok) return images
 
     const fonts = await loadCardFonts()
     if (!fonts.ok) return fonts
 
-    const png = await renderCard(template.value, data, { art: art.value, ...images.value }, fonts.value)
+    const png = await renderCard(template.value, data, { art: art.value, ...images.value, rig: rig.value }, fonts.value)
 
     return saveCardImage(supabase, {
         seasonNumber,

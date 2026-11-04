@@ -12,7 +12,11 @@ export { deletePlayerCard } from './commands/deletePlayerCard'
 export { startCardBulkJob } from './commands/startCardBulkJob'
 export { stopCardBulkJob } from './commands/stopCardBulkJob'
 export { uploadPlayerCardGfx } from './commands/uploadPlayerCardGfx'
+export { uploadPlayerCardRig } from './commands/uploadPlayerCardRig'
+export { deletePlayerCardRig } from './commands/deletePlayerCardRig'
+export { updatePlayerCardRigPlacement } from './commands/updatePlayerCardRigPlacement'
 export { getPlayerCards } from './queries/getPlayerCards'
+export { getPlayerCardRig } from './queries/getPlayerCardRig'
 export { getPublicPlayerCards } from './queries/getPublicPlayerCards'
 export { getCardCatalog } from './queries/getCardCatalog'
 export { getCardTierTemplate } from './queries/getCardTierTemplate'
@@ -34,6 +38,11 @@ export type {
     CardGroup,
     CardData,
     PlayerCard,
+    PlayerCardRig,
+    PlayerCardRigKey,
+    UploadPlayerCardRigInput,
+    RigPlacement,
+    UpdatePlayerCardRigPlacementInput,
     PublicPlayerCard,
     CardLayer,
     CardOverrides,
@@ -85,4 +94,7 @@ export {
     CardBulkJobIdSchema,
     CardPlayerIdsSchema,
     UploadPlayerCardGfxSchema,
+    PlayerCardRigKeySchema,
+    UploadPlayerCardRigSchema,
+    UpdatePlayerCardRigPlacementSchema,
 } from './types'

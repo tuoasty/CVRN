@@ -28,6 +28,7 @@ export const CARD_SEGMENTS: { key: string; label: string; make: () => CardLayer 
     { key: 'teamLogo', label: 'Team', make: () => imageLayer('teamLogo', 120, 120, 'contain') },
     { key: 'teamName', label: 'Team name', make: () => textLayer('teamName', 500, 60, 40) },
     { key: 'headshot', label: 'Avatar', make: () => imageLayer('headshot', 500, 500, 'cover') },
+    { key: 'rig', label: 'Rig', make: () => imageLayer('rig', 500, 500, 'cover') },
     { key: 'username', label: 'Name', make: () => textLayer('username', 700, 90, 72) },
     { key: 'displayName', label: 'Display name', make: () => textLayer('displayName', 700, 60, 40) },
     { key: 'stats', label: 'Stats', make: statsLayer },

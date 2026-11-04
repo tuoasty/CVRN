@@ -220,6 +220,7 @@ function AdminCardsContent() {
                                     drafts={drafts}
                                     onDraftsChange={setDrafts}
                                     onGenerated={card => setCustomPlayer(current => current && { ...current, playerId: card.playerId })}
+                                    onRegistered={playerId => setCustomPlayer(current => current && { ...current, playerId })}
                                 />
                             ) : (
                                 <PlayerCardWorkbench

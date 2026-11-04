@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { downloadPlayerCardTemplateAction, generatePlayerCardAction } from '@/app/actions/playerCard.actions'
-import { uploadPlayerCardGfx } from '@/app/hooks/usePlayerCard'
+import { uploadPlayerCardGfx, uploadPlayerCardRig } from '@/app/hooks/usePlayerCard'
 import type { CardGroup, CardOverrides } from '@/server/domains/playerCard'
 import type { OverallDisplayRow } from '@/app/features/overall/overallRows'
 import { Err } from '@/shared/types/result'
@@ -92,6 +92,9 @@ export default function PlayerCardWorkbench({
             uploadGfx={file => player
                 ? uploadPlayerCardGfx({ kind: 'board', playerId: player.playerId, seasonNumber, groupId: group.id, overrides: cleaned }, file)
                 : Promise.resolve(Err({ message: 'Pick a player first', code: 'VALIDATION_ERROR' }))}
+            uploadRig={player && !isSample
+                ? file => uploadPlayerCardRig({ kind: 'board', playerId: player.playerId, seasonNumber, groupId: group.id }, file)
+                : null}
             onGenerated={() => setOverrides({})}
         />
     )

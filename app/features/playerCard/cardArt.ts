@@ -62,6 +62,14 @@ export async function checkGfxFile(file: File, canvas: { width: number; height: 
     return null
 }
 
+export async function checkRigFile(file: File): Promise<string | null> {
+    if (file.size > CARD_ART_MAX_BYTES) return 'Rig must be 2.9 MB or smaller. Export a smaller PNG.'
+    const size = readPngSize(new Uint8Array(await file.slice(0, 24).arrayBuffer()))
+    if (!size) return 'Rig must be a PNG file'
+    if (size.width * size.height > CARD_ART_MAX_PIXELS) return `${size.width} × ${size.height} is too large. A rig can be up to 16 megapixels.`
+    return null
+}
+
 export function formatArtSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
 }

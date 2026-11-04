@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment } from 'react'
+import { Fragment, ReactNode } from 'react'
 import { ChevronDown, ChevronUp, X } from 'lucide-react'
 import { Input } from '@/app/components/ui/input'
 import NumberField from '@/app/features/overall/NumberField'
@@ -26,6 +26,10 @@ type StylePatch = Partial<Pick<CardTextLayer, 'color' | 'uppercase' | 'letterSpa
 
 function LayerStyleControls({ layer, onPatch }: { layer: CardLayer; onPatch: (patch: StylePatch) => void }) {
     if (layer.kind === 'art') return null
+
+    if (layer.kind === 'image' && layer.field === 'rig') {
+        return <p className="text-xs text-muted-foreground">Shared by every rig card in this group. Players with a rig use this box instead of Avatar.</p>
+    }
 
     if (layer.kind === 'image') {
         return (
@@ -87,11 +91,13 @@ export default function CardLayoutEditor({
     activeIndex,
     onChange,
     onActivate,
+    rigRow,
 }: {
     layers: CardLayer[]
     activeIndex: number | null
     onChange: (layers: CardLayer[]) => void
     onActivate: (index: number | null) => void
+    rigRow?: ReactNode
 }) {
     const update = (index: number, patch: Partial<Record<BoxKey | 'size', number>>) => {
         onChange(layers.map((layer, i) => {
@@ -229,6 +235,7 @@ export default function CardLayoutEditor({
                                         </td>
                                     </tr>
                                 )}
+                                {layer.kind === 'image' && layer.field === 'rig' && rigRow}
                             </Fragment>
                         )
                     })}
@@ -262,7 +269,7 @@ export default function CardLayoutEditor({
                 </button>
             </div>
             <p className="text-xs text-muted-foreground">
-                Canvas pixels. Rows draw top to bottom, later rows on top. Select a row for its colour, spacing, uppercase or fit. These apply to every tier in the group. Art stays at the bottom, and each tier&apos;s file is uploaded on Card Groups. Text is centered in its box and shrinks to fit, from Size down to half of it. Stats is one box split into 2 columns × 3 rows (SCR SPK BLK, then SET REC SRV), all at one shared size.
+                Canvas pixels. Rows draw top to bottom, later rows on top. Select a row for its colour, spacing, uppercase or fit. These apply to every tier in the group. Art stays at the bottom, and each tier&apos;s file is uploaded on Card Groups. Text is centered in its box and shrinks to fit, from Size down to half of it. Stats is one box split into 2 columns × 3 rows (SCR SPK BLK, then SET REC SRV), all at one shared size.{rigRow ? ' Rig image is for this player, season and group only. It is measured from the Rig box\'s top-left corner, cut off at the box\'s edges, and saves on its own.' : ''}
             </p>
         </div>
     )

@@ -228,3 +228,59 @@ describe('renderCard', () => {
         expect(second.equals(first)).toBe(true)
     }, 30000)
 })
+
+describe('renderCard rig', () => {
+    const template = (layers: unknown[]): CardTemplate => ({
+        id: 't',
+        groupId: 'g',
+        name: 'Base',
+        minOvr: 1,
+        width: 200,
+        height: 200,
+        layers: CardLayersSchema.parse(layers),
+    })
+    const art = { kind: 'art', src: 'bg.png', x: 0, y: 0, w: 200, h: 200 }
+    const headshot = { kind: 'image', field: 'headshot', x: 0, y: 0, w: 10, h: 10, fit: 'cover' }
+    const rigBox = { kind: 'image', field: 'rig', x: 50, y: 60, w: 80, h: 40, fit: 'cover' }
+    const logo = { kind: 'image', field: 'teamLogo', x: 60, y: 70, w: 20, h: 20, fit: 'cover' }
+
+    async function pixel(png: Buffer, x: number, y: number) {
+        const { data: raw, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true })
+        const start = (y * info.width + x) * info.channels
+        return [raw[start], raw[start + 1], raw[start + 2]]
+    }
+
+    const near = (actual: number[], expected: number[]) => {
+        actual.forEach((value, i) => expect(Math.abs(value - expected[i])).toBeLessThan(8))
+    }
+
+    const assets = async (rig: string | null) => ({
+        art: { 'bg.png': await solidPng(200, 200, '#000000') },
+        headshot: await solidPng(10, 10, '#00ff00'),
+        teamLogo: await solidPng(20, 20, '#0000ff'),
+        rig,
+    })
+
+    it('draws the rig in the Rig box and hides the Avatar box', async () => {
+        const png = await renderCard(template([art, headshot, rigBox]), data, await assets(await solidPng(80, 40, '#ff0000')), await loadTestFonts())
+        near(await pixel(png, 90, 80), [255, 0, 0])
+        near(await pixel(png, 5, 5), [0, 0, 0])
+    }, 30000)
+
+    it('draws the headshot in the Avatar box and leaves the Rig box empty with no rig', async () => {
+        const png = await renderCard(template([art, headshot, rigBox]), data, await assets(null), await loadTestFonts())
+        near(await pixel(png, 5, 5), [0, 255, 0])
+        near(await pixel(png, 90, 80), [0, 0, 0])
+    }, 30000)
+
+    it('keeps layers later in the stack on top of the rig', async () => {
+        const png = await renderCard(template([art, rigBox, logo]), data, await assets(await solidPng(80, 40, '#ff0000')), await loadTestFonts())
+        near(await pixel(png, 70, 80), [0, 0, 255])
+        near(await pixel(png, 110, 80), [255, 0, 0])
+    }, 30000)
+
+    it('stacks by the Rig row, independently of Avatar', async () => {
+        const png = await renderCard(template([art, logo, rigBox]), data, await assets(await solidPng(80, 40, '#ff0000')), await loadTestFonts())
+        near(await pixel(png, 70, 80), [255, 0, 0])
+    }, 30000)
+})
