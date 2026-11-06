@@ -751,6 +751,10 @@
   flex: none;
 }
 
+.footerSnap {
+  scroll-snap-align: end;
+}
+
 .blackout {
   position: fixed;
   inset: 0;

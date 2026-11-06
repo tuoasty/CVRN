@@ -8,6 +8,7 @@ import styles from "./landing.module.css";
 import LeagueStage from "./LeagueStage";
 import LandingMenu from "./LandingMenu";
 import GameSectionView from "./GameSection";
+import SiteFooter from "@/app/components/public/footer/SiteFooter";
 import {GAME_SECTIONS} from "./gameSections";
 import {FADE_MS, INITIAL_WHEEL, keyIntent, nextWheel, type WheelState} from "./landingGestures";
 import {REPRESENTATIVES, type RepresentativeRegion} from "./representatives";
@@ -240,6 +241,9 @@ export default function LandingExperience({regionTargets, continueLink, cards}: 
                 {GAME_SECTIONS.map(section => (
                     <GameSectionView key={section.id} section={section} onLeague={enterLeagueFromSection} />
                 ))}
+            </div>
+            <div className={styles.footerSnap}>
+                <SiteFooter surface="plain" />
             </div>
             <div className={styles.blackout} data-on={blackout ? "" : undefined} aria-hidden />
         </>
