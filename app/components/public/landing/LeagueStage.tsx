@@ -8,6 +8,7 @@ import {ART, artSrc, artSrcSet, REPRESENTATIVES, type RepresentativeRegion} from
 import {isOpaqueAt, loadAlphaMask, type AlphaMask} from "./alphaHitTest";
 
 const STAGE_SIZES = "max(100vw, 177.78vh)";
+const BASE_SIZES = `(max-width: 767px) 100vw, (max-aspect-ratio: 3/2) 100vw, ${STAGE_SIZES}`;
 const BY_Z = [...REPRESENTATIVES].sort((a, b) => b.z - a.z);
 const CLEAR_DELAY_MS = 160;
 
@@ -93,7 +94,9 @@ export default function LeagueStage({active, focused, onFocusChange, regionHrefs
                     className={styles.base}
                     src={artSrc("base", 2560)}
                     srcSet={artSrcSet("base", ART.w)}
-                    sizes={STAGE_SIZES}
+                    sizes={BASE_SIZES}
+                    width={ART.w}
+                    height={ART.h}
                     alt="Nickey, Keny and Jonn, the Europe, Asia and Americas representatives, under arena lights as the ball rises"
                     fetchPriority="high"
                     draggable={false}
@@ -172,7 +175,11 @@ export default function LeagueStage({active, focused, onFocusChange, regionHrefs
                     style={{"--third": (r.column * 2 + 1) / 6, "--i": r.column} as CSSProperties}
                     onPointerEnter={() => { cancelClear(); onFocusChange(r.region); }}
                     onPointerLeave={scheduleClear}
-                    onFocus={() => { cancelClear(); onFocusChange(r.region); }}
+                    onFocus={e => {
+                        if (!e.currentTarget.matches(":focus-visible")) return;
+                        cancelClear();
+                        onFocusChange(r.region);
+                    }}
                     onBlur={scheduleClear}
                 >
                     <span className={`${styles.titleCode} font-mono`}>{r.code}</span>

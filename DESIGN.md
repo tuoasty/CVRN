@@ -172,6 +172,12 @@ The site runs at three energy levels. Every tier shares the same type, radius, r
 - **Reworked, ENERGY 2:** the pages people open every week. They get more presence than the record pages (team identity, the match hero, stronger hierarchy) but stay lookup-first. MOTION 1: state changes only.
 - **Record, ENERGY 1:** lookup and reference pages. Unchanged in structure; they pick up the shared token changes and nothing else.
 
+**Landing composition.** The art (the three representatives) fills the window pinned to its top edge, so any crop comes off the floor. Two views share it:
+- **Menu:** a right-aligned title-screen group, right of center and a little above the middle: the `h1` CVR NETWORK, the subtitle "Confederate Volleyball Roblox Network", then the rows Continue (returning visitors only), View League and View Game. Rows are large bold caps text, never boxed buttons; dimmed at rest, full ink with the 2px ink underline on hover and focus. Nothing moves on hover.
+- **League:** the same `h1` rises straight up to the top right and becomes the header, with Season {n} and the hint under it. The region names sit along the bottom at the art's thirds, positioned from the window's bottom edge. Hovering a player lights their cutout and shows their floating text (name, handle, awards, statline, no links) on the side opposite them. Back sits bottom left on the names' baseline.
+- Over the art, selected and focused are the same ink text with the 2px ink underline as everywhere else.
+- Below 768px, or in any window narrower than 3:2, the landing is a plain static page: the uncropped art, the title on its corner, and the links listed under it. Functional only for now; it gets its own design later.
+
 The reworked tier is expected to absorb the record tier over time. When a record page gets reworked, it moves up a tier; it doesn't get a fourth style.
 
 **Design Read (record tier):** league record and stats product for players, community followers and league staff, in a ruled broadcast-stats-desk language, dial ENERGY 1 / RHYTHM 2 / MOTION 1. The landing and reworked tiers each get their own Design Read when their rework starts.
@@ -180,7 +186,7 @@ The reworked tier is expected to absorb the record tier over time. When a record
 
 **One deliberate accent:** the "today" color, used only for what happens today. Actions are ink.
 
-**No boxes.** Content sits directly on the page tone. Structure comes from whitespace and alignment first, a quiet rule line second, never a tonal box. Only floating layers (dialogs, sheets, popovers) and controls (buttons, inputs) have a shape of their own.
+**No boxes.** Content sits directly on the page tone. Structure comes from whitespace and alignment, never a tonal box, and never full-width rule lines that cut a list into segments. A rule line belongs only under a heading or a table header. Only floating layers (dialogs, sheets, popovers) and controls (buttons, inputs) have a shape of their own.
 
 **Focal point per screen:** the fact the user came for. On standings it is the table, on a match it is the score, on a player it is the stat line. Chrome defers to it.
 
@@ -244,6 +250,7 @@ Cobalt (`#2D55E6` / `#1F46D1`) and amber (`#E8992C` / `#E89117`) are retired wit
 - **Fixed scale.** No `clamp()`, no viewport-relative type. Responsive behavior is structural: collapse, stack, scroll.
 - **12px floor.** Nothing a user must read goes below `0.75rem`, and text at that size sits in Ink or Quiet Ink at full opacity.
 - **Update-log exception.** In an update log body, `#` sections are 36px semibold (`-0.03em`), larger than the 24px version title, because a patch note is read by section. `##` categories are Label style, `###` features are 18px semibold Ink. This is the only type step above Headline.
+- **Landing exception.** The landing tier sets its own sizes, all fixed px. The title is CVR NETWORK in caps, semibold, `0.14em` tracking: the region names are bold, tight caps, so the league's name takes the same caps voice in a lighter, spaced cut to read as the header above the choices rather than a fourth choice. It is 80px in the menu and 40px as the League header (rendered at 80px and scaled to 0.5), 28px on the phone page. Menu rows 34px bold caps, Continue 20px semibold; region names 48px bold caps; floating display names 44px bold.
 
 ## 5. Elevation
 
@@ -288,7 +295,7 @@ The signature surface of the product.
 ### Ruled sections
 Grouping list content without a container: a heading, a 1px Rule line under it, the rows, then whitespace before the next section. Used by Records. No fill, no surrounding border, so it doesn't box every list into a card.
 - Heading 14px semibold Ink, 8px gap, then the Rule line (never an Ink line, which reads as a white bar in dark mode).
-- Rows separated by Rule lines (`/60` for secondary rows), last row without one.
+- Rows separated by their padding, no Rule line between them. Records still draws row lines; that is current state, not the target.
 - 44px vertical between sections, 48px horizontal in a grid.
 
 ### Filters
@@ -333,6 +340,7 @@ Three radii, no fourth: containers 0px, controls 2px, badges pill. `rounded-xl` 
 - Transitions run 150 to 250ms on `color`, `box-shadow`, `opacity` and `transform` only.
 - Motion confirms a state change (hover, open, close, sort, expand). It never introduces content on scroll and never loops.
 - Every transition has a `prefers-reduced-motion: reduce` alternative, usually instant.
+- **Landing exception.** The landing's menu to League change is the one orchestrated scene transition allowed to run up to about 1.8s: rows fade out in 350ms, the art's darkening and blur (`filter`) lift over 1.4s, its zoom settles over 1.8s, the title rises over 1.2s, then the header lines, region names (staggered) and Back fade in. Going back plays it in reverse. Under reduced motion it is a 200ms crossfade where nothing moves or scales. Everything else on the landing keeps 150 to 250ms.
 
 ## 8. States
 
@@ -360,6 +368,7 @@ Target is **WCAG 2.2 AA**, not best effort.
 
 **Don't**
 - A tonal box (Surface or Recessed fill, or a bordered frame) around content in the page flow: cards, tiles, panels.
+- Full-width rule lines between rows or list items, segmenting a list into strips.
 - Gradient text, except the Mythical rarity name.
 - A colored `border-left` or `border-right` as an accent stripe.
 - A gradient wash behind content.
@@ -382,6 +391,7 @@ Target is **WCAG 2.2 AA**, not best effort.
 | Actions in ink | Clickable reads from shape and underline, so the accent stays free for its one job. |
 | Ink underline for selected | Selected is a state; one repeated mark makes it recognizable on every page. |
 | No boxes in the page flow | Tonal boxes on the page are the most common template tell and Kevin's least favorite pattern; whitespace groups without framing. |
+| No line breakers between rows | Full-width rules chop a list into segments, which reads as boxes drawn with lines; Kevin dislikes them. Padding and the hover fill separate rows. |
 | Square corners, 2px controls, pill badges | Radius tells the eye what kind of thing it is: floating layer, control or status. |
 | Plex Sans + Mono | Institutional tone, and a mono sibling that keeps figures in the same family. |
 | Uppercase 12px labels | Separates a column header from same-size data cells without adding weight or color. |

@@ -3,6 +3,7 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
 import {useSearchParams} from "next/navigation";
+import {ChevronRight} from "lucide-react";
 import styles from "./landing.module.css";
 import LeagueStage from "./LeagueStage";
 import LandingMenu from "./LandingMenu";
@@ -10,6 +11,9 @@ import {REPRESENTATIVES, type RepresentativeRegion} from "./representatives";
 import {headerSeasonNumber, type ContinueLink, type RegionTargets} from "./landingData";
 
 export type LandingView = "menu" | "league";
+
+const PHONE_ORDER: RepresentativeRegion[] = ["as", "eu", "na"];
+const PHONE_REGIONS = PHONE_ORDER.map(region => REPRESENTATIVES.find(r => r.region === region)!);
 
 interface Props {
     regionTargets: RegionTargets;
@@ -26,6 +30,14 @@ export default function LandingExperience({regionTargets, continueLink}: Props) 
     }
     const leagueButtonRef = useRef<HTMLButtonElement>(null);
     const navRef = useRef<HTMLElement>(null);
+    const shownView = useRef(view);
+
+    useEffect(() => {
+        if (shownView.current === view) return;
+        shownView.current = view;
+        const target = view === "league" ? navRef.current : leagueButtonRef.current;
+        target?.focus({preventScroll: true});
+    }, [view]);
     const regionHrefs = useMemo(() => ({
         eu: regionTargets.eu.href,
         as: regionTargets.as.href,
@@ -92,16 +104,26 @@ export default function LandingExperience({regionTargets, continueLink}: Props) 
                 onLeague={() => changeView("league")}
             />
 
-            {view === "league" && (
-                <nav className={styles.phoneList} aria-label="Regions">
-                    {REPRESENTATIVES.map(r => (
-                        <Link key={r.region} href={regionHrefs[r.region]} prefetch={false} className={styles.phoneLink}>
-                            {r.name}
-                            <span className="font-mono">{r.code}</span>
+            <nav className={styles.phoneList} aria-label="Menu">
+                {PHONE_REGIONS.map(r => {
+                    const n = regionTargets[r.region].seasonNumber;
+                    return (
+                        <Link key={r.region} href={regionHrefs[r.region]} prefetch={false} className={styles.phoneRow}>
+                            <span className={styles.phoneName}>{r.name}</span>
+                            {n !== null && (
+                                <span className={styles.phoneSeason}>
+                                    Season <span className="font-mono">{n}</span>
+                                </span>
+                            )}
+                            <ChevronRight className={styles.chevron} aria-hidden />
                         </Link>
-                    ))}
-                </nav>
-            )}
+                    );
+                })}
+                <Link href="/information" prefetch={false} className={styles.phoneRow}>
+                    <span className={styles.phoneName}>View Game</span>
+                    <ChevronRight className={styles.chevron} aria-hidden />
+                </Link>
+            </nav>
 
             <button
                 type="button"

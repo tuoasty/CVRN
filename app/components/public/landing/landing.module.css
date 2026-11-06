@@ -134,6 +134,32 @@
   outline: none;
 }
 
+.names::before,
+.names::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1400ms var(--out);
+}
+
+.names::before {
+  inset: auto 0 0 0;
+  height: 30vh;
+  background: linear-gradient(to top, hsl(var(--scrim) / 0.75), hsl(var(--scrim) / 0));
+}
+
+.names::after {
+  inset: 0;
+  background: radial-gradient(45vw 40vh at 100% 0, hsl(var(--scrim) / 0.8), hsl(var(--scrim) / 0));
+}
+
+.root[data-view="league"] .names::before,
+.root[data-view="league"] .names::after {
+  opacity: 1;
+}
+
 .title {
   --cx: calc(50vw + (var(--third) - 0.5) * var(--art-w));
   position: absolute;
@@ -146,7 +172,6 @@
   gap: 6px;
   white-space: nowrap;
   pointer-events: none;
-  outline: none;
   opacity: 0;
   translate: 0 12px;
   transition:
@@ -165,9 +190,14 @@
   transition-delay: 0ms;
 }
 
+.title:focus-visible {
+  outline: 2px solid hsl(var(--on-art));
+  outline-offset: 2px;
+}
+
 .titleCode,
 .titleName {
-  color: hsl(var(--on-art) / 0.55);
+  color: hsl(var(--on-art) / 0.66);
   text-shadow: 0 2px 24px hsl(var(--scrim) / 0.55);
   transition: color 300ms var(--out);
 }
@@ -194,7 +224,7 @@
 
 .root[data-focus] .title .titleCode,
 .root[data-focus] .title .titleName {
-  color: hsl(var(--on-art) / 0.14);
+  color: hsl(var(--on-art) / 0.5);
 }
 
 .root[data-focus] .title[data-on] .titleCode,
@@ -204,6 +234,11 @@
 
 .root[data-focus] .title[data-on] .titleName {
   background-size: 100% 2px;
+}
+
+.root[data-focus] .title[data-on]:active .titleCode,
+.root[data-focus] .title[data-on]:active .titleName {
+  color: hsl(var(--on-art) / 0.8);
 }
 
 .info {
@@ -283,7 +318,7 @@
 .statLabel {
   display: block;
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -325,7 +360,7 @@
   margin: 0;
   font-size: 14px;
   line-height: 20px;
-  color: hsl(var(--on-art) / 0.7);
+  color: hsl(var(--on-art) / 0.85);
   transition: color 300ms var(--out);
 }
 
@@ -339,6 +374,7 @@
   font-weight: 600;
   color: hsl(var(--on-art) / 0.75);
   padding: 6px 0;
+  cursor: pointer;
   text-underline-offset: 6px;
   transition:
     opacity 400ms var(--out),
@@ -350,7 +386,15 @@
   color: hsl(var(--on-art));
   text-decoration: underline;
   text-decoration-thickness: 2px;
-  outline: none;
+}
+
+.corner:focus-visible {
+  outline: 2px solid hsl(var(--on-art));
+  outline-offset: 2px;
+}
+
+.corner:active {
+  color: hsl(var(--on-art) / 0.8);
 }
 
 .back {
@@ -461,57 +505,138 @@
 .rowContinue {
   margin-bottom: 10px;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
 }
 
 .phoneList {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: none;
 }
 
-.phoneLink {
+.phoneRow {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 14px 16px;
-  background: hsl(0 0% 4% / 0.82);
-  border: 1px solid hsl(var(--on-art) / 0.18);
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 8px;
+  margin: 0 -8px;
+  cursor: pointer;
+  transition: background-color 150ms var(--out);
+}
+
+.phoneRow:hover {
+  background: hsl(0 0% 12% / 0.3);
+}
+
+.phoneRow:active {
+  background: hsl(0 0% 12% / 0.9);
+}
+
+.phoneRow:focus-visible {
+  outline: 2px solid hsl(var(--on-art));
+  outline-offset: 2px;
+}
+
+.phoneName {
+  margin-right: auto;
   font-size: 18px;
-  font-weight: 700;
-  text-transform: uppercase;
+  font-weight: 600;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
 }
 
-.phoneLink span {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.3em;
-  color: hsl(var(--on-art) / 0.6);
+.phoneRow:hover .phoneName,
+.phoneRow:focus-visible .phoneName {
+  text-decoration-line: underline;
 }
 
-@media (min-width: 768px) {
-  .phoneList {
-    display: none;
+.phoneSeason {
+  font-size: 14px;
+  color: hsl(var(--on-art) / 0.7);
+}
+
+.chevron {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: hsl(var(--on-art) / 0.7);
+}
+
+@media (max-width: 767px), (max-aspect-ratio: 3/2) {
+  :global(html:has([data-landing-root])) {
+    overflow: visible;
   }
-}
 
-@media (max-width: 767px) {
+  .root {
+    position: relative;
+    inset: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-bottom: 32px;
+    container-type: inline-size;
+  }
+
+  .root,
+  .root * {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .stage {
+    position: relative;
+    left: auto;
+    width: 100%;
+    transform: none;
+  }
+
+  .stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to top, hsl(var(--scrim) / 0.8), hsl(var(--scrim) / 0) 50%);
+  }
+
+  .root[data-view] .scene {
+    transform: none;
+  }
+
+  .root[data-view] .base {
+    filter: none;
+  }
+
+  .shade,
+  .cut,
+  .hitLayer,
   .names,
   .info,
   .header,
-  .hitLayer {
+  .back,
+  .rows {
     display: none;
   }
 
-  .back {
-    top: 24px;
-    bottom: auto;
-    left: 16px;
+  .root[data-view] .brand {
+    top: calc(100cqw * 9 / 16 - 16px);
+    right: 16px;
+    font-size: 28px;
+    transform: translateY(-100%);
+  }
+
+  .root[data-view] .menu {
+    position: static;
+    padding: 24px 16px 0;
+    align-items: flex-start;
+    text-align: left;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .phoneList {
+    display: flex;
+    flex-direction: column;
+    margin-top: 24px;
+    padding: 0 16px;
   }
 }
 
@@ -529,7 +654,9 @@
   .menu,
   .row,
   .titleName,
-  .titleCode {
+  .titleCode,
+  .names::before,
+  .names::after {
     transition-duration: 200ms !important;
     transition-delay: 0ms !important;
   }
