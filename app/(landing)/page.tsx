@@ -1,7 +1,7 @@
 import {Suspense} from "react";
 import {cookies} from "next/headers";
 import RedirectCleaner from "@/app/components/providers/RedirectCleaner";
-import LandingExperience, {type LandingView} from "@/app/components/public/landing/LandingExperience";
+import LandingExperience from "@/app/components/public/landing/LandingExperience";
 import {pickRegionTargets, resolveContinue} from "@/app/components/public/landing/landingData";
 import {getCachedRegions, getCachedSeasons} from "@/server/cache/publicReads";
 import {logger} from "@/server/utils/logger";
@@ -34,13 +34,8 @@ const STRUCTURED_DATA = JSON.stringify({
     ],
 }).replace(/</g, "\\u003c");
 
-export default async function LandingPage({
-    searchParams,
-}: {
-    searchParams: Promise<{view?: string}>;
-}) {
-    const [{view}, cookieStore, regions, seasons] = await Promise.all([
-        searchParams,
+export default async function LandingPage() {
+    const [cookieStore, regions, seasons] = await Promise.all([
         cookies(),
         getCachedRegions().catch((error) => {
             logger.error({error}, "LandingPage: failed to load regions");
@@ -55,15 +50,13 @@ export default async function LandingPage({
     const regionTargets = pickRegionTargets(regions, seasons, new Date());
     const continueLink = resolveContinue(cookieStore.get("cvrn_last_ctx")?.value, regions, seasons);
 
-    const initialView: LandingView = view === "league" ? "league" : "menu";
-
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{__html: STRUCTURED_DATA}} />
             <Suspense fallback={null}>
                 <RedirectCleaner />
             </Suspense>
-            <LandingExperience initialView={initialView} regionTargets={regionTargets} continueLink={continueLink} />
+            <LandingExperience regionTargets={regionTargets} continueLink={continueLink} />
         </>
     );
 }

@@ -2,6 +2,7 @@
 
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
+import {useSearchParams} from "next/navigation";
 import styles from "./landing.module.css";
 import LeagueStage from "./LeagueStage";
 import LandingMenu from "./LandingMenu";
@@ -11,18 +12,18 @@ import type {ContinueLink, RegionTargets} from "./landingData";
 export type LandingView = "menu" | "league";
 
 interface Props {
-    initialView: LandingView;
     regionTargets: RegionTargets;
     continueLink: ContinueLink | null;
 }
 
-function viewFromUrl(): LandingView {
-    return new URL(window.location.href).searchParams.get("view") === "league" ? "league" : "menu";
-}
-
-export default function LandingExperience({initialView, regionTargets, continueLink}: Props) {
-    const [view, setView] = useState<LandingView>(initialView);
+export default function LandingExperience({regionTargets, continueLink}: Props) {
+    const view: LandingView = useSearchParams().get("view") === "league" ? "league" : "menu";
     const [focused, setFocused] = useState<RepresentativeRegion | null>(null);
+    const [focusView, setFocusView] = useState(view);
+    if (focusView !== view) {
+        setFocusView(view);
+        setFocused(null);
+    }
     const leagueButtonRef = useRef<HTMLButtonElement>(null);
     const regionHrefs = useMemo(() => ({
         eu: regionTargets.eu.href,
@@ -36,20 +37,10 @@ export default function LandingExperience({initialView, regionTargets, continueL
 
     const changeView = useCallback((next: LandingView) => {
         setFocused(null);
-        setView(next);
         const url = new URL(window.location.href);
         if (next === "league") url.searchParams.set("view", "league");
         else url.searchParams.delete("view");
-        window.history.pushState(null, "", url);
-    }, []);
-
-    useEffect(() => {
-        const onPop = () => {
-            setFocused(null);
-            setView(viewFromUrl());
-        };
-        window.addEventListener("popstate", onPop);
-        return () => window.removeEventListener("popstate", onPop);
+        window.history.pushState({landingView: next}, "", url);
     }, []);
 
     useEffect(() => {
