@@ -37,7 +37,8 @@ interface Props {
 }
 
 export default function LandingExperience({regionTargets, continueLink, cards}: Props) {
-    const view: LandingView = useSearchParams().get("view") === "league" ? "league" : "menu";
+    const params = useSearchParams();
+    const view: LandingView = params.get("view") === "league" ? "league" : "menu";
     const [focused, setFocused] = useState<RepresentativeRegion | null>(null);
     const [focusView, setFocusView] = useState(view);
     if (focusView !== view) {

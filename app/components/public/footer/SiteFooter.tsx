@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import {usePathname} from "next/navigation";
+import {ExternalLink} from "lucide-react";
 import {cn} from "@/lib/utils";
-import {SITE_LINKS, SOCIAL_LINKS} from "./footerLinks";
+import {LEAGUE_SHEET, SITE_LINKS, SOCIAL_LINKS} from "./footerLinks";
 
 const LINK = "rounded-[2px] underline-offset-4 decoration-2 transition-colors duration-200 hover:text-foreground hover:underline focus-visible:text-foreground focus-visible:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground";
 const HEADER = "text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground";
@@ -55,6 +56,17 @@ export default function SiteFooter({surface = "band"}: Props) {
                                     </a>
                                 </li>
                             ))}
+                            <li>
+                                <a
+                                    href={LEAGUE_SHEET.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`inline-flex min-h-11 sm:min-h-9 items-center gap-2 ${LINK}`}
+                                >
+                                    {LEAGUE_SHEET.label}
+                                    <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>

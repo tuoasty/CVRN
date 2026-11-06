@@ -15,6 +15,11 @@ export const SOCIAL_LINKS: SocialLink[] = [
     {label: "Asia Discord", href: "https://discord.gg/TyfDzSPhRz", image: "/socials/discord-asia.webp"},
 ];
 
+export const LEAGUE_SHEET: SiteLink = {
+    label: "League spreadsheet",
+    href: "https://docs.google.com/spreadsheets/d/1gJFt-oI29EJXMD19lInXFtijXQaJxRsDBuIlf8jOSoI",
+};
+
 export const SITE_LINKS: SiteLink[] = [
     {label: "About", href: "/about"},
     {label: "Contact", href: "/about#contact"},

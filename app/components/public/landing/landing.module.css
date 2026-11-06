@@ -770,6 +770,17 @@
   pointer-events: auto;
 }
 
+.brand,
+.row,
+.titleName,
+.displayName,
+.season,
+.phoneName,
+.sectionHeading,
+.sectionPrimary {
+  font-family: var(--font-landing-display), var(--font-sans), sans-serif;
+}
+
 @media (max-width: 767px), (max-aspect-ratio: 3/2) {
   .sections {
     padding-bottom: 48px;
