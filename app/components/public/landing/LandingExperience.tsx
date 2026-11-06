@@ -1,9 +1,10 @@
 "use client";
 
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import Link from "next/link";
 import styles from "./landing.module.css";
 import LeagueStage from "./LeagueStage";
+import LandingMenu from "./LandingMenu";
 import {REPRESENTATIVES, type RepresentativeRegion} from "./representatives";
 import type {ContinueLink, RegionTargets} from "./landingData";
 
@@ -22,11 +23,16 @@ function viewFromUrl(): LandingView {
 export default function LandingExperience({initialView, regionTargets, continueLink}: Props) {
     const [view, setView] = useState<LandingView>(initialView);
     const [focused, setFocused] = useState<RepresentativeRegion | null>(null);
+    const leagueButtonRef = useRef<HTMLButtonElement>(null);
     const regionHrefs = useMemo(() => ({
         eu: regionTargets.eu.href,
         as: regionTargets.as.href,
         na: regionTargets.na.href,
     }), [regionTargets]);
+
+    const focusRegion = useCallback((region: RepresentativeRegion | null) => {
+        setFocused(region !== null && view !== "league" ? null : region);
+    }, [view]);
 
     const changeView = useCallback((next: LandingView) => {
         setFocused(null);
@@ -59,38 +65,27 @@ export default function LandingExperience({initialView, regionTargets, continueL
     const focusedRep = REPRESENTATIVES.find(r => r.region === focused);
 
     return (
-        <div className={styles.root} data-landing-root="" data-view={view} data-focus={focused ?? undefined}>
+        <div
+            className={styles.root}
+            data-landing-root=""
+            data-view={view}
+            data-focus={focused ?? undefined}
+        >
             <LeagueStage
                 active={view === "league"}
                 focused={focused}
-                onFocusChange={setFocused}
+                onFocusChange={focusRegion}
                 regionHrefs={regionHrefs}
             />
 
-            <div className={styles.menu} aria-hidden={view !== "menu"}>
-                <div>
-                    <h1 className={styles.menuTitle}>CVR Network</h1>
-                    <p className={styles.menuSub}>Confederate Volleyball Roblox Network</p>
-                </div>
-                <div className={styles.menuActions}>
-                    <Link
-                        href="/information"
-                        prefetch={false}
-                        tabIndex={view === "menu" ? 0 : -1}
-                        className={styles.menuButton}
-                    >
-                        View Game
-                    </Link>
-                    <button
-                        type="button"
-                        tabIndex={view === "menu" ? 0 : -1}
-                        className={styles.menuButton}
-                        onClick={() => changeView("league")}
-                    >
-                        View League
-                    </button>
-                </div>
-            </div>
+            <h1 className={styles.brand}>CVR Network</h1>
+
+            <LandingMenu
+                active={view === "menu"}
+                continueLink={continueLink}
+                leagueButtonRef={leagueButtonRef}
+                onLeague={() => changeView("league")}
+            />
 
             <div className={styles.hint} aria-live="polite">
                 {focusedRep ? `Click to enter ${focusedRep.name}` : "Choose a region"}
@@ -105,16 +100,6 @@ export default function LandingExperience({initialView, regionTargets, continueL
                         </Link>
                     ))}
                 </nav>
-            )}
-
-            {continueLink && (
-                <Link
-                    href={continueLink.href}
-                    prefetch={false}
-                    className={`${styles.corner} ${styles.continue}`}
-                >
-                    Continue to {continueLink.label} →
-                </Link>
             )}
 
             <button
