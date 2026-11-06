@@ -1,7 +1,8 @@
 import {Suspense} from "react";
+import {cookies} from "next/headers";
 import RedirectCleaner from "@/app/components/providers/RedirectCleaner";
 import LandingExperience, {type LandingView} from "@/app/components/public/landing/LandingExperience";
-import {REPRESENTATIVES, type RepresentativeRegion} from "@/app/components/public/landing/representatives";
+import {pickRegionTargets, resolveContinue} from "@/app/components/public/landing/landingData";
 import {getCachedRegions, getCachedSeasons} from "@/server/cache/publicReads";
 import {logger} from "@/server/utils/logger";
 import {SITE_URL} from "@/app/lib/siteUrl";
@@ -38,8 +39,9 @@ export default async function LandingPage({
 }: {
     searchParams: Promise<{view?: string}>;
 }) {
-    const [{view}, regions, seasons] = await Promise.all([
+    const [{view}, cookieStore, regions, seasons] = await Promise.all([
         searchParams,
+        cookies(),
         getCachedRegions().catch((error) => {
             logger.error({error}, "LandingPage: failed to load regions");
             return [];
@@ -50,27 +52,8 @@ export default async function LandingPage({
         }),
     ]);
 
-    const now = new Date();
-    const regionHrefs = {} as Record<RepresentativeRegion, string>;
-    for (const rep of REPRESENTATIVES) {
-        const region = regions.find(r => r.code.toLowerCase() === rep.region);
-        const regionSeasons = region
-            ? seasons
-                .filter(s => s.region_id === region.id)
-                .sort((a, b) => b.start_date.localeCompare(a.start_date))
-            : [];
-        const target = regionSeasons.find(s => !s.end_date || new Date(s.end_date) > now) ?? regionSeasons[0];
-        regionHrefs[rep.region] = target ? `/${rep.region}/${target.slug}` : "/select";
-    }
-
-    const seasonLabels: Record<string, string> = {};
-    for (const s of seasons) {
-        const region = regions.find(r => r.id === s.region_id);
-        if (!region) continue;
-        const code = region.code.toLowerCase();
-        const label = REPRESENTATIVES.find(r => r.region === code)?.name ?? region.name;
-        seasonLabels[`${code}:${s.slug}`] = `${label} ${s.name}`;
-    }
+    const regionTargets = pickRegionTargets(regions, seasons, new Date());
+    const continueLink = resolveContinue(cookieStore.get("cvrn_last_ctx")?.value, regions, seasons);
 
     const initialView: LandingView = view === "league" ? "league" : "menu";
 
@@ -80,7 +63,7 @@ export default async function LandingPage({
             <Suspense fallback={null}>
                 <RedirectCleaner />
             </Suspense>
-            <LandingExperience initialView={initialView} regionHrefs={regionHrefs} seasonLabels={seasonLabels} />
+            <LandingExperience initialView={initialView} regionTargets={regionTargets} continueLink={continueLink} />
         </>
     );
 }

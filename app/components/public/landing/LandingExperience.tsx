@@ -1,28 +1,32 @@
 "use client";
 
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import Link from "next/link";
 import styles from "./landing.module.css";
 import LeagueStage from "./LeagueStage";
 import {REPRESENTATIVES, type RepresentativeRegion} from "./representatives";
-import {useLastSeasonContext} from "@/app/hooks/useLastSeasonContext";
+import type {ContinueLink, RegionTargets} from "./landingData";
 
 export type LandingView = "menu" | "league";
 
 interface Props {
     initialView: LandingView;
-    regionHrefs: Record<RepresentativeRegion, string>;
-    seasonLabels: Record<string, string>;
+    regionTargets: RegionTargets;
+    continueLink: ContinueLink | null;
 }
 
 function viewFromUrl(): LandingView {
     return new URL(window.location.href).searchParams.get("view") === "league" ? "league" : "menu";
 }
 
-export default function LandingExperience({initialView, regionHrefs, seasonLabels}: Props) {
+export default function LandingExperience({initialView, regionTargets, continueLink}: Props) {
     const [view, setView] = useState<LandingView>(initialView);
     const [focused, setFocused] = useState<RepresentativeRegion | null>(null);
-    const lastContext = useLastSeasonContext();
+    const regionHrefs = useMemo(() => ({
+        eu: regionTargets.eu.href,
+        as: regionTargets.as.href,
+        na: regionTargets.na.href,
+    }), [regionTargets]);
 
     const changeView = useCallback((next: LandingView) => {
         setFocused(null);
@@ -53,8 +57,6 @@ export default function LandingExperience({initialView, regionHrefs, seasonLabel
     }, [changeView, focused, view]);
 
     const focusedRep = REPRESENTATIVES.find(r => r.region === focused);
-    const continueKey = lastContext ? `${lastContext.region.toLowerCase()}:${lastContext.season}` : null;
-    const continueLabel = continueKey ? seasonLabels[continueKey] : undefined;
 
     return (
         <div className={styles.root} data-landing-root="" data-view={view} data-focus={focused ?? undefined}>
@@ -105,13 +107,13 @@ export default function LandingExperience({initialView, regionHrefs, seasonLabel
                 </nav>
             )}
 
-            {continueKey && continueLabel && (
+            {continueLink && (
                 <Link
-                    href={`/${continueKey.replace(":", "/")}`}
+                    href={continueLink.href}
                     prefetch={false}
                     className={`${styles.corner} ${styles.continue}`}
                 >
-                    Continue to {continueLabel} →
+                    Continue to {continueLink.label} →
                 </Link>
             )}
 
