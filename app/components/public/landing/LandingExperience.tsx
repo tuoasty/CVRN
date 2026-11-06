@@ -9,6 +9,7 @@ import LeagueStage from "./LeagueStage";
 import LandingMenu from "./LandingMenu";
 import {REPRESENTATIVES, type RepresentativeRegion} from "./representatives";
 import {headerSeasonNumber, type ContinueLink, type RegionTargets} from "./landingData";
+import type {RepresentativeCard} from "./representativeCard";
 
 export type LandingView = "menu" | "league";
 
@@ -18,9 +19,10 @@ const PHONE_REGIONS = PHONE_ORDER.map(region => REPRESENTATIVES.find(r => r.regi
 interface Props {
     regionTargets: RegionTargets;
     continueLink: ContinueLink | null;
+    cards: Record<RepresentativeRegion, RepresentativeCard>;
 }
 
-export default function LandingExperience({regionTargets, continueLink}: Props) {
+export default function LandingExperience({regionTargets, continueLink, cards}: Props) {
     const view: LandingView = useSearchParams().get("view") === "league" ? "league" : "menu";
     const [focused, setFocused] = useState<RepresentativeRegion | null>(null);
     const [focusView, setFocusView] = useState(view);
@@ -82,6 +84,7 @@ export default function LandingExperience({regionTargets, continueLink}: Props) 
                 onFocusChange={focusRegion}
                 regionHrefs={regionHrefs}
                 navRef={navRef}
+                cards={cards}
             />
 
             <h1 className={styles.brand}>CVR Network</h1>
