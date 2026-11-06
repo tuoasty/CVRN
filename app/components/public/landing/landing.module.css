@@ -10,16 +10,33 @@
   --header-top: 24px;
   --names-bottom: 5vh;
   --names-min: calc(var(--edge) + 88px);
-  position: fixed;
-  inset: 0;
+  position: relative;
+  height: 100dvh;
   overflow: hidden;
+  scroll-snap-align: start;
   background: hsl(0 0% 4%);
   color: hsl(var(--on-art));
 }
 
 :global(html:has([data-landing-root])) {
   scrollbar-gutter: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  overflow-x: hidden;
+}
+
+:global(html:has([data-landing-root]))::-webkit-scrollbar {
+  display: none;
+}
+
+:global(html:has([data-landing-root][data-view="league"])) {
   overflow: hidden;
+}
+
+.root[data-instant],
+.root[data-instant] * {
+  transition: none !important;
+  animation: none !important;
 }
 
 .stage {
@@ -605,15 +622,219 @@
   color: hsl(var(--on-art) / 0.7);
 }
 
+.section,
+.blackout {
+  --out: cubic-bezier(0.22, 1, 0.36, 1);
+  --scrim: 0 0% 0%;
+  --on-art: 0 0% 96%;
+  --rest: 0.56;
+}
+
+.section {
+  --art-w: max(100vw, calc(100dvh * 16 / 9));
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+  scroll-snap-align: start;
+  background: hsl(0 0% 4%);
+  color: hsl(var(--on-art));
+}
+
+.sectionStage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--art-w);
+  aspect-ratio: 16 / 9;
+  transform: translate(-50%, -50%);
+}
+
+.sectionArt {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+}
+
+.sectionText {
+  position: absolute;
+  top: 50%;
+  width: min(520px, 30%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transform: translateY(-50%);
+}
+
+.section[data-side="left"] .sectionText {
+  left: 58.33%;
+}
+
+.section[data-side="right"] .sectionText {
+  right: 58.33%;
+}
+
+.sectionHeading {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 24px hsl(var(--scrim) / 0.5);
+}
+
+.sectionBody {
+  margin: 16px 0 0;
+  font-size: 18px;
+  line-height: 28px;
+  color: hsl(var(--on-art) / 0.85);
+  text-shadow: 0 1px 12px hsl(var(--scrim) / 0.6);
+}
+
+.sectionPrimary,
+.sectionSecondary {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  text-decoration: none;
+  text-decoration-thickness: 2px;
+  cursor: pointer;
+  transition: color 200ms var(--out);
+}
+
+.sectionPrimary {
+  margin-top: 32px;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-underline-offset: 8px;
+  color: hsl(var(--on-art) / var(--rest));
+}
+
+.sectionSecondary {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 20px;
+  text-underline-offset: 6px;
+  color: hsl(var(--on-art) / 0.75);
+}
+
+.sectionPrimary:hover,
+.sectionPrimary:focus-visible,
+.sectionSecondary:hover,
+.sectionSecondary:focus-visible {
+  color: hsl(var(--on-art));
+  text-decoration-line: underline;
+}
+
+.sectionPrimary:focus-visible,
+.sectionSecondary:focus-visible {
+  outline: 2px solid hsl(var(--on-art));
+  outline-offset: 2px;
+}
+
+.sectionPrimary:active,
+.sectionSecondary:active {
+  color: hsl(var(--on-art) / 0.8);
+}
+
+.sectionExternal {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.blackout {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: hsl(0 0% 4%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms var(--out);
+}
+
+.blackout[data-on] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 767px), (max-aspect-ratio: 3/2) {
+  .sections {
+    padding-bottom: 48px;
+  }
+
+  .section {
+    height: auto;
+    overflow: visible;
+    padding: 48px 16px 0;
+    scroll-snap-align: none;
+  }
+
+  .sectionStage {
+    position: static;
+    width: auto;
+    aspect-ratio: auto;
+    transform: none;
+  }
+
+  .sectionArt {
+    display: none;
+  }
+
+  .section[data-side] .sectionText {
+    position: static;
+    width: auto;
+    transform: none;
+  }
+
+  .sectionHeading {
+    font-size: 28px;
+  }
+
+  .sectionPrimary {
+    min-height: 44px;
+    margin-top: 20px;
+  }
+
+  .sectionSecondary {
+    min-height: 44px;
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blackout {
+    transition: none;
+  }
+}
+
 @media (max-width: 767px), (max-aspect-ratio: 3/2) {
   :global(html:has([data-landing-root])) {
+    scroll-snap-type: none;
+    scrollbar-width: auto;
+    overflow: visible;
+  }
+
+  :global(html:has([data-landing-root]))::-webkit-scrollbar {
+    display: initial;
+  }
+
+  :global(html:has([data-landing-root][data-view="league"])) {
     overflow: visible;
   }
 
   .root {
     position: relative;
     inset: auto;
-    min-height: 100dvh;
+    height: auto;
     overflow: visible;
     padding-bottom: 32px;
     container-type: inline-size;
