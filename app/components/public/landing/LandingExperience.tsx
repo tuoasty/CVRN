@@ -7,7 +7,7 @@ import styles from "./landing.module.css";
 import LeagueStage from "./LeagueStage";
 import LandingMenu from "./LandingMenu";
 import {REPRESENTATIVES, type RepresentativeRegion} from "./representatives";
-import type {ContinueLink, RegionTargets} from "./landingData";
+import {headerSeasonNumber, type ContinueLink, type RegionTargets} from "./landingData";
 
 export type LandingView = "menu" | "league";
 
@@ -25,6 +25,7 @@ export default function LandingExperience({regionTargets, continueLink}: Props) 
         setFocused(null);
     }
     const leagueButtonRef = useRef<HTMLButtonElement>(null);
+    const navRef = useRef<HTMLElement>(null);
     const regionHrefs = useMemo(() => ({
         eu: regionTargets.eu.href,
         as: regionTargets.as.href,
@@ -54,6 +55,7 @@ export default function LandingExperience({regionTargets, continueLink}: Props) 
     }, [changeView, focused, view]);
 
     const focusedRep = REPRESENTATIVES.find(r => r.region === focused);
+    const seasonNumber = headerSeasonNumber(regionTargets, focused);
 
     return (
         <div
@@ -67,9 +69,21 @@ export default function LandingExperience({regionTargets, continueLink}: Props) 
                 focused={focused}
                 onFocusChange={focusRegion}
                 regionHrefs={regionHrefs}
+                navRef={navRef}
             />
 
             <h1 className={styles.brand}>CVR Network</h1>
+
+            <div className={styles.header} aria-hidden={view !== "league"}>
+                {seasonNumber !== null && (
+                    <p className={styles.season}>
+                        Season <span className="font-mono">{seasonNumber}</span>
+                    </p>
+                )}
+                <p className={styles.hint} aria-live="polite">
+                    {focusedRep ? `Click to enter ${focusedRep.name}` : "Choose a region"}
+                </p>
+            </div>
 
             <LandingMenu
                 active={view === "menu"}
@@ -77,10 +91,6 @@ export default function LandingExperience({regionTargets, continueLink}: Props) 
                 leagueButtonRef={leagueButtonRef}
                 onLeague={() => changeView("league")}
             />
-
-            <div className={styles.hint} aria-live="polite">
-                {focusedRep ? `Click to enter ${focusedRep.name}` : "Choose a region"}
-            </div>
 
             {view === "league" && (
                 <nav className={styles.phoneList} aria-label="Regions">

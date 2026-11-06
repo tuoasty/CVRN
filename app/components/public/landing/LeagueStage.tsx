@@ -1,6 +1,6 @@
 "use client";
 
-import {useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent} from "react";
+import {useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type RefObject} from "react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import styles from "./landing.module.css";
@@ -16,13 +16,14 @@ interface Props {
     focused: RepresentativeRegion | null;
     onFocusChange: (region: RepresentativeRegion | null) => void;
     regionHrefs: Record<RepresentativeRegion, string>;
+    navRef: RefObject<HTMLElement | null>;
 }
 
 function pct(n: number, of: number) {
     return `${(n / of) * 100}%`;
 }
 
-export default function LeagueStage({active, focused, onFocusChange, regionHrefs}: Props) {
+export default function LeagueStage({active, focused, onFocusChange, regionHrefs, navRef}: Props) {
     const router = useRouter();
     const stageRef = useRef<HTMLDivElement>(null);
     const masksRef = useRef<Partial<Record<RepresentativeRegion, AlphaMask>>>({});
@@ -85,6 +86,7 @@ export default function LeagueStage({active, focused, onFocusChange, regionHrefs
     }, [active, regionAt, regionHrefs, router]);
 
     return (
+        <>
         <div ref={stageRef} className={styles.stage}>
             <div className={styles.scene}>
                 <img
@@ -126,34 +128,13 @@ export default function LeagueStage({active, focused, onFocusChange, regionHrefs
                 onClick={handleClick}
             />
 
-            <div className={styles.titles}>
-                {REPRESENTATIVES.map(r => (
-                    <Link
-                        key={r.region}
-                        href={regionHrefs[r.region]}
-                        prefetch={false}
-                        tabIndex={active ? 0 : -1}
-                        className={styles.title}
-                        data-on={focused === r.region ? "" : undefined}
-                        style={{left: `${(r.column * 2 + 1) / 6 * 100}%`, "--i": r.column} as CSSProperties}
-                        onPointerEnter={() => { cancelClear(); onFocusChange(r.region); }}
-                        onPointerLeave={scheduleClear}
-                        onFocus={() => { cancelClear(); onFocusChange(r.region); }}
-                        onBlur={scheduleClear}
-                    >
-                        <span className={`${styles.titleCode} font-mono`}>{r.code}</span>
-                        <span className={styles.titleName}>{r.name}</span>
-                    </Link>
-                ))}
-            </div>
-
             {REPRESENTATIVES.map(r => (
                 <div
                     key={r.region}
                     className={styles.info}
                     data-on={focused === r.region ? "" : undefined}
                     aria-hidden={focused !== r.region}
-                    style={{left: `${r.info.left}%`, top: `${r.info.top}%`}}
+                    style={{left: `${r.info.left}%`, top: `${r.info.top}%`, "--l": r.info.left / 100} as CSSProperties}
                     onPointerEnter={cancelClear}
                     onPointerLeave={scheduleClear}
                 >
@@ -175,26 +156,30 @@ export default function LeagueStage({active, focused, onFocusChange, regionHrefs
                             </div>
                         ))}
                     </div>
-                    <div className={styles.actions} style={{"--i": 4} as CSSProperties}>
-                        <Link
-                            href={regionHrefs[r.region]}
-                            prefetch={false}
-                            tabIndex={focused === r.region ? 0 : -1}
-                            className="inline-flex h-9 items-center bg-primary px-4 text-primary-foreground hover:bg-primary/90"
-                        >
-                            Enter {r.name} →
-                        </Link>
-                        <Link
-                            href={`/players/${r.username}`}
-                            prefetch={false}
-                            tabIndex={focused === r.region ? 0 : -1}
-                            className={styles.playerLink}
-                        >
-                            View player
-                        </Link>
-                    </div>
                 </div>
             ))}
         </div>
+
+        <nav ref={navRef} tabIndex={-1} aria-label="Regions" aria-hidden={!active} className={styles.names}>
+            {REPRESENTATIVES.map(r => (
+                <Link
+                    key={r.region}
+                    href={regionHrefs[r.region]}
+                    prefetch={false}
+                    tabIndex={active ? 0 : -1}
+                    className={styles.title}
+                    data-on={focused === r.region ? "" : undefined}
+                    style={{"--third": (r.column * 2 + 1) / 6, "--i": r.column} as CSSProperties}
+                    onPointerEnter={() => { cancelClear(); onFocusChange(r.region); }}
+                    onPointerLeave={scheduleClear}
+                    onFocus={() => { cancelClear(); onFocusChange(r.region); }}
+                    onBlur={scheduleClear}
+                >
+                    <span className={`${styles.titleCode} font-mono`}>{r.code}</span>
+                    <span className={styles.titleName}>{r.name}</span>
+                </Link>
+            ))}
+        </nav>
+        </>
     );
 }

@@ -39,7 +39,7 @@ export const REPRESENTATIVES: Representative[] = [
         column: 0,
         z: 3,
         box: {x: 1, y: 214, w: 1822, h: 1898},
-        info: {left: 47, top: 15},
+        info: {left: 66, top: 31},
         username: "nickey",
         displayName: "Nickey",
         awards: [
@@ -61,7 +61,7 @@ export const REPRESENTATIVES: Representative[] = [
         column: 1,
         z: 1,
         box: {x: 1657, y: 793, w: 813, h: 1364},
-        info: {left: 65, top: 14},
+        info: {left: 68, top: 30},
         username: "keny",
         displayName: "Keny",
         awards: [
@@ -83,7 +83,7 @@ export const REPRESENTATIVES: Representative[] = [
         column: 2,
         z: 2,
         box: {x: 2437, y: 828, w: 1400, h: 1331},
-        info: {left: 41, top: 14},
+        info: {left: 6, top: 26},
         username: "jonn",
         displayName: "Jonn",
         awards: [
