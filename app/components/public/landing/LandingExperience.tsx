@@ -9,7 +9,7 @@ import LeagueStage from "./LeagueStage";
 import LandingMenu from "./LandingMenu";
 import GameSectionView from "./GameSection";
 import SiteFooter from "@/app/components/public/footer/SiteFooter";
-import {GAME_SECTIONS} from "./gameSections";
+import {GAME_ENABLED, GAME_SECTIONS} from "./gameSections";
 import {FADE_MS, INITIAL_WHEEL, keyIntent, nextWheel, type WheelState} from "./landingGestures";
 import {REPRESENTATIVES, type RepresentativeRegion} from "./representatives";
 import {headerSeasonNumber, type ContinueLink, type RegionTargets} from "./landingData";
@@ -177,6 +177,7 @@ export default function LandingExperience({regionTargets, continueLink, cards}: 
                 data-view={view}
                 data-focus={focused ?? undefined}
                 data-instant={instant ? "" : undefined}
+                data-game={GAME_ENABLED ? "" : undefined}
             >
                 <LeagueStage
                     active={view === "league"}
@@ -205,7 +206,7 @@ export default function LandingExperience({regionTargets, continueLink, cards}: 
                     continueLink={continueLink}
                     leagueButtonRef={leagueButtonRef}
                     onLeague={() => changeView("league")}
-                    onGame={scrollToGame}
+                    onGame={GAME_ENABLED ? scrollToGame : undefined}
                 />
 
                 <nav className={styles.phoneList} aria-label="Menu">
@@ -223,10 +224,17 @@ export default function LandingExperience({regionTargets, continueLink, cards}: 
                             </Link>
                         );
                     })}
-                    <button type="button" className={styles.phoneRow} onClick={scrollToGame}>
-                        <span className={styles.phoneName}>View Game</span>
-                        <ChevronRight className={styles.chevron} aria-hidden />
-                    </button>
+                    {GAME_ENABLED ? (
+                        <button type="button" className={styles.phoneRow} onClick={scrollToGame}>
+                            <span className={styles.phoneName}>View Game</span>
+                            <ChevronRight className={styles.chevron} aria-hidden />
+                        </button>
+                    ) : (
+                        <Link href="/information" prefetch={false} className={styles.phoneRow}>
+                            <span className={styles.phoneName}>View Game</span>
+                            <ChevronRight className={styles.chevron} aria-hidden />
+                        </Link>
+                    )}
                 </nav>
 
                 <button
@@ -238,14 +246,18 @@ export default function LandingExperience({regionTargets, continueLink, cards}: 
                     ← Back
                 </button>
             </div>
-            <div id="landing-game" className={styles.sections}>
-                {GAME_SECTIONS.map(section => (
-                    <GameSectionView key={section.id} section={section} onLeague={enterLeagueFromSection} />
-                ))}
-            </div>
-            <div className={styles.footerSnap}>
-                <SiteFooter surface="plain" />
-            </div>
+            {GAME_ENABLED && (
+                <>
+                    <div id="landing-game" className={styles.sections}>
+                        {GAME_SECTIONS.map(section => (
+                            <GameSectionView key={section.id} section={section} onLeague={enterLeagueFromSection} />
+                        ))}
+                    </div>
+                    <div className={styles.footerSnap}>
+                        <SiteFooter surface="plain" />
+                    </div>
+                </>
+            )}
             <div className={styles.blackout} data-on={blackout ? "" : undefined} aria-hidden />
         </>
     );

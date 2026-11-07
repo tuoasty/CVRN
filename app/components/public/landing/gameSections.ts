@@ -24,6 +24,8 @@ export interface GameSection {
     captions: SectionCaption[];
 }
 
+export const GAME_ENABLED = false;
+
 export const GAME_SECTIONS: GameSection[] = [
     {
         id: "game",

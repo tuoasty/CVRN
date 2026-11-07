@@ -10,7 +10,7 @@ interface LandingMenuProps {
     continueLink: ContinueLink | null;
     leagueButtonRef: RefObject<HTMLButtonElement | null>;
     onLeague: () => void;
-    onGame: () => void;
+    onGame?: () => void;
 }
 
 function withMonoNumbers(text: string) {
@@ -45,9 +45,15 @@ export default function LandingMenu({active, continueLink, leagueButtonRef, onLe
                 >
                     View League
                 </button>
-                <button type="button" tabIndex={tabIndex} className={styles.row} onClick={onGame}>
-                    View Game
-                </button>
+                {onGame ? (
+                    <button type="button" tabIndex={tabIndex} className={styles.row} onClick={onGame}>
+                        View Game
+                    </button>
+                ) : (
+                    <Link href="/information" prefetch={false} tabIndex={tabIndex} className={styles.row}>
+                        View Game
+                    </Link>
+                )}
             </div>
         </div>
     );

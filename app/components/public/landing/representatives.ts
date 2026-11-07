@@ -72,7 +72,7 @@ export const REPRESENTATIVES: Representative[] = [
         region: "na",
         player: {
             username: "jonntaro",
-            displayNameOverride: null,
+            displayNameOverride: "jonntaro",
             position: "Opposite",
             stats: ["pts", "ptsPerSet", "hitPct", "rec"],
             awards: [
