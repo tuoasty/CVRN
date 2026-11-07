@@ -1,9 +1,13 @@
+import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {isValidBearerSecret} from "@/server/utils/apiAuth";
 import {toApiResponse} from "@/server/utils/apiResponse";
-import {listGuildBoosters} from "@/server/domains/booster";
+import {DEFAULT_MAX_RESOLVES, syncBoosters} from "@/server/domains/booster";
 import {logger} from "@/server/utils/logger";
+import type {DBClient} from "@/shared/types/db";
 
 const log = logger.child({module: "cron/sync-boosters"});
+
+const MAX_RESOLVES_CEILING = 200;
 
 export async function GET(req: Request) {
     if (!isValidBearerSecret(req.headers.get("authorization"), process.env.CRON_SECRET)) {
@@ -11,11 +15,11 @@ export async function GET(req: Request) {
         return new Response("Unauthorized", {status: 401});
     }
 
-    const result = await listGuildBoosters();
-    if (!result.ok) return toApiResponse(result);
+    const limitParam = Number(new URL(req.url).searchParams.get("limit"));
+    const maxResolves = Number.isInteger(limitParam) && limitParam > 0
+        ? Math.min(limitParam, MAX_RESOLVES_CEILING)
+        : DEFAULT_MAX_RESOLVES;
 
-    return Response.json({
-        count: result.value.length,
-        boosters: result.value,
-    });
+    const result = await syncBoosters(getSupabaseAdmin() as unknown as DBClient, {maxResolves});
+    return toApiResponse(result);
 }
