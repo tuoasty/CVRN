@@ -49,6 +49,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         entry("/information/builds", { changeFrequency: "monthly", priority: 0.5 }),
         entry("/information/specs", { changeFrequency: "monthly", priority: 0.5 }),
         entry("/information/updates", { changeFrequency: "weekly", priority: 0.5 }),
+        entry("/about", { changeFrequency: "monthly", priority: 0.3 }),
+        entry("/privacy", { changeFrequency: "yearly", priority: 0.2 }),
+        entry("/terms", { changeFrequency: "yearly", priority: 0.2 }),
     ];
 
     for (const season of seasons) {

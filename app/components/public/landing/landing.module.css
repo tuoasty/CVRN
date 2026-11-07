@@ -1,0 +1,980 @@
+.root {
+  --out: cubic-bezier(0.22, 1, 0.36, 1);
+  --scrim: 0 0% 0%;
+  --on-art: 0 0% 96%;
+  --edge: max(32px, 4vw);
+  --menu-top: 37vh;
+  --brand-size: 80px;
+  --rest: 0.56;
+  --art-w: max(100vw, calc(100dvh * 16 / 9));
+  --header-top: 24px;
+  --names-bottom: 5vh;
+  --names-min: calc(var(--edge) + 88px);
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+  scroll-snap-align: start;
+  background: hsl(0 0% 4%);
+  color: hsl(var(--on-art));
+}
+
+:global(html:has([data-landing-root])) {
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+  overflow-x: hidden;
+}
+
+:global(html:has([data-landing-root][data-game])) {
+  scroll-snap-type: y mandatory;
+}
+
+:global(html:has([data-landing-root]))::-webkit-scrollbar {
+  display: none;
+}
+
+:global(html:has([data-landing-root][data-view="league"])) {
+  overflow: hidden;
+}
+
+.root[data-instant],
+.root[data-instant] * {
+  transition: none !important;
+  animation: none !important;
+}
+
+.stage {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: var(--art-w);
+  aspect-ratio: 16 / 9;
+  transform: translateX(-50%);
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transform-origin: 50% 60%;
+  will-change: transform;
+  transition: transform 1800ms var(--out);
+}
+
+.root[data-view="menu"] .scene {
+  transform: scale(1.09);
+}
+
+.base {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+  transition: filter 1400ms var(--out);
+}
+
+.root[data-view="menu"] .base {
+  filter: brightness(0.34) saturate(0.55) blur(7px);
+}
+
+.root[data-view="league"] .base {
+  filter: brightness(0.8) saturate(0.95) blur(0);
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 40%, transparent 55%, hsl(var(--scrim) / 0.55) 100%),
+    linear-gradient(to bottom, hsl(var(--scrim) / 0.5), transparent 20%, transparent 76%, hsl(var(--scrim) / 0.6));
+}
+
+.shade {
+  position: absolute;
+  inset: 0;
+  background: hsl(var(--scrim));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms var(--out);
+}
+
+.root[data-focus] .shade {
+  opacity: 0.66;
+}
+
+.cut {
+  position: absolute;
+  display: block;
+  max-width: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+  transform-origin: 50% 100%;
+  filter: brightness(0.8) contrast(1) drop-shadow(2px 0 0 hsl(0 0% 100% / 0)) drop-shadow(-2px 0 0 hsl(0 0% 100% / 0))
+    drop-shadow(0 2px 0 hsl(0 0% 100% / 0)) drop-shadow(0 -2px 0 hsl(0 0% 100% / 0)) drop-shadow(0 24px 48px hsl(var(--scrim) / 0));
+  transition:
+    opacity 300ms var(--out),
+    transform 600ms var(--out),
+    filter 420ms var(--out),
+    visibility 0s 600ms;
+}
+
+.cut[data-on] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 300ms var(--out),
+    transform 600ms var(--out),
+    filter 420ms var(--out),
+    visibility 0s;
+  z-index: 10;
+  transform: scale(1.04);
+  filter: brightness(1.12) contrast(1.06) drop-shadow(2px 0 0 hsl(0 0% 100%)) drop-shadow(-2px 0 0 hsl(0 0% 100%))
+    drop-shadow(0 2px 0 hsl(0 0% 100%)) drop-shadow(0 -2px 0 hsl(0 0% 100%)) drop-shadow(0 24px 48px hsl(var(--scrim) / 0.7));
+}
+
+.hitLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.root[data-focus] .hitLayer {
+  cursor: pointer;
+}
+
+.names {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  outline: none;
+}
+
+.names::before,
+.names::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1400ms var(--out);
+}
+
+.names::before {
+  inset: auto 0 0 0;
+  height: 30vh;
+  background: linear-gradient(to top, hsl(var(--scrim) / 0.75), hsl(var(--scrim) / 0));
+}
+
+.names::after {
+  inset: 0;
+  background: radial-gradient(45vw 40vh at 100% 0, hsl(var(--scrim) / 0.8), hsl(var(--scrim) / 0));
+}
+
+.root[data-view="league"] .names::before,
+.root[data-view="league"] .names::after {
+  opacity: 1;
+}
+
+.title {
+  --cx: calc(50vw + (var(--third) - 0.5) * var(--art-w));
+  position: absolute;
+  left: var(--cx);
+  bottom: var(--names-bottom);
+  transform: translateX(clamp(calc(var(--names-min) - var(--cx)), -50%, calc(100vw - var(--edge) - var(--cx) - 100%)));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  translate: 0 12px;
+  transition:
+    opacity 500ms var(--out),
+    translate 700ms var(--out);
+}
+
+.root[data-view="league"] .title {
+  pointer-events: auto;
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: calc(700ms + var(--i) * 90ms);
+}
+
+.root[data-focus] .title {
+  transition-delay: 0ms;
+}
+
+.title:focus-visible {
+  outline: 2px solid hsl(var(--on-art));
+  outline-offset: 2px;
+}
+
+.titleCode,
+.titleName {
+  color: hsl(var(--on-art) / 0.66);
+  text-shadow: 0 2px 24px hsl(var(--scrim) / 0.55);
+  transition: color 300ms var(--out);
+}
+
+.titleCode {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  padding-left: 0.32em;
+}
+
+.titleName {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  padding-bottom: 10px;
+  background: linear-gradient(hsl(var(--on-art)), hsl(var(--on-art))) no-repeat 50% 100% / 0% 2px;
+  transition:
+    color 300ms var(--out),
+    background-size 420ms var(--out);
+}
+
+.root[data-focus] .title .titleCode,
+.root[data-focus] .title .titleName {
+  color: hsl(var(--on-art) / 0.5);
+}
+
+.root[data-focus] .title[data-on] .titleCode,
+.root[data-focus] .title[data-on] .titleName {
+  color: hsl(var(--on-art));
+}
+
+.root[data-focus] .title[data-on] .titleName {
+  background-size: 100% 2px;
+}
+
+.root[data-focus] .title[data-on]:active .titleCode,
+.root[data-focus] .title[data-on]:active .titleName {
+  color: hsl(var(--on-art) / 0.8);
+}
+
+.info {
+  --x: calc(50vw + (var(--l) - 0.5) * var(--art-w));
+  position: absolute;
+  z-index: 20;
+  width: max-content;
+  max-width: 480px;
+  transform: translateX(clamp(calc(var(--edge) - var(--x)), 0px, calc(100vw - var(--edge) - var(--x) - 100%)));
+  visibility: hidden;
+  text-shadow:
+    0 1px 2px hsl(var(--scrim) / 0.7),
+    0 0 28px hsl(var(--scrim) / 0.6);
+  transition: visibility 0s 300ms;
+}
+
+.info[data-on] {
+  visibility: visible;
+  transition: visibility 0s;
+}
+
+.info > * {
+  opacity: 0;
+  translate: -10px 0;
+  transition:
+    opacity 220ms var(--out),
+    translate 420ms var(--out);
+}
+
+.info[data-on] > * {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: calc(60ms + var(--i) * 55ms);
+}
+
+.infoId {
+  display: flex;
+  gap: 18px;
+  align-items: flex-end;
+}
+
+.avatar {
+  width: 88px;
+  height: 88px;
+  flex: none;
+  object-fit: cover;
+  background: hsl(var(--scrim) / 0.55);
+}
+
+.displayName {
+  font-size: 60px;
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.displayName > span {
+  display: inline-block;
+}
+
+.infoSub {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin-top: 8px;
+  white-space: nowrap;
+}
+
+.position {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.username {
+  font-size: 16px;
+  color: hsl(var(--on-art) / 0.75);
+}
+
+.statline {
+  margin-top: 22px;
+  display: flex;
+  gap: 36px;
+}
+
+.statValue {
+  display: block;
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.statLabel {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--on-art) / 0.75);
+}
+
+.awards {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.awards li {
+  display: inline;
+  white-space: nowrap;
+}
+
+.awards li + li::before {
+  content: "/ ";
+  padding: 0 4px;
+  color: hsl(var(--on-art) / 0.72);
+}
+
+.awardCount {
+  font-weight: 600;
+}
+
+.header {
+  position: absolute;
+  z-index: 30;
+  top: calc(var(--header-top) + var(--brand-size) / 2 + 10px);
+  right: var(--edge);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+  white-space: nowrap;
+  text-shadow: 0 1px 12px hsl(var(--scrim) / 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms var(--out);
+}
+
+.root[data-view="league"] .header {
+  opacity: 1;
+  transition: opacity 400ms var(--out) 800ms;
+}
+
+.season {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hint {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: hsl(var(--on-art) / 0.85);
+  transition: color 300ms var(--out);
+}
+
+.root[data-focus] .hint {
+  color: hsl(var(--on-art));
+}
+
+.corner {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 600;
+  color: hsl(var(--on-art) / 0.75);
+  padding: 6px 0;
+  cursor: pointer;
+  text-underline-offset: 6px;
+  transition:
+    opacity 400ms var(--out),
+    color 200ms;
+}
+
+.corner:hover,
+.corner:focus-visible {
+  color: hsl(var(--on-art));
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.corner:focus-visible {
+  outline: 2px solid hsl(var(--on-art));
+  outline-offset: 2px;
+}
+
+.corner:active {
+  color: hsl(var(--on-art) / 0.8);
+}
+
+.back {
+  left: var(--edge);
+  bottom: calc(var(--names-bottom) + 9px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.root[data-view="league"] .back {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 900ms;
+}
+
+.brand {
+  position: absolute;
+  z-index: 30;
+  top: var(--menu-top);
+  right: var(--edge);
+  margin: 0 -0.14em 0 0;
+  font-size: var(--brand-size);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: right;
+  white-space: nowrap;
+  text-shadow: 0 2px 24px hsl(var(--scrim) / 0.5);
+  pointer-events: none;
+  transform-origin: calc(100% - 0.14em) 0;
+  transition: transform 1200ms var(--out);
+}
+
+.root[data-view="league"] .brand {
+  transform: translateY(calc(var(--header-top) - var(--menu-top))) scale(0.5);
+}
+
+.menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(var(--menu-top) + var(--brand-size) + 16px);
+  right: var(--edge);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  transition: opacity 350ms var(--out) 850ms;
+}
+
+.root[data-view="league"] .menu {
+  opacity: 0;
+  pointer-events: none;
+  transition-delay: 0ms;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: hsl(var(--on-art) / 0.8);
+  text-shadow: 0 1px 12px hsl(var(--scrim) / 0.6);
+}
+
+.rows {
+  margin-top: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.row {
+  display: block;
+  padding: 6px 0;
+  background: none;
+  border: 0;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-align: right;
+  color: hsl(var(--on-art) / var(--rest));
+  text-decoration: none;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 10px;
+  text-shadow: 0 2px 24px hsl(var(--scrim) / 0.5);
+  cursor: pointer;
+  transition: color 150ms var(--out);
+}
+
+.row:hover,
+.row:focus-visible {
+  color: hsl(var(--on-art));
+  text-decoration-line: underline;
+}
+
+.row:focus-visible {
+  outline: 2px solid hsl(var(--on-art));
+  outline-offset: 2px;
+}
+
+.row:active {
+  color: hsl(var(--on-art) / 0.8);
+}
+
+.rowContinue {
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.phoneList {
+  display: none;
+}
+
+.phoneRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 8px;
+  margin: 0 -8px;
+  cursor: pointer;
+  transition: background-color 150ms var(--out);
+}
+
+.phoneRow:hover {
+  background: hsl(0 0% 12% / 0.3);
+}
+
+.phoneRow:active {
+  background: hsl(0 0% 12% / 0.9);
+}
+
+.phoneRow:focus-visible {
+  outline: 2px solid hsl(var(--on-art));
+  outline-offset: 2px;
+}
+
+.phoneName {
+  margin-right: auto;
+  font-size: 18px;
+  font-weight: 600;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
+}
+
+.phoneRow:hover .phoneName,
+.phoneRow:focus-visible .phoneName {
+  text-decoration-line: underline;
+}
+
+.phoneSeason {
+  font-size: 14px;
+  color: hsl(var(--on-art) / 0.7);
+}
+
+.chevron {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: hsl(var(--on-art) / 0.7);
+}
+
+.section,
+.blackout {
+  --out: cubic-bezier(0.22, 1, 0.36, 1);
+  --scrim: 0 0% 0%;
+  --on-art: 0 0% 96%;
+  --rest: 0.56;
+}
+
+.section {
+  --art-w: max(100vw, calc(100dvh * 16 / 9));
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+  scroll-snap-align: start;
+  background: hsl(0 0% 4%);
+  color: hsl(var(--on-art));
+}
+
+.sectionStage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--art-w);
+  aspect-ratio: 16 / 9;
+  transform: translate(-50%, -50%);
+}
+
+.sectionArt {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+}
+
+.sectionText {
+  position: absolute;
+  top: 50%;
+  width: min(520px, 30%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transform: translateY(-50%);
+}
+
+.section[data-side="left"] .sectionText {
+  left: 58.33%;
+}
+
+.section[data-side="right"] .sectionText {
+  right: 58.33%;
+}
+
+.sectionHeading {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 24px hsl(var(--scrim) / 0.5);
+}
+
+.sectionBody {
+  margin: 16px 0 0;
+  font-size: 18px;
+  line-height: 28px;
+  color: hsl(var(--on-art) / 0.85);
+  text-shadow: 0 1px 12px hsl(var(--scrim) / 0.6);
+}
+
+.sectionPrimary,
+.sectionSecondary {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  text-decoration: none;
+  text-decoration-thickness: 2px;
+  cursor: pointer;
+  transition: color 200ms var(--out);
+}
+
+.sectionPrimary {
+  margin-top: 32px;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-underline-offset: 8px;
+  color: hsl(var(--on-art) / var(--rest));
+}
+
+.sectionSecondary {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 20px;
+  text-underline-offset: 6px;
+  color: hsl(var(--on-art) / 0.75);
+}
+
+.sectionPrimary:hover,
+.sectionPrimary:focus-visible,
+.sectionSecondary:hover,
+.sectionSecondary:focus-visible {
+  color: hsl(var(--on-art));
+  text-decoration-line: underline;
+}
+
+.sectionPrimary:focus-visible,
+.sectionSecondary:focus-visible {
+  outline: 2px solid hsl(var(--on-art));
+  outline-offset: 2px;
+}
+
+.sectionPrimary:active,
+.sectionSecondary:active {
+  color: hsl(var(--on-art) / 0.8);
+}
+
+.sectionExternal {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.footerSnap {
+  scroll-snap-align: end;
+}
+
+.blackout {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: hsl(0 0% 4%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms var(--out);
+}
+
+.blackout[data-on] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.brand,
+.row,
+.titleName,
+.displayName,
+.season,
+.phoneName,
+.sectionHeading,
+.sectionPrimary {
+  font-family: var(--font-landing-display), var(--font-sans), sans-serif;
+}
+
+@media (max-width: 767px), (max-aspect-ratio: 3/2) {
+  .sections {
+    padding-bottom: 48px;
+  }
+
+  .section {
+    height: auto;
+    overflow: visible;
+    padding: 48px 16px 0;
+    scroll-snap-align: none;
+  }
+
+  .sectionStage {
+    position: static;
+    width: auto;
+    aspect-ratio: auto;
+    transform: none;
+  }
+
+  .sectionArt {
+    display: none;
+  }
+
+  .section[data-side] .sectionText {
+    position: static;
+    width: auto;
+    transform: none;
+  }
+
+  .sectionHeading {
+    font-size: 28px;
+  }
+
+  .sectionPrimary {
+    min-height: 44px;
+    margin-top: 20px;
+  }
+
+  .sectionSecondary {
+    min-height: 44px;
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blackout {
+    transition: none;
+  }
+}
+
+@media (max-width: 767px), (max-aspect-ratio: 3/2) {
+  :global(html:has([data-landing-root])),
+  :global(html:has([data-landing-root][data-game])) {
+    scroll-snap-type: none;
+    scrollbar-width: auto;
+    overflow: visible;
+  }
+
+  :global(html:has([data-landing-root]))::-webkit-scrollbar {
+    display: initial;
+  }
+
+  :global(html:has([data-landing-root][data-view="league"])) {
+    overflow: visible;
+  }
+
+  .root {
+    position: relative;
+    inset: auto;
+    height: auto;
+    overflow: visible;
+    padding-bottom: 32px;
+    container-type: inline-size;
+  }
+
+  .root,
+  .root * {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .stage {
+    position: relative;
+    left: auto;
+    width: 100%;
+    transform: none;
+  }
+
+  .stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to top, hsl(var(--scrim) / 0.8), hsl(var(--scrim) / 0) 50%);
+  }
+
+  .root[data-view] .scene {
+    transform: none;
+  }
+
+  .root[data-view] .base {
+    filter: none;
+  }
+
+  .shade,
+  .cut,
+  .hitLayer,
+  .names,
+  .info,
+  .header,
+  .back,
+  .rows {
+    display: none;
+  }
+
+  .root[data-view] .brand {
+    top: calc(100cqw * 9 / 16 - 16px);
+    right: 16px;
+    font-size: 28px;
+    transform: translateY(-100%);
+  }
+
+  .root[data-view] .menu {
+    position: static;
+    padding: 24px 16px 0;
+    align-items: flex-start;
+    text-align: left;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .phoneList {
+    display: flex;
+    flex-direction: column;
+    margin-top: 24px;
+    padding: 0 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene,
+  .base,
+  .shade,
+  .cut,
+  .title,
+  .info,
+  .info > *,
+  .header,
+  .hint,
+  .back,
+  .menu,
+  .row,
+  .titleName,
+  .titleCode,
+  .names::before,
+  .names::after {
+    transition-duration: 200ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  .brand {
+    transition: none;
+  }
+
+  .root[data-view="menu"] .brand {
+    animation: brandInMenu 200ms var(--out);
+  }
+
+  .root[data-view="league"] .brand {
+    animation: brandInLeague 200ms var(--out);
+  }
+
+  .root[data-view="menu"] .scene,
+  .cut[data-on] {
+    transform: none;
+  }
+
+  .title,
+  .info > * {
+    translate: 0 0 !important;
+  }
+}
+
+@keyframes brandInMenu {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes brandInLeague {
+  from {
+    opacity: 0;
+  }
+}

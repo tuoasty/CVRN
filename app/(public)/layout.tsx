@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import PublicNavbar from "@/app/components/public/navigation/PublicNavbar";
-import PublicFooter from "@/app/components/public/landing/PublicFooter";
+import SiteFooter from "@/app/components/public/footer/SiteFooter";
 import { SWRFallback } from "@/app/providers/SWRFallback";
 import { getCachedRegions, getCachedSeasons } from "@/server/cache/publicReads";
 import { logger } from "@/server/utils/logger";
@@ -46,7 +46,7 @@ export default async function PublicLayout({ children }: { children: React.React
                 </PublicLayoutDataProvider>
             </Suspense>
             <Suspense fallback={null}>
-                <PublicFooter />
+                <SiteFooter />
             </Suspense>
         </div>
     );

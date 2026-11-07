@@ -1,12 +1,13 @@
 ---
 name: CVRN
-description: The league's permanent record — dense, square-cornered, broadcast-serious.
+description: The league's permanent record, with a game layer. Dense, black and white, ball-yellow on match day.
+dials:
+  landing: "ENERGY 3 / RHYTHM 3 / MOTION 2"
+  reworked: "ENERGY 2 / RHYTHM 2 / MOTION 1"
+  record: "ENERGY 1 / RHYTHM 2 / MOTION 1"
 colors:
-  action-blue: "#2D55E6"
-  action-blue-light: "#1F46D1"
-  action-blue-ink: "#FFFFFF"
-  location-yellow: "#E8992C"
-  location-yellow-ink: "#1A1206"
+  accent-today: "#FFCC00"
+  accent-today-ink: "#1C1C1C"
   destructive-red: "#EF4444"
   success-green-light: "#157F3C"
   success-green-dark: "#3ECC72"
@@ -45,19 +46,18 @@ typography:
     fontSize: "1.125rem"
     fontWeight: 500
     lineHeight: 1.75rem
-    letterSpacing: "normal"
   body:
     fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
     lineHeight: 1.25rem
-    letterSpacing: "normal"
   label:
     fontFamily: "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 600
     lineHeight: 1rem
     letterSpacing: "0.05em"
+    textTransform: uppercase
   data:
     fontFamily: "IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace"
     fontSize: "0.75rem"
@@ -65,10 +65,9 @@ typography:
     lineHeight: 1rem
     fontFeature: "tabular-nums"
 rounded:
-  sm: "0px"
-  md: "2px"
-  lg: "4px"
-  full: "9999px"
+  container: "0px"
+  control: "2px"
+  pill: "9999px"
 spacing:
   "1": "4px"
   "2": "8px"
@@ -78,302 +77,348 @@ spacing:
   "18": "72px"
   "88": "352px"
 components:
-  panel:
-    backgroundColor: "{colors.surface-light}"
-    textColor: "{colors.ink-light}"
-    rounded: "{rounded.sm}"
-    padding: "16px"
-  panel-interactive:
-    backgroundColor: "{colors.surface-light}"
-    textColor: "{colors.ink-light}"
-    rounded: "{rounded.sm}"
-    padding: "16px"
   button-primary:
-    backgroundColor: "{colors.action-blue}"
-    textColor: "{colors.action-blue-ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.md}"
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.page}"
+    rounded: "{rounded.control}"
     padding: "8px 16px"
     height: "36px"
-  button-primary-hover:
-    backgroundColor: "#4A8BF7"
+    hover: "90% opacity"
   button-outline:
-    backgroundColor: "{colors.page-light}"
-    textColor: "{colors.ink-light}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
-    height: "36px"
-  button-ghost:
-    textColor: "{colors.ink-light}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
+    backgroundColor: "{colors.page}"
+    textColor: "{colors.ink}"
+    border: "1px {colors.rule}"
+    rounded: "{rounded.control}"
     height: "36px"
   input:
-    textColor: "{colors.ink-light}"
-    rounded: "{rounded.md}"
+    border: "1px {colors.rule}"
+    rounded: "{rounded.control}"
     padding: "4px 12px"
     height: "36px"
-  nav-item:
-    textColor: "{colors.quiet-ink-light}"
-    typography: "{typography.body}"
-    rounded: "{rounded.sm}"
-    padding: "0 12px"
-    height: "36px"
   nav-item-active:
-    textColor: "{colors.ink-light}"
+    textColor: "{colors.ink}"
     fontWeight: 600
-    textDecoration: "underline 2px"
-    underlineOffset: "6px"
-    rounded: "{rounded.sm}"
-    padding: "0 12px"
-    height: "36px"
-  filter-option:
-    textColor: "{colors.quiet-ink-light}"
-    typography: "{typography.body}"
-    padding: "0 10px"
-    height: "32px"
+    textDecoration: "underline 2px {colors.ink}, offset 6px"
   filter-option-selected:
-    textColor: "{colors.ink-light}"
+    textColor: "{colors.ink}"
     fontWeight: 600
-    underline: "2px {colors.ink-light}, inset to the text"
-  badge-default:
-    backgroundColor: "{colors.action-blue}"
-    textColor: "{colors.action-blue-ink}"
-    rounded: "{rounded.full}"
-    padding: "2px 8px"
-  badge-outline:
-    textColor: "{colors.ink-light}"
-    rounded: "{rounded.full}"
+    textDecoration: "underline 2px {colors.ink}, inset to the text"
+  badge:
+    rounded: "{rounded.pill}"
     padding: "2px 8px"
   table-head:
-    textColor: "{colors.quiet-ink-light}"
+    textColor: "{colors.quiet-ink}"
     typography: "{typography.label}"
     padding: "12px 16px"
   table-cell:
-    textColor: "{colors.ink-light}"
+    textColor: "{colors.ink}"
     typography: "{typography.body}"
     padding: "12px 16px"
 ---
 
-# Design System: CVRN
+# CVRN Design System
 
-## 1. Overview
+Token values above match `app/globals.css`. If the two disagree, the CSS is current state and this file is the target; fix whichever is wrong on purpose.
 
-**Creative North Star: "The Record Desk"**
+## 1. Product
 
-A press box desk with the league's record book open on it. Everything on that desk earns its place by being consulted: the standings, the box score, the schedule, the archive of past seasons. Nothing is there to set a mood. The record book is authoritative because it is complete and because it is the same every time you open it — and the desk is fast because whoever works at it is looking things up while play continues.
+**What it is.** CVRN is the league platform for CVR Network, a competitive Roblox volleyball league in four regions (AS, EU, NA, SA). It covers the whole season: scheduling and results, per-set player stats, rosters, playoff brackets, season archives, articles and media, and the game's own reference data. Results and stats flow in from the Google Sheets the league already runs on.
 
-That fusion is the whole system. From the record book: squared corners, ruled lines, tabular figures, an archive that never loses a season. From the press box: density, speed, no ceremony between a question and its answer. The visual language is a broadcast stats graphic rendered for reading rather than for air — dense, ruled, unmistakably legible, and confident enough to present a Roblox volleyball league with the gravity of a real one.
+**Who reads it.**
+- **Players and the wider community are co-primary.** Players come for their own result, their own numbers and their team's position. Community followers come for the same facts from outside.
+- **League staff and admins are secondary.** The smallest group by headcount, the heaviest by usage, and the only group that writes.
+- **Reading happens mostly on desktop**, on the machine Roblox runs on. Dense multi-column layouts are the right default, not a compromise. Phone layouts still have to work fully.
 
-What this system rejects is decoration standing in for authority. It does not use gradients to make a heading feel important, or shadows to make a card feel modern, or neon to make a competition feel exciting. Weight, rule lines, and tabular alignment carry all of it. If a surface needs an effect to read as serious, the surface is wrong.
+**What they come to do.** Two jobs, roughly equal: check what happened (results, standings, who won) and look up a specific stat (a player's numbers, a roster, a box score). Following the season as a story (articles, media, playoffs, archive) is a bonus on top.
 
-**Key Characteristics:**
-- Square corners on every data surface — `.panel` resolves to a literal `0px` radius
-- Flat by default; borders and tonal fills carry all in-page depth
-- One type family (IBM Plex Sans) for everything except numbers, which use its sibling IBM Plex Mono
-- One accent with one job: blue acts. Selected and you-are-here states are ink weight plus an ink underline, never a color
-- Dense by design — 12px vertical cell padding, `0.875rem` body, `0.75rem` labels
-- Desktop-first; density expands upward rather than collapsing downward
+**Positioning.** Everything about the league in one place, permanently. Stats, history and schedules already exist, scattered across sheets and Discord. CVRN groups them, keeps them, and presents them better than a spreadsheet can. Avatars, team logos and fast syncing are the visible proof.
 
-## 2. Colors
+**Personality: broadcast-serious.** The interface treats a Roblox volleyball league with the gravity of a real sport: confident, structured, a little formal. Every screen claims *this competition matters*, and earns it by being organized, not loud. Copy follows the same rule: factual and specific, never hype, never winking at the fact that it's Roblox.
 
-A true-neutral black/gray field (hue-agnostic, no tint) with cobalt and amber accents plus a green success token, each carrying one job and no decorative use whatsoever.
+**With a game layer.** The reference feel is a pro league's own site (NBA-style): confident, star-driven, built around players and teams. On top of that, CVRN leans into being a league played inside a game wherever the content is a game object: player cards with OVR and tiers, rarity, records, the landing's representatives. The landing carries this layer hardest; reworked pages carry it in player and team identity; record pages barely at all. "Game layer" means game objects shown with pride, not gaming-site styling: the esports anti-reference below still holds.
 
-### Primary
-- **Action Blue** (cobalt `#2D55E6` / `hsl(227 79% 54%)` dark, `#1F46D1` / `hsl(227 74% 47%)` light): Every actionable and stateful thing. Primary buttons, links, focus rings, the active sort column in a stat table, status dots, the top-loading progress bar. If it can be clicked or it reports live state, it is this cobalt.
+### Principles
 
-### Secondary
-- **Location Yellow** (broadcast amber `#E8992C`, `hsl(35 80% 54%)`): Reserved. It no longer has a structural use: the active navigation item and selected filters are marked by an ink underline (see Navigation and Filters). The token stays in the coordinated palette; new uses need a design decision first. Its sanctioned uses are the update-log rework glyph and the 5-star spec rating (the filled stars of a 5-star spec are amber; 4 and 3 stars take Epic and Rare, see Rarity).
+1. **Consolidation is the product.** Every screen reduces the number of places someone has to look. A fact that still needs a trip to a sheet or a Discord thread is the gap to close.
+2. **Legitimacy comes from structure.** A permanent archive, a working bracket, per-set box scores. Nothing looks provisional or half-built.
+3. **Answer in seconds, reward in minutes.** Get the user to the fact fast. Deeper material sits underneath, never in the way.
+4. **Density earns its keep through hierarchy.** More data per screen than a typical app, on purpose. Rank, state and significance stay legible at a glance.
+5. **The human layer is the advantage.** Avatars, team logos, names and identity are what a spreadsheet can't render. They are the reason to use the site, not decoration.
 
-### Tertiary
-- **Destructive Red** (`#EF4444`, `hsl(0 84% 60%)`): Irreversible actions and error surfaces only. Voiding a match, deleting a team, a failed sync row. Never a warning, never an accent.
+### Anti-references
 
-### Neutral
-- **Page** (`#F4F4F4` light / `#0A0A0A` dark): The body field. Deliberately not pure white and not pure black. In light mode it sits a clear step below the white Surface so panels separate from the page and the white anchors the eye (2026-10-07: was `#FAFAFA`, which left page and panels reading as one glaring sheet).
-- **Surface** (`#FFFFFF` light / `#141414` dark): Panels and elevated content sitting on the page field. The step between page and surface is the primary depth mechanism in this system.
-- **Recessed** (`#EEEEEE` light / `#1F1F1F` dark): Table header bands, hover fills (used at `/30` opacity), zebra striping (`/20`), disabled fills. The layer *below* the surface.
-- **Ink** (`#1C1C1C` light / `#F5F5F5` dark): All primary text and data values.
-- **Quiet Ink** (`#5E5E5E` light / `#999999` dark): Column labels, metadata, secondary values, placeholder text. Never body copy at small sizes.
-- **Rule** (`#D9D9D9` light / `#2B2B2B` dark): Every border, divider, and table line. Frequently used at `/30` opacity for internal column groupings inside dense tables.
+- **A hobby-project dashboard.** Discord-bot-panel energy: untouched default components, inconsistent spacing, visibly unfinished surfaces.
+- **A generic SaaS admin template.** Untouched shadcn defaults, purple gradient cards, hero-metric tiles, `rounded-2xl` on everything.
+- **Esports and gaming tropes.** Neon accents, angular clip-path panels, RGB glows, aggressive italics, condensed display faces on scores. The obvious reflex for a gaming league and the wrong one for this brand.
+- **A spreadsheet on the web.** Undifferentiated grids of numbers with no rank, state or weight. Density without hierarchy is the failure.
+
+## 2. Direction
+
+**North star: "The Record Desk."** A press box desk with the league's record book open on it. Everything on the desk is there because someone consults it: standings, box scores, the schedule, past seasons. From the record book: square corners, ruled lines, tabular figures, an archive that never loses a season. From the press box: density, speed, nothing between a question and its answer. The visual language is a broadcast stats graphic set for reading instead of for air.
+
+The system rejects decoration standing in for authority. No gradient to make a heading feel important, no shadow to make a card feel modern, no neon to make a match feel exciting. Weight, rule lines and tabular alignment carry all of it.
+
+### Dials by tier
+
+The site runs at three energy levels. Every tier shares the same type, radius, rule lines, ink underline and neutral ramp, so the tiers differ in how loud they are, never in which system they belong to.
+
+| Tier | Surfaces | ENERGY | RHYTHM | MOTION |
+|---|---|---|---|---|
+| **Landing** | `app/(landing)` | 3 | 3 | 2 |
+| **Reworked** | Home, Matches, Standings, Teams, Team detail | 2 | 2 | 1 |
+| **Record** | everything else (players, leaderboard, records, archive, playoffs, articles, media, information, admin) | 1 | 2 | 1 |
+
+- **Landing, ENERGY 3:** the one surface whose job is to make an outsider feel the league is real. Big imagery, the representatives, asymmetric composition. MOTION 2 means the two scene changes (Menu to League, and the fade from the league section) plus document scroll snap between full-screen sections. No parallax and no reveal choreography: content is already in place when a section snaps in.
+- **Reworked, ENERGY 2:** the pages people open every week. They get more presence than the record pages (team identity, the match hero, stronger hierarchy) but stay lookup-first. MOTION 1: state changes only.
+- **Record, ENERGY 1:** lookup and reference pages. Unchanged in structure; they pick up the shared token changes and nothing else.
+
+**Landing composition.** The art (the three representatives) fills the window pinned to its top edge, so any crop comes off the floor. Two views share it:
+- **Menu:** a right-aligned title-screen group, right of center and a little above the middle: the `h1` CVR NETWORK, the subtitle "Confederate Volleyball Roblox Network", then the rows Continue (returning visitors only), View League and View Game. Rows are large bold caps text, never boxed buttons; dimmed at rest, full ink with the 2px ink underline on hover and focus. Nothing moves on hover.
+- **League:** the same `h1` rises straight up to the top right and becomes the header, with Season {n} and the hint under it. The region names sit along the bottom at the art's thirds, positioned from the window's bottom edge. Hovering a player lights their cutout and shows their popup beside them: no box, text straight on the shaded art. It holds the Roblox headshot (88px square), the display name in bold caps fitted from 28 to 60px within a 480px cap (the player-card fit rule), the position and @username, four all-time stats and one honours line, all from real league data, with no links. Europe's popup sits right of the player; Asia's and the Americas' sit on the left. Back sits bottom left on the names' baseline.
+- Over the art, selected and focused are the same ink text with the 2px ink underline as everywhere else.
+- **Order:** League sits above the Menu as a view state (`?view=league`), not a scroll position. Below the Menu the document scrolls with mandatory snap through three full-screen Game sections (The game, The league, Community), then the footer as the last snap point. Section copy lives in `gameSections.ts`. View Game scrolls to the first section; the league section's link fades to League. Back from League always lands on the Menu. The page scrollbar is hidden on the landing and the document is locked while League is open. No URL hash per section.
+- **Game sections:** each is one 16:9 stage sized and cropped like the League art, centered on both axes. One commissioned graphic per section: a player lit on a court darkened almost to black, on the left or right third, the other half empty and dark (no pixel brighter than #404040 under the text). The text block sits in that empty half (`left: 58.33%` when the player is on the left, ending at 41.67% when on the right), `min(520px, 30%)` wide, vertically centered: heading, body, one main link, at most one quiet secondary link. No eyebrow above the heading, no box behind the text. Players in the art get small always-visible captions (name, @username, any stat Kevin picks) placed on a dark part of the frame, no box and no links. Until a section's art exists it renders on the landing's dark ground.
+- **Footer on the landing:** the site footer without its band, straight on the dark ground.
+- Below 768px, or in any window narrower than 3:2, the landing is a plain static page: the uncropped art, the title on its corner, the links listed under it, then the three Game sections stacked as plain text (no art, no snap, no gestures) and the footer. Functional only for now; it gets its own design later.
+
+The reworked tier is expected to absorb the record tier over time. When a record page gets reworked, it moves up a tier; it doesn't get a fourth style.
+
+**Design Read (record tier):** league record and stats product for players, community followers and league staff, in a ruled broadcast-stats-desk language, dial ENERGY 1 / RHYTHM 2 / MOTION 1. The landing and reworked tiers each get their own Design Read when their rework starts.
+
+**Identity motif:** the ink underline. Selected, current and you-are-here are always ink text at semibold with a 2px ink underline, never a fill and never a color. It repeats in the navbar, filters, view tabs, inline switches and the information segment picker, and it is what makes a CVRN screen recognizable at a glance. Square ruled containers and monospaced columns support it.
+
+**One deliberate accent:** the "today" color, used only for what happens today. Actions are ink.
+
+**No boxes.** Content sits directly on the page tone. Structure comes from whitespace and alignment, never a tonal box, and never full-width rule lines that cut a list into segments. A rule line belongs only under a heading or a table header. Only floating layers (dialogs, sheets, popovers) and controls (buttons, inputs) have a shape of their own.
+
+**Focal point per screen:** the fact the user came for. On standings it is the table, on a match it is the score, on a player it is the stat line. Chrome defers to it.
+
+## 3. Colors
+
+Black, white and a true-neutral gray ramp (no hue tint, not Tailwind zinc), one accent, and two status colors. Each color has one job and no decorative use. Team logos, player avatars and GFX art carry the color of the site; the chrome stays out of their way.
+
+**Palette count (R-29):** one accent. Red and green are status signals, not palette. The rarity colors are the game's own content and appear only where a rarity is named. Neutrals don't count.
+
+### Actions are ink
+Primary buttons are an ink fill with page-tone text (black on light, white on dark). Links are ink with an underline. The focus ring is a 2px ink outline at 2px offset. Clickable is told by shape and underline, not by color.
+
+### Accent: today
+**Ball yellow `#FFCC00`**, the color of a match ball. Dark mode: yellow text or a 6px yellow dot (13.1:1 on the page). Light mode: yellow text on white fails (about 1.5:1), so it becomes a highlighter mark, a square `#FFCC00` fill behind the word with ink text (`#1C1C1C`), like a marker on the record book. The word itself ("Today") always carries the meaning. Stay on true yellow: shifting toward orange (`#FF9000` territory) on black reads as a different, unwanted brand. It marks only what happens today in the region's timezone: the time on a match scheduled today, today's rows in Upcoming, today's matches on the Matches page. On a day with no matches it doesn't appear at all, which is the point: when it shows, it means "today". It is never a button fill, a link color, a hover, a border or a selected state.
+
+### Retired
+Cobalt (`#2D55E6` / `#1F46D1`) and amber (`#E8992C` / `#E89117`) are retired with the old scheme. Every current use moves to ink, to the accent if it is about today, or is deleted. Exceptions that stay as content: the update-log rework glyph and the 5-star spec fill (see Rarity) until they get their own decision.
+
+### Destructive Red
+`#EF4444`. Irreversible actions and error surfaces only: voiding a match, deleting a team, a failed sync row. Never a warning, never an accent.
+
+### Success Green
+`#157F3C` light / `#3ECC72` dark. Win and synced state.
+
+### Neutrals
+- **Page** (`#F4F4F4` / `#0A0A0A`, light value under review with the light-mode fix): the one tone all in-flow content sits on.
+- **Surface** (`#FFFFFF` / `#141414`): floating layers only (dialogs, sheets, popovers, toasts). Never a card or panel in the page flow.
+- **Recessed** (`#EEEEEE` / `#1F1F1F`): the hover and open-row fill (`/30`), input fills, disabled fills. It appears in response to the pointer or an open state, never at rest as a box.
+- **Ink** (`#1C1C1C` / `#F5F5F5`): all primary text and data values.
+- **Quiet Ink** (`#5E5E5E` / `#999999`): column labels, metadata, secondary values, placeholders.
+- **Rule** (`#D9D9D9` / `#2B2B2B`): every border, divider and table line. Often `/30` for column groupings inside dense tables.
 
 ### Rarity
-- **Rare** (`--rarity-rare`: `#5C96F5` dark / `#2A62E5` light), **Epic** (`--rarity-epic`: `#B477EE` dark / `#8739D0` light), **Mythical** (`--rarity-mythic`: a seven-stop spectrum gradient, brighter in dark mode). Common is plain Ink.
-- These are the game's own rarity tiers, not categorical colors. They appear only where the game's rarity is the thing being named: rarity headings on Abilities and Builds, rarity columns in the Builds pick tray, and the 4-star (Epic) and 3-star (Rare) spec ratings. Never on rows, values, or chrome.
-- **Exception: Mythical gradient text.** `.text-rarity-mythic` clips the Mythical gradient to text. It is sanctioned for the word "Mythical" (and a Mythical rarity heading) only; it is the one place gradient text is allowed.
+- **Rare** (`#2A62E5` / `#5C96F5`), **Epic** (`#8739D0` / `#B477EE`), **Mythical** (a seven-stop spectrum gradient, brighter in dark mode). Common is plain Ink.
+- These are the game's rarity tiers, not categorical colors. They appear only where rarity is the thing being named: rarity headings on Abilities and Builds, rarity columns in the Builds pick tray, and 4-star (Epic) and 3-star (Rare) spec ratings. Never on rows, values or chrome.
+- **Mythical gradient text** (`.text-rarity-mythic`) is sanctioned for the word "Mythical" and a Mythical rarity heading only. It is the one place gradient text exists, because the game itself draws Mythical as a spectrum.
 
-### Named Rules
+### Rules
+- **One accent, one job.** The accent means "today" and nothing else. A screen that uses it for an action, a hover or a highlight has broken the system.
+- **No second accent.** Anything that isn't today, a status or a rarity comes from the neutral ramp. If a data category needs distinguishing, use position, weight or whitespace before hue.
+- **Update-log change markers.** Inside an update log body only: green ▲ buff, red ▼ nerf, `~` rework, and a plain-text `NEW`. Each is a glyph or one word, never a fill, and each is also carried by its shape or word. Headings in update logs stay neutral. The rework and `NEW` colors move off amber and cobalt in the token pass.
+- **Never color alone.** Win/loss, qualified/eliminated and synced/failed each carry a second cue: a glyph, a label or position.
 
-**The Two-Signal Rule.** Blue means *act*. Ink means *selected* or *you are here*. A selected filter, tab or nav item is a state, not an action, so it is drawn as ink text at semibold weight with a 2px ink underline; cobalt is never a selected-state fill. A screen that uses blue for anything but actions, links and focus has broken the system, and the failure is invisible until a user misreads a highlighted row as a button.
+## 4. Typography
 
-**The No-Third-Accent Rule.** Anything that is not an action, a location, or a destructive operation is drawn from the neutral ramp. New categorical colors are prohibited. If a data category needs distinguishing, use position, weight, or rule lines before reaching for hue.
+**IBM Plex Sans** for all text, **IBM Plex Mono** for figures, both via `next/font` with `display: swap`. `font-size-adjust: 0.54` on the body matches Plex's x-height to the fixed rem scale.
 
-**The Coordinated-Palette Rule.** The palette is a deliberate move off the stock shadcn defaults: a true-neutral (hue-agnostic) black/gray ramp — not Tailwind zinc — under a cobalt action accent (`#2D55E6`), a broadcast-amber location accent (`#E8992C`), and a green success token (`#3ECC72` dark / `#157F3C` light) for win/synced state. The neutrals carry no hue tint. Any future accent change must move *all* of them together — a single re-tinted primary against the others reads as a half-finished theme.
-
-**Exception: update-log change markers.** Inside an update log body, color marks the kind of change and nothing else: green ▲ buff (Success), red ▼ nerf (Destructive), a yellow `~` rework glyph (Location Yellow), and a plain-text `NEW` label in Action Blue (blue as state: "new in this version"). Each is a glyph or a single word, never a fill, and each is also carried by its shape or its word. Headings in update logs stay neutral; this exception does not extend to section, category, or feature titles.
-
-## 3. Typography
-
-**Body Font:** IBM Plex Sans (with `ui-sans-serif`, `system-ui`, sans-serif fallback), loaded via `next/font` with `display: swap`; `font-size-adjust: 0.54` on the body matches its x-height to the fixed rem scale
-**Label/Mono Font:** IBM Plex Mono (with the platform monospace stack as fallback) — the matched sibling to Plex Sans
-
-**Character:** One neutral geometric sans doing every job, with the monospace stack reserved exclusively for figures. The pairing has no personality contrast by design — the type is a delivery mechanism for data, and the visual interest lives in alignment and rule lines rather than in letterforms. There is no display face and no fluid sizing anywhere in the system.
+**Why Plex:** it is an engineered, slightly formal grotesque that reads as institutional rather than friendly, which fits broadcast-serious. Its mono sibling shares the same skeleton, so numbers in mono columns sit with the sans text instead of looking like a second system.
 
 ### Hierarchy
-- **Headline** (600, `1.5rem` / 24px, `-0.025em` tracking): Page titles. The largest type in the entire product; there is nothing above it.
-- **Title** (600, `1.25rem` / 20px, `-0.025em`): Section headings within a page.
-- **Subtitle** (500, `1.125rem` / 18px): Sub-section headings and panel titles.
-- **Body** (400, `0.875rem` / 14px, `1.25rem` line-height): The workhorse. Table cells, form values, descriptions, nav items. Prose caps at 65–75ch; tabular content runs as wide as the data requires.
-- **Label** (600, `0.75rem` / 12px, `0.05em` tracking, uppercase): Column headers, stat labels, metadata keys. Always in Quiet Ink.
-- **Data** (400, `0.75rem` / 12px, monospace, `tabular-nums`): Every numeric value that sits in a column.
+- **Headline** (600, 24px, `-0.025em`): page titles. The largest type in the product.
+- **Title** (600, 20px, `-0.025em`): section headings.
+- **Subtitle** (500, 18px): sub-sections and group titles.
+- **Body** (400, 14px / 20px): table cells, form values, descriptions, nav items. Prose caps at 65 to 75ch; tables run as wide as the data needs.
+- **Label** (600, 12px, uppercase, `0.05em`): column headers, stat labels, metadata keys. Always Quiet Ink. Uppercase with light tracking separates a header from the data cells under it at the same 12px size; it is never used as a decorative section eyebrow.
+- **Data** (400, 12px, mono, `tabular-nums`): every number that sits in a column.
 
-### Named Rules
+### Rules
+- **Two faces, no third.** Plex Mono appears only on numbers. A serif heading or condensed score face is the fastest route to the esports look this brand rejects. The landing is the one exception (below).
+- **Tabular figures, always.** Any number in a column gets `font-mono tabular-nums`. Proportional digits make columns shimmer as values change.
+- **Fixed scale.** No `clamp()`, no viewport-relative type. Responsive behavior is structural: collapse, stack, scroll.
+- **12px floor.** Nothing a user must read goes below `0.75rem`, and text at that size sits in Ink or Quiet Ink at full opacity.
+- **Update-log exception.** In an update log body, `#` sections are 36px semibold (`-0.03em`), larger than the 24px version title, because a patch note is read by section. `##` categories are Label style, `###` features are 18px semibold Ink. This is the only type step above Headline.
+- **Landing exception.** The landing's display lettering is **Schibsted Grotesk** (600 and 700, loaded only by `app/(landing)/layout.tsx`): the CVR NETWORK title, menu rows, region names, popup display names, the Season label, phone row names, Game section headings and their main links. A normal-width news grotesk gives the landing more presence than Plex without tipping into the condensed esports look. Body copy, the subtitle, hints, stat labels and every number stay Plex Sans and Plex Mono, which ties the landing to the rest of the site. The landing tier sets its own sizes, all fixed px. The title is CVR NETWORK in caps, semibold, `0.14em` tracking: the region names are bold, tight caps, so the league's name takes the same caps voice in a lighter, spaced cut to read as the header above the choices rather than a fourth choice. It is 80px in the menu and 40px as the League header (rendered at 80px and scaled to 0.5), 28px on the phone page. Menu rows 34px bold caps, Continue 20px semibold; region names 48px bold caps; popup display names fitted 28 to 60px bold caps, popup stats 36px mono. Game sections: heading 40px semibold sentence case at `-0.025em` (28px on the phone page), body 18px / 28px Plex, main link 20px semibold caps at `0.04em`, secondary link 14px Plex.
 
-**The One Family Rule.** IBM Plex Sans carries headings, buttons, labels, body, and navigation; its matched sibling IBM Plex Mono is the only second face, and it appears only on numbers. `font-size-adjust: 0.54` on the body compensates for Plex's smaller x-height so apparent sizes match the fixed rem scale. Introducing a third face — a serif for headings, a condensed sans for scores — is prohibited; it is the fastest available route to the esports look this brand rejects.
+## 5. Elevation
 
-**The Tabular Figures Rule.** Any number that appears in a column gets `font-mono tabular-nums`. Non-negotiable. Proportional digits in a stat table cause the column to shimmer as values change and destroy the scannability that justifies the density in the first place.
+Flat, and one level. Everything in the page flow sits on the Page tone with no box, no fill and no shadow. The only things raised off the page are floating layers: dialogs, sheets, popovers, tooltips, toasts. They use the Surface tone, a 1px Rule border and `shadow-lg`.
 
-**The Fixed Scale Rule.** No `clamp()`, no viewport-relative type, anywhere. Users read this at a consistent desktop DPI, and a heading that shrinks inside a three-column shell looks broken rather than responsive.
+**Clickable without a box.** An item that navigates somewhere says so at rest without a frame: its name is Ink semibold (the thing you'd click), and rows that open something end in a 12px Quiet Ink chevron. On hover the row takes the Recessed `/30` fill and the name underlines, at 150ms. No border appears, nothing lifts.
 
-**The Small-Type Floor.** `0.75rem` is the floor for any text a user must read, and text at that size must sit in Ink or Quiet Ink on Surface — never Quiet Ink at reduced opacity. Below 12px, stat tables stop being dense and start being unreadable, which is the difference between this system and the spreadsheet it replaces.
+## 6. Components
 
-**Exception: update-log sections.** In an update log body, `#` sections are `2.25rem` (36px) semibold with `-0.03em` tracking, larger than the page's own 24px version title. A patch note is read by section, so sections carry the weight and the version header acts as a label. Below them, `##` categories are Label style (12px uppercase, Quiet Ink) acting as helpers, and `###` features are `1.125rem` semibold Ink. This is the only type step above Headline in the product.
-
-## 4. Elevation
-
-This system is flat. In-page depth is built entirely from two mechanisms: a **tonal step** (Page → Surface → Recessed) and a **rule line** (a 1px border in the Rule token). Across the entire application there are fewer than thirty shadow utilities, and that is the correct number. A panel sitting on the page is distinguished by being lighter than the page and by having a border — not by casting a shadow onto it.
-
-Shadows exist for exactly two purposes: lifting genuinely floating layers (dialogs, dropdowns, popovers, tooltips, toasts) off the page, and confirming a hover on an interactive panel. Nothing at rest inside the page flow carries one.
-
-The one deliberate exception is affordance. A panel that navigates somewhere must announce that at rest, because a user who has to hover to discover that a card is clickable will not discover it. That announcement is **structural** — a full-strength border where a static panel would use a lighter one, plus a small chevron in the trailing corner — and the shadow arrives only on hover, alongside a border shift to Action Blue and a 1px lift.
-
-### Shadow Vocabulary
-- **Overlay** (`box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)` — Tailwind `shadow-lg`): Dialogs, sheets, dropdown menus, popovers. The only shadow that appears at rest, and only on things that float.
-- **Hover lift** (`box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05)` — Tailwind `shadow-sm`): Applied to interactive panels on `:hover` and `:focus-visible` only. Never at rest.
-
-### Named Rules
-
-**The Flat-Page Rule.** Nothing in the page flow casts a shadow at rest. If a surface needs to feel separated from what is behind it, change its tone or give it a border. A resting `shadow-sm` on a panel is the single clearest tell of an untouched component library.
-
-**The Affordance-Before-Shadow Rule.** Clickability is announced structurally at rest — border weight and a chevron — and confirmed with motion and shadow on hover. Discovery must never depend on the user hovering first.
-
-## 5. Components
-
-### Panels
-
-`.panel` is the canonical container of this system and the only one. It is the load-bearing surface for standings, box scores, match cards, stat blocks, media posts, and admin forms alike.
-
-- **Corner Style:** Square. `rounded-sm` resolves to `calc(0.25rem - 4px)` = **`0px`**. This is intentional and it is the system's most recognizable trait. `rounded-md` (2px) and `rounded-lg` (4px) exist for controls; containers get none.
-- **Background:** Surface (`#FFFFFF` / `#141414`) on the Page field.
-- **Border:** 1px Rule token, always present. The border does the work the shadow would otherwise do.
-- **Shadow Strategy:** None at rest. See Elevation.
-- **Internal Padding:** `16px` standard, `24px` for full-page sections, `8px` for compact cards inside sidebars.
-
-**Interactive panel.** Same shape, plus: a full-opacity border at rest (static panels may use `border-border/50`), a trailing chevron at `12px` in Quiet Ink, and on hover — border to Action Blue, `shadow-sm`, `-translate-y-px`, all at 150ms.
-
-**Exception — full-bleed graphic panels.** The featured match card and its carousel take the border change on hover and nothing else: no `shadow-sm`, no `-translate-y-px`. Lifting a 376px graphic is a far heavier gesture than lifting a list row, and these surfaces already carry two persistent affordances a row does not — visible arrows and visible dots. This is the only sanctioned deviation; a panel that is mostly text still lifts.
+### Content on the page (no panels)
+`.panel` is retired as a content container. Standings, box scores, match lists, team grids, stat blocks and media posts sit directly on the page.
+- **Grouping:** a heading, then the rows, then whitespace (44px) before the next group. A 1px Rule line under a heading only where the group would otherwise blur into the next.
+- **Grids (teams, media):** each item is its image or logo plus its name, aligned to a shared baseline. The gap between items does the separating. No tile behind them.
+- **Images and GFX** have their own natural edge (a photo, a match graphic), so they need no frame. Square corners. On hover a graphic only changes cursor and its caption underlines.
+- **Admin forms** group fields by heading and whitespace the same way. A dialog is the only boxed form.
 
 ### Buttons
-- **Shape:** Barely-rounded (`rounded-md`, 2px). Height `36px` default, with `24px` / `32px` / `40px` steps and matching square icon sizes.
-- **Primary:** Action Blue fill, white text, `8px 16px` padding. Hover drops to `90%` opacity.
-- **Secondary:** Location Yellow fill with near-black text. Amber is reserved (see Colors); prefer outline for secondary actions.
-- **Outline / Ghost:** Transparent or Page-colored fill with a Rule border; hover fills with the accent tint.
-- **Destructive:** Destructive Red fill, white text. Reserved for irreversible operations.
-- **Focus:** `3px` ring in Action Blue at 50% opacity, plus a border shift to the ring color.
+- 2px radius. 36px default height, with 24 / 32 / 40px steps and matching square icon sizes.
+- **Primary:** ink fill, page-tone text, `8px 16px`. Hover drops to 85% opacity, active to 75%.
+- **Outline / Ghost:** transparent fill, Rule border on outline. Hover fills Recessed.
+- **Destructive:** irreversible operations only. See Open decisions for its contrast.
+- **Secondary (amber fill)** is retired. Use outline for secondary actions.
+- **Focus:** one vocabulary everywhere: a 2px ink outline at 2px offset. Navigation uses the same.
 
-### Inputs / Fields
-- **Style:** Transparent fill, 1px Rule border, `rounded-md` (2px), `36px` tall, `4px 12px` padding. Dark mode fills at `input/30`.
-- **Focus:** `3px` Action Blue ring at 50% opacity with the border shifting to match. Transition on `color, box-shadow` only.
-- **Error:** `aria-invalid` drives a Destructive Red border and a red ring at 20% (40% in dark).
-- **Placeholder:** Quiet Ink. Never lighter.
+### Inputs
+- Transparent fill (dark mode `input/30`), 1px Rule border, 2px radius, 36px tall, `4px 12px`.
+- Focus: the ink outline. Transition on `color` and `box-shadow` only.
+- Error: `aria-invalid` drives a red border and a red ring at 20% (40% dark), plus a text message under the field.
+- Placeholder: Quiet Ink, never lighter. Every field has a visible label.
 
 ### Badges
-- **Shape:** Fully rounded (`rounded-full`) — the deliberate counterpoint to the square panels. `2px 8px` padding, `0.75rem` medium.
-- **Variants:** default (Action Blue), secondary, destructive, warning (yellow-500 on black), outline, ghost, link.
+Pill radius, `2px 8px`, 12px medium, neutral (Quiet Ink text, Rule border, no fill). Badges only carry a real status or label (role, a void match). Ordinary states like scheduled or completed are plain text, not badges; a completed match shows its score instead. No "New" or "Beta" decoration, no tinted status pills.
 
 ### Tables
+The signature surface of the product.
+- **Header:** Label style in Quiet Ink, no band, one 1px Rule line under it.
+- **Cells:** Body, 12px vertical / 16px horizontal padding (8px horizontal below `sm`). Rows are separated by their padding; dense stat tables may add a Rule `/30` line between rows where the eye loses its place.
+- **Row hover:** Recessed `/30`. No zebra striping.
+- **Numbers:** mono, `tabular-nums`, centered. Text columns left-align. The leading identity column is sticky on wide tables.
+- **Column groups:** dense stat tables use a two-row header with a group band, separated by Rule `/30`.
 
-The signature surface of the product, and the one most worth protecting.
-
-- **Header:** `0.75rem` uppercase semibold in Quiet Ink with `0.05em` tracking, on a Recessed band at `/30`, with a bottom Rule border.
-- **Cells:** `0.875rem` body, `12px` vertical / `16px` horizontal padding (`8px` horizontal below `sm`), 1px bottom Rule border, dropped on the last row.
-- **Row hover:** Recessed at `/30`. Zebra striping, where used, is Recessed at `/20`.
-- **Numbers:** monospace, `tabular-nums`, centered. Text columns left-align; the leading identity column is sticky on wide tables.
-- **Column grouping:** dense stat tables use a two-row header with a group band above the column labels, separated by Rule borders at `/30`.
-
-### Ruled Sections
-
-The pattern for grouping list content without a container: a heading, a 1px Rule-tone line under it, the rows, and whitespace before the next section. Used by the Records category blocks. It is not a container (no fill, no surrounding border), so it coexists with the One Container Rule; reach for it when a `.panel` per item would box every list into a card.
-
-- **Heading:** 14px semibold Ink, `8px` below it, then the Rule line. Never an Ink rule: a full-strength line reads as a white bar in dark mode.
-- **Rows:** separated by Rule lines (`/60` for secondary rows), the last row without one.
-- **Spacing between sections:** 44px vertical, 48px horizontal in a grid.
+### Ruled sections
+Grouping list content without a container: a heading, a 1px Rule line under it, the rows, then whitespace before the next section. Used by Records. No fill, no surrounding border, so it doesn't box every list into a card.
+- Heading 14px semibold Ink, 8px gap, then the Rule line (never an Ink line, which reads as a white bar in dark mode).
+- Rows separated by their padding, no Rule line between them. Records still draws row lines; that is current state, not the target.
+- 44px vertical between sections, 48px horizontal in a grid.
 
 ### Filters
-
 Shared components live in `app/components/filters/`.
-
-- **Selected filter state:** Ink text, semibold, plus a 2px Ink underline inset to the text. Unselected options are Quiet Ink medium and go to Ink on hover. No fill, no box, no cobalt.
-- **Option rows (`OptionRow`):** a 12px semibold Quiet Ink label followed by plain-text options. "All" comes first, separated from specific values by a 1px Rule divider. Numbers (season numbers) are mono. Multi-select rows mark every selected value; "All" clears them.
-- **View tabs (`ViewTabs`):** page-level tabs on a full-width Rule line; the selected tab carries a 2px Ink bottom border over that line. Page tools sit at the right end of the same line and drop to their own row beneath it when space runs out. `StatViewSelector` uses the same tabs with the rule fitted to the tabs' width.
+- **Selected state:** the identity motif. Ink, semibold, 2px Ink underline inset to the text. Unselected options are Quiet Ink medium, Ink on hover. No fill, no box, no cobalt.
+- **Option rows (`OptionRow`):** 12px semibold Quiet Ink label, then plain-text options. "All" first, separated by a 1px Rule divider. Season numbers in mono. Multi-select marks every selected value; "All" clears.
+- **View tabs (`ViewTabs`):** tabs on a full-width Rule line; the selected tab carries a 2px Ink bottom border over it. Page tools sit at the right end of the line and drop below it when space runs out. `StatViewSelector` fits the rule to the tabs' width.
 - **Inline switch (`InlineSwitch`):** two or three text options separated by a Rule-tone `/`, the selected one underlined.
-- **Wording editor (admin Information):** editors only appear when an ability shows its DERIVED description; ORIGINAL shows the game text alone. Each line is collapsed to its sentence (chevron, plus a Secondary dot when a part is unverified or unhandled; no toggle there, verification is set on the Terms tab). Expanding shows the raw game line in mono and one row per component (effect, each option, or param): tag on the left, labelled plain inputs for Label, Unit, Label description, Grants, and an `InlineSwitch` for the number format. Each expanded line has its own Save; when the change reaches other abilities, Save first reveals the notes (old line struck through in Quiet Ink, new in Ink) with a confirm. No boxes, no sticky bars.
-
-### Information area
-
-Public reference pages for the game's own data (`/information/*`). They follow the system with a few sanctioned patterns of their own.
-
-- **Segment picker:** ABILITIES / BUILDS / UPDATES / SPECS. At 640px and up, a centered line of 14px medium uppercase text separated by Rule-tone `/`; the current segment is Ink semibold with a 2px Ink underline. Below 640px, a 2 + 2 tonal strip on Recessed `/45`; the current segment takes the Page fill with an inset 2px Ink bottom line. It is the page's only header.
-- **Whitespace-only rarity lists (Abilities, Builds):** no row rules, no boxes. Groups are headed by the rarity name in its rarity token (Abilities add Normal / Lucky odds in mono; Builds show none), 44px between groups. Row hover and the open row are Recessed `/30`. A row that has more to show carries a 12px medium Quiet "See more" / "See less" at its end instead of a chevron; opening animates height over 200ms (`grid-template-rows` 0fr to 1fr), instant under reduced motion. One open row at a time, kept in the URL.
-- **Inspector:** ability details shown in three containers with the same content. A floating card on hover-capable desktops (Surface, 1px Rule, Overlay shadow, square, 150ms fade plus 4px rise, 200ms open delay, triggered by a dotted-underline name); a bottom Sheet on touch or below 768px; and docked beside the kit names on the spec page, where clicking a name switches it (no hover preview).
-- **Row-fill bar (Heights):** a Recessed fill behind the whole row, its width the row's weight over the top weight, with height, game value and odds sitting on it. Hover steps the fill to the Rule tone and the odds to Ink. It is the only bar in the row and the only place this pattern is used. Dropped on phone.
-- **Labelled slot filters with an in-page tray (Builds):** 190px slots on Recessed `/45`, Label on top, value "Any" in Quiet Ink or the pick in Ink semibold with an `×` to clear. Clicking a slot turns it into the input (Recessed `/90`, inset 2px Ink bottom line, ghost completion in Quiet Ink, Tab completes). Options open in the page under the slots, never in a floating box: rarity columns (or foot columns for heights) of Quiet names that go to Ink on Recessed `/90` when hovered or active, and a 12px "Close" at the top right. Typing hides non-matches in place. Phone stacks the slots full width, label left, value right.
-- **Spec photos:** real player photos at 4:5 everywhere, cropped at `object-position: 50% 20%` so heads survive. Gallery cards carry a lower third: a black gradient over the bottom 40% of the photo with the name in white, and stars plus height on a fixed bottom row. The gradient exists for legibility over arbitrary photos, not to decorate; it is sanctioned on spec photos only.
+- **Inline over dropdown.** When every option fits on one line (regions, seasons, positions, stat views), render them inline. A popover is for controls that can't be inline (a date calendar) and for global context (the navbar region/season picker). No floating square dropdowns for choices that fit in the page.
 
 ### Navigation
-- **Style:** Horizontal link row at `lg` and above, collapsing to a vertical stack in a sheet below it. Items are `36px` tall, `12px` horizontal padding, square (`rounded-sm` = 0), `0.875rem` medium.
-- **Default:** Quiet Ink text, no fill. **Hover:** Ink text with a Quiet Ink 2px underline.
-- **Active:** Ink text, semibold, with a 2px Ink underline at a 6px offset. This is the you-are-here signal.
-- **Grouped items (Information):** a click-to-open anchored panel, 320px wide, square, Surface fill, 1px Rule border with no top border so it attaches flush to the header's bottom edge, Overlay shadow, 12px padding. A Label-style group name, then one row per child (14px semibold title). Hover and the current page get a Recessed fill; the current page carries a right-aligned "Here". Opens with opacity plus a 4px rise over 200ms, instant under reduced motion.
-- **Grouped items (admin strip):** the admin navbar is one 52px row. Clicking a group name opens a full-width strip directly under the header, drawn over the page so the page never moves: 44px tall, Surface fill, 1px bottom Rule, Overlay shadow, square, items aligned to the page gutter, sticky with the header. Clicking another group swaps the strip's contents in place; clicking the open group closes it. It also closes on navigation (including clicking the current page), on Escape, and on a click outside. Opening is click only, never hover. It opens with opacity plus a 4px rise over 200ms, instant under reduced motion. A group name is underlined when the current page is inside it or its strip is open; the current page is underlined inside the strip. The current page is the longest nav route that prefixes the pathname. Below `lg`, the sheet lists pages under Label-style group names. Roles that can see 3 pages or fewer get flat links with no groups.
-- **Region / season picker (tonal step):** the trigger separates region from season by tone, not color: the region code in mono semibold 12px on Recessed, a 1px Rule hairline, the season name on Page. The popover keeps a fixed width and labeled structure: boxed region buttons with the selected one filled in Quiet Ink (light text on it), and the current season on a Recessed fill with a Rule border. No cobalt. In admin, it renders only on pages that read it: Matches, Media, Match Stats, Standings, Playoffs, Articles, Spec Calibration.
-- **Focus:** `2px` Action Blue ring on nav items (converging on the `3px` control ring; see Don'ts).
+- **Planned change:** the public navbar will be reworked alongside a public profile section (sign-in with Roblox and Discord). Until profiles exist, the navbar carries no profile or sign-in slot for them. The spec below is current state.
+- Horizontal link row at `lg` and up, a vertical stack in a sheet below it. Items 36px tall, 12px horizontal padding, square, 14px medium.
+- **Default:** Quiet Ink. **Hover:** Ink with a Quiet Ink 2px underline. **Active:** Ink semibold with a 2px Ink underline at 6px offset.
+- **Grouped items (public Information):** click opens an anchored panel, 320px, square, Surface fill, 1px Rule border with no top border so it attaches flush to the header, Overlay shadow, 12px padding. A Label-style group name, then one row per child (14px semibold). Hover and the current page get Recessed; the current page shows a right-aligned "Here". Opacity plus a 4px rise over 200ms, instant under reduced motion.
+- **Grouped items (admin strip):** the admin navbar is one 52px row. Clicking a group name opens a full-width 44px strip under the header, drawn over the page so the page never moves: Surface, 1px bottom Rule, Overlay shadow, square, items aligned to the page gutter, sticky with the header. Clicking another group swaps contents; clicking the open group closes it. Closes on navigation, Escape and outside click. Click only, never hover. A group name is underlined when the current page is inside it or its strip is open. The current page is the longest nav route that prefixes the pathname. Below `lg`, the sheet lists pages under Label-style group names. Roles that see 3 pages or fewer get flat links.
+- **Region / season picker:** separates region from season by tone, not color: region code in mono semibold 12px on Recessed, a 1px Rule hairline, season name on Page. The popover has a fixed width: boxed region buttons with the selected one filled Quiet Ink (light text), current season on Recessed with a Rule border. No cobalt. In admin it renders only on pages that read it.
 
-### Page Containers
-Three fixed widths, chosen by content density rather than by page type: `.page-narrow` (`max-w-7xl` / 1280px) for forms and reading, `.page-wide` (1440px) for the standard public shell, `.page-bleed` (1920px) for the widest stat tables. All use `16px` / `24px` / `32px` responsive gutters.
+### Footer
+- One component, `SiteFooter`, on every public page and at the end of the landing. Same layout everywhere: a brand column (CVR Network, one line on what the site is), a CVRN column (About, Contact, Credits, Privacy Policy, Terms of Service), a Community column (the social links, then the league spreadsheet with the external-link glyph), and a 12px line with the copyright and "Not affiliated with Roblox Corporation." Column headers are Label style.
+- **Surface:** on public pages a full-width band in the navbar's chrome (Card fill, 1px Rule on top); on the landing no band. It is site chrome, like the navbar, so the no-box rule for content doesn't apply. Hidden on `/playoffs`.
+- Links are Quiet Ink, Ink with the 2px underline on hover and focus, 44px tall on touch layouts.
 
-### Named Rules
+### Information area
+Public reference pages for the game's own data (`/information/*`).
+- **Segment picker:** ABILITIES / BUILDS / UPDATES / SPECS, written in caps because they are the game's own section names. At 640px and up, a centered line of 14px medium text separated by Rule-tone `/`; the current segment carries the identity motif. Below 640px, a 2 + 2 tonal strip on Recessed `/45`; the current segment takes the Page fill with an inset 2px Ink bottom line. It is the page's only header.
+- **Rarity lists (Abilities, Builds):** whitespace only, no row rules, no boxes. Groups headed by the rarity name in its rarity color (Abilities add Normal / Lucky odds in mono), 44px between groups. Row hover and the open row are Recessed `/30`. A row with more to show ends in a 12px medium Quiet "See more" / "See less". Opening animates height over 200ms (`grid-template-rows` 0fr to 1fr), instant under reduced motion. One open row at a time, kept in the URL.
+- **Inspector:** ability details in three containers with the same content. A floating card on hover-capable desktops (Surface, 1px Rule, Overlay shadow, square, 150ms fade plus 4px rise, 200ms open delay, triggered by a dotted-underline name); a bottom sheet on touch or below 768px; docked beside the kit names on the spec page, where clicking a name switches it.
+- **Row-fill bar (Heights):** a Recessed fill behind the whole row, width proportional to the row's weight over the top weight. Hover steps the fill to the Rule tone and the odds to Ink. Dropped on phone.
+- **Slot filters with an in-page tray (Builds):** 190px slots on Recessed `/45`, Label on top, value "Any" in Quiet Ink or the pick in Ink semibold with an `×` to clear. Clicking a slot turns it into the input (Recessed `/90`, inset 2px Ink bottom line, ghost completion in Quiet Ink, Tab completes). Options open in the page under the slots, never in a floating box: rarity columns of Quiet names that go to Ink on Recessed `/90` when hovered or active, and a 12px "Close" at the top right. Typing hides non-matches in place. Phone stacks the slots full width.
+- **Spec photos:** real player photos at 4:5, `object-position: 50% 20%` so heads survive. Gallery cards carry a lower third: a black gradient over the bottom 40% with the name in white, and stars plus height on a fixed bottom row. The gradient exists for legibility over arbitrary photos and is sanctioned on spec photos only.
+- **Wording editor (admin Information):** editors appear only when an ability shows its DERIVED description; ORIGINAL shows the game text alone. Each line collapses to its sentence (chevron, plus a Quiet Ink dot when a part is unverified or unhandled). Expanding shows the raw game line in mono and one row per component: tag on the left, labelled plain inputs, and an `InlineSwitch` for the number format. Each expanded line has its own Save; when a change reaches other abilities, Save first shows the old line struck through in Quiet Ink and the new one in Ink, with a confirm. No boxes, no sticky bars.
 
-**The Square-Corner Rule.** Data containers have zero radius. Controls get 2px. Badges get a pill. There is no fourth radius, and `rounded-xl` — shadcn's `<Card>` default — is prohibited on any new surface.
+### Page containers
+Three widths chosen by content density: `.page-narrow` (1280px) for forms and reading, `.page-wide` (1440px) for the standard public shell, `.page-bleed` (1920px) for the widest stat tables. Gutters 16 / 24 / 32px.
 
-**The One Container Rule.** `.panel` is the only container vocabulary. shadcn's `<Card>` currently survives in seven files with `rounded-xl` and `shadow-sm`; those are deviations to migrate, not a second sanctioned system.
+### Icons
+- **Functional glyphs only.** An icon appears only where it names a control or an action: chevron for navigation, `×` for clear, sort direction, menu, external link. lucide-react stays as the source for these.
+- **No icon as illustration.** No calendar on an empty schedule, no trophy on a champion block or an empty state, no icon beside a heading or inside a skeleton. Empty states are text (see States). The data, team logos and player avatars are the imagery.
+- Icon-only controls carry an `aria-label`; the icon is `aria-hidden`.
+- **Brand images, footer only.** The footer's community links show the destination's own icon (the Roblox logo, each Discord server's icon) at 24px, always beside a visible text label, never alone and never elsewhere. Files live in `public/socials/`, never hotlinked.
 
-**The Inline-Over-Dropdown Rule.** When every option fits on one line (regions, seasons, positions, stat views), render them inline as an option row or view tabs. A popover is reserved for controls that cannot be inline (a date calendar) and for global context (the navbar region/season picker). A dropdown that hides four choices behind a click is a spreadsheet filter, not a record desk.
+### Radius
+Three radii, no fourth: containers 0px, controls 2px, badges pill. `rounded-xl` (shadcn's `<Card>` default) is not used on any surface.
 
-## 6. Do's and Don'ts
+## 7. Motion
 
-### Do:
-- **Do** use `.panel` for every container: square corners, 1px Rule border, Surface background, no resting shadow.
-- **Do** give clickable panels a full-strength border and a trailing chevron at rest, then add `shadow-sm`, an Action Blue border, and a 1px lift on hover.
-- **Do** set `font-mono tabular-nums` on every number that sits in a column.
-- **Do** keep Action Blue for what acts, and mark what is selected or where you are with ink weight and an ink underline.
-- **Do** build depth from the Page → Surface → Recessed tonal step and 1px Rule borders.
-- **Do** use fixed rem type sizes and let responsive behavior be structural — collapse the sidebar, stack the columns, make the table scroll.
-- **Do** hold body text to Ink and metadata to Quiet Ink. `0.75rem` is the floor for anything a user must actually read.
-- **Do** keep transitions at 150–250ms on `color`, `box-shadow`, `opacity`, and `transform` — and pair every one with a `prefers-reduced-motion` alternative.
-- **Do** ship skeletons matching the real layout for loading, and empty states that name what will appear here and how it gets there — as centered Quiet Ink text in the space the content would fill, never boxed.
+- Transitions run 150 to 250ms on `color`, `box-shadow`, `opacity` and `transform` only.
+- Motion confirms a state change (hover, open, close, sort, expand). It never introduces content on scroll and never loops.
+- Every transition has a `prefers-reduced-motion: reduce` alternative, usually instant.
+- **Landing exception.** The landing's menu to League change is the one orchestrated scene transition allowed to run up to about 1.8s: rows fade out in 350ms, the art's darkening and blur (`filter`) lift over 1.4s, its zoom settles over 1.8s, the title rises over 1.2s, then the header lines, region names (staggered) and Back fade in. Going back plays it in reverse. Under reduced motion it is a 200ms crossfade where nothing moves or scales. Everything else on the landing keeps 150 to 250ms.
+- **Landing gestures.** On the Menu, resting at the top, one wheel-up, Page Up or Arrow Up enters League; in League, wheel-down, Page Down or Arrow Down returns. A gesture is a run of wheel events under 200ms apart in one direction; reversing direction, a sudden doubling of speed, or a discrete wheel notch starts a new one. Entering League needs a new gesture that starts after the page has rested at the top for 250ms, so momentum carried up from the sections never triggers it. Only the rest of the gesture that switched views is swallowed (no timed lock), so a reversal answers at once. Keys typed into a focused control are left alone. Touch gets no swipe gesture; phones and narrow windows get none of this.
+- **Section to League.** The league section's link is the second scene change: the screen fades to the landing's dark ground over 300ms, jumps to the top while dark, switches to League with every transition suppressed (no Menu zoom), and fades back in over 300ms. Under reduced motion it is an instant cut.
 
-### Don't:
-- **Don't** use `background-clip: text` with a gradient. Gradient text is decorative, never meaningful; use weight and size. The one sanctioned exception is the Mythical rarity name (see Rarity).
-- **Don't** use `border-left` or `border-right` above 1px as a colored accent stripe. Use a full border, a background tint, or nothing.
-- **Don't** wrap an empty, zero, loading-failed, or not-found message in a `.panel` or any bordered box. A box with one line of gray text in it is a gratuitous container — it draws a frame around nothing. Render the message as centered Quiet Ink text in the region the real content would occupy (e.g. `flex items-center justify-center` at the grid's min-height). A box earns its border only when it holds structured content.
-- **Don't** ship the **generic SaaS admin template**: untouched shadcn defaults, `rounded-2xl` containers, purple gradient cards, hero-metric tiles. `rounded-xl` on a container is this look arriving one class at a time.
-- **Don't** ship the **hobby-project dashboard**: mismatched spacing, half-styled surfaces, default components dropped in unmodified. This is the failure mode CVRN exists to disprove.
-- **Don't** reach for **esports and gaming tropes** — neon accents, angular clip-path panels, RGB glows, aggressive italics, condensed display faces on scores. The obvious reflex for a gaming league and the wrong one for this brand.
-- **Don't** produce **a spreadsheet on the web**: an undifferentiated grid of numbers with no rank, no state, and no visual weight. Density is the point; density without hierarchy is the anti-reference.
-- **Don't** put a resting shadow on anything in the page flow. If it does not float above the page, it does not cast a shadow.
-- **Don't** introduce a second type family, a display face, or `clamp()`-sized headings.
-- **Don't** introduce a third accent hue for categorical data. Use position, weight, and rule lines.
-- **Don't** mix focus vocabularies. Controls use a `3px` ring at 50% opacity; navigation currently uses `2px` at full opacity. Converge on the `3px` treatment.
-- **Don't** let a color be the only carrier of meaning. Win/loss, qualified/eliminated, and synced/failed each need a second cue — a glyph, a label, or position.
+## 8. States
 
-**Audit test:** if a screenshot of a new surface could be dropped into a shadcn starter template without looking out of place, it is wrong. The square corners, the ink-underlined active state, the monospaced columns, and the total absence of resting shadows are what make a CVRN screen identifiable — and any one of them going missing is the system eroding.
+- **Loading:** skeletons that match the real layout, so nothing shifts when data lands.
+- **Empty:** centered Quiet Ink text in the space the content would fill, naming what will appear and how it gets there. Never boxed.
+- **Error:** the same placement, in plain words, with a retry where one makes sense. Not-found and failed loads are not wrapped in a panel either.
+
+## 9. Accessibility
+
+Target is **WCAG 2.2 AA**, not best effort.
+- Text 4.5:1, large text (18px+, or 14px+ bold) 3:1, non-text UI parts and meaningful glyphs 3:1.
+- Every control is a native `<button>` or `<a href>`, reachable by Tab in visual order, with the 3px focus ring visible.
+- Dialogs, sheets, strips and popovers close on Escape and return focus to their trigger.
+- Icon-only buttons have an `aria-label`; decorative images have `alt=""`.
+- Tap targets 44px on touch layouts.
+
+## 10. Do and don't
+
+**Do**
+- Put content straight on the page tone; group with headings and whitespace.
+- Mark clickable items with an Ink semibold name and, for rows, a trailing chevron; Recessed fill and underline on hover.
+- Set `font-mono tabular-nums` on every number in a column.
+- Keep actions ink; mark selected and current with the ink underline; keep the accent for today.
+- Keep type on the fixed rem scale and make responsive behavior structural.
+
+**Don't**
+- A tonal box (Surface or Recessed fill, or a bordered frame) around content in the page flow: cards, tiles, panels.
+- Full-width rule lines between rows or list items, segmenting a list into strips.
+- Gradient text, except the Mythical rarity name.
+- A colored `border-left` or `border-right` as an accent stripe.
+- A gradient wash behind content.
+- A box around an empty, zero, failed or not-found message.
+- A shadow on anything in the page flow.
+- Decorative icons beside headings or in empty states.
+- A second sans, a display face, or `clamp()` headings.
+- A third accent hue for categorical data.
+- Esports tropes: neon, clip-path angles, RGB glow, aggressive italics.
+
+**Screenshot test:** if a new surface could be dropped into a shadcn starter template without looking out of place, it is wrong. Content on the bare page, the ink underline, monospaced columns and color coming only from logos, avatars and today are what identify a CVRN screen. Losing any one of them is the system eroding.
+
+## 11. Decisions and reasons
+
+| Decision | Reason |
+|---|---|
+| True-neutral gray ramp | Team logos and avatars carry the color; a tinted field would fight them. |
+| Accent means "today" | Match day is the one recurring moment worth interrupting the black and white for, and it's backed by `scheduled_at`. |
+| Ball yellow, not green or ice blue | It's the sport's own object; green would equal a win on the same rows, ice blue reads as a link. |
+| Actions in ink | Clickable reads from shape and underline, so the accent stays free for its one job. |
+| Ink underline for selected | Selected is a state; one repeated mark makes it recognizable on every page. |
+| No boxes in the page flow | Tonal boxes on the page are the most common template tell and Kevin's least favorite pattern; whitespace groups without framing. |
+| No line breakers between rows | Full-width rules chop a list into segments, which reads as boxes drawn with lines; Kevin dislikes them. Padding and the hover fill separate rows. |
+| Square corners, 2px controls, pill badges | Radius tells the eye what kind of thing it is: floating layer, control or status. |
+| Plex Sans + Mono | Institutional tone, and a mono sibling that keeps figures in the same family. |
+| Uppercase 12px labels | Separates a column header from same-size data cells without adding weight or color. |
+| Flat, one shadow | Only what floats is raised; everything else shares one plane. |
+| Dense 14px body | The audience reads on desktop and comes for lookups; more rows per screen means fewer scrolls. |
+| Rarity colors and Mythical gradient | They are the game's own tiers, so showing them is content, not decoration. |
+| Spec photo gradient | Keeps white names legible over arbitrary photos. |
+| Lucide for functional glyphs only | A glyph that names an action helps; one that illustrates a section is template decoration. |
+| Dark default (temporary) | The current light mode hurts to read. Dark stays default until light mode is fixed, then the default is revisited. |
+| Three dial tiers | The landing sells the league, weekly pages carry identity, reference pages stay quiet; one shared system keeps them related. |
+
+## 12. Open decisions
+
+These need Kevin's call before this file counts as finished.
+
+1. **Game layer on reworked pages.** How far player cards, tiers and rarity show up on Home, Matches, Standings, Teams and Team detail is decided per page during each rework.
+2. **Destructive red contrast.** White on `#EF4444` is **3.76:1**, so destructive button labels fail AA at 14px; red text on white is also 3.76:1. Needs a darker light-mode red. (Cobalt and amber contrast failures are moot now that both are retired.)
+3. **Light mode is a defect, not a choice.** Dark is default because light mode is uncomfortable to read. The toggle ships, so light mode has to work (antislop R-34). Fixing it is part of the token pass. Dropping the gray page under white panels removes the main two-tone glare, but the light page tone itself still needs a decision.
+4. **5-star spec fill and update-log `~` / `NEW` colors.** These used amber and cobalt. The 5-star gold now sits next to ball yellow; they only appear on Information pages, where "today" never does, but they need new values (or ink) so yellow keeps one meaning.
