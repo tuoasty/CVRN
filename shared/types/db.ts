@@ -153,5 +153,11 @@ export type CardBulkJobInsert =
 export type CardBulkJobUpdate =
     Database["public"]["Tables"]["card_bulk_jobs"]["Update"];
 
+export type DiscordBoosterRow =
+    Database["public"]["Tables"]["discord_boosters"]["Row"];
+
+export type DiscordBoosterInsert =
+    Database["public"]["Tables"]["discord_boosters"]["Insert"];
+
 export type GameAbilitySettingRow =
     Database["public"]["Tables"]["game_ability_settings"]["Row"];
