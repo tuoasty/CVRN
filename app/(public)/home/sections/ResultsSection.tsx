@@ -123,16 +123,15 @@ function LeaderTable({days, withRound}: {days: ResultDay[]; withRound: boolean})
     const head = "pb-2 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground";
     const columns = (withRound ? 1 : 0) + 3 + LEADER_ORDER.length;
     return (
-        <TooltipProvider>
-            <table className="mt-2 w-full table-fixed border-collapse">
+        <table className="mt-2 hidden w-full table-fixed border-collapse sm:table">
                 <thead>
                     <tr className="border-b border-border">
                         {withRound && <th scope="col" className={cn(head, "w-12 px-2")}>Round</th>}
-                        <th scope="col" className={cn(head, "pr-3 sm:w-[200px]", !withRound && "pl-2")}>Home</th>
+                        <th scope="col" className={cn(head, "w-[200px] pr-3", !withRound && "pl-2")}>Home</th>
                         <th scope="col" className={cn(head, "w-16 pr-3")}>Score</th>
-                        <th scope="col" className={cn(head, "pr-3 sm:w-[200px]")}>Away</th>
+                        <th scope="col" className={cn(head, "w-[200px] pr-3")}>Away</th>
                         {LEADER_ORDER.map(c => (
-                            <th key={c} scope="col" className={cn(head, "hidden pr-2 sm:table-cell")}>{LEADER_SHORT[c]}</th>
+                            <th key={c} scope="col" className={cn(head, "pr-2")}>{LEADER_SHORT[c]}</th>
                         ))}
                     </tr>
                 </thead>
@@ -180,7 +179,7 @@ function LeaderTable({days, withRound}: {days: ResultDay[]; withRound: boolean})
                                     {LEADER_ORDER.map(c => {
                                         const cell = byCategory.get(c);
                                         return (
-                                            <td key={c} className="hidden py-2 pr-2 sm:table-cell">
+                                            <td key={c} className="py-2 pr-2">
                                                 {cell && <Leader cell={cell} category={c} />}
                                             </td>
                                         );
@@ -191,7 +190,6 @@ function LeaderTable({days, withRound}: {days: ResultDay[]; withRound: boolean})
                     </tbody>
                 ))}
             </table>
-        </TooltipProvider>
     );
 }
 
@@ -203,7 +201,18 @@ export function ResultsSection({title, days, href}: HomeView["results"]) {
     return (
         <section aria-label={title}>
             <SectionHeading title={title} href={href} linkLabel="All results" />
-            {hasLeaders ? <LeaderTable days={days} withRound={withRound} /> : <ScoreList days={days} withRound={withRound} />}
+            <TooltipProvider>
+                {hasLeaders ? (
+                    <>
+                        <div className="sm:hidden">
+                            <ScoreList days={days} withRound={withRound} />
+                        </div>
+                        <LeaderTable days={days} withRound={withRound} />
+                    </>
+                ) : (
+                    <ScoreList days={days} withRound={withRound} />
+                )}
+            </TooltipProvider>
         </section>
     );
 }
