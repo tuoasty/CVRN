@@ -29,6 +29,7 @@
     --input: 0 0% 82%;
     --ring: 227 74% 47%;
     --radius: 0.25rem;
+    --today: 48 100% 50%;
   }
 
   .dark {
@@ -57,6 +58,7 @@
     --input: 0 0% 17%;
     --ring: 227 79% 54%;
     --radius: 0.25rem;
+    --today: 48 100% 50%;
 
     --panel: 0 0% 8.5%;
     --panel-border: 0 0% 20%;

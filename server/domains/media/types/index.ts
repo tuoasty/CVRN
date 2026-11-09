@@ -8,6 +8,8 @@ export interface MediaPost {
     title: string
     description: string | null
     image_url: string | null
+    image_width: number | null
+    image_height: number | null
     video_url: string | null
     author_id: string | null
     match_id: string | null
@@ -30,6 +32,8 @@ export interface InsertMediaPostDto {
     title: string
     description?: string | null
     image_url?: string | null
+    image_width?: number | null
+    image_height?: number | null
     video_url?: string | null
     author_id?: string | null
     match_id?: string | null

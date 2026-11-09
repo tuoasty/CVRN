@@ -56,7 +56,8 @@ import {
     getMatchSitemapRows,
 } from "@/server/domains/match";
 import type {MatchWithDetails, PlayerRecentMatch} from "@/server/domains/match";
-import {getSeasonPodium} from "@/server/domains/season";
+import {getSeasonPodium, getSeasonAwards} from "@/server/domains/season";
+import {getMatchStatTotalsByMatchIds} from "@/server/domains/matchStats";
 import {getAllMediaPosts} from "@/server/domains/media";
 import {getPublishedArticles, getArticleBySlug} from "@/server/domains/article";
 import {getPublishedUpdateLogIndex, getPublishedUpdateLog} from "@/server/domains/updateLog";
@@ -397,6 +398,37 @@ export const getCachedMatchDetailById = unstable_cache(
         tags: [CACHE_TAGS.matches, CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.media],
         revalidate: PUBLIC_REVALIDATE_SECONDS,
     },
+);
+
+export const getCachedSeasonUpcomingMatches = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(await getUpcomingMatches(createPublicClient(), seasonId, 500), "getCachedSeasonUpcomingMatches"),
+    ["public:season-upcoming-matches"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedSeasonCompletedMatches = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(await getRecentMatches(createPublicClient(), seasonId, 500), "getCachedSeasonCompletedMatches"),
+    ["public:season-completed-matches"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedMatchStatTotals = unstable_cache(
+    async (joinedIds: string) => {
+        const matchIds = joinedIds ? joinedIds.split(",") : [];
+        if (matchIds.length === 0) return [];
+        return unwrap(await getMatchStatTotalsByMatchIds(createPublicClient(), matchIds), "getCachedMatchStatTotals");
+    },
+    ["public:match-stat-totals"],
+    {tags: [CACHE_TAGS.stats], revalidate: STATS_REVALIDATE_SECONDS},
+);
+
+export const getCachedSeasonAwards = unstable_cache(
+    async (seasonId: string) =>
+        unwrap(await getSeasonAwards(createPublicClient(), seasonId), "getCachedSeasonAwards"),
+    ["public:season-awards"],
+    {tags: [CACHE_TAGS.seasons, CACHE_TAGS.players, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedSeasonPodium = unstable_cache(

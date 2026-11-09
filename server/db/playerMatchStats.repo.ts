@@ -55,6 +55,19 @@ export async function findMatchStatTotals(
     return Ok(data ?? []);
 }
 
+export async function findMatchStatTotalsByMatchIds(
+    supabase: DBClient,
+    matchIds: string[]
+): Promise<Result<PlayerMatchStatTotal[]>> {
+    if (matchIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("v_player_match_stat_totals")
+        .select("*")
+        .in("match_id", matchIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
 export async function findPlayerLeaderboard(
     supabase: DBClient,
     p: {regionCode?: string; seasonId?: string; teamId?: string}

@@ -5,6 +5,7 @@ import { serializeError } from '@/server/utils/serializeableError'
 import { logger } from '@/server/utils/logger'
 import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
 import { uploadFile, deleteFile } from '@/server/storage/storage.service'
+import { readImageDimensions } from '@/server/storage/imageDimensions'
 import { insertMediaPost } from '@/server/db/mediaPost.repo'
 import { assertMatchSlotFree } from '../helpers/assertMatchSlotFree'
 import { assertChampionSlotFree } from '../helpers/assertChampionSlotFree'
@@ -48,6 +49,7 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
 
     try {
         let imageUrl: string | null = null
+        let imageDims: { width: number; height: number } | null = null
         let title = p.title
         let description = p.description ?? null
         let videoUrl = p.videoUrl ?? null
@@ -152,6 +154,7 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
 
             uploadedPath = path
             imageUrl = uploadRes.value.url
+            imageDims = await readImageDimensions(p.imageFile)
         }
 
         const insertResult = await insertMediaPost(supabase, {
@@ -160,6 +163,8 @@ export async function createMediaPost(supabase: DBClient, p: CreateMediaInput): 
             title,
             description,
             image_url:   imageUrl,
+            image_width:  imageDims?.width ?? null,
+            image_height: imageDims?.height ?? null,
             video_url:   videoUrl,
             author_id:   p.authorId ?? null,
             match_id:    p.matchId ?? null,
