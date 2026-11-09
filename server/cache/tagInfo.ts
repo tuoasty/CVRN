@@ -103,6 +103,12 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         readCount: 5,
         affects: "Player detail API, stats summary API",
     },
+    [CACHE_TAGS.boosters]: {
+        label: "Boosters",
+        description: "Roblox ids of current Discord server boosters, written by the hourly booster sync.",
+        readCount: 1,
+        affects: "Boosters API, player detail API",
+    },
 };
 
 export const CACHE_TAG_ORDER: CacheTag[] = [
@@ -121,4 +127,5 @@ export const CACHE_TAG_ORDER: CacheTag[] = [
     CACHE_TAGS.specs,
     CACHE_TAGS.rawStats,
     CACHE_TAGS.playerCards,
+    CACHE_TAGS.boosters,
 ];

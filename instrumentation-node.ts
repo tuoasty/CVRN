@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { startMemoryLog } from "@/server/utils/memoryLog";
 
 const REQUIRED = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SITE_URL"];
-const EXPECTED = ["GOOGLE_SHEETS_CREDENTIALS", "CRON_SECRET"];
+const EXPECTED = ["GOOGLE_SHEETS_CREDENTIALS", "CRON_SECRET", "DISCORD_TOKEN", "DISCORD_GUILD_ID", "BLOXLINK_API_KEY"];
 
 const EX_CONFIG = 78;
 
