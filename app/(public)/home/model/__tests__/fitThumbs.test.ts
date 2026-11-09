@@ -1,13 +1,19 @@
 import {describe, expect, it} from "vitest";
-import {fitThumbs} from "../fitThumbs";
+import {THUMB_HEIGHT, fitThumbs} from "../fitThumbs";
 
 describe("fitThumbs", () => {
     it("fits seven 16:9 thumbnails in the desktop row", () => {
         expect(fitThumbs(Array(20).fill(16 / 9))).toBe(7);
     });
 
-    it("fits sixteen 4:5 thumbnails in the desktop row", () => {
-        expect(fitThumbs(Array(30).fill(0.8))).toBe(16);
+    it("fits fourteen 4:5 thumbnails in the desktop row", () => {
+        expect(fitThumbs(Array(30).fill(0.8))).toBe(14);
+    });
+
+    it("thumb height is the one where seven 16:9 fill 1376px exactly", () => {
+        expect(THUMB_HEIGHT).toBeCloseTo(106.714, 2);
+        expect(fitThumbs(Array(7).fill(16 / 9))).toBe(7);
+        expect(fitThumbs(Array(8).fill(16 / 9))).toBe(7);
     });
 
     it("counts mixed widths greedily in order", () => {

@@ -42,8 +42,9 @@ export function HeroThumbs({items, selected, onSelect, className}: {
     };
 
     return (
+        <div className={cn("[container-type:inline-size]", className)}>
         <div
-            className={cn("flex gap-2 overflow-x-auto pb-1", className)}
+            className="flex gap-2 overflow-x-auto pb-1 lg:overflow-visible lg:[--th:calc((100cqw_-_48px)*9/112)]"
             role="group"
             aria-label="Featured"
             onKeyDown={e => {
@@ -54,6 +55,7 @@ export function HeroThumbs({items, selected, onSelect, className}: {
             {items.map((item, i) => {
                 const label = tag(item);
                 const on = i === selected;
+                const ratio = item.image?.ratio ?? 1;
                 return (
                     <button
                         key={item.key}
@@ -62,30 +64,25 @@ export function HeroThumbs({items, selected, onSelect, className}: {
                         aria-pressed={on}
                         aria-label={describe(item)}
                         onClick={() => onSelect(i)}
+                        style={{"--r": ratio} as React.CSSProperties}
                         className={cn(
-                            "shrink-0 text-left transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+                            "shrink-0 text-left transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground lg:w-[calc(var(--th)*var(--r))] lg:min-w-0 lg:shrink",
                             on ? "opacity-100" : "opacity-60 hover:opacity-80",
                         )}
                     >
-                        {item.image ? (
-                            <Image
-                                src={item.image.imageUrl}
-                                alt=""
-                                width={0}
-                                height={0}
-                                sizes="240px"
-                                className="h-24 w-auto max-w-none"
-                            />
-                        ) : (
-                            <div className="flex h-24 w-24 items-center justify-center">
-                                {subject(item) && <TeamMark team={subject(item) as HomeTeam} size={72} />}
-                            </div>
-                        )}
+                        <div className="relative flex h-24 w-[calc(96px*var(--r))] items-center justify-center lg:h-[var(--th)] lg:w-full">
+                            {item.image ? (
+                                <Image src={item.image.imageUrl} alt="" fill sizes="240px" className="object-contain" />
+                            ) : (
+                                subject(item) && <TeamMark team={subject(item) as HomeTeam} size={72} />
+                            )}
+                        </div>
                         <div className={cn("mt-1.5 h-0.5", on ? "bg-foreground" : "bg-transparent")} />
-                        {label && <div className={cn("mt-1 font-mono text-[11px] uppercase tracking-wider", on ? "font-semibold" : "text-muted-foreground")}>{label}</div>}
+                        <div className={cn("mt-1 h-4 font-mono text-[11px] uppercase leading-4 tracking-wider", on ? "font-semibold" : "text-muted-foreground")}>{label}</div>
                     </button>
                 );
             })}
+        </div>
         </div>
     );
 }
