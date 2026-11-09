@@ -2,6 +2,8 @@ import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {isValidBearerSecret} from "@/server/utils/apiAuth";
 import {toApiResponse} from "@/server/utils/apiResponse";
 import {DEFAULT_MAX_RESOLVES, syncBoosters} from "@/server/domains/booster";
+import {revalidatePublicData} from "@/server/cache/revalidate";
+import {CACHE_TAGS} from "@/server/cache/tags";
 import {logger} from "@/server/utils/logger";
 import type {DBClient} from "@/shared/types/db";
 
@@ -21,5 +23,6 @@ export async function GET(req: Request) {
         : DEFAULT_MAX_RESOLVES;
 
     const result = await syncBoosters(getSupabaseAdmin() as unknown as DBClient, {maxResolves});
+    if (result.ok && result.value.changed) revalidatePublicData([CACHE_TAGS.boosters]);
     return toApiResponse(result);
 }

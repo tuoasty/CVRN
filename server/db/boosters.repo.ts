@@ -12,6 +12,15 @@ export async function findAllBoosters(supabase: DBClient): Promise<Result<Discor
     return Ok(data ?? []);
 }
 
+export async function findBoosterRobloxIds(supabase: DBClient): Promise<Result<string[]>> {
+    const {data, error} = await supabase
+        .from("discord_boosters")
+        .select("roblox_user_id")
+        .not("roblox_user_id", "is", null);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok([...new Set((data ?? []).map((row) => row.roblox_user_id as string))]);
+}
+
 export async function deleteBoostersByDiscordIds(supabase: DBClient, discordUserIds: string[]): Promise<Result<true>> {
     for (let i = 0; i < discordUserIds.length; i += ID_CHUNK) {
         const {error} = await supabase

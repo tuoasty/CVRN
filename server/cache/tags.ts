@@ -15,6 +15,7 @@ export const CACHE_TAGS = {
     specs: "specs",
     rawStats: "raw-stats",
     playerCards: "player-cards",
+    boosters: "boosters",
 } as const;
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];

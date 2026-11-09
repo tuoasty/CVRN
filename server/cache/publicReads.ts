@@ -64,6 +64,9 @@ import {getGameDatasetPayloads, getPublicInformation} from "@/server/domains/gam
 import {getPublicSpecSnapshot, getPublishedSpecRegions, getPublicSpecs, getRecentSpecWinners} from "@/server/domains/spec";
 import {getRecords} from "@/server/domains/record";
 import {getSeasonOverallInputs} from "@/server/domains/overall";
+import {getBoosterRobloxIds} from "@/server/domains/booster";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
+import type {DBClient} from "@/shared/types/db";
 import {Result} from "@/shared/types/result";
 import {CACHE_TAGS, CARDS_REVALIDATE_SECONDS, PUBLIC_REVALIDATE_SECONDS, STATS_REVALIDATE_SECONDS, RAW_STATS_REVALIDATE_SECONDS} from "./tags";
 
@@ -557,6 +560,15 @@ export const getCachedPlayerDetailByRobloxId = unstable_cache(
         getPlayerDetailByRobloxUserId(createPublicClient(), {robloxUserId, seasonNumber}),
     ["public:player-detail-by-roblox-id"],
     {tags: [CACHE_TAGS.rawStats], revalidate: RAW_STATS_REVALIDATE_SECONDS},
+);
+
+export const getCachedBoosterRobloxIds = unstable_cache(
+    async () => unwrap(
+        await getBoosterRobloxIds(getSupabaseAdmin() as unknown as DBClient),
+        "getCachedBoosterRobloxIds",
+    ),
+    ["public:booster-roblox-ids"],
+    {tags: [CACHE_TAGS.boosters], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedPlayerStatsByRobloxId = unstable_cache(
