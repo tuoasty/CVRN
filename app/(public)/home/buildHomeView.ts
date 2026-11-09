@@ -15,9 +15,10 @@ import {postRatio} from "./model/ratio";
 import {formatWhen} from "./model/format";
 import {rankHeroCandidates, type HeroCandidate} from "./model/rankHeroCandidates";
 import {buildTape} from "./model/buildTape";
-import {sumStatLine} from "./model/leaders";
+import {MATCHUP_LABELS, MATCHUP_ORDER, matchupLine, pickTeamLeader} from "./model/leaders";
+import {POSITION_NAMES, mainPosition, potwLine, roundTeamLeaders, sumPlayerTotals} from "./model/awardLines";
 import {fitThumbs} from "./model/fitThumbs";
-import type {HeroImage, HeroItem, HomeTeam, HomeView, StatLine} from "./model/types";
+import type {HeroImage, HeroItem, HomeTeam, HomeView, LeaderCell, MatchupCategory, StatCell} from "./model/types";
 
 export type HomePerson = { name: string; username: string; avatarUrl: string | null };
 
@@ -48,20 +49,23 @@ function weekFromRoundKey(roundKey: string | null): number | null {
     return m ? parseInt(m[1], 10) : null;
 }
 
+function roundMatches(completed: MatchWithDetails[], roundKey: string | null): MatchWithDetails[] {
+    if (!roundKey) return [];
+    const week = weekFromRoundKey(roundKey);
+    if (week !== null) return completed.filter(m => m.match.match_type === "season" && m.match.week === week);
+    return isPlayoffRound(roundKey) ? completed.filter(m => m.playoff_round === roundKey) : [];
+}
+
 export function statMatchIdsFor(completed: MatchWithDetails[], posts: MediaPost[], seasonId: string): string[] {
-    const weeks = new Set(
-        posts
-            .filter(p => p.type === "potw" && p.season_id === seasonId)
-            .map(p => weekFromRoundKey(p.round_key))
-            .filter((w): w is number => w !== null),
-    );
     const ids = new Set(completed.slice(0, STAT_MATCH_WINDOW).map(m => m.match.id));
     const withGfx = new Set(posts.filter(p => p.type === "gfx" && p.match_id).map(p => p.match_id as string));
     for (const m of completed) {
         if (withGfx.has(m.match.id)) ids.add(m.match.id);
     }
-    for (const m of completed) {
-        if (m.match.week !== null && weeks.has(m.match.week) && m.match.match_type === "season") ids.add(m.match.id);
+    for (const p of posts) {
+        if ((p.type === "potw" || p.type === "totw") && p.season_id === seasonId) {
+            for (const m of roundMatches(completed, p.round_key)) ids.add(m.match.id);
+        }
     }
     return [...ids];
 }
@@ -114,7 +118,7 @@ export function buildHomeView(input: HomeInput): HomeView {
     const resolvePlayer = (playerId: string) => {
         const p = input.identity.players[playerId];
         if (!p) return null;
-        return {name: p.display_name || p.username, avatarUrl: p.avatar_url, href: buildPublicPlayerHref(p.username)};
+        return {name: p.display_name || p.username, username: p.username, avatarUrl: p.avatar_url, href: buildPublicPlayerHref(p.username)};
     };
     const totalsByMatch = new Map<string, PlayerMatchStatTotal[]>();
     for (const t of input.matchTotals) {
@@ -185,32 +189,29 @@ export function buildHomeView(input: HomeInput): HomeView {
             };
         }
         if (c.kind === "potw") {
-            const person = c.post.player_id ? input.people.get(c.post.player_id) : undefined;
-            const playerRow = input.leaderRows.find(r => r.player_id === c.post.player_id);
-            const week = weekFromRoundKey(c.post.round_key);
-            let line: StatLine | null = null;
-            if (c.post.player_id && week !== null) {
-                const weekTotals = input.completed
-                    .filter(m => m.match.week === week && m.match.match_type === "season")
-                    .flatMap(m => totalsByMatch.get(m.match.id) ?? []);
-                line = sumStatLine(weekTotals, c.post.player_id);
-            }
-            if (!line && playerRow) {
-                line = {
-                    points: Math.round((playerRow.points_per_set ?? 0) * 10) / 10,
-                    assists: Math.round((playerRow.assists_per_set ?? 0) * 10) / 10,
-                    blocks: Math.round((playerRow.blocks_per_set ?? 0) * 10) / 10,
-                    receives: Math.round((playerRow.receives_per_set ?? 0) * 10) / 10,
-                    perSet: true,
-                };
+            const playerId = c.post.player_id as string;
+            const person = input.people.get(playerId);
+            const playerRow = input.leaderRows.find(r => r.player_id === playerId);
+            const position = mainPosition(playerRow?.position_counts);
+            const roundLabel = roundKeyLabel(c.post.round_key);
+            const roundTotals = roundMatches(input.completed, c.post.round_key).flatMap(m => totalsByMatch.get(m.match.id) ?? []);
+            const roundRow = roundLabel ? sumPlayerTotals(roundTotals, playerId) : null;
+            let line: StatCell[] = [];
+            let statsLabel: string | null = null;
+            if (roundRow) {
+                line = potwLine(position, roundRow, "match");
+                statsLabel = roundLabel;
+            } else if (playerRow) {
+                line = potwLine(position, playerRow as unknown as Record<string, unknown>, "season");
+                statsLabel = "Season, per set";
             }
             const playerHref = buildPublicPlayerHref(person?.username);
-            const roundLabel = roundKeyLabel(c.post.round_key);
+            const shownRound = roundLabel ?? c.post.description;
             return {
                 kind: "potw",
                 key: c.post.id,
                 image: image(c.post, playerHref),
-                label: roundLabel ? `Player of the Week · ${roundLabel}` : "Player of the Week",
+                label: shownRound ? `Player of the Week · ${shownRound}` : "Player of the Week",
                 player: {
                     name: person?.name ?? c.post.title,
                     username: person?.username ?? "",
@@ -218,21 +219,83 @@ export function buildHomeView(input: HomeInput): HomeView {
                     href: playerHref,
                 },
                 team: toTeam(playerRow?.team_id ?? c.post.team_id),
+                position: position ? POSITION_NAMES[position] : null,
+                statsLabel,
                 line,
             };
         }
         if (c.kind === "totw") {
-            const team = toTeam(c.post.team_id);
-            const standing = standingFor(c.post.team_id);
+            const teamId = c.post.team_id;
+            const team = toTeam(teamId);
+            const standing = standingFor(teamId);
             const roundLabel = roundKeyLabel(c.post.round_key);
+            const played = teamId
+                ? roundMatches(input.completed, c.post.round_key).filter(m => m.match.home_team_id === teamId || m.match.away_team_id === teamId)
+                : [];
+            const roundTotals = played.flatMap(m => totalsByMatch.get(m.match.id) ?? []);
+            const useRound = !!roundLabel && roundTotals.some(t => t.team_id === teamId);
+            const roundLeaders = useRound && teamId ? roundTeamLeaders(roundTotals, teamId) : null;
+            const toCell = (
+                pick: { playerId: string; value: number } | null,
+                row: Record<string, unknown> | undefined,
+                category: MatchupCategory,
+                source: "season" | "match",
+            ): LeaderCell | null => {
+                if (!pick) return null;
+                const who = resolvePlayer(pick.playerId);
+                if (!who) return null;
+                return {
+                    playerId: pick.playerId,
+                    name: who.name,
+                    username: who.username,
+                    avatarUrl: who.avatarUrl,
+                    href: who.href,
+                    value: pick.value,
+                    line: row ? matchupLine(category, row, source) : [],
+                };
+            };
+            const leaders = teamId
+                ? MATCHUP_ORDER.map(category => {
+                      if (roundLeaders) {
+                          const pick = roundLeaders[category];
+                          return {category, label: MATCHUP_LABELS[category], cell: toCell(pick, pick?.row, category, "match")};
+                      }
+                      const pick = pickTeamLeader(input.leaderRows, teamId, category);
+                      const row = input.leaderRows.find(r => r.player_id === pick?.playerId && r.team_id === teamId);
+                      return {
+                          category,
+                          label: MATCHUP_LABELS[category],
+                          cell: toCell(pick, row as unknown as Record<string, unknown> | undefined, category, "season"),
+                      };
+                  }).filter(l => l.cell !== null)
+                : [];
+            const shownRound = roundLabel ?? c.post.description;
+            const results = useRound && teamId
+                ? [...played]
+                      .sort((a, b) => (a.match.scheduled_at ?? "").localeCompare(b.match.scheduled_at ?? ""))
+                      .map(m => {
+                          const home = m.match.home_team_id === teamId;
+                          const mine = (home ? m.match.home_sets_won : m.match.away_sets_won) ?? 0;
+                          const theirs = (home ? m.match.away_sets_won : m.match.home_sets_won) ?? 0;
+                          const opponentId = home ? m.match.away_team_id : m.match.home_team_id;
+                          return {
+                              key: m.match.id,
+                              result: mine > theirs ? ("W" as const) : ("L" as const),
+                              opponent: (opponentId && teamById.get(opponentId)?.name) || "TBD",
+                              score: `${mine}-${theirs}`,
+                          };
+                      })
+                : [];
             return {
                 kind: "totw",
                 key: c.post.id,
                 image: image(c.post, team?.href ?? null),
-                label: roundLabel ? `Team of the Week · ${roundLabel}` : "Team of the Week",
+                label: shownRound ? `Team of the Week · ${shownRound}` : "Team of the Week",
                 team,
                 record: standing ? `${standing.wins ?? 0}-${standing.losses ?? 0}` : null,
                 rank: standing?.rank ?? null,
+                results,
+                leaders,
             };
         }
         const champion = toTeam(championTeamId);

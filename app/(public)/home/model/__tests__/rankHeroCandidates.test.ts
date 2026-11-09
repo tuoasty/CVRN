@@ -60,7 +60,7 @@ describe("rankHeroCandidates", () => {
     it("pool orders POTW, TOTW and result GFX by published_at desc", () => {
         const done = makeMatch({status: "completed", scheduled_at: at(-2 * DAY)});
         const result = gfxFor(done, {published_at: "2026-11-10T00:00:00Z"});
-        const potw = makePost({type: "potw", published_at: "2026-11-11T00:00:00Z"});
+        const potw = makePost({type: "potw", player_id: "p1", published_at: "2026-11-11T00:00:00Z"});
         const totw = makePost({type: "totw", published_at: "2026-11-09T00:00:00Z"});
         const out = run({completed: [done], posts: [totw, result, potw]});
         expect(out.map(c => c.kind)).toEqual(["potw", "match", "totw"]);
@@ -94,6 +94,10 @@ describe("rankHeroCandidates", () => {
         expect(run({upcoming: [makeMatch({scheduled_at: at(DAY)})]})).toEqual([]);
     });
 
+    it("skips a POTW with no single player", () => {
+        expect(run({posts: [makePost({type: "potw", player_id: null})]})).toEqual([]);
+    });
+
     it("other seasons' POTW never appear", () => {
         expect(run({posts: [makePost({type: "potw", season_id: "season-old"})]})).toEqual([]);
     });
@@ -108,11 +112,22 @@ describe("rankHeroCandidates", () => {
         const gf = makeMatch({status: "completed", match_type: "playoffs", scheduled_at: at(-3 * DAY), round: "grand_final"});
         const reg = makeMatch({status: "completed", match_type: "season", scheduled_at: at(-20 * DAY)});
         const champ = makePost({type: "champion"});
-        const sfPost = gfxFor(sf);
-        const gfPost = gfxFor(gf);
+        const sfPost = gfxFor(sf, {published_at: "2026-11-06T00:00:00Z"});
+        const gfPost = gfxFor(gf, {published_at: "2026-11-08T00:00:00Z"});
         const out = run({phase: "completed", completed: [gf, sf, reg], posts: [sfPost, gfPost, gfxFor(reg), champ], championTeamId: "team-home"});
         expect(ids(out)).toEqual([champ.id, gfPost.id, sfPost.id]);
         expect(out[0].kind).toBe("champion");
+    });
+
+    it("completed: POTW and TOTW join the playoff GFX, sorted by published_at", () => {
+        const gf = makeMatch({status: "completed", match_type: "playoffs", scheduled_at: at(-3 * DAY), round: "grand_final"});
+        const champ = makePost({type: "champion"});
+        const gfPost = gfxFor(gf, {published_at: "2026-11-08T00:00:00Z"});
+        const potw = makePost({type: "potw", player_id: "p1", published_at: "2026-11-09T00:00:00Z"});
+        const totw = makePost({type: "totw", published_at: "2026-10-01T00:00:00Z"});
+        const other = makePost({type: "potw", season_id: "season-old", published_at: "2026-11-10T00:00:00Z"});
+        const out = run({phase: "completed", completed: [gf], posts: [totw, gfPost, potw, other, champ], championTeamId: "team-home"});
+        expect(ids(out)).toEqual([champ.id, potw.id, gfPost.id, totw.id]);
     });
 
     it("completed without champion GFX yields a null-post champion when championTeamId is set", () => {

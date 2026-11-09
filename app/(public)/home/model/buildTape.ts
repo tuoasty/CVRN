@@ -5,7 +5,7 @@ import {MATCHUP_LABELS, MATCHUP_ORDER, matchupLine, pickMatchLeader, pickTeamLea
 import {getMatchTypeLabel} from "@/app/utils/matchLabel";
 import type {FormEntry, LeaderCell, Matchup, MatchupCategory, Tape, TapeSide} from "./types";
 
-type ResolvePlayer = (playerId: string) => { name: string; avatarUrl: string | null; href: string | null } | null;
+type ResolvePlayer = (playerId: string) => { name: string; username?: string | null; avatarUrl: string | null; href: string | null } | null;
 
 export function standingRating(standing: Standing, standingMethod: string): number {
     if (standingMethod === "lvr") return standing.total_lvr ?? 0;
@@ -63,6 +63,7 @@ function cell(
     return {
         playerId: pick.playerId,
         name: who.name,
+        username: who.username ?? null,
         avatarUrl: who.avatarUrl,
         href: who.href,
         value: source === "season" ? Math.round(pick.value * 10) / 10 : pick.value,

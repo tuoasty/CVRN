@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {matchupLine, pickMatchLeader, pickTeamLeader, sumStatLine, topSeasonLeaders} from "../leaders";
+import {matchupLine, pickMatchLeader, pickTeamLeader, topSeasonLeaders} from "../leaders";
 import {AWAY, HOME, makeLeaderRow, makeTotal} from "./fixtures";
 
 describe("pickTeamLeader", () => {
@@ -55,21 +55,6 @@ describe("topSeasonLeaders", () => {
         expect(out.map(c => c.label)).toEqual(["Points", "Assists", "Blocks", "Receives"]);
         expect(out[0].entries.map(e => e.playerId)).toEqual(["p1", "p2", "p3"]);
         expect(out[0].entries[0].value).toBe(40);
-    });
-});
-
-describe("sumStatLine", () => {
-    it("sums a player's totals across matches", () => {
-        const rows = [
-            makeTotal({player_id: "p", match_id: "m1", points: 10, assists: 2, total_blocks: 1, total_receives: 5}),
-            makeTotal({player_id: "p", match_id: "m2", points: 7, assists: 3, total_blocks: 0, total_receives: 4}),
-            makeTotal({player_id: "q", match_id: "m1", points: 99}),
-        ];
-        expect(sumStatLine(rows, "p")).toEqual({points: 17, assists: 5, blocks: 1, receives: 9, perSet: false});
-    });
-
-    it("null when the player has no rows", () => {
-        expect(sumStatLine([makeTotal({player_id: "q"})], "p")).toBeNull();
     });
 });
 

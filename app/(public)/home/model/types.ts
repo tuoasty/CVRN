@@ -26,6 +26,7 @@ export interface StatCell {
 export interface LeaderCell {
     playerId: string;
     name: string;
+    username: string | null;
     avatarUrl: string | null;
     href: string | null;
     value: number;
@@ -61,14 +62,6 @@ export interface Tape {
     matchupUnit: "per set" | "this match";
 }
 
-export interface StatLine {
-    points: number;
-    assists: number;
-    blocks: number;
-    receives: number;
-    perSet: boolean;
-}
-
 export type HeroItem =
     | {
           kind: "match";
@@ -94,7 +87,9 @@ export type HeroItem =
           label: string;
           player: { name: string; username: string; avatarUrl: string | null; href: string | null };
           team: HomeTeam | null;
-          line: StatLine | null;
+          position: string | null;
+          statsLabel: string | null;
+          line: StatCell[];
       }
     | {
           kind: "totw";
@@ -104,6 +99,8 @@ export type HeroItem =
           team: HomeTeam | null;
           record: string | null;
           rank: number | null;
+          results: { key: string; result: "W" | "L"; opponent: string; score: string }[];
+          leaders: { category: MatchupCategory; label: string; cell: LeaderCell | null }[];
       }
     | {
           kind: "champion";

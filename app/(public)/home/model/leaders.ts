@@ -1,6 +1,6 @@
 import type {PlayerMatchStatTotal} from "@/shared/types/db";
 import type {LeaderboardStatRow} from "@/server/domains/player";
-import type {LeaderCategory, MatchupCategory, StatCell, StatLine} from "./types";
+import type {LeaderCategory, MatchupCategory, StatCell} from "./types";
 
 export const MATCHUP_LABELS: Record<MatchupCategory, string> = {
     setter: "Setter",
@@ -101,21 +101,6 @@ export function topSeasonLeaders(
             .sort(byValueThenId)
             .slice(0, limit),
     }));
-}
-
-export function sumStatLine(totals: PlayerMatchStatTotal[], playerId: string): StatLine | null {
-    const mine = totals.filter(t => t.player_id === playerId);
-    if (mine.length === 0) return null;
-    return mine.reduce<StatLine>(
-        (acc, t) => ({
-            points: acc.points + num(t.points),
-            assists: acc.assists + num(t.assists),
-            blocks: acc.blocks + num(t.total_blocks),
-            receives: acc.receives + num(t.total_receives),
-            perSet: false,
-        }),
-        {points: 0, assists: 0, blocks: 0, receives: 0, perSet: false},
-    );
 }
 
 type LineSpec = { label: string; season: string; match: string; pct?: boolean };

@@ -2,7 +2,7 @@ import Link from "next/link";
 import {cn} from "@/lib/utils";
 import {PlayerAvatar, TeamMark, TodayMark} from "../sections/TeamMark";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/app/components/ui/tooltip";
-import type {FormEntry, HeroItem, LeaderCell, StatLine, Tape} from "../model/types";
+import type {FormEntry, HeroItem, LeaderCell, StatCell, Tape} from "../model/types";
 
 type MatchItem = Extract<HeroItem, {kind: "match"}>;
 
@@ -161,19 +161,49 @@ function TeamName({team}: {team: MatchItem["home"]}) {
     return team.href ? <Link href={team.href} className="hover:underline">{name}</Link> : name;
 }
 
-function Line({line}: {line: StatLine}) {
-    const cells: [string, number][] = [["Points", line.points], ["Assists", line.assists], ["Blocks", line.blocks], ["Receives", line.receives]];
+function SectionLabel({children}: {children: React.ReactNode}) {
+    return <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{children}</div>;
+}
+
+function TotwLeader({label, cell}: {label: string; cell: LeaderCell}) {
+    const who = (
+        <span className="flex min-w-0 items-center gap-3">
+            <PlayerAvatar src={cell.avatarUrl} size={40} />
+            <span className="min-w-0 leading-tight">
+                <span className="block truncate text-base font-semibold">{cell.name}</span>
+                {cell.username && <span className="block truncate text-xs text-muted-foreground">@{cell.username}</span>}
+            </span>
+        </span>
+    );
     return (
-        <div>
-            <div className="grid grid-cols-4 gap-4">
-                {cells.map(([label, value]) => (
-                    <div key={label}>
-                        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
-                        <div className="mt-1 font-mono text-2xl font-semibold tabular-nums">{value}</div>
+        <div className="flex items-center justify-between gap-4">
+            {cell.href ? <Link href={cell.href} className="min-w-0 hover:underline">{who}</Link> : who}
+            <div className="shrink-0 text-right">
+                <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
+                {cell.line.length > 0 && (
+                    <div className="mt-0.5 flex justify-end gap-x-4">
+                        {cell.line.map(c => (
+                            <div key={c.label} className="leading-tight">
+                                <div className="font-mono text-sm font-semibold tabular-nums">{c.value}</div>
+                                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{c.label}</div>
+                            </div>
+                        ))}
                     </div>
-                ))}
+                )}
             </div>
-            <div className="mt-2 text-xs text-muted-foreground">{line.perSet ? "Per set this season" : "This week"}</div>
+        </div>
+    );
+}
+
+function StatGrid({cells}: {cells: StatCell[]}) {
+    return (
+        <div className="mt-2 grid grid-cols-4 gap-x-4 gap-y-3">
+            {cells.map(c => (
+                <div key={c.label}>
+                    <div className="font-mono text-xl font-semibold tabular-nums">{c.value}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{c.label}</div>
+                </div>
+            ))}
         </div>
     );
 }
@@ -186,18 +216,23 @@ export function TapeCard({item}: {item: HeroItem}) {
                 <Header href={item.player.href} linkLabel="Player profile">{item.label}</Header>
                 <div className="mt-4 flex items-center gap-4">
                     <PlayerAvatar src={item.player.avatarUrl} size={40} />
-                    <div>
-                        <div className="text-3xl font-bold leading-tight">{item.player.name}</div>
+                    <div className="min-w-0">
+                        <div className="truncate text-3xl font-bold leading-tight">{item.player.name}</div>
                         {item.player.username && <div className="text-sm text-muted-foreground">@{item.player.username}</div>}
                     </div>
                 </div>
-                {item.team && (
+                {(item.team || item.position) && (
                     <div className="mt-3 flex items-center gap-2 text-sm">
-                        <TeamMark team={item.team} size={24} />
-                        <span className="font-medium">{item.team.name}</span>
+                        {item.team && <TeamMark team={item.team} size={24} />}
+                        <span className="font-medium">{[item.team?.name, item.position].filter(Boolean).join(" · ")}</span>
                     </div>
                 )}
-                {item.line && <div className="mt-6"><Line line={item.line} /></div>}
+                {item.line.length > 0 && (
+                    <div className="mt-6">
+                        <SectionLabel>{item.statsLabel}</SectionLabel>
+                        <StatGrid cells={item.line} />
+                    </div>
+                )}
             </div>
         );
     }
@@ -208,23 +243,34 @@ export function TapeCard({item}: {item: HeroItem}) {
                 {item.team && (
                     <div className="mt-4 flex items-center gap-4">
                         <TeamMark team={item.team} size={56} />
-                        <div className="text-3xl font-bold leading-tight">{item.team.name}</div>
+                        <div className="min-w-0">
+                            <div className="truncate text-3xl font-bold leading-tight">{item.team.name}</div>
+                            {(item.record || item.rank) && (
+                                <div className="font-mono text-sm text-muted-foreground tabular-nums">
+                                    {[item.record, item.rank ? `#${item.rank}` : null].filter(Boolean).join(" · ")}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
-                {(item.record || item.rank) && (
-                    <div className="mt-6 grid grid-cols-2 gap-4">
-                        {item.record && (
-                            <div>
-                                <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Record</div>
-                                <div className="mt-1 font-mono text-2xl font-semibold tabular-nums">{item.record}</div>
-                            </div>
-                        )}
-                        {item.rank && (
-                            <div>
-                                <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Standing</div>
-                                <div className="mt-1 font-mono text-2xl font-semibold tabular-nums">#{item.rank}</div>
-                            </div>
-                        )}
+                {item.results.length > 0 && (
+                    <div className="mt-5">
+                        <div className="space-y-1">
+                            {item.results.map(r => (
+                                <div key={r.key} className="flex items-center gap-2 text-sm">
+                                    <span className={cn("flex h-4 w-4 items-center justify-center text-[10px] font-bold leading-none text-white", r.result === "W" ? "bg-success" : "bg-destructive")}>
+                                        {r.result}
+                                    </span>
+                                    <span className="font-mono font-semibold tabular-nums">{r.score}</span>
+                                    <span className="text-muted-foreground">vs {r.opponent}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {item.leaders.length > 0 && (
+                    <div className="mt-5 space-y-3">
+                        {item.leaders.map(l => l.cell && <TotwLeader key={l.category} label={l.label} cell={l.cell} />)}
                     </div>
                 )}
             </div>

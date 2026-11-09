@@ -14,6 +14,16 @@ function time(iso: string | null): number {
     return iso ? new Date(iso).getTime() : Number.NaN;
 }
 
+function byPublishedDesc(a: HeroCandidate, b: HeroCandidate): number {
+    return (b.post?.published_at ?? "").localeCompare(a.post?.published_at ?? "");
+}
+
+function weeklyAwards(posts: MediaPost[], seasonId: string): HeroCandidate[] {
+    return posts
+        .filter(p => (p.type === "totw" || (p.type === "potw" && !!p.player_id)) && p.image_url && p.season_id === seasonId)
+        .map(p => ({kind: p.type as "potw" | "totw", post: p}));
+}
+
 function hasBothTeams(m: MatchWithDetails): boolean {
     return !!m.match.home_team_id && !!m.match.away_team_id;
 }
@@ -45,10 +55,12 @@ export function rankHeroCandidates(input: {
         const out: HeroCandidate[] = [];
         const champion = input.posts.find(p => p.type === "champion" && p.image_url && p.season_id === input.seasonId) ?? null;
         if (champion || input.championTeamId) out.push({kind: "champion", post: champion});
-        const playoffs = withGfx(input.completed.filter(m => m.match.match_type === "playoffs"), gfxByMatch)
-            .sort((a, b) => time(b.match.match.scheduled_at) - time(a.match.match.scheduled_at));
-        for (const {match, post} of playoffs) out.push({kind: "match", match, post});
-        return out.slice(0, MAX_HERO);
+        const rest: HeroCandidate[] = [
+            ...withGfx(input.completed.filter(m => m.match.match_type === "playoffs"), gfxByMatch)
+                .map(c => ({kind: "match" as const, match: c.match, post: c.post})),
+            ...weeklyAwards(input.posts, input.seasonId),
+        ].sort(byPublishedDesc);
+        return [...out, ...rest].slice(0, MAX_HERO);
     }
 
     const upcoming = withGfx(input.upcoming, gfxByMatch)
@@ -61,13 +73,11 @@ export function rankHeroCandidates(input: {
     });
 
     const pool: HeroCandidate[] = [
-        ...input.posts
-            .filter(p => (p.type === "potw" || p.type === "totw") && p.image_url && p.season_id === input.seasonId)
-            .map(p => ({kind: p.type as "potw" | "totw", post: p})),
+        ...weeklyAwards(input.posts, input.seasonId),
         ...withGfx(input.completed, gfxByMatch)
             .filter(c => time(c.match.match.scheduled_at) <= now)
             .map(c => ({kind: "match" as const, match: c.match, post: c.post})),
-    ].sort((a, b) => (b.post?.published_at ?? "").localeCompare(a.post?.published_at ?? ""));
+    ].sort(byPublishedDesc);
 
     return [
         ...today.map(c => ({kind: "match" as const, match: c.match, post: c.post})),
