@@ -18,7 +18,7 @@ import {rankHeroCandidates, type HeroCandidate} from "./model/rankHeroCandidates
 import {buildTape, standingRating} from "./model/buildTape";
 import {LEADER_ORDER, LEADER_SHORT, MATCHUP_LABELS, MATCHUP_ORDER, matchupLine, pickMatchLeader, pickTeamLeader, topSeasonLeaders} from "./model/leaders";
 import {POSITION_NAMES, mainPosition, potwLine, roundTeamLeaders, sumPlayerTotals} from "./model/awardLines";
-import {fitThumbs} from "./model/fitThumbs";
+import {MEDIA_ROW_HEIGHT, THUMB_GAP, THUMB_ROW_WIDTH, fitRows, fitThumbs} from "./model/fitThumbs";
 import {orderResults} from "./model/orderResults";
 import {groupByRegionDay, groupUpcoming} from "./model/groupUpcoming";
 import {pickVod} from "./model/pickVod";
@@ -48,6 +48,7 @@ export interface HomeInput {
 }
 
 const STAT_MATCH_WINDOW = 30;
+const MEDIA_ROWS = 3;
 
 function weekFromRoundKey(roundKey: string | null): number | null {
     const m = roundKey?.match(/^week:(\d+)$/);
@@ -416,7 +417,7 @@ export function buildHomeView(input: HomeInput): HomeView {
     const cutoff = season.playoff_configs?.qualified_teams ?? null;
     const standingRows: StandingRow[] = [...input.standings]
         .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
-        .slice(0, 8)
+        .slice(0, 10)
         .flatMap(s => {
             const team = toTeam(s.team_id);
             if (!team || !s.team_id || s.rank == null) return [];
@@ -449,7 +450,7 @@ export function buildHomeView(input: HomeInput): HomeView {
     const regionCodeById = new Map(input.regions.map(r => [r.id, r.code.toUpperCase()]));
     const regionOfSeason = new Map(input.seasons.map(s => [s.id, regionCodeById.get(s.region_id) ?? null]));
     const excluded = new Set([...heroPostIds, ...(vod ? [vod.postId] : [])]);
-    const tiles: MediaTile[] = buildMediaFeed(input.posts, excluded).flatMap(post => {
+    const feed: MediaTile[] = buildMediaFeed(input.posts, excluded, 60).flatMap(post => {
         const imageUrl = resolveMediaThumbnail(post.image_url, post.video_url);
         if (!imageUrl) return [];
         const isVideo = !post.image_url && !!post.video_url;
@@ -462,11 +463,14 @@ export function buildHomeView(input: HomeInput): HomeView {
             videoUrl: isVideo ? post.video_url : null,
         }];
     });
+    const tiles = feed.slice(0, fitRows(feed.map(t => t.ratio), MEDIA_ROWS, THUMB_ROW_WIDTH, MEDIA_ROW_HEIGHT, THUMB_GAP));
 
     const newsDate = new Intl.DateTimeFormat("en-US", {timeZone, month: "short", day: "numeric"});
     const news: NewsRow[] = input.articles.slice(0, 3).map(a => ({
         slug: a.slug,
         title: a.title,
+        snippet: a.snippet,
+        coverUrl: a.thumbnail_url,
         dateLabel: newsDate.format(new Date(a.published_at ?? a.created_at)),
         href: buildArticleHref(a),
     }));
@@ -477,12 +481,16 @@ export function buildHomeView(input: HomeInput): HomeView {
               .sort((a, b) => a.sort_order - b.sort_order)
               .map(a => {
                   const who = resolvePlayer(a.player_id);
+                  const teamId = input.leaderRows.find(r => r.player_id === a.player_id)?.team_id
+                      ?? input.teams.find(t => t.season_id === season.id && t.name === a.players.season_team_name)?.id
+                      ?? null;
                   return {
                       key: a.id,
                       label: a.award_name,
                       playerName: who?.name ?? a.players.username,
-                      teamName: a.players.season_team_name,
-                      avatarUrl: a.full_avatar_url ?? who?.avatarUrl ?? null,
+                      username: who?.username ?? a.players.username,
+                      team: toTeam(teamId),
+                      avatarUrl: who?.avatarUrl ?? null,
                       href: who?.href ?? buildPublicPlayerHref(a.players.username),
                   };
               })

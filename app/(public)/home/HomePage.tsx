@@ -20,7 +20,11 @@ export default function HomePage({view, seasonLabel}: {view: HomeView; seasonLab
             <div className={TWO_COL}>
                 <ResultsSection {...view.results} />
                 {completed ? (
-                    <AwardsSection rows={view.awards} href={`${view.basePath}/archive`} />
+                    <div className={view.results.days.length > 0 ? "lg:relative" : undefined}>
+                        <div className={view.results.days.length > 0 ? "lg:absolute lg:inset-0" : undefined}>
+                            <AwardsSection rows={view.awards} href={`${view.basePath}/archive`} />
+                        </div>
+                    </div>
                 ) : (
                     <UpcomingSection days={view.upcoming} />
                 )}
@@ -42,7 +46,7 @@ export default function HomePage({view, seasonLabel}: {view: HomeView; seasonLab
                 </div>
             )}
             {view.news.length > 0 && (
-                <div className={TWO_COL}>
+                <div className="page-wide mt-14">
                     <NewsSection rows={view.news} />
                 </div>
             )}

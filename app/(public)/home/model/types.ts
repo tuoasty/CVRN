@@ -184,6 +184,8 @@ export interface MediaTile {
 export interface NewsRow {
     slug: string;
     title: string;
+    snippet: string;
+    coverUrl: string | null;
     dateLabel: string;
     href: string;
 }
@@ -192,7 +194,8 @@ export interface AwardRow {
     key: string;
     label: string;
     playerName: string;
-    teamName: string | null;
+    username: string | null;
+    team: HomeTeam | null;
     avatarUrl: string | null;
     href: string | null;
 }
