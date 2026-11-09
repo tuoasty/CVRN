@@ -59,8 +59,8 @@ export function parsePlayoffMatches(
       if (!homeTeamName || !awayTeamName) continue;
 
       const scheduleRaw = cell(rows, row - 1, col) || null;
-      const referees = parseOfficialsCell(cell(rows, row + 2, col), 'REFS');
-      const media = parseOfficialsCell(cell(rows, row + 3, col), 'MEDIA');
+      const referees = parseOfficialsCell(cell(rows, row + 2, col), 'referee');
+      const media = parseOfficialsCell(cell(rows, row + 3, col), 'media');
 
       const sets: { setNumber: number; homeScore: number; awayScore: number }[] = [];
       let isForfeit = false;
