@@ -5,7 +5,7 @@ import {cn} from "@/lib/utils";
 
 type Props<T extends string> = {
     label: string;
-    options: readonly {value: T; label: string}[];
+    options: readonly {value: T; label: string; disabled?: boolean}[];
     value: T;
     onChange: (value: T) => void;
     className?: string;
@@ -26,6 +26,7 @@ export function InlineSwitch<T extends string>({label, options, value, onChange,
                         <button
                             type="button"
                             aria-pressed={selected}
+                            disabled={option.disabled}
                             onClick={() => onChange(option.value)}
                             className={cn(
                                 "px-2 py-1 text-sm transition-colors duration-150 motion-reduce:transition-none",
@@ -33,6 +34,7 @@ export function InlineSwitch<T extends string>({label, options, value, onChange,
                                 selected
                                     ? "font-semibold text-foreground underline decoration-2 underline-offset-[6px]"
                                     : "font-medium text-muted-foreground hover:text-foreground",
+                                "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-muted-foreground",
                             )}
                         >
                             {option.label}

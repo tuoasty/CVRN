@@ -46,6 +46,7 @@ import {
     getMatchDetailById,
     getWeekSchedule,
     getPlayoffSchedule,
+    getSeasonPlayoffSchedule,
     getAvailablePlayoffRounds,
     getCompletedPlayoffRounds,
     getDefaultWeekForSeason,
@@ -55,7 +56,7 @@ import {
     getTeamMatches,
     getMatchSitemapRows,
 } from "@/server/domains/match";
-import type {MatchWithDetails, PlayerRecentMatch} from "@/server/domains/match";
+import type {MatchWithDetails, PlayerRecentMatch, SeasonPlayoffSchedule} from "@/server/domains/match";
 import {getSeasonPodium, getSeasonAwards} from "@/server/domains/season";
 import {getMatchStatTotalsByMatchIds} from "@/server/domains/matchStats";
 import {getAllMediaPosts} from "@/server/domains/media";
@@ -505,6 +506,16 @@ export const getCachedPlayoffSchedule = unstable_cache(
         ),
     ["public:playoff-schedule"],
     {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedSeasonPlayoffSchedule = unstable_cache(
+    async (seasonId: string): Promise<SeasonPlayoffSchedule> =>
+        unwrap(
+            await getSeasonPlayoffSchedule(createPublicClient(), seasonId),
+            "getCachedSeasonPlayoffSchedule",
+        ),
+    ["public:season-playoff-schedule"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.playoffs, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export const getCachedDefaultWeekForSeason = unstable_cache(

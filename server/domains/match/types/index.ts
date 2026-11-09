@@ -27,6 +27,11 @@ export type MatchWithDetails = {
     playoff_round?: string | null;
 };
 
+export type SeasonPlayoffSchedule = {
+    matches: MatchWithDetails[];
+    seeds: Record<string, number>;
+};
+
 export type {
     CreateMatchInput,
     CreateMatchesInput,

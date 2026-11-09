@@ -5,6 +5,7 @@ export {getMatchesForWeek} from "./queries/getMatchesForWeek";
 export {getMatchSets} from "./queries/getMatchSets";
 export {getWeekSchedule} from "./queries/getWeekSchedule";
 export {getPlayoffSchedule} from "./queries/getPlayoffSchedule";
+export {getSeasonPlayoffSchedule} from "./queries/getSeasonPlayoffSchedule";
 export {getAvailablePlayoffRounds} from "./queries/getAvailablePlayoffRounds";
 export {getCompletedPlayoffRounds} from "./queries/getCompletedPlayoffRounds";
 export {getDefaultWeekForSeason} from "./queries/getDefaultWeekForSeason";
@@ -45,6 +46,7 @@ export type {
     SeasonWeekInput,
     MatchOfficialEntry,
     MatchWithDetails,
+    SeasonPlayoffSchedule,
     RawMatchOfficial,
     MatchWithDetailsRow,
     MatchSitemapRow,
