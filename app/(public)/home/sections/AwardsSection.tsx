@@ -6,9 +6,9 @@ import type {AwardRow} from "../model/types";
 export function AwardsSection({rows, href}: {rows: AwardRow[]; href: string}) {
     if (rows.length === 0) return null;
     return (
-        <section aria-label="Awards" className="flex h-full flex-col">
+        <section aria-label="Awards">
             <SectionHeading title="Awards" href={href} linkLabel="Season archive" />
-            <ul className="mt-2 min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-1">
+            <ul className="mt-2 space-y-2.5">
                 {rows.map(row => (
                     <li key={row.key} className="flex items-center gap-2.5 py-0.5">
                         <PlayerAvatar src={row.avatarUrl} size={40} />

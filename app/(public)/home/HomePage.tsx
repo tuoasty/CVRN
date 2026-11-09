@@ -20,11 +20,7 @@ export default function HomePage({view, seasonLabel}: {view: HomeView; seasonLab
             <div className={TWO_COL}>
                 <ResultsSection {...view.results} />
                 {completed ? (
-                    <div className={view.results.days.length > 0 ? "lg:relative" : undefined}>
-                        <div className={view.results.days.length > 0 ? "lg:absolute lg:inset-0" : undefined}>
-                            <AwardsSection rows={view.awards} href={`${view.basePath}/archive`} />
-                        </div>
-                    </div>
+                    <AwardsSection rows={view.awards} href={`${view.basePath}/archive`} />
                 ) : (
                     <UpcomingSection days={view.upcoming} />
                 )}
