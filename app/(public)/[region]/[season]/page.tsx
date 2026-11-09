@@ -23,6 +23,8 @@ import {
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
     params: Promise<{ region: string; season: string }>;
 };

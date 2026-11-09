@@ -178,7 +178,7 @@ export interface MediaTile {
     ratio: number;
     caption: string;
     regionCode: string | null;
-    href: string;
+    videoUrl: string | null;
 }
 
 export interface NewsRow {
@@ -199,6 +199,7 @@ export interface AwardRow {
 
 export interface HomeView {
     phase: SeasonPhase;
+    basePath: string;
     hero: HeroItem[];
     results: { title: "Results" | "Final results"; days: ResultDay[]; href: string | null };
     upcoming: UpcomingDay[];
@@ -206,6 +207,6 @@ export interface HomeView {
     vod: VodItem | null;
     standings: { title: "Standings" | "Final standings"; ratingLabel: "LVR" | "Points"; rows: StandingRow[]; href: string | null };
     leaders: LeaderColumn[];
-    media: MediaTile[];
+    media: { tiles: MediaTile[]; href: string };
     news: NewsRow[];
 }

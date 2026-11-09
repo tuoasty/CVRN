@@ -9,18 +9,21 @@ import type {ArticleListItem} from "@/server/domains/article";
 import {getRegionTimezone} from "@/app/utils/timezoneOptions";
 import {getMatchTypeLabel} from "@/app/utils/matchLabel";
 import {isPlayoffRound, roundLabelLong, roundLabelShort} from "@/app/utils/playoffRounds";
-import {buildPublicMatchHref, buildPublicPlayerHref, buildPublicTeamHref} from "@/app/utils/matchDetailHref";
+import {buildArticleHref, buildPublicMatchHref, buildPublicPlayerHref, buildPublicTeamHref} from "@/app/utils/matchDetailHref";
+import {resolveMediaThumbnail} from "@/app/features/media/mediaUtils";
 import {getSeasonPhase} from "./model/phase";
 import {postRatio} from "./model/ratio";
 import {formatRegionTime, formatWhen} from "./model/format";
 import {rankHeroCandidates, type HeroCandidate} from "./model/rankHeroCandidates";
-import {buildTape} from "./model/buildTape";
-import {LEADER_ORDER, LEADER_SHORT, MATCHUP_LABELS, MATCHUP_ORDER, matchupLine, pickMatchLeader, pickTeamLeader} from "./model/leaders";
+import {buildTape, standingRating} from "./model/buildTape";
+import {LEADER_ORDER, LEADER_SHORT, MATCHUP_LABELS, MATCHUP_ORDER, matchupLine, pickMatchLeader, pickTeamLeader, topSeasonLeaders} from "./model/leaders";
 import {POSITION_NAMES, mainPosition, potwLine, roundTeamLeaders, sumPlayerTotals} from "./model/awardLines";
 import {fitThumbs} from "./model/fitThumbs";
 import {orderResults} from "./model/orderResults";
 import {groupByRegionDay, groupUpcoming} from "./model/groupUpcoming";
-import type {HeroImage, HeroItem, HomeTeam, HomeView, LeaderCell, MatchupCategory, ResultDay, ResultRow, StatCell, UpcomingDay, UpcomingRow} from "./model/types";
+import {pickVod} from "./model/pickVod";
+import {buildMediaFeed} from "./model/buildMediaFeed";
+import type {AwardRow, HeroImage, HeroItem, HomeTeam, HomeView, LeaderCell, LeaderColumn, MatchupCategory, MediaTile, NewsRow, ResultDay, ResultRow, StandingRow, StatCell, UpcomingDay, UpcomingRow, VodItem} from "./model/types";
 
 export type HomePerson = { name: string; username: string; avatarUrl: string | null };
 
@@ -394,8 +397,100 @@ export function buildHomeView(input: HomeInput): HomeView {
         }))
         .filter(day => day.rows.length > 0);
 
+    const heroPostIds = new Set(hero.flatMap(h => (h.image ? [h.image.postId] : [])));
+    const heroMatchIds = new Set(input.posts.filter(p => heroPostIds.has(p.id) && p.match_id).map(p => p.match_id as string));
+    const picked = pickVod({phase, now, completed: input.completed, posts: input.posts, heroMatchIds});
+    const vod: VodItem | null = picked && picked.post.video_url
+        ? {
+              postId: picked.post.id,
+              videoUrl: picked.post.video_url,
+              title: picked.post.title,
+              caption: [
+                  `${teamById.get(picked.match.match.home_team_id ?? "")?.name ?? "TBD"} ${picked.match.match.home_sets_won ?? 0}-${picked.match.match.away_sets_won ?? 0} ${teamById.get(picked.match.match.away_team_id ?? "")?.name ?? "TBD"}`,
+                  getMatchTypeLabel(picked.match.match.match_type, picked.match.match.week, picked.match.playoff_round ?? null),
+              ].join(" · "),
+              matchHref: matchHref(picked.match),
+          }
+        : null;
+
+    const cutoff = season.playoff_configs?.qualified_teams ?? null;
+    const standingRows: StandingRow[] = [...input.standings]
+        .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
+        .slice(0, 8)
+        .flatMap(s => {
+            const team = toTeam(s.team_id);
+            if (!team || !s.team_id || s.rank == null) return [];
+            return [{
+                teamId: s.team_id,
+                rank: s.rank,
+                team,
+                record: `${s.wins ?? 0}-${s.losses ?? 0}`,
+                sets: `${s.sets_won ?? 0}-${s.sets_lost ?? 0}`,
+                rating: standingRating(s, standingMethod),
+                belowCutoff: cutoff !== null && s.rank > cutoff,
+                cutoffAfter: cutoff !== null && s.rank === cutoff,
+            }];
+        });
+
+    const leaders: LeaderColumn[] = topSeasonLeaders(input.leaderRows).map(col => ({
+        category: col.category,
+        label: col.label,
+        entries: col.entries.flatMap((e, i) => {
+            const who = resolvePlayer(e.playerId);
+            if (!who) return [];
+            return [{
+                rank: i + 1,
+                cell: {playerId: e.playerId, name: who.name, username: who.username, avatarUrl: who.avatarUrl, href: who.href, value: e.value, line: []},
+                teamName: e.teamId ? input.identity.teams[e.teamId]?.name ?? null : null,
+            }];
+        }),
+    }));
+
+    const regionCodeById = new Map(input.regions.map(r => [r.id, r.code.toUpperCase()]));
+    const regionOfSeason = new Map(input.seasons.map(s => [s.id, regionCodeById.get(s.region_id) ?? null]));
+    const excluded = new Set([...heroPostIds, ...(vod ? [vod.postId] : [])]);
+    const tiles: MediaTile[] = buildMediaFeed(input.posts, excluded).flatMap(post => {
+        const imageUrl = resolveMediaThumbnail(post.image_url, post.video_url);
+        if (!imageUrl) return [];
+        const isVideo = !post.image_url && !!post.video_url;
+        return [{
+            postId: post.id,
+            imageUrl,
+            ratio: isVideo ? 16 / 9 : postRatio(post),
+            caption: post.title,
+            regionCode: post.season_id ? regionOfSeason.get(post.season_id) ?? null : null,
+            videoUrl: isVideo ? post.video_url : null,
+        }];
+    });
+
+    const newsDate = new Intl.DateTimeFormat("en-US", {timeZone, month: "short", day: "numeric"});
+    const news: NewsRow[] = input.articles.slice(0, 3).map(a => ({
+        slug: a.slug,
+        title: a.title,
+        dateLabel: newsDate.format(new Date(a.published_at ?? a.created_at)),
+        href: buildArticleHref(a),
+    }));
+
+    const awards: AwardRow[] = phase === "completed"
+        ? input.awards
+              .filter(a => a.category === "individual_winners")
+              .sort((a, b) => a.sort_order - b.sort_order)
+              .map(a => {
+                  const who = resolvePlayer(a.player_id);
+                  return {
+                      key: a.id,
+                      label: a.award_name,
+                      playerName: who?.name ?? a.players.username,
+                      teamName: a.players.season_team_name,
+                      avatarUrl: a.full_avatar_url ?? who?.avatarUrl ?? null,
+                      href: who?.href ?? buildPublicPlayerHref(a.players.username),
+                  };
+              })
+        : [];
+
     return {
         phase,
+        basePath: `/${regionCode}/${seasonSlug}`,
         hero,
         results: {
             title: phase === "completed" ? "Final results" : "Results",
@@ -403,16 +498,16 @@ export function buildHomeView(input: HomeInput): HomeView {
             href: `/${regionCode}/${seasonSlug}/matches`,
         },
         upcoming,
-        awards: [],
-        vod: null,
+        awards,
+        vod,
         standings: {
             title: phase === "completed" ? "Final standings" : "Standings",
             ratingLabel: standingMethod === "lvr" ? "LVR" : "Points",
-            rows: [],
-            href: null,
+            rows: standingRows,
+            href: `/${regionCode}/${seasonSlug}/standings`,
         },
-        leaders: [],
-        media: [],
-        news: [],
+        leaders,
+        media: {tiles, href: `/${regionCode}/${seasonSlug}/media`},
+        news,
     };
 }

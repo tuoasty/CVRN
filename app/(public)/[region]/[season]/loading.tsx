@@ -1,75 +1,57 @@
 import { Skeleton } from "@/app/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { HERO_ROW_HEIGHT } from "@/app/(public)/home/hero/GfxFrame";
 
-export default function HomeLoading() {
+const TWO_COL = "page-wide mt-14 grid gap-12 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)]";
+
+function Lines({ count, height = "h-9" }: { count: number; height?: string }) {
     return (
-        <div className="page-wide py-6">
-            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-6">
-                <aside className="hidden lg:block space-y-6">
-                    <SidebarSection />
-                    <SidebarSection />
-                </aside>
-
-                <section className="space-y-6">
-                    {}
-                    <Skeleton className="aspect-video min-h-[280px] w-full rounded-sm" />
-
-                    <div className="space-y-3">
-                        <div className="border-t border-border pt-4">
-                            <Skeleton className="h-5 w-44 rounded-sm mb-4" />
-                            <div className="space-y-3">
-                                <div className="space-y-1">
-                                    {Array.from({ length: 8 }).map((_, i) => (
-                                        <Skeleton key={i} className="h-[46px] w-full rounded-sm" />
-                                    ))}
-                                </div>
-                                <Skeleton className="h-9 w-full rounded-sm" />
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {}
-                <aside>
-                    <div className="panel p-3 space-y-3">
-                        <div className="border border-border rounded-sm overflow-hidden">
-                            <Skeleton className="w-full rounded-none" style={{ aspectRatio: "16/9" }} />
-                            <div className="px-2 py-1.5 space-y-1">
-                                <Skeleton className="h-3.5 w-3/4 rounded-sm" />
-                                <Skeleton className="h-2.5 w-1/2 rounded-sm" />
-                            </div>
-                        </div>
-
-                        {[0, 1].map(i => (
-                            <Skeleton
-                                key={i}
-                                className="w-full rounded-sm"
-                                style={{ aspectRatio: "3/1" }}
-                            />
-                        ))}
-
-                        <Skeleton className="w-full rounded-sm" style={{ aspectRatio: "9/16" }} />
-
-                        <div className="flex justify-center pt-1">
-                            <Skeleton className="h-4 w-20 rounded-sm" />
-                        </div>
-                    </div>
-                </aside>
-            </div>
+        <div className="mt-3 space-y-1.5">
+            {Array.from({ length: count }).map((_, i) => (
+                <Skeleton key={i} className={cn("w-full rounded-sm", height)} />
+            ))}
         </div>
     );
 }
 
-function SidebarSection() {
+function Heading() {
     return (
-        <div className="space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-border">
-                <Skeleton className="h-4 w-4 rounded-sm" />
-                <Skeleton className="h-3.5 w-20 rounded-sm" />
+        <div className="border-b border-border pb-2">
+            <Skeleton className="h-5 w-28 rounded-sm" />
+        </div>
+    );
+}
+
+export default function HomeLoading() {
+    return (
+        <div className="pb-20">
+            <div className="page-wide mt-5">
+                <Skeleton className={cn("aspect-video w-full rounded-none lg:aspect-auto", HERO_ROW_HEIGHT)} />
+                <div className="mt-4 flex gap-2 overflow-hidden">
+                    {Array.from({ length: 7 }).map((_, i) => (
+                        <Skeleton key={i} className="h-24 w-[170px] shrink-0 rounded-none" />
+                    ))}
+                </div>
             </div>
-            <div className="space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="h-[100px] w-full rounded-sm" />
-                ))}
+            <div className={TWO_COL}>
+                <div>
+                    <Heading />
+                    <Lines count={10} />
+                </div>
+                <div>
+                    <Heading />
+                    <Lines count={6} />
+                </div>
+            </div>
+            <div className={TWO_COL}>
+                <div>
+                    <Heading />
+                    <Skeleton className="mt-3 aspect-video w-full rounded-sm" />
+                </div>
+                <div>
+                    <Heading />
+                    <Lines count={8} height="h-8" />
+                </div>
             </div>
         </div>
     );
