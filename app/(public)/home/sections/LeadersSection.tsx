@@ -11,7 +11,7 @@ export function LeadersSection({columns, href}: {columns: LeaderColumn[]; href: 
             <div className="mt-4 grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
                 {columns.map(col => (
                     <div key={col.category} className="min-w-0">
-                        <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{col.label}</h3>
+                        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{col.label}</h3>
                         <ol className="mt-2 space-y-2.5">
                             {col.entries.map(e => (
                                 <li key={e.cell.playerId} className="flex items-center gap-3">

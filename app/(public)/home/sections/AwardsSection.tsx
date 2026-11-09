@@ -13,7 +13,7 @@ export function AwardsSection({rows, href}: {rows: AwardRow[]; href: string}) {
                     <li key={row.key} className="flex items-center gap-2.5 py-0.5">
                         <PlayerAvatar src={row.avatarUrl} size={40} />
                         <span className="min-w-0 flex-1 leading-tight">
-                            <span className="block truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{row.label}</span>
+                            <span className="block truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{row.label}</span>
                             {row.href ? (
                                 <Link href={row.href} className="block truncate text-sm font-semibold hover:underline hover:underline-offset-4">
                                     {row.playerName}

@@ -48,7 +48,7 @@ export function UpcomingSection({days}: {days: UpcomingDay[]}) {
                 <div className="mt-2">
                     {days.map(day => (
                         <div key={day.key} className="mt-3 first:mt-1">
-                            <h3 className="px-2 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            <h3 className="px-2 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                 {day.isToday ? <TodayMark>{day.label}</TodayMark> : day.label}
                             </h3>
                             <ul>

@@ -14,7 +14,7 @@ const LEADER_NOUN: Record<LeaderCategory, string> = {
     receives: "receives",
 };
 
-const DAY_LABEL = "text-xs font-medium uppercase tracking-wider text-muted-foreground";
+const DAY_LABEL = "text-xs font-medium uppercase tracking-wide text-muted-foreground";
 
 function homeWonOf(row: ResultRow): boolean | null {
     if (row.homeSets == null || row.awaySets == null || row.homeSets === row.awaySets) return null;
@@ -120,7 +120,7 @@ function ScoreList({days, withRound}: {days: ResultDay[]; withRound: boolean}) {
 }
 
 function LeaderTable({days, withRound}: {days: ResultDay[]; withRound: boolean}) {
-    const head = "pb-2 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground";
+    const head = "pb-2 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground";
     const columns = (withRound ? 1 : 0) + 3 + LEADER_ORDER.length;
     return (
         <table className="mt-2 hidden w-full table-fixed border-collapse sm:table">

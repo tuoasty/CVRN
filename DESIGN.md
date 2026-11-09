@@ -16,7 +16,7 @@ colors:
   rarity-rare-dark: "#5C96F5"
   rarity-epic-light: "#8739D0"
   rarity-epic-dark: "#B477EE"
-  page-light: "#F4F4F4"
+  page-light: "#FAFAFA"
   page-dark: "#0A0A0A"
   surface-light: "#FFFFFF"
   surface-dark: "#141414"
@@ -215,7 +215,7 @@ Cobalt (`#2D55E6` / `#1F46D1`) and amber (`#E8992C` / `#E89117`) are retired wit
 `#157F3C` light / `#3ECC72` dark. Win and synced state.
 
 ### Neutrals
-- **Page** (`#F4F4F4` / `#0A0A0A`, light value under review with the light-mode fix): the one tone all in-flow content sits on.
+- **Page** (`#FAFAFA` / `#0A0A0A`; light raised from `#F4F4F4` on 2026-11-09 so the white nav and divider lines read without a gray cast): the one tone all in-flow content sits on.
 - **Surface** (`#FFFFFF` / `#141414`): floating layers only (dialogs, sheets, popovers, toasts). Never a card or panel in the page flow.
 - **Recessed** (`#EEEEEE` / `#1F1F1F`): the hover and open-row fill (`/30`), input fills, disabled fills. It appears in response to the pointer or an open state, never at rest as a box.
 - **Ink** (`#1C1C1C` / `#F5F5F5`): all primary text and data values.
@@ -418,7 +418,7 @@ Target is **WCAG 2.2 AA**, not best effort.
 
 These need Kevin's call before this file counts as finished.
 
-1. **Game layer on reworked pages.** How far player cards, tiers and rarity show up on Home, Matches, Standings, Teams and Team detail is decided per page during each rework.
+1. **Game layer on reworked pages.** How far player cards, tiers and rarity show up on Home, Matches, Standings, Teams and Team detail is decided per page during each rework. Home (shipped 2026-11-09): no cards, OVR or tiers; the game layer is the hero's tale of the tape (per-matchup stat lines, POTW position lines, TOTW leaders) plus Season leaders and the Results leader avatars. Matches, Standings, Teams and Team detail are still open.
 2. **Destructive red contrast.** White on `#EF4444` is **3.76:1**, so destructive button labels fail AA at 14px; red text on white is also 3.76:1. Needs a darker light-mode red. (Cobalt and amber contrast failures are moot now that both are retired.)
-3. **Light mode is a defect, not a choice.** Dark is default because light mode is uncomfortable to read. The toggle ships, so light mode has to work (antislop R-34). Fixing it is part of the token pass. Dropping the gray page under white panels removes the main two-tone glare, but the light page tone itself still needs a decision.
+3. **Light mode is a defect, not a choice.** Dark is default because light mode is uncomfortable to read. The toggle ships, so light mode has to work (antislop R-34). Fixing it is part of the token pass. Dropping the gray page under white panels removes the main two-tone glare. Page tone settled 2026-11-09 at `#FAFAFA` (was `#F4F4F4`), and the light-mode logo drop shadow is gone (dark keeps its white glow). Light logos that vanish on the page get a light-mode asset, not the shadow back.
 4. **5-star spec fill and update-log `~` / `NEW` colors.** These used amber and cobalt. The 5-star gold now sits next to ball yellow; they only appear on Information pages, where "today" never does, but they need new values (or ink) so yellow keeps one meaning.

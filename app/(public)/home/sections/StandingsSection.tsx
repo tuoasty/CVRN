@@ -6,7 +6,7 @@ import type {HomeView} from "../model/types";
 
 export function StandingsSection({title, ratingLabel, rows, href}: HomeView["standings"]) {
     if (rows.length === 0) return null;
-    const head = "pb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground";
+    const head = "pb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground";
     return (
         <section aria-label={title}>
             <SectionHeading title={title} href={href} linkLabel="Full table" />
