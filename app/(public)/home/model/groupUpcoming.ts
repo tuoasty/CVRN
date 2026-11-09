@@ -9,6 +9,24 @@ export interface UpcomingGroupDay {
     matches: MatchWithDetails[];
 }
 
+export function groupByRegionDay(matches: MatchWithDetails[], timeZone: string, now: Date, undatedLabel: string): UpcomingGroupDay[] {
+    const todayKey = regionDayKey(now.toISOString(), timeZone);
+    const days: UpcomingGroupDay[] = [];
+    for (const m of matches) {
+        const iso = m.match.scheduled_at;
+        const key = iso ? regionDayKey(iso, timeZone) : "tbd";
+        let day = days.find(d => d.key === key);
+        if (!day) {
+            const isToday = key === todayKey;
+            const label = iso ? formatRegionDay(iso, timeZone) : undatedLabel;
+            day = {key, label: isToday ? `Today · ${label}` : label, isToday, matches: []};
+            days.push(day);
+        }
+        day.matches.push(m);
+    }
+    return days;
+}
+
 export function groupUpcoming(upcoming: MatchWithDetails[], timeZone: string, now: Date): UpcomingGroupDay[] {
     const todayKey = regionDayKey(now.toISOString(), timeZone);
     const sorted = upcoming
@@ -21,19 +39,5 @@ export function groupUpcoming(upcoming: MatchWithDetails[], timeZone: string, no
             if (bt) return 1;
             return 0;
         });
-
-    const days: UpcomingGroupDay[] = [];
-    for (const m of sorted) {
-        const iso = m.match.scheduled_at;
-        const key = iso ? regionDayKey(iso, timeZone) : "tbd";
-        let day = days.find(d => d.key === key);
-        if (!day) {
-            const isToday = key === todayKey;
-            const label = iso ? formatRegionDay(iso, timeZone) : "Date TBD";
-            day = {key, label: isToday ? `Today · ${label}` : label, isToday, matches: []};
-            days.push(day);
-        }
-        day.matches.push(m);
-    }
-    return days;
+    return groupByRegionDay(sorted, timeZone, now, "Date TBD");
 }

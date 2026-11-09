@@ -126,7 +126,7 @@ function MatchCard({item}: {item: MatchItem}) {
                 {!item.isFinal && <> · {item.isToday ? <TodayMark>Today {item.whenLabel}</TodayMark> : item.whenLabel}</>}
             </Header>
             <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-                <div className="flex min-w-0 items-center gap-3">
+                <div className="flex min-w-0 flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-3">
                     <TeamMark team={item.home} size={40} />
                     <TeamName team={item.home} />
                 </div>
@@ -139,7 +139,7 @@ function MatchCard({item}: {item: MatchItem}) {
                 ) : (
                     <span className="text-xs text-muted-foreground">vs</span>
                 )}
-                <div className="flex min-w-0 flex-row-reverse items-center gap-3 text-right">
+                <div className="flex min-w-0 flex-col items-end gap-1.5 text-right sm:flex-row-reverse sm:items-center sm:gap-3">
                     <TeamMark team={item.away} size={40} />
                     <TeamName team={item.away} />
                 </div>
@@ -157,8 +157,10 @@ function MatchCard({item}: {item: MatchItem}) {
 }
 
 function TeamName({team}: {team: MatchItem["home"]}) {
-    const name = <span className="block truncate text-lg font-bold leading-tight">{team.name}</span>;
-    return team.href ? <Link href={team.href} className="hover:underline">{name}</Link> : name;
+    const name = (
+        <span className="block min-w-0 max-w-full break-words text-base font-bold leading-tight line-clamp-2 sm:truncate sm:text-lg">{team.name}</span>
+    );
+    return team.href ? <Link href={team.href} className="block min-w-0 max-w-full hover:underline">{name}</Link> : name;
 }
 
 function SectionLabel({children}: {children: React.ReactNode}) {

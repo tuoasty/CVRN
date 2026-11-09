@@ -114,13 +114,20 @@ export type HeroItem =
 
 export interface ResultRow {
     matchId: string;
-    dateLabel: string;
+    roundCode: string | null;
     home: HomeTeam;
     away: HomeTeam;
     homeSets: number | null;
     awaySets: number | null;
     leaders: { category: LeaderCategory; label: string; cell: LeaderCell }[];
     href: string | null;
+}
+
+export interface ResultDay {
+    key: string;
+    label: string;
+    isToday: boolean;
+    rows: ResultRow[];
 }
 
 export interface UpcomingRow {
@@ -193,7 +200,7 @@ export interface AwardRow {
 export interface HomeView {
     phase: SeasonPhase;
     hero: HeroItem[];
-    results: { title: "Results" | "Final results"; rows: ResultRow[]; href: string | null };
+    results: { title: "Results" | "Final results"; days: ResultDay[]; href: string | null };
     upcoming: UpcomingDay[];
     awards: AwardRow[];
     vod: VodItem | null;

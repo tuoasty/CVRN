@@ -12,15 +12,15 @@ import {isPlayoffRound, roundLabelLong, roundLabelShort} from "@/app/utils/playo
 import {buildPublicMatchHref, buildPublicPlayerHref, buildPublicTeamHref} from "@/app/utils/matchDetailHref";
 import {getSeasonPhase} from "./model/phase";
 import {postRatio} from "./model/ratio";
-import {formatRegionDay, formatRegionTime, formatWhen} from "./model/format";
+import {formatRegionTime, formatWhen} from "./model/format";
 import {rankHeroCandidates, type HeroCandidate} from "./model/rankHeroCandidates";
 import {buildTape} from "./model/buildTape";
 import {LEADER_ORDER, LEADER_SHORT, MATCHUP_LABELS, MATCHUP_ORDER, matchupLine, pickMatchLeader, pickTeamLeader} from "./model/leaders";
 import {POSITION_NAMES, mainPosition, potwLine, roundTeamLeaders, sumPlayerTotals} from "./model/awardLines";
 import {fitThumbs} from "./model/fitThumbs";
 import {orderResults} from "./model/orderResults";
-import {groupUpcoming} from "./model/groupUpcoming";
-import type {HeroImage, HeroItem, HomeTeam, HomeView, LeaderCell, MatchupCategory, ResultRow, StatCell, UpcomingDay, UpcomingRow} from "./model/types";
+import {groupByRegionDay, groupUpcoming} from "./model/groupUpcoming";
+import type {HeroImage, HeroItem, HomeTeam, HomeView, LeaderCell, MatchupCategory, ResultDay, ResultRow, StatCell, UpcomingDay, UpcomingRow} from "./model/types";
 
 export type HomePerson = { name: string; username: string; avatarUrl: string | null };
 
@@ -333,7 +333,10 @@ export function buildHomeView(input: HomeInput): HomeView {
     const allHero = candidates.map(toHero).filter((h): h is HeroItem => h !== null);
     const hero = allHero.slice(0, fitThumbs(allHero.map(h => h.image?.ratio ?? 1)));
 
-    const results: ResultRow[] = orderResults(input.completed, phase).flatMap(m => {
+    const roundCodeOf = (m: MatchWithDetails) =>
+        m.match.match_type === "playoffs" && m.playoff_round ? roundLabelShort(m.playoff_round) : null;
+
+    const toResultRow = (m: MatchWithDetails): ResultRow[] => {
         const home = toTeam(m.match.home_team_id);
         const away = toTeam(m.match.away_team_id);
         if (!home || !away) return [];
@@ -353,12 +356,9 @@ export function buildHomeView(input: HomeInput): HomeView {
             };
             return [{category, label: LEADER_SHORT[category], cell}];
         });
-        const dateLabel = phase === "completed" && m.playoff_round
-            ? roundLabelShort(m.playoff_round)
-            : m.match.scheduled_at ? formatRegionDay(m.match.scheduled_at, timeZone) : "";
         return [{
             matchId: m.match.id,
-            dateLabel,
+            roundCode: roundCodeOf(m),
             home,
             away,
             homeSets: m.match.home_sets_won,
@@ -366,7 +366,10 @@ export function buildHomeView(input: HomeInput): HomeView {
             leaders,
             href: matchHref(m),
         }];
-    });
+    };
+    const resultDays: ResultDay[] = groupByRegionDay(orderResults(input.completed, phase), timeZone, now, "Undated")
+        .map(day => ({key: day.key, label: day.label, isToday: day.isToday, rows: day.matches.flatMap(toResultRow)}))
+        .filter(day => day.rows.length > 0);
 
     const gfxMatchIds = new Set(input.posts.filter(p => p.type === "gfx" && p.match_id && p.image_url).map(p => p.match_id as string));
     const upcoming: UpcomingDay[] = groupUpcoming(input.upcoming, timeZone, now)
@@ -381,7 +384,7 @@ export function buildHomeView(input: HomeInput): HomeView {
                 return [{
                     matchId: m.match.id,
                     time: m.match.scheduled_at ? formatRegionTime(m.match.scheduled_at, timeZone) : null,
-                    roundCode: m.match.match_type === "playoffs" && m.playoff_round ? roundLabelShort(m.playoff_round) : null,
+                    roundCode: roundCodeOf(m),
                     home,
                     away,
                     hasGfx: gfxMatchIds.has(m.match.id),
@@ -396,7 +399,7 @@ export function buildHomeView(input: HomeInput): HomeView {
         hero,
         results: {
             title: phase === "completed" ? "Final results" : "Results",
-            rows: results,
+            days: resultDays,
             href: `/${regionCode}/${seasonSlug}/matches`,
         },
         upcoming,
