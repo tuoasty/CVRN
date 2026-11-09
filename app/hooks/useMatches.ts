@@ -13,6 +13,7 @@ import {
     getMatchesForWeekAction,
 
     getPlayoffScheduleAction,
+    getSeasonPlayoffScheduleAction,
     getRecentMatchesAction,
     getUpcomingMatchesAction,
     getWeekScheduleAction,
@@ -20,7 +21,7 @@ import {
     updateMatchScheduleAction,
     voidMatchAction,
 } from '@/app/actions/match.actions';
-import { CompleteMatchInput, MatchWithDetails, UpdateMatchScheduleInput, VoidMatchInput } from '@/server/domains/match';
+import { CompleteMatchInput, MatchWithDetails, SeasonPlayoffSchedule, UpdateMatchScheduleInput, VoidMatchInput } from '@/server/domains/match';
 import { PlayoffRound } from '@/server/domains/playoff';
 import { Ok, Result } from '@/shared/types/result';
 import { SerializableError } from '@/server/utils/serializeableError';
@@ -142,6 +143,23 @@ export function usePlayoffSchedule(seasonId: string | null, round: PlayoffRound 
         revalidateOnFocus: false,
     });
     return { schedule: (data as MatchWithDetails[] | undefined) ?? [], isLoading, error: error?.message ?? null, mutate };
+}
+
+const EMPTY_PLAYOFF_SCHEDULE: SeasonPlayoffSchedule = { matches: [], seeds: {} };
+
+async function fetchSeasonPlayoffSchedule([, seasonId]: [string, string]): Promise<SeasonPlayoffSchedule> {
+    const result = await getSeasonPlayoffScheduleAction(seasonId);
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+export function useSeasonPlayoffSchedule(seasonId: string | null) {
+    const key = seasonId ? ['seasonPlayoffSchedule', seasonId] as const : null;
+    const { data, error, isLoading, mutate } = useSWR(key, fetchSeasonPlayoffSchedule as BareFetcher<SeasonPlayoffSchedule>, {
+        dedupingInterval: MATCHES_TTL,
+        revalidateOnFocus: false,
+    });
+    return { schedule: (data as SeasonPlayoffSchedule | undefined) ?? EMPTY_PLAYOFF_SCHEDULE, isLoading, error: error?.message ?? null, mutate };
 }
 
 export function useAvailablePlayoffRounds(seasonId: string | null) {
