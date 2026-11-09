@@ -1,0 +1,122 @@
+import Link from "next/link";
+import Image from "next/image";
+import {cn} from "@/lib/utils";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/app/components/ui/tooltip";
+import {LEADER_ORDER, LEADER_SHORT} from "../model/leaders";
+import {SectionHeading} from "./SectionHeading";
+import {TeamMark} from "./TeamMark";
+import type {HomeView, LeaderCategory, LeaderCell, ResultRow} from "../model/types";
+
+const LEADER_NOUN: Record<LeaderCategory, string> = {
+    points: "points",
+    assists: "assists",
+    blocks: "blocks",
+    receives: "receives",
+};
+
+function Team({team, won}: {team: ResultRow["home"]; won: boolean | null}) {
+    return (
+        <span className="flex min-w-0 items-center gap-2">
+            <TeamMark team={team} size={24} />
+            <span className={cn("truncate text-sm", won === true && "font-bold", won === false && "text-muted-foreground")}>{team.name}</span>
+        </span>
+    );
+}
+
+function Leader({cell, category}: {cell: LeaderCell; category: LeaderCategory}) {
+    const label = `${cell.name}, ${cell.value} ${LEADER_NOUN[category]}`;
+    const face = (
+        <span className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden">
+            {cell.avatarUrl ? (
+                <Image src={cell.avatarUrl} alt="" fill sizes="28px" className="object-cover" />
+            ) : (
+                <span className="text-xs font-semibold text-muted-foreground">{cell.name.slice(0, 1).toUpperCase()}</span>
+            )}
+        </span>
+    );
+    const body = (
+        <>
+            {face}
+            <span className="font-mono text-sm font-semibold tabular-nums">{cell.value}</span>
+        </>
+    );
+    const cls = "inline-flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground";
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                {cell.href ? (
+                    <Link href={cell.href} aria-label={label} className={cn(cls, "hover:underline hover:underline-offset-4")}>
+                        {body}
+                    </Link>
+                ) : (
+                    <span tabIndex={0} aria-label={label} className={cls}>
+                        {body}
+                    </span>
+                )}
+            </TooltipTrigger>
+            <TooltipContent className="text-xs">{cell.name}</TooltipContent>
+        </Tooltip>
+    );
+}
+
+export function ResultsSection({title, rows, href}: HomeView["results"]) {
+    if (rows.length === 0) return null;
+    const head = "pb-2 text-left text-[11px] font-medium uppercase tracking-wider text-muted-foreground";
+
+    return (
+        <section aria-label={title}>
+            <SectionHeading title={title} href={href} linkLabel="All results" />
+            <TooltipProvider>
+                <table className="mt-2 w-full table-fixed border-collapse">
+                    <thead>
+                        <tr className="border-b border-border">
+                            <th scope="col" className={cn(head, "w-14 px-2")}><span className="sr-only">Date</span></th>
+                            <th scope="col" className={cn(head, "pr-3 sm:w-[200px]")}>Home</th>
+                            <th scope="col" className={cn(head, "w-16 pr-3")}>Score</th>
+                            <th scope="col" className={cn(head, "pr-3 sm:w-[200px]")}>Away</th>
+                            {LEADER_ORDER.map(c => (
+                                <th key={c} scope="col" className={cn(head, "hidden pr-2 sm:table-cell")}>{LEADER_SHORT[c]}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows.map(row => {
+                            const decided = row.homeSets != null && row.awaySets != null && row.homeSets !== row.awaySets;
+                            const homeWon = decided ? (row.homeSets as number) > (row.awaySets as number) : null;
+                            const byCategory = new Map(row.leaders.map(l => [l.category, l.cell]));
+                            const score = `${row.homeSets ?? "-"}-${row.awaySets ?? "-"}`;
+                            return (
+                                <tr key={row.matchId} className="hover:bg-muted/40">
+                                    <td className="truncate px-2 py-2 font-mono text-xs uppercase text-muted-foreground">{row.dateLabel}</td>
+                                    <td className="py-2 pr-3"><Team team={row.home} won={homeWon} /></td>
+                                    <td className="py-2 pr-3">
+                                        {row.href ? (
+                                            <Link
+                                                href={row.href}
+                                                aria-label={`${row.home.name} ${score} ${row.away.name}, match page`}
+                                                className="font-mono text-base font-semibold tabular-nums underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                                            >
+                                                {score}
+                                            </Link>
+                                        ) : (
+                                            <span className="font-mono text-base font-semibold tabular-nums">{score}</span>
+                                        )}
+                                    </td>
+                                    <td className="py-2 pr-3"><Team team={row.away} won={homeWon === null ? null : !homeWon} /></td>
+                                    {LEADER_ORDER.map(c => {
+                                        const cell = byCategory.get(c);
+                                        return (
+                                            <td key={c} className="hidden py-2 pr-2 sm:table-cell">
+                                                {cell && <Leader cell={cell} category={c} />}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </TooltipProvider>
+        </section>
+    );
+}

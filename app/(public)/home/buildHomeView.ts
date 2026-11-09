@@ -8,17 +8,19 @@ import type {SeasonAwardEntryWithPlayer, SeasonPodiumEntryWithTeam, SeasonWithPl
 import type {ArticleListItem} from "@/server/domains/article";
 import {getRegionTimezone} from "@/app/utils/timezoneOptions";
 import {getMatchTypeLabel} from "@/app/utils/matchLabel";
-import {isPlayoffRound, roundLabelLong} from "@/app/utils/playoffRounds";
+import {isPlayoffRound, roundLabelLong, roundLabelShort} from "@/app/utils/playoffRounds";
 import {buildPublicMatchHref, buildPublicPlayerHref, buildPublicTeamHref} from "@/app/utils/matchDetailHref";
 import {getSeasonPhase} from "./model/phase";
 import {postRatio} from "./model/ratio";
-import {formatWhen} from "./model/format";
+import {formatRegionDay, formatRegionTime, formatWhen} from "./model/format";
 import {rankHeroCandidates, type HeroCandidate} from "./model/rankHeroCandidates";
 import {buildTape} from "./model/buildTape";
-import {MATCHUP_LABELS, MATCHUP_ORDER, matchupLine, pickTeamLeader} from "./model/leaders";
+import {LEADER_ORDER, LEADER_SHORT, MATCHUP_LABELS, MATCHUP_ORDER, matchupLine, pickMatchLeader, pickTeamLeader} from "./model/leaders";
 import {POSITION_NAMES, mainPosition, potwLine, roundTeamLeaders, sumPlayerTotals} from "./model/awardLines";
 import {fitThumbs} from "./model/fitThumbs";
-import type {HeroImage, HeroItem, HomeTeam, HomeView, LeaderCell, MatchupCategory, StatCell} from "./model/types";
+import {orderResults} from "./model/orderResults";
+import {groupUpcoming} from "./model/groupUpcoming";
+import type {HeroImage, HeroItem, HomeTeam, HomeView, LeaderCell, MatchupCategory, ResultRow, StatCell, UpcomingDay, UpcomingRow} from "./model/types";
 
 export type HomePerson = { name: string; username: string; avatarUrl: string | null };
 
@@ -42,7 +44,7 @@ export interface HomeInput {
     people: Map<string, HomePerson>;
 }
 
-const STAT_MATCH_WINDOW = 20;
+const STAT_MATCH_WINDOW = 30;
 
 function weekFromRoundKey(roundKey: string | null): number | null {
     const m = roundKey?.match(/^week:(\d+)$/);
@@ -331,11 +333,73 @@ export function buildHomeView(input: HomeInput): HomeView {
     const allHero = candidates.map(toHero).filter((h): h is HeroItem => h !== null);
     const hero = allHero.slice(0, fitThumbs(allHero.map(h => h.image?.ratio ?? 1)));
 
+    const results: ResultRow[] = orderResults(input.completed, phase).flatMap(m => {
+        const home = toTeam(m.match.home_team_id);
+        const away = toTeam(m.match.away_team_id);
+        if (!home || !away) return [];
+        const totals = totalsByMatch.get(m.match.id) ?? [];
+        const leaders = LEADER_ORDER.flatMap(category => {
+            const pick = pickMatchLeader(totals, null, category);
+            const who = pick ? resolvePlayer(pick.playerId) : null;
+            if (!pick || !who) return [];
+            const cell: LeaderCell = {
+                playerId: pick.playerId,
+                name: who.name,
+                username: who.username,
+                avatarUrl: who.avatarUrl,
+                href: who.href,
+                value: pick.value,
+                line: [],
+            };
+            return [{category, label: LEADER_SHORT[category], cell}];
+        });
+        const dateLabel = phase === "completed" && m.playoff_round
+            ? roundLabelShort(m.playoff_round)
+            : m.match.scheduled_at ? formatRegionDay(m.match.scheduled_at, timeZone) : "";
+        return [{
+            matchId: m.match.id,
+            dateLabel,
+            home,
+            away,
+            homeSets: m.match.home_sets_won,
+            awaySets: m.match.away_sets_won,
+            leaders,
+            href: matchHref(m),
+        }];
+    });
+
+    const gfxMatchIds = new Set(input.posts.filter(p => p.type === "gfx" && p.match_id && p.image_url).map(p => p.match_id as string));
+    const upcoming: UpcomingDay[] = groupUpcoming(input.upcoming, timeZone, now)
+        .map(day => ({
+            key: day.key,
+            label: day.label,
+            isToday: day.isToday,
+            rows: day.matches.flatMap((m): UpcomingRow[] => {
+                const home = toTeam(m.match.home_team_id);
+                const away = toTeam(m.match.away_team_id);
+                if (!home || !away) return [];
+                return [{
+                    matchId: m.match.id,
+                    time: m.match.scheduled_at ? formatRegionTime(m.match.scheduled_at, timeZone) : null,
+                    roundCode: m.match.match_type === "playoffs" && m.playoff_round ? roundLabelShort(m.playoff_round) : null,
+                    home,
+                    away,
+                    hasGfx: gfxMatchIds.has(m.match.id),
+                    href: matchHref(m),
+                }];
+            }),
+        }))
+        .filter(day => day.rows.length > 0);
+
     return {
         phase,
         hero,
-        results: {title: phase === "completed" ? "Final results" : "Results", rows: [], defaultExpandedId: null},
-        upcoming: [],
+        results: {
+            title: phase === "completed" ? "Final results" : "Results",
+            rows: results,
+            href: `/${regionCode}/${seasonSlug}/matches`,
+        },
+        upcoming,
         awards: [],
         vod: null,
         standings: {

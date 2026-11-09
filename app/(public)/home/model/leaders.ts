@@ -34,6 +34,13 @@ export const LEADER_LABELS: Record<LeaderCategory, string> = {
 
 export const LEADER_ORDER: LeaderCategory[] = ["points", "assists", "blocks", "receives"];
 
+export const LEADER_SHORT: Record<LeaderCategory, string> = {
+    points: "PTS",
+    assists: "AST",
+    blocks: "BLK",
+    receives: "REC",
+};
+
 export const SEASON_TOTAL_FIELD = {
     points: "points_total",
     assists: "assists_total",

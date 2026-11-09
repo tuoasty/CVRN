@@ -119,7 +119,6 @@ export interface ResultRow {
     away: HomeTeam;
     homeSets: number | null;
     awaySets: number | null;
-    hasStats: boolean;
     leaders: { category: LeaderCategory; label: string; cell: LeaderCell }[];
     href: string | null;
 }
@@ -127,6 +126,7 @@ export interface ResultRow {
 export interface UpcomingRow {
     matchId: string;
     time: string | null;
+    roundCode: string | null;
     home: HomeTeam;
     away: HomeTeam;
     hasGfx: boolean;
@@ -138,12 +138,6 @@ export interface UpcomingDay {
     label: string;
     isToday: boolean;
     rows: UpcomingRow[];
-}
-
-export interface UpcomingPage {
-    key: string;
-    label: string;
-    days: UpcomingDay[];
 }
 
 export interface VodItem {
@@ -199,8 +193,8 @@ export interface AwardRow {
 export interface HomeView {
     phase: SeasonPhase;
     hero: HeroItem[];
-    results: { title: "Results" | "Final results"; rows: ResultRow[]; defaultExpandedId: string | null };
-    upcoming: UpcomingPage[];
+    results: { title: "Results" | "Final results"; rows: ResultRow[]; href: string | null };
+    upcoming: UpcomingDay[];
     awards: AwardRow[];
     vod: VodItem | null;
     standings: { title: "Standings" | "Final standings"; ratingLabel: "LVR" | "Points"; rows: StandingRow[]; href: string | null };
