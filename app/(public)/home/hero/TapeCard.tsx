@@ -19,12 +19,12 @@ function Header({children, href, linkLabel}: {children: React.ReactNode; href: s
     );
 }
 
-function Row({label, home, away, better}: {label: string; home: React.ReactNode; away: React.ReactNode; better?: "home" | "away" | null}) {
+function Row({label, home, away, better, inward}: {label: string; home: React.ReactNode; away: React.ReactNode; better?: "home" | "away" | null; inward?: boolean}) {
     return (
         <>
-            <div className={cn("min-w-0 py-1 font-mono text-sm tabular-nums", better === "home" && "font-bold")}>{home}</div>
+            <div className={cn("min-w-0 py-1 font-mono text-sm tabular-nums", inward && "text-right", better === "home" && "font-bold")}>{home}</div>
             <div className="self-center text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
-            <div className={cn("min-w-0 py-1 text-right font-mono text-sm tabular-nums", better === "away" && "font-bold")}>{away}</div>
+            <div className={cn("min-w-0 py-1 font-mono text-sm tabular-nums", !inward && "text-right", better === "away" && "font-bold")}>{away}</div>
         </>
     );
 }
@@ -89,7 +89,9 @@ function Leader({cell, align}: {cell: LeaderCell | null; align: "left" | "right"
     );
 }
 
-function TapeRows({tape}: {tape: Tape}) {
+export function TapeRows({tape, inward = false}: {tape: Tape; inward?: boolean}) {
+    const homeAlign = inward ? "right" : "left";
+    const awayAlign = inward ? "left" : "right";
     const h = tape.home;
     const a = tape.away;
     if (!(h && a) && tape.matchups.length === 0) return null;
@@ -97,19 +99,19 @@ function TapeRows({tape}: {tape: Tape}) {
         <div className="grid grid-cols-[minmax(0,1fr)_max-content_minmax(0,1fr)] gap-x-3">
             {h && a && (
                 <>
-                    <Row label="Record" home={h.record} away={a.record} better={better(parseInt(h.record), parseInt(a.record))} />
-                    <Row label="Standing" home={h.rank ? `#${h.rank}` : "-"} away={a.rank ? `#${a.rank}` : "-"} better={better(h.rank, a.rank, false)} />
-                    <Row label={tape.ratingLabel} home={h.rating?.toFixed(1) ?? "-"} away={a.rating?.toFixed(1) ?? "-"} better={better(h.rating, a.rating)} />
+                    <Row inward={inward} label="Record" home={h.record} away={a.record} better={better(parseInt(h.record), parseInt(a.record))} />
+                    <Row inward={inward} label="Standing" home={h.rank ? `#${h.rank}` : "-"} away={a.rank ? `#${a.rank}` : "-"} better={better(h.rank, a.rank, false)} />
+                    <Row inward={inward} label={tape.ratingLabel} home={h.rating?.toFixed(1) ?? "-"} away={a.rating?.toFixed(1) ?? "-"} better={better(h.rating, a.rating)} />
                     {(h.form.length > 0 || a.form.length > 0) && (
-                        <Row label="Last 5" home={<Form form={h.form} align="left" />} away={<Form form={a.form} align="right" />} />
+                        <Row inward={inward} label="Last 5" home={<Form form={h.form} align={homeAlign} />} away={<Form form={a.form} align={awayAlign} />} />
                     )}
                 </>
             )}
             {tape.matchups.map(m => (
                 <div key={m.category} className="contents">
-                    <Leader cell={m.home} align="left" />
+                    <Leader cell={m.home} align={homeAlign} />
                     <div className="self-center text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{m.label}</div>
-                    <Leader cell={m.away} align="right" />
+                    <Leader cell={m.away} align={awayAlign} />
                 </div>
             ))}
         </div>

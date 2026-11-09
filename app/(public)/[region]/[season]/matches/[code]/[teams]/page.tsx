@@ -3,6 +3,7 @@ import { getCachedMatchDetail } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import MatchDetailContent from "@/app/features/matchStats/MatchDetailContent";
 import BackButton from "@/app/components/public/BackButton";
+import { loadMatchExtras } from "@/app/features/matchStats/loadMatchExtras";
 
 type PageProps = {
     params: Promise<{
@@ -26,15 +27,14 @@ export default async function MatchDetailPage({ params }: PageProps) {
 
     const detail = await getCachedMatchDetail(regionCode, seasonSlug, matchCode);
     if (!detail) notFound();
+    const extras = await loadMatchExtras(detail);
 
     return (
-        <div className="page-wide py-6 space-y-4">
+        <div className="page-wide py-6">
             <BackButton />
-            <MatchDetailContent
-                detail={detail}
-                regionCode={regionCode}
-                seasonSlug={seasonSlug}
-            />
+            <div className="mt-4">
+                <MatchDetailContent detail={detail} extras={extras} />
+            </div>
         </div>
     );
 }
