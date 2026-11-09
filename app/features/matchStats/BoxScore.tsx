@@ -2,7 +2,7 @@
 
 import {useCallback, useRef} from "react";
 import Image from "next/image";
-import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
+import {DefaultTeamLogo} from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
 import {buildPublicPlayerHref} from "@/app/utils/matchDetailHref";
 import {Team} from "@/shared/types/db";
@@ -30,12 +30,12 @@ type Props = {
     positionsByPlayer?: Map<string, string[]>;
 };
 
-const isHex = (color: string | null | undefined): color is string => {
-    if (!color) return false;
-    return /^#[0-9A-Fa-f]{6}$/.test(color) || /^#[0-9A-Fa-f]{3}$/.test(color);
-};
-
 const DRAG_THRESHOLD = 4;
+
+const STICKY_CELL =
+    "sticky left-0 z-[1] bg-background shadow-[-1px_0_0_hsl(var(--background)),1px_0_0_hsl(var(--border))] group-hover/row:bg-[color-mix(in_srgb,hsl(var(--muted))_40%,hsl(var(--background)))]";
+const ROW_HOVER = "group-hover/row:bg-[color-mix(in_srgb,hsl(var(--muted))_40%,hsl(var(--background)))]";
+const PLAYER_COL = "w-24 min-w-24 max-w-24 sm:w-auto sm:min-w-[160px] sm:max-w-none";
 
 function useDragScroll() {
     const cleanupRef = useRef<(() => void) | null>(null);
@@ -96,18 +96,23 @@ function useDragScroll() {
     }, []);
 }
 
+function ScrollFade() {
+    return (
+        <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-r from-transparent to-background sm:hidden"
+        />
+    );
+}
+
+const groupEdge = (columns: StatColumn[], i: number) => i === 0 || columns[i - 1].group !== columns[i].group;
+
 export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detailed, showSetsPlayed, positionsByPlayer}: Props) {
     const columns = buildColumns(detailed, showSetsPlayed);
     const tableRef = useDragScroll();
 
     if (rows.length === 0) {
-        return (
-            <div className="panel p-6">
-                <p className="text-sm text-muted-foreground">
-                    No statistics available for this match.
-                </p>
-            </div>
-        );
+        return <p className="py-4 text-sm text-muted-foreground">No statistics available for this match.</p>;
     }
 
     const selectedRows = selectedTeam ? rows.filter(r => r.team_id === selectedTeam.id) : [];
@@ -119,60 +124,54 @@ export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detail
 
     const groups = groupColumns(columns);
     const leaders = findLeaderKeys(selectedRows, columns);
+    const label = "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
 
     return (
         <TooltipProvider delayDuration={200}>
-            <div className="border border-border rounded-sm overflow-hidden [&>[data-slot=table-container]]:overflow-x-auto">
-                <Table ref={tableRef} className="border-collapse">
+            <div className="relative [&>[data-slot=table-container]]:overflow-x-auto">
+                <Table ref={tableRef} className="border-separate border-spacing-0">
                     <TableHeader>
-                        <TableRow className="border-b-0 hover:bg-transparent">
-                            <TableHead
-                                rowSpan={2}
-                                className="sticky left-0 z-10 bg-background text-left align-bottom min-w-[160px] px-2 border-r border-border/30 text-[11px] font-semibold uppercase tracking-wider"
-                            >
+                        <TableRow className="hidden border-0 hover:bg-transparent sm:table-row">
+                            <TableHead rowSpan={2} className={cn(STICKY_CELL, PLAYER_COL, label, "z-10 border-b border-border px-2 text-left align-bottom")}>
                                 Player
                             </TableHead>
                             {groups.map((g, idx) => (
                                 <TableHead
                                     key={`group-${idx}-${g.group}`}
                                     colSpan={g.columns.length}
-                                    className="h-6 px-1 text-center text-[10px] uppercase tracking-wider font-semibold text-muted-foreground border-r border-border/30 last:border-r-0"
+                                    className={cn("h-6 px-1 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground", idx > 0 && "border-l border-border/30")}
                                 >
                                     {g.group}
                                 </TableHead>
                             ))}
                         </TableRow>
-                        <TableRow className="hover:bg-transparent">
-                            {columns.map((col, i) => {
-                                const isLastInGroup =
-                                    i === columns.length - 1 || columns[i + 1].group !== col.group;
-                                return (
-                                    <TableHead
-                                        key={col.key}
-                                        className={cn(
-                                            "h-8 px-1 text-right text-[11px] font-semibold whitespace-nowrap",
-                                            statHeadWidthClass(col.format),
-                                            isLastInGroup && "border-r border-border/30 last:border-r-0",
-                                        )}
-                                    >
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <span className="cursor-help">{col.label}</span>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="top">{col.description}</TooltipContent>
-                                        </Tooltip>
-                                    </TableHead>
-                                );
-                            })}
+                        <TableRow className="border-0 hover:bg-transparent">
+                            <TableHead className={cn(STICKY_CELL, PLAYER_COL, label, "z-10 border-b border-border px-2 text-left sm:hidden")}>
+                                Player
+                            </TableHead>
+                            {columns.map((col, i) => (
+                                <TableHead
+                                    key={col.key}
+                                    className={cn(
+                                        "h-8 whitespace-nowrap border-b border-border px-1.5 text-right text-xs font-semibold",
+                                        statHeadWidthClass(col.format),
+                                        i > 0 && groupEdge(columns, i) && "sm:border-l sm:border-l-border/30",
+                                    )}
+                                >
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="cursor-help">{col.label}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">{col.description}</TooltipContent>
+                                    </Tooltip>
+                                </TableHead>
+                            ))}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {selectedRows.length === 0 ? (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={columns.length + 1}
-                                    className="text-center text-sm text-muted-foreground py-6"
-                                >
+                            <TableRow className="border-0">
+                                <TableCell colSpan={columns.length + 1} className="py-6 text-center text-sm text-muted-foreground">
                                     No stats recorded for this team.
                                 </TableCell>
                             </TableRow>
@@ -190,41 +189,29 @@ export default function BoxScore({homeTeam, awayTeam, rows, selectedTeam, detail
 
                         {homeTeam && awayTeam && (
                             <>
-                                <TableRow className="bg-muted hover:bg-muted border-t-2 border-border">
-                                    <TableCell className="sticky left-0 z-[1] bg-muted h-8 py-0 px-2 text-[11px] font-semibold uppercase tracking-wider text-foreground/70 border-r border-border/30 align-middle">
-                                        Team Totals
+                                <TableRow className="border-0 hover:bg-transparent">
+                                    <TableCell className={cn(STICKY_CELL, PLAYER_COL, label, "h-8 border-t border-border px-2 py-0 align-middle")}>
+                                        Totals
                                     </TableCell>
-                                    {columns.map((col, i) => {
-                                        const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;
-                                        return (
-                                            <TableCell
-                                                key={col.key}
-                                                className={cn(
-                                                    "h-8 py-0 px-1 text-right text-[11px] font-semibold text-muted-foreground whitespace-nowrap align-middle",
-                                                    isLastInGroup && "border-r border-border/30 last:border-r-0",
-                                                )}
-                                            >
-                                                {col.label}
-                                            </TableCell>
-                                        );
-                                    })}
+                                    {columns.map((col, i) => (
+                                        <TableCell
+                                            key={col.key}
+                                            className={cn(
+                                                "h-8 whitespace-nowrap border-t border-border px-1.5 py-0 text-right align-middle text-xs font-semibold text-muted-foreground",
+                                                i > 0 && groupEdge(columns, i) && "sm:border-l sm:border-l-border/30",
+                                            )}
+                                        >
+                                            {col.label}
+                                        </TableCell>
+                                    ))}
                                 </TableRow>
-                                <TeamTotalRow
-                                    team={homeTeam}
-                                    totals={homeTotals}
-                                    otherTotals={awayTotals}
-                                    columns={columns}
-                                />
-                                <TeamTotalRow
-                                    team={awayTeam}
-                                    totals={awayTotals}
-                                    otherTotals={homeTotals}
-                                    columns={columns}
-                                />
+                                <TeamTotalRow team={homeTeam} totals={homeTotals} otherTotals={awayTotals} columns={columns} />
+                                <TeamTotalRow team={awayTeam} totals={awayTotals} otherTotals={homeTotals} columns={columns} />
                             </>
                         )}
                     </TableBody>
                 </Table>
+                <ScrollFade />
             </div>
         </TooltipProvider>
     );
@@ -242,20 +229,20 @@ function PlayerStatRow({
     positions?: string[];
 }) {
     return (
-        <TableRow className="group/row hover:bg-muted/30">
-            <TableCell className="sticky left-0 z-[1] bg-background group-hover/row:bg-muted transition-colors border-r border-border/30">
+        <TableRow className="group/row border-0 hover:bg-transparent">
+            <TableCell className={cn(STICKY_CELL, PLAYER_COL, "px-2 py-1.5")}>
                 <PlayerCell row={row} positions={positions} />
             </TableCell>
             {columns.map((col, i) => {
                 const isLeader = leaders.has(`${row.player_id}:${col.key}`);
-                const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;
                 return (
                     <TableCell
                         key={col.key}
                         className={cn(
-                            "py-1 px-1 text-right text-xs font-mono tabular-nums whitespace-nowrap",
+                            ROW_HOVER,
+                            "whitespace-nowrap px-1.5 py-1.5 text-right font-mono text-xs tabular-nums",
                             isLeader ? "font-bold text-foreground" : "text-foreground/70",
-                            isLastInGroup && "border-r border-border/30 last:border-r-0",
+                            i > 0 && groupEdge(columns, i) && "sm:border-l sm:border-l-border/30",
                         )}
                     >
                         {formatStatValue(col.accessor(row), col.format)}
@@ -277,31 +264,25 @@ function TeamTotalRow({
     otherTotals: Array<number | null>;
     columns: StatColumn[];
 }) {
-    const useColor = isHex(team.brick_color);
-
     return (
-        <TableRow className="group/row bg-muted/40 hover:bg-muted/60">
-            <TableCell className="sticky left-0 z-[1] bg-background group-hover/row:bg-muted/60 transition-colors border-r border-border/30 py-1.5">
+        <TableRow className="group/row border-0 hover:bg-transparent">
+            <TableCell className={cn(STICKY_CELL, PLAYER_COL, "px-2 py-1.5")}>
                 <TeamLabel team={team} />
             </TableCell>
             {columns.map((col, i) => {
                 const myVal = totals[i];
                 const otherVal = otherTotals[i];
-                const isLeader = myVal !== null && otherVal !== null && myVal > otherVal;
-                const isTie = myVal !== null && otherVal !== null && myVal === otherVal;
-                const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;
-
+                const ahead = myVal !== null && otherVal !== null && myVal > otherVal;
+                const tie = myVal !== null && otherVal !== null && myVal === otherVal;
                 return (
                     <TableCell
                         key={col.key}
                         className={cn(
-                            "py-1.5 px-1 text-right text-xs font-mono tabular-nums font-semibold whitespace-nowrap",
-                            isLeader && !useColor && "text-foreground",
-                            !isLeader && !isTie && "text-foreground/40",
-                            isTie && "text-foreground/70",
-                            isLastInGroup && "border-r border-border/30 last:border-r-0",
+                            ROW_HOVER,
+                            "whitespace-nowrap px-1.5 py-1.5 text-right font-mono text-xs tabular-nums",
+                            ahead ? "font-semibold text-foreground" : tie ? "text-foreground/70" : "text-muted-foreground",
+                            i > 0 && groupEdge(columns, i) && "sm:border-l sm:border-l-border/30",
                         )}
-                        style={isLeader && useColor ? {color: team.brick_color || undefined} : undefined}
                     >
                         {formatStatValue(myVal, col.format)}
                     </TableCell>
@@ -320,32 +301,25 @@ function PlayerCell({row, positions}: {row: StatRow; positions?: string[]}) {
             : "position" in row && row.position
               ? [row.position]
               : [];
+    const position = positionList.length > 0 ? positionList.join(" / ") : null;
 
     const content = (
-        <div className="flex items-center gap-2 min-w-0">
-            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border shrink-0 bg-muted">
+        <div className="flex min-w-0 items-center gap-2">
+            <div className="relative hidden h-8 w-8 shrink-0 overflow-hidden rounded-full border border-border bg-muted sm:block">
                 {row.avatar_url && (
-                    <Image
-                        src={row.avatar_url}
-                        alt={row.username || ""}
-                        fill
-                        sizes="32px"
-                        className="object-cover"
-                        unoptimized
-                    />
+                    <Image src={row.avatar_url} alt={row.username || ""} fill sizes="32px" className="object-cover" unoptimized />
                 )}
             </div>
-            <div className="flex flex-col min-w-0 leading-tight flex-1">
-                <span className="text-sm font-medium truncate">
+            <div className="flex min-w-0 flex-1 flex-col leading-tight">
+                <span className="truncate text-xs font-semibold sm:text-sm sm:font-medium">
                     {row.display_name || row.username || "Unknown"}
                 </span>
-                {hasBothNames && (
-                    <span className="text-[11px] text-muted-foreground truncate">@{row.username}</span>
-                )}
+                {hasBothNames && <span className="hidden truncate text-xs text-muted-foreground sm:block">@{row.username}</span>}
+                {position && <span className="truncate text-xs text-muted-foreground sm:hidden">{position}</span>}
             </div>
-            {positionList.length > 0 && (
-                <span className="shrink-0 pl-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground tabular-nums">
-                    {positionList.join(" / ")}
+            {position && (
+                <span className="hidden shrink-0 pl-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:inline">
+                    {position}
                 </span>
             )}
         </div>
@@ -353,7 +327,7 @@ function PlayerCell({row, positions}: {row: StatRow; positions?: string[]}) {
 
     if (href) {
         return (
-            <Link href={href} prefetch={false} className="block hover:opacity-80 transition-opacity">
+            <Link href={href} prefetch={false} className="block hover:underline hover:underline-offset-4">
                 {content}
             </Link>
         );
@@ -363,21 +337,15 @@ function PlayerCell({row, positions}: {row: StatRow; positions?: string[]}) {
 
 function TeamLabel({team}: {team: Team}) {
     return (
-        <div className="flex items-center gap-1.5 min-w-0">
-            <div className="relative w-6 h-6 rounded-sm overflow-hidden shrink-0">
+        <div className="flex min-w-0 items-center gap-1.5">
+            <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded-sm">
                 {team.logo_url ? (
-                    <Image
-                        src={team.logo_url}
-                        alt={team.name}
-                        fill
-                        sizes="24px"
-                        className={getLogoClassName(team.logo_bg_removed)}
-                    />
+                    <Image src={team.logo_url} alt={team.name} fill sizes="24px" className={getLogoClassName(team.logo_bg_removed)} />
                 ) : (
                     <DefaultTeamLogo sizes="24px" alt={team.name} />
                 )}
             </div>
-            <span className="text-xs font-semibold uppercase tracking-wide truncate">{team.name}</span>
+            <span className="truncate text-xs font-semibold">{team.name}</span>
         </div>
     );
 }

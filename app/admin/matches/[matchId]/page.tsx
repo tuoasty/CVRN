@@ -4,6 +4,7 @@ import {ChevronLeft} from "lucide-react";
 import {getMatchDetailByIdAction} from "@/app/actions/match.actions";
 import {Button} from "@/app/components/ui/button";
 import MatchDetailContent from "@/app/features/matchStats/MatchDetailContent";
+import {loadMatchExtras} from "@/app/features/matchStats/loadMatchExtras";
 import MatchMediaDialog from "@/app/features/media/MatchMediaDialog";
 import {buildMatchMediaTitle} from "@/app/utils/matchLabel";
 
@@ -25,6 +26,8 @@ export default async function AdminMatchDetailPage({params}: PageProps) {
             </div>
         );
     }
+
+    const extras = await loadMatchExtras(result.value);
 
     return (
         <div className="admin-container">
@@ -49,7 +52,7 @@ export default async function AdminMatchDetailPage({params}: PageProps) {
                         })}
                     />
                 </div>
-                <MatchDetailContent detail={result.value} />
+                <MatchDetailContent detail={result.value} extras={extras} />
             </div>
         </div>
     );

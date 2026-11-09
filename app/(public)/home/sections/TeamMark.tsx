@@ -6,6 +6,7 @@ import type {HomeTeam} from "../model/types";
 
 const SIZE_CLASS = {
     24: "h-6 w-6",
+    32: "h-8 w-8",
     40: "h-10 w-10",
     56: "h-14 w-14",
     64: "h-16 w-16",

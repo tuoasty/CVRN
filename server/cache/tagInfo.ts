@@ -24,19 +24,19 @@ export const CACHE_TAG_INFO: Record<CacheTag, CacheTagInfo> = {
         label: "Matches",
         description:
             "Match lists, schedules, match detail pages, box scores, standings and playoff rounds. Widest blast radius.",
-        readCount: 19,
+        readCount: 20,
         affects: "Matches, match detail, standings, playoffs, home",
     },
     [CACHE_TAGS.playoffs]: {
         label: "Playoffs",
         description: "Playoff bracket structure, rounds and advancement.",
-        readCount: 6,
+        readCount: 7,
         affects: "Playoffs page, matches playoff tab",
     },
     [CACHE_TAGS.teams]: {
         label: "Teams",
         description: "Team pages, logos, and rosters.",
-        readCount: 19,
+        readCount: 20,
         affects: "Teams, team detail, matches, match detail, archive, home, records",
     },
     [CACHE_TAGS.players]: {

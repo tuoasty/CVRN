@@ -32,6 +32,7 @@ import {
     getMatchDetailById,
     getMatchesForWeek,
     getPlayoffSchedule,
+    getSeasonPlayoffSchedule,
     getRecentMatches,
     getUpcomingMatches,
     getWeekSchedule,
@@ -118,6 +119,13 @@ export async function getPlayoffScheduleAction(input: unknown) {
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
     return getPlayoffSchedule(supabase, parsed.data);
+}
+
+export async function getSeasonPlayoffScheduleAction(seasonId: string) {
+    const parsed = z.uuid().safeParse(seasonId);
+    if (!parsed.success) return Err({message: "Invalid season ID", code: "VALIDATION_ERROR"});
+    const supabase = await createServerSupabase();
+    return getSeasonPlayoffSchedule(supabase, parsed.data);
 }
 
 export async function getAvailablePlayoffRoundsAction(seasonId: string) {

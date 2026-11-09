@@ -126,7 +126,11 @@ function LeaderTable({days, withRound}: {days: ResultDay[]; withRound: boolean})
         <table className="mt-2 hidden w-full table-fixed border-collapse sm:table">
                 <thead>
                     <tr className="border-b border-border">
-                        {withRound && <th scope="col" className={cn(head, "w-12 px-2")}>Round</th>}
+                        {withRound && (
+                            <th scope="col" className={cn(head, "w-12 px-2")}>
+                                <abbr title="Round" className="no-underline">Rd</abbr>
+                            </th>
+                        )}
                         <th scope="col" className={cn(head, "w-[200px] pr-3", !withRound && "pl-2")}>Home</th>
                         <th scope="col" className={cn(head, "w-16 pr-3")}>Score</th>
                         <th scope="col" className={cn(head, "w-[200px] pr-3")}>Away</th>

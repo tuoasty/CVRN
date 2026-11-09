@@ -34,7 +34,7 @@ export default function MatchMediaSlotButton({ matchId, slot, current, onChanged
                 size="sm"
                 className={cn(
                     'h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm',
-                    current ? 'text-primary hover:text-primary' : 'text-muted-foreground/50',
+                    current ? 'text-success hover:text-success' : 'text-muted-foreground/50',
                 )}
                 title={current ? `${label}: ${current.title}` : `Attach ${label}`}
                 onClick={() => setOpen(true)}

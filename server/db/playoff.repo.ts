@@ -17,7 +17,7 @@ type PlayoffMatchWithDetails = Match & {
     match_officials: PlayoffMatchOfficialJoin[];
 };
 
-type PlayoffBracketWithMatch = {
+export type PlayoffBracketWithMatch = {
     round: string;
     seed_home: number | null;
     seed_away: number | null;
@@ -276,6 +276,40 @@ export async function findMatchesWithDetailsBySeasonAndRound(
         .eq("season_id", seasonId)
         .eq("round", round)
         .order("seed_home", {ascending: true, nullsFirst: false});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []) as unknown as PlayoffBracketWithMatch[]);
+}
+
+export async function findMatchesWithDetailsBySeason(
+    supabase: DBClient,
+    seasonId: string
+): Promise<Result<PlayoffBracketWithMatch[]>> {
+    const {data, error} = await supabase
+        .from("playoff_brackets")
+        .select(`
+            round,
+            seed_home,
+            seed_away,
+            match_id,
+            matches!inner (
+                *,
+                match_sets (
+                    set_number,
+                    home_score,
+                    away_score
+                ),
+                match_officials (
+                    official_type,
+                    players (
+                        id,
+                        username,
+                        display_name,
+                        avatar_url
+                    )
+                )
+            )
+        `)
+        .eq("season_id", seasonId);
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as unknown as PlayoffBracketWithMatch[]);
 }
