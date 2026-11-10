@@ -63,10 +63,7 @@ const PAGE_SIZE = 50;
 
 const RANK_W = "w-14";
 const PLAYER_W = "w-52";
-const RANK_W_COMPACT = "w-8 sm:w-14";
-const PLAYER_W_COMPACT = "w-32 sm:w-52";
-const PLAYER_LEFT = "left-14";
-const PLAYER_LEFT_COMPACT = "left-8 sm:left-14";
+const PLAYER_W_COMPACT = "w-40 sm:w-[16.5rem]";
 const POSITION_W = "w-24";
 const TEAM_W = "w-36";
 const REGION_W = "w-10";
@@ -156,7 +153,7 @@ export default function LeaderboardTable({
         Math.max(0, windowEnd - visible.length),
     );
 
-    const totalColumnCount = 2 + 1 + (showTeam ? 1 : 0) + (showRegion ? 1 : 0) + columns.length + 1;
+    const totalColumnCount = (flow ? 1 : 2) + 1 + (showTeam ? 1 : 0) + (showRegion ? 1 : 0) + columns.length + 1;
 
     if (rows.length === 0) {
         return <p className="text-sm text-muted-foreground py-8 text-center">{emptyMessage}</p>;
@@ -195,7 +192,7 @@ export default function LeaderboardTable({
             >
                 <Table className="table-fixed border-collapse">
                     <colgroup>
-                        <col className={flow ? RANK_W_COMPACT : RANK_W} />
+                        {!flow && <col className={RANK_W} />}
                         <col className={flow ? PLAYER_W_COMPACT : PLAYER_W} />
                         <col className={POSITION_W} />
                         {showTeam && <col className={TEAM_W} />}
@@ -207,22 +204,24 @@ export default function LeaderboardTable({
                     </colgroup>
                     <TableHeader className={cn("h-7 bg-background", !flow && "sticky top-0", Z_HEAD)}>
                         <TableRow className="border-b-0 hover:bg-transparent">
-                            <TableHead
-                                rowSpan={2}
-                                className={cn(
-                                    "sticky left-0 text-right align-bottom px-2 py-0 my-0 text-xs font-semibold uppercase tracking-wider",
-                                    HEAD_BG,
-                                    Z_HEAD_CORNER,
-                                    HEAD_RULE,
-                                )}
-                            >
-                                #
-                            </TableHead>
+                            {!flow && (
+                                <TableHead
+                                    rowSpan={2}
+                                    className={cn(
+                                        "sticky left-0 text-right align-bottom px-2 py-0 my-0 text-xs font-semibold uppercase tracking-wider",
+                                        HEAD_BG,
+                                        Z_HEAD_CORNER,
+                                        HEAD_RULE,
+                                    )}
+                                >
+                                    #
+                                </TableHead>
+                            )}
                             <TableHead
                                 rowSpan={2}
                                 className={cn(
                                     "sticky text-left align-bottom px-2 text-xs font-semibold uppercase tracking-wider",
-                                    flow ? PLAYER_LEFT_COMPACT : PLAYER_LEFT,
+                                    flow ? "left-0" : "left-14",
                                     HEAD_BG,
                                     Z_HEAD_CORNER,
                                     HEAD_RULE,
@@ -464,33 +463,45 @@ function LeaderboardRow({
     return (
 
         <TableRow className="group h-[3.25rem] hover:bg-muted/30">
-            <TableCell
-                className={cn(
-                    "sticky left-0 bg-background group-hover:shadow-[inset_0_0_0_100vmax_hsl(var(--muted)/0.3)] transition-shadow py-0 text-right align-middle",
-                    compact ? "px-1 sm:px-2" : "px-2",
-                    Z_BODY_STICKY,
-                )}
-            >
-                <span
+            {!compact && (
+                <TableCell
                     className={cn(
-                        "font-mono tabular-nums text-sm",
-                        rank !== null && rank <= 3
-                            ? "font-semibold text-foreground"
-                            : "text-muted-foreground",
+                        "sticky left-0 bg-background group-hover:shadow-[inset_0_0_0_100vmax_hsl(var(--muted)/0.3)] transition-shadow py-0 text-right align-middle",
+                        "px-2",
+                        Z_BODY_STICKY,
                     )}
                 >
-                    {rank ?? "—"}
-                </span>
-            </TableCell>
+                    <span
+                        className={cn(
+                            "font-mono tabular-nums text-sm",
+                            rank !== null && rank <= 3
+                                ? "font-semibold text-foreground"
+                                : "text-muted-foreground",
+                        )}
+                    >
+                        {rank ?? "—"}
+                    </span>
+                </TableCell>
+            )}
 
             <TableCell
                 className={cn(
                     "sticky bg-background group-hover:shadow-[inset_0_0_0_100vmax_hsl(var(--muted)/0.3)] transition-shadow py-0 px-2 align-middle",
-                    compact ? PLAYER_LEFT_COMPACT : PLAYER_LEFT,
+                    compact ? "left-0" : "left-14",
                     Z_BODY_STICKY,
                 )}
             >
                 <div className="flex items-center gap-2.5 min-w-0">
+                    {compact && (
+                        <span
+                            className={cn(
+                                "w-5 shrink-0 text-right font-mono tabular-nums text-sm",
+                                rank !== null && rank <= 3 ? "font-semibold text-foreground" : "text-muted-foreground",
+                            )}
+                        >
+                            {rank ?? "-"}
+                        </span>
+                    )}
                     {row.avatar_url && (
                         <div className={cn("relative w-10 h-10 shrink-0 rounded-full overflow-hidden bg-muted", compact && "hidden sm:block")}>
                             <Image src={row.avatar_url} alt="" fill sizes="40px" className="object-cover" unoptimized />
