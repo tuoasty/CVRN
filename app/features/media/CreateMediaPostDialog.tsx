@@ -126,7 +126,7 @@ export default function CreateMediaPostDialog({ open, onOpenChange, lockedType, 
             if (type !== 'clip' && description.trim()) formData.set('description', description.trim())
             if (isUrlType) formData.set('videoUrl', videoUrl.trim())
             if (isImageType && imageFile) formData.set('imageFile', imageFile)
-            if (type === 'totw' && teamId) formData.set('teamId', teamId)
+            if ((type === 'totw' || type === 'potw') && teamId) formData.set('teamId', teamId)
             if (type === 'potw' && playerId) formData.set('playerId', playerId)
             if ((type === 'totw' || type === 'potw') && seasonId) formData.set('seasonId', seasonId)
             if (type !== 'clip' && author) formData.set('authorId', author.id)

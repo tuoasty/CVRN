@@ -308,6 +308,29 @@ export async function findActivePlayerTeamSeasons(
     return Ok(data ?? []);
 }
 
+export type PlayerSeasonMembership = {
+    player_id: string;
+    team_id: string;
+    position: string | null;
+    joined_at: string;
+    left_at: string | null;
+};
+
+export async function findPlayerSeasonMemberships(
+    supabase: DBClient,
+    playerIds: string[],
+    seasonId: string
+): Promise<Result<PlayerSeasonMembership[]>> {
+    if (playerIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("player_team_seasons")
+        .select("player_id, team_id, position, joined_at, left_at")
+        .in("player_id", playerIds)
+        .eq("season_id", seasonId);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
 export async function findPlayerTeamSeasonsForTeams(
     supabase: DBClient,
     playerIds: string[],

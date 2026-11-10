@@ -62,6 +62,13 @@ export interface Tape {
     matchupUnit: "per set" | "this match";
 }
 
+export interface WeekResult {
+    key: string;
+    result: "W" | "L";
+    opponent: string;
+    score: string;
+}
+
 export type HeroItem =
     | {
           kind: "match";
@@ -88,6 +95,8 @@ export type HeroItem =
           player: { name: string; username: string; avatarUrl: string | null; href: string | null };
           team: HomeTeam | null;
           position: string | null;
+          description: string | null;
+          results: WeekResult[];
           statsLabel: string | null;
           line: StatCell[];
       }
@@ -99,7 +108,7 @@ export type HeroItem =
           team: HomeTeam | null;
           record: string | null;
           rank: number | null;
-          results: { key: string; result: "W" | "L"; opponent: string; score: string }[];
+          results: WeekResult[];
           leaders: { category: MatchupCategory; label: string; cell: LeaderCell | null }[];
       }
     | {

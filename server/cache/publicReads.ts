@@ -36,6 +36,7 @@ import {
 import type {TeamWithRegion} from "@/server/domains/team";
 import {getStandings} from "@/server/domains/standing";
 import {findTeamsBySeasonId} from "@/server/db/teams.repo";
+import {findPlayerSeasonMemberships} from "@/server/db/players.repo";
 import {getPlayoffBracketBySeasonId} from "@/server/domains/playoff";
 import type {PlayoffRound} from "@/server/domains/playoff";
 import {
@@ -592,6 +593,19 @@ export const getCachedPlayersByIds = unstable_cache(
     },
     ["public:players-by-ids"],
     {tags: [CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedPlayerSeasonMemberships = unstable_cache(
+    async (seasonId: string, joinedIds: string) => {
+        const playerIds = joinedIds ? joinedIds.split(",") : [];
+        if (playerIds.length === 0) return [];
+        return unwrap(
+            await findPlayerSeasonMemberships(createPublicClient(), playerIds, seasonId),
+            "getCachedPlayerSeasonMemberships",
+        );
+    },
+    ["public:player-season-memberships"],
+    {tags: [CACHE_TAGS.teams, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 
 export function playerIdsCacheKey(ids: string[]): string {

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import HomePage from "@/app/(public)/home/HomePage";
-import { buildHomeView, peopleIdsFor, statMatchIdsFor, type HomePerson } from "@/app/(public)/home/buildHomeView";
+import { buildHomeView, peopleIdsFor, potwPlayerIdsFor, statMatchIdsFor, type HomePerson } from "@/app/(public)/home/buildHomeView";
 import { getSeasonPhase } from "@/app/(public)/home/model/phase";
 import {
     getCachedRegionByCode,
@@ -19,6 +19,7 @@ import {
     getCachedRegions,
     getCachedMatchStatTotals,
     getCachedPlayersByIds,
+    getCachedPlayerSeasonMemberships,
     playerIdsCacheKey,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
@@ -60,9 +61,10 @@ export default async function Page({ params }: PageProps) {
             getCachedPublishedArticles(),
         ]);
 
-    const [matchTotals, players] = await Promise.all([
+    const [matchTotals, players, memberships] = await Promise.all([
         getCachedMatchStatTotals(playerIdsCacheKey(statMatchIdsFor(completed, posts, seasonRecord.id))),
         getCachedPlayersByIds(playerIdsCacheKey(peopleIdsFor(posts, seasonRecord.id))),
+        getCachedPlayerSeasonMemberships(seasonRecord.id, playerIdsCacheKey(potwPlayerIdsFor(posts, seasonRecord.id))),
     ]);
 
     const people = new Map<string, HomePerson>(
@@ -87,6 +89,7 @@ export default async function Page({ params }: PageProps) {
         regions,
         articles,
         people,
+        memberships,
     });
 
     return <HomePage view={view} seasonLabel={seasonRecord.name} />;

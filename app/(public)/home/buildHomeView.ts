@@ -6,6 +6,8 @@ import type {LeaderboardIdentity, LeaderboardStatRow} from "@/server/domains/pla
 import type {TeamWithRegion} from "@/server/domains/team";
 import type {SeasonAwardEntryWithPlayer, SeasonPodiumEntryWithTeam, SeasonWithPlayoffConfig} from "@/server/domains/season";
 import type {ArticleListItem} from "@/server/domains/article";
+import type {PlayerSeasonMembership} from "@/server/db/players.repo";
+import type {PositionCode} from "@/shared/volleyball/positions";
 import {getRegionTimezone} from "@/app/utils/timezoneOptions";
 import {getMatchTypeLabel} from "@/app/utils/matchLabel";
 import {isPlayoffRound, roundLabelLong, roundLabelShort} from "@/app/utils/playoffRounds";
@@ -23,7 +25,7 @@ import {orderResults} from "./model/orderResults";
 import {groupByRegionDay, groupUpcoming} from "./model/groupUpcoming";
 import {pickVod} from "./model/pickVod";
 import {buildMediaFeed} from "./model/buildMediaFeed";
-import type {AwardRow, HeroImage, HeroItem, HomeTeam, HomeView, LeaderCell, LeaderColumn, MatchupCategory, MediaTile, NewsRow, ResultDay, ResultRow, StandingRow, StatCell, UpcomingDay, UpcomingRow, VodItem} from "./model/types";
+import type {AwardRow, HeroImage, HeroItem, HomeTeam, HomeView, LeaderCell, LeaderColumn, MatchupCategory, MediaTile, NewsRow, ResultDay, ResultRow, StandingRow, UpcomingDay, UpcomingRow, VodItem} from "./model/types";
 
 export type HomePerson = { name: string; username: string; avatarUrl: string | null };
 
@@ -45,6 +47,7 @@ export interface HomeInput {
     regions: Region[];
     articles: ArticleListItem[];
     people: Map<string, HomePerson>;
+    memberships: PlayerSeasonMembership[];
 }
 
 const STAT_MATCH_WINDOW = 30;
@@ -84,6 +87,23 @@ export function peopleIdsFor(posts: MediaPost[], seasonId: string): string[] {
         if (p.player_id) ids.add(p.player_id);
     }
     return [...ids];
+}
+
+export function potwPlayerIdsFor(posts: MediaPost[], seasonId: string): string[] {
+    return [...new Set(posts.filter(p => p.type === "potw" && p.season_id === seasonId && p.player_id).map(p => p.player_id as string))];
+}
+
+function membershipAt(memberships: PlayerSeasonMembership[], playerId: string, at: string | null): PlayerSeasonMembership | null {
+    const mine = memberships.filter(m => m.player_id === playerId).sort((a, b) => b.joined_at.localeCompare(a.joined_at));
+    if (at) {
+        const covering = mine.find(m => m.joined_at <= at && (!m.left_at || m.left_at > at));
+        if (covering) return covering;
+    }
+    return mine.find(m => !m.left_at) ?? mine[0] ?? null;
+}
+
+function asPosition(value: string | null | undefined): PositionCode | null {
+    return value && value in POSITION_NAMES ? (value as PositionCode) : null;
 }
 
 function roundKeyLabel(roundKey: string | null): string | null {
@@ -141,6 +161,23 @@ export function buildHomeView(input: HomeInput): HomeView {
         href,
     });
     const standingFor = (teamId: string | null | undefined) => input.standings.find(s => s.team_id === teamId) ?? null;
+    const playedBy = (roundKey: string | null, teamId: string | null | undefined) =>
+        teamId ? roundMatches(input.completed, roundKey).filter(m => m.match.home_team_id === teamId || m.match.away_team_id === teamId) : [];
+    const weekResults = (played: MatchWithDetails[], teamId: string) =>
+        [...played]
+            .sort((a, b) => (a.match.scheduled_at ?? "").localeCompare(b.match.scheduled_at ?? ""))
+            .map(m => {
+                const home = m.match.home_team_id === teamId;
+                const mine = (home ? m.match.home_sets_won : m.match.away_sets_won) ?? 0;
+                const theirs = (home ? m.match.away_sets_won : m.match.home_sets_won) ?? 0;
+                const opponentId = home ? m.match.away_team_id : m.match.home_team_id;
+                return {
+                    key: m.match.id,
+                    result: mine > theirs ? ("W" as const) : ("L" as const),
+                    opponent: (opponentId && teamById.get(opponentId)?.name) || "TBD",
+                    score: `${mine}-${theirs}`,
+                };
+            });
 
     const championTeamId = input.podium.find(p => p.place === 1)?.team_id ?? null;
     const candidates = rankHeroCandidates({
@@ -198,21 +235,21 @@ export function buildHomeView(input: HomeInput): HomeView {
             const playerId = c.post.player_id as string;
             const person = input.people.get(playerId);
             const playerRow = input.leaderRows.find(r => r.player_id === playerId);
-            const position = mainPosition(playerRow?.position_counts);
             const roundLabel = roundKeyLabel(c.post.round_key);
-            const roundTotals = roundMatches(input.completed, c.post.round_key).flatMap(m => totalsByMatch.get(m.match.id) ?? []);
+            const roundAll = roundMatches(input.completed, c.post.round_key);
+            const roundTotals = roundAll.flatMap(m => totalsByMatch.get(m.match.id) ?? []);
+            const firstMatchAt = roundAll.map(m => m.match.scheduled_at).filter((x): x is string => !!x).sort()[0] ?? null;
+            const membership = membershipAt(input.memberships, playerId, firstMatchAt);
+            const teamId = c.post.team_id
+                ?? roundTotals.find(t => t.player_id === playerId && t.team_id)?.team_id
+                ?? membership?.team_id
+                ?? playerRow?.team_id
+                ?? null;
+            const position = mainPosition(playerRow?.position_counts) ?? asPosition(membership?.position);
             const roundRow = roundLabel ? sumPlayerTotals(roundTotals, playerId) : null;
-            let line: StatCell[] = [];
-            let statsLabel: string | null = null;
-            if (roundRow) {
-                line = potwLine(position, roundRow, "match");
-                statsLabel = roundLabel;
-            } else if (playerRow) {
-                line = potwLine(position, playerRow as unknown as Record<string, unknown>, "season");
-                statsLabel = "Season, per set";
-            }
             const playerHref = buildPublicPlayerHref(person?.username);
             const shownRound = roundLabel ?? c.post.description;
+            const description = roundLabel ? c.post.description?.trim() || null : null;
             return {
                 kind: "potw",
                 key: c.post.id,
@@ -224,10 +261,12 @@ export function buildHomeView(input: HomeInput): HomeView {
                     avatarUrl: person?.avatarUrl ?? null,
                     href: playerHref,
                 },
-                team: toTeam(playerRow?.team_id ?? c.post.team_id),
+                team: toTeam(teamId),
                 position: position ? POSITION_NAMES[position] : null,
-                statsLabel,
-                line,
+                description,
+                results: teamId ? weekResults(playedBy(c.post.round_key, teamId), teamId) : [],
+                statsLabel: roundRow ? roundLabel : null,
+                line: roundRow ? potwLine(position, roundRow, "match") : [],
             };
         }
         if (c.kind === "totw") {
@@ -235,9 +274,7 @@ export function buildHomeView(input: HomeInput): HomeView {
             const team = toTeam(teamId);
             const standing = standingFor(teamId);
             const roundLabel = roundKeyLabel(c.post.round_key);
-            const played = teamId
-                ? roundMatches(input.completed, c.post.round_key).filter(m => m.match.home_team_id === teamId || m.match.away_team_id === teamId)
-                : [];
+            const played = playedBy(c.post.round_key, teamId);
             const roundTotals = played.flatMap(m => totalsByMatch.get(m.match.id) ?? []);
             const useRound = !!roundLabel && roundTotals.some(t => t.team_id === teamId);
             const roundLeaders = useRound && teamId ? roundTeamLeaders(roundTotals, teamId) : null;
@@ -276,22 +313,7 @@ export function buildHomeView(input: HomeInput): HomeView {
                   }).filter(l => l.cell !== null)
                 : [];
             const shownRound = roundLabel ?? c.post.description;
-            const results = useRound && teamId
-                ? [...played]
-                      .sort((a, b) => (a.match.scheduled_at ?? "").localeCompare(b.match.scheduled_at ?? ""))
-                      .map(m => {
-                          const home = m.match.home_team_id === teamId;
-                          const mine = (home ? m.match.home_sets_won : m.match.away_sets_won) ?? 0;
-                          const theirs = (home ? m.match.away_sets_won : m.match.home_sets_won) ?? 0;
-                          const opponentId = home ? m.match.away_team_id : m.match.home_team_id;
-                          return {
-                              key: m.match.id,
-                              result: mine > theirs ? ("W" as const) : ("L" as const),
-                              opponent: (opponentId && teamById.get(opponentId)?.name) || "TBD",
-                              score: `${mine}-${theirs}`,
-                          };
-                      })
-                : [];
+            const results = useRound && teamId ? weekResults(played, teamId) : [];
             return {
                 kind: "totw",
                 key: c.post.id,

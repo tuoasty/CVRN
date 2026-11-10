@@ -2,7 +2,7 @@ import Link from "next/link";
 import {cn} from "@/lib/utils";
 import {PlayerAvatar, TeamMark, TodayMark} from "../sections/TeamMark";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/app/components/ui/tooltip";
-import type {FormEntry, HeroItem, LeaderCell, StatCell, Tape} from "../model/types";
+import type {FormEntry, HeroItem, LeaderCell, StatCell, Tape, WeekResult} from "../model/types";
 
 type MatchItem = Extract<HeroItem, {kind: "match"}>;
 
@@ -199,6 +199,22 @@ function TotwLeader({label, cell}: {label: string; cell: LeaderCell}) {
     );
 }
 
+function WeekResults({results}: {results: WeekResult[]}) {
+    return (
+        <div className="space-y-1">
+            {results.map(r => (
+                <div key={r.key} className="flex items-center gap-2 text-sm">
+                    <span className={cn("flex h-4 w-4 items-center justify-center text-[10px] font-bold leading-none text-white", r.result === "W" ? "bg-success" : "bg-destructive")}>
+                        {r.result}
+                    </span>
+                    <span className="font-mono font-semibold tabular-nums">{r.score}</span>
+                    <span className="text-muted-foreground">vs {r.opponent}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 function StatGrid({cells}: {cells: StatCell[]}) {
     return (
         <div className="mt-2 grid grid-cols-4 gap-x-4 gap-y-3">
@@ -231,6 +247,12 @@ export function TapeCard({item}: {item: HeroItem}) {
                         <span className="font-medium">{[item.team?.name, item.position].filter(Boolean).join(" · ")}</span>
                     </div>
                 )}
+                {item.description && <p className="mt-4 max-w-prose text-sm leading-relaxed">{item.description}</p>}
+                {item.results.length > 0 && (
+                    <div className="mt-5">
+                        <WeekResults results={item.results} />
+                    </div>
+                )}
                 {item.line.length > 0 && (
                     <div className="mt-6">
                         <SectionLabel>{item.statsLabel}</SectionLabel>
@@ -259,17 +281,7 @@ export function TapeCard({item}: {item: HeroItem}) {
                 )}
                 {item.results.length > 0 && (
                     <div className="mt-5">
-                        <div className="space-y-1">
-                            {item.results.map(r => (
-                                <div key={r.key} className="flex items-center gap-2 text-sm">
-                                    <span className={cn("flex h-4 w-4 items-center justify-center text-[10px] font-bold leading-none text-white", r.result === "W" ? "bg-success" : "bg-destructive")}>
-                                        {r.result}
-                                    </span>
-                                    <span className="font-mono font-semibold tabular-nums">{r.score}</span>
-                                    <span className="text-muted-foreground">vs {r.opponent}</span>
-                                </div>
-                            ))}
-                        </div>
+                        <WeekResults results={item.results} />
                     </div>
                 )}
                 {item.leaders.length > 0 && (
