@@ -58,6 +58,20 @@ describe("filterTeamMedia", () => {
     });
 });
 
+describe("filterTeamMedia match media", () => {
+    it("includes match GFX and VODs attached to this team's matches even without a season id", () => {
+        const out = filterTeamMedia(
+            [
+                post("matchGfx", "gfx", {match_id: "m1", season_id: null, published_at: "2026-10-02T00:00:00Z"}),
+                post("matchVod", "video", {match_id: "m1", season_id: null, published_at: "2026-10-01T00:00:00Z"}),
+                post("otherMatch", "gfx", {match_id: "m9", season_id: null}),
+            ],
+            input,
+        );
+        expect(out.map((p) => p.id)).toEqual(["matchGfx", "matchVod"]);
+    });
+});
+
 describe("mediaSubline", () => {
     it("joins the type label with the week or playoff round", () => {
         expect(mediaSubline(post("a", "gfx", {round_key: "week:3"}))).toBe("GFX · Week 3");

@@ -14,25 +14,20 @@ export default function TeamCardsSection({ seasonNumber, cards, players }: Props
     return (
         <section aria-label={`Season ${seasonNumber} cards`} className="min-w-0">
             <SectionHeading title={`Season ${seasonNumber} cards`} />
-            <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-x-4 gap-y-6">
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
                 {cards.map((card) => {
                     const player = players[card.playerId];
                     const name = player?.name ?? "Unknown";
                     const figure = (
-                        <figure className="min-w-0">
-                            <Image
-                                src={card.imageUrl}
-                                alt={`${name} player card, Season ${card.seasonNumber}, OVR ${card.ovr}`}
-                                width={card.width}
-                                height={card.height}
-                                loading="lazy"
-                                unoptimized
-                                className="h-auto w-full"
-                            />
-                            <figcaption className="mt-2 truncate text-xs font-semibold text-foreground group-hover:underline group-hover:underline-offset-4">
-                                {name}
-                            </figcaption>
-                        </figure>
+                        <Image
+                            src={card.imageUrl}
+                            alt={`${name} player card, Season ${card.seasonNumber}, OVR ${card.ovr}`}
+                            width={card.width}
+                            height={card.height}
+                            loading="lazy"
+                            unoptimized
+                            className="h-auto w-full"
+                        />
                     );
                     const key = `${card.playerId}-${card.groupId}`;
                     return player?.href ? (
@@ -40,7 +35,7 @@ export default function TeamCardsSection({ seasonNumber, cards, players }: Props
                             key={key}
                             href={player.href}
                             prefetch={false}
-                            className="group block min-w-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                            className="block min-w-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                         >
                             {figure}
                         </Link>

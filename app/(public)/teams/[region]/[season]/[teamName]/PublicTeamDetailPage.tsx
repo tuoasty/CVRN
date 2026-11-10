@@ -106,18 +106,15 @@ export default function PublicTeamDetailPage({
                 <TeamStatsSection seasonRows={statRows} careerRows={careerRows} />
             </div>
 
-            {(hasMedia || cardSeason) && (
-                <div
-                    className={
-                        hasMedia && cardSeason
-                            ? "mt-12 grid gap-12 min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
-                            : "mt-12"
-                    }
-                >
-                    {hasMedia && <TeamMediaSection posts={media} />}
-                    {cardSeason && (
-                        <TeamCardsSection seasonNumber={cardSeason.seasonNumber} cards={cardSeason.cards} players={leaderPlayers} />
-                    )}
+            {cardSeason && (
+                <div className="mt-12">
+                    <TeamCardsSection seasonNumber={cardSeason.seasonNumber} cards={cardSeason.cards} players={leaderPlayers} />
+                </div>
+            )}
+
+            {hasMedia && (
+                <div className="mt-12">
+                    <TeamMediaSection posts={media} />
                 </div>
             )}
         </div>

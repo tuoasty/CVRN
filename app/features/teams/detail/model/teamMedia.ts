@@ -8,13 +8,12 @@ export function filterTeamMedia(
     const matchIds = new Set(input.matchIds);
     const rosterIds = new Set(input.rosterIds);
     return posts
-        .filter((p) => p.type !== "article" && p.season_id === input.seasonId)
-        .filter(
-            (p) =>
-                p.team_id === input.teamId ||
-                (p.match_id !== null && matchIds.has(p.match_id)) ||
-                (p.type === "potw" && p.player_id !== null && rosterIds.has(p.player_id)),
-        )
+        .filter((p) => p.type !== "article")
+        .filter((p) => {
+            if (p.match_id !== null && matchIds.has(p.match_id)) return true;
+            if (p.season_id !== input.seasonId) return false;
+            return p.team_id === input.teamId || (p.type === "potw" && p.player_id !== null && rosterIds.has(p.player_id));
+        })
         .sort((a, b) => b.published_at.localeCompare(a.published_at));
 }
 
