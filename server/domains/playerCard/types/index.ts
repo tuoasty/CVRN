@@ -108,6 +108,10 @@ export interface PublicPlayerCard {
     height: number
 }
 
+export interface TeamCard extends PublicPlayerCard {
+    playerId: string
+}
+
 export type CardBulkMode = 'missing' | 'all'
 export type CardBulkJobStatus = 'running' | 'completed' | 'stopped' | 'interrupted'
 

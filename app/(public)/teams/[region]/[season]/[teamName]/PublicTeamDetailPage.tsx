@@ -13,6 +13,10 @@ import type { Leader } from "@/app/features/teams/detail/model/leaders";
 import type { TeamBreakdown } from "@/app/features/teams/detail/model/breakdown";
 import TeamStatsSection from "./TeamStatsSection";
 import TeamMatchHistory from "./TeamMatchHistory";
+import TeamMediaSection from "./TeamMediaSection";
+import TeamCardsSection from "./TeamCardsSection";
+import type { MediaPost } from "@/server/domains/media/types";
+import type { TeamCard } from "@/server/domains/playerCard";
 
 type Props = {
     team: TeamWithRegion;
@@ -33,6 +37,8 @@ type Props = {
     leaders: { source: "season" | "alltime"; leaders: Leader[] };
     leaderPlayers: Record<string, LeaderPlayer>;
     breakdown: TeamBreakdown | null;
+    media: MediaPost[];
+    cardSeason: { seasonNumber: number; cards: TeamCard[] } | null;
 };
 
 export default function PublicTeamDetailPage({
@@ -54,9 +60,12 @@ export default function PublicTeamDetailPage({
     leaders,
     leaderPlayers,
     breakdown,
+    media,
+    cardSeason,
 }: Props) {
     const formerName = history.find((h) => h.oldName !== team.name)?.oldName ?? null;
     const maxPlayers = team.seasons?.max_players ?? 18;
+    const hasMedia = media.some((p) => !!p.image_url || !!p.video_url);
     const teamsHref = `/${encodeURIComponent(regionCode)}/${encodeURIComponent(seasonSlug)}/teams`;
 
     return (
@@ -96,6 +105,21 @@ export default function PublicTeamDetailPage({
             <div className="mt-12">
                 <TeamStatsSection seasonRows={statRows} careerRows={careerRows} />
             </div>
+
+            {(hasMedia || cardSeason) && (
+                <div
+                    className={
+                        hasMedia && cardSeason
+                            ? "mt-12 grid gap-12 min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
+                            : "mt-12"
+                    }
+                >
+                    {hasMedia && <TeamMediaSection posts={media} />}
+                    {cardSeason && (
+                        <TeamCardsSection seasonNumber={cardSeason.seasonNumber} cards={cardSeason.cards} players={leaderPlayers} />
+                    )}
+                </div>
+            )}
         </div>
     );
 }

@@ -19,6 +19,7 @@ export { getPlayerCards } from './queries/getPlayerCards'
 export { getPlayerCardRig } from './queries/getPlayerCardRig'
 export { getPublicPlayerCards } from './queries/getPublicPlayerCards'
 export { getCardAttributes } from './queries/getCardAttributes'
+export { getTeamCards } from './queries/getTeamCards'
 export { getCardCatalog } from './queries/getCardCatalog'
 export { getCardTierTemplate } from './queries/getCardTierTemplate'
 export { getBoardPlayerCardTemplate, getCustomPlayerCardTemplate } from './queries/getPlayerCardTemplate'
@@ -46,6 +47,7 @@ export type {
     UpdatePlayerCardRigPlacementInput,
     PublicPlayerCard,
     CardAttributes,
+    TeamCard,
     CardLayer,
     CardOverrides,
     CustomCardPlayer,

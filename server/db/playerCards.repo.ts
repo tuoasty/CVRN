@@ -86,6 +86,23 @@ export async function findPublicPlayerCards(supabase: DBClient, p: { playerId: s
     return Ok((data ?? []) as unknown as PublicPlayerCardRow[])
 }
 
+export type TeamCardRow = PublicPlayerCardRow & { id: string; player_id: string }
+
+export async function findCardsBySeasonNumbers(supabase: DBClient, seasonNumbers: number[]): Promise<Result<TeamCardRow[]>> {
+    const out: TeamCardRow[] = []
+    for (let from = 0; ; from += CARD_ATTRIBUTES_PAGE_SIZE) {
+        const { data, error } = await supabase
+            .from('player_cards')
+            .select('id, player_id, season_number, group_id, ovr, image_url, group:card_groups!group_id(name, sort_order, canvas_width, canvas_height), team:teams!team_id(name)')
+            .in('season_number', seasonNumbers)
+            .order('id', { ascending: true })
+            .range(from, from + CARD_ATTRIBUTES_PAGE_SIZE - 1)
+        if (error) return Err(serializeError(error, 'DB_ERROR'))
+        out.push(...((data ?? []) as unknown as TeamCardRow[]))
+        if (!data || data.length < CARD_ATTRIBUTES_PAGE_SIZE) return Ok(out)
+    }
+}
+
 export async function findPlayerCards(supabase: DBClient, p: { playerId: string; seasonNumber: number }): Promise<Result<PlayerCardRow[]>> {
     const { data, error } = await supabase
         .from('player_cards')

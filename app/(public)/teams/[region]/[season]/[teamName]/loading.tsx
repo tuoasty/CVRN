@@ -1,39 +1,95 @@
 import { Skeleton } from "@/app/components/ui/skeleton";
 
+function Heading({ width = "w-24" }: { width?: string }) {
+    return (
+        <div className="flex min-h-9 items-end border-b border-border pb-2">
+            <Skeleton className={`h-5 ${width}`} />
+        </div>
+    );
+}
+
 export default function TeamDetailLoading() {
     return (
-        <div className="page-wide space-y-6 py-6">
-            {}
-            <div className="pt-2 pb-4">
-                <Skeleton className="h-8 w-16 rounded-sm mb-4" />
-                <div className="flex items-center gap-5">
-                    {}
-                    <Skeleton className="w-36 h-36 sm:w-44 sm:h-44 shrink-0 rounded-sm" />
-                    {}
-                    <div className="space-y-2 flex-1 min-w-0">
-                        <Skeleton className="h-9 w-48 rounded-sm" />
-                        <Skeleton className="h-3 w-32 rounded-sm" />
-                        <Skeleton className="h-4 w-40 rounded-sm" />
+        <div className="page-wide py-6">
+            <Skeleton className="h-4 w-16" />
+            <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-8">
+                <Skeleton className="h-24 w-24 shrink-0 sm:h-32 sm:w-32" />
+                <div className="min-w-0 space-y-2">
+                    <Skeleton className="h-7 w-48" />
+                    <Skeleton className="h-3.5 w-72 max-w-full" />
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-4 pt-3 sm:flex sm:gap-x-10">
+                        {Array.from({ length: 4 }, (_, i) => (
+                            <div key={i} className="space-y-1.5">
+                                <Skeleton className="h-3 w-16" />
+                                <Skeleton className="h-6 w-14" />
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            {}
-            <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-14 rounded-sm" />
-                    <Skeleton className="h-4 w-12 rounded-sm" />
+            <div className="mt-12 grid gap-12 min-[1100px]:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+                <div>
+                    <Heading />
+                    <div className="mt-3 grid grid-cols-1 sm:mt-4 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:gap-x-4 sm:gap-y-6">
+                        {Array.from({ length: 8 }, (_, i) => (
+                            <div key={i}>
+                                <div className="flex items-center gap-3 py-1.5 sm:hidden">
+                                    <Skeleton className="h-10 w-10 shrink-0" />
+                                    <div className="flex-1 space-y-1.5">
+                                        <Skeleton className="h-3.5 w-32" />
+                                        <Skeleton className="h-3 w-24" />
+                                    </div>
+                                </div>
+                                <div className="hidden sm:block">
+                                    <Skeleton className="aspect-[4/5] w-full" />
+                                    <Skeleton className="mt-2 h-3.5 w-3/4" />
+                                    <Skeleton className="mt-1.5 h-3 w-1/2" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-9 gap-2 sm:gap-3">
-                    {}
-                    {[...Array(3)].map((_, i) => (
-                        <Skeleton key={i} className="aspect-square rounded-md" />
-                    ))}
-                    {}
-                    {[...Array(6)].map((_, i) => (
-                        <div key={i + 3} className="col-span-3 sm:col-span-1 rounded-md overflow-hidden border border-border">
-                            <Skeleton className="h-[60px] sm:h-auto sm:aspect-square rounded-none" />
+                <div className="space-y-12">
+                    <div>
+                        <Heading />
+                        <div className="mt-2 space-y-3">
+                            {Array.from({ length: 4 }, (_, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <Skeleton className="h-3 w-16" />
+                                    <Skeleton className="h-8 w-8" />
+                                    <Skeleton className="h-3.5 flex-1" />
+                                    <Skeleton className="h-3.5 w-8" />
+                                </div>
+                            ))}
                         </div>
+                    </div>
+                    <div>
+                        <Skeleton className="h-5 w-36" />
+                        <Skeleton className="mt-3 h-11 w-full" />
+                        <div className="mt-3 space-y-2">
+                            {Array.from({ length: 8 }, (_, i) => (
+                                <Skeleton key={i} className="h-4 w-full" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-12">
+                <Heading />
+                <div className="mt-2 space-y-2">
+                    {Array.from({ length: 6 }, (_, i) => (
+                        <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                </div>
+            </div>
+
+            <div className="mt-12">
+                <Heading width="w-16" />
+                <div className="mt-3 space-y-2">
+                    {Array.from({ length: 8 }, (_, i) => (
+                        <Skeleton key={i} className="h-12 w-full" />
                     ))}
                 </div>
             </div>
