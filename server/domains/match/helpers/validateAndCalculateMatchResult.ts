@@ -1,16 +1,19 @@
 import {Err, Ok, Result} from "@/shared/types/result";
 import {MatchResultInput, MatchContext, MatchResultOutput} from "../types";
 import {StandingMethod} from "@/shared/types/standing";
-
-function differentialBonus(winnerPointDiff: number): number {
-    if (winnerPointDiff >= 30) return 5;
-    if (winnerPointDiff >= 25) return 4;
-    if (winnerPointDiff >= 20) return 3;
-    if (winnerPointDiff >= 15) return 2;
-    if (winnerPointDiff >= 10) return 1;
-    if (winnerPointDiff >= 5) return 0.5;
-    return 0;
-}
+import {
+    differentialBonus,
+    FORFEIT_BONUS,
+    FORFEIT_LVR,
+    FORFEIT_POINTS_WITHOUT_BONUS,
+    LVR_MAX_POINT_DIFF,
+    LVR_MAX_SET_DIFF,
+    LVR_POINT_WEIGHT,
+    LVR_SCALE,
+    LVR_SET_WEIGHT,
+    POINTS_PER_SET,
+    WIN_POINTS,
+} from "@/shared/volleyball/matchScoring";
 
 export function validateAndCalculateMatchResult(
     input: MatchResultInput,
@@ -58,32 +61,32 @@ export function validateAndCalculateMatchResult(
 
         if (match.match_type === "season") {
             if (input.forfeitingTeam === "home") {
-                homeTeamLvr = -10;
-                awayTeamLvr = 5;
+                homeTeamLvr = FORFEIT_LVR.forfeiter;
+                awayTeamLvr = FORFEIT_LVR.opponent;
             } else {
-                homeTeamLvr = 5;
-                awayTeamLvr = -10;
+                homeTeamLvr = FORFEIT_LVR.opponent;
+                awayTeamLvr = FORFEIT_LVR.forfeiter;
             }
 
             pointDiff = input.forfeitingTeam === "home" ? -25 * minSets : 25 * minSets;
 
             if (standingMethod === "points_without_bonus") {
 
-                homeTeamPoints = input.forfeitingTeam === "home" ? 0 : 1;
-                awayTeamPoints = input.forfeitingTeam === "home" ? 1 : 0;
+                homeTeamPoints = input.forfeitingTeam === "home" ? 0 : FORFEIT_POINTS_WITHOUT_BONUS;
+                awayTeamPoints = input.forfeitingTeam === "home" ? FORFEIT_POINTS_WITHOUT_BONUS : 0;
                 homeTeamBonus = 0;
                 awayTeamBonus = 0;
             } else {
 
                 if (input.forfeitingTeam === "home") {
                     homeTeamPoints = 0;
-                    awayTeamPoints = 2 + 0.5 * awaySetsWon;
+                    awayTeamPoints = WIN_POINTS + POINTS_PER_SET * awaySetsWon;
                     homeTeamBonus = 0;
-                    awayTeamBonus = 1;
+                    awayTeamBonus = FORFEIT_BONUS;
                 } else {
-                    homeTeamPoints = 2 + 0.5 * homeSetsWon;
+                    homeTeamPoints = WIN_POINTS + POINTS_PER_SET * homeSetsWon;
                     awayTeamPoints = 0;
-                    homeTeamBonus = 1;
+                    homeTeamBonus = FORFEIT_BONUS;
                     awayTeamBonus = 0;
                 }
             }
@@ -147,10 +150,10 @@ export function validateAndCalculateMatchResult(
 
             pointDiff = totalHomePoints - totalAwayPoints;
 
-            const normalizedSetDiff = setDiff / 2;
-            const normalizedPointDiff = pointDiff / 50;
+            const normalizedSetDiff = setDiff / LVR_MAX_SET_DIFF;
+            const normalizedPointDiff = pointDiff / LVR_MAX_POINT_DIFF;
 
-            const lvrValue = 10 * (0.7 * normalizedSetDiff + 0.3 * normalizedPointDiff);
+            const lvrValue = LVR_SCALE * (LVR_SET_WEIGHT * normalizedSetDiff + LVR_POINT_WEIGHT * normalizedPointDiff);
 
             homeTeamLvr = lvrValue;
             awayTeamLvr = -lvrValue;
@@ -159,8 +162,8 @@ export function validateAndCalculateMatchResult(
 
             if (standingMethod === "points_without_bonus") {
 
-                homeTeamPoints = homeWon ? 2 - 0.5 * awaySetsWon : 0.5 * homeSetsWon;
-                awayTeamPoints = homeWon ? 0.5 * awaySetsWon : 2 - 0.5 * homeSetsWon;
+                homeTeamPoints = homeWon ? WIN_POINTS - POINTS_PER_SET * awaySetsWon : POINTS_PER_SET * homeSetsWon;
+                awayTeamPoints = homeWon ? POINTS_PER_SET * awaySetsWon : WIN_POINTS - POINTS_PER_SET * homeSetsWon;
                 homeTeamBonus = 0;
                 awayTeamBonus = 0;
             } else {
@@ -168,8 +171,8 @@ export function validateAndCalculateMatchResult(
                 const winnerPointDiff = homeWon ? pointDiff : -pointDiff;
                 const bonus = differentialBonus(winnerPointDiff);
 
-                homeTeamPoints = 0.5 * homeSetsWon + (homeWon ? 2 : 0);
-                awayTeamPoints = 0.5 * awaySetsWon + (homeWon ? 0 : 2);
+                homeTeamPoints = POINTS_PER_SET * homeSetsWon + (homeWon ? WIN_POINTS : 0);
+                awayTeamPoints = POINTS_PER_SET * awaySetsWon + (homeWon ? 0 : WIN_POINTS);
                 homeTeamBonus = homeWon ? bonus : 0;
                 awayTeamBonus = homeWon ? 0 : bonus;
             }

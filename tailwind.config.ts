@@ -29,6 +29,10 @@ const config: Config = {
           foreground: "hsl(var(--destructive-foreground))",
         },
         today: "hsl(var(--today))",
+        form: {
+          win: "hsl(var(--form-win))",
+          loss: "hsl(var(--form-loss))",
+        },
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
