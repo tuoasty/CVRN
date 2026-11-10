@@ -27,7 +27,7 @@ export function FormChips({team, form, regionCode, seasonSlug, linkMode}: {
     linkMode: StandingsLinkMode;
 }) {
     return (
-        <span className="flex w-[106px] gap-1">
+        <span className="flex gap-1.5">
             {form.map(f => {
                 const opponentName = f.opponent?.name ?? UNKNOWN;
                 const label = `${f.outcome === "W" ? "Win" : "Loss"} ${f.teamSets}-${f.opponentSets} against ${opponentName}`;
@@ -41,7 +41,7 @@ export function FormChips({team, form, regionCode, seasonSlug, linkMode}: {
                     seasonSlug,
                 });
                 const chipClass = cn(
-                    "grid h-[18px] w-[18px] place-items-center text-[11px] font-semibold leading-none text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-foreground",
+                    "grid h-6 w-6 shrink-0 place-items-center text-xs font-semibold leading-none text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-foreground",
                     f.outcome === "W" ? "bg-form-win" : "bg-form-loss",
                 );
                 return (

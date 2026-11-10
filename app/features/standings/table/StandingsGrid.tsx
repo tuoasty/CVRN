@@ -44,7 +44,13 @@ function HeaderCell({column, label, title, sorted}: {column: ColumnKey; label: s
             scope="col"
             aria-sort={sorted ? "descending" : undefined}
             title={title}
-            className={cn(CELL, "pb-2 pt-0 text-center text-xs font-semibold", VISIBILITY[column], sorted ? "text-foreground" : "text-muted-foreground")}
+            className={cn(
+                CELL,
+                "pb-2 pt-0 text-xs font-semibold",
+                column === "form" ? "text-left" : "text-center",
+                VISIBILITY[column],
+                sorted ? "text-foreground" : "text-muted-foreground",
+            )}
         >
             {sorted ? (
                 <span className="inline-flex items-center gap-0.5 underline decoration-2 underline-offset-[6px]">
