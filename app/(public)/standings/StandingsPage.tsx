@@ -12,11 +12,18 @@ type Props = {
 export default function StandingsPage({season, region, model}: Props) {
     return (
         <div className="page-wide py-6">
-            <h1 className="text-2xl font-semibold tracking-tight">Standings</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">{season.name} · {region.name}</p>
-            <div className="mt-6">
-                <StandingsView model={model} regionCode={region.code} seasonSlug={season.slug} linkMode="public" />
-            </div>
+            <StandingsView
+                model={model}
+                regionCode={region.code}
+                seasonSlug={season.slug}
+                linkMode="public"
+                header={
+                    <>
+                        <h1 className="text-2xl font-semibold tracking-tight">Standings</h1>
+                        <p className="mt-0.5 text-sm text-muted-foreground">{season.name} · {region.name}</p>
+                    </>
+                }
+            />
         </div>
     );
 }
