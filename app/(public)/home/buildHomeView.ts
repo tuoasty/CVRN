@@ -15,7 +15,7 @@ import {buildArticleHref, buildPublicMatchHref, buildPublicPlayerHref, buildPubl
 import {resolveMediaThumbnail} from "@/app/features/media/mediaUtils";
 import {getSeasonPhase} from "./model/phase";
 import {postRatio} from "./model/ratio";
-import {formatRegionTime, formatWhen} from "./model/format";
+import {formatRegionFullDate, formatRegionTime, formatWhen} from "./model/format";
 import {rankHeroCandidates, type HeroCandidate} from "./model/rankHeroCandidates";
 import {buildTape, standingRating} from "./model/buildTape";
 import {LEADER_ORDER, LEADER_SHORT, MATCHUP_LABELS, MATCHUP_ORDER, matchupLine, pickMatchLeader, pickTeamLeader, topSeasonLeaders} from "./model/leaders";
@@ -393,7 +393,7 @@ export function buildHomeView(input: HomeInput): HomeView {
             href: matchHref(m),
         }];
     };
-    const resultDays: ResultDay[] = groupByRegionDay(orderResults(input.completed, phase), timeZone, now, "Undated")
+    const resultDays: ResultDay[] = groupByRegionDay(orderResults(input.completed, phase), timeZone, now, "Undated", formatRegionFullDate)
         .map(day => ({key: day.key, label: day.label, isToday: day.isToday, rows: day.matches.flatMap(toResultRow)}))
         .filter(day => day.rows.length > 0);
 

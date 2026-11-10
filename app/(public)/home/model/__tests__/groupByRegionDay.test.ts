@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest";
 import {groupByRegionDay} from "../groupUpcoming";
 import {makeMatch} from "./fixtures";
+import {formatRegionFullDate} from "../format";
 
 const TZ = "Asia/Singapore";
 const NOW = new Date("2026-11-12T02:00:00Z");
@@ -21,5 +22,12 @@ describe("groupByRegionDay", () => {
         const days = groupByRegionDay([today, undated], TZ, NOW, "Undated");
         expect(days[0]).toMatchObject({label: "Today · Thu 12", isToday: true});
         expect(days[1]).toMatchObject({key: "tbd", label: "Undated", isToday: false});
+    });
+
+    it("uses the given day formatter for dated groups", () => {
+        const sat = makeMatch({status: "completed", scheduled_at: "2026-11-07T11:00:00Z"});
+        const today = makeMatch({status: "completed", scheduled_at: "2026-11-12T01:00:00Z"});
+        const days = groupByRegionDay([today, sat], TZ, NOW, "Undated", formatRegionFullDate);
+        expect(days.map(d => d.label)).toEqual(["Today · Nov 12, 2026", "Nov 7, 2026"]);
     });
 });

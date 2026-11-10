@@ -18,6 +18,11 @@ export function formatRegionDay(iso: string, timeZone: string): string {
     return `${p.weekday} ${p.day}`;
 }
 
+export function formatRegionFullDate(iso: string, timeZone: string): string {
+    const p = parts(iso, timeZone, {day: "numeric", month: "short", year: "numeric"});
+    return `${p.month} ${p.day}, ${p.year}`;
+}
+
 export function formatRegionDate(iso: string, timeZone: string): string {
     const p = parts(iso, timeZone, {weekday: "short", day: "numeric", month: "short"});
     return `${p.weekday} ${p.day} ${p.month}`;

@@ -9,7 +9,13 @@ export interface UpcomingGroupDay {
     matches: MatchWithDetails[];
 }
 
-export function groupByRegionDay(matches: MatchWithDetails[], timeZone: string, now: Date, undatedLabel: string): UpcomingGroupDay[] {
+export function groupByRegionDay(
+    matches: MatchWithDetails[],
+    timeZone: string,
+    now: Date,
+    undatedLabel: string,
+    formatDay: (iso: string, timeZone: string) => string = formatRegionDay,
+): UpcomingGroupDay[] {
     const todayKey = regionDayKey(now.toISOString(), timeZone);
     const days: UpcomingGroupDay[] = [];
     for (const m of matches) {
@@ -18,7 +24,7 @@ export function groupByRegionDay(matches: MatchWithDetails[], timeZone: string, 
         let day = days.find(d => d.key === key);
         if (!day) {
             const isToday = key === todayKey;
-            const label = iso ? formatRegionDay(iso, timeZone) : undatedLabel;
+            const label = iso ? formatDay(iso, timeZone) : undatedLabel;
             day = {key, label: isToday ? `Today · ${label}` : label, isToday, matches: []};
             days.push(day);
         }
