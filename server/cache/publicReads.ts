@@ -32,8 +32,10 @@ import {
     getTeamNameHistory,
     getAllTeamsWithRegions,
     getTeamsByIds,
+    getTeamStrengths,
+    getSeasonRosters,
 } from "@/server/domains/team";
-import type {TeamWithRegion} from "@/server/domains/team";
+import type {SeasonRosterEntry, TeamStrength, TeamWithRegion} from "@/server/domains/team";
 import {getStandings} from "@/server/domains/standing";
 import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 import {findPlayerSeasonMemberships} from "@/server/db/players.repo";
@@ -231,6 +233,20 @@ export const getCachedTeamWithPlayers = unstable_cache(
             "getCachedTeamWithPlayers",
         ),
     ["public:team-with-players"],
+    {tags: [CACHE_TAGS.teams, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedTeamStrengths = unstable_cache(
+    async (seasonNumber: number): Promise<TeamStrength[]> =>
+        unwrap(await getTeamStrengths(createPublicClient(), {seasonNumber}), "getCachedTeamStrengths"),
+    ["public:team-strengths"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedSeasonRosters = unstable_cache(
+    async (seasonId: string): Promise<SeasonRosterEntry[]> =>
+        unwrap(await getSeasonRosters(createPublicClient(), {seasonId}), "getCachedSeasonRosters"),
+    ["public:season-rosters"],
     {tags: [CACHE_TAGS.teams, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 

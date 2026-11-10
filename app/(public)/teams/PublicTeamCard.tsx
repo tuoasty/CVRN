@@ -1,130 +1,108 @@
-"use client";
-
 import Image from "next/image";
-import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import Link from "next/link";
-import { useTheme } from "next-themes";
-import { TeamWithRegion } from "@/server/domains/team";
-import { getBrickDisplayColor } from "@/app/lib/brickColor";
+import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
+import AvatarImage from "@/app/components/ui/AvatarImage";
 import { getLogoClassName } from "@/app/lib/logoClass";
+import { formatStrength, type RankedValue } from "@/app/features/teams/model/strength";
+import type { TeamWithRegion } from "@/server/domains/team";
 
 interface PublicTeamCardProps {
     team: TeamWithRegion;
+    strength: RankedValue;
     isPriority?: boolean;
 }
 
-export default function PublicTeamCard({ team, isPriority }: PublicTeamCardProps) {
-    const { resolvedTheme } = useTheme();
-
+function teamHref(team: TeamWithRegion): string | null {
     const regionCode = team.seasons?.regions?.code?.toLowerCase();
     const seasonSlug = team.seasons?.slug?.toLowerCase();
     const teamSlug = team.slug?.toLowerCase();
+    if (!regionCode || !seasonSlug || !teamSlug) return null;
+    return `/${encodeURIComponent(regionCode)}/${encodeURIComponent(seasonSlug)}/teams/${encodeURIComponent(teamSlug)}`;
+}
 
-    const canNavigate = !!regionCode && !!seasonSlug && !!teamSlug;
-    const brickColor = getBrickDisplayColor(team.brick_color, resolvedTheme === "dark");
-
-    const href = canNavigate
-        ? `/${encodeURIComponent(regionCode!)}/${encodeURIComponent(seasonSlug!)}/teams/${encodeURIComponent(teamSlug!)}`
-        : null;
-
-    const cardClasses = `group flex flex-col overflow-hidden panel transition-[border-color,box-shadow,transform] duration-150 motion-reduce:transition-none ${
-        canNavigate
-            ? "cursor-pointer hover:border-primary hover:shadow-sm hover:-translate-y-px motion-reduce:hover:translate-y-0"
-            : "opacity-60"
-    }`;
+export default function PublicTeamCard({ team, strength, isPriority }: PublicTeamCardProps) {
+    const href = teamHref(team);
+    const hex = team.brick_color ? team.brick_color.toUpperCase() : null;
+    const playerCount = team.playerCount ?? 0;
 
     const inner = (
         <>
-            <div className="flex items-center gap-2 px-3.5 py-3 border-b border-border">
-                <span className="text-sm font-semibold tracking-tight truncate min-w-0 flex-1">
-                    {team.name}
-                </span>
-                <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
-                    {team.playerCount ?? 0} players
-                </span>
-            </div>
-
-            <div className="flex-1 flex items-center justify-center min-h-[208px] bg-card">
+            <div className="relative h-20 w-20 sm:h-28 sm:w-28">
                 {team.logo_url ? (
-                    <div className="relative w-[108px] h-[108px]" suppressHydrationWarning>
-                        <Image
-                            src={team.logo_url}
-                            alt={team.name || "Team"}
-                            fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                            priority={isPriority}
-                            className={getLogoClassName(team.logo_bg_removed)}
-                        />
-                    </div>
+                    <Image
+                        src={team.logo_url}
+                        alt=""
+                        fill
+                        sizes="112px"
+                        priority={isPriority}
+                        className={getLogoClassName(team.logo_bg_removed)}
+                    />
                 ) : (
-                    <div className="relative w-[108px] h-[108px]">
-                        <DefaultTeamLogo sizes="108px" alt={team.name || "Team"} />
-                    </div>
+                    <DefaultTeamLogo sizes="112px" alt="" />
                 )}
             </div>
 
-            <div className="flex items-center gap-2 px-3.5 py-2.5 border-t border-border">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                    {team.captain ? (
-                        <>
-                            {team.captain.avatarUrl ? (
-                                <Image
-                                    src={team.captain.avatarUrl}
-                                    alt={team.captain.displayName ?? "Captain"}
-                                    width={18}
-                                    height={18}
-                                    sizes="18px"
-                                    className="rounded-full object-cover shrink-0"
-                                    unoptimized
-                                />
-                            ) : (
-                                <div
-                                    className="w-[18px] h-[18px] rounded-full shrink-0 flex items-center justify-center"
-                                    style={{ backgroundColor: brickColor ?? "hsl(var(--muted-foreground))" }}
-                                    suppressHydrationWarning
-                                >
-                                    <span className="text-xs font-bold uppercase leading-none text-white">
-                                        {team.captain.displayName?.slice(0, 1) ?? "?"}
-                                    </span>
-                                </div>
-                            )}
-                            <span className="text-xs text-muted-foreground truncate min-w-0">
-                                {team.captain.displayName}
-                            </span>
-                        </>
-                    ) : (
-                        <span className="text-xs text-muted-foreground">No captain</span>
-                    )}
-                </div>
+            <span className="mt-4 max-w-full truncate text-lg font-semibold tracking-tight text-foreground group-hover:underline group-hover:underline-offset-4">
+                {team.name}
+            </span>
 
+            <span className="mt-1 font-mono text-base tabular-nums text-foreground">
+                <span className="sr-only">Strength </span>
+                {formatStrength(strength.value)}
+            </span>
+
+            <span className="mt-3 flex max-w-full items-center gap-2 text-[13px] text-muted-foreground">
+                {team.captain ? (
+                    <>
+                        <span className="relative h-6 w-6 shrink-0 overflow-hidden">
+                            <AvatarImage src={team.captain.avatarUrl} alt="" sizes="24px" />
+                        </span>
+                        <span className="truncate">{team.captain.displayName}</span>
+                    </>
+                ) : (
+                    "No captain"
+                )}
+            </span>
+
+            <span className="mt-1.5 flex flex-wrap items-center justify-center gap-x-1.5 text-xs text-muted-foreground">
+                <span>
+                    <span className="font-mono tabular-nums">{playerCount}</span> {playerCount === 1 ? "player" : "players"}
+                </span>
+                {hex && (
+                    <>
+                        <span aria-hidden>·</span>
+                        <span className="flex items-center gap-1">
+                            <span
+                                aria-hidden
+                                className="h-2.5 w-2.5 shrink-0 border border-border"
+                                style={{ backgroundColor: team.brick_color }}
+                            />
+                            <span className="font-mono">{hex}</span>
+                        </span>
+                    </>
+                )}
                 {team.brick_number != null && (
-                    <span
-                        className="text-xs font-semibold px-1.5 py-0.5 rounded-sm shrink-0 tabular-nums font-mono"
-                        style={
-                            brickColor
-                                ? {
-                                      backgroundColor: `${brickColor}20`,
-                                      color: brickColor,
-                                      border: `1px solid ${brickColor}40`,
-                                  }
-                                : undefined
-                        }
-                        suppressHydrationWarning
-                    >
-                        <span className={brickColor ? "" : "text-muted-foreground"}>#{team.brick_number}</span>
-                    </span>
+                    <>
+                        <span aria-hidden>·</span>
+                        <span className="font-mono tabular-nums">#{team.brick_number}</span>
+                    </>
                 )}
-            </div>
+            </span>
         </>
     );
 
-    if (href) {
-        return (
-            <Link href={href} prefetch={false} className={cardClasses}>
-                {inner}
-            </Link>
-        );
-    }
+    const className =
+        "group flex min-w-0 flex-col items-center px-2 py-4 text-center transition-colors duration-150 motion-reduce:transition-none";
 
-    return <div className={cardClasses}>{inner}</div>;
+    if (!href) return <div className={className}>{inner}</div>;
+
+    return (
+        <Link
+            href={href}
+            prefetch={false}
+            className={`${className} cursor-pointer hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
+        >
+            {inner}
+        </Link>
+    );
 }
