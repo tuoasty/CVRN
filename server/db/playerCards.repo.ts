@@ -2,6 +2,7 @@ import { CardGroupInsert, CardGroupRow, CardTemplateInsert, CardTemplateRow, DBC
 import type { Json } from '@/database.types'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { serializeError } from '@/server/utils/serializeableError'
+import type { CardAttributes } from '@/server/domains/playerCard/types'
 
 type PgError = { code?: string; message: string }
 
@@ -36,6 +37,35 @@ export async function findCardTemplates(supabase: DBClient, groupId?: string): P
     const { data, error } = await query.order('min_ovr', { ascending: false })
     if (error) return Err(serializeError(error, 'DB_ERROR'))
     return Ok((data ?? []) as CardTemplateRow[])
+}
+
+const CARD_ATTRIBUTES_PAGE_SIZE = 1000
+
+export async function findCardAttributesBySeason(supabase: DBClient, seasonNumber: number): Promise<Result<CardAttributes[]>> {
+    const out: CardAttributes[] = []
+    for (let from = 0; ; from += CARD_ATTRIBUTES_PAGE_SIZE) {
+        const { data, error } = await supabase
+            .from('player_cards')
+            .select('id, player_id, season_number, ovr, scoring, spiking, setting, blocking, receiving, serving')
+            .eq('season_number', seasonNumber)
+            .order('id', { ascending: true })
+            .range(from, from + CARD_ATTRIBUTES_PAGE_SIZE - 1)
+        if (error) return Err(serializeError(error, 'DB_ERROR'))
+        for (const r of data ?? []) {
+            out.push({
+                playerId: r.player_id,
+                seasonNumber: r.season_number,
+                ovr: r.ovr,
+                scoring: r.scoring,
+                spiking: r.spiking,
+                setting: r.setting,
+                blocking: r.blocking,
+                receiving: r.receiving,
+                serving: r.serving,
+            })
+        }
+        if (!data || data.length < CARD_ATTRIBUTES_PAGE_SIZE) return Ok(out)
+    }
 }
 
 export interface PublicPlayerCardRow {

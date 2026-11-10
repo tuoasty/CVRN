@@ -14,6 +14,9 @@ import {
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { seasonStrengths } from "@/app/features/teams/model/strength";
 import { buildRosterTiles } from "@/app/features/teams/detail/model/roster";
+import { buildLeaders } from "@/app/features/teams/detail/model/leaders";
+import { getCachedSeasonTeamBreakdown } from "@/app/features/teams/detail/getCachedSeasonTeamBreakdown";
+import { buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
 import type { PlayerLeaderboardRow } from "@/server/domains/player";
 import type { StandingMethod } from "@/shared/types/standing";
 
@@ -45,13 +48,14 @@ export default async function TeamPage({ params }: PageProps) {
     const teamData = await getCachedTeamWithPlayers(teamSlug, seasonRecord.id);
     if (!teamData) notFound();
 
-    const [history, statRows, matchHistory, standings, strengths, allRows] = await Promise.all([
+    const [history, statRows, matchHistory, standings, strengths, allRows, breakdowns] = await Promise.all([
         getCachedTeamNameHistory(teamData.team.id),
         getCachedTeamLeaderboard(teamData.team.id, seasonRecord.id),
         getCachedTeamMatches(teamData.team.id, seasonRecord.id),
         getCachedStandings(seasonRecord.id, regionRecord.id),
         getCachedTeamStrengths(seasonRecord.season_number),
         getCachedAllSeasonRows(),
+        getCachedSeasonTeamBreakdown(seasonRecord.id, regionRecord.id),
     ]);
 
     const seasonTeamIds = standings.map((s) => s.team_id).filter((id): id is string => !!id);
@@ -61,9 +65,30 @@ export default async function TeamPage({ params }: PageProps) {
         rank: null,
     };
 
+    const rows = allRows as unknown as PlayerLeaderboardRow[];
+    const rosterIds = teamData.players.map((p) => p.id);
+    const rosterIdSet = new Set(rosterIds);
+    const rosterRows = rows.filter((r) => rosterIdSet.has(r.player_id));
+    const leaders = buildLeaders({
+        rosterIds,
+        seasonRows: rosterRows.filter((r) => r.season_id === seasonRecord.id),
+        careerRows: rosterRows,
+    });
+    const leaderPlayers = Object.fromEntries(
+        teamData.players.map((p) => [
+            p.id,
+            {
+                name: p.display_name || p.username || "Unknown",
+                username: p.username,
+                avatarUrl: p.avatar_url,
+                href: buildPublicPlayerHref(p.username),
+            },
+        ]),
+    );
+
     const rosterTiles = buildRosterTiles({
         players: teamData.players,
-        rows: allRows as unknown as PlayerLeaderboardRow[],
+        rows: rosterRows,
         seasonId: seasonRecord.id,
         regionId: regionRecord.id,
     });
@@ -82,6 +107,9 @@ export default async function TeamPage({ params }: PageProps) {
             standing={standings.find((s) => s.team_id === teamData.team.id) ?? null}
             teamCount={standings.filter((s) => !!s.team_id).length}
             strength={strength}
+            leaders={leaders}
+            leaderPlayers={leaderPlayers}
+            breakdown={breakdowns[teamData.team.id] ?? null}
         />
     );
 }

@@ -23,8 +23,8 @@ import {
     getRawStatSummaryBySeasonNumber,
 } from "@/server/domains/player";
 import {pickMainTeam} from "@/server/domains/player/helpers/pickMainTeam";
-import {getPublicPlayerCards} from "@/server/domains/playerCard";
-import type {PublicPlayerCard} from "@/server/domains/playerCard";
+import {getCardAttributes, getPublicPlayerCards} from "@/server/domains/playerCard";
+import type {CardAttributes, PublicPlayerCard} from "@/server/domains/playerCard";
 import {findHeldSpecSeasonId} from "@/server/db/seasons.repo";
 import type {PlayerDetail} from "@/server/domains/player";
 import {
@@ -196,6 +196,13 @@ export const getCachedPlayerCards = unstable_cache(
     async (playerId: string): Promise<PublicPlayerCard[]> =>
         unwrap(await getPublicPlayerCards(createPublicClient(), {playerId}), "getCachedPlayerCards"),
     ["public:player-cards"],
+    {tags: [CACHE_TAGS.playerCards], revalidate: CARDS_REVALIDATE_SECONDS},
+);
+
+export const getCachedCardAttributes = unstable_cache(
+    async (seasonNumber: number): Promise<CardAttributes[]> =>
+        unwrap(await getCardAttributes(createPublicClient(), {seasonNumber}), "getCachedCardAttributes"),
+    ["public:card-attributes"],
     {tags: [CACHE_TAGS.playerCards], revalidate: CARDS_REVALIDATE_SECONDS},
 );
 

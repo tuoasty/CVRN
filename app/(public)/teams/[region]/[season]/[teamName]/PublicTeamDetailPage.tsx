@@ -7,6 +7,10 @@ import type { RankedValue } from "@/app/features/teams/model/strength";
 import type { RosterTile } from "@/app/features/teams/detail/model/roster";
 import TeamHeader from "./TeamHeader";
 import RosterSection from "./RosterSection";
+import LeadersSection, { type LeaderPlayer } from "./LeadersSection";
+import BreakdownSection from "./BreakdownSection";
+import type { Leader } from "@/app/features/teams/detail/model/leaders";
+import type { TeamBreakdown } from "@/app/features/teams/detail/model/breakdown";
 import TeamStatsSection from "./TeamStatsSection";
 import TeamMatchHistory from "./TeamMatchHistory";
 
@@ -23,6 +27,9 @@ type Props = {
     standing: StandingWithInfo | null;
     teamCount: number;
     strength: RankedValue;
+    leaders: { source: "season" | "alltime"; leaders: Leader[] };
+    leaderPlayers: Record<string, LeaderPlayer>;
+    breakdown: TeamBreakdown | null;
 };
 
 export default function PublicTeamDetailPage({
@@ -38,6 +45,9 @@ export default function PublicTeamDetailPage({
     standing,
     teamCount,
     strength,
+    leaders,
+    leaderPlayers,
+    breakdown,
 }: Props) {
     const formerName = history.find((h) => h.oldName !== team.name)?.oldName ?? null;
     const maxPlayers = team.seasons?.max_players ?? 18;
@@ -57,7 +67,10 @@ export default function PublicTeamDetailPage({
 
             <div className="mt-12 grid gap-12 min-[1100px]:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
                 <RosterSection tiles={rosterTiles} maxPlayers={maxPlayers} />
-                <div className="min-w-0" />
+                <div className="min-w-0 space-y-12">
+                    <LeadersSection source={leaders.source} leaders={leaders.leaders} players={leaderPlayers} />
+                    <BreakdownSection breakdown={breakdown} players={leaderPlayers} />
+                </div>
             </div>
 
             <div className="mt-12">
