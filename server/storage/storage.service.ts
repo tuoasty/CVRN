@@ -5,7 +5,7 @@ import {logger} from "@/server/utils/logger";
 import sharp from 'sharp';
 import {getUserRole} from "@/server/db/roles.repo";
 import {checkUploadRateLimit} from "@/server/utils/rateLimiter";
-import {processLogoBackground} from "./imageProcessing";
+import {processLogoBackground, trimLogoPadding} from "./imageProcessing";
 import {toCdnUrl} from "./toCdnUrl";
 import {IMAGE_PROFILES, type ImageProfile} from "@/shared/storage/imageProfiles";
 
@@ -15,6 +15,8 @@ const IMAGE_VALIDATION = {
     ALLOWED_TYPES: ['image/png', 'image/jpeg', 'image/webp'] as string[],
     COMPRESSION_QUALITY: 85,
 } as const;
+
+const TRIM_WORKING_MAX = 1024;
 
 export async function validateAndCompressImage(
     file: File | Blob,
@@ -49,6 +51,17 @@ export async function validateAndCompressImage(
                 name: "InvalidImage",
                 code: "VALIDATION_ERROR"
             });
+        }
+
+        if (profile.trimPadding) {
+            const working = await image.resize(TRIM_WORKING_MAX, TRIM_WORKING_MAX, {fit: 'inside', withoutEnlargement: true}).png().toBuffer();
+            const cleaned = removeBackground ? await processLogoBackground(working, 'png') : {buffer: working, bgRemoved: false};
+            const trimmed = await trimLogoPadding(cleaned.buffer);
+            const output = await sharp(trimmed).resize(profile.maxDimension, profile.maxDimension, {
+                fit: 'inside',
+                withoutEnlargement: true
+            }).webp({ quality: IMAGE_VALIDATION.COMPRESSION_QUALITY }).toBuffer();
+            return Ok({ buffer: output, contentType: 'image/webp', bgRemoved: cleaned.bgRemoved });
         }
 
         const resizedBuffer = await image.resize(profile.maxDimension, profile.maxDimension, {

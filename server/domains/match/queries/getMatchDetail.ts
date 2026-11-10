@@ -11,7 +11,7 @@ import {findMatchOfficials} from "@/server/db/matchOfficial.repo";
 import {findAllMediaPosts} from "@/server/db/mediaPost.repo";
 import type {MediaPost} from "@/server/domains/media";
 import {MatchOfficialEntry} from "../types";
-import {getTeamRosters, TeamRosters} from "./getTeamRosters";
+import {getTeamRosters, RosterAsOf, TeamRosters} from "./getTeamRosters";
 import {StandingMethod} from "@/shared/types/standing";
 
 export type MatchDetail = {
@@ -80,8 +80,20 @@ async function loadDetailForMatch(
     }
 
     let rosters: TeamRosters | null = null;
-    if (match.status !== "completed" && match.home_team_id && match.away_team_id) {
-        const rostersRes = await getTeamRosters(supabase, match.home_team_id, match.away_team_id);
+    const isCompleted = match.status === "completed";
+    const needsRosters = !isCompleted || (!match.is_forfeit && statTotalsRes.value.length === 0);
+    if (needsRosters && match.home_team_id && match.away_team_id) {
+        let asOf: RosterAsOf | null = null;
+        if (isCompleted && match.scheduled_at) {
+            const seasonRes = await supabase
+                .from("seasons")
+                .select("season_number")
+                .eq("id", match.season_id)
+                .maybeSingle();
+            const seasonNumber = seasonRes.data?.season_number ?? 1;
+            asOf = {at: match.scheduled_at, trustJoinedAt: seasonNumber >= 2};
+        }
+        const rostersRes = await getTeamRosters(supabase, match.home_team_id, match.away_team_id, asOf);
         if (rostersRes.ok) rosters = rostersRes.value;
     }
 

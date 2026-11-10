@@ -127,7 +127,7 @@ export default function MatchDetailContent({detail, extras}: Props) {
                 </section>
             )}
 
-            {!isCompleted && !match.is_forfeit && players && (
+            {!match.is_forfeit && players && !(isPlayable && hasStats) && (
                 <section className="mt-11">
                     <h2 className="text-center text-xl font-semibold tracking-tight">Players</h2>
                     <div className="mt-4">

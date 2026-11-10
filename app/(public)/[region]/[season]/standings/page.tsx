@@ -3,9 +3,13 @@ import StandingsPage from "@/app/(public)/standings/StandingsPage";
 import {
     getCachedRegionByCode,
     getCachedSeasonBySlugAndRegion,
+    getCachedSeasonCompletedMatches,
+    getCachedSeasonUpcomingMatches,
     getCachedStandings,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
+import { buildStandingsTable } from "@/app/features/standings/model/buildStandingsTable";
+import type { StandingMethod } from "@/shared/types/standing";
 
 type PageProps = {
     params: Promise<{ region: string; season: string }>;
@@ -23,7 +27,20 @@ export default async function Page({ params }: PageProps) {
     );
     if (!seasonRecord) notFound();
 
-    const standings = await getCachedStandings(seasonRecord.id, regionRecord.id);
+    const [standings, completed, upcoming] = await Promise.all([
+        getCachedStandings(seasonRecord.id, regionRecord.id),
+        getCachedSeasonCompletedMatches(seasonRecord.id),
+        getCachedSeasonUpcomingMatches(seasonRecord.id),
+    ]);
 
-    return <StandingsPage season={seasonRecord} region={regionRecord} standings={standings} />;
+    const model = buildStandingsTable({
+        standings,
+        completed,
+        upcoming,
+        method: regionRecord.standing_method as StandingMethod,
+        qualifiedTeams: seasonRecord.playoff_configs?.qualified_teams,
+        playinTeams: seasonRecord.playoff_configs?.playin_teams,
+    });
+
+    return <StandingsPage season={seasonRecord} region={regionRecord} model={model} />;
 }
