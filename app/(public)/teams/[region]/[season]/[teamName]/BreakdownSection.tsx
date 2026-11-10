@@ -1,107 +1,76 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { ViewTabs } from "@/app/components/filters/ViewTabs";
 import { ordinal } from "@/app/features/teams/model/strength";
-import type { BreakdownStat, TeamBreakdown } from "@/app/features/teams/detail/model/breakdown";
-import type { StarterSlot } from "@/app/features/teams/detail/model/projectedStarters";
-import type { LeaderPlayer } from "./LeadersSection";
+import type { BreakdownGroup, BreakdownStat, TeamBreakdown } from "@/app/features/teams/detail/model/breakdown";
 
 type View = "projected" | "season";
 
 type Props = {
     breakdown: TeamBreakdown | null;
-    players: Record<string, LeaderPlayer>;
 };
 
-const SIGNED = new Set(["pointDiff", "setDiff"]);
+const LEFT_GROUPS: BreakdownGroup[] = ["Overall", "Attack", "Setting"];
+const RIGHT_GROUPS: BreakdownGroup[] = ["Block", "Defense", "Serve"];
 
 function formatValue(stat: BreakdownStat): string {
     if (stat.value === null) return "-";
-    if (stat.key === "setDiff") return stat.value > 0 ? `+${stat.value}` : String(stat.value);
+    if (stat.kind === "pct") return `${(stat.value * 100).toFixed(1)}%`;
     const text = stat.value.toFixed(1);
-    if (SIGNED.has(stat.key) && Number(text) > 0) return `+${text}`;
     if (Number(text) === 0) return "0.0";
+    if (stat.kind === "diff" && stat.value > 0) return `+${text}`;
     return text;
 }
 
 function showsZero(stat: BreakdownStat): boolean {
-    return stat.value !== null && Math.round(stat.value * 10) === 0;
+    if (stat.value === null || stat.kind === "diff") return false;
+    const scale = stat.kind === "pct" ? 1000 : 10;
+    return Math.round(stat.value * scale) === 0;
 }
 
-function StatTable({ stats }: { stats: BreakdownStat[] }) {
+function StatGroup({ group, stats }: { group: BreakdownGroup; stats: BreakdownStat[] }) {
     return (
-        <table className="mt-3 w-full text-sm">
-            <thead>
-                <tr className="border-b border-border">
-                    <th scope="col" className="pb-2 text-left text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground">
-                        Stat per set
-                    </th>
-                    <th scope="col" className="pb-2 text-right text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground">
-                        Value
-                    </th>
-                    <th scope="col" className="w-16 pb-2 text-right text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground">
-                        Rank
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                {stats.map((stat) => (
-                    <tr key={stat.key}>
-                        <th scope="row" className="py-2 text-left font-normal text-foreground">
-                            {stat.label}
-                        </th>
-                        <td className="py-2 text-right font-mono tabular-nums text-foreground">{formatValue(stat)}</td>
-                        <td className="py-2 text-right font-mono tabular-nums text-muted-foreground">
-                            {stat.rank !== null ? ordinal(stat.rank) : "-"}
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
+        <div>
+            {group !== "Overall" && (
+                <h3 className="text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground">{group}</h3>
+            )}
+            <table className="w-full text-sm">
+                <tbody>
+                    {stats.map((stat) => (
+                        <tr key={stat.key}>
+                            <th scope="row" className="py-0.5 text-left font-normal text-foreground">
+                                {stat.label}
+                            </th>
+                            <td className="py-0.5 text-right font-mono tabular-nums text-foreground">{formatValue(stat)}</td>
+                            <td className="w-12 py-0.5 text-right font-mono tabular-nums text-muted-foreground">
+                                {stat.rank !== null ? ordinal(stat.rank) : "-"}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     );
 }
 
-function StartersList({ starters, players }: { starters: StarterSlot[]; players: Record<string, LeaderPlayer> }) {
+function StatGroups({ stats }: { stats: BreakdownStat[] }) {
+    const visible = stats.filter((stat) => !showsZero(stat));
+    const column = (groups: BreakdownGroup[]) =>
+        groups
+            .map((group) => ({ group, rows: visible.filter((stat) => stat.group === group) }))
+            .filter(({ rows }) => rows.length > 0)
+            .map(({ group, rows }) => <StatGroup key={group} group={group} stats={rows} />);
+
     return (
-        <>
-            <h3 className="mt-6 text-sm font-semibold text-foreground">Projected starters</h3>
-            <ul className="mt-2">
-                {starters.map((slot, i) => {
-                    const player = slot.playerId ? players[slot.playerId] : undefined;
-                    return (
-                        <li key={`${slot.slot}-${i}`} className="grid grid-cols-[44px_minmax(0,1fr)] items-center py-1.5 text-sm">
-                            <span className="font-mono text-xs font-semibold text-muted-foreground">{slot.slot}</span>
-                            {!player ? (
-                                <span className="text-muted-foreground">-</span>
-                            ) : (
-                                <span className="flex min-w-0 items-baseline gap-2">
-                                    {player.href ? (
-                                        <Link
-                                            href={player.href}
-                                            prefetch={false}
-                                            className="truncate font-semibold text-foreground hover:underline hover:underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-                                        >
-                                            {player.name}
-                                        </Link>
-                                    ) : (
-                                        <span className="truncate font-semibold text-foreground">{player.name}</span>
-                                    )}
-                                    {player.username && (
-                                        <span className="shrink-0 truncate text-xs text-muted-foreground">@{player.username}</span>
-                                    )}
-                                </span>
-                            )}
-                        </li>
-                    );
-                })}
-            </ul>
-        </>
+        <div className="mt-3 grid gap-x-10 gap-y-3 sm:max-[1099px]:grid-cols-2">
+            <div className="space-y-3">{column(LEFT_GROUPS)}</div>
+            <div className="space-y-3">{column(RIGHT_GROUPS)}</div>
+        </div>
     );
 }
 
-export default function BreakdownSection({ breakdown, players }: Props) {
+export default function BreakdownSection({ breakdown }: Props) {
     const hasSeason = !!breakdown?.season;
     const [view, setView] = useState<View>(hasSeason ? "season" : "projected");
     const active: View = hasSeason ? view : "projected";
@@ -113,23 +82,23 @@ export default function BreakdownSection({ breakdown, players }: Props) {
           ] as const)
         : ([{ value: "projected", label: "Projected" }] as const);
 
-    const fullLineup = !!breakdown && breakdown.starters.every((slot) => slot.playerId !== null);
-
     return (
         <section aria-label="Team breakdown" className="min-w-0">
-            <h2 className="text-base font-semibold">Team breakdown</h2>
+            <div className="flex items-baseline justify-between gap-4">
+                <h2 className="text-base font-semibold">Team breakdown</h2>
+                <span className="text-xs text-muted-foreground">per set · rank in region</span>
+            </div>
             <ViewTabs label="Breakdown view" idBase="team-breakdown" tabs={tabs} value={active} onChange={setView} density="compact" className="mt-1" />
 
             {!breakdown ? (
                 <p className="py-6 text-sm text-muted-foreground">No breakdown for this team yet.</p>
             ) : active === "season" && breakdown.season ? (
                 <div id="team-breakdown-panel" role="tabpanel" aria-labelledby="team-breakdown-tab-season">
-                    <StatTable stats={breakdown.season} />
+                    <StatGroups stats={breakdown.season} />
                 </div>
             ) : (
                 <div id="team-breakdown-panel" role="tabpanel" aria-labelledby="team-breakdown-tab-projected">
-                    <StatTable stats={breakdown.projected.filter((stat) => !showsZero(stat))} />
-                    {fullLineup && <StartersList starters={breakdown.starters} players={players} />}
+                    <StatGroups stats={breakdown.projected} />
                 </div>
             )}
         </section>

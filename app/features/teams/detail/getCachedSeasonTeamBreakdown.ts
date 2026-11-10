@@ -7,7 +7,6 @@ import {
     getCachedSeasonCompletedMatches,
     getCachedSeasonRosters,
     getCachedSeasons,
-    getCachedStandings,
     getCachedTeamsWithRegions,
 } from "@/server/cache/publicReads";
 import {CACHE_TAGS, PUBLIC_REVALIDATE_SECONDS} from "@/server/cache/tags";
@@ -29,19 +28,18 @@ function careerPositionCounts(rows: PlayerLeaderboardRow[]): Map<string, Positio
 }
 
 export const getCachedSeasonTeamBreakdown = unstable_cache(
-    async (seasonId: string, regionId: string): Promise<Record<string, TeamBreakdown>> => {
+    async (seasonId: string): Promise<Record<string, TeamBreakdown>> => {
         const seasons = await getCachedSeasons();
         const season = seasons.find((s) => s.id === seasonId);
         if (!season) return {};
 
-        const [rosters, teams, allRows, previousCards, seasonRows, completedMatches, standings] = await Promise.all([
+        const [rosters, teams, allRows, previousCards, seasonRows, completedMatches] = await Promise.all([
             getCachedSeasonRosters(seasonId),
             getCachedTeamsWithRegions(),
             getCachedAllSeasonRows(),
             getCachedCardAttributes(season.season_number - 1),
             getCachedPlayerLeaderboard(seasonId),
             getCachedSeasonCompletedMatches(seasonId),
-            getCachedStandings(seasonId, regionId),
         ]);
 
         const numberBySeason = new Map(seasons.map((s) => [s.id, s.season_number]));
@@ -71,7 +69,6 @@ export const getCachedSeasonTeamBreakdown = unstable_cache(
             previousCards,
             seasonRows: seasonRows as unknown as PlayerLeaderboardRow[],
             completedMatches,
-            standings,
             positionsByPlayer,
         });
 

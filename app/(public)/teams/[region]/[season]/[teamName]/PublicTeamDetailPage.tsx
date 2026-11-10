@@ -69,7 +69,7 @@ export default function PublicTeamDetailPage({
                 <RosterSection tiles={rosterTiles} maxPlayers={maxPlayers} />
                 <div className="min-w-0 space-y-12">
                     <LeadersSection source={leaders.source} leaders={leaders.leaders} players={leaderPlayers} />
-                    <BreakdownSection breakdown={breakdown} players={leaderPlayers} />
+                    <BreakdownSection breakdown={breakdown} />
                 </div>
             </div>
 

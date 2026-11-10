@@ -1,31 +1,44 @@
 import type {PlayerLeaderboardRow} from "@/server/domains/player";
 import type {MatchWithDetails} from "@/server/domains/match";
-import type {StandingWithInfo} from "@/server/domains/standing";
 import type {SeasonRosterEntry} from "@/server/domains/team/types";
 import type {CardAttributes} from "@/server/domains/playerCard/types";
 import type {PositionCode} from "@/shared/volleyball/positions";
 import {rankValues} from "@/app/features/teams/model/strength";
 import {pickProjectedStarters, type StarterCandidate, type StarterSlot} from "./projectedStarters";
-import {perSetOf, sumByPlayer, TOTAL_FIELDS, type StatKey} from "./perSet";
+import {emptyTotals, perSetOf, STAT_KEYS, sumByPlayer, TOTAL_FIELDS, type StatKey} from "./perSet";
 
-export const PROJECTED_STATS = [
-    {key: "points", label: "Points"},
-    {key: "kills", label: "Kills"},
-    {key: "assists", label: "Assists"},
-    {key: "blocks", label: "Blocks"},
-    {key: "receives", label: "Receives"},
-    {key: "aces", label: "Aces"},
-] as const satisfies readonly {key: StatKey; label: string}[];
+export type StatKind = "perSet" | "pct" | "diff";
 
-export const SEASON_STATS = [
-    {key: "pointDiff", label: "Point diff"},
-    {key: "setDiff", label: "Set diff (total)"},
-    ...PROJECTED_STATS,
-] as const;
+export type BreakdownGroup = "Overall" | "Attack" | "Setting" | "Block" | "Defense" | "Serve";
+
+type StatDef = {key: string; label: string; group: BreakdownGroup; kind: StatKind; seasonOnly?: boolean};
+
+export const BREAKDOWN_STATS: readonly StatDef[] = [
+    {key: "pointDiff", label: "Point Differential", group: "Overall", kind: "diff", seasonOnly: true},
+    {key: "points", label: "Points", group: "Attack", kind: "perSet"},
+    {key: "kills", label: "Kills", group: "Attack", kind: "perSet"},
+    {key: "delayKills", label: "Delay Kills", group: "Attack", kind: "perSet"},
+    {key: "quickKills", label: "Quick Kills", group: "Attack", kind: "perSet"},
+    {key: "efficiency", label: "Efficiency", group: "Attack", kind: "pct"},
+    {key: "assists", label: "Assists", group: "Setting", kind: "perSet"},
+    {key: "apeKills", label: "Ape Kills", group: "Setting", kind: "perSet"},
+    {key: "setEfficiency", label: "Setting Efficiency", group: "Setting", kind: "pct"},
+    {key: "blocks", label: "Blocks", group: "Block", kind: "perSet"},
+    {key: "killBlocks", label: "Kill Blocks", group: "Block", kind: "perSet"},
+    {key: "receives", label: "Receives", group: "Defense", kind: "perSet"},
+    {key: "digs", label: "Digs", group: "Defense", kind: "perSet"},
+    {key: "dives", label: "Dives", group: "Defense", kind: "perSet"},
+    {key: "aces", label: "Aces", group: "Serve", kind: "perSet"},
+];
+
+export const PROJECTED_STATS = BREAKDOWN_STATS.filter((s) => !s.seasonOnly);
+export const SEASON_STATS = BREAKDOWN_STATS;
 
 export interface BreakdownStat {
     key: string;
     label: string;
+    group: BreakdownGroup;
+    kind: StatKind;
     value: number | null;
     rank: number | null;
 }
@@ -44,9 +57,10 @@ export interface SeasonBreakdownInput {
     previousCards: CardAttributes[];
     seasonRows: PlayerLeaderboardRow[];
     completedMatches: MatchWithDetails[];
-    standings: StandingWithInfo[];
     positionsByPlayer: Map<string, PositionCode[]>;
 }
+
+type Values = Record<string, number | null>;
 
 function bestCards(cards: CardAttributes[]): Map<string, CardAttributes> {
     const out = new Map<string, CardAttributes>();
@@ -75,11 +89,18 @@ function teamSetMargins(matches: MatchWithDetails[]): Map<string, {sets: number;
     return out;
 }
 
-function withRanks<K extends string>(
-    teamIds: string[],
-    stats: readonly {key: K; label: string}[],
-    values: Map<string, Record<K, number | null> | null>,
-): Map<string, BreakdownStat[] | null> {
+function valuesFrom(sums: Record<StatKey, number>, divisor: number): Values {
+    const out: Values = {};
+    for (const def of BREAKDOWN_STATS) {
+        if (def.kind === "perSet") out[def.key] = sums[def.key as StatKey] / divisor;
+    }
+    out.efficiency = sums.killAttempts > 0 ? (sums.kills - sums.spikingErrors) / sums.killAttempts : null;
+    const setAttempts = sums.assists + sums.settingErrors;
+    out.setEfficiency = setAttempts > 0 ? sums.assists / setAttempts : null;
+    return out;
+}
+
+function withRanks(teamIds: string[], stats: readonly StatDef[], values: Map<string, Values | null>): Map<string, BreakdownStat[] | null> {
     const ranks = new Map(
         stats.map(({key}) => [
             key,
@@ -95,10 +116,12 @@ function withRanks<K extends string>(
             if (!own) return [id, null];
             return [
                 id,
-                stats.map(({key, label}) => ({
+                stats.map(({key, label, group, kind}) => ({
                     key,
                     label,
-                    value: own[key],
+                    group,
+                    kind,
+                    value: own[key] ?? null,
                     rank: ranks.get(key)?.get(id)?.rank ?? null,
                 })),
             ];
@@ -111,7 +134,7 @@ export function buildSeasonBreakdown(input: SeasonBreakdownInput): Map<string, T
     const cards = bestCards(input.previousCards);
 
     const starters = new Map<string, StarterSlot[]>();
-    const projectedValues = new Map<string, Record<StatKey, number | null>>();
+    const projectedValues = new Map<string, Values | null>();
 
     for (const teamId of input.teamIds) {
         const candidates: StarterCandidate[] = input.rosters
@@ -137,23 +160,19 @@ export function buildSeasonBreakdown(input: SeasonBreakdownInput): Map<string, T
         const picked = pickProjectedStarters(candidates);
         starters.set(teamId, picked);
 
-        const values = {} as Record<StatKey, number | null>;
-        for (const {key} of PROJECTED_STATS) {
-            let sum: number | null = null;
-            for (const slot of picked) {
-                if (!slot.playerId) continue;
-                const v = perSetOf(pre.get(slot.playerId), key);
-                if (v !== null) sum = (sum ?? 0) + v;
-            }
-            values[key] = sum;
+        const sums = emptyTotals();
+        let anyRows = false;
+        for (const slot of picked) {
+            const entry = slot.playerId ? pre.get(slot.playerId) : undefined;
+            if (!entry || entry.sets <= 0) continue;
+            anyRows = true;
+            for (const key of STAT_KEYS) sums[key] += perSetOf(entry, key) ?? 0;
         }
-        projectedValues.set(teamId, values);
+        projectedValues.set(teamId, anyRows ? valuesFrom(sums, 1) : {});
     }
 
     const margins = teamSetMargins(input.completedMatches);
-    const standingByTeam = new Map(input.standings.filter((s) => s.team_id).map((s) => [s.team_id as string, s]));
-    type SeasonKey = (typeof SEASON_STATS)[number]["key"];
-    const seasonValues = new Map<string, Record<SeasonKey, number | null> | null>();
+    const seasonValues = new Map<string, Values | null>();
 
     for (const teamId of input.teamIds) {
         const teamRows = input.seasonRows.filter((r) => r.team_id === teamId);
@@ -163,16 +182,11 @@ export function buildSeasonBreakdown(input: SeasonBreakdownInput): Map<string, T
             seasonValues.set(teamId, null);
             continue;
         }
-        const standing = standingByTeam.get(teamId);
-        const values = {
-            pointDiff: margin.margin / margin.sets,
-            setDiff: standing ? (standing.sets_won ?? 0) - (standing.sets_lost ?? 0) : null,
-        } as Record<SeasonKey, number | null>;
-        for (const {key} of PROJECTED_STATS) {
-            const total = teamRows.reduce((sum, r) => sum + Number(r[TOTAL_FIELDS[key]] ?? 0), 0);
-            values[key] = total / margin.sets;
+        const sums = emptyTotals();
+        for (const r of teamRows) {
+            for (const key of STAT_KEYS) sums[key] += Number(r[TOTAL_FIELDS[key]] ?? 0);
         }
-        seasonValues.set(teamId, values);
+        seasonValues.set(teamId, {...valuesFrom(sums, margin.sets), pointDiff: margin.margin / margin.sets});
     }
 
     const projected = withRanks(input.teamIds, PROJECTED_STATS, projectedValues);

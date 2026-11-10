@@ -55,7 +55,7 @@ export default async function TeamPage({ params }: PageProps) {
         getCachedStandings(seasonRecord.id, regionRecord.id),
         getCachedTeamStrengths(seasonRecord.season_number),
         getCachedAllSeasonRows(),
-        getCachedSeasonTeamBreakdown(seasonRecord.id, regionRecord.id),
+        getCachedSeasonTeamBreakdown(seasonRecord.id),
     ]);
 
     const seasonTeamIds = standings.map((s) => s.team_id).filter((id): id is string => !!id);
