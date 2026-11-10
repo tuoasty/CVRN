@@ -1,7 +1,10 @@
 "use client";
 
+import {TooltipProvider} from "@/app/components/ui/tooltip";
 import type {StandingsTableModel} from "./model/types";
 import {StandingsGrid, type StandingsLinkMode} from "./table/StandingsGrid";
+import {FormChips} from "./table/FormChips";
+import {NextFixtureCell} from "./table/NextFixtureCell";
 
 function zoneLegend(model: StandingsTableModel): string | null {
     if (!model.qualifiedTeams) return null;
@@ -9,7 +12,7 @@ function zoneLegend(model: StandingsTableModel): string | null {
     return `Top ${model.qualifiedTeams} go to the playoffs${playin}.`;
 }
 
-export function StandingsView({model, regionCode, seasonSlug}: {
+export function StandingsView({model, regionCode, seasonSlug, linkMode}: {
     model: StandingsTableModel;
     regionCode: string;
     seasonSlug: string;
@@ -26,7 +29,19 @@ export function StandingsView({model, regionCode, seasonSlug}: {
     const legend = zoneLegend(model);
     return (
         <div>
-            <StandingsGrid model={model} regionCode={regionCode} seasonSlug={seasonSlug} />
+            <TooltipProvider delayDuration={100}>
+                <StandingsGrid
+                    model={model}
+                    regionCode={regionCode}
+                    seasonSlug={seasonSlug}
+                    renderForm={row => (
+                        <FormChips team={row.team} form={row.form} regionCode={regionCode} seasonSlug={seasonSlug} linkMode={linkMode} />
+                    )}
+                    renderNext={row => (
+                        <NextFixtureCell next={row.next} regionCode={regionCode} seasonSlug={seasonSlug} linkMode={linkMode} />
+                    )}
+                />
+            </TooltipProvider>
             {legend && <p className="mt-3 text-xs text-muted-foreground">{legend}</p>}
         </div>
     );
