@@ -55,4 +55,55 @@ describe("validateAndCompressImage", () => {
         if (!r.ok) return;
         expect(await dimensions(r.value.buffer)).toEqual([205, 256, "webp"]);
     });
+
+    it("trims logo padding before resizing so the content fills the frame", async () => {
+        const r = await validateAndCompressImage(await paddedLogo(600, 200), true);
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(await dimensions(r.value.buffer)).toEqual([200, 200, "webp"]);
+        expect(await cornerAlpha(r.value.buffer)).toBeGreaterThan(200);
+    });
+
+    it("does not trim spec photos", async () => {
+        const r = await validateAndCompressImage(await paddedLogo(600, 200), false, IMAGE_PROFILES.specPhoto);
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(await dimensions(r.value.buffer)).toEqual([600, 600, "webp"]);
+    });
+});
+
+async function cornerAlpha(buffer: Buffer): Promise<number> {
+    const {data} = await sharp(buffer).ensureAlpha().raw().toBuffer({resolveWithObject: true});
+    return data[3];
+}
+
+async function paddedLogo(size: number, content: number, bg: [number, number, number, number] = [0, 0, 0, 0]): Promise<File> {
+    const pixels = Buffer.alloc(size * size * 4);
+    for (let i = 0; i < size * size; i++) pixels.set(bg, i * 4);
+    const start = (size - content) / 2;
+    for (let y = start; y < start + content; y++) {
+        for (let x = start; x < start + content; x++) {
+            pixels.set([200, 30, 30, 255], (y * size + x) * 4);
+        }
+    }
+    const buf = await sharp(pixels, { raw: { width: size, height: size, channels: 4 } }).png().toBuffer();
+    return new File([new Uint8Array(buf)], "logo.png", { type: "image/png" });
+}
+
+describe("validateAndCompressImage logo trim", () => {
+    it("removes a solid background, then trims to the content", async () => {
+        const r = await validateAndCompressImage(await paddedLogo(600, 200, [255, 255, 255, 255]), true);
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(r.value.bgRemoved).toBe(true);
+        expect(await dimensions(r.value.buffer)).toEqual([200, 200, "webp"]);
+        expect(await cornerAlpha(r.value.buffer)).toBeGreaterThan(200);
+    });
+
+    it("keeps a solid background when removal is off", async () => {
+        const r = await validateAndCompressImage(await paddedLogo(600, 200, [255, 255, 255, 255]), false);
+        expect(r.ok).toBe(true);
+        if (!r.ok) return;
+        expect(await dimensions(r.value.buffer)).toEqual([256, 256, "webp"]);
+    });
 });

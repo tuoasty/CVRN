@@ -85,7 +85,7 @@ function TeamCell({row, regionCode, seasonSlug}: {row: StandingsRow; regionCode:
     const href = buildPublicTeamHref({regionCode, seasonSlug, teamSlug: row.team.slug});
     const body = (
         <span className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <TeamLogo team={{team_name: row.team.name, team_logo_url: row.team.logoUrl, team_logo_bg_removed: row.team.logoBgRemoved}} size={20} />
+            <TeamLogo team={{team_name: row.team.name, team_logo_url: row.team.logoUrl, team_logo_bg_removed: row.team.logoBgRemoved}} size={28} />
             <span className="truncate font-medium">{row.team.name}</span>
         </span>
     );

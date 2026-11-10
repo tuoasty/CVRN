@@ -38,7 +38,7 @@ export function NextFixtureCell({next, regionCode, seasonSlug, linkMode}: {
     const logo = (
         <TeamLogo
             team={{team_name: next.opponent.name, team_logo_url: next.opponent.logoUrl, team_logo_bg_removed: next.opponent.logoBgRemoved}}
-            size={20}
+            size={24}
         />
     );
     const triggerClass = "inline-flex items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground";

@@ -105,11 +105,13 @@ function bfsFloodfill(
 }
 
 export async function processLogoBackground(
-    input: Buffer
+    input: Buffer,
+    format: "webp" | "png" = "webp"
 ): Promise<{ buffer: Buffer; bgRemoved: boolean }> {
+    const encode = (img: sharp.Sharp) => (format === "png" ? img.png() : img.webp({ quality: 85 })).toBuffer();
     const { width, height } = await sharp(input).metadata();
     if (!width || !height) {
-        const buffer = await sharp(input).webp({ quality: 85 }).toBuffer();
+        const buffer = await encode(sharp(input));
         return { buffer, bgRemoved: false };
     }
 
@@ -117,9 +119,7 @@ export async function processLogoBackground(
     const pixels = new Uint8Array(rawBuf);
 
     if (hasTransparentPixels(pixels)) {
-        const buffer = await sharp(Buffer.from(pixels), { raw: { width, height, channels: 4 } })
-            .webp({ quality: 85 })
-            .toBuffer();
+        const buffer = await encode(sharp(Buffer.from(pixels), { raw: { width, height, channels: 4 } }));
         return { buffer, bgRemoved: true };
     }
 
@@ -134,14 +134,43 @@ export async function processLogoBackground(
     const maxDist = Math.max(...corners.map((c) => colorDistance(c, avg)));
 
     if (maxDist > CORNER_AGREEMENT_THRESHOLD) {
-        const buffer = await sharp(input).webp({ quality: 85 }).toBuffer();
+        const buffer = await encode(sharp(input));
         return { buffer, bgRemoved: false };
     }
 
     const modified = bfsFloodfill(pixels, width, height, avg, FLOODFILL_TOLERANCE);
-    const buffer = await sharp(Buffer.from(modified), { raw: { width, height, channels: 4 } })
-        .webp({ quality: 85 })
-        .toBuffer();
+    const buffer = await encode(sharp(Buffer.from(modified), { raw: { width, height, channels: 4 } }));
 
     return { buffer, bgRemoved: true };
+}
+
+const TRIM_ALPHA_THRESHOLD = 16;
+
+export async function trimLogoPadding(input: Buffer): Promise<Buffer> {
+    try {
+        const {data, info} = await sharp(input).ensureAlpha().raw().toBuffer({resolveWithObject: true});
+        const {width, height} = info;
+        let minX = width, minY = height, maxX = -1, maxY = -1;
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                if (data[(y * width + x) * 4 + 3] < TRIM_ALPHA_THRESHOLD) continue;
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+
+        if (maxX < 0) return input;
+        const trimmedWidth = maxX - minX + 1;
+        const trimmedHeight = maxY - minY + 1;
+        if (trimmedWidth === width && trimmedHeight === height) return input;
+
+        return await sharp(input)
+            .extract({left: minX, top: minY, width: trimmedWidth, height: trimmedHeight})
+            .png()
+            .toBuffer();
+    } catch {
+        return input;
+    }
 }
