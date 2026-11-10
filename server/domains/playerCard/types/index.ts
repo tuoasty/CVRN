@@ -85,6 +85,18 @@ export interface PlayerCardRig {
     placement: RigPlacement | null
 }
 
+export interface CardAttributes {
+    playerId: string
+    seasonNumber: number
+    ovr: number
+    scoring: number
+    spiking: number
+    setting: number
+    blocking: number
+    receiving: number
+    serving: number
+}
+
 export interface PublicPlayerCard {
     seasonNumber: number
     groupId: string
@@ -94,6 +106,10 @@ export interface PublicPlayerCard {
     imageUrl: string
     width: number
     height: number
+}
+
+export interface TeamCard extends PublicPlayerCard {
+    playerId: string
 }
 
 export type CardBulkMode = 'missing' | 'all'

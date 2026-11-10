@@ -1,4 +1,5 @@
 import {PlayerWithRole} from "@/server/domains/player";
+import type {PositionCode} from "@/shared/volleyball/positions";
 
 export interface TeamWithRegion {
     id: string;
@@ -30,6 +31,25 @@ export interface TeamWithRegion {
             name: string;
         };
     };
+}
+
+export type RosterRole = "captain" | "vice_captain" | "court_captain" | "player";
+
+export interface SeasonRosterEntry {
+    teamId: string;
+    playerId: string;
+    displayName: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+    position: PositionCode | null;
+    role: RosterRole;
+}
+
+export interface TeamStrength {
+    teamId: string;
+    seasonId: string;
+    sets: number;
+    rating: number;
 }
 
 export interface TeamWithRegionAndPlayers {

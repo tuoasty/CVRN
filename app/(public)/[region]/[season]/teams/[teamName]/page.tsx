@@ -7,8 +7,27 @@ import {
     getCachedTeamNameHistory,
     getCachedTeamLeaderboard,
     getCachedTeamMatches,
+    getCachedStandings,
+    getCachedTeamStrengths,
+    getCachedAllSeasonRows,
+    getCachedSeasonCompletedMatches,
+    getCachedSeasonUpcomingMatches,
+    getCachedLeaderboardIdentity,
+    getCachedAllMediaPosts,
+    getCachedCardsForSeasons,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
+import { seasonStrengths } from "@/app/features/teams/model/strength";
+import { buildRosterTiles } from "@/app/features/teams/detail/model/roster";
+import { buildLeaders } from "@/app/features/teams/detail/model/leaders";
+import { opponentsByTeam, scheduleStrength } from "@/app/features/teams/detail/model/scheduleStrength";
+import { getCachedSeasonTeamBreakdown } from "@/app/features/teams/detail/getCachedSeasonTeamBreakdown";
+import { buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
+import { joinLeaderboardIdentity } from "@/app/features/leaderboard/joinLeaderboardIdentity";
+import { filterTeamMedia } from "@/app/features/teams/detail/model/teamMedia";
+import { pickCardSeason } from "@/app/features/teams/detail/model/cardSeason";
+import type { LeaderboardStatRow } from "@/server/domains/player";
+import type { PlayerLeaderboardRow } from "@/server/domains/player";
 import type { StandingMethod } from "@/shared/types/standing";
 
 type PageProps = {
@@ -39,16 +58,72 @@ export default async function TeamPage({ params }: PageProps) {
     const teamData = await getCachedTeamWithPlayers(teamSlug, seasonRecord.id);
     if (!teamData) notFound();
 
-    const [history, statRows, matchHistory] = await Promise.all([
+    const [history, statRows, matchHistory, standings, strengths, allRows, breakdowns, seasonCompleted, seasonUpcoming, identity, mediaPosts, cards] = await Promise.all([
         getCachedTeamNameHistory(teamData.team.id),
         getCachedTeamLeaderboard(teamData.team.id, seasonRecord.id),
         getCachedTeamMatches(teamData.team.id, seasonRecord.id),
+        getCachedStandings(seasonRecord.id, regionRecord.id),
+        getCachedTeamStrengths(seasonRecord.season_number),
+        getCachedAllSeasonRows(),
+        getCachedSeasonTeamBreakdown(seasonRecord.id),
+        getCachedSeasonCompletedMatches(seasonRecord.id),
+        getCachedSeasonUpcomingMatches(seasonRecord.id),
+        getCachedLeaderboardIdentity(),
+        getCachedAllMediaPosts(),
+        getCachedCardsForSeasons(seasonRecord.season_number),
     ]);
+
+    const seasonTeamIds = standings.map((s) => s.team_id).filter((id): id is string => !!id);
+    if (!seasonTeamIds.includes(teamData.team.id)) seasonTeamIds.push(teamData.team.id);
+    const strengthMap = seasonStrengths(strengths, seasonRecord.id, seasonTeamIds);
+    const strength = strengthMap.get(teamData.team.id) ?? { value: null, rank: null };
+    const opponents = opponentsByTeam([...seasonCompleted, ...seasonUpcoming]);
+    const schedule = scheduleStrength({
+        matchesByTeam: new Map(seasonTeamIds.map((id) => [id, opponents.get(id) ?? []])),
+        strengths: strengthMap,
+    }).get(teamData.team.id) ?? { value: null, rank: null };
+    const strengthRecord = Object.fromEntries([...strengthMap].map(([id, v]) => [id, v.value]));
+
+    const rows = allRows as unknown as PlayerLeaderboardRow[];
+    const rosterIds = teamData.players.map((p) => p.id);
+    const rosterIdSet = new Set(rosterIds);
+    const rosterRows = rows.filter((r) => rosterIdSet.has(r.player_id));
+    const leaders = buildLeaders({
+        rosterIds,
+        seasonRows: rosterRows.filter((r) => r.season_id === seasonRecord.id),
+        careerRows: rosterRows,
+    });
+    const leaderPlayers = Object.fromEntries(
+        teamData.players.map((p) => [
+            p.id,
+            {
+                name: p.display_name || p.username || "Unknown",
+                username: p.username,
+                avatarUrl: p.avatar_url,
+                href: buildPublicPlayerHref(p.username),
+            },
+        ]),
+    );
+
+    const teamMedia = filterTeamMedia(mediaPosts, {
+        teamId: teamData.team.id,
+        seasonId: seasonRecord.id,
+        matchIds: matchHistory.matches.map((m) => m.match.id),
+        rosterIds,
+    });
+    const cardSeason = pickCardSeason(cards, rosterIds, seasonRecord.season_number);
+
+    const rosterTiles = buildRosterTiles({
+        players: teamData.players,
+        rows: rosterRows,
+        seasonId: seasonRecord.id,
+        regionId: regionRecord.id,
+    });
 
     return (
         <PublicTeamDetailPage
             team={teamData.team}
-            players={teamData.players}
+            rosterTiles={rosterTiles}
             history={history}
             statRows={statRows}
             matches={matchHistory.matches}
@@ -56,6 +131,17 @@ export default async function TeamPage({ params }: PageProps) {
             regionCode={regionCode}
             seasonSlug={seasonSlug}
             standingMethod={regionRecord.standing_method as StandingMethod}
+            standing={standings.find((s) => s.team_id === teamData.team.id) ?? null}
+            teamCount={standings.filter((s) => !!s.team_id).length}
+            strength={strength}
+            schedule={schedule}
+            strengths={strengthRecord}
+            careerRows={joinLeaderboardIdentity(rosterRows as unknown as LeaderboardStatRow[], identity)}
+            leaders={leaders}
+            leaderPlayers={leaderPlayers}
+            breakdown={breakdowns[teamData.team.id] ?? null}
+            media={teamMedia}
+            cardSeason={cardSeason}
         />
     );
 }

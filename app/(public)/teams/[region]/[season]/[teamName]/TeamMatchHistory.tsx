@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import type { MatchWithDetails } from "@/server/domains/match";
 import type { TeamWithRegion } from "@/server/domains/team";
 import type { StandingMethod } from "@/shared/types/standing";
+import { SectionHeading } from "@/app/(public)/home/sections/SectionHeading";
+import { formatStrength, ordinal, type RankedValue } from "@/app/features/teams/model/strength";
 
 function orientForTeam(md: MatchWithDetails, teamId: string): MatchWithDetails {
     const m = md.match;
@@ -34,7 +36,13 @@ function orientForTeam(md: MatchWithDetails, teamId: string): MatchWithDetails {
 
 const WIN_TEXT = "text-success";
 const LOSS_TEXT = "text-destructive";
-const COLS = "56px minmax(120px,1fr) 96px minmax(140px,1.4fr) 72px 14px";
+const GRID = cn(
+    "grid items-center gap-2 px-2 sm:gap-3.5 sm:px-4",
+    "grid-cols-[52px_minmax(0,1fr)_96px_14px]",
+    "sm:grid-cols-[56px_minmax(0,1fr)_96px_64px_14px]",
+    "md:grid-cols-[56px_minmax(0,1fr)_96px_minmax(140px,1.4fr)_72px_14px]",
+    "lg:grid-cols-[56px_minmax(0,1fr)_104px_96px_minmax(140px,1.4fr)_72px_14px]",
+);
 const LABEL = "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
 
 function roundLabel(md: MatchWithDetails): string {
@@ -84,22 +92,40 @@ type Props = {
     regionCode: string;
     seasonSlug: string;
     standingMethod: StandingMethod;
+    strengths: Record<string, number | null>;
+    teamStrength: RankedValue;
+    schedule: RankedValue;
 };
 
-export default function TeamMatchHistory({ matches, teams, teamId, regionCode, seasonSlug, standingMethod }: Props) {
+function StrengthNote({ label, value, suffix }: { label: string; value: RankedValue; suffix?: string }) {
+    return (
+        <span>
+            {label} <span className="font-mono tabular-nums text-foreground">{formatStrength(value.value)}</span>
+            {value.rank != null && ` (${ordinal(value.rank)}${suffix ?? ""})`}
+        </span>
+    );
+}
+
+export default function TeamMatchHistory({ matches, teams, teamId, regionCode, seasonSlug, standingMethod, strengths, teamStrength, schedule }: Props) {
     const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
     const regionTimezone = getRegionTimezone(regionCode);
 
     const header = (
-        <h3 className="text-sm uppercase tracking-wide text-muted-foreground">Match History</h3>
+        <SectionHeading title="Matches">
+            <span className="flex flex-wrap justify-end gap-x-1.5 text-xs text-muted-foreground">
+                <StrengthNote label="Team strength" value={teamStrength} />
+                <span aria-hidden>·</span>
+                <StrengthNote label="Schedule strength" value={schedule} suffix=" hardest" />
+            </span>
+        </SectionHeading>
     );
 
     if (matches.length === 0) {
         return (
-            <div className="space-y-3">
+            <section aria-label="Matches">
                 {header}
-                <p className="text-sm text-muted-foreground py-8 text-center">No matches played yet.</p>
-            </div>
+                <p className="py-8 text-sm text-muted-foreground">No matches scheduled yet.</p>
+            </section>
         );
     }
 
@@ -113,21 +139,17 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
     });
 
     return (
-        <div className="space-y-3">
+        <section aria-label="Matches">
             {header}
 
-            <div className="border border-border rounded-sm bg-card overflow-hidden max-w-4xl">
-                <div className="overflow-x-auto">
-                    <div style={{ minWidth: 620 }}>
-                        <div
-                            className="grid gap-3.5 items-center px-4 py-2 bg-muted/30 border-b border-border"
-                            style={{ gridTemplateColumns: COLS }}
-                        >
+            <div className="mt-2">
+                        <div className={cn(GRID, "py-2 border-b border-border")}>
                             <span className={LABEL}>Round</span>
                             <span className={LABEL}>Opponent</span>
+                            <span className={cn(LABEL, "hidden text-right lg:block")}>Opp strength</span>
                             <span className={LABEL}>Result</span>
-                            <span className={LABEL}>Sets</span>
-                            <span className={cn(LABEL, "text-right")}>{isPoints ? "PTS" : "LVR"}</span>
+                            <span className={cn(LABEL, "hidden md:block")}>Sets</span>
+                            <span className={cn(LABEL, "hidden text-right sm:block")}>{isPoints ? "PTS" : "LVR"}</span>
                             <span />
                         </div>
 
@@ -138,7 +160,9 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                             const oriented = orientForTeam(md, teamId);
                             const opponent = oriented.match.away_team_id ? teams[oriented.match.away_team_id] : undefined;
 
+                            const opponentStrength = oriented.match.away_team_id ? strengths[oriented.match.away_team_id] ?? null : null;
                             const isCompleted = oriented.match.status === "completed";
+                            const isPlayoff = original.match_type === "playoffs";
                             const subjectSets = oriented.match.home_sets_won ?? 0;
                             const oppSets = oriented.match.away_sets_won ?? 0;
                             const won = subjectSets > oppSets;
@@ -170,6 +194,10 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                                         </span>
                                     </div>
 
+                                    <span className="hidden text-right text-xs font-mono tabular-nums text-foreground lg:block">
+                                        {formatStrength(opponentStrength)}
+                                    </span>
+
                                     {isCompleted ? (
                                         <div className="flex items-center gap-2">
                                             <span className={cn(
@@ -183,16 +211,16 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                                             </span>
                                         </div>
                                     ) : (
-                                        <span className="text-xs text-muted-foreground">Scheduled</span>
+                                        <span className="truncate text-xs font-mono tabular-nums text-muted-foreground">{timeDisplay}</span>
                                     )}
 
                                     {isCompleted ? (
                                         original.is_forfeit ? (
-                                            <span className="text-xs text-muted-foreground italic">
+                                            <span className="hidden text-xs text-muted-foreground md:block">
                                                 {won ? "Won" : "Lost"} by forfeit
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-3 text-xs tabular-nums overflow-hidden">
+                                            <span className="hidden items-center gap-3 text-xs tabular-nums overflow-hidden md:flex">
                                                 {oriented.sets.map((s, i) => (
                                                     <span key={i} className={cn("shrink-0", s.home_score > s.away_score ? "text-foreground font-medium" : "text-muted-foreground")}>
                                                         {s.home_score}-{s.away_score}
@@ -201,47 +229,45 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                                             </span>
                                         )
                                     ) : (
-                                        <span className="text-xs font-mono tabular-nums text-muted-foreground">{timeDisplay}</span>
+                                        <span className="hidden md:block" />
                                     )}
 
-                                    {isCompleted && !isPoints && subjectLvr != null ? (
-                                        <span className={cn("text-right text-xs font-semibold font-mono tabular-nums", subjectLvr >= 0 ? WIN_TEXT : LOSS_TEXT)}>
+                                    {isPlayoff || !isCompleted ? (
+                                        <span className="hidden sm:block" />
+                                    ) : !isPoints && subjectLvr != null ? (
+                                        <span className={cn("hidden text-right text-xs font-semibold font-mono tabular-nums sm:block", subjectLvr >= 0 ? WIN_TEXT : LOSS_TEXT)}>
                                             {subjectLvr >= 0 ? "+" : ""}{subjectLvr.toFixed(1)}
                                         </span>
-                                    ) : isCompleted && isPoints ? (
-                                        <span className="text-right text-xs font-semibold font-mono tabular-nums text-foreground">
+                                    ) : isPoints ? (
+                                        <span className="hidden text-right text-xs font-semibold font-mono tabular-nums text-foreground sm:block">
                                             +{subjectPts.toFixed(1)}
                                         </span>
                                     ) : (
-                                        <span />
+                                        <span className="hidden sm:block" />
                                     )}
 
                                     <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" aria-hidden />
                                 </>
                             );
 
-                            const rowStyle = { gridTemplateColumns: COLS };
-                            const rowClasses = "grid gap-3.5 items-center px-4 py-2.5 border-b border-border last:border-b-0 transition-colors";
+                            const rowClasses = cn(GRID, "py-2.5 transition-colors duration-150");
 
                             return href ? (
                                 <Link
                                     key={original.id}
                                     href={href}
                                     prefetch={false}
-                                    style={rowStyle}
-                                    className={cn(rowClasses, "hover:bg-muted/30 focus:outline-none focus-visible:bg-muted/30 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50")}
+                                    className={cn(rowClasses, "hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground")}
                                 >
                                     {rowInner}
                                 </Link>
                             ) : (
-                                <div key={original.id} style={rowStyle} className={rowClasses}>
+                                <div key={original.id} className={rowClasses}>
                                     {rowInner}
                                 </div>
                             );
                         })}
-                    </div>
-                </div>
             </div>
-        </div>
+        </section>
     );
 }

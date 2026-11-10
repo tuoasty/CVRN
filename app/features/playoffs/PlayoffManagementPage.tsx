@@ -5,6 +5,7 @@ import { usePlayoffBrackets, usePlayoffConfigs, generateBracket, resetBrackets, 
 import { useAllMatches } from "@/app/hooks/useMatches";
 import { useTeams } from "@/app/hooks/useTeams";
 import { useSeasons } from "@/app/hooks/useSeasons";
+import { useRegions } from "@/app/hooks/useRegions";
 import { mutate } from "swr";
 import { templates } from "@/server/domains/playoff/helpers/playoffTemplates";
 import { SeedChooserDialog } from "./SeedChooserDialog";
@@ -39,6 +40,8 @@ export default function PlayoffManagementPage() {
     const [readvanceMatchId, setReadvanceMatchId] = useState<string | null>(null);
 
     const { seasons: allSeasons } = useSeasons();
+    const { regions } = useRegions();
+    const selectedRegionCode = regions.find((r) => r.id === selectedRegionId)?.code;
     const { configs } = usePlayoffConfigs();
     const { brackets, incomingMap, isLoading: loadingBrackets } = usePlayoffBrackets(selectedSeasonId ?? null);
 
@@ -254,7 +257,7 @@ export default function PlayoffManagementPage() {
                         </div>
                     </div>
                 ) : seasonIdValue && brackets.length > 0 ? (
-                    <PlayoffBracketDisplay brackets={brackets} incomingMap={incomingMap} teams={teams} matches={matches} linkContext="admin" isSuperAdmin={isSuperAdmin} onReadvanceMatch={setReadvanceMatchId} />
+                    <PlayoffBracketDisplay brackets={brackets} incomingMap={incomingMap} teams={teams} matches={matches} regionCode={selectedRegionCode} linkContext="admin" isSuperAdmin={isSuperAdmin} onReadvanceMatch={setReadvanceMatchId} />
                 ) : seasonIdValue && !isProcessing ? (
                     <div className="panel p-12 border-l-4 border-l-muted">
                         <p className="text-sm text-muted-foreground text-center">

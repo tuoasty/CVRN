@@ -6,6 +6,8 @@ export {getTeamByNameAndSeason} from "./queries/getTeamByNameAndSeason";
 export {getTeamBySlugAndSeasonWithRegion} from "./queries/getTeamBySlugAndSeasonWithRegion";
 export {getTeamWithRegionAndPlayers} from "./queries/getTeamWithRegionAndPlayers";
 export {getTeamsByIds} from "./queries/getTeamsByIds";
+export {getTeamStrengths} from "./queries/getTeamStrengths";
+export {getSeasonRosters} from "./queries/getSeasonRosters";
 export {createTeam} from "./commands/createTeam";
 export {updateTeam} from "./commands/updateTeam";
 export {deleteTeam} from "./commands/deleteTeam";
@@ -17,6 +19,9 @@ export type {
     TeamSlugSeasonInput,
     TeamWithRegion,
     TeamWithRegionAndPlayers,
+    TeamStrength,
+    SeasonRosterEntry,
+    RosterRole,
     InsertTeamDto,
     CreateTeamInput,
     UpdateTeamInput,

@@ -23,8 +23,8 @@ import {
     getRawStatSummaryBySeasonNumber,
 } from "@/server/domains/player";
 import {pickMainTeam} from "@/server/domains/player/helpers/pickMainTeam";
-import {getPublicPlayerCards} from "@/server/domains/playerCard";
-import type {PublicPlayerCard} from "@/server/domains/playerCard";
+import {getCardAttributes, getPublicPlayerCards, getTeamCards} from "@/server/domains/playerCard";
+import type {CardAttributes, PublicPlayerCard, TeamCard} from "@/server/domains/playerCard";
 import {findHeldSpecSeasonId} from "@/server/db/seasons.repo";
 import type {PlayerDetail} from "@/server/domains/player";
 import {
@@ -32,8 +32,10 @@ import {
     getTeamNameHistory,
     getAllTeamsWithRegions,
     getTeamsByIds,
+    getTeamStrengths,
+    getSeasonRosters,
 } from "@/server/domains/team";
-import type {TeamWithRegion} from "@/server/domains/team";
+import type {SeasonRosterEntry, TeamStrength, TeamWithRegion} from "@/server/domains/team";
 import {getStandings} from "@/server/domains/standing";
 import {findTeamsBySeasonId} from "@/server/db/teams.repo";
 import {findPlayerSeasonMemberships} from "@/server/db/players.repo";
@@ -197,6 +199,20 @@ export const getCachedPlayerCards = unstable_cache(
     {tags: [CACHE_TAGS.playerCards], revalidate: CARDS_REVALIDATE_SECONDS},
 );
 
+export const getCachedCardAttributes = unstable_cache(
+    async (seasonNumber: number): Promise<CardAttributes[]> =>
+        unwrap(await getCardAttributes(createPublicClient(), {seasonNumber}), "getCachedCardAttributes"),
+    ["public:card-attributes"],
+    {tags: [CACHE_TAGS.playerCards], revalidate: CARDS_REVALIDATE_SECONDS},
+);
+
+export const getCachedCardsForSeasons = unstable_cache(
+    async (current: number): Promise<TeamCard[]> =>
+        unwrap(await getTeamCards(createPublicClient(), {seasonNumbers: [current, current - 1]}), "getCachedCardsForSeasons"),
+    ["public:cards-for-seasons"],
+    {tags: [CACHE_TAGS.playerCards], revalidate: CARDS_REVALIDATE_SECONDS},
+);
+
 export const getCachedPlayerRecentMatches = unstable_cache(
     async (playerId: string): Promise<PlayerRecentMatch[]> =>
         unwrap(await getPlayerRecentMatches(createPublicClient(), {playerId}), "getCachedPlayerRecentMatches"),
@@ -231,6 +247,20 @@ export const getCachedTeamWithPlayers = unstable_cache(
             "getCachedTeamWithPlayers",
         ),
     ["public:team-with-players"],
+    {tags: [CACHE_TAGS.teams, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedTeamStrengths = unstable_cache(
+    async (seasonNumber: number): Promise<TeamStrength[]> =>
+        unwrap(await getTeamStrengths(createPublicClient(), {seasonNumber}), "getCachedTeamStrengths"),
+    ["public:team-strengths"],
+    {tags: [CACHE_TAGS.matches, CACHE_TAGS.teams], revalidate: PUBLIC_REVALIDATE_SECONDS},
+);
+
+export const getCachedSeasonRosters = unstable_cache(
+    async (seasonId: string): Promise<SeasonRosterEntry[]> =>
+        unwrap(await getSeasonRosters(createPublicClient(), {seasonId}), "getCachedSeasonRosters"),
+    ["public:season-rosters"],
     {tags: [CACHE_TAGS.teams, CACHE_TAGS.players], revalidate: PUBLIC_REVALIDATE_SECONDS},
 );
 

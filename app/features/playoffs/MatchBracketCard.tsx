@@ -1,15 +1,17 @@
 "use client";
 
-import React from "react";
+import React, {useMemo} from "react";
 import Link from "next/link";
-import { PlayoffBracket, Match } from "@/shared/types/db";
-import { TeamWithRegion } from "@/server/domains/team";
-import { Badge } from "@/app/components/ui/badge";
-import { Calendar, Trophy, AlertCircle, RotateCw } from "lucide-react";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
-import { getLogoClassName } from "@/app/lib/logoClass";
+import {RotateCw} from "lucide-react";
+import {PlayoffBracket, Match} from "@/shared/types/db";
+import {TeamWithRegion} from "@/server/domains/team";
+import {cn} from "@/lib/utils";
+import {DefaultTeamLogo} from "@/app/components/ui/DefaultTeamLogo";
+import {TodayText} from "@/app/components/ui/TodayText";
+import {getLogoClassName} from "@/app/lib/logoClass";
+import {formatRegionDate, formatRegionTime} from "@/app/(public)/home/model/format";
+import {isRegionToday} from "@/app/(public)/home/model/phase";
 
 type MatchBracketCardProps = {
     bracket: PlayoffBracket;
@@ -22,6 +24,8 @@ type MatchBracketCardProps = {
     href?: string | null;
     canReadvance?: boolean;
     onReadvance?: () => void;
+    isChampion?: boolean;
+    timeZone?: string;
 };
 
 function TeamRow({
@@ -29,62 +33,94 @@ function TeamRow({
     team,
     source,
     won,
-    dim,
+    lost,
     score,
     showScore,
     divider,
+    linked,
 }: {
     seed: number | null;
     team?: TeamWithRegion;
     source?: string;
     won: boolean;
-    dim: boolean;
+    lost: boolean;
     score: number;
     showScore: boolean;
     divider: boolean;
+    linked: boolean;
 }) {
     return (
         <div
             className={cn(
-                "grid grid-cols-[1rem_2rem_1fr_auto] items-center gap-2.5 px-3 py-2.5 transition-opacity",
-                divider && "border-t border-border",
-                dim && "opacity-40"
+                "grid h-[46px] grid-cols-[1rem_28px_minmax(0,1fr)_auto] items-center gap-2.5 px-3",
+                divider && "border-t border-border/60"
             )}
         >
-            <span className="text-xs font-semibold text-muted-foreground text-right">
+            <span className="text-right font-mono text-xs tabular-nums text-muted-foreground">
                 {seed ?? ""}
             </span>
             {team ? (
                 <>
-                    <div className="relative w-8 h-8">
+                    <div className={cn("relative h-7 w-7", lost && "opacity-50")}>
                         {team.logo_url ? (
                             <Image
                                 src={team.logo_url}
-                                alt={team.name}
+                                alt=""
                                 fill
-                                sizes="32px"
+                                sizes="28px"
                                 className={getLogoClassName(team.logo_bg_removed)}
                             />
                         ) : !team.is_bye ? (
-                            <DefaultTeamLogo sizes="32px" alt={team.name} />
+                            <DefaultTeamLogo sizes="28px" alt="" />
                         ) : null}
                     </div>
-                    <span className={cn("text-sm truncate min-w-0", won ? "font-bold" : "font-semibold")}>
+                    <span
+                        className={cn(
+                            "min-w-0 truncate text-sm",
+                            lost ? "font-medium text-muted-foreground" : "font-semibold text-foreground",
+                            linked && "group-hover/slot:underline group-hover/slot:underline-offset-4"
+                        )}
+                    >
                         {team.name}
                     </span>
                 </>
             ) : (
-                <span className="col-span-2 text-sm truncate min-w-0 font-medium italic text-muted-foreground">
+                <span className="col-span-2 min-w-0 truncate text-sm font-medium text-muted-foreground">
                     {source || "TBD"}
                 </span>
             )}
             {showScore && (
-                <span className={cn("font-mono text-base tabular-nums text-right", won && "font-bold")}>
+                <span
+                    className={cn(
+                        "text-right font-mono text-[15px] tabular-nums",
+                        won ? "font-semibold text-foreground" : "text-muted-foreground"
+                    )}
+                >
                     {score}
                 </span>
             )}
         </div>
     );
+}
+
+function SlotStatus({match, isChampion, timeZone}: {match: Match; isChampion: boolean; timeZone: string}) {
+    const today = useMemo(
+        () => isRegionToday(match.scheduled_at, timeZone, new Date()),
+        [match.scheduled_at, timeZone]
+    );
+
+    if (isChampion) {
+        return <span className="font-semibold uppercase tracking-[0.05em] text-foreground">Champion</span>;
+    }
+    if (match.status === "completed") {
+        return <span className="text-muted-foreground">Final</span>;
+    }
+    if (match.status === "scheduled" && match.scheduled_at) {
+        const time = formatRegionTime(match.scheduled_at, timeZone);
+        if (today) return <TodayText active>Today {time}</TodayText>;
+        return <span className="text-muted-foreground">{formatRegionDate(match.scheduled_at, timeZone)} · {time}</span>;
+    }
+    return null;
 }
 
 export function MatchBracketCard({
@@ -97,113 +133,86 @@ export function MatchBracketCard({
     href,
     canReadvance,
     onReadvance,
+    isChampion = false,
+    timeZone = "UTC",
 }: MatchBracketCardProps) {
     const isCompleted = match.status === "completed";
     const homeWon = isCompleted && (match.home_sets_won || 0) > (match.away_sets_won || 0);
     const awayWon = isCompleted && (match.away_sets_won || 0) > (match.home_sets_won || 0);
+    const linked = !!href;
 
-    const getStatusConfig = () => {
-        if (match.status === "completed") {
-            return {
-                label: "Completed",
-                className: "bg-success/15 text-success border-success/30",
-                icon: <Trophy className="h-3 w-3" />,
-            };
-        }
-        if (match.status === "scheduled") {
-            return {
-                label: "Scheduled",
-                className: "bg-primary/15 text-primary border-primary/30",
-                icon: <Calendar className="h-3 w-3" />,
-            };
-        }
-        return {
-            label: "Pending",
-            className: "bg-secondary/15 text-secondary border-secondary/30",
-            icon: <AlertCircle className="h-3 w-3" />,
-        };
-    };
-
-    const statusConfig = getStatusConfig();
-
-    const inner = (
+    const rows = (
         <>
-            <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border bg-muted">
-                <div className="flex items-baseline gap-2">
-                    <span className="font-mono text-xs font-bold tracking-wide text-foreground">
-                        {match.match_code}
-                    </span>
-                    <span className="text-xs font-medium text-muted-foreground">
-                        BO{match.best_of}
-                    </span>
-                </div>
-                <Badge
-                    variant="outline"
-                    className={cn(
-                        "text-[10px] h-5 px-2 font-semibold uppercase tracking-wider flex items-center gap-1",
-                        statusConfig.className
-                    )}
-                >
-                    {statusConfig.icon}
-                    {statusConfig.label}
-                </Badge>
-            </div>
-
             <TeamRow
                 seed={bracket.seed_home}
                 team={homeTeam}
                 source={homeSource}
                 won={homeWon}
-                dim={awayWon}
+                lost={awayWon}
                 score={match.home_sets_won || 0}
                 showScore={isCompleted}
                 divider={false}
+                linked={linked}
             />
             <TeamRow
                 seed={bracket.seed_away}
                 team={awayTeam}
                 source={awaySource}
                 won={awayWon}
-                dim={homeWon}
+                lost={homeWon}
                 score={match.away_sets_won || 0}
                 showScore={isCompleted}
                 divider
+                linked={linked}
             />
         </>
     );
 
-    const baseClass = cn(
-        "block bg-card border border-muted-foreground/30 rounded-sm overflow-hidden transition-all duration-200",
-        href && "hover:border-primary/40 hover:shadow-sm hover:-translate-y-px"
+    const frameClass = cn(
+        "block border border-border",
+        linked && "group/slot cursor-pointer transition-colors duration-150 hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
     );
 
-    const card = href ? (
-        <Link href={href} prefetch={false} className={cn(baseClass, "cursor-pointer")}>
-            {inner}
+    const frame = href ? (
+        <Link href={href} prefetch={false} className={frameClass}>
+            {rows}
         </Link>
     ) : (
-        <div className={baseClass}>{inner}</div>
+        <div className={frameClass}>{rows}</div>
     );
 
-    if (!canReadvance || !onReadvance) return card;
-
     return (
-        <div className="relative">
-            {card}
-            <button
-                type="button"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onReadvance();
-                }}
-                title="Re-advance winner into the next bracket"
-                aria-label="Re-advance winner into the next bracket"
-                className="absolute -top-2 -right-2 z-20 flex h-7 w-7 items-center justify-center rounded-sm border border-primary/40 bg-background text-primary shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground"
-            >
-                <RotateCw className="h-3.5 w-3.5" />
-            </button>
+        <div>
+            <div className="mb-1.5 flex h-4 items-center justify-between gap-2 text-xs leading-4">
+                <span className="truncate">
+                    <span className="font-mono font-semibold text-foreground">{match.match_code}</span>
+                    <span className="text-muted-foreground"> · BO{match.best_of}</span>
+                </span>
+                <span className="shrink-0">
+                    <SlotStatus match={match} isChampion={isChampion} timeZone={timeZone} />
+                </span>
+            </div>
+            {canReadvance && onReadvance ? (
+                <div className="relative">
+                    {frame}
+                    <button
+                        type="button"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onReadvance();
+                        }}
+                        title="Re-advance winner into the next bracket"
+                        aria-label="Re-advance winner into the next bracket"
+                        className="absolute -right-2 -top-2 z-20 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[2px] border border-border bg-background text-foreground transition-colors duration-150 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                    >
+                        <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                </div>
+            ) : (
+                frame
+            )}
         </div>
     );
 }

@@ -2,15 +2,11 @@ import Link from "next/link";
 import type {ReactNode} from "react";
 import {cn} from "@/lib/utils";
 import {TeamMark} from "@/app/(public)/home/sections/TeamMark";
+import {TodayText} from "@/app/components/ui/TodayText";
 import type {ScheduleKind, ScheduleRow, ScheduleTeam} from "./types";
 
 export const ROW_GRID = "grid-cols-[64px_128px_minmax(0,1fr)_72px_minmax(0,1fr)_216px_64px]";
 export const ROW_GRID_ADMIN = "grid-cols-[64px_128px_minmax(0,1fr)_72px_minmax(0,1fr)_216px_64px_196px]";
-
-function TodayText({active, children}: {active: boolean; children: ReactNode}) {
-    if (!active) return <>{children}</>;
-    return <span className="bg-today px-1 font-semibold text-black dark:bg-transparent dark:px-0 dark:text-today">{children}</span>;
-}
 
 function ForfeitBadge() {
     return <span className="inline-flex items-center rounded-full border border-border px-2 text-xs font-medium text-muted-foreground">Forfeit</span>;
