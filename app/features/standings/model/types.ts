@@ -29,7 +29,6 @@ export interface NextFixture {
     opponent: TeamRef;
     scheduledAt: string | null;
     week: number | null;
-    isToday: boolean;
     homeTeamName: string;
     awayTeamName: string;
 }
@@ -72,6 +71,4 @@ export interface BuildStandingsTableInput {
     method: StandingMethod;
     qualifiedTeams: number | null | undefined;
     playinTeams: number | null | undefined;
-    timeZone: string;
-    now: Date;
 }

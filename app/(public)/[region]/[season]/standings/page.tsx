@@ -8,7 +8,6 @@ import {
     getCachedStandings,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
-import { getRegionTimezone } from "@/app/utils/timezoneOptions";
 import { buildStandingsTable } from "@/app/features/standings/model/buildStandingsTable";
 import type { StandingMethod } from "@/shared/types/standing";
 
@@ -41,8 +40,6 @@ export default async function Page({ params }: PageProps) {
         method: regionRecord.standing_method as StandingMethod,
         qualifiedTeams: seasonRecord.playoff_configs?.qualified_teams,
         playinTeams: seasonRecord.playoff_configs?.playin_teams,
-        timeZone: getRegionTimezone(regionRecord.code),
-        now: new Date(),
     });
 
     return <StandingsPage season={seasonRecord} region={regionRecord} model={model} />;

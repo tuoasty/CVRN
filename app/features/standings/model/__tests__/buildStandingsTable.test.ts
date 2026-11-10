@@ -66,8 +66,6 @@ function input(o: Partial<BuildStandingsTableInput> = {}): BuildStandingsTableIn
         method: "lvr",
         qualifiedTeams: null,
         playinTeams: null,
-        timeZone: "Asia/Singapore",
-        now: new Date("2026-11-13T02:00:00Z"),
         ...o,
     };
 }
@@ -187,13 +185,6 @@ describe("next", () => {
         const next = rowFor(buildStandingsTable(input({upcoming})), "a").next;
         expect(next?.matchId).toBe("real");
         expect(next?.opponent.id).toBe("c");
-    });
-
-    it("marks a fixture today in the region's timezone", () => {
-        const today = match({status: "scheduled", scheduled_at: "2026-11-12T17:00:00Z"} as Partial<Match>);
-        const tomorrow = match({status: "scheduled", scheduled_at: "2026-11-13T17:00:00Z"} as Partial<Match>);
-        expect(rowFor(buildStandingsTable(input({upcoming: [today]})), "a").next?.isToday).toBe(true);
-        expect(rowFor(buildStandingsTable(input({upcoming: [tomorrow]})), "a").next?.isToday).toBe(false);
     });
 
     it("hides the column when nobody has a next match", () => {

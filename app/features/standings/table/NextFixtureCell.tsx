@@ -5,6 +5,7 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "@/app/components/ui/toolt
 import {TeamLogo} from "@/app/features/player/detail/TeamLogoLink";
 import {TodayMark} from "@/app/(public)/home/sections/TeamMark";
 import {formatDateInTimezone, getRegionTimezone} from "@/app/utils/timezoneOptions";
+import {isRegionToday} from "@/app/(public)/home/model/phase";
 import type {NextFixture} from "../model/types";
 import type {StandingsLinkMode} from "./StandingsGrid";
 import {fixtureHref} from "./fixtureHref";
@@ -23,6 +24,7 @@ export function NextFixtureCell({next, regionCode, seasonSlug, linkMode}: {
 }) {
     if (!next) return null;
     const when = whenText(next, regionCode);
+    const isToday = isRegionToday(next.scheduledAt, getRegionTimezone(regionCode), new Date());
     const label = `Next: vs ${next.opponent.name}${when ? `, ${when}` : ""}`;
     const href = fixtureHref({
         linkMode,
@@ -55,7 +57,7 @@ export function NextFixtureCell({next, regionCode, seasonSlug, linkMode}: {
                     vs {next.opponent.name}{when ? ` · ${when}` : ""}
                 </TooltipContent>
             </Tooltip>
-            {next.isToday && <span className="text-xs"><TodayMark>Today</TodayMark></span>}
+            {isToday && <span className="text-xs"><TodayMark>Today</TodayMark></span>}
         </span>
     );
 }

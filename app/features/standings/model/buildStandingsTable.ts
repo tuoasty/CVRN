@@ -1,7 +1,6 @@
 import type {StandingWithInfo} from "@/server/domains/standing";
 import type {MatchWithDetails} from "@/server/domains/match";
 import type {StandingMethod} from "@/shared/types/standing";
-import {isRegionToday} from "@/app/(public)/home/model/phase";
 import type {
     BuildStandingsTableInput,
     FormEntry,
@@ -92,7 +91,7 @@ function buildForm(teamId: string, completed: MatchWithDetails[], lookup: Map<st
     });
 }
 
-function findNext(teamId: string, upcoming: MatchWithDetails[], lookup: Map<string, TeamRef>, timeZone: string, now: Date): NextFixture | null {
+function findNext(teamId: string, upcoming: MatchWithDetails[], lookup: Map<string, TeamRef>): NextFixture | null {
     const team = lookup.get(teamId);
     for (const m of upcoming) {
         if (!involves(m, teamId)) continue;
@@ -106,7 +105,6 @@ function findNext(teamId: string, upcoming: MatchWithDetails[], lookup: Map<stri
             opponent,
             scheduledAt: m.match.scheduled_at,
             week: m.match.week,
-            isToday: isRegionToday(m.match.scheduled_at, timeZone, now),
             homeTeamName: isHome ? team.name : opponent.name,
             awayTeamName: isHome ? opponent.name : team.name,
         };
@@ -138,7 +136,7 @@ export function buildStandingsTable(input: BuildStandingsTableInput): StandingsT
             setDiff: setsWon - setsLost,
             metric: metricFor(s, input.method),
             form: buildForm(s.team_id, completed, lookup),
-            next: findNext(s.team_id, upcoming, lookup, input.timeZone, input.now),
+            next: findNext(s.team_id, upcoming, lookup),
         };
     });
 
