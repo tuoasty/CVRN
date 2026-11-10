@@ -33,16 +33,44 @@ function sortRoster(players: RosterPlayer[]): RosterPlayer[] {
     });
 }
 
+export type RosterAsOf = {
+    at: string;
+    trustJoinedAt: boolean;
+};
+
+type RosterRow = {
+    role: string;
+    team_id: string;
+    joined_at: string | null;
+    left_at: string | null;
+    player: {
+        id: string;
+        username: string | null;
+        display_name: string | null;
+        avatar_url: string | null;
+    } | null;
+};
+
+export function wasOnRosterAt(row: Pick<RosterRow, "joined_at" | "left_at">, asOf: RosterAsOf): boolean {
+    const at = new Date(asOf.at).getTime();
+    if (row.left_at !== null && at > new Date(row.left_at).getTime()) return false;
+    if (!asOf.trustJoinedAt || row.joined_at === null) return true;
+    return at >= new Date(row.joined_at).getTime();
+}
+
 export async function getTeamRosters(
     supabase: DBClient,
     homeTeamId: string,
-    awayTeamId: string
+    awayTeamId: string,
+    asOf: RosterAsOf | null = null
 ): Promise<Result<TeamRosters, SerializableError>> {
-    const { data, error } = await supabase
+    const query = supabase
         .from("player_team_seasons")
         .select(`
             role,
             team_id,
+            joined_at,
+            left_at,
             player:players (
                 id,
                 username,
@@ -50,21 +78,21 @@ export async function getTeamRosters(
                 avatar_url
             )
         `)
-        .in("team_id", [homeTeamId, awayTeamId])
-        .is("left_at", null);
+        .in("team_id", [homeTeamId, awayTeamId]);
+
+    const { data, error } = asOf ? await query : await query.is("left_at", null);
 
     if (error) return Err(serializeError(error, "DB_ERROR"));
 
-    const rows = (data ?? []) as unknown as Array<{
-        role: string;
-        team_id: string;
-        player: {
-            id: string;
-            username: string | null;
-            display_name: string | null;
-            avatar_url: string | null;
-        } | null;
-    }>;
+    const seen = new Set<string>();
+    const rows = ((data ?? []) as unknown as RosterRow[]).filter(r => {
+        if (asOf && !wasOnRosterAt(r, asOf)) return false;
+        if (!r.player) return true;
+        const key = `${r.team_id}:${r.player.id}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 
     const toPlayer = (row: (typeof rows)[number]): RosterPlayer | null => {
         if (!row.player) return null;

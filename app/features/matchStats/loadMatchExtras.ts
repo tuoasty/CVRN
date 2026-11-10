@@ -35,7 +35,7 @@ export async function loadMatchExtras(detail: MatchDetail): Promise<MatchExtras 
     const homeId = match.home_team_id;
     const awayId = match.away_team_id;
     const isCompleted = match.status === "completed";
-    const needsPlayers = !isCompleted && !match.is_forfeit && !!detail.rosters;
+    const needsPlayers = !match.is_forfeit && !!detail.rosters;
 
     const [standings, completed, leaderRows, identity, teams, allRows] = await Promise.all([
         getCachedStandings(season.id, region.id),

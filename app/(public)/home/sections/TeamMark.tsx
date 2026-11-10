@@ -27,10 +27,10 @@ export function TeamMark({team, size, className}: {team: HomeTeam; size: keyof t
     );
 }
 
-export function PlayerAvatar({src, size}: {src: string | null; size: 22 | 28 | 40 | 56}) {
+export function PlayerAvatar({src, size, className}: {src: string | null; size: 22 | 28 | 40 | 56; className?: string}) {
     const cls = size === 22 ? "h-[22px] w-[22px]" : size === 28 ? "h-7 w-7" : size === 40 ? "h-10 w-10" : "h-14 w-14";
     return (
-        <div className={cn("relative shrink-0", cls)}>
+        <div className={cn("relative shrink-0", cls, className)}>
             {src && <Image src={src} alt="" fill sizes={`${size}px`} className="object-cover" />}
         </div>
     );
