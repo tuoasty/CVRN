@@ -4,8 +4,7 @@ import { useMemo } from "react";
 import { useSeasonContext } from "@/app/(public)/[region]/[season]/context";
 import { buildIncomingMap } from "@/app/hooks/usePlayoffs";
 import { PlayoffBracketDisplay } from "@/app/features/playoffs/PlayoffBracketDisplay";
-import { Trophy } from "lucide-react";
-import { Badge } from "@/app/components/ui/badge";
+import { findChampion, type BracketEntry } from "@/app/features/playoffs/model/bracketModel";
 import type { PlayoffBracket, Match } from "@/shared/types/db";
 import type { TeamWithRegion } from "@/server/domains/team";
 
@@ -17,6 +16,14 @@ type Props = {
     teams: TeamWithRegion[];
 };
 
+function EmptyLine({ children }: { children: string }) {
+    return (
+        <div className="grid min-h-[320px] place-items-center">
+            <p className="text-sm text-muted-foreground">{children}</p>
+        </div>
+    );
+}
+
 export default function PlayoffsPage({ brackets, matches, teams }: Props) {
     const { season, region } = useSeasonContext();
     const hasPlayoffs = season.playoff_started;
@@ -26,74 +33,52 @@ export default function PlayoffsPage({ brackets, matches, teams }: Props) {
 
     const incomingMap = useMemo(() => buildIncomingMap(brackets), [brackets]);
 
+    const championName = useMemo(() => {
+        const matchById = new Map(matches.map((m) => [m.id, m]));
+        const entries: BracketEntry[] = brackets
+            .filter((b) => matchById.has(b.match_id))
+            .map((b) => ({ ...b, match: matchById.get(b.match_id)! }));
+        const champion = findChampion(entries);
+        if (!champion) return null;
+        return teams.find((t) => t.id === champion.teamId)?.name ?? null;
+    }, [brackets, matches, teams]);
+
     return (
         <>
             <div className="page-wide space-y-6 py-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
-                            <Trophy className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold uppercase tracking-wider text-foreground">
-                                    Playoffs
-                                </h1>
-                                {hasPlayoffs && (
-                                    <Badge
-                                        variant="outline"
-                                        className={`rounded-sm text-[10px] h-5 px-2 font-semibold uppercase tracking-wider ${
-                                            isCompleted
-                                                ? "bg-success/10 text-success border-success/20"
-                                                : "bg-primary/10 text-primary border-primary/20"
-                                        }`}
-                                    >
-                                        {isCompleted ? "Completed" : "In Progress"}
-                                    </Badge>
-                                )}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                    {season.name} · {region.name}
-                                </p>
-                        </div>
-                    </div>
+                <div>
+                    <h1 className="text-2xl font-semibold tracking-tight text-foreground">Playoffs</h1>
+                    <p className="mt-1 text-[13px] text-muted-foreground">
+                        {season.name} · {region.name}
+                        {hasPlayoffs && !isCompleted && " · In progress"}
+                        {isCompleted && championName && (
+                            <>
+                                {" · Champion "}
+                                <span className="font-semibold text-foreground">{championName}</span>
+                            </>
+                        )}
+                        {isCompleted && !championName && " · Completed"}
+                    </p>
                 </div>
 
                 {!hasPlayoffs ? (
-
-                    <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">
-                        <div className="text-center space-y-3">
-                            <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
-                            <p className="text-sm text-muted-foreground font-medium">
-                                Playoffs have not started for this season
-                            </p>
-                        </div>
-                    </div>
+                    <EmptyLine>Playoffs have not started for this season.</EmptyLine>
                 ) : brackets.length === 0 ? (
-                    <div className="panel p-6 sm:p-16 bg-gradient-to-br from-muted/30 to-transparent">
-                        <div className="text-center space-y-3">
-                            <Trophy className="h-12 w-12 text-muted-foreground/40 mx-auto" />
-                            <p className="text-sm text-muted-foreground font-medium">
-                                No bracket data found
-                            </p>
-                        </div>
-                    </div>
+                    <EmptyLine>No bracket data found.</EmptyLine>
                 ) : null}
             </div>
 
-            {hasPlayoffs && (
+            {hasPlayoffs && brackets.length > 0 && (
                 <div className="page-bleed pb-6">
-                    {brackets.length > 0 ? (
-                        <PlayoffBracketDisplay
-                            brackets={brackets}
-                            incomingMap={incomingMap}
-                            teams={teams}
-                            matches={matches}
-                            regionCode={region.code}
-                            seasonSlug={season.slug}
-                            linkContext="public"
-                        />
-                    ) : null}
+                    <PlayoffBracketDisplay
+                        brackets={brackets}
+                        incomingMap={incomingMap}
+                        teams={teams}
+                        matches={matches}
+                        regionCode={region.code}
+                        seasonSlug={season.slug}
+                        linkContext="public"
+                    />
                 </div>
             )}
         </>

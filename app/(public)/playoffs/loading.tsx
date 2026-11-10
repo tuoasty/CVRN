@@ -3,15 +3,16 @@ import { PlayoffBracketLoading } from "@/app/features/playoffs/PlayoffBracketLoa
 
 export default function PlayoffsLoading() {
     return (
-        <div className="page-wide py-6 space-y-6">
-            <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-sm shrink-0" />
-                <div className="space-y-1.5">
-                    <Skeleton className="h-6 w-28 rounded-sm" />
-                    <Skeleton className="h-3 w-44 rounded-sm" />
+        <>
+            <div className="page-wide py-6">
+                <div className="space-y-2">
+                    <Skeleton className="h-7 w-32" />
+                    <Skeleton className="h-3.5 w-56" />
                 </div>
             </div>
-            <PlayoffBracketLoading />
-        </div>
+            <div className="page-bleed pb-6">
+                <PlayoffBracketLoading />
+            </div>
+        </>
     );
 }
