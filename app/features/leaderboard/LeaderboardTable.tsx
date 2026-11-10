@@ -183,7 +183,7 @@ export default function LeaderboardTable({
         <TooltipProvider delayDuration={200}>
             <div
                 className={cn(
-                    "border border-border rounded-sm",
+                    !flow && "border border-border rounded-sm",
                     !flow && "[&>[data-slot=table-container]]:max-h-[calc(100vh-18rem)]",
                     !flow && "[&>[data-slot=table-container]]:min-h-[20rem]",
                     !flow && "[&>[data-slot=table-container]]:overflow-auto",

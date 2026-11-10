@@ -10,13 +10,19 @@ import {
     getCachedStandings,
     getCachedTeamStrengths,
     getCachedAllSeasonRows,
+    getCachedSeasonCompletedMatches,
+    getCachedSeasonUpcomingMatches,
+    getCachedLeaderboardIdentity,
 } from "@/server/cache/publicReads";
 import { safeDecodeURIComponent } from "@/app/utils/decodeURI";
 import { seasonStrengths } from "@/app/features/teams/model/strength";
 import { buildRosterTiles } from "@/app/features/teams/detail/model/roster";
 import { buildLeaders } from "@/app/features/teams/detail/model/leaders";
+import { opponentsByTeam, scheduleStrength } from "@/app/features/teams/detail/model/scheduleStrength";
 import { getCachedSeasonTeamBreakdown } from "@/app/features/teams/detail/getCachedSeasonTeamBreakdown";
 import { buildPublicPlayerHref } from "@/app/utils/matchDetailHref";
+import { joinLeaderboardIdentity } from "@/app/features/leaderboard/joinLeaderboardIdentity";
+import type { LeaderboardStatRow } from "@/server/domains/player";
 import type { PlayerLeaderboardRow } from "@/server/domains/player";
 import type { StandingMethod } from "@/shared/types/standing";
 
@@ -48,7 +54,7 @@ export default async function TeamPage({ params }: PageProps) {
     const teamData = await getCachedTeamWithPlayers(teamSlug, seasonRecord.id);
     if (!teamData) notFound();
 
-    const [history, statRows, matchHistory, standings, strengths, allRows, breakdowns] = await Promise.all([
+    const [history, statRows, matchHistory, standings, strengths, allRows, breakdowns, seasonCompleted, seasonUpcoming, identity] = await Promise.all([
         getCachedTeamNameHistory(teamData.team.id),
         getCachedTeamLeaderboard(teamData.team.id, seasonRecord.id),
         getCachedTeamMatches(teamData.team.id, seasonRecord.id),
@@ -56,14 +62,21 @@ export default async function TeamPage({ params }: PageProps) {
         getCachedTeamStrengths(seasonRecord.season_number),
         getCachedAllSeasonRows(),
         getCachedSeasonTeamBreakdown(seasonRecord.id),
+        getCachedSeasonCompletedMatches(seasonRecord.id),
+        getCachedSeasonUpcomingMatches(seasonRecord.id),
+        getCachedLeaderboardIdentity(),
     ]);
 
     const seasonTeamIds = standings.map((s) => s.team_id).filter((id): id is string => !!id);
     if (!seasonTeamIds.includes(teamData.team.id)) seasonTeamIds.push(teamData.team.id);
-    const strength = seasonStrengths(strengths, seasonRecord.id, seasonTeamIds).get(teamData.team.id) ?? {
-        value: null,
-        rank: null,
-    };
+    const strengthMap = seasonStrengths(strengths, seasonRecord.id, seasonTeamIds);
+    const strength = strengthMap.get(teamData.team.id) ?? { value: null, rank: null };
+    const opponents = opponentsByTeam([...seasonCompleted, ...seasonUpcoming]);
+    const schedule = scheduleStrength({
+        matchesByTeam: new Map(seasonTeamIds.map((id) => [id, opponents.get(id) ?? []])),
+        strengths: strengthMap,
+    }).get(teamData.team.id) ?? { value: null, rank: null };
+    const strengthRecord = Object.fromEntries([...strengthMap].map(([id, v]) => [id, v.value]));
 
     const rows = allRows as unknown as PlayerLeaderboardRow[];
     const rosterIds = teamData.players.map((p) => p.id);
@@ -107,6 +120,9 @@ export default async function TeamPage({ params }: PageProps) {
             standing={standings.find((s) => s.team_id === teamData.team.id) ?? null}
             teamCount={standings.filter((s) => !!s.team_id).length}
             strength={strength}
+            schedule={schedule}
+            strengths={strengthRecord}
+            careerRows={joinLeaderboardIdentity(rosterRows as unknown as LeaderboardStatRow[], identity)}
             leaders={leaders}
             leaderPlayers={leaderPlayers}
             breakdown={breakdowns[teamData.team.id] ?? null}

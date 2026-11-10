@@ -27,6 +27,9 @@ type Props = {
     standing: StandingWithInfo | null;
     teamCount: number;
     strength: RankedValue;
+    schedule: RankedValue;
+    strengths: Record<string, number | null>;
+    careerRows: PlayerLeaderboardRow[];
     leaders: { source: "season" | "alltime"; leaders: Leader[] };
     leaderPlayers: Record<string, LeaderPlayer>;
     breakdown: TeamBreakdown | null;
@@ -45,6 +48,9 @@ export default function PublicTeamDetailPage({
     standing,
     teamCount,
     strength,
+    schedule,
+    strengths,
+    careerRows,
     leaders,
     leaderPlayers,
     breakdown,
@@ -81,12 +87,14 @@ export default function PublicTeamDetailPage({
                     regionCode={regionCode}
                     seasonSlug={seasonSlug}
                     standingMethod={standingMethod}
+                    strengths={strengths}
+                    teamStrength={strength}
+                    schedule={schedule}
                 />
             </div>
 
-            <div className="mt-12 space-y-3">
-                <h3 className="text-sm uppercase tracking-wide text-muted-foreground">Season Stats</h3>
-                <TeamStatsSection rows={statRows} />
+            <div className="mt-12">
+                <TeamStatsSection seasonRows={statRows} careerRows={careerRows} />
             </div>
         </div>
     );

@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import type { MatchWithDetails } from "@/server/domains/match";
 import type { TeamWithRegion } from "@/server/domains/team";
 import type { StandingMethod } from "@/shared/types/standing";
+import { SectionHeading } from "@/app/(public)/home/sections/SectionHeading";
+import { formatStrength, ordinal, type RankedValue } from "@/app/features/teams/model/strength";
 
 function orientForTeam(md: MatchWithDetails, teamId: string): MatchWithDetails {
     const m = md.match;
@@ -34,7 +36,7 @@ function orientForTeam(md: MatchWithDetails, teamId: string): MatchWithDetails {
 
 const WIN_TEXT = "text-success";
 const LOSS_TEXT = "text-destructive";
-const COLS = "56px minmax(120px,1fr) 96px minmax(140px,1.4fr) 72px 14px";
+const COLS = "56px minmax(120px,1fr) 104px 96px minmax(140px,1.4fr) 72px 14px";
 const LABEL = "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
 
 function roundLabel(md: MatchWithDetails): string {
@@ -84,22 +86,40 @@ type Props = {
     regionCode: string;
     seasonSlug: string;
     standingMethod: StandingMethod;
+    strengths: Record<string, number | null>;
+    teamStrength: RankedValue;
+    schedule: RankedValue;
 };
 
-export default function TeamMatchHistory({ matches, teams, teamId, regionCode, seasonSlug, standingMethod }: Props) {
+function StrengthNote({ label, value, suffix }: { label: string; value: RankedValue; suffix?: string }) {
+    return (
+        <span>
+            {label} <span className="font-mono tabular-nums text-foreground">{formatStrength(value.value)}</span>
+            {value.rank != null && ` (${ordinal(value.rank)}${suffix ?? ""})`}
+        </span>
+    );
+}
+
+export default function TeamMatchHistory({ matches, teams, teamId, regionCode, seasonSlug, standingMethod, strengths, teamStrength, schedule }: Props) {
     const isPoints = standingMethod === "points" || standingMethod === "points_without_bonus";
     const regionTimezone = getRegionTimezone(regionCode);
 
     const header = (
-        <h3 className="text-sm uppercase tracking-wide text-muted-foreground">Match History</h3>
+        <SectionHeading title="Matches">
+            <span className="flex flex-wrap justify-end gap-x-1.5 text-xs text-muted-foreground">
+                <StrengthNote label="Team strength" value={teamStrength} />
+                <span aria-hidden>·</span>
+                <StrengthNote label="Schedule strength" value={schedule} suffix=" hardest" />
+            </span>
+        </SectionHeading>
     );
 
     if (matches.length === 0) {
         return (
-            <div className="space-y-3">
+            <section aria-label="Matches">
                 {header}
-                <p className="text-sm text-muted-foreground py-8 text-center">No matches played yet.</p>
-            </div>
+                <p className="py-8 text-sm text-muted-foreground">No matches scheduled yet.</p>
+            </section>
         );
     }
 
@@ -113,18 +133,19 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
     });
 
     return (
-        <div className="space-y-3">
+        <section aria-label="Matches">
             {header}
 
-            <div className="border border-border rounded-sm bg-card overflow-hidden max-w-4xl">
+            <div className="mt-2">
                 <div className="overflow-x-auto">
-                    <div style={{ minWidth: 620 }}>
+                    <div style={{ minWidth: 740 }}>
                         <div
-                            className="grid gap-3.5 items-center px-4 py-2 bg-muted/30 border-b border-border"
+                            className="grid gap-3.5 items-center px-4 py-2 border-b border-border"
                             style={{ gridTemplateColumns: COLS }}
                         >
                             <span className={LABEL}>Round</span>
                             <span className={LABEL}>Opponent</span>
+                            <span className={cn(LABEL, "text-right")}>Opp strength</span>
                             <span className={LABEL}>Result</span>
                             <span className={LABEL}>Sets</span>
                             <span className={cn(LABEL, "text-right")}>{isPoints ? "PTS" : "LVR"}</span>
@@ -138,6 +159,7 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                             const oriented = orientForTeam(md, teamId);
                             const opponent = oriented.match.away_team_id ? teams[oriented.match.away_team_id] : undefined;
 
+                            const opponentStrength = oriented.match.away_team_id ? strengths[oriented.match.away_team_id] ?? null : null;
                             const isCompleted = oriented.match.status === "completed";
                             const subjectSets = oriented.match.home_sets_won ?? 0;
                             const oppSets = oriented.match.away_sets_won ?? 0;
@@ -169,6 +191,10 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                                             {opponent?.is_bye ? "BYE" : opponent?.name ?? "TBD"}
                                         </span>
                                     </div>
+
+                                    <span className="text-right text-xs font-mono tabular-nums text-foreground">
+                                        {formatStrength(opponentStrength)}
+                                    </span>
 
                                     {isCompleted ? (
                                         <div className="flex items-center gap-2">
@@ -221,7 +247,7 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                             );
 
                             const rowStyle = { gridTemplateColumns: COLS };
-                            const rowClasses = "grid gap-3.5 items-center px-4 py-2.5 border-b border-border last:border-b-0 transition-colors";
+                            const rowClasses = "grid gap-3.5 items-center px-4 py-2.5 transition-colors duration-150";
 
                             return href ? (
                                 <Link
@@ -229,7 +255,7 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                                     href={href}
                                     prefetch={false}
                                     style={rowStyle}
-                                    className={cn(rowClasses, "hover:bg-muted/30 focus:outline-none focus-visible:bg-muted/30 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50")}
+                                    className={cn(rowClasses, "hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground")}
                                 >
                                     {rowInner}
                                 </Link>
@@ -242,6 +268,6 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     );
 }
