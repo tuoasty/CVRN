@@ -36,7 +36,13 @@ function orientForTeam(md: MatchWithDetails, teamId: string): MatchWithDetails {
 
 const WIN_TEXT = "text-success";
 const LOSS_TEXT = "text-destructive";
-const COLS = "56px minmax(120px,1fr) 104px 96px minmax(140px,1.4fr) 72px 14px";
+const GRID = cn(
+    "grid items-center gap-2 px-2 sm:gap-3.5 sm:px-4",
+    "grid-cols-[52px_minmax(0,1fr)_96px_14px]",
+    "sm:grid-cols-[56px_minmax(0,1fr)_96px_64px_14px]",
+    "md:grid-cols-[56px_minmax(0,1fr)_96px_minmax(140px,1.4fr)_72px_14px]",
+    "lg:grid-cols-[56px_minmax(0,1fr)_104px_96px_minmax(140px,1.4fr)_72px_14px]",
+);
 const LABEL = "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
 
 function roundLabel(md: MatchWithDetails): string {
@@ -137,18 +143,13 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
             {header}
 
             <div className="mt-2">
-                <div className="overflow-x-auto">
-                    <div style={{ minWidth: 740 }}>
-                        <div
-                            className="grid gap-3.5 items-center px-4 py-2 border-b border-border"
-                            style={{ gridTemplateColumns: COLS }}
-                        >
+                        <div className={cn(GRID, "py-2 border-b border-border")}>
                             <span className={LABEL}>Round</span>
                             <span className={LABEL}>Opponent</span>
-                            <span className={cn(LABEL, "text-right")}>Opp strength</span>
+                            <span className={cn(LABEL, "hidden text-right lg:block")}>Opp strength</span>
                             <span className={LABEL}>Result</span>
-                            <span className={LABEL}>Sets</span>
-                            <span className={cn(LABEL, "text-right")}>{isPoints ? "PTS" : "LVR"}</span>
+                            <span className={cn(LABEL, "hidden md:block")}>Sets</span>
+                            <span className={cn(LABEL, "hidden text-right sm:block")}>{isPoints ? "PTS" : "LVR"}</span>
                             <span />
                         </div>
 
@@ -161,6 +162,7 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
 
                             const opponentStrength = oriented.match.away_team_id ? strengths[oriented.match.away_team_id] ?? null : null;
                             const isCompleted = oriented.match.status === "completed";
+                            const isPlayoff = original.match_type === "playoffs";
                             const subjectSets = oriented.match.home_sets_won ?? 0;
                             const oppSets = oriented.match.away_sets_won ?? 0;
                             const won = subjectSets > oppSets;
@@ -192,7 +194,7 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                                         </span>
                                     </div>
 
-                                    <span className="text-right text-xs font-mono tabular-nums text-foreground">
+                                    <span className="hidden text-right text-xs font-mono tabular-nums text-foreground lg:block">
                                         {formatStrength(opponentStrength)}
                                     </span>
 
@@ -209,16 +211,16 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                                             </span>
                                         </div>
                                     ) : (
-                                        <span className="text-xs text-muted-foreground">Scheduled</span>
+                                        <span className="truncate text-xs font-mono tabular-nums text-muted-foreground">{timeDisplay}</span>
                                     )}
 
                                     {isCompleted ? (
                                         original.is_forfeit ? (
-                                            <span className="text-xs text-muted-foreground italic">
+                                            <span className="hidden text-xs text-muted-foreground md:block">
                                                 {won ? "Won" : "Lost"} by forfeit
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-3 text-xs tabular-nums overflow-hidden">
+                                            <span className="hidden items-center gap-3 text-xs tabular-nums overflow-hidden md:flex">
                                                 {oriented.sets.map((s, i) => (
                                                     <span key={i} className={cn("shrink-0", s.home_score > s.away_score ? "text-foreground font-medium" : "text-muted-foreground")}>
                                                         {s.home_score}-{s.away_score}
@@ -227,46 +229,44 @@ export default function TeamMatchHistory({ matches, teams, teamId, regionCode, s
                                             </span>
                                         )
                                     ) : (
-                                        <span className="text-xs font-mono tabular-nums text-muted-foreground">{timeDisplay}</span>
+                                        <span className="hidden md:block" />
                                     )}
 
-                                    {isCompleted && !isPoints && subjectLvr != null ? (
-                                        <span className={cn("text-right text-xs font-semibold font-mono tabular-nums", subjectLvr >= 0 ? WIN_TEXT : LOSS_TEXT)}>
+                                    {isPlayoff || !isCompleted ? (
+                                        <span className="hidden sm:block" />
+                                    ) : !isPoints && subjectLvr != null ? (
+                                        <span className={cn("hidden text-right text-xs font-semibold font-mono tabular-nums sm:block", subjectLvr >= 0 ? WIN_TEXT : LOSS_TEXT)}>
                                             {subjectLvr >= 0 ? "+" : ""}{subjectLvr.toFixed(1)}
                                         </span>
-                                    ) : isCompleted && isPoints ? (
-                                        <span className="text-right text-xs font-semibold font-mono tabular-nums text-foreground">
+                                    ) : isPoints ? (
+                                        <span className="hidden text-right text-xs font-semibold font-mono tabular-nums text-foreground sm:block">
                                             +{subjectPts.toFixed(1)}
                                         </span>
                                     ) : (
-                                        <span />
+                                        <span className="hidden sm:block" />
                                     )}
 
                                     <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" aria-hidden />
                                 </>
                             );
 
-                            const rowStyle = { gridTemplateColumns: COLS };
-                            const rowClasses = "grid gap-3.5 items-center px-4 py-2.5 transition-colors duration-150";
+                            const rowClasses = cn(GRID, "py-2.5 transition-colors duration-150");
 
                             return href ? (
                                 <Link
                                     key={original.id}
                                     href={href}
                                     prefetch={false}
-                                    style={rowStyle}
                                     className={cn(rowClasses, "hover:bg-muted/30 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground")}
                                 >
                                     {rowInner}
                                 </Link>
                             ) : (
-                                <div key={original.id} style={rowStyle} className={rowClasses}>
+                                <div key={original.id} className={rowClasses}>
                                     {rowInner}
                                 </div>
                             );
                         })}
-                    </div>
-                </div>
             </div>
         </section>
     );

@@ -63,6 +63,10 @@ const PAGE_SIZE = 50;
 
 const RANK_W = "w-14";
 const PLAYER_W = "w-52";
+const RANK_W_COMPACT = "w-8 sm:w-14";
+const PLAYER_W_COMPACT = "w-32 sm:w-52";
+const PLAYER_LEFT = "left-14";
+const PLAYER_LEFT_COMPACT = "left-8 sm:left-14";
 const POSITION_W = "w-24";
 const TEAM_W = "w-36";
 const REGION_W = "w-10";
@@ -191,8 +195,8 @@ export default function LeaderboardTable({
             >
                 <Table className="table-fixed border-collapse">
                     <colgroup>
-                        <col className={RANK_W} />
-                        <col className={PLAYER_W} />
+                        <col className={flow ? RANK_W_COMPACT : RANK_W} />
+                        <col className={flow ? PLAYER_W_COMPACT : PLAYER_W} />
                         <col className={POSITION_W} />
                         {showTeam && <col className={TEAM_W} />}
                         {showRegion && <col className={REGION_W} />}
@@ -217,7 +221,8 @@ export default function LeaderboardTable({
                             <TableHead
                                 rowSpan={2}
                                 className={cn(
-                                    "sticky left-14 text-left align-bottom px-2 text-xs font-semibold uppercase tracking-wider",
+                                    "sticky text-left align-bottom px-2 text-xs font-semibold uppercase tracking-wider",
+                                    flow ? PLAYER_LEFT_COMPACT : PLAYER_LEFT,
                                     HEAD_BG,
                                     Z_HEAD_CORNER,
                                     HEAD_RULE,
@@ -346,6 +351,7 @@ export default function LeaderboardTable({
                                 sortKey={filters.sort}
                                 showRegion={showRegion}
                                 showTeam={showTeam}
+                                compact={flow}
                             />
                         ))}
 
@@ -375,6 +381,7 @@ export default function LeaderboardTable({
                                         sortKey={filters.sort}
                                 showRegion={showRegion}
                                 showTeam={showTeam}
+                                compact={flow}
                                     />
                                 ))}
                             </>
@@ -435,6 +442,7 @@ function LeaderboardRow({
     sortKey,
     showRegion,
     showTeam,
+    compact,
 }: {
     row: LeaderboardDisplayRow;
 
@@ -443,6 +451,7 @@ function LeaderboardRow({
     sortKey: SortKey;
     showRegion: boolean;
     showTeam: boolean;
+    compact: boolean;
 }) {
     const teamHref = buildPublicTeamHref({
         regionCode: row.region_code,
@@ -457,7 +466,8 @@ function LeaderboardRow({
         <TableRow className="group h-[3.25rem] hover:bg-muted/30">
             <TableCell
                 className={cn(
-                    "sticky left-0 bg-background group-hover:bg-muted/30 transition-colors py-0 px-2 text-right align-middle",
+                    "sticky left-0 bg-background group-hover:shadow-[inset_0_0_0_100vmax_hsl(var(--muted)/0.3)] transition-shadow py-0 text-right align-middle",
+                    compact ? "px-1 sm:px-2" : "px-2",
                     Z_BODY_STICKY,
                 )}
             >
@@ -475,13 +485,14 @@ function LeaderboardRow({
 
             <TableCell
                 className={cn(
-                    "sticky left-14 bg-background group-hover:bg-muted/30 transition-colors py-0 px-2 align-middle",
+                    "sticky bg-background group-hover:shadow-[inset_0_0_0_100vmax_hsl(var(--muted)/0.3)] transition-shadow py-0 px-2 align-middle",
+                    compact ? PLAYER_LEFT_COMPACT : PLAYER_LEFT,
                     Z_BODY_STICKY,
                 )}
             >
                 <div className="flex items-center gap-2.5 min-w-0">
                     {row.avatar_url && (
-                        <div className="relative w-10 h-10 shrink-0 rounded-full overflow-hidden bg-muted">
+                        <div className={cn("relative w-10 h-10 shrink-0 rounded-full overflow-hidden bg-muted", compact && "hidden sm:block")}>
                             <Image src={row.avatar_url} alt="" fill sizes="40px" className="object-cover" unoptimized />
                         </div>
                     )}
