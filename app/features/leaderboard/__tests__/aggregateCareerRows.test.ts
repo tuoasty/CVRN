@@ -158,6 +158,20 @@ describe("aggregateCareerRows", () => {
         expect(career.find(c => c.region_code === "NA")!.aces_total).toBe(5);
     });
 
+    it("merges a player's regions when keyed by player id", () => {
+        const career = aggregateCareerRows(
+            [
+                row({season_slug: "s1", season_start_date: "2025-01-01", region_id: "na", region_code: "NA", sets_played: 10, aces_total: 5}),
+                row({season_slug: "s1", season_start_date: "2025-01-01", region_id: "as", region_code: "AS", sets_played: 4, aces_total: 1}),
+            ],
+            r => r.player_id,
+        );
+
+        expect(career).toHaveLength(1);
+        expect(career[0].sets_played).toBe(14);
+        expect(career[0].aces_total).toBe(6);
+    });
+
     it("takes identity and team from the most recent season", () => {
         const [career] = aggregateCareerRows([
             row({season_slug: "s1", season_start_date: "2025-01-01", sets_played: 5, team_name: "Old Team", team_slug: "old"}),
