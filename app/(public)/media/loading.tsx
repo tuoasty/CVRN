@@ -1,19 +1,10 @@
+import {PublicPageHeaderSkeleton} from "@/app/components/public/PublicPageHeader";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { Image as ImageIcon } from "lucide-react";
 
 export default function MediaLoading() {
     return (
         <div className="page-wide py-6 space-y-6">
-            {}
-            <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
-                    <ImageIcon className="h-5 w-5 text-primary" />
-                </div>
-                <div className="space-y-1.5">
-                    <Skeleton className="h-6 w-20 rounded-sm" />
-                    <Skeleton className="h-3 w-52 rounded-sm" />
-                </div>
-            </div>
+            <PublicPageHeaderSkeleton titleWidth="w-24" />
             <div className="flex gap-1.5">
                 <Skeleton className="h-6 w-10 rounded-sm" />
                 <Skeleton className="h-6 w-24 rounded-sm" />

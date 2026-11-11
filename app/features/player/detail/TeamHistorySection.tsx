@@ -39,7 +39,7 @@ function TeamRow({entry}: {entry: PlayerTeamHistoryEntry}) {
         </div>
     );
     return (
-        <li className="border-b border-border/60 last:border-b-0">
+        <li>
             {href ? <Link href={href} prefetch={false} className="block transition-colors hover:bg-muted/30">{body}</Link> : body}
         </li>
     );

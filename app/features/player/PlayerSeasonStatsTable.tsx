@@ -25,6 +25,10 @@ type TeamLogoInfo = {logo_url: string | null; logo_bg_removed: boolean};
 
 const DRAG_THRESHOLD = 4;
 
+const STICKY = "sticky left-0 bg-background border-r border-border";
+const GROUP_RULE = "border-r border-r-border/30";
+const LABEL = "text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground";
+
 function useDragScroll() {
     const cleanupRef = useRef<(() => void) | null>(null);
     return useCallback((node: HTMLTableElement | null) => {
@@ -80,72 +84,72 @@ export default function PlayerSeasonStatsTable({rows, teamLogoBySeasonId}: Props
     return (
         <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h2 className="text-lg font-semibold">Season Stats</h2>
-                </div>
+                <h2 className="text-lg font-semibold">Season Stats</h2>
                 <StatViewSelector value={view} onChange={setView} />
             </div>
             <TooltipProvider delayDuration={200}>
-                <div className="border border-border rounded-sm overflow-hidden [&>[data-slot=table-container]]:overflow-x-auto">
-                    <Table ref={tableRef} className="border-collapse">
-                        <TableHeader>
-                            <TableRow className="border-b-0 hover:bg-transparent">
+                <div className="overflow-hidden rounded-sm border border-border">
+                <Table ref={tableRef} className="border-separate border-spacing-0">
+                    <TableHeader>
+                        <TableRow className="border-b-0 hover:bg-transparent">
+                            <TableHead
+                                rowSpan={2}
+                                className={cn(STICKY, "z-10 min-w-[7.5rem] border-b border-border px-2 text-left align-bottom", LABEL)}
+                            >
+                                Season
+                            </TableHead>
+                            <TableHead
+                                rowSpan={2}
+                                className={cn("border-b border-border px-2 text-left align-bottom", GROUP_RULE, LABEL)}
+                            >
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="cursor-help">Pos</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">Positions played</TooltipContent>
+                                </Tooltip>
+                            </TableHead>
+                            {groups.map((g, idx) => (
                                 <TableHead
-                                    rowSpan={2}
-                                    className="sticky left-0 z-10 bg-background text-left align-bottom min-w-[120px] px-2 border-r border-border/30 text-[11px] font-semibold uppercase tracking-wider"
+                                    key={`group-${idx}`}
+                                    colSpan={g.columns.length}
+                                    className={cn("h-7 px-1 text-center", LABEL, idx < groups.length - 1 && GROUP_RULE)}
                                 >
-                                    Season
+                                    {g.group}
                                 </TableHead>
-                                <TableHead
-                                    rowSpan={2}
-                                    className="text-left align-bottom px-2 border-r border-border/30 text-[11px] font-semibold uppercase tracking-wider"
-                                >
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className="cursor-help">Pos</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top">Positions played</TooltipContent>
-                                    </Tooltip>
-                                </TableHead>
-                                {groups.map((g, idx) => (
-                                    <TableHead
-                                        key={`group-${idx}`}
-                                        colSpan={g.columns.length}
-                                        className="h-6 px-1 text-center text-[10px] uppercase tracking-wider font-semibold text-muted-foreground border-r border-border/30 last:border-r-0"
-                                    >
-                                        {g.group}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                            <TableRow className="hover:bg-transparent">
-                                {columns.map((col, i) => {
-                                    const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;
-                                    return (
-                                        <TableHead
-                                            key={col.key as string}
-                                            className={cn(
-                                                "h-8 px-1 text-center text-[11px] font-semibold whitespace-nowrap",
-                                                playerHeadWidthClass(col.format),
-                                                isLastInGroup && "border-r border-border/30 last:border-r-0",
-                                            )}
-                                        >
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <span className="cursor-help">{col.label}</span>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="top">{col.description}</TooltipContent>
-                                            </Tooltip>
-                                        </TableHead>
-                                    );
-                                })}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {rows.map(row => (
-                                <SeasonStatRow key={row.season_id} row={row} columns={columns} teamLogo={teamLogoBySeasonId?.get(row.season_id)} />
                             ))}
-                        </TableBody>
-                    </Table>
+                        </TableRow>
+                        <TableRow className="hover:bg-transparent">
+                            {columns.map((col, i) => {
+                                const isLastColumn = i === columns.length - 1;
+                                const isLastInGroup = isLastColumn || columns[i + 1].group !== col.group;
+                                return (
+                                    <TableHead
+                                        key={col.key as string}
+                                        className={cn(
+                                            "h-8 border-b border-border px-1 text-center whitespace-nowrap",
+                                            LABEL,
+                                            playerHeadWidthClass(col.format),
+                                            isLastInGroup && !isLastColumn && GROUP_RULE,
+                                        )}
+                                    >
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span className="cursor-help">{col.label}</span>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">{col.description}</TooltipContent>
+                                        </Tooltip>
+                                    </TableHead>
+                                );
+                            })}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {rows.map(row => (
+                            <SeasonStatRow key={row.season_id} row={row} columns={columns} teamLogo={teamLogoBySeasonId?.get(row.season_id)} />
+                        ))}
+                    </TableBody>
+                </Table>
                 </div>
             </TooltipProvider>
         </div>
@@ -154,14 +158,14 @@ export default function PlayerSeasonStatsTable({rows, teamLogoBySeasonId}: Props
 
 function SeasonStatRow({row, columns, teamLogo}: {row: PlayerSeasonStat; columns: PlayerStatColumn[]; teamLogo?: TeamLogoInfo}) {
     return (
-        <TableRow className="hover:bg-muted/30">
-            <TableCell className="sticky left-0 z-[1] bg-background hover:bg-muted/30 transition-colors border-r border-border/30 py-1.5 px-2 text-sm font-medium whitespace-nowrap">
+        <TableRow className="group border-b-0 hover:bg-muted/30">
+            <TableCell className={cn(STICKY, "z-[1] px-2 py-2 text-sm font-medium whitespace-nowrap transition-shadow duration-150 group-hover:shadow-[inset_0_0_0_100vmax_hsl(var(--muted)/0.3)]")}>
                 <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{row.region_code}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{row.region_code}</span>
                     <span>{row.season_name}</span>
                     {teamLogo && (
-                        <div className="relative w-5 h-5 shrink-0 ml-auto">
-                            {teamLogo?.logo_url ? (
+                        <div className="relative ml-auto h-5 w-5 shrink-0">
+                            {teamLogo.logo_url ? (
                                 <Image
                                     src={teamLogo.logo_url}
                                     alt=""
@@ -177,18 +181,19 @@ function SeasonStatRow({row, columns, teamLogo}: {row: PlayerSeasonStat; columns
                     )}
                 </div>
             </TableCell>
-            <TableCell className="border-r border-border/30 py-1 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+            <TableCell className={cn("px-2 py-2 font-mono text-xs uppercase text-muted-foreground whitespace-nowrap", GROUP_RULE)}>
                 <span title={positionsTitle(row.position_counts)}>{formatPositions(row.position_counts)}</span>
             </TableCell>
             {columns.map((col, i) => {
-                const isLastInGroup = i === columns.length - 1 || columns[i + 1].group !== col.group;
+                const isLastColumn = i === columns.length - 1;
+                const isLastInGroup = isLastColumn || columns[i + 1].group !== col.group;
                 const value = row[col.key] as number | null;
                 return (
                     <TableCell
                         key={col.key as string}
                         className={cn(
-                            "py-1 px-1 text-center text-xs font-mono tabular-nums whitespace-nowrap text-foreground/70",
-                            isLastInGroup && "border-r border-border/30 last:border-r-0",
+                            "px-1 py-2 text-center font-mono text-xs tabular-nums whitespace-nowrap text-foreground",
+                            isLastInGroup && !isLastColumn && GROUP_RULE,
                         )}
                     >
                         {formatPlayerStat(value, col.format)}

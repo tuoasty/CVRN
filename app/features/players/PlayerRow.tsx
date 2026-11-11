@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { ChevronRight } from "lucide-react"
 import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo"
 import PlayerAvatar from "./PlayerAvatar"
 import { buildPublicPlayerHref } from "@/app/utils/matchDetailHref"
@@ -8,9 +9,9 @@ import { cn } from "@/lib/utils"
 import type { PlayerSearchHit } from "@/server/domains/player"
 
 export const PLAYER_ROW_GRID =
-    "grid items-center gap-3 pl-3 pr-3 sm:gap-4 sm:pr-4 " +
-    "grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] " +
-    "sm:grid-cols-[3.5rem_13rem_minmax(0,1fr)_3rem_8rem_3.25rem]"
+    "grid items-center gap-3 px-2 sm:gap-4 " +
+    "grid-cols-[2.75rem_minmax(0,1fr)_2.5rem_0.75rem] " +
+    "sm:grid-cols-[3.5rem_minmax(0,1.1fr)_minmax(0,0.9fr)_2.5rem_minmax(0,1fr)_2.5rem_0.75rem]"
 
 export const PLAYER_ROW_BOX = "min-h-[3.75rem] py-1.5"
 
@@ -29,17 +30,15 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
             className={cn(
                 PLAYER_ROW_GRID,
                 PLAYER_ROW_BOX,
-                "group relative overflow-hidden transition-colors",
-                "hover:bg-muted/40",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                "group relative overflow-hidden transition-colors duration-150 hover:bg-muted/30",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground",
                 !href && "pointer-events-none opacity-60"
             )}
         >
-            {}
             {team?.brick_color && (
                 <span
                     aria-hidden
-                    className="pointer-events-none absolute inset-y-0 left-0 w-48 opacity-[0.13] transition-opacity duration-200 group-hover:opacity-[0.24]"
+                    className="pointer-events-none absolute inset-y-0 left-0 w-48 opacity-[0.16] transition-opacity duration-200 group-hover:opacity-[0.28] motion-reduce:transition-none"
                     style={{ background: `linear-gradient(to right, ${team.brick_color}, transparent)` }}
                 />
             )}
@@ -47,7 +46,7 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
             {team?.logo_url && (
                 <span
                     aria-hidden
-                    className="pointer-events-none absolute inset-y-0 -left-8 w-28 opacity-[0.10] transition-opacity duration-200 group-hover:opacity-[0.18]"
+                    className="pointer-events-none absolute inset-y-0 -left-8 w-28 opacity-[0.16] transition-opacity duration-200 group-hover:opacity-[0.26] motion-reduce:transition-none"
                     style={{ maskImage: LOGO_BLEED_MASK, WebkitMaskImage: LOGO_BLEED_MASK }}
                 >
                     <Image
@@ -61,47 +60,45 @@ export default function PlayerRow({ player }: { player: PlayerSearchHit }) {
                 </span>
             )}
 
-            {}
-            <div className="relative z-10 -mb-1.5 h-[3.5rem] w-full self-end">
-                <PlayerAvatar src={player.avatar_url} alt={player.username || "Player"} />
+            <div className="relative -mb-1.5 h-[3.25rem] w-full self-end sm:h-[3.5rem]">
+                <PlayerAvatar src={player.avatar_url} alt="" />
             </div>
 
-            {}
-            <div className="relative z-10 min-w-0">
-                <div className="truncate text-sm font-semibold">{name}</div>
+            <div className="relative min-w-0">
+                <div className="truncate text-sm font-semibold text-foreground group-hover:underline group-hover:underline-offset-4">{name}</div>
                 <div className="truncate text-xs text-muted-foreground sm:hidden">
                     {[handle, player.region_code, team?.name].filter(Boolean).join(" · ")}
                 </div>
             </div>
 
-            <div className="relative z-10 hidden min-w-0 truncate text-sm text-muted-foreground sm:block">
+            <div className="relative hidden min-w-0 truncate text-sm text-muted-foreground sm:block">
                 {handle}
             </div>
 
-            {}
-            <div className="relative z-10 h-[2.75rem] w-full self-center sm:h-[3rem]">
+            <div className="relative h-10 w-10 self-center">
                 {team?.logo_url ? (
                     <Image
                         src={team.logo_url}
-                        alt={team.name}
+                        alt=""
                         fill
-                        sizes="48px"
+                        sizes="40px"
                         className={getLogoClassName(team.logo_bg_removed)}
                         unoptimized
                     />
                 ) : team ? (
-                    <DefaultTeamLogo sizes="48px" alt={team.name} />
+                    <DefaultTeamLogo sizes="40px" alt="" />
                 ) : null}
             </div>
 
-            <div className="relative z-10 hidden min-w-0 truncate text-sm sm:block">
+            <div className="relative hidden min-w-0 truncate text-sm text-foreground sm:block">
                 {team?.name ?? ""}
             </div>
 
-            {}
-            <div className="relative z-10 hidden text-right text-sm font-semibold uppercase tracking-wide text-muted-foreground sm:block">
+            <div className="relative hidden text-right font-mono text-xs font-semibold uppercase text-muted-foreground sm:block">
                 {player.region_code ?? ""}
             </div>
+
+            <ChevronRight className="relative h-3 w-3 text-muted-foreground" aria-hidden />
         </Link>
     )
 }

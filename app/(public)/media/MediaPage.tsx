@@ -20,15 +20,6 @@ import type { ArticleListItem } from '@/server/domains/article'
 
 type TabKey = MediaFilterType | 'articles'
 
-const TYPE_COLORS: Record<string, string> = {
-    gfx:   'bg-violet-500/20 text-violet-400 border-violet-500/30',
-    video: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    feature: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-    news:  'bg-green-500/20 text-green-400 border-green-500/30',
-    recap: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-    clip:  'bg-pink-500/20 text-pink-400 border-pink-500/30',
-}
-
 const TAB_LABELS: Record<TabKey, string> = {
     all:      'All',
     articles: 'Articles',
@@ -128,7 +119,7 @@ function MediaCard({ post, authorName, onVideoClick, onGfxClick }: {
             <div className="p-3 space-y-1">
                 <Badge
                     variant="outline"
-                    className={cn('rounded-sm text-[9px] uppercase tracking-wide font-semibold', TYPE_COLORS[post.type] ?? '')}
+                    className="rounded-full border-border bg-transparent px-2 py-0.5 text-xs font-medium uppercase text-muted-foreground"
                 >
                     {post.type}
                 </Badge>
@@ -294,23 +285,24 @@ export default function MediaFeedPage({ posts: allPosts, articles: allArticles =
     return (
         <div className="page-wide py-6 space-y-6">
             <PublicPageHeader
-                icon={ImageIcon}
                 title="Media"
                 subtitle="GFX, highlights, and league content"
             />
 
             {}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap gap-x-5">
                     {(Object.keys(TAB_LABELS) as TabKey[]).map(f => (
                         <button
                             key={f}
+                            type="button"
+                            aria-pressed={filter === f}
                             onClick={() => handleFilter(f)}
                             className={cn(
-                                'rounded-sm px-3 py-1 text-xs font-medium transition-colors',
+                                'h-9 text-sm transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground',
                                 filter === f
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                    ? 'font-semibold text-foreground underline decoration-2 underline-offset-[6px]'
+                                    : 'font-medium text-muted-foreground hover:text-foreground'
                             )}
                         >
                             {TAB_LABELS[f]}

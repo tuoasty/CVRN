@@ -15,7 +15,7 @@ export function RuledSection({title, action, id, children}: {title: string; acti
 
 export function CareerLink({href, children}: {href: string; children: ReactNode}) {
     return (
-        <Link href={href} prefetch={false} className="shrink-0 text-xs font-medium text-primary hover:underline">
+        <Link href={href} prefetch={false} className="shrink-0 text-xs font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground">
             {children}
         </Link>
     );

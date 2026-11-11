@@ -79,7 +79,7 @@ function MatchRow({match}: {match: PlayerRecentMatch}) {
         </div>
     );
     return (
-        <li className="h-[72px] border-b border-border/60 last:border-b-0 lg:h-[var(--match-row)]">
+        <li className="h-[72px] lg:h-[var(--match-row)]">
             {href ? <Link href={href} prefetch={false} className="block h-full transition-colors hover:bg-muted/30">{body}</Link> : body}
         </li>
     );

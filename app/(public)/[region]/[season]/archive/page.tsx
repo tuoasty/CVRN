@@ -68,7 +68,7 @@ function ChampionMasthead({ podium, regionCode, seasonSlug }: { podium: SeasonDe
     const champHref = buildPublicTeamHref({ regionCode, seasonSlug, teamSlug: champion.teams.slug });
     const name = <span className="text-2xl font-bold tracking-tight leading-none">{champion.teams.name}</span>;
     return (
-        <div className="border-t-2 border-foreground border-b border-border pt-3.5 pb-4">
+        <div className="border-t border-border pt-3.5 pb-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 <Trophy className="h-3.5 w-3.5 text-secondary" /> Champion
             </div>
@@ -133,7 +133,7 @@ function ChampionGfxHero({ gfx, podium, regionCode, seasonSlug }: { gfx: { image
     };
 
     return (
-        <div className="border-t-2 border-foreground border-b border-border pt-3.5 pb-4">
+        <div className="border-t border-border pt-3.5 pb-4">
             <div className="mx-auto w-full max-w-[calc(60vh*16/9)]">
                 <div className="relative w-full aspect-video overflow-hidden bg-black">
                     <GfxFrame src={gfx.image_url} alt={gfx.title} sizes="100vw" priority className="absolute inset-0 w-full h-full" />
@@ -484,10 +484,10 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
 
     return (
         <>
-            <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">{season.name}</h1>
-                <p className="text-xs text-muted-foreground">
-                    {regionName} · {fmt(season.start_date)}{season.end_date ? ` – ${fmt(season.end_date)}` : ""}
+            <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">{season.name}</h1>
+                <p className="mt-1 text-[13px] text-muted-foreground">
+                    {regionName} · {fmt(season.start_date)}{season.end_date ? ` to ${fmt(season.end_date)}` : ""}
                 </p>
             </div>
 

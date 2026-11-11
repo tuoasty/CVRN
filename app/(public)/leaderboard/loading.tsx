@@ -1,15 +1,10 @@
+import {PublicPageHeaderSkeleton} from "@/app/components/public/PublicPageHeader";
 import {Skeleton} from "@/app/components/ui/skeleton";
 
 export default function AllTimeLeaderboardLoading() {
     return (
         <div className="page-bleed py-6 space-y-6">
-            <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-sm" />
-                <div className="space-y-1.5">
-                    <Skeleton className="h-6 w-56 rounded-sm" />
-                    <Skeleton className="h-3 w-64 rounded-sm" />
-                </div>
-            </div>
+            <PublicPageHeaderSkeleton titleWidth="w-56" />
 
             <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">

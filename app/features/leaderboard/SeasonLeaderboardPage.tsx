@@ -2,7 +2,7 @@
 
 import {useMemo} from "react";
 import Link from "next/link";
-import {ArrowRight, Loader2, Trophy} from "lucide-react";
+import {ArrowRight, Loader2} from "lucide-react";
 import {format} from "date-fns";
 import {PublicPageHeader} from "@/app/components/public/PublicPageHeader";
 import LeaderboardFilterBar, {LEADERBOARD_TABS_ID, LeaderboardCount} from "@/app/features/leaderboard/LeaderboardFilterBar";
@@ -59,7 +59,6 @@ export default function SeasonLeaderboardPage({rows, season, region, statsVersio
     return (
         <div className="page-bleed py-6 space-y-6">
             <PublicPageHeader
-                icon={Trophy}
                 title="Leaderboard"
                 subtitle={subtitle}
                 actions={
@@ -67,7 +66,7 @@ export default function SeasonLeaderboardPage({rows, season, region, statsVersio
                         <LeaderboardCount total={pool.length} shown={shownCount} />
                         <Link
                             href="/leaderboard"
-                            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-sm border border-border text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="inline-flex h-9 items-center gap-1.5 rounded-[2px] border border-border px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                         >
                             See all-time
                             <ArrowRight className="h-4 w-4" aria-hidden />

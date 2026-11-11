@@ -6,7 +6,7 @@ function RuledSkeleton({rows, titleWidth, rowClassName}: {rows: number; titleWid
             <Skeleton className={`h-4 ${titleWidth}`} />
             <div className="mt-2 border-t border-border">
                 {Array.from({length: rows}).map((_, i) => (
-                    <div key={i} className={`flex items-center gap-3 border-b border-border/60 py-2 last:border-b-0 ${rowClassName ?? ""}`}>
+                    <div key={i} className={`flex items-center gap-3 py-2 ${rowClassName ?? ""}`}>
                         <Skeleton className="size-7 shrink-0 rounded-sm" />
                         <div className="min-w-0 flex-1 space-y-1.5">
                             <Skeleton className="h-4 w-32" />
@@ -21,18 +21,23 @@ function RuledSkeleton({rows, titleWidth, rowClassName}: {rows: number; titleWid
 
 export default function PlayerPageLoading() {
     return (
-        <div className="max-w-[1440px] mx-auto px-4 py-6 space-y-11">
-            <Skeleton className="h-5 w-16" />
-
-            <div className="flex gap-1 items-end">
-                <Skeleton className="w-14 h-14 sm:w-20 sm:h-20 shrink-0 self-start rounded-sm" />
-                <Skeleton className="w-[140px] h-[140px] sm:w-[200px] sm:h-[200px] shrink-0 rounded-sm" />
-                <div className="flex flex-col gap-2 pl-3 sm:pl-8 pb-2 flex-1 min-w-0">
-                    <Skeleton className="h-3 w-20" />
-                    <Skeleton className="h-6 w-36 sm:h-8 sm:w-48" />
-                    <Skeleton className="h-4 w-24 mt-1" />
+        <>
+        <div className="page-wide">
+            <div className="pt-3">
+                <Skeleton className="h-9 w-20" />
+            </div>
+            <div className="flex items-end gap-1 pt-2">
+                <Skeleton className="hidden h-20 w-20 shrink-0 self-start rounded-sm sm:block" />
+                <Skeleton className="h-[148px] w-[120px] shrink-0 rounded-sm sm:h-[200px] sm:w-[200px]" />
+                <div className="flex min-w-0 flex-1 flex-col gap-2 self-center pl-3 sm:pl-8">
+                    <Skeleton className="h-8 w-36 sm:h-9 sm:w-48" />
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-4 w-24" />
                 </div>
             </div>
+        </div>
+
+        <div className="page-wide space-y-11 pb-6 pt-11">
 
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -58,5 +63,6 @@ export default function PlayerPageLoading() {
                 <RuledSkeleton rows={3} titleWidth="w-28" />
             </div>
         </div>
+        </>
     );
 }
