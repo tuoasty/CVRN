@@ -8,34 +8,31 @@ import {
 
 describe("buildAdminNav", () => {
     it("gives super_admin all four groups in design order", () => {
-        const nav = buildAdminNav("super_admin");
+        const nav = buildAdminNav(["super_admin"]);
         expect(nav.primary.map(p => p.label)).toEqual(["Dashboard", "Teams", "Matches", "Media"]);
         expect(nav.groups.map(g => [g.label, g.pages.map(p => p.label)])).toEqual([
             ["League", ["Standings", "Playoffs", "Match Stats", "Seasons"]],
             ["Content", ["Articles", "Updates", "Information"]],
             ["Ratings", ["Specs", "Spec Calibration", "Overalls", "Player Cards", "Card Groups"]],
-            ["System", ["Sync", "Sync History", "Cache", "Invite"]],
+            ["System", ["Sync", "Sync History", "Cache", "Staff"]],
         ]);
     });
 
-    it("hides Cache and Invite from admin", () => {
-        const system = buildAdminNav("admin").groups.find(g => g.label === "System");
+    it("hides Cache and Staff from admin", () => {
+        const system = buildAdminNav(["admin"]).groups.find(g => g.label === "System");
         expect(system?.pages.map(p => p.label)).toEqual(["Sync", "Sync History"]);
     });
 
-    it("renders limited roles flat with no groups", () => {
-        expect(buildAdminNav("stat_tracker")).toEqual({
-            primary: [{ href: "/admin/sync/history", label: "Sync History" }],
-            groups: [],
-        });
-        expect(buildAdminNav("staff").primary.map(p => p.href)).toEqual(["/admin/teams", "/admin/sync/history"]);
-        expect(buildAdminNav("staff").groups).toEqual([]);
-        expect(buildAdminNav("information_manager").primary.map(p => p.href)).toEqual(["/admin/game-data"]);
-        expect(buildAdminNav("none")).toEqual({ primary: [], groups: [] });
+    it("renders limited groups flat with no groups", () => {
+        expect(buildAdminNav(["transaction"]).primary.map(p => p.href)).toEqual(["/admin/teams", "/admin/sync/history"]);
+        expect(buildAdminNav(["transaction"]).groups).toEqual([]);
+        expect(buildAdminNav(["information"]).primary.map(p => p.href)).toEqual(["/admin/game-data", "/admin/specs"]);
+        expect(buildAdminNav(["statistics"]).primary.map(p => p.href)).toEqual(["/admin/stats"]);
+        expect(buildAdminNav([])).toEqual({ primary: [], groups: [] });
     });
 
-    it("applies the spec_manager Information override", () => {
-        const nav = buildAdminNav("spec_manager");
+    it("sends specs to the spec loadouts tab of Information", () => {
+        const nav = buildAdminNav(["specs"]);
         expect(nav.groups).toEqual([]);
         expect(nav.primary.map(p => p.href)).toEqual([
             "/admin/game-data/specs",
@@ -44,16 +41,14 @@ describe("buildAdminNav", () => {
         ]);
     });
 
-    it("keeps everything but super admin pages for an unknown role", () => {
-        const nav = buildAdminNav(null);
-        expect(nav.groups).toHaveLength(4);
-        expect(adminNavHrefs(nav)).not.toContain("/admin/cache");
-        expect(adminNavHrefs(nav)).not.toContain("/admin/invite");
+    it("unions the pages of several groups", () => {
+        const hrefs = adminNavHrefs(buildAdminNav(["graphics", "awards"]));
+        expect(hrefs).toEqual(["/admin/dashboard", "/admin/matches", "/admin/media", "/admin/seasons"]);
     });
 });
 
 describe("findCurrentHref", () => {
-    const hrefs = adminNavHrefs(buildAdminNav("super_admin"));
+    const hrefs = adminNavHrefs(buildAdminNav(["super_admin"]));
 
     it.each([
         ["/admin/dashboard", "/admin/dashboard"],
@@ -75,8 +70,8 @@ describe("findCurrentHref", () => {
         expect(findCurrentHref("/admin/sync-foo", hrefs)).toBeNull();
     });
 
-    it("finds the spec_manager override route", () => {
-        const specHrefs = adminNavHrefs(buildAdminNav("spec_manager"));
+    it("finds the specs fallback route", () => {
+        const specHrefs = adminNavHrefs(buildAdminNav(["specs"]));
         expect(findCurrentHref("/admin/game-data/specs", specHrefs)).toBe("/admin/game-data/specs");
     });
 });

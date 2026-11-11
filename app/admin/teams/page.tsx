@@ -6,9 +6,11 @@ import TeamsDataTable from "@/app/features/teams/TeamsDataTable";
 import CreateTeamForm from "@/app/features/teams/CreateTeamForm";
 import { Users } from "lucide-react";
 import { AdminPageHeader } from "@/app/components/admin/AdminPageHeader";
+import { useHasGroup } from "@/app/admin/AdminRoleProvider";
 
 export default function AdminTeamsPage() {
     const [activeTab, setActiveTab] = useState("view");
+    const canCreate = useHasGroup("admin");
 
     return (
         <div className="admin-container">
@@ -24,9 +26,11 @@ export default function AdminTeamsPage() {
                         <TabsTrigger value="view" className="rounded-sm">
                             All Teams
                         </TabsTrigger>
-                        <TabsTrigger value="create" className="rounded-sm">
-                            Create Team
-                        </TabsTrigger>
+                        {canCreate && (
+                            <TabsTrigger value="create" className="rounded-sm">
+                                Create Team
+                            </TabsTrigger>
+                        )}
                     </TabsList>
 
                     <TabsContent value="view" className="mt-6">
@@ -42,11 +46,13 @@ export default function AdminTeamsPage() {
                         </Suspense>
                     </TabsContent>
 
-                    <TabsContent value="create" className="mt-6">
-                        <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
-                            <CreateTeamForm onSuccess={() => setActiveTab("view")} />
-                        </div>
-                    </TabsContent>
+                    {canCreate && (
+                        <TabsContent value="create" className="mt-6">
+                            <div className="panel p-6 border-l-4 border-l-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+                                <CreateTeamForm onSuccess={() => setActiveTab("view")} />
+                            </div>
+                        </TabsContent>
+                    )}
                 </Tabs>
             </div>
         </div>

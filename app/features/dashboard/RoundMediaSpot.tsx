@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Image as ImageIcon, Plus } from "lucide-react";
 import CreateMediaPostDialog from "@/app/features/media/CreateMediaPostDialog";
+import { useGroups } from "@/app/admin/AdminRoleProvider";
+import { canWriteMediaType } from "@/shared/auth/mediaAccess";
 import EditMediaPostDialog from "@/app/features/media/EditMediaPostDialog";
 import type { MediaPost } from "@/server/domains/media";
 import { cn } from "@/lib/utils";
@@ -19,6 +21,9 @@ export default function RoundMediaSpot({ type, seasonId, roundKey, post, onChang
     const [open, setOpen] = useState(false);
     const label = type === "potw" ? "POTW" : "TOTW";
     const Icon = post ? ImageIcon : Plus;
+    const canWrite = canWriteMediaType(useGroups(), type);
+
+    if (!canWrite) return null;
 
     return (
         <>

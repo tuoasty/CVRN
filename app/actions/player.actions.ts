@@ -29,6 +29,7 @@ import {
 import type {PlayerDetail} from "@/server/domains/player";
 import {findHeldSpecSeasonId} from "@/server/db/seasons.repo";
 import {createServerSupabase} from "@/server/supabase/server";
+import {requireGroups} from "@/server/domains/auth";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {
     SavePlayerToTeamSchema,
@@ -57,6 +58,8 @@ export async function savePlayerAction(input: unknown) {
     }).safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await savePlayer(supabase, parsed.data);
     if (result.ok) revalidatePublicData(ROSTER_TAGS);
     return result;
@@ -66,6 +69,8 @@ export async function savePlayerToTeamAction(input: unknown) {
     const parsed = SavePlayerToTeamSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await savePlayerToTeam(supabase, parsed.data);
     if (result.ok) revalidatePublicData(ROSTER_TAGS);
     return result;
@@ -75,6 +80,8 @@ export async function removePlayerFromTeamAction(input: unknown) {
     const parsed = RemovePlayerFromTeamSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await removePlayerFromTeamService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(ROSTER_TAGS);
     return result;
@@ -117,6 +124,8 @@ export async function addExistingPlayerToTeamAction(input: unknown) {
     const parsed = AddExistingPlayerToTeamSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await addExistingPlayerToTeam(supabase, parsed.data);
     if (result.ok) revalidatePublicData(ROSTER_TAGS);
     return result;
@@ -133,6 +142,8 @@ export async function setPlayerRoleAction(input: unknown) {
     const parsed = SetPlayerRoleSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await setPlayerRoleService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(ROSTER_TAGS);
     return result;
@@ -142,6 +153,8 @@ export async function transferCaptainAction(input: unknown) {
     const parsed = TransferCaptainSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await transferCaptainService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(ROSTER_TAGS);
     return result;

@@ -29,7 +29,7 @@ import {deleteSeasonMatchesBySeasonId} from "@/server/db/matches.repo";
 import {deletePlayoffMatchesBySeasonId} from "@/server/db/playoff.repo";
 import {syncSheet} from "@/server/domains/sheets/commands/syncSheet";
 import {revertSyncs} from "@/server/domains/sheets/commands/revertSyncs";
-import {requireSuperAdmin} from "@/server/domains/auth";
+import { requireGroups } from "@/server/domains/auth";
 
 const SaveSheetConfigSchema = z.object({
     seasonId: z.string().uuid(),
@@ -51,11 +51,6 @@ const UpdateSheetConfigSchema = z.object({
     blockStride: z.number().int().min(1).optional(),
 });
 
-async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
-    const {data: {user}} = await supabase.auth.getUser();
-    return user;
-}
-
 export async function previewSheetAction(input: {
     sheetId: string;
     tabName: string;
@@ -64,6 +59,9 @@ export async function previewSheetAction(input: {
     blockHeight: number;
     blockStride: number;
 }) {
+    const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     try {
         const {values, bgColors, fgColors} = await readSheetRangeWithColors(input.sheetId, input.tabName);
         if (input.sheetType === 'qualifier') {
@@ -87,6 +85,8 @@ export async function previewSheetAction(input: {
 
 export async function getSheetConfigsAction() {
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin", "transaction"]);
+    if (!guard.ok) return guard;
     return findAllSheetConfigs(supabase);
 }
 
@@ -94,8 +94,8 @@ export async function saveSheetConfigAction(data: unknown) {
     const parsed = SaveSheetConfigSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR" as const});
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await insertSheetConfig(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/sync');
     return result;
@@ -105,8 +105,8 @@ export async function updateSheetConfigAction(data: unknown) {
     const parsed = UpdateSheetConfigSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR" as const});
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const {id, ...rest} = parsed.data;
     const result = await updateSheetConfig(supabase, id, rest);
     if (result.ok) revalidatePath('/admin/sync');
@@ -115,7 +115,7 @@ export async function updateSheetConfigAction(data: unknown) {
 
 export async function deleteSheetConfigAction(id: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireSuperAdmin(supabase);
+    const guard = await requireGroups(supabase, ['super_admin']);
     if (!guard.ok) return guard;
     const result = await deleteSheetConfig(supabase, id);
     if (result.ok) revalidatePath('/admin/sync');
@@ -124,6 +124,8 @@ export async function deleteSheetConfigAction(id: string) {
 
 export async function getSyncLogsAction(configId?: string, limit = 100) {
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin", "transaction"]);
+    if (!guard.ok) return guard;
     if (configId) return findSyncLogsByConfigId(supabase, configId, limit);
     return findAllSyncLogs(supabase, limit);
 }
@@ -133,7 +135,7 @@ export async function resetConfigAction(configId: string, options: {
     clearLogs: boolean;
 }) {
     const supabase = await createServerSupabase();
-    const guard = await requireSuperAdmin(supabase);
+    const guard = await requireGroups(supabase, ['super_admin']);
     if (!guard.ok) return guard;
 
     const configResult = await findSheetConfigById(supabase, configId);
@@ -180,8 +182,8 @@ export async function resetConfigAction(configId: string, options: {
 
 export async function runSyncAction(configId: string) {
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await syncSheet(supabase, configId, 'manual');
     if (result.ok) {
         revalidatePath('/admin/sync');
@@ -192,6 +194,8 @@ export async function runSyncAction(configId: string) {
 
 export async function getLastSyncTimesAction(configIds: string[]): Promise<{ok: true; value: Record<string, string | null>} | {ok: false; error: {message: string; code: string}}> {
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin", "transaction"]);
+    if (!guard.ok) return guard;
     const results = await Promise.all(
         configIds.map(id => findLatestSyncLogByConfigId(supabase, id).then(r => ({id, r})))
     );
@@ -204,8 +208,8 @@ export async function getLastSyncTimesAction(configIds: string[]): Promise<{ok: 
 
 export async function toggleCronEnabledAction(configId: string, enabled: boolean) {
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await updateCronEnabled(supabase, configId, enabled);
     if (result.ok) revalidatePath('/admin/sync');
     return result;
@@ -220,8 +224,8 @@ export async function revertSyncsAction(configId: string, targetSyncId: string) 
     const parsed = RevertSyncsSchema.safeParse({configId, targetSyncId});
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR" as const});
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
     const result = await revertSyncs(supabase, parsed.data);
     if (result.ok) {
         revalidatePath('/admin/sync/history');

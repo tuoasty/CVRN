@@ -3,7 +3,7 @@
 import {revalidatePublicData} from "@/server/cache/revalidate";
 import {CACHE_TAGS} from "@/server/cache/tags";
 
-import { Err, Result } from '@/shared/types/result'
+import { Err, Ok, Result } from '@/shared/types/result'
 import { createServerSupabase } from '@/server/supabase/server'
 import {
     createMediaPost,
@@ -24,11 +24,22 @@ import {
     GetPagedMediaSchema,
     AssignMediaToMatchSchema,
 } from '@/server/domains/media'
-import { requireAdmin } from '@/server/domains/auth'
+import { requireGroups } from '@/server/domains/auth'
+import { canWriteMediaType } from '@/shared/auth/mediaAccess'
+import { createError } from '@/server/utils/serializeableError'
+import type { DBClient } from '@/shared/types/db'
+import type { AccessGroup } from '@/shared/types/accessGroup'
 
-async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
-    const { data: { user } } = await supabase.auth.getUser()
-    return user
+const MEDIA_WRITERS: AccessGroup[] = ['admin', 'graphics', 'media']
+
+const forbiddenType = () => Err(createError('You cannot manage this type of post.', 'FORBIDDEN', 403))
+
+async function requirePostTypeAccess(supabase: DBClient, groups: AccessGroup[], postId: string): Promise<Result<true>> {
+    const post = await getMediaPostById(supabase, postId)
+    if (!post.ok) return post
+    if (!post.value) return Err(createError('Post not found', 'NOT_FOUND', 404))
+    if (!canWriteMediaType(groups, post.value.type)) return forbiddenType()
+    return Ok<true>(true)
 }
 
 export async function createMediaPostAction(formData: FormData): Promise<Result<MediaPost>> {
@@ -47,8 +58,9 @@ export async function createMediaPostAction(formData: FormData): Promise<Result<
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const user = await requireAuth(supabase)
-    if (!user) return Err({ message: 'Not authenticated', code: 'UNAUTHORIZED' })
+    const guard = await requireGroups(supabase, MEDIA_WRITERS)
+    if (!guard.ok) return guard
+    if (!canWriteMediaType(guard.value.groups, parsed.data.type)) return forbiddenType()
 
     const imageFile = formData.get('imageFile') as File | null
 
@@ -64,7 +76,7 @@ export async function createMediaPostAction(formData: FormData): Promise<Result<
         playerId:    parsed.data.playerId || null,
         seasonId:    parsed.data.seasonId || null,
         roundKey:    parsed.data.roundKey || null,
-        userId:      user.id,
+        userId:      guard.value.userId,
     })
     if (result.ok) revalidatePublicData([CACHE_TAGS.media])
     return result
@@ -75,8 +87,10 @@ export async function updateMediaPostAction(input: unknown): Promise<Result<Medi
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, MEDIA_WRITERS)
     if (!guard.ok) return guard
+    const access = await requirePostTypeAccess(supabase, guard.value.groups, parsed.data.postId)
+    if (!access.ok) return access
 
     const result = await updateMediaPost(supabase, parsed.data)
     if (result.ok) revalidatePublicData([CACHE_TAGS.media])
@@ -88,10 +102,10 @@ export async function deleteMediaPostAction(input: unknown): Promise<Result<void
     if (!parsed.success) return Err({ message: 'Invalid post ID', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const user = await requireAuth(supabase)
-    if (!user) return Err({ message: 'Not authenticated', code: 'UNAUTHORIZED' })
+    const guard = await requireGroups(supabase, ['admin'])
+    if (!guard.ok) return guard
 
-    const result = await deleteMediaPost(supabase, { postId: parsed.data.postId, userId: user.id })
+    const result = await deleteMediaPost(supabase, { postId: parsed.data.postId, userId: guard.value.userId })
     if (result.ok) revalidatePublicData([CACHE_TAGS.media])
     return result
 }
@@ -101,8 +115,10 @@ export async function assignMediaToMatchAction(input: unknown): Promise<Result<M
     if (!parsed.success) return Err({ message: 'Invalid assignment input', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, MEDIA_WRITERS)
     if (!guard.ok) return guard
+    const access = await requirePostTypeAccess(supabase, guard.value.groups, parsed.data.postId)
+    if (!access.ok) return access
 
     const result = await assignMediaToMatch(supabase, parsed.data)
     if (result.ok) revalidatePublicData([CACHE_TAGS.media])
@@ -133,8 +149,8 @@ export async function togglePinMediaPostAction(input: unknown): Promise<Result<M
     if (!parsed.success) return Err({ message: 'Invalid post ID', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const user = await requireAuth(supabase)
-    if (!user) return Err({ message: 'Not authenticated', code: 'UNAUTHORIZED' })
+    const guard = await requireGroups(supabase, ['admin'])
+    if (!guard.ok) return guard
 
     const postResult = await getMediaPostById(supabase, parsed.data.postId)
     if (!postResult.ok) return postResult

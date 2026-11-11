@@ -11,6 +11,7 @@ import { useStandings } from "@/app/hooks/useStandings";
 import { useAllMediaPosts } from "@/app/hooks/useMediaPosts";
 import { useAdminContextStore } from "@/app/stores/adminContextStore";
 import { useAdminReady } from "@/app/admin/AdminReadyContext";
+import { useHasGroup } from "@/app/admin/AdminRoleProvider";
 import { Button } from "@/app/components/ui/button";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { buildAdminMatchHref } from "@/app/utils/matchDetailHref";
@@ -40,6 +41,7 @@ export default function MatchManagementPage() {
     const [kind, setKind] = useState<ScheduleKind>("season");
     const [weekOverride, setWeekOverride] = useState<number | null>(null);
     const [creating, setCreating] = useState(false);
+    const isAdmin = useHasGroup("admin");
 
     useEffect(() => {
         setWeekOverride(null);
@@ -119,7 +121,7 @@ export default function MatchManagementPage() {
                             <Skeleton className="mt-1.5 h-4 w-48 rounded-sm" />
                         )}
                     </div>
-                    {kind === "season" && selectedSeasonId && (
+                    {isAdmin && kind === "season" && selectedSeasonId && (
                         creating ? (
                             <button
                                 type="button"
@@ -156,7 +158,7 @@ export default function MatchManagementPage() {
                                 stickyTop="top-[61px] lg:top-[53px]"
                             />
                         </div>
-                        {creating && kind === "season" ? (
+                        {isAdmin && creating && kind === "season" ? (
                             <div className="mt-6">
                                 <CreateMatchesPanel
                                     seasonId={selectedSeasonId}
@@ -175,7 +177,7 @@ export default function MatchManagementPage() {
                             <ScheduleList
                                 view={view}
                                 kind={kind}
-                                hrefFor={row => buildAdminMatchHref(row.matchId)}
+                                hrefFor={row => (isAdmin ? buildAdminMatchHref(row.matchId) : null)}
                                 renderActions={row => {
                                     const details = detailsById.get(row.matchId);
                                     if (!details) return null;

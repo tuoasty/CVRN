@@ -1,17 +1,23 @@
 "use client";
 
 import {createContext, useContext} from "react";
+import type {AccessGroup} from "@/shared/types/accessGroup";
 
-const AdminRoleContext = createContext<string | null>(null);
+const AdminRoleContext = createContext<readonly AccessGroup[]>([]);
 
-export function AdminRoleProvider({role, children}: {role: string | null; children: React.ReactNode}) {
-    return <AdminRoleContext.Provider value={role}>{children}</AdminRoleContext.Provider>;
+export function AdminRoleProvider({groups, children}: {groups: AccessGroup[]; children: React.ReactNode}) {
+    return <AdminRoleContext.Provider value={groups}>{children}</AdminRoleContext.Provider>;
 }
 
-export function useUserRole(): string | null {
+export function useGroups(): readonly AccessGroup[] {
     return useContext(AdminRoleContext);
 }
 
+export function useHasGroup(...allowed: AccessGroup[]): boolean {
+    const groups = useContext(AdminRoleContext);
+    return groups.includes("super_admin") || allowed.some(group => groups.includes(group));
+}
+
 export function useIsSuperAdmin(): boolean {
-    return useContext(AdminRoleContext) === "super_admin";
+    return useContext(AdminRoleContext).includes("super_admin");
 }

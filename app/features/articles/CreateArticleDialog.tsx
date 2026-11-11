@@ -20,6 +20,7 @@ import ArticleEditorModeToggle, { type EditorMode } from '@/app/features/article
 import SlugFields from '@/app/features/articles/SlugFields'
 import { useSlugField } from '@/app/features/articles/useSlugField'
 import SeasonSelect from '@/app/features/articles/SeasonSelect'
+import { useHasGroup } from '@/app/admin/AdminRoleProvider'
 
 interface CreateArticleDialogProps {
     open: boolean
@@ -37,6 +38,7 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
     const [match, setMatch] = useState<MatchSelection | null>(null)
     const [images, setImages] = useState<ArticleImageItem[]>([])
     const [publish, setPublish] = useState(false)
+    const canPublish = useHasGroup('admin')
     const [loading, setLoading] = useState(false)
     const [mode, setMode] = useState<EditorMode>('edit')
 
@@ -145,7 +147,7 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
                     )}
 
                     <div className="flex items-center justify-between px-6 py-3 border-t border-border">
-                        <div className="inline-flex rounded-sm border border-border overflow-hidden">
+                        {canPublish ? <div className="inline-flex rounded-sm border border-border overflow-hidden">
                             <button type="button" onClick={() => setPublish(false)}
                                 className={cn('px-3 py-1 text-xs font-medium uppercase tracking-wide transition-colors',
                                     !publish ? 'bg-muted text-foreground' : 'bg-transparent text-muted-foreground')}>
@@ -156,7 +158,7 @@ export default function CreateArticleDialog({ open, onOpenChange }: CreateArticl
                                     publish ? 'bg-primary text-primary-foreground' : 'bg-transparent text-muted-foreground')}>
                                 Publish
                             </button>
-                        </div>
+                        </div> : <span />}
                         <div className="flex gap-2">
                             <Button type="button" variant="ghost" size="sm" className="rounded-sm" onClick={() => handleOpenChange(false)} disabled={loading}>
                                 Cancel

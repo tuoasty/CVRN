@@ -6,6 +6,7 @@ import {bumpCacheVersion} from "@/server/cache/version";
 import {CACHE_TAGS} from "@/server/cache/tags";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
+import {requireGroups} from "@/server/domains/auth";
 import {
     insertMatchSheetConfig,
     deleteMatchSheetConfig,
@@ -18,11 +19,6 @@ import {buildMatchStatsPlan, PlayerOverrides} from "@/server/domains/sheets/comm
 import {syncMatchStats} from "@/server/domains/sheets/commands/syncMatchStats";
 import {refreshRecords} from "@/server/domains/record";
 
-async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
-    const {data: {user}} = await supabase.auth.getUser();
-    return user;
-}
-
 export async function getSeasonPlayoffMatchesAction(seasonId: string) {
     const supabase = await createServerSupabase();
     return getSeasonPlayoffMatches(supabase, seasonId);
@@ -32,8 +28,8 @@ export async function saveMatchSheetConfigAction(data: unknown) {
     const parsed = SaveMatchSheetConfigSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR" as const});
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    if (!guard.ok) return guard;
     const result = await insertMatchSheetConfig(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/stats');
     return result;
@@ -41,8 +37,8 @@ export async function saveMatchSheetConfigAction(data: unknown) {
 
 export async function deleteMatchSheetConfigAction(id: string) {
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    if (!guard.ok) return guard;
     const result = await deleteMatchSheetConfig(supabase, id);
     if (result.ok) revalidatePath('/admin/stats');
     return result;
@@ -50,8 +46,8 @@ export async function deleteMatchSheetConfigAction(id: string) {
 
 export async function clearMatchStatsAction(matchId: string) {
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    if (!guard.ok) return guard;
     const result = await clearMatchStats(supabase, matchId);
     if (result.ok) {
         revalidatePath('/admin/stats');
@@ -62,8 +58,8 @@ export async function clearMatchStatsAction(matchId: string) {
 
 export async function previewMatchStatsAction(configId: string, playerOverrides?: PlayerOverrides) {
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    if (!guard.ok) return guard;
 
     const configRes = await findMatchSheetConfigById(supabase, configId);
     if (!configRes.ok) return configRes;
@@ -78,8 +74,8 @@ export async function syncMatchStatsAction(
     playerOverrides?: PlayerOverrides
 ) {
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    if (!guard.ok) return guard;
     const result = await syncMatchStats(supabase, configId, {force, playerOverrides});
     if (result.ok) {
         revalidatePath('/admin/stats');
@@ -91,8 +87,8 @@ export async function syncMatchStatsAction(
 
 export async function publishStatsAction() {
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "Not authenticated", code: "UNAUTHORIZED" as const});
+    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    if (!guard.ok) return guard;
 
     const refreshed = await refreshRecords(supabase);
     if (!refreshed.ok) return refreshed;

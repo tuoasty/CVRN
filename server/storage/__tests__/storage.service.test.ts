@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import sharp from "sharp";
 
-vi.mock("@/server/db/roles.repo", () => ({ getUserRole: vi.fn() }));
+vi.mock("@/server/domains/auth/queries/getCurrentGroups", () => ({ getCurrentGroups: vi.fn() }));
 vi.mock("@/server/utils/rateLimiter", () => ({ checkUploadRateLimit: vi.fn() }));
 
 import { IMAGE_PROFILES, validateAndCompressImage } from "../storage.service";

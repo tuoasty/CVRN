@@ -3,7 +3,7 @@
 import { Err, Ok, Result } from '@/shared/types/result'
 import { createServerSupabase } from '@/server/supabase/server'
 import { serializeError } from '@/server/utils/serializeableError'
-import { requireAdmin } from '@/server/domains/auth'
+import { requireGroups } from '@/server/domains/auth'
 import {
     getOverallConfig,
     saveOverallScalings,
@@ -24,7 +24,7 @@ export async function getOverallBoardAction(seasonNumber: number): Promise<Resul
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     try {
@@ -44,7 +44,7 @@ export async function saveOverallScalingsAction(input: unknown): Promise<Result<
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return saveOverallScalings(supabase, parsed.data)
@@ -55,7 +55,7 @@ export async function copyOverallScalingsAction(input: unknown): Promise<Result<
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return copyOverallScalings(supabase, parsed.data)
@@ -66,7 +66,7 @@ export async function setOverallOverrideAction(input: unknown): Promise<Result<O
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return setOverallOverride(supabase, parsed.data)
@@ -77,7 +77,7 @@ export async function clearOverallOverrideAction(input: unknown): Promise<Result
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return clearOverallOverride(supabase, parsed.data)

@@ -3,7 +3,7 @@ import {serializeError} from "@/server/utils/serializeableError";
 import {DBClient} from "@/shared/types/db";
 import {logger} from "@/server/utils/logger";
 import sharp from 'sharp';
-import {getUserRole} from "@/server/db/roles.repo";
+import {getCurrentGroups} from "@/server/domains/auth/queries/getCurrentGroups";
 import {checkUploadRateLimit} from "@/server/utils/rateLimiter";
 import {processLogoBackground, trimLogoPadding} from "./imageProcessing";
 import {toCdnUrl} from "./toCdnUrl";
@@ -98,12 +98,12 @@ export async function uploadFile(supabase: DBClient, p: {
     userId: string;
 }): Promise<Result<{ url:string;path:string;bgRemoved:boolean }>> {
     try {
-        const roleResult = await getUserRole(supabase, p.userId);
-        if (!roleResult.ok) {
-            return Err(roleResult.error);
+        const groupsResult = await getCurrentGroups(supabase);
+        if (!groupsResult.ok) {
+            return Err(groupsResult.error);
         }
 
-        const role = roleResult.value || 'admin';
+        const role = groupsResult.value.includes('super_admin') ? 'super_admin' : 'staff';
         const rateLimitCheck = checkUploadRateLimit(p.userId, role);
 
         if (!rateLimitCheck.allowed) {

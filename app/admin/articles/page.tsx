@@ -17,12 +17,15 @@ import EditArticleDialog from '@/app/features/articles/EditArticleDialog'
 import type { ArticleListItem } from '@/server/domains/article'
 import { toast } from '@/app/utils/toast'
 import { cn } from '@/lib/utils'
+import { useHasGroup } from '@/app/admin/AdminRoleProvider'
 
 type FilterType = 'all' | 'published' | 'draft'
 const FILTER_OPTIONS: FilterType[] = ['all', 'published', 'draft']
 
 export default function AdminArticlesPage() {
     const { articles, isLoading } = useAdminArticles()
+    const canPublish = useHasGroup('admin')
+    const canDelete = useHasGroup('super_admin')
     const [createOpen, setCreateOpen] = useState(false)
     const [editTarget, setEditTarget] = useState<ArticleListItem | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<ArticleListItem | null>(null)
@@ -125,7 +128,7 @@ export default function AdminArticlesPage() {
                                     a.published_at ? 'text-muted-foreground' : 'text-secondary border-secondary/40')}>
                                     {a.published_at ? 'Published' : 'Draft'}
                                 </Badge>
-                                <Button
+                                {(canPublish || a.published_at) && <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 rounded-sm text-muted-foreground hover:bg-muted"
@@ -134,7 +137,7 @@ export default function AdminArticlesPage() {
                                     title={a.published_at ? 'Unpublish' : 'Publish'}
                                 >
                                     {a.published_at ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </Button>
+                                </Button>}
                                 <Button
                                     variant="ghost"
                                     size="icon"
@@ -144,7 +147,7 @@ export default function AdminArticlesPage() {
                                 >
                                     <Pencil className="h-4 w-4" />
                                 </Button>
-                                <Button
+                                {canDelete && <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 rounded-sm text-destructive hover:bg-destructive/10"
@@ -153,7 +156,7 @@ export default function AdminArticlesPage() {
                                     title="Delete"
                                 >
                                     <Trash2 className="h-4 w-4" />
-                                </Button>
+                                </Button>}
                             </div>
                         ))}
                     </div>

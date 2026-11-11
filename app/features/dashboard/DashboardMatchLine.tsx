@@ -3,6 +3,8 @@ import type { DashboardMatch, DashboardTeam } from "@/server/domains/admin";
 import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
 import { buildMatchMediaTitle } from "@/app/utils/matchLabel";
 import MatchMediaSlotButton from "@/app/features/media/MatchMediaSlotButton";
+import { useGroups } from "@/app/admin/AdminRoleProvider";
+import { allowedMediaTypes } from "@/shared/auth/mediaAccess";
 
 function TeamLogo({ team }: { team: DashboardTeam }) {
     return (
@@ -17,6 +19,7 @@ function TeamLogo({ team }: { team: DashboardTeam }) {
 }
 
 export default function DashboardMatchLine({ match, onChanged }: { match: DashboardMatch; onChanged: () => void }) {
+    const mediaTypes = allowedMediaTypes(useGroups());
     const defaultTitle = buildMatchMediaTitle({
         homeTeamName: match.home.name,
         awayTeamName: match.away.name,
@@ -39,8 +42,8 @@ export default function DashboardMatchLine({ match, onChanged }: { match: Dashbo
                 {match.away.name}
             </p>
             <div className="flex items-center">
-                <MatchMediaSlotButton matchId={match.id} slot="gfx" current={match.gfx} defaultTitle={defaultTitle} onChanged={onChanged} />
-                <MatchMediaSlotButton matchId={match.id} slot="video" current={match.vod} defaultTitle={defaultTitle} onChanged={onChanged} />
+                {mediaTypes.includes("gfx") ? <MatchMediaSlotButton matchId={match.id} slot="gfx" current={match.gfx} defaultTitle={defaultTitle} onChanged={onChanged} /> : <div className="h-10 w-10 sm:h-8 sm:w-8" aria-hidden />}
+                {mediaTypes.includes("video") ? <MatchMediaSlotButton matchId={match.id} slot="video" current={match.vod} defaultTitle={defaultTitle} onChanged={onChanged} /> : <div className="h-10 w-10 sm:h-8 sm:w-8" aria-hidden />}
             </div>
         </div>
     );

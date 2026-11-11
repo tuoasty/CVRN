@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { loginAction, signInWithDiscordAction } from "@/app/actions/auth.actions";
+import { useSearchParams } from "next/navigation";
+import { signInWithDiscordAction } from "@/app/actions/auth.actions";
 import { Button } from "@/app/components/ui/button";
-import { Input } from "@/app/components/ui/input";
-import { Label } from "@/app/components/ui/label";
 
 const ERROR_COPY: Record<string, string> = {
     no_role: "Your Discord account has no staff role on the CVR server.",
@@ -14,18 +12,12 @@ const ERROR_COPY: Record<string, string> = {
 };
 
 export default function LoginPage() {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const returnUrl = searchParams.get("returnUrl");
     const errorKey = searchParams.get("error");
 
     const [discordLoading, setDiscordLoading] = useState(false);
     const [startError, setStartError] = useState<string | null>(null);
-
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [legacyError, setLegacyError] = useState<string | null>(null);
-    const [legacyLoading, setLegacyLoading] = useState(false);
 
     async function handleDiscord() {
         setStartError(null);
@@ -37,20 +29,6 @@ export default function LoginPage() {
             return;
         }
         window.location.href = result.value.url;
-    }
-
-    async function handleLegacy(e: React.FormEvent) {
-        e.preventDefault();
-        setLegacyError(null);
-        setLegacyLoading(true);
-        const result = await loginAction(email, password);
-        if ("error" in result) {
-            setLegacyError(result.error.message);
-            setLegacyLoading(false);
-            return;
-        }
-        setLegacyLoading(false);
-        router.push(returnUrl ?? "/admin/dashboard");
     }
 
     const message = startError ?? (errorKey ? ERROR_COPY[errorKey] ?? ERROR_COPY.failed : null);
@@ -72,42 +50,6 @@ export default function LoginPage() {
                         {message}
                     </p>
                 )}
-
-                <details className="mt-10 text-sm">
-                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                        Email sign-in (old accounts)
-                    </summary>
-                    <form onSubmit={handleLegacy} className="mt-4 space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={legacyLoading}
-                                required
-                                className="rounded-sm"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                disabled={legacyLoading}
-                                required
-                                className="rounded-sm"
-                            />
-                        </div>
-                        <Button type="submit" variant="outline" disabled={legacyLoading} className="w-full rounded-sm">
-                            {legacyLoading ? "Signing in..." : "Sign in with email"}
-                        </Button>
-                        {legacyError && <p role="alert" className="text-destructive">{legacyError}</p>}
-                    </form>
-                </details>
             </div>
         </div>
     );

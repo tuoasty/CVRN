@@ -23,7 +23,11 @@ import {
     ArticleIdSchema,
     SetArticlePublishedSchema,
 } from '@/server/domains/article'
-import { requireAdmin } from '@/server/domains/auth'
+import { requireGroups } from '@/server/domains/auth'
+import { createError } from '@/server/utils/serializeableError'
+import type { AccessGroup } from '@/shared/types/accessGroup'
+
+const canPublish = (groups: readonly AccessGroup[]) => groups.includes('admin') || groups.includes('super_admin')
 
 const ARTICLE_TAGS = [CACHE_TAGS.articles, CACHE_TAGS.media]
 
@@ -63,7 +67,7 @@ export async function createArticleAction(formData: FormData): Promise<Result<Ar
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'articles'])
     if (!guard.ok) return guard
 
     const images = parseArticleImages(formData)
@@ -76,9 +80,9 @@ export async function createArticleAction(formData: FormData): Promise<Result<Ar
         authorId:  parsed.data.authorId || null,
         matchId:   parsed.data.matchId || null,
         seasonId:  parsed.data.seasonId || null,
-        published: parsed.data.published,
+        published: parsed.data.published && canPublish(guard.value.groups),
         images:    images.value,
-        userId:    guard.value,
+        userId:    guard.value.userId,
     })
     if (result.ok) revalidatePublicData(ARTICLE_TAGS)
     return result
@@ -97,7 +101,7 @@ export async function updateArticleAction(formData: FormData): Promise<Result<Ar
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'articles'])
     if (!guard.ok) return guard
 
     const images = parseArticleImages(formData)
@@ -111,8 +115,9 @@ export async function updateArticleAction(formData: FormData): Promise<Result<Ar
         authorId:    parsed.data.authorId,
         matchId:     parsed.data.matchId,
         seasonId:    parsed.data.seasonId,
+        unpublish:   !canPublish(guard.value.groups),
         images:      images.value,
-        userId:      guard.value,
+        userId:      guard.value.userId,
     })
     if (result.ok) revalidatePublicData(ARTICLE_TAGS)
     return result
@@ -123,7 +128,7 @@ export async function deleteArticleAction(input: unknown): Promise<Result<void>>
     if (!parsed.success) return Err({ message: 'Invalid article ID', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['super_admin'])
     if (!guard.ok) return guard
 
     const result = await deleteArticle(supabase, { articleId: parsed.data.articleId })
@@ -136,8 +141,11 @@ export async function setArticlePublishedAction(input: unknown): Promise<Result<
     if (!parsed.success) return Err({ message: 'Invalid input', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'articles'])
     if (!guard.ok) return guard
+    if (parsed.data.published && !canPublish(guard.value.groups)) {
+        return Err(createError('Only an admin can publish an article.', 'FORBIDDEN', 403))
+    }
 
     const result = await setArticlePublished(supabase, parsed.data)
     if (result.ok) revalidatePublicData(ARTICLE_TAGS)
@@ -151,7 +159,7 @@ export async function getPublishedArticlesAction(seasonId?: string): Promise<Res
 
 export async function getArticlesForAdminAction(): Promise<Result<ArticleListItem[]>> {
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'articles'])
     if (!guard.ok) return guard
     return getArticlesForAdmin(supabase)
 }

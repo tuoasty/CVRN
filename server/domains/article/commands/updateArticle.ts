@@ -37,6 +37,7 @@ export async function updateArticle(supabase: DBClient, p: UpdateArticleInput): 
         if (p.authorId !== undefined) fields.author_id = p.authorId
         if (p.matchId !== undefined)  fields.match_id = p.matchId
         if (p.seasonId !== undefined) fields.season_id = p.seasonId
+        if (p.unpublish) fields.published_at = null
 
         const updated = await updateArticleRow(supabase, p.articleId, fields)
         if (!updated.ok) return updated

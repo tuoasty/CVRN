@@ -26,13 +26,8 @@ export default function UserButton() {
                 setIsLoading(false);
 
                 if (user) {
-                    const { data: roleData } = await supabase
-                        .from("user_roles")
-                        .select("role")
-                        .eq("user_id", user.id)
-                        .single();
-
-                    setIsAdmin(!!roleData?.role);
+                    const { data: groups } = await supabase.rpc("current_groups");
+                    setIsAdmin(Array.isArray(groups) && groups.length > 0);
                 }
             } catch {
                 setIsLoading(false);
@@ -47,14 +42,9 @@ export default function UserButton() {
                 setIsAdmin(false);
                 return;
             }
-            const userId = session.user.id;
             setTimeout(async () => {
-                const { data: roleData } = await supabase
-                    .from("user_roles")
-                    .select("role")
-                    .eq("user_id", userId)
-                    .single();
-                setIsAdmin(!!roleData?.role);
+                const { data: groups } = await supabase.rpc("current_groups");
+                setIsAdmin(Array.isArray(groups) && groups.length > 0);
             }, 0);
         });
 

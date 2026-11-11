@@ -1,13 +1,12 @@
 import { Suspense } from 'react';
 import { createServerSupabase } from '@/server/supabase/server';
+import { getCurrentGroups } from '@/server/domains/auth/queries/getCurrentGroups';
 import SyncHistoryContent from './SyncHistoryContent';
 
 async function getCanRevert(): Promise<boolean> {
     const supabase = await createServerSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
-    const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id).single();
-    return data?.role !== 'stat_tracker' && data?.role !== 'staff';
+    const groups = await getCurrentGroups(supabase);
+    return groups.ok && (groups.value.includes('admin') || groups.value.includes('super_admin'));
 }
 
 export default async function AdminSyncHistoryPage() {

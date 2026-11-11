@@ -1,4 +1,7 @@
-export type AdminNavPage = { href: string; label: string; superAdminOnly?: boolean };
+import type { AccessGroup } from "@/shared/types/accessGroup";
+import { canAccessPath } from "@/shared/auth/pageAccess";
+
+export type AdminNavPage = { href: string; label: string; fallbackHref?: string };
 export type AdminNavGroup = { label: string; pages: AdminNavPage[] };
 export type AdminNavModel = { primary: AdminNavPage[]; groups: AdminNavGroup[] };
 
@@ -24,7 +27,7 @@ const GROUPS: AdminNavGroup[] = [
         pages: [
             { href: "/admin/articles", label: "Articles" },
             { href: "/admin/updates", label: "Updates" },
-            { href: "/admin/game-data", label: "Information" },
+            { href: "/admin/game-data", label: "Information", fallbackHref: "/admin/game-data/specs" },
         ],
     },
     {
@@ -42,24 +45,11 @@ const GROUPS: AdminNavGroup[] = [
         pages: [
             { href: "/admin/sync", label: "Sync" },
             { href: "/admin/sync/history", label: "Sync History" },
-            { href: "/admin/cache", label: "Cache", superAdminOnly: true },
-            { href: "/admin/staff", label: "Staff", superAdminOnly: true },
-            { href: "/admin/invite", label: "Invite", superAdminOnly: true },
+            { href: "/admin/cache", label: "Cache" },
+            { href: "/admin/staff", label: "Staff" },
         ],
     },
 ];
-
-const ALLOWED_HREFS: Record<string, Set<string>> = {
-    stat_tracker: new Set(["/admin/sync/history"]),
-    staff: new Set(["/admin/teams", "/admin/sync/history"]),
-    spec_manager: new Set(["/admin/specs", "/admin/specs/qualify", "/admin/game-data"]),
-    information_manager: new Set(["/admin/game-data"]),
-    none: new Set(),
-};
-
-const HREF_OVERRIDES: Record<string, Record<string, string>> = {
-    spec_manager: { "/admin/game-data": "/admin/game-data/specs" },
-};
 
 const FLAT_PAGE_LIMIT = 3;
 
@@ -73,23 +63,23 @@ const REGION_SEASON_PICKER_PATHS = new Set([
     "/admin/specs/qualify",
 ]);
 
-export function buildAdminNav(role: string | null | undefined): AdminNavModel {
-    const allowed = role ? ALLOWED_HREFS[role] : undefined;
-    const overrides = role ? HREF_OVERRIDES[role] : undefined;
-    const isSuperAdmin = role === "super_admin";
+function resolvePage(page: AdminNavPage, groups: readonly AccessGroup[]): AdminNavPage | null {
+    if (canAccessPath(groups, page.href)) return { href: page.href, label: page.label };
+    if (page.fallbackHref && canAccessPath(groups, page.fallbackHref)) return { href: page.fallbackHref, label: page.label };
+    return null;
+}
 
+export function buildAdminNav(groups: readonly AccessGroup[]): AdminNavModel {
     const visible = (pages: AdminNavPage[]) =>
-        pages
-            .filter(page => (!allowed || allowed.has(page.href)) && (!page.superAdminOnly || isSuperAdmin))
-            .map(page => (overrides?.[page.href] ? { ...page, href: overrides[page.href] } : page));
+        pages.map(page => resolvePage(page, groups)).filter((page): page is AdminNavPage => page !== null);
 
     const primary = visible(PRIMARY_PAGES);
-    const groups = GROUPS
+    const navGroups = GROUPS
         .map(group => ({ ...group, pages: visible(group.pages) }))
         .filter(group => group.pages.length > 0);
 
-    const flat = [...primary, ...groups.flatMap(group => group.pages)];
-    return flat.length <= FLAT_PAGE_LIMIT ? { primary: flat, groups: [] } : { primary, groups };
+    const flat = [...primary, ...navGroups.flatMap(group => group.pages)];
+    return flat.length <= FLAT_PAGE_LIMIT ? { primary: flat, groups: [] } : { primary, groups: navGroups };
 }
 
 export function adminNavHrefs(model: AdminNavModel): string[] {

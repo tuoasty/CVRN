@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ViewTabs } from '@/app/components/filters/ViewTabs'
 import { cn } from '@/lib/utils'
-import { useUserRole } from '@/app/admin/AdminRoleProvider'
+import { useHasGroup } from '@/app/admin/AdminRoleProvider'
 import { useInformation } from './InformationProvider'
 
 const BASE = '/admin/game-data'
@@ -24,8 +24,8 @@ export default function InformationTabs() {
     const pathname = usePathname()
     const router = useRouter()
     const { index, buildIndex, termList, unhandled, loadouts, skipped, specByGameKey } = useInformation()
-    const role = useUserRole()
-    const canImport = role === 'admin' || role === 'super_admin'
+    const canImport = useHasGroup('admin')
+    const specsOnly = !useHasGroup('admin', 'information')
 
     const segment = pathname.slice(BASE.length + 1).split('/')[0]
     const current = (TAB_VALUES as readonly string[]).includes(segment) ? (segment as TabValue) : null
@@ -42,7 +42,7 @@ export default function InformationTabs() {
         { value: 'specs' as const, label: loadouts.length > 0 ? <>Spec loadouts<Count value={activeLoadouts.length} flag={unlinkedLoadouts} /></> : 'Spec loadouts' },
         { value: 'builds' as const, label: buildIndex.length > 0 ? <>Builds<Count value={buildIndex.length} /></> : 'Builds' },
     ]
-    const tabs = role === 'spec_manager' ? allTabs.filter(t => t.value === 'specs') : allTabs
+    const tabs = specsOnly ? allTabs.filter(t => t.value === 'specs') : allTabs
     const importing = segment === 'import'
 
     return (

@@ -10,7 +10,7 @@ import {DBClient} from "@/shared/types/db";
 import {getCachedPlayerLeaderboard, getCachedLeaderboardIdentity} from "@/server/cache/publicReads";
 import {getPositionLeaderboardStatRows, LeaderboardStatRow} from "@/server/domains/player";
 import {joinLeaderboardIdentity} from "@/app/features/leaderboard/joinLeaderboardIdentity";
-import {requireRoles} from "@/server/domains/auth";
+import { requireGroups } from "@/server/domains/auth";
 import {getSeasonFinalsSlots, getSeasonPodium} from "@/server/domains/season";
 import {z} from "zod";
 import {
@@ -48,10 +48,6 @@ import {
 } from "@/server/domains/spec";
 import {deleteSpecSnapshot} from "@/server/db/specSnapshot.repo";
 
-const SPEC_ROLES = ["admin", "super_admin", "spec_manager"] as const;
-const SPEC_FACT_ROLES = [...SPEC_ROLES, "information_manager"] as const;
-const SPEC_PHOTO_ROLES = ["admin", "super_admin", "information_manager"] as const;
-
 const RegionIdSchema = z.string().uuid();
 const SpecIdSchema = z.string().uuid();
 
@@ -63,7 +59,7 @@ export async function getSpecsAction(regionId: string) {
     if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs', 'information']);
     if (!guard.ok) return guard;
 
     return getSpecs(supabase, regionId);
@@ -71,7 +67,7 @@ export async function getSpecsAction(regionId: string) {
 
 export async function getSpecsAllRegionsAction() {
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs', 'information']);
     if (!guard.ok) return guard;
 
     return getSpecsAllRegions(supabase);
@@ -79,7 +75,7 @@ export async function getSpecsAllRegionsAction() {
 
 export async function getSpecCatalogAction() {
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs', 'information']);
     if (!guard.ok) return guard;
 
     return getSpecCatalog(supabase);
@@ -95,7 +91,7 @@ export async function saveSpecIdentityAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     const result = await saveSpecIdentity(supabase, parsed.data);
@@ -116,7 +112,7 @@ export async function setSpecVaultedAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     const result = await setSpecVaulted(supabase, parsed.data);
@@ -139,7 +135,7 @@ export async function saveSpecFactsAction(data: unknown) {
 
     const supabase = await createServerSupabase();
 
-    const guard = await requireRoles(supabase, SPEC_FACT_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs', 'information']);
     if (!guard.ok) return guard;
 
     const result = await saveSpecFacts(supabase, parsed.data);
@@ -158,7 +154,7 @@ export async function uploadSpecPhotoAction(specId: string, formData: FormData) 
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_PHOTO_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'information']);
     if (!guard.ok) return guard;
 
     const file = formData.get("photo");
@@ -167,7 +163,7 @@ export async function uploadSpecPhotoAction(specId: string, formData: FormData) 
     }
 
     const admin = getSupabaseAdmin() as unknown as DBClient;
-    const result = await storeSpecPhoto(admin, {specId, file, userId: guard.value});
+    const result = await storeSpecPhoto(admin, {specId, file, userId: guard.value.userId});
     if (!result.ok) return result;
 
     revalidatePublicData([CACHE_TAGS.specs]);
@@ -181,7 +177,7 @@ export async function removeSpecPhotoAction(specId: string) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_PHOTO_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'information']);
     if (!guard.ok) return guard;
 
     const admin = getSupabaseAdmin() as unknown as DBClient;
@@ -204,7 +200,7 @@ export async function saveRegionRequirementsAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     const result = await saveRegionRequirements(supabase, parsed.data);
@@ -222,7 +218,7 @@ export async function exportSpecRequirementsAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     return exportSpecRequirements(supabase, parsed.data);
@@ -238,7 +234,7 @@ export async function importSpecRequirementsAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     const result = await importSpecRequirements(supabase, {
@@ -256,7 +252,7 @@ export async function importSpecRequirementsAction(data: unknown) {
 
 export async function deleteSpecAction(id: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['super_admin']);
     if (!guard.ok) return guard;
 
     const result = await removeSpec(supabase, id);
@@ -271,7 +267,7 @@ export async function generateSpecSnapshotAction(regionId: string) {
     if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     const result = await generateSpecSnapshot(supabase, regionId);
@@ -286,7 +282,7 @@ export async function deleteSpecSnapshotAction(regionId: string) {
     if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     const result = await deleteSpecSnapshot(supabase, regionId);
@@ -299,7 +295,7 @@ export async function deleteSpecSnapshotAction(regionId: string) {
 
 export async function getPlacementBonusAction(regionId: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     return getPlacementBonus(supabase, regionId);
@@ -315,7 +311,7 @@ export async function savePlacementBonusAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     return savePlacementBonus(supabase, parsed.data);
@@ -323,7 +319,7 @@ export async function savePlacementBonusAction(data: unknown) {
 
 export async function resetPlacementBonusAction(regionId: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     return resetPlacementBonus(supabase, regionId);
@@ -332,7 +328,7 @@ export async function resetPlacementBonusAction(regionId: string) {
 export async function getHeightRangesAction(regionId: string) {
     if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     return getHeightRanges(supabase, regionId);
@@ -348,7 +344,7 @@ export async function saveHeightRangesAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     const result = await saveHeightRanges(supabase, parsed.data);
@@ -361,7 +357,7 @@ export async function saveHeightRangesAction(data: unknown) {
 
 export async function getSpecWinnersAction(seasonId: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     return getSpecWinners(supabase, seasonId);
@@ -377,7 +373,7 @@ export async function awardSpecWinnerAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     const result = await awardSpecWinner(supabase, parsed.data);
@@ -398,7 +394,7 @@ export async function deleteSpecWinnerAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     const result = await deleteSpecWinner(supabase, parsed.data.id);
@@ -411,7 +407,7 @@ export async function deleteSpecWinnerAction(data: unknown) {
 
 export async function getSpecLeaderboardAction(seasonId: string, position: string | null) {
     const supabase = await createServerSupabase();
-    const guard = await requireRoles(supabase, SPEC_ROLES);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     try {
