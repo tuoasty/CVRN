@@ -43,6 +43,7 @@ const GROUPS: AdminNavGroup[] = [
             { href: "/admin/sync", label: "Sync" },
             { href: "/admin/sync/history", label: "Sync History" },
             { href: "/admin/cache", label: "Cache", superAdminOnly: true },
+            { href: "/admin/staff", label: "Staff", superAdminOnly: true },
             { href: "/admin/invite", label: "Invite", superAdminOnly: true },
         ],
     },

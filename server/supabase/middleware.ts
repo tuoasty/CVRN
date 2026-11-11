@@ -55,7 +55,7 @@ export async function updateSession(request: NextRequest) {
   const isCallback = pathname === "/auth/callback"
 
   const isAdmin = pathname.startsWith("/admin");
-  const isInvite = pathname === "/admin/invite";
+  const isSuperAdminPage = pathname === "/admin/invite" || pathname === "/admin/staff";
 
   const refuse = async () => {
     await supabase.auth.signOut();
@@ -125,8 +125,8 @@ export async function updateSession(request: NextRequest) {
       );
     }
 
-    if (isInvite && roleData.role !== "super_admin") {
-      logger.warn({ user_id: user.id, role: roleData.role }, "Non-super_admin attempted to access invite page");
+    if (isSuperAdminPage && roleData.role !== "super_admin") {
+      logger.warn({ user_id: user.id, role: roleData.role, pathname }, "Non-super_admin attempted to access a super_admin page");
       return NextResponse.redirect(
           new URL("/admin/dashboard", request.url)
       );

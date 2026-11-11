@@ -53,6 +53,24 @@ describe("updateSession on /admin", () => {
         expect(response.headers.get("location")).toBe("http://localhost:3000/auth/login?error=no_role");
     });
 
+    it("sends an admin away from the super_admin staff page", async () => {
+        mocks.findUserAccount.mockResolvedValue(Ok(null));
+        mocks.getUserRole.mockResolvedValue(Ok("admin"));
+
+        const response = await updateSession(new NextRequest("http://localhost:3000/admin/staff"));
+
+        expect(response.headers.get("location")).toBe("http://localhost:3000/admin/dashboard");
+    });
+
+    it("lets a super_admin open the staff page", async () => {
+        mocks.findUserAccount.mockResolvedValue(Ok(null));
+        mocks.getUserRole.mockResolvedValue(Ok("super_admin"));
+
+        const response = await updateSession(new NextRequest("http://localhost:3000/admin/staff"));
+
+        expect(response.headers.get("location")).toBeNull();
+    });
+
     it("lets a user with a role through", async () => {
         mocks.findUserAccount.mockResolvedValue(Ok(null));
         mocks.getUserRole.mockResolvedValue(Ok("admin"));
