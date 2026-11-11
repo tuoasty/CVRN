@@ -6,7 +6,7 @@ import { DBClient } from '@/shared/types/db'
 import { createServerSupabase } from '@/server/supabase/server'
 import { getSupabaseAdmin } from '@/server/supabase/admin'
 import { serializeError } from '@/server/utils/serializeableError'
-import { requireAdmin, requireSuperAdmin } from '@/server/domains/auth'
+import { requireGroups } from '@/server/domains/auth'
 import {
     createCardGroup,
     createCardTemplate,
@@ -82,7 +82,7 @@ async function findSeasonPlayer(seasonNumber: number, playerId: string): Promise
 
 export async function getCardCatalogAction(): Promise<Result<CardGroup[]>> {
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return getCardCatalog(supabase)
@@ -93,7 +93,7 @@ export async function getPlayerCardsAction(input: unknown): Promise<Result<Playe
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return getPlayerCards(supabase, parsed.data)
@@ -104,7 +104,7 @@ export async function previewPlayerCardAction(input: unknown): Promise<Result<st
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     try {
@@ -121,7 +121,7 @@ export async function updateCardGroupLayersAction(input: unknown): Promise<Resul
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "updateCardGroupLayers", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase, { groupId: parsed.data.groupId })
@@ -135,7 +135,7 @@ export async function generatePlayerCardAction(input: unknown): Promise<Result<P
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "generatePlayerCard", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase)
@@ -162,7 +162,7 @@ export async function previewCustomPlayerCardAction(input: unknown): Promise<Res
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return previewCustomPlayerCard(supabase, parsed.data)
@@ -173,7 +173,7 @@ export async function generateCustomPlayerCardAction(input: unknown): Promise<Re
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "generateCustomPlayerCard", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase)
@@ -191,7 +191,7 @@ export async function createCardGroupAction(input: unknown): Promise<Result<{ id
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "createCardGroup", target: parsed.data })
     if (!guard.ok) return guard
 
     return createCardGroup(supabase, parsed.data)
@@ -202,7 +202,7 @@ export async function updateCardGroupAction(input: unknown): Promise<Result<null
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "updateCardGroup", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase, { groupId: parsed.data.groupId })
@@ -218,7 +218,7 @@ export async function deleteCardGroupAction(input: unknown): Promise<Result<null
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireSuperAdmin(supabase)
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "deleteCardGroup", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase, { groupId: parsed.data.groupId })
@@ -232,7 +232,7 @@ export async function createCardTemplateAction(input: unknown): Promise<Result<{
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "createCardTemplate", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase, { groupId: parsed.data.groupId })
@@ -246,7 +246,7 @@ export async function updateCardTemplateAction(input: unknown): Promise<Result<n
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "updateCardTemplate", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase, { templateId: parsed.data.templateId })
@@ -263,14 +263,14 @@ export async function uploadCardTemplateArtAction(formData: FormData): Promise<R
     if (!(file instanceof File) || file.size === 0) return Err({ message: 'Choose a PNG file', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "uploadCardTemplateArt", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase, { templateId: parsed.data.templateId })
     if (!lock.ok) return lock
 
     const admin = getSupabaseAdmin() as unknown as DBClient
-    return uploadCardTemplateArt(admin, { ...parsed.data, file, userId: guard.value })
+    return uploadCardTemplateArt(admin, { ...parsed.data, file, userId: guard.value.userId })
 }
 
 export async function downloadCardTierTemplateAction(input: unknown): Promise<Result<{ fileName: string; dataUri: string }>> {
@@ -278,7 +278,7 @@ export async function downloadCardTierTemplateAction(input: unknown): Promise<Re
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return getCardTierTemplate(supabase, parsed.data.templateId)
@@ -289,7 +289,7 @@ export async function downloadPlayerCardTemplateAction(input: unknown): Promise<
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     try {
@@ -311,7 +311,7 @@ export async function downloadCustomPlayerCardTemplateAction(input: unknown): Pr
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return getCustomPlayerCardTemplate(supabase, parsed.data)
@@ -322,7 +322,7 @@ export async function deletePlayerCardAction(input: unknown): Promise<Result<nul
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireSuperAdmin(supabase)
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "deletePlayerCard", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase)
@@ -338,7 +338,7 @@ export async function deleteCardTemplateAction(input: unknown): Promise<Result<n
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireSuperAdmin(supabase)
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "deleteCardTemplate", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase, { templateId: parsed.data.templateId })
@@ -352,7 +352,7 @@ export async function startCardBulkJobAction(input: unknown): Promise<Result<Car
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = parsed.data.mode === 'all' ? await requireSuperAdmin(supabase) : await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, parsed.data.mode === 'all' ? ['super_admin'] : ['admin', 'player_cards'], { action: "startCardBulkJob", target: parsed.data })
     if (!guard.ok) return guard
 
     try {
@@ -361,7 +361,7 @@ export async function startCardBulkJobAction(input: unknown): Promise<Result<Car
         return startCardBulkJob(admin, {
             ...parsed.data,
             rows,
-            startedBy: guard.value,
+            startedBy: guard.value.userId,
             schedule: task => after(async () => {
                 try {
                     await task()
@@ -380,7 +380,7 @@ export async function stopCardBulkJobAction(input: unknown): Promise<Result<null
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "stopCardBulkJob", target: parsed.data })
     if (!guard.ok) return guard
 
     const admin = getSupabaseAdmin() as unknown as DBClient
@@ -389,7 +389,7 @@ export async function stopCardBulkJobAction(input: unknown): Promise<Result<null
 
 export async function getCardBulkStatusAction(): Promise<Result<CardBulkJob | null>> {
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     const admin = getSupabaseAdmin() as unknown as DBClient
@@ -401,7 +401,7 @@ export async function getCardPlayerIdsAction(input: unknown): Promise<Result<str
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return getCardPlayerIds(supabase, parsed.data)
@@ -421,7 +421,7 @@ export async function uploadPlayerCardGfxAction(formData: FormData): Promise<Res
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "uploadPlayerCardGfx", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase)
@@ -472,7 +472,7 @@ export async function getPlayerCardRigAction(input: unknown): Promise<Result<Pla
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
     if (!guard.ok) return guard
 
     return getPlayerCardRig(supabase, parsed.data)
@@ -492,7 +492,7 @@ export async function uploadPlayerCardRigAction(formData: FormData): Promise<Res
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "uploadPlayerCardRig", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase)
@@ -532,7 +532,7 @@ export async function updatePlayerCardRigPlacementAction(input: unknown): Promis
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "updatePlayerCardRigPlacement", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase)
@@ -546,7 +546,7 @@ export async function deletePlayerCardRigAction(input: unknown): Promise<Result<
     if (!parsed.success) return validationError(parsed.error.issues)
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "deletePlayerCardRig", target: parsed.data })
     if (!guard.ok) return guard
 
     const lock = await assertNoRunningBulk(supabase)

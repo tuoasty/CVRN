@@ -25,7 +25,7 @@ export {deleteSeasonPodiumSlot} from "./commands/deleteSeasonPodiumSlot";
 export {deriveAndSaveSeasonPodium} from "./commands/deriveAndSaveSeasonPodium";
 export {upsertSeasonAward} from "./commands/upsertSeasonAward";
 export {deleteSeasonAward} from "./commands/deleteSeasonAward";
-export {storeAwardAvatar} from "./commands/storeAwardAvatar";
+export {refreshAwardAvatar} from "./commands/refreshAwardAvatar";
 export {fetchChampionRosterAwards} from "./commands/fetchChampionRosterAwards";
 export {batchUpsertSeasonAwards} from "./commands/batchUpsertSeasonAwards";
 export {updateSeasonAward} from "./commands/updateSeasonAward";

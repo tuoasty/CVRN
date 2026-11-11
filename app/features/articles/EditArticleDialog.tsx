@@ -21,6 +21,7 @@ import SlugFields from '@/app/features/articles/SlugFields'
 import { useSlugField } from '@/app/features/articles/useSlugField'
 import SeasonSelect from '@/app/features/articles/SeasonSelect'
 import type { ArticleListItem } from '@/server/domains/article'
+import { useHasGroup } from '@/app/admin/AdminRoleProvider'
 
 interface EditArticleDialogProps {
     article: ArticleListItem | null
@@ -31,6 +32,7 @@ interface EditArticleDialogProps {
 const PENDING_LABEL = '(linked match)'
 
 export default function EditArticleDialog({ article, open, onOpenChange }: EditArticleDialogProps) {
+    const canPublish = useHasGroup('admin')
     const [title, setTitle] = useState('')
     const [body, setBody] = useState('')
     const slugField = useSlugField()
@@ -115,7 +117,7 @@ export default function EditArticleDialog({ article, open, onOpenChange }: EditA
                 toast.error(result.error.message)
                 return
             }
-            toast.success('Article updated')
+            toast.success(canPublish || !article?.published_at ? 'Article updated' : 'Saved as draft. An admin needs to publish it again.')
             await Promise.all([mutateArticles(), mutateAllMedia()])
             onOpenChange(false)
         } catch (err) {

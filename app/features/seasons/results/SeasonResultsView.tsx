@@ -16,6 +16,7 @@ import {Season} from "@/shared/types/db";
 import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
 import ChampionGfxBlock from "@/app/features/seasons/ChampionGfxBlock";
+import { useHasGroup } from "@/app/admin/AdminRoleProvider";
 import ConfirmDialog from "@/app/features/spec/catalog/ConfirmDialog";
 import {useLeaveGuard} from "@/app/features/spec/catalog/useLeaveGuard";
 import {ResultsCommandBar} from "@/app/features/seasons/results/ResultsCommandBar";
@@ -81,6 +82,7 @@ export function ResultsSkeleton() {
 export function SeasonResultsView({seasonId, initial}: {seasonId: string; initial: SeasonResultsData}) {
     const router = useRouter();
     const stickyTop = useStickyOffset();
+    const canChampionGfx = useHasGroup("admin", "graphics");
     const {season, regionCode} = initial;
 
     const [podium, setPodium] = useState(initial.podium);
@@ -165,7 +167,7 @@ export function SeasonResultsView({seasonId, initial}: {seasonId: string; initia
                 <div className="grid grid-cols-1 gap-x-10 gap-y-8 lg:grid-cols-3">
                     <div className="min-w-0 space-y-8">
                         <PlacementsSection seasonId={seasonId} teams={initial.teams} podium={podium} setPodium={setPodium} />
-                        <ChampionGfxBlock seasonId={seasonId} seasonName={season.name} initialPost={initial.championGfx} />
+                        {canChampionGfx && <ChampionGfxBlock seasonId={seasonId} seasonName={season.name} initialPost={initial.championGfx} />}
                         <ChampionRosterColumns
                             roster={sortRoster(awards)}
                             championName={champions.length > 0 ? champions.join(", ") : null}

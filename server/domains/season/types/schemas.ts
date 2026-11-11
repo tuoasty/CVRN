@@ -79,7 +79,6 @@ export const UpsertSeasonAwardSchema = z.object({
     playerId: z.uuid(),
     awardName: z.string().min(1, "Award name is required"),
     category: AwardCategoryEnum,
-    cdnUrl: z.string().url("Invalid avatar URL"),
 })
 export type UpsertSeasonAwardInput = z.infer<typeof UpsertSeasonAwardSchema>
 

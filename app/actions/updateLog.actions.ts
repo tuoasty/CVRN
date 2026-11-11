@@ -26,7 +26,7 @@ import {
     UpdateLogIdSchema,
     SetUpdateLogPublishedSchema,
 } from '@/server/domains/updateLog'
-import { requireAdmin } from '@/server/domains/auth'
+import { requireGroups } from '@/server/domains/auth'
 
 const UPDATE_LOG_TAGS = [CACHE_TAGS.updateLogs]
 
@@ -44,7 +44,7 @@ export async function createUpdateLogAction(formData: FormData): Promise<Result<
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin'], { action: "createUpdateLog", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await createUpdateLog(supabase, {
@@ -52,7 +52,7 @@ export async function createUpdateLogAction(formData: FormData): Promise<Result<
         title:      parsed.data.title || null,
         body:       parsed.data.body,
         releasedAt: parsed.data.releasedAt,
-        userId:     guard.value,
+        userId:     guard.value.userId,
     })
     if (result.ok) revalidatePublicData(UPDATE_LOG_TAGS)
     return result
@@ -66,7 +66,7 @@ export async function updateUpdateLogAction(formData: FormData): Promise<Result<
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin'], { action: "updateUpdateLog", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await updateUpdateLog(supabase, {
@@ -85,7 +85,7 @@ export async function setUpdateLogPublishedAction(input: unknown): Promise<Resul
     if (!parsed.success) return Err({ message: 'Invalid input', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin'], { action: "setUpdateLogPublished", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await setUpdateLogPublished(supabase, parsed.data)
@@ -98,7 +98,7 @@ export async function deleteUpdateLogAction(input: unknown): Promise<Result<void
     if (!parsed.success) return Err({ message: 'Invalid update log ID', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "deleteUpdateLog", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await deleteUpdateLog(supabase, { updateLogId: parsed.data.updateLogId })
@@ -108,7 +108,7 @@ export async function deleteUpdateLogAction(input: unknown): Promise<Result<void
 
 export async function getUpdateLogsForAdminAction(): Promise<Result<UpdateLogListItem[]>> {
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin'])
     if (!guard.ok) return guard
     return getUpdateLogsForAdmin(supabase)
 }
@@ -118,7 +118,7 @@ export async function getUpdateLogForAdminAction(input: unknown): Promise<Result
     if (!parsed.success) return Err({ message: 'Update log not found', code: 'NOT_FOUND' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin'])
     if (!guard.ok) return guard
     return getUpdateLogForAdmin(supabase, parsed.data.updateLogId)
 }
@@ -137,7 +137,7 @@ export async function uploadUpdateLogImageAction(formData: FormData): Promise<Re
     if (file.size > UPDATE_LOG_IMAGE_MAX_BYTES) return Err({ message: 'Images must be 2 MB or smaller', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin'], { action: "uploadUpdateLogImage", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await uploadUpdateLogImage(supabase, {
@@ -145,7 +145,7 @@ export async function uploadUpdateLogImageAction(formData: FormData): Promise<Re
         name:        parsed.data.name,
         caption:     parsed.data.caption || null,
         file,
-        userId:      guard.value,
+        userId:      guard.value.userId,
     })
     if (result.ok) revalidatePublicData(UPDATE_LOG_TAGS)
     return result
@@ -156,7 +156,7 @@ export async function updateUpdateLogImagesAction(input: unknown): Promise<Resul
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireAdmin(supabase)
+    const guard = await requireGroups(supabase, ['admin'], { action: "updateUpdateLogImages", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await updateUpdateLogImages(supabase, {

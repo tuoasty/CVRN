@@ -8,6 +8,8 @@ import MatchMediaSlotButton from "@/app/features/media/MatchMediaSlotButton";
 import type { MatchWithDetails } from "@/server/domains/match";
 import type { MediaPost } from "@/server/domains/media";
 import type { ScheduleKind, ScheduleRow } from "./types";
+import { useGroups } from "@/app/admin/AdminRoleProvider";
+import { allowedMediaTypes } from "@/shared/auth/mediaAccess";
 
 type Props = {
     row: ScheduleRow;
@@ -28,6 +30,21 @@ export function AdminRowActions({ row, details, seasonId, regionCode, kind, medi
     const { match, sets } = details;
     const isScheduled = match.status === "scheduled";
     const isCompleted = match.status === "completed";
+    const groups = useGroups();
+    const isAdmin = groups.includes("admin") || groups.includes("super_admin");
+    const mediaTypes = allowedMediaTypes(groups);
+    const canGfx = mediaTypes.includes("gfx");
+    const canVideo = mediaTypes.includes("video");
+
+    if (!isAdmin) {
+        return (
+            <div className="flex items-center justify-end gap-0.5">
+                {canGfx ? <MatchMediaSlotButton matchId={match.id} slot="gfx" current={media?.gfx ?? null} defaultTitle={mediaTitle} /> : <Gap />}
+                {canVideo ? <MatchMediaSlotButton matchId={match.id} slot="video" current={media?.vod ?? null} defaultTitle={mediaTitle} /> : <Gap />}
+            </div>
+        );
+    }
+
     return (
         <div className="flex items-center justify-end gap-0.5">
             <ManageMatchDialog

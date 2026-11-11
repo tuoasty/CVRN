@@ -13,6 +13,7 @@ import {
     type AdminNavPage,
 } from "@/app/components/admin/navigation/adminNav";
 import { cn } from "@/lib/utils";
+import { useGroups } from "@/app/admin/AdminRoleProvider";
 
 const ITEM_BASE = cn(
     "inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-sm px-2 text-sm font-medium outline-none transition-colors xl:px-3",
@@ -25,13 +26,13 @@ const SHEET_OFF = "text-muted-foreground";
 
 interface AdminNavItemsProps {
     layout?: "horizontal" | "vertical";
-    userRole?: string | null;
     onNavigate?: () => void;
 }
 
-export default function AdminNavItems({ layout = "horizontal", userRole, onNavigate }: AdminNavItemsProps) {
+export default function AdminNavItems({ layout = "horizontal", onNavigate }: AdminNavItemsProps) {
     const pathname = usePathname();
-    const model = useMemo(() => buildAdminNav(userRole), [userRole]);
+    const groups = useGroups();
+    const model = useMemo(() => buildAdminNav(groups), [groups]);
     const currentHref = findCurrentHref(pathname, adminNavHrefs(model));
 
     if (layout === "vertical") {

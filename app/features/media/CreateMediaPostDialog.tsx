@@ -15,8 +15,19 @@ import { useAdminContextStore } from '@/app/stores/adminContextStore'
 import { useTeamsBySeason } from '@/app/hooks/useTeams'
 import { useTeamPlayers } from '@/app/hooks/usePlayers'
 import AuthorPicker, { type AuthorSelection } from '@/app/features/media/AuthorPicker'
+import { useGroups } from '@/app/admin/AdminRoleProvider'
+import { allowedMediaTypes } from '@/shared/auth/mediaAccess'
 
 type MediaFormType = 'gfx' | 'video' | 'feature' | 'clip' | 'totw' | 'potw'
+
+const TYPE_OPTIONS: { value: MediaFormType; label: string }[] = [
+    { value: 'gfx', label: 'GFX' },
+    { value: 'video', label: 'Video (Match VOD)' },
+    { value: 'feature', label: 'Feature (YouTube / Shorts)' },
+    { value: 'clip', label: 'Clip (TikTok / Short-form)' },
+    { value: 'totw', label: 'Team of the Week' },
+    { value: 'potw', label: 'Player of the Week' },
+]
 
 interface CreateMediaPostDialogProps {
     open: boolean
@@ -33,7 +44,9 @@ const LOCKED_TITLES: Record<'potw' | 'totw', string> = {
 }
 
 export default function CreateMediaPostDialog({ open, onOpenChange, lockedType, seasonId: forcedSeasonId, roundKey, onCreated }: CreateMediaPostDialogProps) {
-    const [type, setType] = useState<MediaFormType>(lockedType ?? 'gfx')
+    const allowedTypes = allowedMediaTypes(useGroups())
+    const typeOptions = TYPE_OPTIONS.filter(option => allowedTypes.includes(option.value))
+    const [type, setType] = useState<MediaFormType>(lockedType ?? typeOptions[0]?.value ?? 'gfx')
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [videoUrl, setVideoUrl] = useState('')
@@ -169,12 +182,9 @@ export default function CreateMediaPostDialog({ open, onOpenChange, lockedType, 
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="gfx">GFX</SelectItem>
-                                        <SelectItem value="video">Video (Match VOD)</SelectItem>
-                                        <SelectItem value="feature">Feature (YouTube / Shorts)</SelectItem>
-                                        <SelectItem value="clip">Clip (TikTok / Short-form)</SelectItem>
-                                        <SelectItem value="totw">Team of the Week</SelectItem>
-                                        <SelectItem value="potw">Player of the Week</SelectItem>
+                                        {typeOptions.map(option => (
+                                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>

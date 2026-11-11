@@ -17,12 +17,16 @@ import EditMediaPostDialog from '@/app/features/media/EditMediaPostDialog'
 import type { MediaPost } from '@/server/domains/media'
 import { toast } from '@/app/utils/toast'
 import { cn } from '@/lib/utils'
+import { useGroups } from '@/app/admin/AdminRoleProvider'
+import { canWriteMediaType } from '@/shared/auth/mediaAccess'
 
 type FilterType = 'all' | 'gfx' | 'video' | 'feature' | 'news' | 'recap' | 'clip' | 'totw' | 'potw'
 const FILTER_OPTIONS: FilterType[] = ['all', 'gfx', 'video', 'feature', 'clip', 'totw', 'potw', 'news', 'recap']
 
 export default function AdminMediaPage() {
     const { posts, isLoading } = useAllMediaPosts()
+    const groups = useGroups()
+    const isAdmin = groups.includes('admin') || groups.includes('super_admin')
     const [createOpen, setCreateOpen] = useState(false)
     const [deleting, setDeleting] = useState<string | null>(null)
     const [pinning, setPinning] = useState<string | null>(null)
@@ -133,7 +137,7 @@ export default function AdminMediaPage() {
                                         Link
                                     </a>
                                 )}
-                                <Button
+                                {isAdmin && <Button
                                     variant="ghost"
                                     size="icon"
                                     className={cn('h-8 w-8 rounded-sm', post.is_pinned ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground hover:bg-muted')}
@@ -142,8 +146,8 @@ export default function AdminMediaPage() {
                                     title={post.is_pinned ? 'Unpin post' : 'Pin post'}
                                 >
                                     <Pin className={cn('h-4 w-4', post.is_pinned && 'fill-primary')} />
-                                </Button>
-                                <Button
+                                </Button>}
+                                {canWriteMediaType(groups, post.type) && <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 rounded-sm text-muted-foreground hover:bg-muted"
@@ -151,8 +155,8 @@ export default function AdminMediaPage() {
                                     title="Edit post"
                                 >
                                     <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
+                                </Button>}
+                                {isAdmin && <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 rounded-sm text-destructive hover:bg-destructive/10"
@@ -160,7 +164,7 @@ export default function AdminMediaPage() {
                                     onClick={() => setDeleteTarget({ id: post.id, title: post.title })}
                                 >
                                     <Trash2 className="h-4 w-4" />
-                                </Button>
+                                </Button>}
                             </div>
                         ))}
                     </div>

@@ -4,6 +4,7 @@ import {useCallback, useMemo, useRef, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {useRegions} from '@/app/hooks/useRegions';
 import {deleteSpec, saveRegionRequirements, useSpecsAllRegions} from '@/app/hooks/useSpecs';
+import {useIsSuperAdmin} from '@/app/admin/AdminRoleProvider';
 import {useAdminContextStore} from '@/app/stores/adminContextStore';
 import {toast} from '@/app/utils/toast';
 import {clientLogger} from '@/app/utils/clientLogger';
@@ -50,6 +51,7 @@ export default function SpecCatalog() {
     const [creating, setCreating] = useState(false);
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const canDeleteSpec = useIsSuperAdmin();
     const [heightsOpen, setHeightsOpen] = useState(false);
     const [pending, setPending] = useState<Pending>(null);
     const [importFile, setImportFile] = useState<ImportFile | null>(null);
@@ -309,7 +311,7 @@ export default function SpecCatalog() {
                             baseline={baseline[selectedSpec.id]}
                             columns={columns}
                             onEdit={change => edit(selectedSpec.id, change)}
-                            onDelete={() => setPending({kind: 'delete', spec: selectedSpec})}
+                            onDelete={canDeleteSpec ? () => setPending({kind: 'delete', spec: selectedSpec}) : undefined}
                             onDetailsSaved={spec => selectSpec(spec.id, spec.position as SpecPosition)}
                         />
                     ) : (

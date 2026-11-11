@@ -11,7 +11,7 @@ import { kitSections, requirementStatus, specPopLine } from '@/server/domains/ga
 import type { SpecLoadout } from '@/server/domains/gameData/types/datasets'
 import { SPEC_STARS, type SpecStars } from '@/server/domains/gameData/types/specLinks'
 import { useInformation } from '../InformationProvider'
-import { useUserRole } from '@/app/admin/AdminRoleProvider'
+import { useHasGroup } from '@/app/admin/AdminRoleProvider'
 import KitSection from './KitSection'
 import SpecPhotoControl from './SpecPhotoControl'
 
@@ -31,10 +31,9 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 
 export default function SpecLoadoutDetail({ loadout }: { loadout: SpecLoadout }) {
     const { specByGameKey, skipped, regions, kitResolver, abilityByKey, saveSpecFacts } = useInformation()
-    const role = useUserRole()
-    const canImport = role === 'admin' || role === 'super_admin'
-    const showRequirements = role !== 'information_manager'
-    const canPhoto = role === 'admin' || role === 'super_admin' || role === 'information_manager'
+    const canImport = useHasGroup('admin')
+    const showRequirements = useHasGroup('admin', 'specs')
+    const canPhoto = useHasGroup('admin', 'information')
     const spec = specByGameKey.get(loadout.key)
     const kit = useMemo(() => resolveKit(loadout, kitResolver), [loadout, kitResolver])
     const tunes = useMemo(() => resolveTuning(loadout, kit, abilityByKey), [loadout, kit, abilityByKey])

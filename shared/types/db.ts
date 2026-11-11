@@ -159,5 +159,20 @@ export type DiscordBoosterRow =
 export type DiscordBoosterInsert =
     Database["public"]["Tables"]["discord_boosters"]["Insert"];
 
+export type UserAccountRow =
+    Database["public"]["Tables"]["user_accounts"]["Row"];
+
+export type DiscordRoleGroupRow =
+    Database["public"]["Tables"]["discord_role_groups"]["Row"];
+
+export type UserGroupBlockRow =
+    Database["public"]["Tables"]["user_group_blocks"]["Row"];
+
+export type AuditLogRow =
+    Database["public"]["Tables"]["audit_log"]["Row"];
+
+export type AuditLogInsert =
+    Database["public"]["Tables"]["audit_log"]["Insert"];
+
 export type GameAbilitySettingRow =
     Database["public"]["Tables"]["game_ability_settings"]["Row"];

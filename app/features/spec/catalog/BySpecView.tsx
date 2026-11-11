@@ -40,7 +40,7 @@ interface Props {
     baseline: RegionSpecState | undefined;
     columns: RegionColumn[];
     onEdit: (edit: SpecStateEdit) => void;
-    onDelete: () => void;
+    onDelete?: () => void;
     onDetailsSaved: (spec: Spec) => void;
 }
 
@@ -216,9 +216,11 @@ export default function BySpecView({spec, regionCode, state, baseline, columns, 
                     </button>
                 )}
                 <span className="flex-1" />
-                <button type="button" className={linkClass} onClick={onDelete}>
-                    Delete spec
-                </button>
+                {onDelete && (
+                    <button type="button" className={linkClass} onClick={onDelete}>
+                        Delete spec
+                    </button>
+                )}
             </div>
             {editingDetails && (
                 <SpecIdentityForm

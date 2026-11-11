@@ -3,6 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "@/lib/utils";
 import {Database} from "@/shared/types/db.override";
 import { logger } from "@/server/utils/logger";
+import { findUserAccount } from "@/server/db/userAccounts.repo";
+import { refreshMemberRoles } from "@/server/domains/auth/commands/refreshMemberRoles";
+import { getCurrentGroups } from "@/server/domains/auth/queries/getCurrentGroups";
+import { needsRoleRefresh } from "@/server/domains/auth/helpers/needsRoleRefresh";
+import { safeReturnPath } from "@/server/domains/auth/helpers/safeReturnPath";
+import type { DBClient } from "@/shared/types/db";
+import { canAccessPath, landingFor } from "@/shared/auth/pageAccess";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -46,114 +53,64 @@ export async function updateSession(request: NextRequest) {
   const isHome = pathname === "/";
   const isLogin = pathname === "/auth/login";
   const isCallback = pathname === "/auth/callback"
-  const isSetPassword = pathname === "/auth/set-password";
 
   const isAdmin = pathname.startsWith("/admin");
-  const isInvite = pathname === "/admin/invite";
+
+  const redirectTo = (path: string) => {
+    const redirect = NextResponse.redirect(new URL(path, request.url));
+    supabaseResponse.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    return redirect;
+  };
+
+  const refuse = async () => {
+    await supabase.auth.signOut();
+    return redirectTo("/auth/login?error=no_role");
+  };
 
   if (isHome || isCallback) {
     return supabaseResponse;
   }
 
   if (isLogin) {
-    if (user) {
-      const url = new URL("/admin/dashboard", request.url);
-      const returnUrl = request.nextUrl.searchParams.get("returnUrl");
-
-      if (returnUrl) {
-        const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", user.id)
-            .single();
-
-        if (!roleData?.role) {
-          return NextResponse.redirect(url);
-        }
-
-        return NextResponse.redirect(new URL(returnUrl, request.url));
-      }
-
-      return NextResponse.redirect(url);
-    }
-
-    return supabaseResponse;
-  }
-
-  if (isSetPassword) {
     if (!user) {
-      return NextResponse.redirect(
-          new URL("/", request.url)
-      );
+      return supabaseResponse;
     }
 
-    return supabaseResponse;
+    const groups = await getCurrentGroups(supabase as unknown as DBClient);
+    if (!groups.ok || groups.value.length === 0) {
+      return supabaseResponse;
+    }
+
+    const returnPath = safeReturnPath(request.nextUrl.searchParams.get("returnUrl"));
+    const target = returnPath && canAccessPath(groups.value, new URL(returnPath, request.url).pathname)
+        ? returnPath
+        : landingFor(groups.value);
+    return redirectTo(target);
   }
 
   if (isAdmin) {
     if (!user) {
       logger.debug({ pathname }, "Unauthenticated access attempt to admin route");
-      return NextResponse.redirect(
-          new URL("/", request.url)
-      );
+      const loginUrl = new URL("/auth/login", request.url);
+      loginUrl.searchParams.set("returnUrl", pathname + request.nextUrl.search);
+      return NextResponse.redirect(loginUrl);
     }
 
-    const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-
-    if (!roleData?.role) {
-      logger.warn({ user_id: user.id, pathname }, "User missing role");
-      return NextResponse.redirect(
-          new URL("/auth/set-password", request.url)
-      );
+    const db = supabase as unknown as DBClient;
+    const account = await findUserAccount(db, user.id);
+    if (account.ok && account.value && needsRoleRefresh(account.value.roles_valid_until, new Date())) {
+      await refreshMemberRoles(user.id);
     }
 
-    if (roleData.role === "none") {
-      logger.debug({ user_id: user.id, pathname }, "user with role none redirected home");
-      return NextResponse.redirect(
-          new URL("/", request.url)
-      );
+    const groups = await getCurrentGroups(db);
+    if (!groups.ok || groups.value.length === 0) {
+      logger.info({ user_id: user.id, pathname }, "User has no groups, signing out");
+      return refuse();
     }
 
-    if (isInvite && roleData.role !== "super_admin") {
-      logger.warn({ user_id: user.id, role: roleData.role }, "Non-super_admin attempted to access invite page");
-      return NextResponse.redirect(
-          new URL("/admin/dashboard", request.url)
-      );
-    }
-
-    if (roleData.role === "stat_tracker" && pathname !== "/admin/sync/history") {
-      logger.debug({ user_id: user.id, pathname }, "stat_tracker redirected to sync history");
-      return NextResponse.redirect(
-          new URL("/admin/sync/history", request.url)
-      );
-    }
-
-    const staffAllowed = pathname === "/admin/teams" || pathname === "/admin/sync/history";
-    if (roleData.role === "staff" && !staffAllowed) {
-      logger.debug({ user_id: user.id, pathname }, "staff redirected to teams");
-      return NextResponse.redirect(
-          new URL("/admin/teams", request.url)
-      );
-    }
-
-    const specManagerAllowed = pathname === "/admin/specs" || pathname === "/admin/specs/qualify" || pathname === "/admin/game-data/specs";
-    if (roleData.role === "spec_manager" && !specManagerAllowed) {
-      logger.debug({ user_id: user.id, pathname }, "spec_manager redirected to specs");
-      return NextResponse.redirect(
-          new URL("/admin/specs", request.url)
-      );
-    }
-
-    const informationManagerAllowed = pathname.startsWith("/admin/game-data/") && !pathname.startsWith("/admin/game-data/import");
-    if (roleData.role === "information_manager" && !informationManagerAllowed) {
-      logger.debug({ user_id: user.id, pathname }, "information_manager redirected to information");
-      return NextResponse.redirect(
-          new URL("/admin/game-data/rollables", request.url)
-      );
+    if (!canAccessPath(groups.value, pathname)) {
+      logger.debug({ user_id: user.id, groups: groups.value, pathname }, "Groups cannot open this page, redirecting to landing");
+      return redirectTo(landingFor(groups.value));
     }
 
     return supabaseResponse;

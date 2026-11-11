@@ -19,6 +19,12 @@ export async function deleteSeasonAward(
             return pathResult;
         }
 
+        const result = await deleteSeasonAwardById(supabase, p.awardId);
+        if (!result.ok) {
+            logger.error({input: p, error: result.error}, "Failed to delete season award");
+            return result;
+        }
+
         if (pathResult.value) {
             const fileResult = await deleteFile(getSupabaseAdmin(), {bucket: BUCKETS.PUBLIC, path: pathResult.value});
             if (!fileResult.ok) {
@@ -26,11 +32,6 @@ export async function deleteSeasonAward(
             }
         }
 
-        const result = await deleteSeasonAwardById(supabase, p.awardId);
-        if (!result.ok) {
-            logger.error({input: p, error: result.error}, "Failed to delete season award");
-            return result;
-        }
         return Ok(true);
     } catch (error) {
         logger.error({error}, "Unexpected error deleting season award");

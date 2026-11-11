@@ -26,7 +26,7 @@ import {toast} from "@/app/utils/toast";
 import {clientLogger} from "@/app/utils/clientLogger";
 import { getSeasonStatus, SeasonStatus } from "@/server/domains/season/helpers/getSeasonStatus";
 import { REGION_ORDER } from "@/app/features/leaderboard/useLeaderboardFilters";
-import { useIsSuperAdmin } from "@/app/admin/AdminRoleProvider";
+import { useHasGroup, useIsSuperAdmin } from "@/app/admin/AdminRoleProvider";
 
 const STATUS_BADGE: Record<SeasonStatus, {label: string; variant: "default" | "secondary" | "outline"}> = {
     upcoming: {label: "Upcoming", variant: "outline"},
@@ -38,6 +38,7 @@ export default function AdminSeasonsPage() {
     const {seasons, isLoading, error} = useSeasons();
     const {regions} = useRegions();
     const isSuperAdmin = useIsSuperAdmin();
+    const isAdmin = useHasGroup("admin");
 
     const [formOpen, setFormOpen] = useState(false);
     const [editSeason, setEditSeason] = useState<SeasonWithPlayoffConfig | undefined>(undefined);
@@ -114,12 +115,12 @@ export default function AdminSeasonsPage() {
                     icon={CalendarDays}
                     title="Season Management"
                     description="Create and manage league seasons by region"
-                    actions={
+                    actions={isAdmin ? (
                         <Button onClick={handleCreate} className="rounded-sm gap-2">
                             <Plus className="h-4 w-4" />
                             New Season
                         </Button>
-                    }
+                    ) : undefined}
                 />
 
                 {isLoading && <Skeleton className="h-64 w-full rounded-sm" />}
@@ -177,14 +178,16 @@ export default function AdminSeasonsPage() {
                                                         </td>
                                                         <td>
                                                             <div className="flex gap-2">
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    className="rounded-sm"
-                                                                    onClick={() => handleEdit(season)}
-                                                                >
-                                                                    Edit
-                                                                </Button>
+                                                                {isAdmin && (
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        className="rounded-sm"
+                                                                        onClick={() => handleEdit(season)}
+                                                                    >
+                                                                        Edit
+                                                                    </Button>
+                                                                )}
                                                                 <Button
                                                                     variant="outline"
                                                                     size="sm"

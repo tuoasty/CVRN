@@ -11,6 +11,7 @@ import { useRegions } from "@/app/hooks/useRegions";
 import { useSeasons } from "@/app/hooks/useSeasons";
 import { isSeasonActive } from "@/server/domains/season/helpers/isSeasonActive";
 import UploadTeamLogoDialog from "@/app/features/teams/UploadTeamLogoDialog";
+import { useHasGroup } from "@/app/admin/AdminRoleProvider";
 import TeamsFilterBar from "@/app/features/teams/TeamsFilterBar";
 import { buildTeamsQuery, useTeamsFilters } from "@/app/features/teams/useTeamsFilters";
 import {
@@ -25,6 +26,7 @@ export default function TeamsDataTable() {
     const { regions } = useRegions();
     const { seasons } = useSeasons();
     const router = useRouter();
+    const canOpenTeam = useHasGroup("admin");
 
     const { filters, setRegion, setSeason, setQuery, reset } = useTeamsFilters(regions, seasons);
 
@@ -115,13 +117,13 @@ export default function TeamsDataTable() {
                         </thead>
                         <tbody>
                             {filteredTeams.map((team) => {
-                                const hasRequiredData = team.seasons?.regions?.code && team.seasons?.slug;
+                                const hasRequiredData = canOpenTeam && team.seasons?.regions?.code && team.seasons?.slug;
                                 const seasonName = team.seasons?.name || "Unknown Season";
 
                                 return (
                                     <tr
                                         key={team.id}
-                                        className={`cursor-pointer hover:bg-muted/50 transition-colors${!hasRequiredData ? " opacity-50" : ""}`}
+                                        className={`${hasRequiredData ? "cursor-pointer hover:bg-muted/50" : ""} transition-colors${canOpenTeam && !hasRequiredData ? " opacity-50" : ""}`}
                                         onClick={() => hasRequiredData && handleTeamClick(team)}
                                     >
                                         <td onClick={(e) => e.stopPropagation()}>

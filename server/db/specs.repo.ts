@@ -135,13 +135,10 @@ export async function updateSpecFacts(
     p: {id: string; stars: number; position: string}
 ): Promise<Result<Spec>> {
     const {data, error} = await supabase
-        .from("specs")
-        .update({stars: p.stars, position: p.position, updated_at: new Date().toISOString()})
-        .eq("id", p.id)
-        .select()
+        .rpc("save_spec_facts", {p_spec_id: p.id, p_stars: p.stars, p_position: p.position})
         .single();
     if (error) return Err(serializeError(error, "DB_ERROR"));
-    return Ok(data);
+    return Ok(data as Spec);
 }
 
 export async function replaceRegionSpecRequirements(

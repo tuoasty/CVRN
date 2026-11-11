@@ -3,7 +3,7 @@ import {Ok, Result} from "@/shared/types/result";
 import type {DBClient, DiscordBoosterInsert} from "@/shared/types/db";
 import {deleteBoostersByDiscordIds, findAllBoosters, upsertBoosters} from "@/server/db/boosters.repo";
 import {logger} from "@/server/utils/logger";
-import {listGuildBoosters} from "../helpers/discordClient";
+import {listGuildBoosters} from "@/server/discord/client";
 import {resolveRobloxIdFromDiscord} from "../helpers/bloxlinkClient";
 import {planBoosterSync} from "../helpers/planBoosterSync";
 import type {BoosterSyncSummary} from "../types";

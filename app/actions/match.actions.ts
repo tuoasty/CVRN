@@ -8,7 +8,7 @@ const MATCH_MUTATION_TAGS = [CACHE_TAGS.matches, CACHE_TAGS.standings, CACHE_TAG
 import {z} from "zod"
 import {createServerSupabase} from "@/server/supabase/server";
 import {Err} from "@/shared/types/result";
-import {requireSuperAdmin} from "@/server/domains/auth";
+import { requireGroups } from "@/server/domains/auth";
 import {
     CreateMatchesSchema,
     UpdateMatchScheduleSchema,
@@ -45,6 +45,8 @@ export async function createMatchesAction(input: unknown) {
     const parsed = CreateMatchesSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"], { action: "createMatches", target: parsed.data });
+    if (!guard.ok) return guard;
     const result = await createMatches(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
     return result;
@@ -73,6 +75,8 @@ export async function updateMatchScheduleAction(input: unknown) {
     const parsed = UpdateMatchScheduleSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"], { action: "updateMatchSchedule", target: parsed.data });
+    if (!guard.ok) return guard;
     const result = await updateMatchScheduleService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
     return result;
@@ -82,6 +86,8 @@ export async function completeMatchAction(input: unknown) {
     const parsed = CompleteMatchSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"], { action: "completeMatch", target: parsed.data });
+    if (!guard.ok) return guard;
     const result = await completeMatchService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
     return result;
@@ -91,7 +97,7 @@ export async function voidMatchAction(input: unknown) {
     const parsed = VoidMatchSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireSuperAdmin(supabase);
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "voidMatch", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await voidMatchService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
@@ -102,6 +108,8 @@ export async function updateMatchResultsAction(input: unknown) {
     const parsed = CompleteMatchSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"], { action: "updateMatchResults", target: parsed.data });
+    if (!guard.ok) return guard;
     const result = await updateMatchResultsService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
     return result;
@@ -146,7 +154,9 @@ export async function deleteMatchAction(matchId: string) {
     const parsed = z.uuid().safeParse(matchId);
     if (!parsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const result = await deleteMatchService(supabase, parsed.data);
+    const guard = await requireGroups(supabase, ["admin"], { action: "deleteMatch", target: parsed.data });
+    if (!guard.ok) return guard;
+    const result = await deleteMatchService(supabase, parsed.data, {isSuperAdmin: guard.value.groups.includes("super_admin")});
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
     return result;
 }

@@ -3,7 +3,7 @@ import { Err, Ok, Result } from '@/shared/types/result'
 import { DBClient } from '@/shared/types/db'
 import { serializeError } from '@/server/utils/serializeableError'
 import { takeUpdateLogImageUpload } from '@/server/utils/rateLimiter'
-import { getUserRole } from '@/server/db/roles.repo'
+import { getCurrentGroups } from '@/server/domains/auth/queries/getCurrentGroups'
 import { findUpdateLogById } from '@/server/db/updateLog.repo'
 import { findUpdateLogImagesByLogId, insertUpdateLogImage } from '@/server/db/updateLogImage.repo'
 import { BUCKETS, STORAGE_PATHS } from '@/server/storage/storage.paths'
@@ -24,9 +24,9 @@ export async function uploadUpdateLogImage(supabase: DBClient, p: UploadUpdateLo
             return Err({ message: 'Another image in this log already uses that name.', code: 'UPDATE_LOG_IMAGE_NAME_TAKEN' })
         }
 
-        const role = await getUserRole(supabase, p.userId)
-        if (!role.ok) return role
-        const limit = takeUpdateLogImageUpload(p.userId, role.value || 'admin')
+        const groups = await getCurrentGroups(supabase)
+        if (!groups.ok) return groups
+        const limit = takeUpdateLogImageUpload(p.userId, groups.value.includes('super_admin') ? 'super_admin' : 'staff')
         if (!limit.allowed) {
             const resetAt = limit.resetAt ? new Date(limit.resetAt).toISOString() : 'later'
             return Err({ message: `Image upload limit reached. Try again after ${resetAt}.`, code: 'FORBIDDEN' })

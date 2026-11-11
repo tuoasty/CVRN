@@ -89,6 +89,7 @@ export interface UpdateArticleInput {
     authorId?: string | null
     matchId?: string | null
     seasonId?: string | null
+    unpublish?: boolean
     images: ArticleImageInput[]
     userId: string
 }

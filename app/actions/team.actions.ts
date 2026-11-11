@@ -4,7 +4,7 @@ import {createServerSupabase} from "@/server/supabase/server";
 import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {z} from "zod"
 import {Result, Err, Ok} from "@/shared/types/result";
-import {getUserRole} from "@/server/db/roles.repo";
+import {requireGroups} from "@/server/domains/auth";
 import {revalidatePath} from "next/cache";
 import {revalidatePublicData} from "@/server/cache/revalidate";
 import {CACHE_TAGS} from "@/server/cache/tags";
@@ -36,11 +36,6 @@ import {
 } from "@/server/domains/team";
 import {Team} from "@/shared/types/db";
 
-async function requireAuth(supabase: Awaited<ReturnType<typeof createServerSupabase>>) {
-    const {data: {user}} = await supabase.auth.getUser();
-    return user;
-}
-
 export async function createTeamAction(formData: FormData) {
     const parsed = CreateTeamFormSchema.safeParse({
         name: formData.get('name'),
@@ -53,8 +48,8 @@ export async function createTeamAction(formData: FormData) {
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    const guard = await requireGroups(supabase, ["admin"], { action: "createTeam", target: parsed.data });
+    if (!guard.ok) return guard;
 
     const file = formData.get('logo') as File;
     const removeBackground = formData.get('removeBackground') !== 'false';
@@ -63,7 +58,7 @@ export async function createTeamAction(formData: FormData) {
         name: parsed.data.name,
         logoFile: file,
         seasonId: parsed.data.seasonId,
-        userId: user.id,
+        userId: guard.value.userId,
         brickNumber: parsed.data.brickNumber,
         brickColor: parsed.data.brickColor,
         startingLvr: parsed.data.startingLvr,
@@ -95,6 +90,8 @@ export async function deleteTeamAction(input: unknown): Promise<Result<void>> {
     const parsed = TeamIdSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["super_admin"], { action: "deleteTeam", target: parsed.data });
+    if (!guard.ok) return guard;
     const result = await deleteTeam(supabase, parsed.data);
     if (result.ok) revalidatePublicData([CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.rawStats]);
     return result;
@@ -140,8 +137,8 @@ export async function updateTeamAction(formData: FormData) {
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 
     const supabase = await createServerSupabase();
-    const user = await requireAuth(supabase);
-    if (!user) return Err({message: "User not authenticated", code: "UNAUTHORIZED"});
+    const guard = await requireGroups(supabase, ["admin"], { action: "updateTeam", target: parsed.data });
+    if (!guard.ok) return guard;
 
     const file = formData.get('logo') as File | null;
     const removeBackground = formData.get('removeBackground') !== 'false';
@@ -150,7 +147,7 @@ export async function updateTeamAction(formData: FormData) {
         teamId: parsed.data.teamId,
         name: parsed.data.name,
         logoFile: file && file.size > 0 ? file : null,
-        userId: user.id,
+        userId: guard.value.userId,
         brickNumber: parsed.data.brickNumber,
         brickColor: parsed.data.brickColor,
         startingLvr: parsed.data.startingLvr,
@@ -164,18 +161,12 @@ export async function updateTeamAction(formData: FormData) {
 
 export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
     const supabase = await createServerSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return Err({ message: "Not authenticated", code: "UNAUTHORIZED" as const });
-
-    const roleResult = await getUserRole(supabase, user.id);
-    if (!roleResult.ok) return Err(roleResult.error);
-    const role = roleResult.value;
-    if (role !== 'staff' && role !== 'admin' && role !== 'super_admin') {
-        return Err({ message: "Insufficient permissions", code: "FORBIDDEN" as const });
-    }
+    const guard = await requireGroups(supabase, ["admin", "transaction"], { action: "uploadTeamLogo", target: { teamId } });
+    if (!guard.ok) return guard;
 
     const file = formData.get('logo') as File | null;
     if (!file || file.size === 0) return Err({ message: "No file provided", code: "VALIDATION_ERROR" as const });
+    const removeBackground = formData.get('removeBackground') !== 'false';
 
     const admin = getSupabaseAdmin() as unknown as DBClient;
 
@@ -198,7 +189,8 @@ export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
         file,
         contentType: 'image/webp',
         compress: true,
-        userId: user.id,
+        removeBackground,
+        userId: guard.value.userId,
     });
     if (!uploadResult.ok) {
         logger.error({ teamId, error: uploadResult.error }, "Logo upload failed");

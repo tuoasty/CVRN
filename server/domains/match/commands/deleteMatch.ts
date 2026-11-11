@@ -6,7 +6,8 @@ import {findMatchById, deleteMatch} from "@/server/db/matches.repo";
 
 export async function deleteMatchService(
     supabase: DBClient,
-    matchId: string
+    matchId: string,
+    options: { isSuperAdmin: boolean }
 ): Promise<Result<void>> {
     try {
         const matchLookup = await findMatchById(supabase, matchId);
@@ -27,6 +28,13 @@ export async function deleteMatchService(
             return Err({
                 message: "Playoff matches cannot be deleted",
                 code: "VALIDATION_ERROR"
+            });
+        }
+
+        if (match.status === "completed" && !options.isSuperAdmin) {
+            return Err({
+                message: "Only a super admin can delete a completed match.",
+                code: "FORBIDDEN"
             });
         }
 
