@@ -1,6 +1,5 @@
 export {signIn} from "./commands/signIn";
 export {signOut} from "./commands/signOut";
-export {setUserPassword} from "./commands/setUserPassword";
 export {processAuthCallback} from "./commands/processAuthCallback";
 export {getUserWithRole} from "./queries/getUserWithRole";
 export {hasRole} from "./queries/hasRole";
@@ -9,5 +8,5 @@ export {requireAdmin} from "./queries/requireAdmin";
 export {requireSuperAdmin} from "./queries/requireSuperAdmin";
 export {requireGroups} from "./queries/requireGroups";
 export {getCurrentGroups} from "./queries/getCurrentGroups";
-export type {AuthUser, AuthResponse, LoginInput, SetPasswordInput, AuthCallbackInput} from "./types";
-export {LoginSchema, SetPasswordSchema, AuthCallbackSchema} from "./types";
+export type {AuthUser, AuthResponse, LoginInput, AuthCallbackInput} from "./types";
+export {LoginSchema, AuthCallbackSchema} from "./types";

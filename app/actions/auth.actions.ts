@@ -5,9 +5,9 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {safeReturnPath} from "@/server/domains/auth/helpers/safeReturnPath";
 import {createError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {processAuthCallback, setUserPassword, signIn, signOut} from "@/server/domains/auth";
+import {processAuthCallback, signIn, signOut} from "@/server/domains/auth";
 import {createServerSupabase} from "@/server/supabase/server";
-import {LoginSchema, SetPasswordSchema, AuthCallbackSchema} from "@/server/domains/auth";
+import {LoginSchema, AuthCallbackSchema} from "@/server/domains/auth";
 
 export async function loginAction(email: string, password: string) {
     const parsed = LoginSchema.safeParse({email, password});
@@ -19,13 +19,6 @@ export async function loginAction(email: string, password: string) {
 export async function logoutAction() {
     const supabase = await createServerSupabase();
     return signOut(supabase);
-}
-
-export async function setPasswordAction(password: string) {
-    const parsed = SetPasswordSchema.safeParse({password});
-    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
-    const supabase = await createServerSupabase();
-    return setUserPassword(supabase, parsed.data.password);
 }
 
 export async function authCallbackAction(url: string) {

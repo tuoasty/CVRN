@@ -53,10 +53,16 @@ export async function updateSession(request: NextRequest) {
   const isHome = pathname === "/";
   const isLogin = pathname === "/auth/login";
   const isCallback = pathname === "/auth/callback"
-  const isSetPassword = pathname === "/auth/set-password";
 
   const isAdmin = pathname.startsWith("/admin");
   const isInvite = pathname === "/admin/invite";
+
+  const refuse = async () => {
+    await supabase.auth.signOut();
+    const refused = NextResponse.redirect(new URL("/auth/login?error=no_role", request.url));
+    supabaseResponse.cookies.getAll().forEach((cookie) => refused.cookies.set(cookie));
+    return refused;
+  };
 
   if (isHome || isCallback) {
     return supabaseResponse;
@@ -82,16 +88,6 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  if (isSetPassword) {
-    if (!user) {
-      return NextResponse.redirect(
-          new URL("/", request.url)
-      );
-    }
-
-    return supabaseResponse;
-  }
-
   if (isAdmin) {
     if (!user) {
       logger.debug({ pathname }, "Unauthenticated access attempt to admin route");
@@ -110,10 +106,7 @@ export async function updateSession(request: NextRequest) {
       const groups = await getCurrentGroups(db);
       if (!groups.ok || groups.value.length === 0) {
         logger.info({ user_id: user.id, pathname }, "Discord user has no groups, signing out");
-        await supabase.auth.signOut();
-        const refused = NextResponse.redirect(new URL("/auth/login?error=no_role", request.url));
-        supabaseResponse.cookies.getAll().forEach((cookie) => refused.cookies.set(cookie));
-        return refused;
+        return refuse();
       }
     }
 
@@ -121,10 +114,8 @@ export async function updateSession(request: NextRequest) {
     const roleData = roleResult.ok && roleResult.value ? { role: roleResult.value } : null;
 
     if (!roleData?.role) {
-      logger.warn({ user_id: user.id, pathname }, "User missing role");
-      return NextResponse.redirect(
-          new URL("/auth/set-password", request.url)
-      );
+      logger.warn({ user_id: user.id, pathname }, "User missing role, signing out");
+      return refuse();
     }
 
     if (roleData.role === "none") {

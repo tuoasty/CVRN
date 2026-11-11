@@ -11,12 +11,10 @@ export interface AuthResponse {
 
 export type {
     LoginInput,
-    SetPasswordInput,
     AuthCallbackInput,
 } from "./schemas";
 
 export {
     LoginSchema,
-    SetPasswordSchema,
     AuthCallbackSchema,
 } from "./schemas";
