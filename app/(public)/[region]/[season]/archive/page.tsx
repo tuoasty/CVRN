@@ -484,10 +484,10 @@ async function SeasonDetailContent({ slug, regionCode, seasonSlug }: { slug: str
 
     return (
         <>
-            <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">{season.name}</h1>
-                <p className="text-xs text-muted-foreground">
-                    {regionName} · {fmt(season.start_date)}{season.end_date ? ` – ${fmt(season.end_date)}` : ""}
+            <div>
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">{season.name}</h1>
+                <p className="mt-1 text-[13px] text-muted-foreground">
+                    {regionName} · {fmt(season.start_date)}{season.end_date ? ` to ${fmt(season.end_date)}` : ""}
                 </p>
             </div>
 

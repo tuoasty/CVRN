@@ -2,7 +2,7 @@
 
 import {useMemo} from "react";
 import Link from "next/link";
-import {ArrowLeft, Trophy} from "lucide-react";
+import {ArrowLeft} from "lucide-react";
 import {PublicPageHeader} from "@/app/components/public/PublicPageHeader";
 import LeaderboardFilterBar, {LEADERBOARD_TABS_ID, LeaderboardCount} from "@/app/features/leaderboard/LeaderboardFilterBar";
 import {viewPanelId, viewTabId} from "@/app/components/filters/ViewTabs";
@@ -74,7 +74,6 @@ export default function AllTimeLeaderboardPage({rows, statsVersion}: Props) {
     return (
         <div className="page-bleed py-6 space-y-6">
             <PublicPageHeader
-                icon={Trophy}
                 title="All-Time Leaderboard"
                 subtitle={subtitle}
                 actions={
@@ -86,7 +85,7 @@ export default function AllTimeLeaderboardPage({rows, statsVersion}: Props) {
                                     ? `/${lastContext.region}/${lastContext.season}/leaderboard`
                                     : "/select?next=leaderboard"
                             }
-                            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-sm border border-border text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            className="inline-flex h-9 items-center gap-1.5 rounded-[2px] border border-border px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                         >
                             <ArrowLeft className="h-4 w-4" aria-hidden />
                             Season board

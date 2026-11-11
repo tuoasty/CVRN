@@ -62,7 +62,7 @@ function Identity({player, activeSpec, activeTeams}: {
 
     return (
         <>
-            <h1 className="break-words text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="break-words text-3xl font-semibold leading-none tracking-[-0.025em] text-foreground sm:text-4xl">
                 {player.display_name || player.username}
             </h1>
             {meta.length > 0 && (

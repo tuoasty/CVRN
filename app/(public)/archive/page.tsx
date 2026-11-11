@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { DefaultTeamLogo } from "@/app/components/ui/DefaultTeamLogo";
-import { Globe } from "lucide-react";
+import { PublicPageHeader } from "@/app/components/public/PublicPageHeader";
 import { getCachedArchive, getCachedRegions } from "@/server/cache/publicReads";
 import { logger } from "@/server/utils/logger";
 import { cn } from "@/lib/utils";
@@ -104,15 +104,7 @@ export default async function GlobalArchivePage() {
 
     return (
         <div className="page-wide space-y-8 py-6">
-            <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-sm border border-primary/20 bg-primary/10">
-                    <Globe className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold uppercase tracking-wider text-foreground">League History</h1>
-                    <p className="mt-0.5 text-xs text-muted-foreground">Every champion the league has crowned, by region</p>
-                </div>
-            </div>
+            <PublicPageHeader title="League History" subtitle="Every champion the league has crowned, by region" />
 
             {byRegion.length === 0 ? (
                 <div className="flex min-h-64 items-center justify-center">

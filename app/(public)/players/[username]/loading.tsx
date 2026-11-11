@@ -30,7 +30,7 @@ export default function PlayerPageLoading() {
                 <Skeleton className="hidden h-20 w-20 shrink-0 self-start rounded-sm sm:block" />
                 <Skeleton className="h-[148px] w-[120px] shrink-0 rounded-sm sm:h-[200px] sm:w-[200px]" />
                 <div className="flex min-w-0 flex-1 flex-col gap-2 self-center pl-3 sm:pl-8">
-                    <Skeleton className="h-7 w-36 sm:w-48" />
+                    <Skeleton className="h-8 w-36 sm:h-9 sm:w-48" />
                     <Skeleton className="h-4 w-28" />
                     <Skeleton className="h-4 w-24" />
                 </div>

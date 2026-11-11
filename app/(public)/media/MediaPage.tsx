@@ -294,7 +294,6 @@ export default function MediaFeedPage({ posts: allPosts, articles: allArticles =
     return (
         <div className="page-wide py-6 space-y-6">
             <PublicPageHeader
-                icon={ImageIcon}
                 title="Media"
                 subtitle="GFX, highlights, and league content"
             />

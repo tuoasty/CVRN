@@ -1,18 +1,10 @@
+import {PublicPageHeaderSkeleton} from "@/app/components/public/PublicPageHeader";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { BookOpen } from "lucide-react";
 
 export default function ArchiveLoading() {
     return (
         <div className="page-wide space-y-6 py-6">
-            <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 border border-primary/20">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                </div>
-                <div className="space-y-1.5">
-                    <Skeleton className="h-6 w-24 rounded-sm" />
-                    <Skeleton className="h-3 w-44 rounded-sm" />
-                </div>
-            </div>
+            <PublicPageHeaderSkeleton titleWidth="w-48" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {[...Array(6)].map((_, i) => (
                     <div key={i} className="panel p-5 space-y-4">
