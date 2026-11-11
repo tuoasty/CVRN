@@ -3,13 +3,14 @@ import AdminNavbar from "@/app/components/admin/navigation/AdminNavbar";
 import { AdminStoreInitializer } from "@/app/admin/AdminStoreInitializier";
 import { AdminRoleProvider } from "@/app/admin/AdminRoleProvider";
 import { createServerSupabase } from "@/server/supabase/server";
+import { getUserRole } from "@/server/db/roles.repo";
 
 async function getCurrentUserRole(): Promise<string | null> {
     const supabase = await createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
-    const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).single();
-    return data?.role ?? null;
+    const role = await getUserRole(supabase, user.id);
+    return role.ok ? role.value : null;
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

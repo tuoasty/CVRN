@@ -4,13 +4,13 @@ import axiosRetry, {exponentialDelay} from "axios-retry";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {createError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
-import {GuildBooster} from "../types";
+import {GuildBooster} from "@/server/domains/booster/types";
 
-const log = logger.child({module: "booster/discord"});
+const log = logger.child({module: "discord"});
 
 const PAGE_SIZE = 1000;
 
-const discordApi = axios.create({
+export const discordApi = axios.create({
     baseURL: "https://discord.com/api/v10",
     timeout: 10000,
 });
@@ -37,7 +37,17 @@ interface DiscordMember {
 
 interface DiscordRole {
     id: string;
+    name?: string;
+    position?: number;
+    managed?: boolean;
     tags?: {premium_subscriber?: null};
+}
+
+export interface GuildRole {
+    id: string;
+    name: string;
+    position: number;
+    managed: boolean;
 }
 
 function authHeaders(token: string) {
@@ -107,4 +117,51 @@ export async function listGuildBoosters(): Promise<Result<GuildBooster[]>> {
 
     log.info({pages, boosters: boosters.length}, "Listed guild boosters");
     return Ok(boosters);
+}
+
+function credentials(): Result<{token: string; guildId: string}> {
+    const token = process.env.DISCORD_TOKEN;
+    const guildId = process.env.DISCORD_GUILD_ID;
+    if (!token || !guildId) {
+        return Err(createError("Missing DISCORD_TOKEN or DISCORD_GUILD_ID", "INTEGRATION_ERROR"));
+    }
+    return Ok({token, guildId});
+}
+
+export async function getGuildMember(discordUserId: string): Promise<Result<{roles: string[]} | null>> {
+    const creds = credentials();
+    if (!creds.ok) return creds;
+    const {token, guildId} = creds.value;
+
+    try {
+        const {data} = await discordApi.get<DiscordMember>(`/guilds/${guildId}/members/${discordUserId}`, {
+            headers: authHeaders(token),
+        });
+        return Ok({roles: data.roles});
+    } catch (error) {
+        const code = error instanceof AxiosError ? (error.response?.data as {code?: number} | undefined)?.code : undefined;
+        if (code === 10007 || code === 10013) {
+            return Ok(null);
+        }
+        log.error({error: describeError(error), discordUserId}, "Failed to fetch guild member");
+        return Err(createError(describeError(error), "INTEGRATION_ERROR"));
+    }
+}
+
+export async function listGuildRoles(): Promise<Result<GuildRole[]>> {
+    const creds = credentials();
+    if (!creds.ok) return creds;
+    const {token, guildId} = creds.value;
+
+    try {
+        const {data} = await discordApi.get<DiscordRole[]>(`/guilds/${guildId}/roles`, {headers: authHeaders(token)});
+        const roles = data
+            .filter(r => r.id !== guildId)
+            .map(r => ({id: r.id, name: r.name ?? r.id, position: r.position ?? 0, managed: r.managed ?? false}))
+            .sort((a, b) => b.position - a.position);
+        return Ok(roles);
+    } catch (error) {
+        log.error({error: describeError(error)}, "Failed to list guild roles");
+        return Err(createError(describeError(error), "INTEGRATION_ERROR"));
+    }
 }

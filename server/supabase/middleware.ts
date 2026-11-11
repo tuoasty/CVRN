@@ -3,6 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "@/lib/utils";
 import {Database} from "@/shared/types/db.override";
 import { logger } from "@/server/utils/logger";
+import { getUserRole } from "@/server/db/roles.repo";
+import { findUserAccount } from "@/server/db/userAccounts.repo";
+import { refreshMemberRoles } from "@/server/domains/auth/commands/refreshMemberRoles";
+import { getCurrentGroups } from "@/server/domains/auth/queries/getCurrentGroups";
+import { needsRoleRefresh } from "@/server/domains/auth/helpers/needsRoleRefresh";
+import { safeReturnPath } from "@/server/domains/auth/helpers/safeReturnPath";
+import type { DBClient } from "@/shared/types/db";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -58,20 +65,15 @@ export async function updateSession(request: NextRequest) {
   if (isLogin) {
     if (user) {
       const url = new URL("/admin/dashboard", request.url);
-      const returnUrl = request.nextUrl.searchParams.get("returnUrl");
+      const returnPath = safeReturnPath(request.nextUrl.searchParams.get("returnUrl"));
 
-      if (returnUrl) {
-        const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", user.id)
-            .single();
-
-        if (!roleData?.role) {
+      if (returnPath) {
+        const role = await getUserRole(supabase as unknown as DBClient, user.id);
+        if (!role.ok || !role.value) {
           return NextResponse.redirect(url);
         }
 
-        return NextResponse.redirect(new URL(returnUrl, request.url));
+        return NextResponse.redirect(new URL(returnPath, request.url));
       }
 
       return NextResponse.redirect(url);
@@ -93,16 +95,30 @@ export async function updateSession(request: NextRequest) {
   if (isAdmin) {
     if (!user) {
       logger.debug({ pathname }, "Unauthenticated access attempt to admin route");
-      return NextResponse.redirect(
-          new URL("/", request.url)
-      );
+      const loginUrl = new URL("/auth/login", request.url);
+      loginUrl.searchParams.set("returnUrl", pathname + request.nextUrl.search);
+      return NextResponse.redirect(loginUrl);
     }
 
-    const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
+    const db = supabase as unknown as DBClient;
+    const account = await findUserAccount(db, user.id);
+    if (account.ok && account.value) {
+      if (needsRoleRefresh(account.value.roles_valid_until, new Date())) {
+        await refreshMemberRoles(user.id);
+      }
+
+      const groups = await getCurrentGroups(db);
+      if (!groups.ok || groups.value.length === 0) {
+        logger.info({ user_id: user.id, pathname }, "Discord user has no groups, signing out");
+        await supabase.auth.signOut();
+        const refused = NextResponse.redirect(new URL("/auth/login?error=no_role", request.url));
+        supabaseResponse.cookies.getAll().forEach((cookie) => refused.cookies.set(cookie));
+        return refused;
+      }
+    }
+
+    const roleResult = await getUserRole(db, user.id);
+    const roleData = roleResult.ok && roleResult.value ? { role: roleResult.value } : null;
 
     if (!roleData?.role) {
       logger.warn({ user_id: user.id, pathname }, "User missing role");

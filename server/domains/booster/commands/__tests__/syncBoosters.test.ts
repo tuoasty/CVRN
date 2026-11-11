@@ -8,7 +8,7 @@ vi.mock('@/server/db/boosters.repo', () => ({
     deleteBoostersByDiscordIds: vi.fn(),
     upsertBoosters: vi.fn(),
 }))
-vi.mock('../../helpers/discordClient', () => ({ listGuildBoosters: vi.fn() }))
+vi.mock('@/server/discord/client', () => ({ listGuildBoosters: vi.fn() }))
 vi.mock('../../helpers/bloxlinkClient', () => ({ resolveRobloxIdFromDiscord: vi.fn() }))
 vi.mock('@/server/utils/logger', () => {
     const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
@@ -16,7 +16,7 @@ vi.mock('@/server/utils/logger', () => {
 })
 
 import { findAllBoosters, deleteBoostersByDiscordIds, upsertBoosters } from '@/server/db/boosters.repo'
-import { listGuildBoosters } from '../../helpers/discordClient'
+import { listGuildBoosters } from '@/server/discord/client'
 import { resolveRobloxIdFromDiscord } from '../../helpers/bloxlinkClient'
 import { syncBoosters } from '../syncBoosters'
 

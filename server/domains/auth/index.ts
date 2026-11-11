@@ -7,5 +7,7 @@ export {hasRole} from "./queries/hasRole";
 export {requireRoles} from "./queries/requireRoles";
 export {requireAdmin} from "./queries/requireAdmin";
 export {requireSuperAdmin} from "./queries/requireSuperAdmin";
+export {requireGroups} from "./queries/requireGroups";
+export {getCurrentGroups} from "./queries/getCurrentGroups";
 export type {AuthUser, AuthResponse, LoginInput, SetPasswordInput, AuthCallbackInput} from "./types";
 export {LoginSchema, SetPasswordSchema, AuthCallbackSchema} from "./types";

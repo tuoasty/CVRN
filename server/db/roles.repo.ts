@@ -2,6 +2,7 @@ import { DBClient } from "@/shared/types/db";
 import { Err, Ok, Result } from "@/shared/types/result";
 import { serializeError } from "@/server/utils/serializeableError";
 import { logger } from "@/server/utils/logger";
+import { getCurrentGroups } from "@/server/domains/auth/queries/getCurrentGroups";
 
 export type UserRole = 'admin' | 'super_admin' | 'stat_tracker' | 'staff' | 'spec_manager' | 'information_manager' | 'none' | null;
 
@@ -25,8 +26,7 @@ export async function getUserRole(supabase: DBClient, userId: string): Promise<R
 
         if (error) {
             if (error.code === 'PGRST116') {
-                roleCache.set(userId, { role: null, cachedAt: now });
-                return Ok(null);
+                return discordBridgeRole(supabase);
             }
             logger.error({ userId, error }, "Failed to fetch user role");
             return Err(serializeError(error, "DB_ERROR"));
@@ -40,6 +40,14 @@ export async function getUserRole(supabase: DBClient, userId: string): Promise<R
         logger.error({ userId, error }, "Unexpected error fetching user role");
         return Err(serializeError(error));
     }
+}
+
+async function discordBridgeRole(supabase: DBClient): Promise<Result<UserRole>> {
+    const groups = await getCurrentGroups(supabase);
+    if (!groups.ok) return groups;
+    if (groups.value.includes('super_admin')) return Ok('super_admin');
+    if (groups.value.includes('admin')) return Ok('admin');
+    return Ok(null);
 }
 
 export function clearUserRoleCache(userId?: string): void {
