@@ -41,7 +41,7 @@ export async function saveOfficialAction(input: unknown) {
     }).safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "saveOfficial", target: parsed.data });
     if (!guard.ok) return guard;
     return savePlayer(supabase, parsed.data);
 }
@@ -50,7 +50,7 @@ export async function assignOfficialToMatchAction(input: unknown) {
     const parsed = AssignOfficialSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "assignOfficialToMatch", target: parsed.data });
     if (!guard.ok) return guard;
     return assignOfficialToMatch(supabase, parsed.data);
 }
@@ -59,7 +59,7 @@ export async function assignMultipleOfficialsToMatchAction(input: unknown) {
     const parsed = AssignMultipleOfficialsSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "assignMultipleOfficialsToMatch", target: parsed.data });
     if (!guard.ok) return guard;
     return assignMultipleOfficialsToMatch(supabase, parsed.data);
 }
@@ -88,7 +88,7 @@ export async function removeOfficialFromMatchAction(matchId: string, officialId:
     const typeParsed = OfficialTypeSchema.safeParse(officialType);
     if (!typeParsed.success) return Err({message: "Invalid official type", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "removeOfficialFromMatch", target: { matchId: matchParsed.data, officialId: officialParsed.data, officialType: typeParsed.data } });
     if (!guard.ok) return guard;
     return removeOfficialFromMatch(supabase, matchParsed.data, officialParsed.data, typeParsed.data);
 }
@@ -99,7 +99,7 @@ export async function removeAllOfficialsOfTypeAction(matchId: string, officialTy
     const typeParsed = OfficialTypeSchema.safeParse(officialType);
     if (!typeParsed.success) return Err({message: "Invalid official type", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['super_admin']);
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "removeAllOfficialsOfType", target: { matchId: matchParsed.data, officialType: typeParsed.data } });
     if (!guard.ok) return guard;
     return removeAllOfficialsOfType(supabase, matchParsed.data, typeParsed.data);
 }

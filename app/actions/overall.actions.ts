@@ -44,7 +44,7 @@ export async function saveOverallScalingsAction(input: unknown): Promise<Result<
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "saveOverallScalings", target: parsed.data })
     if (!guard.ok) return guard
 
     return saveOverallScalings(supabase, parsed.data)
@@ -55,7 +55,7 @@ export async function copyOverallScalingsAction(input: unknown): Promise<Result<
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "copyOverallScalings", target: parsed.data })
     if (!guard.ok) return guard
 
     return copyOverallScalings(supabase, parsed.data)
@@ -66,7 +66,7 @@ export async function setOverallOverrideAction(input: unknown): Promise<Result<O
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "setOverallOverride", target: parsed.data })
     if (!guard.ok) return guard
 
     return setOverallOverride(supabase, parsed.data)
@@ -77,7 +77,7 @@ export async function clearOverallOverrideAction(input: unknown): Promise<Result
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'player_cards'])
+    const guard = await requireGroups(supabase, ['admin', 'player_cards'], { action: "clearOverallOverride", target: parsed.data })
     if (!guard.ok) return guard
 
     return clearOverallOverride(supabase, parsed.data)

@@ -60,7 +60,9 @@ const PUBLIC_ACTIONS = new Set([
     "getStandingsAction",
 ]);
 
-const BANNED = ["requireAdmin(", "requireRoles(", "requireSuperAdmin(", "getUserRole(", "function requireAuth"];
+const READ_NAME = /^(get|search|preview|download|export)/;
+
+const BANNED =["requireAdmin(", "requireRoles(", "requireSuperAdmin(", "getUserRole(", "function requireAuth"];
 
 type ActionSource = { file: string; name: string; body: string };
 
@@ -105,6 +107,25 @@ describe("server action guards", () => {
     it("lists only actions that exist as public", () => {
         const names = new Set(actions.map(action => action.name));
         expect([...PUBLIC_ACTIONS].filter(name => !names.has(name))).toEqual([]);
+    });
+
+    it("every guarded mutation passes its own name as the audit action", () => {
+        const missing = actions
+            .filter(action => action.body.includes("requireGroups(") && !READ_NAME.test(action.name))
+            .filter(action => {
+                const name = action.name.replace(/Action$/, "");
+                return !action.body.includes(`action: "${name}"`) && !action.body.includes(`action: '${name}'`);
+            })
+            .map(action => `${action.file}: ${action.name}`);
+        expect(missing).toEqual([]);
+    });
+
+    it("reads pass no audit action", () => {
+        const audited = actions
+            .filter(action => action.body.includes("requireGroups(") && READ_NAME.test(action.name))
+            .filter(action => /requireGroups\([^)]*\{\s*action:/.test(action.body))
+            .map(action => `${action.file}: ${action.name}`);
+        expect(audited).toEqual([]);
     });
 
     it("uses no legacy role guard", () => {

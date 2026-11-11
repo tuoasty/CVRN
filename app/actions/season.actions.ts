@@ -44,7 +44,7 @@ export async function createSeasonAction(data: unknown) {
     const parsed = CreateSeasonSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin']);
+    const guard = await requireGroups(supabase, ['admin'], { action: "createSeason", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await createSeason(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -55,7 +55,7 @@ export async function updateSeasonAction(data: unknown) {
     const parsed = UpdateSeasonSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin']);
+    const guard = await requireGroups(supabase, ['admin'], { action: "updateSeason", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await updateSeason(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -66,7 +66,7 @@ export async function deleteSeasonAction(data: unknown) {
     const parsed = SeasonIdSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['super_admin']);
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "deleteSeason", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await deleteSeason(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -109,7 +109,7 @@ export async function addAwardNameAction(input: unknown) {
     const parsed = AddAwardNameSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "addAwardName", target: parsed.data });
     if (!guard.ok) return guard;
     return addAwardName(supabase, parsed.data);
 }
@@ -123,7 +123,7 @@ export async function deriveAndSaveSeasonPodiumAction(input: unknown) {
     const parsed = DeriveSeasonPodiumSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "deriveAndSaveSeasonPodium", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await deriveAndSaveSeasonPodium(supabase, parsed.data.seasonId);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -134,7 +134,7 @@ export async function upsertSeasonPodiumSlotAction(input: unknown) {
     const parsed = UpsertSeasonPodiumSlotSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "upsertSeasonPodiumSlot", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await upsertSeasonPodiumSlot(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -145,7 +145,7 @@ export async function deleteSeasonPodiumSlotAction(input: unknown) {
     const parsed = DeleteSeasonPodiumSlotSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "deleteSeasonPodiumSlot", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await deleteSeasonPodiumSlot(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -156,7 +156,7 @@ export async function upsertSeasonAwardAction(input: unknown) {
     const parsed = UpsertSeasonAwardSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "upsertSeasonAward", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await upsertSeasonAward(supabase, parsed.data, guard.value.userId);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -167,7 +167,7 @@ export async function deleteSeasonAwardAction(input: unknown) {
     const parsed = DeleteSeasonAwardSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "deleteSeasonAward", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await deleteSeasonAward(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -178,7 +178,7 @@ export async function batchUpsertSeasonAwardsAction(input: unknown) {
     const parsed = BatchUpsertSeasonAwardsSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "batchUpsertSeasonAwards", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await batchUpsertSeasonAwards(supabase, parsed.data, guard.value.userId);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -189,7 +189,7 @@ export async function updateSeasonAwardAction(input: unknown) {
     const parsed = UpdateSeasonAwardSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "updateSeasonAward", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await updateSeasonAward(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -200,7 +200,7 @@ export async function reorderSeasonAwardsAction(input: unknown) {
     const parsed = ReorderSeasonAwardsSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "reorderSeasonAwards", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await reorderSeasonAwards(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -218,7 +218,7 @@ export async function upsertSeasonAllStarTeamNameAction(input: unknown) {
     const parsed = UpsertSeasonAllStarTeamNameSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "upsertSeasonAllStarTeamName", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await upsertSeasonAllStarTeamName(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -229,7 +229,7 @@ export async function setAllStarCaptainAction(input: unknown) {
     const parsed = SetAllStarCaptainSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "setAllStarCaptain", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await setAllStarCaptain(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/seasons');
@@ -240,7 +240,7 @@ export async function refreshAwardAvatarAction(input: unknown) {
     const parsed = z.object({awardId: z.uuid()}).safeParse(input);
     if (!parsed.success) return Err({message: "Invalid award ID", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "refreshAwardAvatar", target: parsed.data });
     if (!guard.ok) return guard;
     return refreshAwardAvatar(supabase, parsed.data.awardId);
 }
@@ -249,7 +249,7 @@ export async function fetchChampionRosterAwardsAction(input: unknown) {
     const parsed = z.object({seasonId: z.uuid()}).safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'awards']);
+    const guard = await requireGroups(supabase, ['admin', 'awards'], { action: "fetchChampionRosterAwards", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await fetchChampionRosterAwards(supabase, parsed.data.seasonId, guard.value.userId);
     if (result.ok) revalidatePath('/admin/seasons');

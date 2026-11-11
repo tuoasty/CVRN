@@ -91,7 +91,7 @@ export async function saveSpecIdentityAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "saveSpecIdentity", target: parsed.data });
     if (!guard.ok) return guard;
 
     const result = await saveSpecIdentity(supabase, parsed.data);
@@ -112,7 +112,7 @@ export async function setSpecVaultedAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "setSpecVaulted", target: parsed.data });
     if (!guard.ok) return guard;
 
     const result = await setSpecVaulted(supabase, parsed.data);
@@ -135,7 +135,7 @@ export async function saveSpecFactsAction(data: unknown) {
 
     const supabase = await createServerSupabase();
 
-    const guard = await requireGroups(supabase, ['admin', 'information']);
+    const guard = await requireGroups(supabase, ['admin', 'information'], { action: "saveSpecFacts", target: parsed.data });
     if (!guard.ok) return guard;
 
     const result = await saveSpecFacts(supabase, parsed.data);
@@ -154,7 +154,7 @@ export async function uploadSpecPhotoAction(specId: string, formData: FormData) 
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'information']);
+    const guard = await requireGroups(supabase, ['admin', 'information'], { action: "uploadSpecPhoto", target: { specId } });
     if (!guard.ok) return guard;
 
     const file = formData.get("photo");
@@ -177,7 +177,7 @@ export async function removeSpecPhotoAction(specId: string) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'information']);
+    const guard = await requireGroups(supabase, ['admin', 'information'], { action: "removeSpecPhoto", target: { specId } });
     if (!guard.ok) return guard;
 
     const admin = getSupabaseAdmin() as unknown as DBClient;
@@ -200,7 +200,7 @@ export async function saveRegionRequirementsAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "saveRegionRequirements", target: parsed.data });
     if (!guard.ok) return guard;
 
     const result = await saveRegionRequirements(supabase, parsed.data);
@@ -234,7 +234,7 @@ export async function importSpecRequirementsAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "importSpecRequirements", target: parsed.data });
     if (!guard.ok) return guard;
 
     const result = await importSpecRequirements(supabase, {
@@ -252,7 +252,7 @@ export async function importSpecRequirementsAction(data: unknown) {
 
 export async function deleteSpecAction(id: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['super_admin']);
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "deleteSpec", target: { id } });
     if (!guard.ok) return guard;
 
     const result = await removeSpec(supabase, id);
@@ -267,7 +267,7 @@ export async function generateSpecSnapshotAction(regionId: string) {
     if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "generateSpecSnapshot", target: { regionId } });
     if (!guard.ok) return guard;
 
     const result = await generateSpecSnapshot(supabase, regionId);
@@ -282,7 +282,7 @@ export async function deleteSpecSnapshotAction(regionId: string) {
     if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "deleteSpecSnapshot", target: { regionId } });
     if (!guard.ok) return guard;
 
     const result = await deleteSpecSnapshot(supabase, regionId);
@@ -311,7 +311,7 @@ export async function savePlacementBonusAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "savePlacementBonus", target: parsed.data });
     if (!guard.ok) return guard;
 
     return savePlacementBonus(supabase, parsed.data);
@@ -319,7 +319,7 @@ export async function savePlacementBonusAction(data: unknown) {
 
 export async function resetPlacementBonusAction(regionId: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "resetPlacementBonus", target: { regionId } });
     if (!guard.ok) return guard;
 
     return resetPlacementBonus(supabase, regionId);
@@ -344,7 +344,7 @@ export async function saveHeightRangesAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "saveHeightRanges", target: parsed.data });
     if (!guard.ok) return guard;
 
     const result = await saveHeightRanges(supabase, parsed.data);
@@ -373,7 +373,7 @@ export async function awardSpecWinnerAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "awardSpecWinner", target: parsed.data });
     if (!guard.ok) return guard;
 
     const result = await awardSpecWinner(supabase, parsed.data);
@@ -394,7 +394,7 @@ export async function deleteSpecWinnerAction(data: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs']);
+    const guard = await requireGroups(supabase, ['admin', 'specs'], { action: "deleteSpecWinner", target: parsed.data });
     if (!guard.ok) return guard;
 
     const result = await deleteSpecWinner(supabase, parsed.data.id);

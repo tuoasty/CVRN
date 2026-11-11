@@ -7,6 +7,7 @@ import {deleteUserAccount, findUserAccount, upsertUserAccount} from "@/server/db
 import {getGuildMember} from "@/server/discord/client";
 import {getSupabaseAdmin} from "@/server/supabase/admin";
 import {AccessGroup} from "@/shared/types/accessGroup";
+import {AuditSnapshot, recordAudit} from "@/server/domains/audit";
 import {nextRoleValidity} from "../helpers/nextRoleValidity";
 import {toMemberLookup} from "../helpers/toMemberLookup";
 import {getCurrentGroups} from "../queries/getCurrentGroups";
@@ -25,6 +26,11 @@ type DiscordMetadata = {
 
 function fail(reason: SignInFailureReason, message: string): Result<never, SignInError> {
     return {ok: false, error: {...createError(message, "UNAUTHORIZED", 401), reason}};
+}
+
+function refuse(reason: SignInFailureReason, message: string, userId: string | null, snapshot: AuditSnapshot): Result<never, SignInError> {
+    recordAudit({kind: "auth", userId, groups: [], action: "signIn", outcome: "denied", target: {reason}, snapshot});
+    return fail(reason, message);
 }
 
 export async function completeDiscordSignIn(
@@ -46,11 +52,19 @@ export async function completeDiscordSignIn(
         return fail("failed", "Not a Discord account");
     }
 
+    const displayName = meta.custom_claims?.global_name ?? meta.full_name ?? null;
+    const snapshot: AuditSnapshot = {
+        discordUserId,
+        displayName,
+        username: meta.name ?? null,
+        avatarUrl: meta.avatar_url ?? null,
+    };
+
     const admin = getSupabaseAdmin() as unknown as DBClient;
     const existing = await findUserAccount(admin, user.id);
     if (!existing.ok) {
         await supabase.auth.signOut();
-        return fail("failed", "Account lookup failed");
+        return refuse("failed", "Account lookup failed", user.id, snapshot);
     }
     const prior = existing.value;
 
@@ -64,20 +78,23 @@ export async function completeDiscordSignIn(
     const saved = await upsertUserAccount(admin, {
         user_id: user.id,
         discord_user_id: discordUserId,
-        discord_username: meta.name ?? null,
-        discord_display_name: meta.custom_claims?.global_name ?? meta.full_name ?? null,
-        discord_avatar_url: meta.avatar_url ?? null,
+        discord_username: snapshot.username,
+        discord_display_name: displayName,
+        discord_avatar_url: snapshot.avatarUrl,
         role_ids: roles.roleIds,
         roles_verified_at: roles.rolesVerifiedAt,
         roles_valid_until: roles.rolesValidUntil,
     });
     if (!saved.ok) {
         await supabase.auth.signOut();
-        return fail("failed", "Account save failed");
+        return refuse("failed", "Account save failed", user.id, snapshot);
     }
 
     const groups = await getCurrentGroups(supabase);
-    if (groups.ok && groups.value.length > 0) return {ok: true, value: {groups: groups.value}};
+    if (groups.ok && groups.value.length > 0) {
+        recordAudit({kind: "auth", userId: user.id, groups: groups.value, action: "signIn", outcome: "allowed", snapshot});
+        return {ok: true, value: {groups: groups.value}};
+    }
 
     await supabase.auth.signOut();
     if (!prior) {
@@ -86,9 +103,10 @@ export async function completeDiscordSignIn(
         if (deleteError) logger.error({error: deleteError, userId: user.id}, "Failed to delete refused Discord user");
     }
 
-    if (!groups.ok) return fail("failed", "Group lookup failed");
+    const auditUserId = prior ? user.id : null;
+    if (!groups.ok) return refuse("failed", "Group lookup failed", auditUserId, snapshot);
     logger.info({discordUserId, lookup: lookup.kind}, "Discord sign-in refused");
     return lookup.kind === "error"
-        ? fail("discord_unavailable", "Discord unavailable")
-        : fail("no_role", "No staff role");
+        ? refuse("discord_unavailable", "Discord unavailable", auditUserId, snapshot)
+        : refuse("no_role", "No staff role", auditUserId, snapshot);
 }

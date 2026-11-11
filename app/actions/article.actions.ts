@@ -67,7 +67,7 @@ export async function createArticleAction(formData: FormData): Promise<Result<Ar
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'articles'])
+    const guard = await requireGroups(supabase, ['admin', 'articles'], { action: "createArticle", target: parsed.data })
     if (!guard.ok) return guard
 
     const images = parseArticleImages(formData)
@@ -101,7 +101,7 @@ export async function updateArticleAction(formData: FormData): Promise<Result<Ar
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'articles'])
+    const guard = await requireGroups(supabase, ['admin', 'articles'], { action: "updateArticle", target: parsed.data })
     if (!guard.ok) return guard
 
     const images = parseArticleImages(formData)
@@ -128,7 +128,7 @@ export async function deleteArticleAction(input: unknown): Promise<Result<void>>
     if (!parsed.success) return Err({ message: 'Invalid article ID', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['super_admin'])
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "deleteArticle", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await deleteArticle(supabase, { articleId: parsed.data.articleId })
@@ -141,7 +141,7 @@ export async function setArticlePublishedAction(input: unknown): Promise<Result<
     if (!parsed.success) return Err({ message: 'Invalid input', code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'articles'])
+    const guard = await requireGroups(supabase, ['admin', 'articles'], { action: "setArticlePublished", target: parsed.data })
     if (!guard.ok) return guard
     if (parsed.data.published && !canPublish(guard.value.groups)) {
         return Err(createError('Only an admin can publish an article.', 'FORBIDDEN', 403))

@@ -21,7 +21,7 @@ export async function purgeCacheTagAction(input: unknown) {
     }
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['super_admin']);
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "purgeCacheTag", target: parsed.data });
     if (!guard.ok) return guard;
 
     if (parsed.data.tag === CACHE_TAGS.stats) {
@@ -36,7 +36,7 @@ export async function purgeCacheTagAction(input: unknown) {
 
 export async function purgeAllCacheAction() {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['super_admin']);
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "purgeAllCache" });
     if (!guard.ok) return guard;
 
     const refreshed = await refreshRecords(supabase);

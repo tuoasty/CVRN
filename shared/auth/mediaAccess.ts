@@ -13,6 +13,12 @@ export function allowedMediaTypes(groups: readonly AccessGroup[]): MediaPostType
     return ALL_MEDIA_TYPES.filter(type => groups.some(group => GROUP_MEDIA_TYPES[group]?.includes(type)));
 }
 
+export function mediaWritersFor(type: string): AccessGroup[] {
+    const groups = (Object.keys(GROUP_MEDIA_TYPES) as AccessGroup[])
+        .filter(group => (GROUP_MEDIA_TYPES[group] as readonly string[]).includes(type));
+    return ["admin", ...groups];
+}
+
 export function canWriteMediaType(groups: readonly AccessGroup[], type: string): boolean {
     return (allowedMediaTypes(groups) as string[]).includes(type);
 }

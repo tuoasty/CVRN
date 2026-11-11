@@ -45,6 +45,7 @@ const GROUPS: AdminNavGroup[] = [
         pages: [
             { href: "/admin/sync", label: "Sync" },
             { href: "/admin/sync/history", label: "Sync History" },
+            { href: "/admin/audit", label: "Audit log" },
             { href: "/admin/cache", label: "Cache" },
             { href: "/admin/staff", label: "Staff" },
         ],

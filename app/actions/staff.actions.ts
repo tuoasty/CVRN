@@ -23,7 +23,7 @@ export async function saveRoleMappingAction(input: unknown): Promise<Result<true
     const parsed = SaveRoleMappingSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["super_admin"]);
+    const guard = await requireGroups(supabase, ["super_admin"], { action: "saveRoleMapping", target: parsed.data });
     if (!guard.ok) return guard;
     return saveRoleMapping(supabase, parsed.data, guard.value.userId);
 }
@@ -32,7 +32,7 @@ export async function setUserBlocksAction(input: unknown): Promise<Result<true>>
     const parsed = SetUserBlocksSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["super_admin"]);
+    const guard = await requireGroups(supabase, ["super_admin"], { action: "setUserBlocks", target: parsed.data });
     if (!guard.ok) return guard;
     return setUserBlocks(supabase, parsed.data, guard.value.userId);
 }

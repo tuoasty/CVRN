@@ -48,7 +48,7 @@ export async function createTeamAction(formData: FormData) {
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "createTeam", target: parsed.data });
     if (!guard.ok) return guard;
 
     const file = formData.get('logo') as File;
@@ -90,7 +90,7 @@ export async function deleteTeamAction(input: unknown): Promise<Result<void>> {
     const parsed = TeamIdSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["super_admin"]);
+    const guard = await requireGroups(supabase, ["super_admin"], { action: "deleteTeam", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await deleteTeam(supabase, parsed.data);
     if (result.ok) revalidatePublicData([CACHE_TAGS.teams, CACHE_TAGS.players, CACHE_TAGS.rawStats]);
@@ -137,7 +137,7 @@ export async function updateTeamAction(formData: FormData) {
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "updateTeam", target: parsed.data });
     if (!guard.ok) return guard;
 
     const file = formData.get('logo') as File | null;
@@ -161,7 +161,7 @@ export async function updateTeamAction(formData: FormData) {
 
 export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin", "transaction"]);
+    const guard = await requireGroups(supabase, ["admin", "transaction"], { action: "uploadTeamLogo", target: { teamId } });
     if (!guard.ok) return guard;
 
     const file = formData.get('logo') as File | null;

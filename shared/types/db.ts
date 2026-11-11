@@ -168,5 +168,11 @@ export type DiscordRoleGroupRow =
 export type UserGroupBlockRow =
     Database["public"]["Tables"]["user_group_blocks"]["Row"];
 
+export type AuditLogRow =
+    Database["public"]["Tables"]["audit_log"]["Row"];
+
+export type AuditLogInsert =
+    Database["public"]["Tables"]["audit_log"]["Insert"];
+
 export type GameAbilitySettingRow =
     Database["public"]["Tables"]["game_ability_settings"]["Row"];

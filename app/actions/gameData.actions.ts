@@ -42,7 +42,7 @@ export async function publishGameDataImportAction(input: PublishGameDataInput): 
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin'])
+    const guard = await requireGroups(supabase, ['admin'], { action: "publishGameDataImport", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await publishGameDataImport(supabase, { text: parsed.data.text, specLinks: parsed.data.specLinks, userId: guard.value.userId })
@@ -59,7 +59,7 @@ export async function saveGameTermAction(input: SaveGameTermInput): Promise<Resu
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'information'])
+    const guard = await requireGroups(supabase, ['admin', 'information'], { action: "saveGameTerm", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await saveGameTerm(supabase, { input: parsed.data, userId: guard.value.userId })
@@ -72,7 +72,7 @@ export async function setGameTermVerifiedAction(input: SetGameTermVerifiedInput)
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'information'])
+    const guard = await requireGroups(supabase, ['admin', 'information'], { action: "setGameTermVerified", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await setGameTermVerified(supabase, { input: parsed.data, userId: guard.value.userId })
@@ -85,7 +85,7 @@ export async function setAbilityDescriptionSourceAction(input: SetAbilityDescrip
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'information'])
+    const guard = await requireGroups(supabase, ['admin', 'information'], { action: "setAbilityDescriptionSource", target: parsed.data })
     if (!guard.ok) return guard
 
     const result = await setAbilityDescriptionSource(supabase, { input: parsed.data, userId: guard.value.userId })

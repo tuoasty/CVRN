@@ -90,13 +90,35 @@ describe("media actions", () => {
         expect(mocks.assignMediaToMatch).not.toHaveBeenCalled();
     });
 
+    it("guards an edit with the stored post type's writers and audits it", async () => {
+        asGroups("graphics");
+        mocks.getMediaPostById.mockResolvedValue(Ok({id: POST_ID, type: "video"}));
+
+        await updateMediaPostAction({postId: POST_ID, title: "x"});
+
+        expect(mocks.requireGroups).toHaveBeenCalledWith(expect.anything(), ["admin", "media"], {
+            action: "updateMediaPost",
+            target: expect.objectContaining({postId: POST_ID}),
+        });
+    });
+
+    it("turns a guard FORBIDDEN on a typed post into the type message", async () => {
+        mocks.requireGroups.mockResolvedValue(Err({message: "Forbidden", code: "FORBIDDEN"}));
+
+        const result = await createMediaPostAction(form({type: "clip", title: "x", videoUrl: "https://youtu.be/abc"}));
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.error.message).toBe("You cannot manage this type of post.");
+        expect(mocks.requireGroups).toHaveBeenCalledWith(expect.anything(), ["admin"], expect.objectContaining({action: "createMediaPost"}));
+    });
+
     it("stops at the group guard", async () => {
         mocks.requireGroups.mockResolvedValue(Err({message: "Forbidden", code: "FORBIDDEN"}));
 
         const result = await deleteMediaPostAction({postId: POST_ID});
 
         expect(result.ok).toBe(false);
-        expect(mocks.requireGroups).toHaveBeenCalledWith(expect.anything(), ["admin"]);
+        expect(mocks.requireGroups).toHaveBeenCalledWith(expect.anything(), ["admin"], {action: "deleteMediaPost", target: {postId: POST_ID}});
         expect(mocks.deleteMediaPost).not.toHaveBeenCalled();
     });
 });

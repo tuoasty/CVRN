@@ -94,7 +94,7 @@ export async function saveSheetConfigAction(data: unknown) {
     const parsed = SaveSheetConfigSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR" as const});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "saveSheetConfig", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await insertSheetConfig(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/sync');
@@ -105,7 +105,7 @@ export async function updateSheetConfigAction(data: unknown) {
     const parsed = UpdateSheetConfigSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR" as const});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "updateSheetConfig", target: parsed.data });
     if (!guard.ok) return guard;
     const {id, ...rest} = parsed.data;
     const result = await updateSheetConfig(supabase, id, rest);
@@ -115,7 +115,7 @@ export async function updateSheetConfigAction(data: unknown) {
 
 export async function deleteSheetConfigAction(id: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['super_admin']);
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "deleteSheetConfig", target: { id } });
     if (!guard.ok) return guard;
     const result = await deleteSheetConfig(supabase, id);
     if (result.ok) revalidatePath('/admin/sync');
@@ -135,7 +135,7 @@ export async function resetConfigAction(configId: string, options: {
     clearLogs: boolean;
 }) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['super_admin']);
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "resetConfig", target: { configId, ...options } });
     if (!guard.ok) return guard;
 
     const configResult = await findSheetConfigById(supabase, configId);
@@ -182,7 +182,7 @@ export async function resetConfigAction(configId: string, options: {
 
 export async function runSyncAction(configId: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "runSync", target: { configId } });
     if (!guard.ok) return guard;
     const result = await syncSheet(supabase, configId, 'manual');
     if (result.ok) {
@@ -208,7 +208,7 @@ export async function getLastSyncTimesAction(configIds: string[]): Promise<{ok: 
 
 export async function toggleCronEnabledAction(configId: string, enabled: boolean) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "toggleCronEnabled", target: { configId, enabled } });
     if (!guard.ok) return guard;
     const result = await updateCronEnabled(supabase, configId, enabled);
     if (result.ok) revalidatePath('/admin/sync');
@@ -224,7 +224,7 @@ export async function revertSyncsAction(configId: string, targetSyncId: string) 
     const parsed = RevertSyncsSchema.safeParse({configId, targetSyncId});
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR" as const});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "revertSyncs", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await revertSyncs(supabase, parsed.data);
     if (result.ok) {

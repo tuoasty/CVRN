@@ -45,7 +45,7 @@ export async function createMatchesAction(input: unknown) {
     const parsed = CreateMatchesSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "createMatches", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await createMatches(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
@@ -75,7 +75,7 @@ export async function updateMatchScheduleAction(input: unknown) {
     const parsed = UpdateMatchScheduleSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "updateMatchSchedule", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await updateMatchScheduleService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
@@ -86,7 +86,7 @@ export async function completeMatchAction(input: unknown) {
     const parsed = CompleteMatchSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "completeMatch", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await completeMatchService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
@@ -97,7 +97,7 @@ export async function voidMatchAction(input: unknown) {
     const parsed = VoidMatchSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['super_admin']);
+    const guard = await requireGroups(supabase, ['super_admin'], { action: "voidMatch", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await voidMatchService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
@@ -108,7 +108,7 @@ export async function updateMatchResultsAction(input: unknown) {
     const parsed = CompleteMatchSchema.safeParse(input);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "updateMatchResults", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await updateMatchResultsService(supabase, parsed.data);
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);
@@ -154,7 +154,7 @@ export async function deleteMatchAction(matchId: string) {
     const parsed = z.uuid().safeParse(matchId);
     if (!parsed.success) return Err({message: "Invalid match ID", code: "VALIDATION_ERROR"});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"]);
+    const guard = await requireGroups(supabase, ["admin"], { action: "deleteMatch", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await deleteMatchService(supabase, parsed.data, {isSuperAdmin: guard.value.groups.includes("super_admin")});
     if (result.ok) revalidatePublicData(MATCH_MUTATION_TAGS);

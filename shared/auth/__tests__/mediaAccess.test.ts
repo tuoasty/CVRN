@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {allowedMediaTypes, canWriteMediaType} from "@/shared/auth/mediaAccess";
+import {allowedMediaTypes, canWriteMediaType, mediaWritersFor} from "@/shared/auth/mediaAccess";
 
 describe("allowedMediaTypes", () => {
     it("gives graphics its five types", () => {
@@ -35,5 +35,19 @@ describe("canWriteMediaType", () => {
         [["graphics", "media"], "video", true],
     ] as const)("%j writing %s is %s", (groups, type, allowed) => {
         expect(canWriteMediaType([...groups], type)).toBe(allowed);
+    });
+});
+
+describe("mediaWritersFor", () => {
+    it("lets admin and graphics write gfx", () => {
+        expect(mediaWritersFor("gfx")).toEqual(["admin", "graphics"]);
+    });
+
+    it("lets admin and media write video", () => {
+        expect(mediaWritersFor("video")).toEqual(["admin", "media"]);
+    });
+
+    it("leaves clip to admin", () => {
+        expect(mediaWritersFor("clip")).toEqual(["admin"]);
     });
 });

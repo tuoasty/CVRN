@@ -28,7 +28,7 @@ export async function saveMatchSheetConfigAction(data: unknown) {
     const parsed = SaveMatchSheetConfigSchema.safeParse(data);
     if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR" as const});
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    const guard = await requireGroups(supabase, ["admin", "statistics"], { action: "saveMatchSheetConfig", target: parsed.data });
     if (!guard.ok) return guard;
     const result = await insertMatchSheetConfig(supabase, parsed.data);
     if (result.ok) revalidatePath('/admin/stats');
@@ -37,7 +37,7 @@ export async function saveMatchSheetConfigAction(data: unknown) {
 
 export async function deleteMatchSheetConfigAction(id: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    const guard = await requireGroups(supabase, ["admin", "statistics"], { action: "deleteMatchSheetConfig", target: { id } });
     if (!guard.ok) return guard;
     const result = await deleteMatchSheetConfig(supabase, id);
     if (result.ok) revalidatePath('/admin/stats');
@@ -46,7 +46,7 @@ export async function deleteMatchSheetConfigAction(id: string) {
 
 export async function clearMatchStatsAction(matchId: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    const guard = await requireGroups(supabase, ["admin", "statistics"], { action: "clearMatchStats", target: { matchId } });
     if (!guard.ok) return guard;
     const result = await clearMatchStats(supabase, matchId);
     if (result.ok) {
@@ -74,7 +74,7 @@ export async function syncMatchStatsAction(
     playerOverrides?: PlayerOverrides
 ) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    const guard = await requireGroups(supabase, ["admin", "statistics"], { action: "syncMatchStats", target: { configId, force, playerOverrides } });
     if (!guard.ok) return guard;
     const result = await syncMatchStats(supabase, configId, {force, playerOverrides});
     if (result.ok) {
@@ -87,7 +87,7 @@ export async function syncMatchStatsAction(
 
 export async function publishStatsAction() {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin", "statistics"]);
+    const guard = await requireGroups(supabase, ["admin", "statistics"], { action: "publishStats" });
     if (!guard.ok) return guard;
 
     const refreshed = await refreshRecords(supabase);
