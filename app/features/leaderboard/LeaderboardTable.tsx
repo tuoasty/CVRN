@@ -61,9 +61,7 @@ const rowKey = (row: LeaderboardDisplayRow) => `${row.player_id}-${row.season_id
 
 const PAGE_SIZE = 50;
 
-const RANK_W = "w-14";
-const PLAYER_W = "w-52";
-const PLAYER_W_COMPACT = "w-40 sm:w-[16.5rem]";
+const PLAYER_W = "w-40 sm:w-[16.5rem]";
 const POSITION_W = "w-24";
 const TEAM_W = "w-36";
 const REGION_W = "w-10";
@@ -72,10 +70,11 @@ const Z_HEAD = "z-20";
 const Z_HEAD_CORNER = "z-10";
 const Z_BODY_STICKY = "z-10";
 
-const HEAD_RULE = "shadow-[inset_0_-1px_0_var(--border)]";
+const HEAD_RULE = "border-b border-b-muted-foreground/50";
 
 const HEAD_BG = "bg-background";
-const HEAD_BG_ACTIVE = "bg-[color-mix(in_srgb,hsl(var(--primary))_10%,hsl(var(--background)))]";
+const STICKY_EDGE = "border-r border-border";
+const ROW_RULE = "[&>td]:border-b [&>td]:border-b-border/30";
 
 export default function LeaderboardTable({
     rows,
@@ -153,7 +152,7 @@ export default function LeaderboardTable({
         Math.max(0, windowEnd - visible.length),
     );
 
-    const totalColumnCount = (flow ? 1 : 2) + 1 + (showTeam ? 1 : 0) + (showRegion ? 1 : 0) + columns.length + 1;
+    const totalColumnCount = 1 + 1 + (showTeam ? 1 : 0) + (showRegion ? 1 : 0) + columns.length + 1;
 
     if (rows.length === 0) {
         return <p className="text-sm text-muted-foreground py-8 text-center">{emptyMessage}</p>;
@@ -172,7 +171,7 @@ export default function LeaderboardTable({
                 <button
                     type="button"
                     onClick={onClearSearch}
-                    className="mt-4 text-sm text-primary underline-offset-4 hover:underline rounded-sm focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    className="mt-4 text-sm font-medium text-foreground underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                 >
                     Clear search
                 </button>
@@ -190,10 +189,9 @@ export default function LeaderboardTable({
                     !flow && "[&>[data-slot=table-container]]:overflow-auto",
                 )}
             >
-                <Table className="table-fixed border-collapse">
+                <Table className="table-fixed border-separate border-spacing-0">
                     <colgroup>
-                        {!flow && <col className={RANK_W} />}
-                        <col className={flow ? PLAYER_W_COMPACT : PLAYER_W} />
+                        <col className={PLAYER_W} />
                         <col className={POSITION_W} />
                         {showTeam && <col className={TEAM_W} />}
                         {showRegion && <col className={REGION_W} />}
@@ -204,30 +202,18 @@ export default function LeaderboardTable({
                     </colgroup>
                     <TableHeader className={cn("h-7 bg-background", !flow && "sticky top-0", Z_HEAD)}>
                         <TableRow className="border-b-0 hover:bg-transparent">
-                            {!flow && (
-                                <TableHead
-                                    rowSpan={2}
-                                    className={cn(
-                                        "sticky left-0 text-right align-bottom px-2 py-0 my-0 text-xs font-semibold uppercase tracking-wider",
-                                        HEAD_BG,
-                                        Z_HEAD_CORNER,
-                                        HEAD_RULE,
-                                    )}
-                                >
-                                    #
-                                </TableHead>
-                            )}
                             <TableHead
                                 rowSpan={2}
                                 className={cn(
-                                    "sticky text-left align-bottom px-2 text-xs font-semibold uppercase tracking-wider",
-                                    flow ? "left-0" : "left-14",
+                                    "sticky left-0 text-left align-bottom px-2 text-xs font-semibold uppercase tracking-wider",
                                     HEAD_BG,
+                                    STICKY_EDGE,
                                     Z_HEAD_CORNER,
                                     HEAD_RULE,
                                 )}
                             >
-                                Player
+                                <span className="inline-block w-5 text-right">#</span>
+                                <span className="ml-2.5">Player</span>
                             </TableHead>
                             <TableHead
                                 rowSpan={2}
@@ -305,8 +291,8 @@ export default function LeaderboardTable({
                                         className={cn(
                                             "h-8 px-1.5 text-right text-xs font-semibold whitespace-nowrap",
                                             HEAD_RULE,
-                                            isLastInGroup && !isLastColumn && "border-r border-border/30",
-                                            active ? HEAD_BG_ACTIVE : HEAD_BG,
+                                            isLastInGroup && !isLastColumn && "border-r border-r-border/30",
+                                            HEAD_BG,
                                         )}
                                     >
                                         <Tooltip>
@@ -316,7 +302,9 @@ export default function LeaderboardTable({
                                                     onClick={() => onSort(col.key)}
                                                     className={cn(
                                                         "inline-flex items-center gap-0.5 rounded-sm px-0.5 transition-colors focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                                                        active ? "text-primary" : "text-foreground/80 hover:text-foreground",
+                                                        active
+                                                            ? "font-semibold text-foreground underline decoration-2 underline-offset-[6px]"
+                                                            : "text-foreground/80 hover:text-foreground",
                                                     )}
                                                 >
                                                     {col.label}
@@ -350,7 +338,6 @@ export default function LeaderboardTable({
                                 sortKey={filters.sort}
                                 showRegion={showRegion}
                                 showTeam={showTeam}
-                                compact={flow}
                             />
                         ))}
 
@@ -364,7 +351,7 @@ export default function LeaderboardTable({
                                         <span className="font-medium text-foreground/80">
                                             Below the {MIN_SETS_FOR_RATE}-set minimum
                                         </span>
-                                        {" — "}
+                                        {". "}
                                         {activeColumn?.label} is a ratio, so a small sample can top the
                                         board. These {visibleUnqualified.length}{" "}
                                         {visibleUnqualified.length === 1 ? "player is" : "players are"} listed
@@ -380,7 +367,6 @@ export default function LeaderboardTable({
                                         sortKey={filters.sort}
                                 showRegion={showRegion}
                                 showTeam={showTeam}
-                                compact={flow}
                                     />
                                 ))}
                             </>
@@ -400,9 +386,9 @@ export default function LeaderboardTable({
                                 aria-label="Previous page"
                                 className={cn(
                                     "inline-flex items-center gap-1 h-8 px-2.5 rounded-sm border border-border text-xs font-medium transition-colors",
-                                    "hover:bg-accent hover:text-accent-foreground",
+                                    "hover:bg-muted",
                                     "disabled:opacity-40 disabled:pointer-events-none",
-                                    "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
                                 )}
                             >
                                 <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
@@ -418,9 +404,9 @@ export default function LeaderboardTable({
                                 aria-label="Next page"
                                 className={cn(
                                     "inline-flex items-center gap-1 h-8 px-2.5 rounded-sm border border-border text-xs font-medium transition-colors",
-                                    "hover:bg-accent hover:text-accent-foreground",
+                                    "hover:bg-muted",
                                     "disabled:opacity-40 disabled:pointer-events-none",
-                                    "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
                                 )}
                             >
                                 Next
@@ -441,7 +427,6 @@ function LeaderboardRow({
     sortKey,
     showRegion,
     showTeam,
-    compact,
 }: {
     row: LeaderboardDisplayRow;
 
@@ -450,7 +435,6 @@ function LeaderboardRow({
     sortKey: SortKey;
     showRegion: boolean;
     showTeam: boolean;
-    compact: boolean;
 }) {
     const teamHref = buildPublicTeamHref({
         regionCode: row.region_code,
@@ -462,55 +446,32 @@ function LeaderboardRow({
 
     return (
 
-        <TableRow className="group h-[3.25rem] hover:bg-muted/30">
-            {!compact && (
-                <TableCell
-                    className={cn(
-                        "sticky left-0 bg-background group-hover:shadow-[inset_0_0_0_100vmax_hsl(var(--muted)/0.3)] transition-shadow py-0 text-right align-middle",
-                        "px-2",
-                        Z_BODY_STICKY,
-                    )}
-                >
-                    <span
-                        className={cn(
-                            "font-mono tabular-nums text-sm",
-                            rank !== null && rank <= 3
-                                ? "font-semibold text-foreground"
-                                : "text-muted-foreground",
-                        )}
-                    >
-                        {rank ?? "—"}
-                    </span>
-                </TableCell>
-            )}
-
+        <TableRow className={cn("group h-[3.25rem] border-b-0 hover:bg-muted/30", ROW_RULE)}>
             <TableCell
                 className={cn(
-                    "sticky bg-background group-hover:shadow-[inset_0_0_0_100vmax_hsl(var(--muted)/0.3)] transition-shadow py-0 px-2 align-middle",
-                    compact ? "left-0" : "left-14",
+                    "sticky left-0 bg-background group-hover:shadow-[inset_0_0_0_100vmax_hsl(var(--muted)/0.3)] transition-shadow py-0 px-2 align-middle",
+                    STICKY_EDGE,
                     Z_BODY_STICKY,
                 )}
             >
                 <div className="flex items-center gap-2.5 min-w-0">
-                    {compact && (
-                        <span
-                            className={cn(
-                                "w-5 shrink-0 text-right font-mono tabular-nums text-sm",
-                                rank !== null && rank <= 3 ? "font-semibold text-foreground" : "text-muted-foreground",
-                            )}
-                        >
-                            {rank ?? "-"}
-                        </span>
-                    )}
+                    <span
+                        className={cn(
+                            "w-5 shrink-0 text-right font-mono tabular-nums text-sm",
+                            rank !== null && rank <= 3 ? "font-semibold text-foreground" : "text-muted-foreground",
+                        )}
+                    >
+                        {rank ?? "-"}
+                    </span>
                     {row.avatar_url && (
-                        <div className={cn("relative w-10 h-10 shrink-0 rounded-full overflow-hidden bg-muted", compact && "hidden sm:block")}>
+                        <div className="relative hidden h-10 w-10 shrink-0 overflow-hidden rounded-full bg-muted sm:block">
                             <Image src={row.avatar_url} alt="" fill sizes="40px" className="object-cover" unoptimized />
                         </div>
                     )}
                     <div className="min-w-0 leading-tight">
                         <Link
                             href={`/players/${encodeURIComponent(row.username)}`}
-                            className="block truncate text-sm font-medium hover:text-primary transition-colors"
+                            className="block truncate text-sm font-medium text-foreground hover:underline hover:underline-offset-4"
                         >
                             {hasDistinctDisplayName ? row.display_name : row.username}
                         </Link>
@@ -542,7 +503,7 @@ function LeaderboardRow({
                             bgRemoved={row.team_logo_bg_removed ?? false}
                         />
                     ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                        <span className="text-xs text-muted-foreground">-</span>
                     )}
                 </TableCell>
             )}
@@ -614,7 +575,7 @@ function TeamCell({
     return href ? (
         <Link
             href={href}
-            className="flex items-center gap-2 min-w-0 text-muted-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-2 min-w-0 text-muted-foreground transition-colors hover:text-foreground"
         >
             {content}
         </Link>
