@@ -85,8 +85,7 @@ export default function UploadTeamLogoDialog({
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (removeBackground: boolean) => {
         if (!file) {
             toast.error("Please select an image first");
             return;
@@ -96,6 +95,7 @@ export default function UploadTeamLogoDialog({
         try {
             const formData = new FormData();
             formData.append("logo", file);
+            formData.append("removeBackground", String(removeBackground));
 
             const result = await uploadTeamLogoAction(teamId, formData);
 
@@ -125,7 +125,7 @@ export default function UploadTeamLogoDialog({
                     <DialogTitle>Upload Logo — {teamName}</DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} onPaste={handlePaste} className="space-y-4">
+                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(true); }} onPaste={handlePaste} className="space-y-4">
                     <div
                         className={`border-2 border-dashed rounded-sm p-4 text-center transition-colors cursor-pointer ${
                             isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
@@ -167,7 +167,7 @@ export default function UploadTeamLogoDialog({
                         onChange={handleFileChange}
                     />
 
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex flex-wrap gap-2 justify-end">
                         <Button
                             type="button"
                             variant="outline"
@@ -177,11 +177,20 @@ export default function UploadTeamLogoDialog({
                             Cancel
                         </Button>
                         <Button
+                            type="button"
+                            variant="secondary"
+                            className="rounded-sm"
+                            disabled={!file || loading || compressing}
+                            onClick={() => handleSubmit(false)}
+                        >
+                            Upload, keep background
+                        </Button>
+                        <Button
                             type="submit"
                             className="rounded-sm"
                             disabled={!file || loading || compressing}
                         >
-                            {loading ? "Uploading…" : "Upload"}
+                            {loading ? "Uploading…" : "Upload & remove background"}
                         </Button>
                     </div>
                 </form>

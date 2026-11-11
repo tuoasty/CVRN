@@ -5,7 +5,8 @@ describe("canAccessPath", () => {
     it.each([
         [["information"], "/admin/game-data/import", false],
         [["information"], "/admin/game-data/rollables", true],
-        [["specs"], "/admin/game-data/specs", true],
+        [["specs"], "/admin/game-data/specs", false],
+        [["information"], "/admin/game-data/specs", true],
         [["specs"], "/admin/game-data/rollables", false],
         [["awards"], "/admin/seasons/x/results", true],
         [["awards"], "/admin/seasons", true],
@@ -24,7 +25,8 @@ describe("canAccessPath", () => {
         [["player_cards"], "/admin/cards/groups", true],
         [["specs"], "/admin/specs/qualify", true],
         [["information"], "/admin/specs/qualify", false],
-        [["information"], "/admin/specs", true],
+        [["information"], "/admin/specs", false],
+        [["specs"], "/admin/specs", true],
     ] as const)("%j on %s is %s", (groups, path, allowed) => {
         expect(canAccessPath([...groups], path)).toBe(allowed);
     });

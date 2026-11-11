@@ -26,19 +26,15 @@ describe("buildAdminNav", () => {
     it("renders limited groups flat with no groups", () => {
         expect(buildAdminNav(["transaction"]).primary.map(p => p.href)).toEqual(["/admin/teams", "/admin/sync/history"]);
         expect(buildAdminNav(["transaction"]).groups).toEqual([]);
-        expect(buildAdminNav(["information"]).primary.map(p => p.href)).toEqual(["/admin/game-data", "/admin/specs"]);
+        expect(buildAdminNav(["information"]).primary.map(p => p.href)).toEqual(["/admin/game-data"]);
         expect(buildAdminNav(["statistics"]).primary.map(p => p.href)).toEqual(["/admin/stats"]);
         expect(buildAdminNav([])).toEqual({ primary: [], groups: [] });
     });
 
-    it("sends specs to the spec loadouts tab of Information", () => {
+    it("gives specs the spec pages and no Information", () => {
         const nav = buildAdminNav(["specs"]);
         expect(nav.groups).toEqual([]);
-        expect(nav.primary.map(p => p.href)).toEqual([
-            "/admin/game-data/specs",
-            "/admin/specs",
-            "/admin/specs/qualify",
-        ]);
+        expect(nav.primary.map(p => p.href)).toEqual(["/admin/specs", "/admin/specs/qualify"]);
     });
 
     it("unions the pages of several groups", () => {
@@ -68,11 +64,6 @@ describe("findCurrentHref", () => {
 
     it("needs a segment boundary", () => {
         expect(findCurrentHref("/admin/sync-foo", hrefs)).toBeNull();
-    });
-
-    it("finds the specs fallback route", () => {
-        const specHrefs = adminNavHrefs(buildAdminNav(["specs"]));
-        expect(findCurrentHref("/admin/game-data/specs", specHrefs)).toBe("/admin/game-data/specs");
     });
 });
 

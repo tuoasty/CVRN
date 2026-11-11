@@ -59,7 +59,7 @@ export async function saveGameTermAction(input: SaveGameTermInput): Promise<Resu
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'information', 'specs'])
+    const guard = await requireGroups(supabase, ['admin', 'information'])
     if (!guard.ok) return guard
 
     const result = await saveGameTerm(supabase, { input: parsed.data, userId: guard.value.userId })
@@ -72,7 +72,7 @@ export async function setGameTermVerifiedAction(input: SetGameTermVerifiedInput)
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'information', 'specs'])
+    const guard = await requireGroups(supabase, ['admin', 'information'])
     if (!guard.ok) return guard
 
     const result = await setGameTermVerified(supabase, { input: parsed.data, userId: guard.value.userId })
@@ -85,7 +85,7 @@ export async function setAbilityDescriptionSourceAction(input: SetAbilityDescrip
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
     const supabase = await createServerSupabase()
-    const guard = await requireGroups(supabase, ['admin', 'information', 'specs'])
+    const guard = await requireGroups(supabase, ['admin', 'information'])
     if (!guard.ok) return guard
 
     const result = await setAbilityDescriptionSource(supabase, { input: parsed.data, userId: guard.value.userId })

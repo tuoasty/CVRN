@@ -36,9 +36,9 @@ export default function LoginPage() {
     return (
         <div className="page-narrow flex min-h-[calc(100vh-6rem)] items-center">
             <div className="w-full max-w-sm">
-                <h1 className="text-2xl font-semibold">CVRN Staff</h1>
+                <h1 className="text-2xl font-semibold">CVR Staff</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    Staff only. Sign in with the Discord account that holds your CVRN staff role.
+                    Staff only. Sign in with the Discord account that holds your CVR staff role.
                 </p>
 
                 <Button onClick={handleDiscord} disabled={discordLoading} className="mt-6 w-full rounded-sm">

@@ -1,7 +1,7 @@
 import type { AccessGroup } from "@/shared/types/accessGroup";
 import { canAccessPath } from "@/shared/auth/pageAccess";
 
-export type AdminNavPage = { href: string; label: string; fallbackHref?: string };
+export type AdminNavPage = { href: string; label: string };
 export type AdminNavGroup = { label: string; pages: AdminNavPage[] };
 export type AdminNavModel = { primary: AdminNavPage[]; groups: AdminNavGroup[] };
 
@@ -27,7 +27,7 @@ const GROUPS: AdminNavGroup[] = [
         pages: [
             { href: "/admin/articles", label: "Articles" },
             { href: "/admin/updates", label: "Updates" },
-            { href: "/admin/game-data", label: "Information", fallbackHref: "/admin/game-data/specs" },
+            { href: "/admin/game-data", label: "Information" },
         ],
     },
     {
@@ -63,15 +63,9 @@ const REGION_SEASON_PICKER_PATHS = new Set([
     "/admin/specs/qualify",
 ]);
 
-function resolvePage(page: AdminNavPage, groups: readonly AccessGroup[]): AdminNavPage | null {
-    if (canAccessPath(groups, page.href)) return { href: page.href, label: page.label };
-    if (page.fallbackHref && canAccessPath(groups, page.fallbackHref)) return { href: page.fallbackHref, label: page.label };
-    return null;
-}
-
 export function buildAdminNav(groups: readonly AccessGroup[]): AdminNavModel {
     const visible = (pages: AdminNavPage[]) =>
-        pages.map(page => resolvePage(page, groups)).filter((page): page is AdminNavPage => page !== null);
+        pages.filter(page => canAccessPath(groups, page.href));
 
     const primary = visible(PRIMARY_PAGES);
     const navGroups = GROUPS

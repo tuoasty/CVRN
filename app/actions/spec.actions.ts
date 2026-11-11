@@ -59,7 +59,7 @@ export async function getSpecsAction(regionId: string) {
     if (!RegionIdSchema.safeParse(regionId).success) return invalidRegion();
 
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs', 'information']);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     return getSpecs(supabase, regionId);
@@ -67,7 +67,7 @@ export async function getSpecsAction(regionId: string) {
 
 export async function getSpecsAllRegionsAction() {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs', 'information']);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     return getSpecsAllRegions(supabase);
@@ -75,7 +75,7 @@ export async function getSpecsAllRegionsAction() {
 
 export async function getSpecCatalogAction() {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ['admin', 'specs', 'information']);
+    const guard = await requireGroups(supabase, ['admin', 'specs']);
     if (!guard.ok) return guard;
 
     return getSpecCatalog(supabase);
@@ -135,7 +135,7 @@ export async function saveSpecFactsAction(data: unknown) {
 
     const supabase = await createServerSupabase();
 
-    const guard = await requireGroups(supabase, ['admin', 'specs', 'information']);
+    const guard = await requireGroups(supabase, ['admin', 'information']);
     if (!guard.ok) return guard;
 
     const result = await saveSpecFacts(supabase, parsed.data);

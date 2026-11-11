@@ -25,7 +25,6 @@ export default function InformationTabs() {
     const router = useRouter()
     const { index, buildIndex, termList, unhandled, loadouts, skipped, specByGameKey } = useInformation()
     const canImport = useHasGroup('admin')
-    const specsOnly = !useHasGroup('admin', 'information')
 
     const segment = pathname.slice(BASE.length + 1).split('/')[0]
     const current = (TAB_VALUES as readonly string[]).includes(segment) ? (segment as TabValue) : null
@@ -42,7 +41,7 @@ export default function InformationTabs() {
         { value: 'specs' as const, label: loadouts.length > 0 ? <>Spec loadouts<Count value={activeLoadouts.length} flag={unlinkedLoadouts} /></> : 'Spec loadouts' },
         { value: 'builds' as const, label: buildIndex.length > 0 ? <>Builds<Count value={buildIndex.length} /></> : 'Builds' },
     ]
-    const tabs = specsOnly ? allTabs.filter(t => t.value === 'specs') : allTabs
+    const tabs = allTabs
     const importing = segment === 'import'
 
     return (

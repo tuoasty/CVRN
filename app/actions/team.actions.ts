@@ -166,6 +166,7 @@ export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
 
     const file = formData.get('logo') as File | null;
     if (!file || file.size === 0) return Err({ message: "No file provided", code: "VALIDATION_ERROR" as const });
+    const removeBackground = formData.get('removeBackground') !== 'false';
 
     const admin = getSupabaseAdmin() as unknown as DBClient;
 
@@ -188,6 +189,7 @@ export async function uploadTeamLogoAction(teamId: string, formData: FormData) {
         file,
         contentType: 'image/webp',
         compress: true,
+        removeBackground,
         userId: guard.value.userId,
     });
     if (!uploadResult.ok) {
