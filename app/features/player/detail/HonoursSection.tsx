@@ -6,7 +6,7 @@ export function HonoursSection({honours, careerHref}: {honours: PlayerHonour[]; 
         <RuledSection title="Honours" action={careerHref ? <CareerLink href={careerHref}>Career</CareerLink> : undefined}>
             <ul>
                 {honours.map(honour => (
-                    <li key={honour.label} className="flex items-baseline gap-3 border-b border-border/60 py-2 text-sm last:border-b-0">
+                    <li key={honour.label} className="flex items-baseline gap-3 py-2 text-sm">
                         <span className="w-8 shrink-0 font-mono font-semibold tabular-nums">{honour.count}x</span>
                         <span className="min-w-0">{honour.label}</span>
                     </li>

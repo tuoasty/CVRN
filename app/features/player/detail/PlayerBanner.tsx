@@ -1,20 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
+import type {ReactNode} from "react";
 import {DefaultTeamLogo} from "@/app/components/ui/DefaultTeamLogo";
+import {specStarClass} from "@/app/features/information/specs/Stars";
 import {getLogoClassName} from "@/app/lib/logoClass";
 import {buildPublicTeamHref} from "@/app/utils/matchDetailHref";
+import {cn} from "@/lib/utils";
 import type {PlayerDetail, PlayerSpecEntry, PlayerTeamHistoryEntry} from "@/server/domains/player";
 import {positionLabel} from "@/shared/volleyball/positions";
 import {TeamLogo} from "./TeamLogoLink";
 
 function ActiveSpecLine({spec}: {spec: PlayerSpecEntry}) {
     return (
-        <p className="mt-1.5 text-xs sm:text-sm font-bold uppercase tracking-wide">
+        <p className="mt-2 text-sm font-semibold text-foreground">
             {spec.spec_name}
-            <span className="text-secondary font-mono ml-1.5 tabular-nums">{spec.stars}★</span>
-            {spec.dropped && (
-                <span className="italic font-normal normal-case text-muted-foreground ml-1.5">dropped</span>
-            )}
+            <span className={cn("ml-1.5 font-mono text-xs tabular-nums", specStarClass(spec.stars))}>{spec.stars}★</span>
+            {spec.dropped && <span className="ml-1.5 text-xs font-normal text-muted-foreground">dropped</span>}
         </p>
     );
 }
@@ -22,7 +23,7 @@ function ActiveSpecLine({spec}: {spec: PlayerSpecEntry}) {
 function ActiveTeamsLine({teams}: {teams: PlayerTeamHistoryEntry[]}) {
     if (teams.length === 0) return null;
     return (
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             {teams.map(team => {
                 const href = team.team_disbanded ? null : buildPublicTeamHref({
                     regionCode: team.region_code,
@@ -33,74 +34,102 @@ function ActiveTeamsLine({teams}: {teams: PlayerTeamHistoryEntry[]}) {
                     <>
                         <TeamLogo team={team} size={20} />
                         <span className="truncate">{team.team_name}</span>
-                        <span className="text-muted-foreground">{team.region_code}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{team.region_code}</span>
                     </>
                 );
                 const key = `${team.team_id}-${team.season_id}`;
                 return href ? (
-                    <Link key={key} href={href} prefetch={false} className="flex min-w-0 items-center gap-1.5 hover:underline">{body}</Link>
+                    <Link key={key} href={href} prefetch={false} className="flex min-w-0 items-center gap-1.5 text-foreground hover:underline hover:underline-offset-4">{body}</Link>
                 ) : (
-                    <span key={key} className="flex min-w-0 items-center gap-1.5">{body}</span>
+                    <span key={key} className="flex min-w-0 items-center gap-1.5 text-foreground">{body}</span>
                 );
             })}
         </div>
     );
 }
 
-export function PlayerBanner({player, activeSpec, activeTeams}: {
+function Identity({player, activeSpec, activeTeams}: {
     player: PlayerDetail["player"];
     activeSpec: PlayerSpecEntry | null;
     activeTeams: PlayerTeamHistoryEntry[];
 }) {
+    const meta = [
+        player.username ? <span key="u">@{player.username}</span> : null,
+        player.current_position ? (
+            <span key="p" title={positionLabel(player.current_position)} className="font-mono">{player.current_position}</span>
+        ) : null,
+    ].filter(Boolean);
+
+    return (
+        <>
+            <h1 className="break-words text-2xl font-semibold tracking-tight text-foreground">
+                {player.display_name || player.username}
+            </h1>
+            {meta.length > 0 && (
+                <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[13px] text-muted-foreground">
+                    {meta.map((node, i) => (
+                        <span key={i} className="flex items-center gap-x-1.5">
+                            {i > 0 && <span aria-hidden>·</span>}
+                            {node}
+                        </span>
+                    ))}
+                </p>
+            )}
+            <ActiveTeamsLine teams={activeTeams} />
+            {activeSpec && <ActiveSpecLine spec={activeSpec} />}
+        </>
+    );
+}
+
+function CurrentTeamLogo({team, size}: {team: NonNullable<PlayerDetail["player"]["current_team"]>; size: number}) {
+    return (
+        <div className="relative shrink-0" style={{width: size, height: size}}>
+            {team.team_logo_url ? (
+                <Image
+                    src={team.team_logo_url}
+                    alt={team.team_name}
+                    fill
+                    sizes={`${size}px`}
+                    className={getLogoClassName(team.team_logo_bg_removed)}
+                    unoptimized
+                />
+            ) : (
+                <DefaultTeamLogo sizes={`${size}px`} alt={team.team_name} />
+            )}
+        </div>
+    );
+}
+
+export function PlayerBanner({player, activeSpec, activeTeams, top}: {
+    player: PlayerDetail["player"];
+    activeSpec: PlayerSpecEntry | null;
+    activeTeams: PlayerTeamHistoryEntry[];
+    top?: ReactNode;
+}) {
     const team = player.current_team;
     return (
-        <div
-            className="relative rounded-lg overflow-hidden"
+        <header
+            className="relative"
             style={team?.team_brick_color ? {
                 background: `linear-gradient(115deg, ${team.team_brick_color}35 0%, ${team.team_brick_color}18 50%, transparent 100%)`,
             } : undefined}
         >
-            <div className="sm:hidden flex items-stretch min-h-[148px]">
-                <div className="flex-1 p-4 flex flex-col min-w-0">
-                    {team && (
-                        <div className="relative w-9 h-9 shrink-0">
-                            {team?.team_logo_url ? (
-                                <Image
-                                    src={team.team_logo_url}
-                                    alt={team.team_name}
-                                    fill
-                                    sizes="36px"
-                                    className={getLogoClassName(team.team_logo_bg_removed)}
-                                    unoptimized
-                                />
-                            ) : (
-                                <DefaultTeamLogo sizes="36px" alt={team.team_name} />
-                            )}
-                        </div>
-                    )}
-                    <div className="mt-auto pt-2">
-                        {player.current_position && (
-                            <p title={positionLabel(player.current_position)} className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/85 mb-0.5">
-                                {player.current_position}
-                            </p>
-                        )}
-                        <h1 className="text-2xl font-black leading-none tracking-tight">
-                            {player.display_name || player.username}
-                        </h1>
-                        {player.username && (
-                            <p className="text-xs text-muted-foreground mt-1">@{player.username}</p>
-                        )}
-                        <ActiveTeamsLine teams={activeTeams} />
-                        {activeSpec && <ActiveSpecLine spec={activeSpec} />}
+            <div className="page-wide">
+            {top && <div className="pt-3">{top}</div>}
+            <div className="flex min-h-[148px] items-stretch sm:hidden">
+                <div className="flex min-w-0 flex-1 flex-col py-4">
+                    {team && <CurrentTeamLogo team={team} size={36} />}
+                    <div className="mt-auto pt-3">
+                        <Identity player={player} activeSpec={activeSpec} activeTeams={activeTeams} />
                     </div>
                 </div>
                 {player.avatar_url && (
-                    <div className="relative w-[130px] shrink-0">
+                    <div className="relative w-[120px] shrink-0">
                         <Image
                             src={player.avatar_url}
-                            alt={player.username ?? ""}
+                            alt=""
                             fill
-                            sizes="130px"
+                            sizes="120px"
                             className="object-contain object-bottom"
                             unoptimized
                         />
@@ -108,28 +137,17 @@ export function PlayerBanner({player, activeSpec, activeTeams}: {
                 )}
             </div>
 
-            <div className="hidden sm:flex gap-1 p-4 pb-0">
+            <div className="hidden gap-1 pt-2 sm:flex">
                 {team && (
-                    <div className="self-start relative shrink-0 w-20 h-20">
-                        {team?.team_logo_url ? (
-                            <Image
-                                src={team.team_logo_url}
-                                alt={team.team_name}
-                                fill
-                                sizes="80px"
-                                className={getLogoClassName(team.team_logo_bg_removed)}
-                                unoptimized
-                            />
-                        ) : (
-                            <DefaultTeamLogo sizes="80px" alt={team.team_name} />
-                        )}
+                    <div className="self-start">
+                        <CurrentTeamLogo team={team} size={80} />
                     </div>
                 )}
-                <div className="self-end relative shrink-0 w-[200px] h-[200px]">
+                <div className="relative h-[200px] w-[200px] shrink-0 self-end">
                     {player.avatar_url && (
                         <Image
                             src={player.avatar_url}
-                            alt={player.username ?? ""}
+                            alt=""
                             fill
                             sizes="200px"
                             className="object-contain object-bottom"
@@ -137,29 +155,11 @@ export function PlayerBanner({player, activeSpec, activeTeams}: {
                         />
                     )}
                 </div>
-                <div className="self-center flex flex-col gap-0.5 pl-8 min-w-0 flex-1">
-                    {player.current_position && (
-                        <p title={positionLabel(player.current_position)} className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/85 mb-1">
-                            {player.current_position}
-                        </p>
-                    )}
-                    <h1 className="text-4xl lg:text-5xl font-black leading-none tracking-tight truncate">
-                        {player.display_name || player.username}
-                    </h1>
-                    {player.username && (
-                        <p className="text-sm text-muted-foreground mt-2">@{player.username}</p>
-                    )}
-                    <ActiveTeamsLine teams={activeTeams} />
-                    {activeSpec && <ActiveSpecLine spec={activeSpec} />}
+                <div className="flex min-w-0 flex-1 flex-col self-center pl-8">
+                    <Identity player={player} activeSpec={activeSpec} activeTeams={activeTeams} />
                 </div>
             </div>
-
-            {team?.team_brick_color && (
-                <div
-                    className="mt-2 h-px w-full"
-                    style={{background: `linear-gradient(to right, ${team.team_brick_color}80, transparent)`}}
-                />
-            )}
-        </div>
+            </div>
+        </header>
     );
 }

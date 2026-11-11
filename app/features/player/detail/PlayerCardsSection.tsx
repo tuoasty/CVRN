@@ -37,7 +37,7 @@ export function PlayerCardsSection({cards, playerName, showAll, onToggleAll, onF
     const shown = cards.slice(0, CARD_CAP);
     const single = shown.length === 1;
     const action = cards.length > CARD_CAP ? (
-        <button type="button" onClick={onToggleAll} className="shrink-0 text-xs font-medium text-primary hover:underline">
+        <button type="button" onClick={onToggleAll} className="shrink-0 text-xs font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground">
             {showAll ? "Show fewer" : `View all ${cards.length}`}
         </button>
     ) : undefined;

@@ -97,10 +97,10 @@ export default function PlayerDetailPage({detail, cards, matches}: Props) {
     const stackUntilXl = Math.min(visibleCards.length, CARD_CAP) >= CARD_CAP;
 
     return (
-        <div className="max-w-[1440px] mx-auto px-4 py-6 space-y-11">
-            <BackButton />
+        <>
+        <PlayerBanner player={player} activeSpec={activeSpec} activeTeams={activeTeams} top={<BackButton />} />
 
-            <PlayerBanner player={player} activeSpec={activeSpec} activeTeams={activeTeams} />
+        <div className="page-wide space-y-11 pb-6 pt-11">
 
             {seasonStats.length > 0 && (
                 <PlayerSeasonStatsTable rows={seasonStats} teamLogoBySeasonId={teamLogoBySeasonId} />
@@ -134,5 +134,6 @@ export default function PlayerDetailPage({detail, cards, matches}: Props) {
 
             {!hasRecord && <p className="text-sm text-muted-foreground">No league record yet.</p>}
         </div>
+        </>
     );
 }
