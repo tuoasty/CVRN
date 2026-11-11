@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Users, Search, X, AlertCircle } from "lucide-react"
-import { PublicPageHeader } from "@/app/components/public/PublicPageHeader"
+import { Search, X } from "lucide-react"
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue"
 import { usePlayerSearch } from "@/app/hooks/usePlayerSearch"
 import { useRecentPlayers } from "@/app/hooks/useRecentPlayers"
 import { PlayerTable, PlayerTableSkeleton } from "@/app/features/players/PlayerTable"
+
+function Message({ children }: { children: React.ReactNode }) {
+    return <div className="flex flex-col items-center gap-3 py-20 text-center text-sm text-muted-foreground">{children}</div>
+}
 
 export default function PlayerSearchPage() {
     const [query, setQuery] = useState("")
@@ -21,77 +24,71 @@ export default function PlayerSearchPage() {
     const searchFailed = hasQuery && !!error
 
     return (
-        <div className="mx-auto max-w-4xl px-4 py-6 space-y-6 sm:px-6 lg:px-8">
-            <PublicPageHeader
-                icon={Users}
-                title="Players"
-                subtitle="Search players across every region and season"
-            />
+        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Players</h1>
+            <p className="mt-1 text-[13px] text-muted-foreground">Every player across all regions and seasons</p>
 
-            {}
-            <form onSubmit={e => e.preventDefault()} role="search" className="relative w-full">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <form onSubmit={e => e.preventDefault()} role="search" className="relative mt-6 w-full">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
                 <input
                     type="text"
                     autoFocus
                     aria-label="Search players by name"
-                    placeholder="Search by username or display name..."
+                    placeholder="Search by username or display name"
                     value={query}
                     onChange={e => setQuery(e.target.value)}
-                    className="h-12 w-full rounded-sm border border-input bg-card pl-12 pr-11 text-base text-foreground transition-shadow placeholder:text-muted-foreground focus:border-ring/60 focus:outline-none focus:ring-2 focus:ring-ring/50"
+                    onKeyDown={e => {
+                        if (e.key === "Escape") setQuery("")
+                    }}
+                    className="h-11 w-full rounded-[2px] border border-border bg-transparent pl-10 pr-11 text-base text-foreground transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground dark:bg-input/30 sm:text-sm"
                 />
                 {query && (
                     <button
                         type="button"
                         aria-label="Clear search"
                         onClick={() => setQuery("")}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                        className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-foreground"
                     >
-                        <X className="h-5 w-5" />
+                        <X className="h-4 w-4" aria-hidden />
                     </button>
                 )}
             </form>
 
-            {}
-            <div aria-live="polite" aria-busy={loading}>
+            <div aria-live="polite" aria-busy={loading} className="mt-8">
                 {searchFailed ? (
-
-                    <div className="flex flex-col items-center justify-center space-y-3 py-20">
-                        <AlertCircle className="h-10 w-10 text-muted-foreground/40" />
-                        <p className="text-sm text-muted-foreground">
-                            Couldn&apos;t load search results.
-                        </p>
+                    <Message>
+                        <p>Couldn&apos;t load search results.</p>
                         <button
                             type="button"
                             onClick={() => retry()}
-                            className="rounded-sm border border-input bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="h-9 rounded-[2px] border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                         >
                             Try again
                         </button>
-                    </div>
+                    </Message>
                 ) : loading && list.length === 0 ? (
                     <PlayerTableSkeleton />
                 ) : hasQuery && list.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center space-y-3 py-20">
-                        <Search className="h-10 w-10 text-muted-foreground/30" />
-                        <p className="text-sm text-muted-foreground">No players found for &ldquo;{debounced}&rdquo;.</p>
-                    </div>
+                    <Message>
+                        <p>No players found for &ldquo;{debounced}&rdquo;.</p>
+                    </Message>
                 ) : !hasQuery && list.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center space-y-3 py-20">
-                        <Users className="h-10 w-10 text-muted-foreground/30" />
-                        <p className="text-sm text-muted-foreground">Start typing a player&apos;s name to search.</p>
-                    </div>
+                    <Message>
+                        <p>Start typing a player&apos;s name to search.</p>
+                    </Message>
                 ) : (
-                    <div className="space-y-2">
-                        {}
-                        <p className="px-1 text-xs text-muted-foreground">
-                            {hasQuery
-                                ? `${list.length} result${list.length === 1 ? "" : "s"}`
-                                : "Recently added players"}
-                        </p>
-                        <p className="sr-only">{list.length} player{list.length === 1 ? "" : "s"} found.</p>
+                    <>
+                        <h2 className="mb-3 text-sm font-semibold text-foreground">
+                            {hasQuery ? (
+                                <>
+                                    <span className="font-mono tabular-nums">{list.length}</span> result{list.length === 1 ? "" : "s"}
+                                </>
+                            ) : (
+                                "Recently added"
+                            )}
+                        </h2>
                         <PlayerTable players={list} />
-                    </div>
+                    </>
                 )}
             </div>
         </div>
