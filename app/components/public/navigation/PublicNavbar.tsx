@@ -17,7 +17,7 @@ import { ModeToggle } from "@/app/components/ui/ModeToggle";
 import PublicNavItems from "@/app/components/public/navigation/PublicNavItems";
 import NavbarLogo from "@/app/components/public/navigation/NavbarLogo";
 import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
-import UserButton from "@/app/components/ui/UserButton";
+import { AccountMenu } from "@/app/components/account/AccountMenu";
 
 export default function PublicNavbar() {
     const pathname = usePathname();
@@ -43,8 +43,7 @@ export default function PublicNavbar() {
                         <RegionSeasonSelector />
                         <div className="h-6 w-px bg-border" />
                         <ModeToggle />
-                        <div className="h-6 w-px bg-border" />
-                        <UserButton />
+                        <AccountMenu variant="public" leadingDivider />
                     </div>
                 </div>
 
@@ -55,7 +54,7 @@ export default function PublicNavbar() {
                     </Link>
 
                     <div className="flex items-center gap-2">
-                        <UserButton />
+                        <AccountMenu variant="public" />
                         <Sheet open={open} onOpenChange={setOpen}>
                             <SheetTrigger asChild>
                                 <Button

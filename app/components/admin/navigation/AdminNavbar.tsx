@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, Users } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
     Sheet,
@@ -14,7 +14,7 @@ import {
     SheetTrigger,
 } from "@/app/components/ui/sheet";
 import { ModeToggle } from "@/app/components/ui/ModeToggle";
-import { LogoutButton } from "@/app/components/ui/LogoutButton";
+import { AccountMenu } from "@/app/components/account/AccountMenu";
 import AdminNavItems from "@/app/components/admin/navigation/AdminNavItems";
 import AdminRegionSeasonSelector from "@/app/components/admin/navigation/AdminRegionSeasonSelector";
 import { showsRegionSeasonPicker } from "@/app/components/admin/navigation/adminNav";
@@ -52,17 +52,7 @@ export default function AdminNavbar() {
                             </>
                         )}
                         <ModeToggle />
-                        <div className="h-6 w-px bg-border" />
-                        <LogoutButton />
-                        <div className="h-6 w-px bg-border" />
-                        <Button
-                            asChild
-                            variant="ghost"
-                            size="sm"
-                            className="h-10 w-10 sm:h-8 sm:w-8 p-0 rounded-sm"
-                        >
-                            <Link href="/" aria-label="Go to public site"><Users className="h-4 w-4" /></Link>
-                        </Button>
+                        <AccountMenu variant="admin" leadingDivider />
                     </div>
                 </div>
 
@@ -75,14 +65,7 @@ export default function AdminNavbar() {
                     </Link>
 
                     <div className="flex items-center gap-2">
-                        <Button
-                            asChild
-                            variant="ghost"
-                            size="sm"
-                            className="h-10 w-10 p-0 rounded-sm"
-                        >
-                            <Link href="/" aria-label="Go to public site"><Users className="h-4 w-4" /></Link>
-                        </Button>
+                        <AccountMenu variant="admin" />
                         <Sheet open={open} onOpenChange={setOpen}>
                             <SheetTrigger asChild>
                                 <Button
@@ -112,11 +95,6 @@ export default function AdminNavbar() {
                                             <AdminRegionSeasonSelector />
                                         </>
                                     )}
-                                    <div className="h-px bg-border" />
-                                    <LogoutButton
-                                        showLabel
-                                        className="w-full justify-start"
-                                    />
                                     <div className="h-px bg-border" />
                                     <div className="flex items-center justify-between">
                                         <span className="text-sm text-muted-foreground">
