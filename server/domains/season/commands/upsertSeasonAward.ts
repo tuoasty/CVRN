@@ -3,7 +3,7 @@ import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import {logger} from "@/server/utils/logger";
 import {insertSeasonAward} from "@/server/db/seasonHistory.repo";
-import {storeAwardAvatar} from "./storeAwardAvatar";
+import {refreshAwardAvatar} from "./refreshAwardAvatar";
 import {UpsertSeasonAwardInput} from "../types";
 
 export async function upsertSeasonAward(
@@ -24,7 +24,7 @@ export async function upsertSeasonAward(
             return result;
         }
 
-        const storeResult = await storeAwardAvatar(result.value.id, p.cdnUrl);
+        const storeResult = await refreshAwardAvatar(supabase, result.value.id);
         if (!storeResult.ok) {
             logger.error({awardId: result.value.id, error: storeResult.error}, "Failed to store award avatar");
             return Err(storeResult.error);

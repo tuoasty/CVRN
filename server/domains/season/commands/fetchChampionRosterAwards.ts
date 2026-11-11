@@ -51,6 +51,13 @@ export async function fetchChampionRosterAwards(
         }
 
         const oldPaths = await findSeasonAwardBucketPathsByCategory(supabase, seasonId, "champion_roster");
+
+        const deleteResult = await deleteSeasonAwardsByCategory(supabase, seasonId, "champion_roster");
+        if (!deleteResult.ok) {
+            logger.error({seasonId, error: deleteResult.error}, "fetchChampionRosterAwards: failed to clear old entries");
+            return deleteResult as Result<{count: number; skipped: boolean}>;
+        }
+
         if (oldPaths.ok) {
             const admin = getSupabaseAdmin();
             for (const path of oldPaths.value) {
@@ -61,12 +68,6 @@ export async function fetchChampionRosterAwards(
             }
         } else {
             logger.error({seasonId, error: oldPaths.error}, "fetchChampionRosterAwards: failed to look up old avatar paths");
-        }
-
-        const deleteResult = await deleteSeasonAwardsByCategory(supabase, seasonId, "champion_roster");
-        if (!deleteResult.ok) {
-            logger.error({seasonId, error: deleteResult.error}, "fetchChampionRosterAwards: failed to clear old entries");
-            return deleteResult as Result<{count: number; skipped: boolean}>;
         }
 
         let count = 0;

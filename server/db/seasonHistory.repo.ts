@@ -241,6 +241,20 @@ export async function findSeasonAwardBucketPath(
     return Ok(data?.avatar_bucket_path ?? null);
 }
 
+export async function findSeasonAwardPlayerRobloxId(
+    supabase: DBClient,
+    awardId: string
+): Promise<Result<string | null>> {
+    const {data, error} = await supabase
+        .from("season_awards")
+        .select("players(roblox_user_id)")
+        .eq("id", awardId)
+        .maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    const player = data?.players as {roblox_user_id: string | number | null} | null | undefined;
+    return Ok(player?.roblox_user_id != null ? String(player.roblox_user_id) : null);
+}
+
 export async function findSeasonAwardBucketPathsByCategory(
     supabase: DBClient,
     seasonId: string,

@@ -3,9 +3,8 @@
 import {useCallback, useState, type Dispatch, type SetStateAction} from "react";
 import {
     deleteSeasonAwardAction,
-    previewAwardAvatarAction,
     reorderSeasonAwardsAction,
-    saveAwardAvatarAction,
+    refreshAwardAvatarAction,
     setAllStarCaptainAction,
     updateSeasonAwardAction,
 } from "@/app/actions/season.actions";
@@ -82,9 +81,7 @@ export function useAwardEditor({awards, setAwards, refreshAwards, onRemoved, awa
     const refreshAvatar = useCallback(async (award: SeasonAwardEntryWithPlayer) => {
         setRefreshingId(award.id);
         try {
-            const preview = await previewAwardAvatarAction({playerId: award.players.id});
-            if (!preview.ok) { toast.error("Could not fetch avatar", preview.error.message); return; }
-            const saved = await saveAwardAvatarAction({awardId: award.id, cdnUrl: preview.value.cdnUrl});
+            const saved = await refreshAwardAvatarAction({awardId: award.id});
             if (!saved.ok) { toast.error("Failed to update avatar", saved.error.message); return; }
             await refreshAwards();
             toast.success(`Avatar updated for @${award.players.username}`);
