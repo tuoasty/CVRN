@@ -19,6 +19,7 @@ type Props = {
     syncingId: string | null;
     togglingCronId: string | null;
     isSuperAdmin: boolean;
+    canManage: boolean;
     onAdd: () => void;
     onSync: (cfg: SheetConfig) => void;
     onPreview: (cfg: SheetConfig) => void;
@@ -37,6 +38,7 @@ export default function SyncConfigSection({
     syncingId,
     togglingCronId,
     isSuperAdmin,
+    canManage,
     onAdd,
     onSync,
     onPreview,
@@ -53,10 +55,12 @@ export default function SyncConfigSection({
                     {title}
                     <span className="ml-2 font-mono text-xs tabular-nums text-muted-foreground">{rows.length}</span>
                 </h2>
-                <Button variant="ghost" size="sm" className="rounded-sm h-7 gap-1 text-xs" onClick={onAdd}>
-                    <Plus className="h-3 w-3" />
-                    Add
-                </Button>
+                {canManage && (
+                    <Button variant="ghost" size="sm" className="rounded-sm h-7 gap-1 text-xs" onClick={onAdd}>
+                        <Plus className="h-3 w-3" />
+                        Add
+                    </Button>
+                )}
             </div>
 
             {rows.length === 0 ? (
@@ -87,6 +91,7 @@ export default function SyncConfigSection({
                                             {lastSync ? new Date(lastSync).toLocaleString() : 'Never'}
                                         </td>
                                         <td>
+                                            {canManage ? (
                                             <Button
                                                 variant={cronEnabled ? 'default' : 'ghost'}
                                                 size="sm"
@@ -101,6 +106,9 @@ export default function SyncConfigSection({
                                                     ? <RefreshCw className="h-3 w-3 animate-spin" />
                                                     : <Clock className="h-3 w-3" />}
                                             </Button>
+                                            ) : (
+                                                <span className="text-xs font-mono text-muted-foreground">{cronEnabled ? 'On' : 'Off'}</span>
+                                            )}
                                         </td>
                                         <td>
                                             <div className="flex gap-1">
@@ -116,13 +124,17 @@ export default function SyncConfigSection({
                                                         : <Play className="h-3 w-3" />}
                                                     Sync
                                                 </Button>
-                                                <Button variant="outline" size="sm" className="rounded-sm gap-1" onClick={() => onPreview(cfg)}>
-                                                    <Eye className="h-3 w-3" />
-                                                    Preview
-                                                </Button>
-                                                <Button variant="outline" size="sm" className="rounded-sm" onClick={() => onEdit(cfg)} aria-label="Edit config">
-                                                    <Pencil className="h-3 w-3" />
-                                                </Button>
+                                                {canManage && (
+                                                    <>
+                                                        <Button variant="outline" size="sm" className="rounded-sm gap-1" onClick={() => onPreview(cfg)}>
+                                                            <Eye className="h-3 w-3" />
+                                                            Preview
+                                                        </Button>
+                                                        <Button variant="outline" size="sm" className="rounded-sm" onClick={() => onEdit(cfg)} aria-label="Edit config">
+                                                            <Pencil className="h-3 w-3" />
+                                                        </Button>
+                                                    </>
+                                                )}
                                                 <Button variant="ghost" size="sm" className="rounded-sm" onClick={() => onHistory(cfg)} title="View sync history" aria-label="View sync history">
                                                     <History className="h-3 w-3" />
                                                 </Button>

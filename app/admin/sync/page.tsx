@@ -31,7 +31,7 @@ import {
     getLastSyncTimesAction,
 } from '@/app/actions/sheets.actions';
 import { useRegions } from '@/app/hooks';
-import { useIsSuperAdmin } from '@/app/admin/AdminRoleProvider';
+import { useHasGroup, useIsSuperAdmin } from '@/app/admin/AdminRoleProvider';
 import { AdminPageHeader } from '@/app/components/admin/AdminPageHeader';
 import { OptionRow } from '@/app/components/filters/OptionRow';
 import { REGION_ORDER } from '@/app/features/leaderboard/useLeaderboardFilters';
@@ -110,6 +110,7 @@ function AdminSyncContent() {
     const {regions} = useRegions();
     const router = useRouter();
     const isSuperAdmin = useIsSuperAdmin();
+    const canManage = useHasGroup('admin');
 
     const [configs, setConfigs] = useState<SheetConfig[]>([]);
     const [configsLoading, setConfigsLoading] = useState(true);
@@ -407,12 +408,12 @@ function AdminSyncContent() {
                     icon={Sheet}
                     title="Sheet Sync"
                     description="Google Sheets sync configs, grouped by season number"
-                    actions={
+                    actions={canManage ? (
                         <Button onClick={() => handleOpenAdd()} className="rounded-sm gap-2">
                             <Plus className="h-4 w-4" />
                             Add Config
                         </Button>
-                    }
+                    ) : undefined}
                 />
 
                 {(configsLoading || seasonsLoading) && (
@@ -453,6 +454,7 @@ function AdminSyncContent() {
                                     syncingId={syncingId}
                                     togglingCronId={togglingCronId}
                                     isSuperAdmin={isSuperAdmin}
+                                    canManage={canManage}
                                     onAdd={() => handleOpenAdd(sheetType)}
                                     onSync={handleSync}
                                     onPreview={handlePreview}

@@ -231,8 +231,11 @@ export async function syncMatchResults(
             }
 
             let isForfeit = result.isForfeit;
-            let forfeitingTeam: 'home' | 'away' | undefined;
-            if (isForfeit) {
+            let forfeitingTeam: 'home' | 'away' | 'both' | undefined;
+            if (result.isDoubleForfeit) {
+                isForfeit = true;
+                forfeitingTeam = 'both';
+            } else if (isForfeit) {
                 const winnerNorm = result.winner ? teamNameKey(result.winner) : '';
                 if (winnerNorm === teamNameKey(result.homeTeamName)) {
                     forfeitingTeam = 'away';

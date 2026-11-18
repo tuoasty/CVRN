@@ -82,7 +82,7 @@ describe("updateSession on /admin", () => {
     it("sends a user to their landing page from a page their groups cannot open", async () => {
         mocks.getCurrentGroups.mockResolvedValue(Ok(["transaction"]));
 
-        const response = await updateSession(new NextRequest("http://localhost:3000/admin/sync"));
+        const response = await updateSession(new NextRequest("http://localhost:3000/admin/standings"));
 
         expect(mocks.signOut).not.toHaveBeenCalled();
         expect(response.headers.get("location")).toBe("http://localhost:3000/admin/teams");

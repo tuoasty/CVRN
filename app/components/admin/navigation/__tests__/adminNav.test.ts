@@ -24,7 +24,7 @@ describe("buildAdminNav", () => {
     });
 
     it("renders limited groups flat with no groups", () => {
-        expect(buildAdminNav(["transaction"]).primary.map(p => p.href)).toEqual(["/admin/teams", "/admin/sync/history"]);
+        expect(buildAdminNav(["transaction"]).primary.map(p => p.href)).toEqual(["/admin/teams", "/admin/sync", "/admin/sync/history"]);
         expect(buildAdminNav(["transaction"]).groups).toEqual([]);
         expect(buildAdminNav(["information"]).primary.map(p => p.href)).toEqual(["/admin/game-data"]);
         expect(buildAdminNav(["statistics"]).primary.map(p => p.href)).toEqual(["/admin/stats"]);

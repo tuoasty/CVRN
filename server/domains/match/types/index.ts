@@ -59,7 +59,7 @@ export type MatchResultInput = {
     matchMvpPlayerId?: string | null;
     loserMvpPlayerId?: string | null;
     isForfeit?: boolean;
-    forfeitingTeam?: "home" | "away";
+    forfeitingTeam?: "home" | "away" | "both";
 };
 
 export type MatchContext = {

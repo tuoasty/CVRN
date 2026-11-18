@@ -45,6 +45,39 @@ export function validateAndCalculateMatchResult(
 
         const minSets = match.best_of === 5 ? 3 : 2;
 
+        if (input.forfeitingTeam === "both") {
+            setsToInsert = Array.from({ length: minSets }, (_, i) => ({
+                setNumber: i + 1,
+                homeScore: 0,
+                awayScore: 0,
+            }));
+
+            if (match.match_type === "season") {
+                homeTeamLvr = FORFEIT_LVR.forfeiter;
+                awayTeamLvr = FORFEIT_LVR.forfeiter;
+                pointDiff = 0;
+                homeTeamPoints = 0;
+                awayTeamPoints = 0;
+                homeTeamBonus = 0;
+                awayTeamBonus = 0;
+            }
+
+            return Ok({
+                homeSetsWon: 0,
+                awaySetsWon: 0,
+                homeTeamLvr,
+                awayTeamLvr,
+                homeTeamPoints,
+                awayTeamPoints,
+                homeTeamBonus,
+                awayTeamBonus,
+                pointDiff,
+                setsToInsert,
+                matchMvpPlayerId: null,
+                loserMvpPlayerId: null,
+            });
+        }
+
         if (input.forfeitingTeam === "home") {
             awaySetsWon = minSets;
             homeSetsWon = 0;

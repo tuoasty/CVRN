@@ -15,6 +15,15 @@ const COL_REFEREE = 19;
 const COL_MEDIA = 21;    
 
 const BYE_AWAY_TOKENS = new Set(["n/a", "na", "by round", "(by round)", "bye"]);
+const ZERO_ZERO_SET = /^0\s*-\s*0$/;
+
+function isDoubleForfeitRow(row: string[]): boolean {
+    const filled = row
+        .slice(COL_SET_START, COL_SET_END + 1)
+        .map(cell => cell?.trim() ?? '')
+        .filter(cell => cell && cell.toLowerCase() !== 'xx');
+    return filled.length > 0 && filled.every(cell => ZERO_ZERO_SET.test(cell));
+}
 
 function parseSetScore(
     cell: string,
@@ -101,7 +110,8 @@ export function parseQualifierRows(
         const scheduleRaw = row[COL_SCHEDULE]?.trim() || null;
         const winnerRaw = row[COL_WINNER]?.trim() || null;
         const noteRaw = row[COL_NOTE]?.trim() ?? '';
-        let isForfeit = noteRaw.toUpperCase() === 'FF';
+        const isDoubleForfeit = isDoubleForfeitRow(row);
+        let isForfeit = isDoubleForfeit || noteRaw.toUpperCase() === 'FF';
         const referees = (row[COL_REFEREE]?.trim() || '').split('/').map(s => s.trim()).filter(Boolean);
         const media = (row[COL_MEDIA]?.trim() || '').split('/').map(s => s.trim()).filter(Boolean);
 
@@ -149,6 +159,7 @@ export function parseQualifierRows(
             sets,
             winner: winnerRaw,
             isForfeit,
+            isDoubleForfeit,
             isByeAway,
             scheduleRaw,
             referees,

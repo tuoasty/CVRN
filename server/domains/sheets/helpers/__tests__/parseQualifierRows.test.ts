@@ -73,6 +73,33 @@ describe('parseQualifierRows — bye handling', () => {
   })
 })
 
+describe('parseQualifierRows — double forfeit', () => {
+  it('flags 0-0 sets as a double forfeit even when the note column says FF and the winner is NONE', () => {
+    const { results, errors } = parseOne({ 4: '1-10', 6: 'Bankai', 8: 'Mongolz', 12: '0-0', 13: '0-0', 16: 'NONE', 17: 'FF' })
+    expect(errors).toHaveLength(0)
+    expect(results[0].isForfeit).toBe(true)
+    expect(results[0].isDoubleForfeit).toBe(true)
+  })
+
+  it('flags 0-0 sets as a double forfeit without a note', () => {
+    const { results } = parseOne({ 4: '1-10', 6: 'Bankai', 8: 'Mongolz', 12: '0 - 0', 13: '0-0', 14: 'xx' })
+    expect(results[0].isForfeit).toBe(true)
+    expect(results[0].isDoubleForfeit).toBe(true)
+  })
+
+  it('does not flag a single forfeit', () => {
+    const { results } = parseOne({ 4: '1-2', 6: 'Nemesis', 8: 'Poullet', 12: '0 - 25', 13: '0 - 25', 16: 'Poullet', 17: 'FF' })
+    expect(results[0].isForfeit).toBe(true)
+    expect(results[0].isDoubleForfeit).toBe(false)
+  })
+
+  it('does not flag a row with no scores', () => {
+    const { results } = parseOne({ 4: '1-3', 6: 'Alpha', 8: 'Beta' })
+    expect(results[0].isForfeit).toBe(false)
+    expect(results[0].isDoubleForfeit).toBe(false)
+  })
+})
+
 describe('parseQualifierRows — color-driven score orientation', () => {
   const row = { 4: '1-M1', 6: 'Alpha', 8: 'Beta', 12: '25-20' }
 

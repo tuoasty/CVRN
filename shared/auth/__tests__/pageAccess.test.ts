@@ -12,7 +12,8 @@ describe("canAccessPath", () => {
         [["awards"], "/admin/seasons", true],
         [["awards"], "/admin/standings", false],
         [["transaction"], "/admin/sync/history", true],
-        [["transaction"], "/admin/sync", false],
+        [["transaction"], "/admin/sync", true],
+        [["transaction"], "/admin/standings", false],
         [["transaction"], "/admin/teams", true],
         [["transaction"], "/admin/teams/as/season-3/nonchalant", false],
         [["graphics"], "/admin/matches", true],
@@ -35,7 +36,7 @@ describe("canAccessPath", () => {
     });
 
     it("needs a segment boundary", () => {
-        expect(canAccessPath(["transaction"], "/admin/sync/history-foo")).toBe(false);
+        expect(canAccessPath(["transaction"], "/admin/teams-foo")).toBe(false);
     });
 
     it("denies an empty group list everywhere in admin", () => {

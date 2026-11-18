@@ -124,3 +124,26 @@ describe("points_without_bonus (EU) computation", () => {
         expect(res.value.awayTeamBonus).toBe(0);
     });
 });
+
+describe("double forfeit", () => {
+    it.each(["lvr", "points", "points_without_bonus"] as const)("%s → both teams take the forfeiter penalty, 0-0 sets", method => {
+        const res = ok(validateAndCalculateMatchResult({
+            sets: [],
+            isForfeit: true,
+            forfeitingTeam: "both",
+        }, seasonBo3, method));
+        expect(res.value.homeSetsWon).toBe(0);
+        expect(res.value.awaySetsWon).toBe(0);
+        expect(res.value.homeTeamLvr).toBe(-10);
+        expect(res.value.awayTeamLvr).toBe(-10);
+        expect(res.value.homeTeamPoints).toBe(0);
+        expect(res.value.awayTeamPoints).toBe(0);
+        expect(res.value.homeTeamBonus).toBe(0);
+        expect(res.value.awayTeamBonus).toBe(0);
+        expect(res.value.pointDiff).toBe(0);
+        expect(res.value.setsToInsert).toEqual([
+            { setNumber: 1, homeScore: 0, awayScore: 0 },
+            { setNumber: 2, homeScore: 0, awayScore: 0 },
+        ]);
+    });
+});

@@ -70,7 +70,7 @@ function toRow(m: MatchWithDetails, home: TeamWithRegion, away: TeamWithRegion, 
         awaySets,
         sets: [...m.sets].sort((a, b) => a.set_number - b.set_number).map(s => ({home: s.home_score, away: s.away_score})),
         isForfeit: !!match.is_forfeit,
-        impact: impactFor(m, input, homeWon),
+        impact: homeWon || awayWon ? impactFor(m, input, homeWon) : null,
     };
 }
 

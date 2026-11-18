@@ -5,6 +5,8 @@ import {revalidatePath} from "next/cache";
 import {revalidatePublicData, SHEET_SYNC_TAGS} from "@/server/cache/revalidate";
 import {Err, Ok} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
+import {getSupabaseAdmin} from "@/server/supabase/admin";
+import type {DBClient} from "@/shared/types/db";
 import {readSheetRangeWithColors} from "@/server/utils/googleSheets";
 import {parseTeamsSheet} from "@/server/domains/sheets/helpers/parseTeamsSheet";
 import {parseQualifierRows} from "@/server/domains/sheets/helpers/parseQualifierRows";
@@ -182,9 +184,9 @@ export async function resetConfigAction(configId: string, options: {
 
 export async function runSyncAction(configId: string) {
     const supabase = await createServerSupabase();
-    const guard = await requireGroups(supabase, ["admin"], { action: "runSync", target: { configId } });
+    const guard = await requireGroups(supabase, ["admin", "transaction"], { action: "runSync", target: { configId } });
     if (!guard.ok) return guard;
-    const result = await syncSheet(supabase, configId, 'manual');
+    const result = await syncSheet(getSupabaseAdmin() as unknown as DBClient, configId, 'manual');
     if (result.ok) {
         revalidatePath('/admin/sync');
         revalidatePublicData(SHEET_SYNC_TAGS);

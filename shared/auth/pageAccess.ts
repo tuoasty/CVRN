@@ -23,7 +23,7 @@ export const PAGE_ACCESS: PageAccessEntry[] = [
     { prefix: "/admin/specs/qualify", groups: ["admin", "specs"] },
     { prefix: "/admin/overalls", groups: ["admin", "player_cards"] },
     { prefix: "/admin/cards", groups: ["admin", "player_cards"] },
-    { prefix: "/admin/sync", groups: ["admin"] },
+    { prefix: "/admin/sync", groups: ["admin", "transaction"] },
     { prefix: "/admin/sync/history", groups: ["admin", "transaction"] },
     { prefix: "/admin/audit", groups: ["admin"] },
     { prefix: "/admin/cache", groups: ["super_admin"] },
