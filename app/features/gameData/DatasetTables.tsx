@@ -12,7 +12,7 @@ import { createAbilityLookup, describeAbility, type AbilityLookup } from '@/serv
 import { NO_ROLL_VALUE } from '@/server/domains/gameData/helpers/datasets/crossCheck'
 import { rarityForWeight } from '@/server/domains/gameData/helpers/datasets/rarityForWeight'
 import { createKitResolver, resolveKit, resolveTuning, type ResolvedTune } from '@/server/domains/gameData/helpers/specLoadouts/resolveKit'
-import type { SpecLoadout } from '@/server/domains/gameData/types/datasets'
+import type { ServeStyle, ServeStyleValue, SpecLoadout } from '@/server/domains/gameData/types/datasets'
 import { formatGameHeight, formatGameHeightRange } from '@/shared/utils/height'
 import { cn } from '@/lib/utils'
 
@@ -328,6 +328,7 @@ export function SpecLoadoutTable({ loadouts, links = {} }: { loadouts: SpecLoado
                     <col className="w-20" />
                     <col className="w-20" />
                     <col className="w-24" />
+                    <col className="w-48" />
                     <col />
                 </colgroup>
                 <thead>
@@ -337,6 +338,7 @@ export function SpecLoadoutTable({ loadouts, links = {} }: { loadouts: SpecLoado
                         <th className={cn(TH, 'px-2 text-right')}>Passive</th>
                         <th className={cn(TH, 'px-2 text-right')}>Active</th>
                         <th className={cn(TH, 'px-2 text-right')}>Plain text</th>
+                        <th className={TH}>Styles</th>
                         <th className={TH}>Tunes</th>
                     </tr>
                 </thead>
@@ -350,6 +352,11 @@ export function SpecLoadoutTable({ loadouts, links = {} }: { loadouts: SpecLoado
                                 <td className={cn(TD, NUM, 'px-2')}>{l.passive.length}</td>
                                 <td className={cn(TD, NUM, 'px-2')}>{l.active.length}</td>
                                 <td className={cn(TD, NUM, 'px-2')}>{row?.text ?? 0}</td>
+                                <td className={cn(TD, 'text-xs')}>
+                                    {(l.styles ?? []).length > 0
+                                        ? (l.styles ?? []).map(s => `${s.name} ${s.value}`).join(', ')
+                                        : <span className="text-muted-foreground">None</span>}
+                                </td>
                                 <td className={TD}>
                                     {row?.tunes.length
                                         ? <ul className="space-y-0.5 font-mono text-xs tabular-nums text-secondary">{row.tunes.map((t, i) => <li key={i}>{tuneText(t)}</li>)}</ul>
@@ -361,6 +368,46 @@ export function SpecLoadoutTable({ loadouts, links = {} }: { loadouts: SpecLoado
                 </tbody>
             </table>
         </div>
+    )
+}
+
+export function ServeStyleTable({ styles }: { styles: ServeStyle[] }) {
+    return (
+        <table className="w-full text-sm">
+            <thead>
+                <tr className="border-b border-border">
+                    <th className={TH}>Style</th>
+                </tr>
+            </thead>
+            <tbody>
+                {styles.map(s => (
+                    <tr key={s.name} className="border-b border-border last:border-b-0">
+                        <td className={TD}>{s.name}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    )
+}
+
+export function ServeStyleValueTable({ values }: { values: ServeStyleValue[] }) {
+    return (
+        <table className="w-full text-sm">
+            <thead>
+                <tr className="border-b border-border">
+                    <th className={TH}>Key</th>
+                    <th className={cn(TH, 'text-right')}>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {values.map(v => (
+                    <tr key={v.key} className="border-b border-border last:border-b-0">
+                        <td className={cn(TD, 'font-mono text-xs')}>{v.key}</td>
+                        <td className={cn(TD, NUM)}>{v.value}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
     )
 }
 

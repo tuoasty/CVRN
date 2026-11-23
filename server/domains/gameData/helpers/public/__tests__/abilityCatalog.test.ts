@@ -24,10 +24,10 @@ function all(groups: ReturnType<typeof catalog>['physical']) {
 }
 
 describe('buildAbilityCatalog', () => {
-    it('lists only rollables, 22 physicals and 43 technicals', () => {
+    it('lists only rollables, 23 physicals and 40 technicals', () => {
         const c = catalog()
-        expect(all(c.physical)).toHaveLength(22)
-        expect(all(c.technical)).toHaveLength(43)
+        expect(all(c.physical)).toHaveLength(23)
+        expect(all(c.technical)).toHaveLength(40)
         expect(all(c.technical).some(a => a.key === 'Nerfed Butterman')).toBe(false)
     })
 

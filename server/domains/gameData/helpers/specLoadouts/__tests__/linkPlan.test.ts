@@ -11,7 +11,7 @@ const specs: LinkSpec[] = [
 ]
 
 const loadout = (key: string, height: number): SpecLoadout => ({
-    key, name: key, height, cooldown: 1, endOnSpike: false, maxPower: 1, activeMaxPower: 1, passive: [], active: [], tuning: [],
+    key, name: key, height, cooldown: 1, endOnSpike: false, maxPower: 1, activeMaxPower: 1, passive: [], active: [], tuning: [], styles: [],
 })
 
 describe('normalizeSpecName', () => {

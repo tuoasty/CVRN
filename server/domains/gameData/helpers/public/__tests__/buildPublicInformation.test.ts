@@ -16,6 +16,8 @@ const payloads = {
     specLoadouts: fixtureSpecLoadouts(),
     builds: fixtureDataset('builds.txt', 'builds'),
     buildPassives: fixtureDataset('build-passives.txt', 'buildPassives'),
+    serveStyles: fixtureDataset('serve-styles.txt', 'serveStyles'),
+    serveStyleValues: fixtureDataset('serve-style-values.txt', 'serveStyleValues'),
 }
 
 describe('buildPublicInformation', () => {
@@ -25,14 +27,44 @@ describe('buildPublicInformation', () => {
             inspectors: {},
             heights: [],
             kits: {},
+            customKits: {},
             builds: { groups: [], physicals: [], technicals: [], heights: [] },
+            serveStyles: [],
         })
+    })
+
+    it('builds custom kits from the paid loadouts', () => {
+        const paid = fixtureDataset('spec-loadouts-paid.txt', 'specLoadoutsPaid', { 1: 'specLoadoutsPaid' })
+        const info = buildPublicInformation({ payloads: { ...payloads, specLoadoutsPaid: paid }, terms, settings: {} })
+        expect(Object.keys(info.customKits)).toEqual(Object.keys(info.kits))
+        for (const kit of Object.values(info.customKits)) {
+            for (const entry of [...kit.active, ...kit.passive]) {
+                if (entry.target) expect(info.inspectors[entry.target], entry.target).toBeDefined()
+            }
+        }
+    })
+
+    it('has no custom kits without a paid file', () => {
+        expect(buildPublicInformation({ payloads, terms, settings: {} }).customKits).toEqual({})
+    })
+
+    it('lists every serve style with its odds', () => {
+        const info = buildPublicInformation({ payloads, terms, settings: {} })
+        expect(info.serveStyles.map(s => [s.name, s.tunable])).toEqual([
+            ['Curveball', 'CurveballSide'],
+            ['Dive Bomb', 'DiveBombTopDrop'],
+            ['Hangtime', 'HangtimeTopDrop'],
+            ['Knuckleball', 'KnuckleballFloat'],
+            ['Trapdoor', 'TrapdoorFloat'],
+            ['Long Haul', 'LongHaulFloat'],
+            ['Razor', 'RazorFloat'],
+        ])
     })
 
     it('fills abilities, heights and one inspector per rollable', () => {
         const info = buildPublicInformation({ payloads, terms, settings: {} })
         const rollables = [...info.abilities.physical, ...info.abilities.technical].flatMap(g => g.abilities)
-        expect(rollables).toHaveLength(65)
+        expect(rollables).toHaveLength(63)
         for (const a of rollables) expect(info.inspectors[a.key]?.kind).toBe(a.kind)
         expect(info.heights.map(c => c.foot)).toEqual([5, 6, 7])
     })
@@ -63,7 +95,7 @@ describe('buildPublicInformation', () => {
     it('fills builds and an inspector for every build effect target', () => {
         const info = buildPublicInformation({ payloads, terms, settings: {} })
         const builds = info.builds.groups.flatMap(g => g.builds)
-        expect(builds).toHaveLength(52)
+        expect(builds).toHaveLength(51)
         expect(info.builds.heights).toHaveLength(24)
         for (const build of builds) {
             for (const effect of build.effects) {

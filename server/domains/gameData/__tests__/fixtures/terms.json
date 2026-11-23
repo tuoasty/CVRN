@@ -405,7 +405,7 @@
     "category": "movement",
     "label": null,
     "unit": null,
-    "template": "Mid-air turn takes {v}s",
+    "template": "Able to turn in mid-air for {v}s",
     "grants": null,
     "verified": false
   },
@@ -645,7 +645,7 @@
     "category": "attack",
     "label": null,
     "unit": null,
-    "template": "Feints are pushed down by {v}",
+    "template": "Back-tilted attack at power 3 or lower is pushed down by {v}.",
     "grants": null,
     "verified": true
   },
@@ -655,7 +655,7 @@
     "category": "attack",
     "label": null,
     "unit": null,
-    "template": "Feints keep dropping in flight ({v})",
+    "template": "Pushed down by {v} a few more times during flight.",
     "grants": null,
     "verified": true
   },
@@ -1135,7 +1135,7 @@
     "category": "set",
     "label": null,
     "unit": null,
-    "template": "Obtains a 16 power spike when hitting {v}s after a set",
+    "template": "Increased spike power when hitting within {v}s of a set",
     "grants": null,
     "verified": true
   },
@@ -1596,6 +1596,86 @@
     "label": null,
     "unit": null,
     "template": "and below",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "CurveballSide",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Side spin serves get +{v} sideways kick, on top of the base value of 1.6",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "DiveBombTopDrop",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Topspin serves get +{v} dip on top of the base value of 5",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "HangtimeTopDrop",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Backspin serves hang {v} longer than the base value of 5",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "InstantSetPower",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Spike power increased to {v}",
+    "grants": null,
+    "verified": true
+  },
+  {
+    "kind": "param",
+    "tag": "KnuckleballFloat",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Plain float serves get a +{v} float boost",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "LongHaulFloat",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Deep float serves get a +{v} float boost",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "RazorFloat",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Cutter float serves get a +{v} float boost",
+    "grants": null,
+    "verified": false
+  },
+  {
+    "kind": "param",
+    "tag": "TrapdoorFloat",
+    "category": "special",
+    "label": null,
+    "unit": null,
+    "template": "Dropper float serves get a +{v} float boost",
     "grants": null,
     "verified": false
   }

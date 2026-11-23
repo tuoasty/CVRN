@@ -1,6 +1,10 @@
-import type { Ability, GameDatasetPayloads } from '../../types/datasets'
-import type { InspectorData, PublicKitEntry, PublicSpecKit } from '../../types/publicInformation'
-import { capitalize } from '../../terms/format'
+import type { Ability, GameDatasetPayloads, ServeStyleValue, SpecStyle } from '../../types/datasets'
+import type { InspectorData, PublicKitEntry, PublicKitStyle, PublicSpecKit } from '../../types/publicInformation'
+import type { TermBook } from '../../terms/types'
+import { capitalize, fmt } from '../../terms/format'
+import { renderValue, templateFormat } from '../../terms/segments'
+import { styleTunables } from '../serveStyles/styleTunable'
+import { describeStyleValue } from './serveStyles'
 import { createKitResolver, kitTarget, resolveKit, resolveTuning, type KitEntry, type ResolvedTune } from '../specLoadouts/resolveKit'
 import { applyTunes, type InspectorContext } from './inspector'
 
@@ -25,6 +29,16 @@ function toEntry(entry: KitEntry, tunes: ResolvedTune[], inspectorFor: (key: str
     return result
 }
 
+function toStyle(style: SpecStyle, values: ServeStyleValue[], terms: TermBook): PublicKitStyle {
+    const matches = styleTunables(style.name, values)
+    if (matches.length !== 1) return { name: style.name, text: '', regular: null }
+    const { key, value: regularValue } = matches[0]
+    const template = terms.params.get(key)?.template
+    const slot = template ? templateFormat(template)?.slot : undefined
+    const regular = style.value === regularValue ? null : slot ? renderValue(slot, regularValue) : fmt(regularValue)
+    return { name: style.name, text: describeStyleValue(key, style.value, terms), regular }
+}
+
 export function buildSpecKits(
     payloads: Partial<GameDatasetPayloads>,
     ctx: InspectorContext,
@@ -34,6 +48,7 @@ export function buildSpecKits(
     const abilityByKey = new Map(abilities.map(a => [a.key, a]))
     const resolve = createKitResolver(abilityByKey.keys())
 
+    const styleValues = payloads.serveStyleValues ?? []
     const kits: Record<string, PublicSpecKit> = {}
     for (const loadout of payloads.specLoadouts ?? []) {
         const kit = resolveKit(loadout, resolve)
@@ -43,6 +58,7 @@ export function buildSpecKits(
             cooldown: loadout.cooldown,
             active: entries.filter(e => e.slot === 'Active'),
             passive: entries.filter(e => e.slot === 'Passive'),
+            styles: (loadout.styles ?? []).map(style => toStyle(style, styleValues, ctx.context.terms)),
         }
         if (loadout.lifetime !== undefined) result.lifetime = loadout.lifetime
         kits[loadout.key] = result

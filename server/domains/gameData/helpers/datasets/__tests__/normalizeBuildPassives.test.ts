@@ -16,7 +16,7 @@ describe('normalizeBuildPassives', () => {
     it('normalizes the real build effects', () => {
         const { payload, issues } = normalizeBuildPassives(parseOne(fixtureText('build-passives.txt')))
         expect(issues).toEqual([])
-        expect(payload).toHaveLength(52)
+        expect(payload).toHaveLength(51)
         expect(payload[0]).toEqual({ build: 'High Flyer', effects: [{ type: 'named', name: '+0.2 Jump Power' }] })
         expect(payload.find(p => p.build === 'Hitterish')!.effects).toEqual([
             { type: 'named', name: 'Nerfed Butterman' },

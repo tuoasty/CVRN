@@ -75,11 +75,31 @@ describe('parseLuaData', () => {
         expect(statements[3].value).toBe(5)
     })
 
-    it('records statement line and source and ignores return', () => {
+    it('records statement line and source', () => {
         const statements = parseOk('\nA.B = {\n  1,\n} :: { T }\nreturn A')
-        expect(statements).toHaveLength(1)
+        expect(statements).toHaveLength(2)
         expect(statements[0].line).toBe(2)
         expect(statements[0].source).toBe('A.B = {\n  1,\n} :: { T }')
+    })
+
+    it('keeps a return statement with a null target', () => {
+        const statements = parseOk('return { A = 1 }')
+        expect(statements).toMatchObject([{ target: null, line: 1, value: { kind: 'table' } }])
+        expect(statements[0].source).toBe('return { A = 1 }')
+    })
+
+    it('keeps parsing after a return so joined files yield every statement', () => {
+        const statements = parseOk('return { 1 }\n\nX.Y = { 2 }\n\nreturn { 3 }')
+        expect(statements.map(s => s.target)).toEqual([null, 'X.Y', null])
+    })
+
+    it('keeps a returned call', () => {
+        const statements = parseOk('return Tunables.Define("Style", { CurveballSide = 1 })')
+        expect(statements[0].value).toMatchObject({ kind: 'call', callee: 'Tunables.Define' })
+    })
+
+    it('skips a bare return', () => {
+        expect(parseOk('return')).toEqual([])
     })
 
     it('reports the line and column of a syntax error', () => {

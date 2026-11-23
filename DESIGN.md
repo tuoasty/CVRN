@@ -312,7 +312,7 @@ Shared components live in `app/components/filters/`.
 - **Selected state:** the identity motif. Ink, semibold, 2px Ink underline inset to the text. Unselected options are Quiet Ink medium, Ink on hover. No fill, no box, no cobalt.
 - **Option rows (`OptionRow`):** 12px semibold Quiet Ink label, then plain-text options. "All" first, separated by a 1px Rule divider. Season numbers in mono. Multi-select marks every selected value; "All" clears.
 - **View tabs (`ViewTabs`):** tabs on a full-width Rule line; the selected tab carries a 2px Ink bottom border over it. Page tools sit at the right end of the line and drop below it when space runs out. `StatViewSelector` fits the rule to the tabs' width.
-- **Inline switch (`InlineSwitch`):** two or three text options separated by a Rule-tone `/`, the selected one underlined.
+- **Inline switch (`InlineSwitch`):** two to four short text options separated by a Rule-tone `/`, the selected one underlined.
 - **Inline over dropdown.** When every option fits on one line (regions, seasons, positions, stat views), render them inline. A popover is for controls that can't be inline (a date calendar) and for global context (the navbar region/season picker). No floating square dropdowns for choices that fit in the page.
 
 ### Navigation

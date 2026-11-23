@@ -21,7 +21,7 @@ describe('createNameResolver', () => {
 
 describe('buildBuildIndex', () => {
     it('resolves the real build effects', () => {
-        expect(index).toHaveLength(54)
+        expect(index).toHaveLength(52)
         expect(find('High Flyer').effects).toEqual([{ type: 'text', name: '+0.2 Jump Power' }])
         expect(find('Bandit').effects).toEqual([{ type: 'ability', name: 'Nerfed Butterman', key: 'Nerfed Butterman' }])
         expect(find('Tiny King').effects).toEqual([{ type: 'bonus', name: 'Stance', key: 'Stance' }])
@@ -34,7 +34,7 @@ describe('buildBuildIndex', () => {
     })
 
     it('marks builds without effects', () => {
-        expect(index.filter(b => !b.hasEffects).map(b => b.name)).toEqual(['Anchor', 'Bulldozer'])
+        expect(index.filter(b => !b.hasEffects).map(b => b.name)).toEqual(['Anchor'])
     })
 
     it('joins effects to builds ignoring case', () => {

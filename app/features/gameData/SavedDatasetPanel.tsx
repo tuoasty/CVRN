@@ -4,7 +4,7 @@ import type { GameDatasetKind } from '@/server/domains/gameData/types/datasets'
 import type { StoredGameDatasets } from '@/server/domains/gameData/types/preview'
 import type { GameTerm } from '@/server/domains/gameData/terms/types'
 import { DATASET_LABELS, DATASET_ROOTS } from '@/server/domains/gameData/helpers/datasets/registry'
-import { AbilityTable, AttributeTable, BuildEffectsTable, BuildTable, HeightTable, RarityTable, SpecLoadoutTable } from './DatasetTables'
+import { AbilityTable, AttributeTable, BuildEffectsTable, BuildTable, HeightTable, RarityTable, ServeStyleTable, ServeStyleValueTable, SpecLoadoutTable } from './DatasetTables'
 
 export default function SavedDatasetPanel({ kind, stored, terms }: { kind: GameDatasetKind; stored: StoredGameDatasets; terms: GameTerm[] }) {
     const { payloads } = stored
@@ -24,6 +24,9 @@ export default function SavedDatasetPanel({ kind, stored, terms }: { kind: GameD
             {kind === 'heights' && payloads.heights && <HeightTable heights={payloads.heights} />}
             {kind === 'builds' && payloads.builds && <BuildTable builds={payloads.builds} />}
             {kind === 'buildPassives' && payloads.buildPassives && <BuildEffectsTable entries={payloads.buildPassives} />}
+            {kind === 'specLoadoutsPaid' && payloads.specLoadoutsPaid && <SpecLoadoutTable loadouts={payloads.specLoadoutsPaid} links={links} />}
+            {kind === 'serveStyles' && payloads.serveStyles && <ServeStyleTable styles={payloads.serveStyles} />}
+            {kind === 'serveStyleValues' && payloads.serveStyleValues && <ServeStyleValueTable values={payloads.serveStyleValues} />}
         </div>
     )
 }

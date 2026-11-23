@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildImportPreview } from '../../helpers/buildImportPreview'
-import { createAbilityLookup, describeAbility, describeOption, unmappedTags } from '../describeAbility'
+import { createAbilityLookup, describeAbility, describeOption, unmappedStyleTags, unmappedTags } from '../describeAbility'
 import { createTermBook, EMPTY_TERM_BOOK, renderTemplate, unknownPlaceholders } from '../template'
 import type { Ability } from '../../types/datasets'
 import type { GameTerm } from '../types'
@@ -49,13 +49,13 @@ describe('ability wording', () => {
         expect(texts('Butterman')).toEqual(['Increased dive distance by 25%'])
         expect(texts('Step Approach')).toEqual([
             'Toggle, off by default',
-            'Reduced spike jump strength by 17%',
+            'Reduced spike jump strength by 9%',
             'Spike windup fixed at 0.2s',
         ])
     })
 
     it('words sprint bonus generically', () => {
-        expect(texts('Sprinter')).toEqual(['Increased sprint bonus by 1.5'])
+        expect(texts('Sprinter')).toEqual(['Increased sprint bonus by 1.5', 'Increased sprint speed cap by 3'])
     })
 
     it('words the block green window against the 0.9 fill', () => {
@@ -65,7 +65,7 @@ describe('ability wording', () => {
 
     it('puts activation first and words team grants', () => {
         expect(texts('Speed Surge')[0]).toBe('Active ability, lasts 8s, 60s cooldown')
-        expect(texts('Auto Lockdown')[0]).toBe('Activates itself when ready, lasts 30s, 300s cooldown')
+        expect(texts('Auto Lockdown')[0]).toBe('Activates itself when ready, lasts 60s, 300s cooldown')
         expect(texts('Special - Leader')).toEqual(["Teammates get Leader's Power", "Teammates get Leader's Jump"])
     })
 
@@ -101,8 +101,11 @@ describe('ability wording', () => {
 
     it('renders everything raw with an empty term book', () => {
         const bullets = describeAbility(byKey.get('Sprinter')!, { terms: EMPTY_TERM_BOOK })
-        expect(bullets.map(b => [b.text, b.mapped])).toEqual([['Increased sprint bonus by 1.5', false]])
-        expect(unmappedTags([byKey.get('Sprinter')!], EMPTY_TERM_BOOK)).toEqual([{ kind: 'effect', tag: 'SprintBonus', uses: 1 }])
+        expect(bullets.map(b => [b.text, b.mapped])).toEqual([['Increased sprint bonus by 1.5', false], ['Increased sprint cap by 3', false]])
+        expect(unmappedTags([byKey.get('Sprinter')!], EMPTY_TERM_BOOK)).toEqual([
+            { kind: 'effect', tag: 'SprintBonus', uses: 1 },
+            { kind: 'effect', tag: 'SprintCap', uses: 1 },
+        ])
     })
 })
 
@@ -135,5 +138,16 @@ describe('option wording', () => {
         const unhandled = unmappedTags(abilities, { ...terms, options: new Map() }).filter(t => t.kind === 'option')
         expect(unhandled.map(t => t.tag)).toEqual(expect.arrayContaining(['Mode', 'ShortBonus']))
         expect(unhandled.map(t => t.tag)).not.toContain('Group')
+    })
+})
+
+describe('unmappedStyleTags', () => {
+    it('lists serve style values without a param template', () => {
+        expect(unmappedStyleTags([{ key: 'CurveballSide', value: 1 }], EMPTY_TERM_BOOK)).toEqual([{ kind: 'param', tag: 'CurveballSide', uses: 1 }])
+    })
+
+    it('skips values that already have a param template', () => {
+        const book = createTermBook([{ kind: 'param', tag: 'CurveballSide', category: 'serve', label: null, unit: null, template: 'Curve +{v}', grants: null, verified: true }])
+        expect(unmappedStyleTags([{ key: 'CurveballSide', value: 1 }], book)).toEqual([])
     })
 })

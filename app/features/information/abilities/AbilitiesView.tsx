@@ -2,19 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { InlineSwitch } from '@/app/components/filters/InlineSwitch'
-import type { HeightColumn, InspectorData, PublicAbilityCatalog, RarityGroup } from '@/server/domains/gameData'
+import type { HeightColumn, InspectorData, PublicAbilityCatalog, PublicServeStyle, RarityGroup } from '@/server/domains/gameData'
 import RarityHeading from '../RarityHeading'
 import SearchBox from '../SearchBox'
 import { useInfoParams } from '../useInfoParams'
 import AbilityRow from './AbilityRow'
 import HeightsTable from './HeightsTable'
+import ServeStylesTable from './ServeStylesTable'
 
-type AbilityTab = 'physical' | 'technical' | 'heights'
+type AbilityTab = 'physical' | 'technical' | 'heights' | 'serves'
 
 const TABS = [
     { value: 'physical', label: 'Physicals' },
     { value: 'technical', label: 'Technicals' },
     { value: 'heights', label: 'Heights' },
+    { value: 'serves', label: 'Serves' },
 ] as const satisfies readonly { value: AbilityTab; label: string }[]
 
 function parseTab(raw: string | null): AbilityTab {
@@ -32,10 +34,11 @@ function filterGroups(groups: RarityGroup[], query: string): RarityGroup[] {
 interface Props {
     catalog: PublicAbilityCatalog
     heights: HeightColumn[]
+    serveStyles: PublicServeStyle[]
     inspectors: Record<string, InspectorData>
 }
 
-export default function AbilitiesView({ catalog, heights, inspectors }: Props) {
+export default function AbilitiesView({ catalog, heights, serveStyles, inspectors }: Props) {
     const params = useInfoParams()
     const tab = parseTab(params.get('type'))
     const requested = params.get('ability')
@@ -43,7 +46,7 @@ export default function AbilitiesView({ catalog, heights, inspectors }: Props) {
     const [mounted, setMounted] = useState(false)
     const scrolledFor = useRef<string | null>(null)
 
-    const groups = useMemo(() => (tab === 'heights' ? [] : filterGroups(catalog[tab] ?? [], query)), [catalog, tab, query])
+    const groups = useMemo(() => (tab === 'heights' || tab === 'serves' ? [] : filterGroups(catalog[tab] ?? [], query)), [catalog, tab, query])
     const openSlug = mounted ? requested : null
 
     useEffect(() => setMounted(true), [])
@@ -70,13 +73,15 @@ export default function AbilitiesView({ catalog, heights, inspectors }: Props) {
         <div>
             <div className="mb-9 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <InlineSwitch label="Ability type" options={TABS} value={tab} onChange={switchTab} className="-ml-2" />
-                {tab !== 'heights' && (
+                {tab !== 'heights' && tab !== 'serves' && (
                     <SearchBox value={query} onChange={setQuery} placeholder="Search abilities" className="w-full md:w-[260px]" />
                 )}
             </div>
 
             {tab === 'heights' ? (
                 <HeightsTable columns={heights} />
+            ) : tab === 'serves' ? (
+                <ServeStylesTable styles={serveStyles} />
             ) : groups.length === 0 ? (
                 <p className="py-16 text-center text-sm text-muted-foreground">{query ? 'No matching ability' : 'No abilities'}</p>
             ) : (

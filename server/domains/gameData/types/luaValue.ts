@@ -23,7 +23,7 @@ export interface LuaRef {
 }
 
 export interface LuaStatement {
-    target: string
+    target: string | null
     value: LuaValue
     line: number
     source: string

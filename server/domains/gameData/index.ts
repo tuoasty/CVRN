@@ -10,7 +10,7 @@ export { getPublicInformation } from './queries/getPublicInformation'
 export { findAbility } from './helpers/public/abilityCatalog'
 export { abilityHref } from './helpers/public/inspector'
 export { toSlug } from './helpers/public/slug'
-export type { PublicInformation, PublicAbility, PublicAbilityKind, PublicAbilityCatalog, PublicAbilityLine, RarityGroup, AbilityMarker, InspectorData, TunedInspector, SheetRow, HeightColumn, HeightRow, PublicKitEntry, PublicSpecKit, PublicBuild, PublicBuildCatalog, PublicBuildCombo, PublicBuildEffect, PublicBuildPart, PickOption } from './types/publicInformation'
+export type { PublicInformation, PublicAbility, PublicAbilityKind, PublicAbilityCatalog, PublicAbilityLine, RarityGroup, AbilityMarker, InspectorData, TunedInspector, SheetRow, HeightColumn, HeightRow, PublicKitEntry, PublicSpecKit, PublicBuild, PublicBuildCatalog, PublicBuildCombo, PublicBuildEffect, PublicBuildPart, PickOption, PublicServeStyle } from './types/publicInformation'
 export { collectTermUsage, termId, unhandledTerms, isTermHandled } from './terms/termUsage'
 export type { TermUsage } from './terms/termUsage'
 export { previewTermChange, validateTermDraft, normalizeTermDraft, lineNeedsAttention, unseenValue, withDraft } from './terms/termEdit'
@@ -58,6 +58,9 @@ export type {
     PublishGameDataResult,
     StoredGameDatasets,
     IgnoredStatement,
+    PendingStatement,
+    KindChoice,
+    KindChoices,
     GameDataPreview,
     GameDataTextInput,
     DescriptionSource,
@@ -71,6 +74,9 @@ export type {
     KitSlot,
     SpecTune,
     SpecLoadout,
+    SpecStyle,
+    ServeStyle,
+    ServeStyleValue,
     LinkSpec,
     SpecCandidate,
     SpecLinkItem,

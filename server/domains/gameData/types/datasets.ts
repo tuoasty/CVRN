@@ -1,4 +1,4 @@
-export const GAME_DATASET_KINDS = ['rarities', 'abilities', 'physicals', 'technicals', 'heights', 'builds', 'buildPassives', 'specLoadouts'] as const
+export const GAME_DATASET_KINDS = ['rarities', 'abilities', 'physicals', 'technicals', 'heights', 'builds', 'buildPassives', 'specLoadouts', 'serveStyles', 'serveStyleValues', 'specLoadoutsPaid'] as const
 export type GameDatasetKind = (typeof GAME_DATASET_KINDS)[number]
 
 export type ScalarValue = string | number | boolean
@@ -94,6 +94,20 @@ export interface SpecTune {
     value: number
 }
 
+export interface ServeStyle {
+    name: string
+}
+
+export interface ServeStyleValue {
+    key: string
+    value: number
+}
+
+export interface SpecStyle {
+    name: string
+    value: number
+}
+
 export interface SpecLoadout {
     key: string
     name: string
@@ -106,6 +120,7 @@ export interface SpecLoadout {
     passive: string[]
     active: string[]
     tuning: SpecTune[]
+    styles: SpecStyle[]
     extra?: Record<string, PlainValue>
 }
 
@@ -118,6 +133,9 @@ export interface GameDatasetPayloads {
     builds: Build[]
     buildPassives: BuildPassives[]
     specLoadouts: SpecLoadout[]
+    serveStyles: ServeStyle[]
+    serveStyleValues: ServeStyleValue[]
+    specLoadoutsPaid: SpecLoadout[]
 }
 
 export type IssueLevel = 'error' | 'warning'

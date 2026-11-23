@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { fixtureAbilities, fixtureDataset, fixtureSpecLoadouts, fixtureTerms } from '../../../__tests__/fixtures/loadFixtures'
 import { createAbilityLookup } from '../../../terms/describeAbility'
 import { capitalize } from '../../../terms/format'
+import { renderTemplate } from '../../../terms/template'
 import { buildAbilityIndex } from '../../abilityIndex/buildAbilityIndex'
 import { buildInspector } from '../inspector'
 import { buildSpecKits } from '../specKits'
@@ -22,13 +23,14 @@ const inspectorFor = (key: string) => {
     return ability ? buildInspector(ability, entryByKey.get(key), ctx) : undefined
 }
 
-const kits = buildSpecKits({ abilities, specLoadouts: fixtureSpecLoadouts() }, ctx, inspectorFor)
+const serveStyleValues = fixtureDataset('serve-style-values.txt', 'serveStyleValues')
+const kits = buildSpecKits({ abilities, specLoadouts: fixtureSpecLoadouts(), serveStyleValues }, ctx, inspectorFor)
 
 describe('buildSpecKits', () => {
     it('keys kits by loadout and carries cooldown and lifetime', () => {
         const leon = kits['Wilfredo Leon']
         expect(leon.cooldown).toBe(fixtureSpecLoadouts().find(l => l.key === 'Wilfredo Leon')!.cooldown)
-        expect(leon.lifetime).toBe(10)
+        expect(leon.lifetime).toBe(15)
         expect(kits['Gold Ship'].lifetime).toBeUndefined()
     })
 
@@ -44,7 +46,7 @@ describe('buildSpecKits', () => {
     })
 
     it('keeps plain-text entries in their slot with no target', () => {
-        const reach = kits['Micah Christenson'].passive.find(e => e.name === '+2.75 Set Reach')!
+        const reach = kits['Antoine Brizard'].passive.find(e => e.name === '+1 Set Reach')!
         expect(reach.target).toBeUndefined()
         const teamPower = kits['Gold Ship'].active.find(e => e.name === '+1 Team Power')!
         expect(teamPower.target).toBeUndefined()
@@ -56,16 +58,18 @@ describe('buildSpecKits', () => {
     })
 
     it('writes a tuned line with the term label when the ability has no sheet', () => {
-        const wingspan = kits['Wilfredo Leon'].passive.find(e => e.name === 'Wingspan')!
-        const tag = byKey.get('Wingspan')!.effects[0].tag
-        expect(wingspan.tuned?.sheet).toBeUndefined()
-        expect(wingspan.tuned?.tuned).toEqual([`${capitalize(terms.effects.get(tag)!.label!)} 0.8 → 0.85`])
+        const cannon = kits['Wilfredo Leon'].passive.find(e => e.name === 'Buffed Cannon')!
+        const tag = byKey.get('Buffed Cannon')!.effects[0].tag
+        expect(cannon.tuned?.sheet).toBeUndefined()
+        expect(cannon.tuned?.tuned).toEqual([`${capitalize(terms.effects.get(tag)!.label!)} 15.6 → 15.8`])
     })
 
     it('tunes an ability whose key looks like a variant against itself', () => {
-        const wingspan = kits['Lucas Saatkamp'].passive.find(e => e.name === '+0.35 Wingspan')!
-        expect(wingspan.target).toBe('+0.35 Wingspan')
-        expect(wingspan.tuned?.tuned).toEqual(['Attack hitbox height 0.35 → 0'])
+        const leon = fixtureSpecLoadouts().find(l => l.key === 'Wilfredo Leon')!
+        const odd = { ...leon, key: 'Odd', passive: ['+0.6 Wide Reach'], active: [], tuning: [{ slot: 'Passive' as const, ability: '+0.6 Wide Reach', path: 'Effects.1.Amount', value: 0 }] }
+        const reach = buildSpecKits({ abilities, specLoadouts: [odd] }, ctx, inspectorFor).Odd.passive[0]
+        expect(reach.target).toBe('+0.6 Wide Reach')
+        expect(reach.tuned?.sheet?.[0]).toMatchObject({ value: '+0' })
     })
 
     it('shows a tune on a missing effect as written', () => {
@@ -76,10 +80,34 @@ describe('buildSpecKits', () => {
 
     it('leaves untuned entries without a tuned inspector', () => {
         const leon = kits['Wilfredo Leon']
-        expect(leon.passive.filter(e => e.tuned).map(e => e.name)).toEqual(['Wingspan'])
+        expect(leon.passive.filter(e => e.tuned).map(e => e.name)).toEqual(['Buffed Cannon'])
     })
 
     it('has no kit for an unknown loadout key', () => {
         expect(kits['No Such Spec']).toBeUndefined()
+    })
+
+    it('words Wilfredo Leon styles at the spec value', () => {
+        const styles = kits['Wilfredo Leon'].styles
+        expect(styles.map(s => s.name)).toEqual(['Curveball', 'Dive Bomb'])
+        expect(styles[1].text).toBe(renderTemplate(terms.params.get('DiveBombTopDrop')!.template!, 1))
+    })
+
+    it('shows the regular roll when the spec overrides below the default', () => {
+        expect(kits['Wilfredo Leon'].styles[1].regular).toBe('2.5')
+    })
+
+    it('shows no regular roll when the spec value equals the default', () => {
+        expect(kits['Wilfredo Leon'].styles[0].regular).toBeNull()
+    })
+
+    it('gives a spec with Styles = {} no styles', () => {
+        expect(kits['Joh'].styles).toEqual([])
+    })
+
+    it('keeps a style without a known value as its name only', () => {
+        const leon = fixtureSpecLoadouts().find(l => l.key === 'Wilfredo Leon')!
+        const odd = { ...leon, key: 'Odd', styles: [{ name: 'Lob', value: 2 }] }
+        expect(buildSpecKits({ abilities, specLoadouts: [odd], serveStyleValues }, ctx, inspectorFor).Odd.styles).toEqual([{ name: 'Lob', text: '', regular: null }])
     })
 })

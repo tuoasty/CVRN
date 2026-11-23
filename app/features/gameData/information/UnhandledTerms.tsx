@@ -4,7 +4,7 @@ import { Fragment, useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { fmt } from '@/server/domains/gameData/terms/format'
-import { termId } from '@/server/domains/gameData/terms/termUsage'
+import { SERVE_STYLE_SOURCE, termId } from '@/server/domains/gameData/terms/termUsage'
 import { useInformation } from './InformationProvider'
 import TermEditor from './TermEditor'
 import { abilityHref } from './abilityLinks'
@@ -47,7 +47,9 @@ export default function UnhandledTerms() {
                                 {u.abilities.slice(0, SHOWN_ABILITIES).map((key, i) => (
                                     <Fragment key={key}>
                                         {i > 0 && ', '}
-                                        <Link href={abilityHref(key, index.get(key))} className="underline decoration-border underline-offset-4 hover:text-foreground">{key}</Link>
+                                        {key === SERVE_STYLE_SOURCE
+                                            ? key
+                                            : <Link href={abilityHref(key, index.get(key))} className="underline decoration-border underline-offset-4 hover:text-foreground">{key}</Link>}
                                     </Fragment>
                                 ))}
                                 {u.abilities.length > SHOWN_ABILITIES && ` and ${u.abilities.length - SHOWN_ABILITIES} more`}

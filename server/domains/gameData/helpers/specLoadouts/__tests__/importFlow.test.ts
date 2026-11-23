@@ -11,7 +11,7 @@ const specs: LinkSpec[] = [
 ]
 
 const loadout = (key: string, height = 1.3): SpecLoadout => ({
-    key, name: key, height, cooldown: 1, endOnSpike: false, maxPower: 1, activeMaxPower: 1, passive: [], active: [], tuning: [],
+    key, name: key, height, cooldown: 1, endOnSpike: false, maxPower: 1, activeMaxPower: 1, passive: [], active: [], tuning: [], styles: [],
 })
 
 const plan = buildSpecLinkPlan([loadout('Wilfredo Leon'), loadout('T.J DeFalco'), loadout('Earvin Ngapeth'), loadout('New Guy'), loadout('Old Twin')], specs, new Set(['Old Twin']))
@@ -64,11 +64,13 @@ describe('summarizeSpecWrites', () => {
 })
 
 describe('publishBlocker', () => {
-    const ok = { stale: false, canPublish: true, planErrors: 0, undecided: 0, hasChanges: true, specOps: 0 }
+    const ok = { stale: false, canPublish: true, pending: 0, planErrors: 0, undecided: 0, hasChanges: true, specOps: 0 }
 
     it('picks the first blocker', () => {
         expect(publishBlocker(ok)).toBeNull()
         expect(publishBlocker({ ...ok, stale: true, undecided: 3 })).toBe('stale')
+        expect(publishBlocker({ ...ok, pending: 1, canPublish: false })).toBe('pending')
+        expect(publishBlocker({ ...ok, stale: true, pending: 1 })).toBe('stale')
         expect(publishBlocker({ ...ok, planErrors: 1, undecided: 3 })).toBe('errors')
         expect(publishBlocker({ ...ok, canPublish: false })).toBe('errors')
         expect(publishBlocker({ ...ok, undecided: 3 })).toBe('undecided')
@@ -79,6 +81,7 @@ describe('publishBlocker', () => {
     it('writes the reason', () => {
         expect(publishBlockerText('stale', 0)).toBe('Preview again first.')
         expect(publishBlockerText('errors', 0)).toBe('Fix the errors above first.')
+        expect(publishBlockerText('pending', 0)).toBe('Choose what each listed line is first.')
         expect(publishBlockerText('undecided', 3)).toBe('3 left')
         expect(publishBlockerText('nothing', 0)).toBe('Matches what is stored.')
     })

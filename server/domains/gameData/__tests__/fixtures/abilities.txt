@@ -17,10 +17,18 @@ AbilityCatalog.Abilities = {
 
 	["Devoted Jumper"] = {
 		Group = "JumpTrait",
-		Effects = { add("JumpSpeed", 1.25, { ShortBonus = true }), add("JumpWindup", 0.15), add("BlockChargeSlow", 1) },
-		Description = "+1.25 jump speed, more the shorter you are, but your spike windup is 0.15 s longer and a block charge takes 0.7 s instead of 0.55 s. Does not stack with other jump traits.",
+		Effects = { add("JumpSpeed", 1.2, { ShortBonus = true }), add("JumpWindup", 0.15), add("BlockChargeSlow", 1) },
+		Description = "+1.2 jump speed, more the shorter you are, but your spike windup is 0.15 s longer and a block charge takes 0.7 s instead of 0.55 s. Does not stack with other jump traits.",
 	},
 	["Nerfed Bounce"] = { Group = "JumpTrait", Effects = { add("JumpSpeed", 0.5, { ShortBonus = true }) } },
+
+	-- the spike half of bounce is the base, the charge verdict moves it up or down from there
+	Tempo = {
+		Group = "JumpTrait",
+		Effects = { add("JumpSpeed", 0.8, { ShortBonus = true, Mode = "Spike" }) },
+		Params = { TempoCharge = 1, TempoBlockGreen = 0.4 },
+		Description = "Your spike approach charges like a block jump. Let go in the green to jump higher than Bounce, or in the yellow to jump a little lower than Bounce. Letting go too early or holding too long gives a much weaker jump, and any spike off it is always Too Low. The green part is twice as wide as a block's. Green block jumps get +0.4. Setter jumps don't charge. Does not stack with other jump traits.",
+	},
 
 	Reactor = {
 		Params = { BlockAutoGreen = 1 },
@@ -28,8 +36,9 @@ AbilityCatalog.Abilities = {
 	},
 
 	Momentum = {
+		Effects = { add("WalkSpeed", 2) },
 		Params = { SprintAnywhere = 1 },
-		Description = "You can keep sprinting on the ground while busy with an action, not only while standing idle.",
+		Description = "+2 walk speed, and you can keep sprinting on the ground while busy with an action, not only while standing idle.",
 	},
 
 	Butterman = {
@@ -45,7 +54,7 @@ AbilityCatalog.Abilities = {
 	["Captains Call"] = {
 		Active = { Cooldown = 150, Behaviour = "CaptainsCall" },
 		Params = { TeamGrantSeconds = 15, CallCaptainJump = 1, CallEndurance = 1, CallBackRow = 1 },
-		Description = "For 15 s your whole team, you included, gets +0.2 spike jump and twice as fast stamina regen. Teammates with 'lib' or 'ds' in their name also get +0.5 receive width and depth and 8% longer dives.",
+		Description = "For 15 s your whole team, you included, gets +0.2 spike jump and twice as fast stamina regen. Teammates in the back row when you call it also get +0.5 receive width and depth and 8% longer dives.",
 	},
 	["Captain's Jump"] = { Effects = { add("JumpSpeed", 0.2, { Mode = "Spike" }) } },
 	["Captain's Endurance"] = { Params = { StaminaRegenScale = 2 } },
@@ -59,9 +68,15 @@ AbilityCatalog.Abilities = {
 	},
 
 	Lockdown = {
-		Active = { Cooldown = 300, Duration = 30, Behaviour = "Lockdown" },
+		Active = { Cooldown = 300, Duration = 60, Behaviour = "Lockdown" },
 		Params = { LockdownStripSeconds = 50, LockdownSoftStripSeconds = 25 },
-		Description = "For 30 s, your next block of an opponent's ball strips that hitter: 50 s without traits or spec if it lands on their side, 25 s if their team plays it, nothing if your team touches it next. A spec they had popped goes back on its full cooldown.",
+		Description = "For 60 s, your next block of an opponent's ball strips that hitter: 50 s without traits or spec if it lands on their side, 25 s if their team plays it, nothing if your team touches it next. A spec they had popped goes back on its full cooldown.",
+	},
+
+	["Nerfed Lockdown"] = {
+		Active = { Cooldown = 360, Duration = 30, Behaviour = "Lockdown" },
+		Params = { LockdownStripSeconds = 40, LockdownSoftStripSeconds = 20 },
+		Description = "For 30 s, your next block of an opponent's ball strips that hitter: 40 s without traits or spec if it lands on their side, 20 s if their team plays it, nothing if your team touches it next. A spec they had popped goes back on its full cooldown. 360 s cooldown.",
 	},
 
 	Ambidextrous = {
@@ -72,6 +87,17 @@ AbilityCatalog.Abilities = {
 	Hesi = {
 		Active = { Cooldown = 15, Duration = 1, Grounded = true },
 		Description = "Plays your spike windup on the ground as a fake. Must be on the ground.",
+	},
+
+	-- always on: it fires itself the moment its cooldown, as long as the vision, runs out
+	["Auto Buffed Eagle Eyes"] = {
+		Active = { Cooldown = 30, Duration = 30, Auto = true },
+		Description = "You always see the ball's predicted flight path, and where every spiker in the air would land it if they hit right now.",
+	},
+
+	["Nerfed Hesi"] = {
+		Active = { Cooldown = 35, Duration = 1, Grounded = true },
+		Description = "Plays your spike windup on the ground as a fake. Must be on the ground. 35 s cooldown.",
 	},
 
 	["Eagle Eyes"] = {
@@ -111,16 +137,15 @@ AbilityCatalog.Abilities = {
 	},
 	["Vertical Leap"] = {
 		Effects = {
-			add("JumpSpeed", 1.8, { ShortBonus = true, Standing = true, MaxHeight = 1.45 }),
-			add("JumpSpeed", 1.2, { ShortBonus = true, Standing = true, MinHeight = 1.475, Mode = "Spike" }),
-			add("JumpSpeed", 0.96, { ShortBonus = true, Standing = true, MinHeight = 1.475, Mode = "Block" }),
+			add("JumpSpeed", 1.8, { ShortBonus = true, Standing = true, Mode = "Spike", FadeFrom = 1.35, FadeTo = 1.5, FadeAmount = 1.2 }),
+			add("JumpSpeed", 1.4, { ShortBonus = true, Standing = true, Mode = "Block", FadeFrom = 1.35, FadeTo = 1.5, FadeAmount = 0.96 }),
 		},
-		Description = "Standing jumps with no run-up get +1.8 speed up to 6'10. From 6'11 it is +1.2 on spike jumps and +0.96 on block jumps, with a little extra for shorter players.",
+		Description = "Standing jumps with no run-up get +1.8 speed on spike jumps and +1.4 on block jumps up to 6'6. From there they fade evenly down to +1.2 and +0.96 at 7'0, with a little extra for shorter players.",
 	},
 	Sprinter = {
 		Group = "SprintTrait",
-		Effects = { add("SprintBonus", 1.5) },
-		Description = "Your sprint builds up speed faster. Does not stack with Athletic's sprint bonus.",
+		Effects = { add("SprintBonus", 1.5), add("SprintCap", 3) },
+		Description = "Your sprint builds up speed faster and its speed cap is 3 higher. Does not stack with Athletic's sprint bonus.",
 	},
 	["Big Lungs"] = {
 		Effects = { add("Stamina", 3) },
@@ -134,9 +159,9 @@ AbilityCatalog.Abilities = {
 
 	Hasty = {
 		Group = "HastyTrait",
-		Effects = { add("WalkSpeed", 2), add("SprintCap", 4) },
+		Effects = { add("WalkSpeed", 2), add("SprintCap", 3) },
 		Params = { DigDiveWalk = 2 },
-		Description = "+2 walk speed and +4 sprint speed cap, and you can still walk when a broken receive throws you into a dive.",
+		Description = "+2 walk speed and +3 sprint speed cap, and you can still walk when a broken receive throws you into a dive.",
 	},
 
 	["Solid Form"] = {
@@ -151,14 +176,15 @@ AbilityCatalog.Abilities = {
 
 	["Wide Reach"] = {
 		Group = "WideTrait",
-		Effects = { add("ReachWidth", 1), add("ReachCoreHeight", 1.2), add("ReachHeight", 1.2), add("ReachDepth", 1), add("BlockWidth", 0.5), add("BlockHeight", 1.2) },
-		Params = { GreenReachBonus = 1.2 },
-		Description = "Bigger attack hitbox (+1 wide, +2.4 tall, +1 deep) and bigger block (+0.5 wide, +1.2 tall). Green spikes also register from contacts 1.2 lower.",
+		-- width stays first, specs tune Effects.1. voted: +0.5 wide and deep, and +0.6 over normal at the top, which is
+		-- the 0.25 the wider ball adds plus this lift
+		Effects = { add("ReachWidth", 0.5), add("ReachCoreHeight", 1.2), add("ReachHeight", 1.2), add("ReachDepth", 0.5), add("ReachLift", 0.35) },
+		Description = "Bigger attack hitbox (+0.5 wide, +2.4 tall, +0.5 deep) that also sits 0.35 higher, so it reaches 0.6 higher than normal.",
 	},
 	["Big Brain"] = {
-		Params = { AirReachShrink = 0.06 },
-		Effects = { add("ReachWidth", 0.06), add("ReachHeight", 0.06), add("ReachDepth", 0.06), add("DiveDepth", 0.075) },
-		Description = "Attack hitbox is 0.06 bigger on every side while you are on the ground (it shrinks back in the air) and dives reach 0.075 deeper.",
+		Params = { AirReachShrink = 0.3 },
+		Effects = { add("ReachWidth", 0.3), add("ReachHeight", 0.3), add("ReachDepth", 0.3), add("DiveDepth", 0.3) },
+		Description = "Attack hitbox is 0.3 bigger on every side while you are on the ground (it shrinks back in the air), so ground sets reach further, and dives reach 0.3 deeper.",
 	},
 	["Broad Blocker"] = {
 		Group = "BroadTrait",
@@ -168,14 +194,13 @@ AbilityCatalog.Abilities = {
 
 	Wingspan = {
 		Effects = { add("ReachHeight", 0.8), add("ReachLift", 0.4), add("BlockHeight", 0.8), add("DigDepth", 0.35), set("ArmScale", 1.1) },
-		Params = { GreenReachBonus = 0.8 },
-		Description = "Longer arms: attack and block hitboxes are 0.8 taller, the attack one also sits 0.4 higher, and receives reach 0.35 deeper. Green spikes also register from contacts 0.8 lower.",
+		Description = "Longer arms: attack and block hitboxes are 0.8 taller, the attack one also sits 0.4 higher, and receives reach 0.35 deeper.",
 	},
 
 	Relentless = {
 		Effects = { add("DigWidth", 1), add("DigDepth", 1) },
-		Params = { DigStaminaCost = 5 },
-		Description = "Receive hitbox is 1 wider and 1 deeper, but receiving a spike above power 8 costs 5 stamina.",
+		Params = { DigStaminaShare = 0.2 },
+		Description = "Receive hitbox is 1 wider and 1 deeper, but receiving a spike above power 12 costs 20% of your max stamina, rounded up.",
 	},
 
 	Cannon = {
@@ -186,8 +211,9 @@ AbilityCatalog.Abilities = {
 	},
 
 	["No Pressure"] = {
-		Params = { PressureRate = 1 / 24, PressureCap = 1.35 },
-		Description = "Spikes above power 13 come down lower and harder the longer the ball has been in play, building up over about 32 seconds.",
+		-- full build up in 20 s, about when your team gets the ball back a second time. +1 tops a normal 15 out at 16
+		Params = { PressureRate = 1 / 20, PressureCap = 1 },
+		Description = "Spikes above power 13 come down lower and harder the longer the ball has been in play, building up over 20 seconds to +1 power (16 at normal max power).",
 	},
 
 	["Heavy Hitter"] = {
@@ -207,8 +233,8 @@ AbilityCatalog.Abilities = {
 		Group = "StepTrait",
 		Toggle = "StepApproach",
 		ToggleDefault = false,
-		Effects = { set("JumpWindupOverride", 0.2), scale("JumpSpeedScale", 1 / 1.2) },
-		Description = "While on, your spike windup is a fixed 0.2 s but spike jumps are about 17% weaker. Off by default; your ability key switches it.",
+		Effects = { set("JumpWindupOverride", 0.2), scale("JumpSpeedScale", 1 / 1.1) },
+		Description = "While on, your spike windup is a fixed 0.2 s but spike jumps are about 9% weaker. Off by default; your ability key switches it.",
 	},
 
 	["Block Control"] = {
@@ -224,17 +250,17 @@ AbilityCatalog.Abilities = {
 
 	Swiper = {
 		Params = { SwipePower = 9 },
-		Description = "Lets you swipe: attack while leaning left or right at power 9 or lower, near the net and facing it, and you swipe the ball to that side instead of spiking.",
+		Description = "Lets you swipe: attack while leaning left or right at power 9 or lower near the net, facing any way, and you swipe the ball to that side instead of spiking.",
 	},
 
 	Lowflow = {
 		Params = { GreenCooldownCut = 0.35, TooLowFloorCut = 0.08, SpikeMissWindow = 0.25 },
-		Description = "Spikes count as too low only below 0.17 instead of 0.25, you can green 0.35 s sooner after a set, and you can hit a set from 0.25 s after it.",
+		Description = "Spikes count as too low only below 0.17 instead of 0.25, and you can hit a set from 0.25 s after it.",
 	},
 
 	Blitz = {
-		Params = { GreenCooldownCut = 0.4, BlitzSpeed = 1.1, SpikeMissWindow = 0.2 },
-		Description = "Spikes at power 12 to 15 fly 10% faster, you can green 0.4 s sooner after a set, and you can hit a set from 0.2 s after it instead of 0.325 s.",
+		Params = { BlitzSpeed = 1.1, AssistGreenCooldownCut = 0.4, SetMissCut = 0.125 },
+		Description = "Spikes off your sets at power 12 to 15 fly 10% faster, and hitters can hit your sets from 0.2 s after instead of 0.325 s.",
 	},
 
 	["Backrow Blitz"] = {
@@ -243,8 +269,8 @@ AbilityCatalog.Abilities = {
 	},
 
 	["Precision Setter"] = {
-		Params = { AssistGreenFloorCut = 0.05, SetMissCut = 0.15 },
-		Description = "Your hitters get green spikes off your sets from slightly lower contacts. As your Technical it also drops the no-hit window after your set to 0.175 s.",
+		Params = { AssistGreenFloorCut = 0.05, AssistGreenCooldownCut = 0.3, SetMissCut = 0.2 },
+		Description = "Your hitters get green spikes off your sets from slightly lower contacts. As your Technical it also drops the no-hit window after your set to 0.125 s.",
 	},
 
 	-- sized off the +x set reach spec passives (0.5 to 2.75), but those only work in setter mode and this works on every set
@@ -258,29 +284,19 @@ AbilityCatalog.Abilities = {
 		ToggleDefault = false,
 		ParamsAlways = true,
 		Params = { AssistGreenCooldownCut = 0.35, SetMissCut = 0.125 },
-		Description = "While on, your front sets start with the back-set motion so blockers cannot read them. The set perks stay on either way: no-hit window after your set 0.2 s and hitters green 0.35 s sooner.",
+		Description = "While on, your front sets start with the back-set motion so blockers cannot read them. The set perk stays on either way: the no-hit window after your set is 0.2 s.",
 	},
 	Trickster = {
 		Params = { AssistGreenCooldownCut = 0.35, SetMissCut = 0.125, GroundAim = 1 },
-		Description = "Lets you aim sets from the ground. The no-hit window after your set drops to 0.2 s and your hitters can green 0.35 s sooner after it.",
+		Description = "Lets you aim sets from the ground. The no-hit window after your set drops to 0.2 s.",
 	},
 	["Grounded Setter"] = {
 		Params = { AssistGreenCooldownCut = 0.3, SetMissCut = 0.2, GroundSetRise = 4 },
-		Description = "Sets from the ground go 4 higher, the no-hit window after your set drops to 0.125 s, and your hitters can green 0.3 s sooner after it.",
+		Description = "Sets from the ground go 4 higher, and the no-hit window after your set drops to 0.125 s.",
 	},
 	Bullseye = {
 		Params = { SetMissCut = 0.15, DumpMissCut = 0.075 },
 		Description = "The no-hit window after your set drops to 0.175 s. As your Technical it also drops the window after your dump to 0.075 s.",
-	},
-
-	["Spin Control"] = {
-		Params = { SpinSide = 2.6, SpinDrop = 13, SpinTopDrop = 5 },
-		Description = "Spins you pick curve harder sideways (2.6 instead of 1.6) and drop a little more.",
-	},
-
-	["Float Control"] = {
-		Params = { FloatControl = 1 },
-		Description = "Your float serves wobble more, cutters break harder late and droppers sink faster.",
 	},
 
 	["Flexible Wrists"] = {
@@ -318,7 +334,7 @@ AbilityCatalog.Abilities = {
 		Description = "Your spikes count as 0.1 further out on the opposing block, so you tool it more often.",
 	},
 	Wiper = {
-		Params = { HitterWipeKeep = 0.0175 },
+		Params = { HitterWipeKeep = 0.028 },
 		Description = "Balls wiped or tooled off the opposing block keep a bit more of your spike speed.",
 	},
 	Glider = {
@@ -331,8 +347,8 @@ AbilityCatalog.Abilities = {
 	},
 	Stance = {
 		Group = "StanceTrait",
-		Effects = { add("DigWidth", 1.5), add("DigDepth", 1.3) },
-		Description = "Receive hitbox is 1.5 wider and 1.3 deeper.",
+		Effects = { add("DigWidth", 1.25), add("DigDepth", 1.1) },
+		Description = "Receive hitbox is 1.25 wider and 1.1 deeper.",
 	},
 	Rollout = {
 		Effects = { add("DiveWidth", 1), add("DiveHeight", 1), add("DiveDepth", 1) },
@@ -371,27 +387,21 @@ AbilityCatalog.Abilities = {
 	["No ape nerf"] = { Params = { ApeNerfCut = 7 } },
 
 	["Buffed Wingspan"] = {
-		Params = { GreenReachBonus = 0.5 },
 		Effects = { add("ReachHeight", 0.5), add("ReachLift", 0.25), add("BlockHeight", 0.5), add("DigDepth", 0.15), set("ArmScale", 1.15) },
 	},
 	["Halved Wingspan"] = {
-		Params = { GreenReachBonus = 0.115 },
 		Effects = { add("ReachHeight", 0.115), add("ReachLift", 0.0575), add("BlockHeight", 0.115), add("DigDepth", 0.05) },
 	},
 	["+0.35 Wingspan"] = {
-		Params = { GreenReachBonus = 0.35 },
 		Effects = { add("ReachHeight", 0.35), add("ReachLift", 0.175), add("BlockHeight", 0.35), add("DigDepth", 0.35 / 3), set("ArmScale", 1.075) },
 	},
 	["+0.4 Wingspan"] = {
-		Params = { GreenReachBonus = 0.4 },
 		Effects = { add("ReachHeight", 0.4), add("ReachLift", 0.2), add("BlockHeight", 0.4), add("DigDepth", 0.4 / 3), set("ArmScale", 1.075) },
 	},
 	["+0.6 Wide Reach"] = {
-		Params = { GreenReachBonus = 0.6 },
 		Effects = { add("ReachWidth", 0.5), add("ReachHeight", 0.6), add("ReachDepth", 0.5), add("BlockWidth", 0.5), add("BlockHeight", 0.6) },
 	},
 	["+0.65 Wide Reach"] = {
-		Params = { GreenReachBonus = 0.65 },
 		Effects = { add("ReachWidth", 0.5), add("ReachHeight", 0.65), add("ReachDepth", 0.5), add("BlockWidth", 0.5), add("BlockHeight", 0.65) },
 	},
 	["Buffed No Pressure"] = { Params = { PressureRate = 1 / 12, PressureCap = 1.6 } },
@@ -399,10 +409,15 @@ AbilityCatalog.Abilities = {
 	["Slightly Negates Too Low"] = { Params = { TooLowNerfCut = 2 } },
 	["Negates Quick Nerf"] = { Params = { QuickNerfImmune = 1 } },
 	["Negates ALL Spiking Penalties"] = { Params = { SpikeImmune = 1, TooLowImmune = 1 } },
-	Insta = { Params = { InstantSetWindow = 0.8 } },
+	Insta = { Params = { InstantSetWindow = 0.8, InstantSetPower = 15.8 } },
 	["Only Green Spikes"] = { Params = { ForceGreen = 1 } },
 	Perfection = { Params = { Perfection = 1 } },
-	["Buffed Mind Reader"] = { Active = { Cooldown = 50, Duration = 45 } },
+	-- only saatkamp has it, sized for him
+	["Buffed Mind Reader"] = { Active = { Cooldown = 75, Duration = 55 } },
+	["Slightly Buffed Mind Reader"] = {
+		Active = { Cooldown = 175, Duration = 45 },
+		Description = "For 45 s you see every enemy's power level above their head. 175 s cooldown.",
+	},
 	Recharge = { Active = { Cooldown = 100, Behaviour = "Recharge" }, Params = { RechargeStamina = 5 } },
 	["Fake Ape"] = {
 		Toggle = "FakeApe",
@@ -427,9 +442,6 @@ AbilityCatalog.Abilities = {
 	["Buffed Bullseye"] = { Params = { SetMissCut = 0.325 } },
 	["Slightly Buffed Bullseye"] = { Params = { SetMissCut = 0.25 } },
 	["Setter Dump Buff"] = { Params = { DumpRiseCut = 2 } },
-	["Buffed Spin Control"] = { Params = { SpinSide = 3.2, SpinDrop = 13.75, SpinTopDrop = 5 } },
-	["Slightly Buffed Spin Control"] = { Params = { SpinSide = 2.8, SpinDrop = 13.25, SpinTopDrop = 5 } },
-	["Slightly Nerfed Spin Control"] = { Params = { SpinSide = 1.95, SpinDrop = 9.75, SpinTopDrop = 3.75 } },
 	["Buffed Feint"] = { Params = { FeintDrop = 6, FeintLoopDrop = 6.5 } },
 
 	["Buffed Bounce"] = { Group = "JumpTrait", Effects = { add("JumpSpeed", 1.5, { ShortBonus = true, MaxHeight = 1.45 }), add("JumpSpeed", 1, { ShortBonus = true, MinHeight = 1.475, Mode = "Block" }) } },
@@ -445,6 +457,11 @@ AbilityCatalog.Abilities = {
 	["Buffed Rollout"] = { Effects = { add("DiveWidth", 1.5), add("DiveHeight", 1.5), add("DiveDepth", 1.5) } },
 	["Slightly Buffed Rollout"] = { Effects = { add("DiveWidth", 1.25), add("DiveHeight", 1.25), add("DiveDepth", 1.25) } },
 	["Mad dog"] = { Effects = { add("DigWidth", -2), add("DigDepth", -1.8) } },
+	-- 35% off his receive and dive boxes, sized at nikolov's 6'9
+	["Special - Mad Dog"] = {
+		Effects = { add("DigWidth", -2.6), add("DigDepth", -1.75), add("DiveWidth", -2.6), add("DiveDepth", -3.45) },
+		Description = "Your receive and dive hitboxes are 35% smaller.",
+	},
 	["Buffed Stance"] = { Group = "StanceTierTrait", Effects = { add("DigWidth", 2), add("DigDepth", 1.8) } },
 	["Nerfed Stance"] = { Group = "StanceTierTrait", Effects = { add("DigWidth", 0.5), add("DigDepth", 0.5) } },
 
@@ -526,24 +543,17 @@ AbilityCatalog.Abilities = {
 	},
 	["Buffed Lowflow"] = {
 		Params = { GreenCooldownCut = 0.45, TooLowFloorCut = 0.12, SpikeMissWindow = 0.3 },
-		Description = "Spikes count as too low only below 0.13 instead of 0.25, you can green 0.45 s sooner after a set, and you can hit a set from 0.3 s after it.",
+		Description = "Spikes count as too low only below 0.13 instead of 0.25, and you can hit a set from 0.3 s after it.",
 	},
 	["Buffed Wiper"] = {
 		Params = { HitterWipeKeep = 0.035 },
 		Description = "Balls wiped or tooled off the opposing block keep twice as much of your spike speed as Wiper.",
 	},
-	["Buffed Float Control"] = {
-		Params = { FloatControl = 1.5 },
-		Description = "Old-style floats: your float serves wobble even more, cutters break sharper and droppers sink faster than with Float Control.",
-	},
-	["Slightly Buffed Float Control"] = {
-		Params = { FloatControl = 1.25 },
-		Description = "Your float serves wobble a bit more than with Float Control, cutters break a bit sharper and droppers sink a bit faster.",
-	},
+	-- balaso's burst: a half second dash every 30 s
 	["Buffed Speed Surge"] = {
-		Active = { Cooldown = 40, Duration = 15 },
-		Effects = { set("WalkSpeedPin", 40) },
-		Description = "For 15 s your movement speed is locked at 40. Sprint is off while it runs.",
+		Active = { Cooldown = 30, Duration = 0.5 },
+		Effects = { set("WalkSpeedPin", 60) },
+		Description = "For 0.5 s your movement speed is locked at 60. Sprint is off while it runs.",
 	},
 	["Buffed Swift Recovery"] = {
 		Params = { DigLockCut = 0.6, DiveSwift = 1 },
@@ -566,7 +576,7 @@ AbilityCatalog.Abilities = {
 		Description = "Mind Reader is on for as long as your spec is popped.",
 	},
 	["Auto Lockdown"] = {
-		Active = { Cooldown = 300, Duration = 30, Behaviour = "Lockdown", Auto = true },
+		Active = { Cooldown = 300, Duration = 60, Behaviour = "Lockdown", Auto = true },
 		Params = { LockdownStripSeconds = 50, LockdownSoftStripSeconds = 25 },
 		Description = "Lockdown turns itself on whenever it's ready.",
 	},
@@ -609,6 +619,70 @@ AbilityCatalog.Abilities = {
 		Team = { "+0.2 Power" },
 		Description = "Your teammates get +0.2 power.",
 	},
+	["Special - The MVP"] = {
+		Params = { MvpPower = 0.2, MvpStacks = 2 },
+		Description = "Every spike you receive gives your next spike +0.2 power, stacking up to 2 times. It resets when the rally ends.",
+	},
+	["Special - No Fear"] = {
+		Params = { NoFearHeight = 1.425, NoFearChance = 0.75 },
+		Description = "Against a blocker 6'9 or taller, your spike has a 75% chance to wipe or tool the block.",
+	},
+	["Special - Hang Time"] = {
+		Params = { HangLift = 0.65, HangSeconds = 0.7 },
+		Description = "Hold S during a spike jump to hang in the air: gravity is cut by 65% for up to 0.7 s.",
+	},
+	["Special - Apex"] = {
+		Params = { ApexMetres = 3.7, ApexSeconds = 15 },
+		Description = "Spike above 3.70 m into a block and that blocker can't block or spike for 15 s.",
+	},
+	["Special - Swipe Master"] = {
+		Params = { SwipePower = 19, SwipeClean = 1, SwipeThrough = 1 },
+		Description = "You can swipe at up to 19 power. Your swipes ignore quick set, ape, backrow and head height penalties, and any block they hit sends the ball off to your swipe side, even a W tilt.",
+	},
+	["Special - Lurking Monster"] = {
+		Params = { LurkBlockHeight = 0.1 },
+		Description = "Every ball you touch on a block makes your block 0.1 taller until the rally ends.",
+	},
+	["Special - Re:Jump"] = {
+		Params = { ReJump = 1, ReJumpSurgeSeconds = 1.5, ReJumpCharges = 2 },
+		Description = "Twice per pop: jump again while blocking to drop straight to the ground, run at 40 for 1.5 s, and jump again right away. After a re:jump you can only block jump until a teammate touches the ball.",
+	},
+	["Re:Jump Surge"] = { Effects = { set("WalkSpeedPin", 40) } },
+	["Special - Slam Dunk"] = {
+		Effects = { add("AlwaysBoost", 1) },
+		Description = "Every spike jump launches like a full run-up, even standing still.",
+	},
+	["Special - Newton's Law"] = {
+		Params = { NewtonLift = 0.5, NewtonKicks = 6, NewtonInterval = 0.1 },
+		Description = "Your sets fall half as fast for 0.6 s once they reach the top.",
+	},
+	["Special - Orchestrator"] = {
+		Params = { OrchestratePower = 0.05 },
+		Description = "Every teammate who spikes off your set for the first time grows your stack by 0.05 power, and that spike gets the whole stack: +0.05 for the first new spiker, +0.1 for the second, +0.15 for the third. Teammates who already spiked off you get nothing. A kill or the end of your pop starts it over.",
+	},
+	["Special - Spider"] = {
+		Params = { DiveRecoveryScale = 0.5, SpiderTeamStance = 1 },
+		Description = "You get up from dives twice as fast, and every ball you receive gives your teammates Stance until the rally ends.",
+	},
+	["Special - Tricky"] = {
+		Params = { BumpMissCut = 0.15 },
+		Description = "Your receives have Bullseye: your teammates can hit the ball 0.15 s sooner after you receive it.",
+	},
+	-- buffed step approach's 0.1333 windup on the block charge. reactor already greens a tap so that alone did
+	-- nothing for him, the rise runs on 1.6x gravity off a harder launch so it tops out at the same height sooner
+	["Special - No Time To Waste"] = {
+		Effects = { set("BlockChargeOverride", 0.1333) },
+		Params = { BlockRiseGravity = 1.6 },
+		Description = "Your block charges in 0.13 s, and your block jumps reach the same height faster.",
+	},
+	["Special - Wall"] = {
+		Team = { "+0.5 Top Hitbox", "+0.5 Block Width" },
+		Description = "Your teammates' attack hitboxes are 0.5 bigger and their blocks are 0.5 wider.",
+	},
+	["Special - Breath"] = {
+		Team = { "Endurance" },
+		Description = "Your teammates' stamina regenerates twice as fast.",
+	},
 	["Special - Fly High"] = {
 		Team = { "+0.3 Top Hitbox" },
 		Description = "Your teammates' attack hitboxes are 0.3 bigger.",
@@ -635,8 +709,8 @@ AbilityCatalog.Abilities = {
 	Dominance = { Effects = { add("BlockWidth", 0.25), add("BlockHeight", 0.5) }, Params = { DigBreakBonus = 0.075, DigServeBreak = 0.805 } },
 	Absolute = { Effects = { add("DigWidth", 0.8), add("DigDepth", 0.8) } },
 	["Absolute Stance"] = { Effects = { add("DigWidth", 1.3), add("DigDepth", 1.3) } },
-	["Leader's Power"] = { TeamSlot = "Power", Effects = { add("AttackPower", 0.2) } },
-	["Leader's Jump"] = { TeamSlot = "Jump", Effects = { add("JumpSpeed", 0.8) } },
+	["Leader's Power"] = { TeamSlot = "Power", Effects = { add("AttackPower", 0.3) } },
+	["Leader's Jump"] = { TeamSlot = "Jump", Effects = { add("JumpSpeed", 0.6) } },
 	["Team Backrow Blitz"] = { Params = { BackrowBlitz = 0.1 } },
 	["Team Wipe Ease"] = { Params = { HitterWipeEase = 0.15 } },
 	["Team Broad Blocker"] = { Group = "BroadTrait", Effects = { add("BlockWidth", 0.55), add("BlockHeight", 1) } },
@@ -657,6 +731,12 @@ AbilityCatalog.Abilities = {
 	["Buffed Fast approach"] = { Effects = { add("JumpWindup", -0.0375) } },
 	["Buffed Athletic"] = { Effects = { add("JumpWindupAfter", -0.05), add("JumpSpeed", 0.4, { Mode = "Spike" }), add("SprintBonus", 1.5), add("Stamina", 2) } },
 	["Slightly Buffed Athletic"] = { Effects = { add("JumpSpeed", 0.2, { Mode = "Spike" }), add("SprintBonus", 1.25), add("Stamina", 1) } },
+	-- robertlandy's signature: a step approach windup with none of the jump penalty. 0.25 not 0, at 0 a blocker has
+	-- nothing to read off the approach at all
+	["Special - Monster Tempo"] = {
+		Effects = { set("JumpWindupOverride", 0.25) },
+		Description = "Your spike windup is 0.25 s (normally 0.45 s) with full jump power.",
+	},
 	["Buffed step Approach"] = { Group = "StepTrait", Toggle = "StepApproach", ToggleDefault = false, Effects = { set("JumpWindupOverride", 0.1333), scale("JumpSpeedScale", 1 / 1.075) } },
 	["Buffed Swiper"] = { Params = { SwipePower = 12 } },
 	["Slightly Buffed Feint"] = { Params = { FeintDrop = 5.5, FeintLoopDrop = 6 } },
@@ -664,4 +744,10 @@ AbilityCatalog.Abilities = {
 	Breaker = { Params = { Breaker = 1 } },
 
 	["Unbreakable Recs"] = { Params = { DigUnbreakable = 1 } },
+	-- rocket's devoted jumper windup tax undone, matches MovementConfig.JumpWindupSeconds. override beats the
+	-- windup adds so the trait numbers can move without breaking this
+	["Standard Windup"] = {
+		Effects = { set("JumpWindupOverride", 0.45) },
+		Description = "Your spike windup is the standard 0.45 s, whatever your other traits add.",
+	},
 } :: { [string]: Ability }

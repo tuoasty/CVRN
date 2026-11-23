@@ -1,0 +1,1 @@
+ServeStyle.Styles = { "Curveball", "Dive Bomb", "Hangtime", "Knuckleball", "Trapdoor", "Long Haul", "Razor" } :: { Style }

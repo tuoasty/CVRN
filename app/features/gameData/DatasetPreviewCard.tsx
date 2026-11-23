@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
-import type { DatasetDiff } from '@/server/domains/gameData/types/datasets'
+import type { DatasetDiff, GameDatasetKind } from '@/server/domains/gameData/types/datasets'
 import type { PreviewDataset } from '@/server/domains/gameData/types/preview'
 import { DATASET_LABELS } from '@/server/domains/gameData/helpers/datasets/registry'
 import IssueList from './IssueList'
-import { AbilityTable, AttributeTable, BuildEffectsTable, BuildTable, HeightTable, RarityTable, SpecLoadoutTable, type AttributeLinks } from './DatasetTables'
+import { AbilityTable, AttributeTable, BuildEffectsTable, BuildTable, HeightTable, RarityTable, ServeStyleTable, ServeStyleValueTable, SpecLoadoutTable, type AttributeLinks } from './DatasetTables'
+import { InlineSwitch } from '@/app/components/filters/InlineSwitch'
 import { cn } from '@/lib/utils'
 
 export function diffParts(diff: DatasetDiff): string {
@@ -18,7 +19,15 @@ export function diffParts(diff: DatasetDiff): string {
     ].filter(Boolean).join(', ')
 }
 
-export default function DatasetPreviewCard({ dataset, links }: { dataset: PreviewDataset; links: AttributeLinks }) {
+interface Props {
+    dataset: PreviewDataset
+    links: AttributeLinks
+    onReadAs?: (line: number, kind: GameDatasetKind) => void
+    readAsDisabled?: boolean
+    file?: string | null
+}
+
+export default function DatasetPreviewCard({ dataset, links, onReadAs, readAsDisabled = false, file }: Props) {
     const [open, setOpen] = useState(false)
     const errors = dataset.issues.filter(i => i.level === 'error').length
     const warnings = dataset.issues.length - errors
@@ -33,7 +42,7 @@ export default function DatasetPreviewCard({ dataset, links }: { dataset: Previe
             >
                 <ChevronRight aria-hidden className={cn('h-3.5 w-3.5 self-center text-muted-foreground transition-transform duration-150 motion-reduce:transition-none', open && 'rotate-90')} />
                 <span className="font-semibold text-foreground">{DATASET_LABELS[dataset.kind]}</span>
-                <span className="truncate font-mono text-xs tabular-nums text-muted-foreground">{dataset.root} · line {dataset.line}</span>
+                <span className="truncate font-mono text-xs tabular-nums text-muted-foreground">{dataset.root ?? 'return'} · line {dataset.line}{file && ` · ${file}`}</span>
                 <span className="font-mono text-xs tabular-nums text-foreground">{dataset.count} entries</span>
                 <span className="text-muted-foreground">
                     {!dataset.diff ? 'New, nothing stored yet' : dataset.diff.unchanged ? 'Unchanged' : diffParts(dataset.diff)}
@@ -43,6 +52,18 @@ export default function DatasetPreviewCard({ dataset, links }: { dataset: Previe
                     {warnings > 0 && <span className="text-secondary"><span className="font-mono tabular-nums">{warnings}</span> warning{warnings === 1 ? '' : 's'}</span>}
                 </span>
             </button>
+
+            {onReadAs && dataset.alternatives.length > 0 && (
+                <div className="flex items-center gap-2 pb-2 pl-[30px] text-sm text-muted-foreground">
+                    <span>Read as</span>
+                    <InlineSwitch
+                        label={`Read line ${dataset.line} as`}
+                        options={[dataset.kind, ...dataset.alternatives].map(k => ({ value: k, label: DATASET_LABELS[k], disabled: readAsDisabled }))}
+                        value={dataset.kind}
+                        onChange={kind => onReadAs(dataset.line, kind)}
+                    />
+                </div>
+            )}
 
             {open && (
                 <div className="space-y-3 pb-4 pl-[30px]">
@@ -55,6 +76,9 @@ export default function DatasetPreviewCard({ dataset, links }: { dataset: Previe
                     {dataset.kind === 'heights' && <HeightTable heights={dataset.payload} />}
                     {dataset.kind === 'builds' && <BuildTable builds={dataset.payload} />}
                     {dataset.kind === 'buildPassives' && <BuildEffectsTable entries={dataset.payload} />}
+                    {dataset.kind === 'specLoadoutsPaid' && <SpecLoadoutTable loadouts={dataset.payload} links={links} />}
+                    {dataset.kind === 'serveStyles' && <ServeStyleTable styles={dataset.payload} />}
+                    {dataset.kind === 'serveStyleValues' && <ServeStyleValueTable values={dataset.payload} />}
                 </div>
             )}
         </div>

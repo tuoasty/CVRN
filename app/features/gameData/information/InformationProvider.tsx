@@ -106,7 +106,7 @@ export function InformationProvider({ initialStored, initialTerms, initialSettin
             rarities,
         }).map(e => [e.key, e]))
         const buildIndex = buildBuildIndex({ builds: stored.payloads.builds ?? [], passives: stored.payloads.buildPassives, abilities })
-        return { abilities, rarities, index, buildIndex, abilityByKey: new Map(abilities.map(a => [a.key, a])), usage: collectTermUsage(abilities) }
+        return { abilities, rarities, index, buildIndex, abilityByKey: new Map(abilities.map(a => [a.key, a])), usage: collectTermUsage(abilities, stored.payloads.serveStyleValues ?? []) }
     }, [stored])
 
     const wording = useMemo(() => {

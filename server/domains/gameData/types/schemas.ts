@@ -2,13 +2,20 @@ import { z } from "zod"
 import { TERM_CATEGORIES, TERM_KINDS } from "../terms/types"
 import { POSITIONS, type PositionCode } from "@/shared/volleyball/positions"
 import { SPEC_STARS } from "./specLinks"
+import { GAME_DATASET_KINDS } from "./datasets"
 
 export const GAME_DATA_TEXT_MAX = 1_000_000
 
+export const KindChoicesSchema = z
+    .record(z.string().regex(/^\d+$/), z.union([z.enum(GAME_DATASET_KINDS), z.literal('skip')]))
+    .refine(choices => Object.keys(choices).length <= 100, 'Too many dataset choices')
+    .default({})
+
 export const GameDataTextSchema = z.object({
     text: z.string().trim().min(1, 'Paste some Lua first').max(GAME_DATA_TEXT_MAX, 'Paste is too large'),
+    kindChoices: KindChoicesSchema,
 })
-export type GameDataTextInput = z.infer<typeof GameDataTextSchema>
+export type GameDataTextInput = z.input<typeof GameDataTextSchema>
 
 const POSITION_CODES = POSITIONS.map(p => p.code) as [PositionCode, ...PositionCode[]]
 

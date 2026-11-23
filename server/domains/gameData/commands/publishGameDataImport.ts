@@ -3,7 +3,7 @@ import { DBClient } from '@/shared/types/db'
 import { Err, Ok, Result } from '@/shared/types/result'
 import { publishGameData } from '@/server/db/gameDataset.repo'
 import { getSpecsAllRegions } from '@/server/domains/spec/queries/getSpecs'
-import type { PublishGameDataResult, SpecLinkDecision, SpecLinkOp, UpsertGameDatasetDto } from '../types'
+import type { KindChoices, PublishGameDataResult, SpecLinkDecision, SpecLinkOp, UpsertGameDatasetDto } from '../types'
 import { analyzeImport } from '../helpers/buildImportPreview'
 import { planSpecOps } from '../helpers/specLoadouts/linkPlan'
 import { getStoredGameDatasets } from '../queries/getStoredGameDatasets'
@@ -11,14 +11,14 @@ import { getLinkSpecs, getSkippedSpecKeys } from '../queries/getLinkSpecs'
 
 export async function publishGameDataImport(
     supabase: DBClient,
-    p: { text: string; specLinks: SpecLinkDecision[]; userId: string },
+    p: { text: string; specLinks: SpecLinkDecision[]; kindChoices: KindChoices; userId: string },
 ): Promise<Result<PublishGameDataResult>> {
     const [stored, specs, skipped] = await Promise.all([getStoredGameDatasets(supabase), getLinkSpecs(supabase), getSkippedSpecKeys(supabase)])
     if (!stored.ok) return stored
     if (!specs.ok) return specs
     if (!skipped.ok) return skipped
 
-    const { preview, sources } = analyzeImport(p.text, stored.value.payloads, undefined, specs.value, skipped.value)
+    const { preview, sources } = analyzeImport(p.text, stored.value.payloads, undefined, specs.value, skipped.value, p.kindChoices)
     if (preview.status === 'parse_error') {
         return Err({ message: `Line ${preview.error.line}: ${preview.error.message}`, code: 'VALIDATION_ERROR' })
     }
