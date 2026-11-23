@@ -27,9 +27,25 @@ describe('buildPublicInformation', () => {
             inspectors: {},
             heights: [],
             kits: {},
+            customKits: {},
             builds: { groups: [], physicals: [], technicals: [], heights: [] },
             serveStyles: [],
         })
+    })
+
+    it('builds custom kits from the paid loadouts', () => {
+        const paid = fixtureDataset('spec-loadouts-paid.txt', 'specLoadoutsPaid', { 1: 'specLoadoutsPaid' })
+        const info = buildPublicInformation({ payloads: { ...payloads, specLoadoutsPaid: paid }, terms, settings: {} })
+        expect(Object.keys(info.customKits)).toEqual(Object.keys(info.kits))
+        for (const kit of Object.values(info.customKits)) {
+            for (const entry of [...kit.active, ...kit.passive]) {
+                if (entry.target) expect(info.inspectors[entry.target], entry.target).toBeDefined()
+            }
+        }
+    })
+
+    it('has no custom kits without a paid file', () => {
+        expect(buildPublicInformation({ payloads, terms, settings: {} }).customKits).toEqual({})
     })
 
     it('lists every serve style with its odds', () => {

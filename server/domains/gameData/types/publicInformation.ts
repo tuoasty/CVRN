@@ -143,6 +143,7 @@ export interface PublicInformation {
     inspectors: Record<string, InspectorData>
     heights: HeightColumn[]
     kits: Record<string, PublicSpecKit>
+    customKits: Record<string, PublicSpecKit>
     builds: PublicBuildCatalog
     serveStyles: PublicServeStyle[]
 }

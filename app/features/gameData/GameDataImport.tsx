@@ -19,13 +19,13 @@ import IssueList from './IssueList'
 import StoredDatasetsStrip from './StoredDatasetsStrip'
 import SavedDatasetPanel from './SavedDatasetPanel'
 import PendingStatements from './PendingStatements'
+import { canChoose, joinFiles, sourceForLine, type PasteSource } from './pasteSources'
 import SpecLinkSections from './specLink/SpecLinkSections'
 import PublishSection, { type PublishDone } from './specLink/PublishSection'
 import { cn } from '@/lib/utils'
 
-async function readFiles(files: FileList | File[]): Promise<string> {
-    const texts = await Promise.all([...files].map(f => f.text()))
-    return texts.join('\n\n')
+async function readFiles(files: FileList | File[]) {
+    return joinFiles(await Promise.all([...files].map(async f => ({ name: f.name, text: await f.text() }))))
 }
 
 interface GameDataImportProps {
@@ -65,6 +65,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
     const [viewing, setViewing] = useState<GameDatasetKind | null>(null)
     const [text, setText] = useState('')
     const [choices, setChoices] = useState<KindChoices>({})
+    const [sources, setSources] = useState<PasteSource[]>([])
     const [preview, setPreview] = useState<GameDataPreview | null>(null)
     const [previewedText, setPreviewedText] = useState<string | null>(null)
     const [busy, setBusy] = useState(false)
@@ -113,9 +114,10 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
         decide(gameKey, on ? { gameKey, action: 'leave' } : undefined)
     }
 
-    function changeText(next: string) {
+    function changeText(next: string, nextSources: PasteSource[] = []) {
         setText(next)
         setChoices({})
+        setSources(nextSources)
     }
 
     async function loadPreview(source: string, kindChoices: KindChoices = choices, keepDecisions = false) {
@@ -129,8 +131,10 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
         }
     }
 
+    const choosable = canChoose({ previewedText, text, busy })
+
     async function choose(line: number, choice: KindChoice) {
-        if (previewedText === null) return
+        if (previewedText === null || !canChoose({ previewedText, text, busy })) return
         const next = { ...choices, [line]: choice }
         setChoices(next)
         setBusy(true)
@@ -184,7 +188,8 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
 
     async function loadFiles(files: FileList | File[]) {
         if (files.length === 0) return
-        changeText(await readFiles(files))
+        const joined = await readFiles(files)
+        changeText(joined.text, joined.sources)
     }
 
     function onDrop(e: DragEvent<HTMLTextAreaElement>) {
@@ -234,7 +239,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
             </div>
 
             {preview?.status === 'parse_error' && <ParseError error={preview.error} />}
-            {ok && <FoundInPaste preview={ok} stored={stored} terms={terms} onChoose={choose} />}
+            {ok && <FoundInPaste preview={ok} stored={stored} terms={terms} onChoose={choose} canChoose={choosable} fileFor={line => sourceForLine(sources, line)} />}
             {plan && (
                 <SpecLinkSections
                     plan={plan}
@@ -292,9 +297,11 @@ interface FoundInPasteProps {
     stored: StoredGameDatasets
     terms: GameTerm[]
     onChoose: (line: number, choice: KindChoice) => void
+    canChoose: boolean
+    fileFor: (line: number) => string | null
 }
 
-function FoundInPaste({ preview, stored, terms, onChoose }: FoundInPasteProps) {
+function FoundInPaste({ preview, stored, terms, onChoose, canChoose: choosable, fileFor }: FoundInPasteProps) {
     const unchecked = GAME_DATASET_KINDS.filter(k => !preview.checkedKinds.includes(k))
     const pasted = (kind: GameDatasetKind) => preview.datasets.find(d => d.kind === kind)?.payload
     const links = {
@@ -325,11 +332,11 @@ function FoundInPaste({ preview, stored, terms, onChoose }: FoundInPasteProps) {
                     <IssueList issues={preview.crossIssues} showKind />
                 </div>
             )}
-            <PendingStatements pending={preview.pending} onChoose={onChoose} />
+            <PendingStatements pending={preview.pending} onChoose={onChoose} disabled={!choosable} fileFor={fileFor} />
             <div className="mt-1.5">
                 {preview.datasets.length === 0
                     ? preview.pending.length === 0 && <p className="py-2 text-sm text-muted-foreground">No known dataset in this paste.</p>
-                    : preview.datasets.map(d => <DatasetPreviewCard key={d.kind} dataset={d} links={links} onReadAs={onChoose} />)}
+                    : preview.datasets.map(d => <DatasetPreviewCard key={d.kind} dataset={d} links={links} onReadAs={onChoose} readAsDisabled={!choosable} file={fileFor(d.line)} />)}
             </div>
         </section>
     )

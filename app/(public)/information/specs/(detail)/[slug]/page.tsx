@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -10,6 +11,9 @@ import SpecPhoto from '@/app/features/spec/SpecPhoto'
 import Stars from '@/app/features/information/specs/Stars'
 import SpecKit, { SpecSplit } from '@/app/features/information/specs/SpecKit'
 import SpecWinners, { type WinnerColumn } from '@/app/features/information/specs/SpecWinners'
+import Fact from '@/app/features/information/specs/Fact'
+import KitFacts, { StaticKitFacts } from '@/app/features/information/specs/KitFacts'
+import KitSwitch from '@/app/features/information/specs/KitSwitch'
 
 const WINNER_REGIONS = ['AS', 'EU', 'NA'] as const
 
@@ -29,25 +33,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: card?.name ?? 'Specs' }
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
-    return (
-        <div>
-            <span className="mb-0.5 block text-xs font-semibold uppercase tracking-[0.05em] text-muted-foreground">{label}</span>
-            <span className="font-mono text-sm tabular-nums text-foreground">{value}</span>
-        </div>
-    )
-}
-
 export default async function SpecPage({ params }: PageProps) {
     const { slug } = await params
     const { info, card } = await findCard(slug)
     if (!card) redirect('/information/specs')
 
-    const kit = card.game_key ? info.kits?.[card.game_key] : undefined
+    const leagueKit = card.game_key ? info.kits?.[card.game_key] : undefined
+    const customKit = card.game_key ? info.customKits?.[card.game_key] : undefined
+    const kit = card.is_custom ? customKit ?? leagueKit : leagueKit
     const allInspectors = info.inspectors ?? {}
     const inspectors: Record<string, InspectorData> = {}
-    for (const entry of [...(kit?.active ?? []), ...(kit?.passive ?? [])]) {
-        if (entry.target && allInspectors[entry.target]) inspectors[entry.target] = allInspectors[entry.target]
+    for (const shown of card.is_custom ? [kit] : [leagueKit, customKit]) {
+        for (const entry of [...(shown?.active ?? []), ...(shown?.passive ?? [])]) {
+            if (entry.target && allInspectors[entry.target]) inspectors[entry.target] = allInspectors[entry.target]
+        }
     }
 
     const position = card.position && isPositionCode(card.position) ? card.position : 'OUT'
@@ -64,8 +63,13 @@ export default async function SpecPage({ params }: PageProps) {
                     </p>
                     <div className="mt-3.5 flex flex-wrap gap-x-8 gap-y-3">
                         <Fact label="Height" value={formatHeight(card.height)} />
-                        {kit && <Fact label="Cooldown" value={`${kit.cooldown}s`} />}
-                        {kit?.lifetime !== undefined && <Fact label="Lasts" value={`${kit.lifetime}s`} />}
+                        {card.is_custom ? (
+                            <StaticKitFacts kit={kit} />
+                        ) : (
+                            <Suspense fallback={<StaticKitFacts kit={leagueKit} />}>
+                                <KitFacts league={leagueKit} custom={customKit} />
+                            </Suspense>
+                        )}
                     </div>
                 </div>
             </div>
@@ -84,7 +88,11 @@ export default async function SpecPage({ params }: PageProps) {
     return (
         <>
             {hero}
-            {kit && <SpecKit kit={kit} inspectors={inspectors} />}
+            {leagueKit && (
+                <Suspense fallback={<SpecKit kit={leagueKit} inspectors={inspectors} />}>
+                    <KitSwitch league={leagueKit} custom={customKit} inspectors={inspectors} />
+                </Suspense>
+            )}
             <SpecWinners columns={winnerColumns} />
         </>
     )

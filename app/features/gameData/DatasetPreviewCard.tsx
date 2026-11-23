@@ -23,9 +23,11 @@ interface Props {
     dataset: PreviewDataset
     links: AttributeLinks
     onReadAs?: (line: number, kind: GameDatasetKind) => void
+    readAsDisabled?: boolean
+    file?: string | null
 }
 
-export default function DatasetPreviewCard({ dataset, links, onReadAs }: Props) {
+export default function DatasetPreviewCard({ dataset, links, onReadAs, readAsDisabled = false, file }: Props) {
     const [open, setOpen] = useState(false)
     const errors = dataset.issues.filter(i => i.level === 'error').length
     const warnings = dataset.issues.length - errors
@@ -40,7 +42,7 @@ export default function DatasetPreviewCard({ dataset, links, onReadAs }: Props) 
             >
                 <ChevronRight aria-hidden className={cn('h-3.5 w-3.5 self-center text-muted-foreground transition-transform duration-150 motion-reduce:transition-none', open && 'rotate-90')} />
                 <span className="font-semibold text-foreground">{DATASET_LABELS[dataset.kind]}</span>
-                <span className="truncate font-mono text-xs tabular-nums text-muted-foreground">{dataset.root ?? 'return'} · line {dataset.line}</span>
+                <span className="truncate font-mono text-xs tabular-nums text-muted-foreground">{dataset.root ?? 'return'} · line {dataset.line}{file && ` · ${file}`}</span>
                 <span className="font-mono text-xs tabular-nums text-foreground">{dataset.count} entries</span>
                 <span className="text-muted-foreground">
                     {!dataset.diff ? 'New, nothing stored yet' : dataset.diff.unchanged ? 'Unchanged' : diffParts(dataset.diff)}
@@ -56,7 +58,7 @@ export default function DatasetPreviewCard({ dataset, links, onReadAs }: Props) 
                     <span>Read as</span>
                     <InlineSwitch
                         label={`Read line ${dataset.line} as`}
-                        options={[dataset.kind, ...dataset.alternatives].map(k => ({ value: k, label: DATASET_LABELS[k] }))}
+                        options={[dataset.kind, ...dataset.alternatives].map(k => ({ value: k, label: DATASET_LABELS[k], disabled: readAsDisabled }))}
                         value={dataset.kind}
                         onChange={kind => onReadAs(dataset.line, kind)}
                     />

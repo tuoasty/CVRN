@@ -28,7 +28,7 @@ export function SpecSplit({ header, list, detail }: { header: ReactNode; list: R
             <div className="min-w-0 self-start [grid-area:list]">
                 {list ?? <p className="text-sm text-muted-foreground">No abilities</p>}
             </div>
-            {detail && <div aria-live="polite" className="min-w-0 self-start [grid-area:detail]">{detail}</div>}
+            {detail && <div className="min-w-0 self-start [grid-area:detail]">{detail}</div>}
         </div>
     )
 }
@@ -95,29 +95,33 @@ export default function SpecKit({ kit, inspectors, header, split = false }: Prop
                     </ul>
                 </section>
             ))}
-            {styles.length > 0 && (
-                <section className={sections.length > 0 ? 'mt-8' : undefined}>
-                    <h3 className="mb-2 text-lg font-semibold tracking-[-0.01em] text-foreground">Serve styles</h3>
-                    <ul>
-                        {styles.map(style => (
-                            <li key={style.name} className="break-inside-avoid py-1 text-sm">
-                                <span className="font-medium text-foreground">{style.name}</span>
-                                {style.text && (
-                                    <span className="block text-muted-foreground">
-                                        {style.text}
-                                        {style.regular && ` (regular roll ${style.regular})`}
-                                    </span>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
         </div>
     )
 
-    const detail = dock && shown && shownData
-        ? <InspectorContent data={shownData} title={shown.name} />
+    const stylesSection = styles.length > 0 ? (
+        <section>
+            <h3 className="mb-2 text-lg font-semibold tracking-[-0.01em] text-foreground">Serve styles</h3>
+            <ul>
+                {styles.map(style => (
+                    <li key={style.name} className="py-1 text-sm">
+                        <span className="font-medium text-foreground">{style.name}</span>
+                        {style.text && (
+                            <span className="block text-muted-foreground">
+                                {style.text}
+                                {style.regular && ` (regular roll ${style.regular})`}
+                            </span>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </section>
+    ) : null
+
+    const inspector = dock && shown && shownData
+        ? <div aria-live="polite"><InspectorContent data={shownData} title={shown.name} /></div>
+        : null
+    const detail = inspector || stylesSection
+        ? <div className="space-y-8">{inspector}{dock && stylesSection}</div>
         : null
 
     if (split && !dock) {
@@ -125,6 +129,7 @@ export default function SpecKit({ kit, inspectors, header, split = false }: Prop
             <div className="space-y-8">
                 {header}
                 {list}
+                {stylesSection}
             </div>
         )
     }
@@ -132,13 +137,9 @@ export default function SpecKit({ kit, inspectors, header, split = false }: Prop
     if (split) return <SpecSplit header={header} list={list} detail={detail} />
 
     return (
-        <div className={cn(dock && 'grid grid-cols-[260px_minmax(0,1fr)] gap-8')}>
+        <div className={cn(dock ? 'grid grid-cols-[260px_minmax(0,1fr)] gap-8' : 'space-y-8')}>
             {list}
-            {detail && (
-                <div aria-live="polite" className="self-start">
-                    {detail}
-                </div>
-            )}
+            {dock ? detail && <div className="self-start">{detail}</div> : stylesSection}
         </div>
     )
 }

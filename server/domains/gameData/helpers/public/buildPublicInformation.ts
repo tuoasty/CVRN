@@ -36,11 +36,15 @@ export function buildPublicInformation({ payloads, terms, settings }: PublicInfo
     for (const ability of rollables) addInspector(ability.key)
     for (const ability of rollables) for (const line of ability.lines) if (line.grants) addInspector(line.grants)
 
-    const kits = buildSpecKits(payloads, ctx, key => {
+    const inspectorFor = (key: string) => {
         addInspector(key)
         return inspectors[key]
-    })
-    for (const kit of Object.values(kits)) for (const entry of [...kit.active, ...kit.passive]) if (entry.target) addInspector(entry.target)
+    }
+    const kits = buildSpecKits(payloads, ctx, inspectorFor)
+    const customKits = buildSpecKits({ ...payloads, specLoadouts: payloads.specLoadoutsPaid ?? [] }, ctx, inspectorFor)
+    for (const kit of [...Object.values(kits), ...Object.values(customKits)]) {
+        for (const entry of [...kit.active, ...kit.passive]) if (entry.target) addInspector(entry.target)
+    }
 
     const heights = buildHeightColumns(payloads.heights ?? [])
     const builds = buildBuildCatalog(payloads, catalog, heights, key => {
@@ -53,5 +57,5 @@ export function buildPublicInformation({ payloads, terms, settings }: PublicInfo
 
     const serveStyles = buildServeStyles(payloads.serveStyles ?? [], payloads.serveStyleValues ?? [], ctx.context.terms)
 
-    return { abilities: catalog, inspectors, heights, kits, builds, serveStyles }
+    return { abilities: catalog, inspectors, heights, kits, customKits, builds, serveStyles }
 }
