@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildImportPreview } from '../../helpers/buildImportPreview'
-import { createAbilityLookup, describeAbility, describeOption, unmappedTags } from '../describeAbility'
+import { createAbilityLookup, describeAbility, describeOption, unmappedStyleTags, unmappedTags } from '../describeAbility'
 import { createTermBook, EMPTY_TERM_BOOK, renderTemplate, unknownPlaceholders } from '../template'
 import type { Ability } from '../../types/datasets'
 import type { GameTerm } from '../types'
@@ -138,5 +138,16 @@ describe('option wording', () => {
         const unhandled = unmappedTags(abilities, { ...terms, options: new Map() }).filter(t => t.kind === 'option')
         expect(unhandled.map(t => t.tag)).toEqual(expect.arrayContaining(['Mode', 'ShortBonus']))
         expect(unhandled.map(t => t.tag)).not.toContain('Group')
+    })
+})
+
+describe('unmappedStyleTags', () => {
+    it('lists serve style values without a param template', () => {
+        expect(unmappedStyleTags([{ key: 'CurveballSide', value: 1 }], EMPTY_TERM_BOOK)).toEqual([{ kind: 'param', tag: 'CurveballSide', uses: 1 }])
+    })
+
+    it('skips values that already have a param template', () => {
+        const book = createTermBook([{ kind: 'param', tag: 'CurveballSide', category: 'serve', label: null, unit: null, template: 'Curve +{v}', grants: null, verified: true }])
+        expect(unmappedStyleTags([{ key: 'CurveballSide', value: 1 }], book)).toEqual([])
     })
 })

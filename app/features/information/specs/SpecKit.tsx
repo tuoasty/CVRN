@@ -43,6 +43,7 @@ export default function SpecKit({ kit, inspectors, header, split = false }: Prop
         { slot: 'Active' as const, entries: kit.active ?? [] },
         { slot: 'Passive' as const, entries: kit.passive ?? [] },
     ].filter(s => s.entries.length > 0)
+    const styles = kit.styles ?? []
 
     const keyed = sections.flatMap(s => s.entries.map((entry, i) => ({ id: entryId(entry, i), entry })))
     const firstTarget = keyed.find(k => k.entry.slot === 'Active' && k.entry.target) ?? keyed.find(k => k.entry.target)
@@ -52,7 +53,7 @@ export default function SpecKit({ kit, inspectors, header, split = false }: Prop
     const shown = keyed.find(k => k.id === shownId)?.entry
     const shownData = shown?.target ? shown.tuned ?? inspectors[shown.target] : undefined
 
-    if (sections.length === 0) return split ? <SpecSplit header={header} list={null} /> : null
+    if (sections.length === 0 && styles.length === 0) return split ? <SpecSplit header={header} list={null} /> : null
 
     const list = (
         <div>
@@ -94,6 +95,24 @@ export default function SpecKit({ kit, inspectors, header, split = false }: Prop
                     </ul>
                 </section>
             ))}
+            {styles.length > 0 && (
+                <section className={sections.length > 0 ? 'mt-8' : undefined}>
+                    <h3 className="mb-2 text-lg font-semibold tracking-[-0.01em] text-foreground">Serve styles</h3>
+                    <ul>
+                        {styles.map(style => (
+                            <li key={style.name} className="break-inside-avoid py-1 text-sm">
+                                <span className="font-medium text-foreground">{style.name}</span>
+                                {style.text && (
+                                    <span className="block text-muted-foreground">
+                                        {style.text}
+                                        {style.regular && ` (regular roll ${style.regular})`}
+                                    </span>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
         </div>
     )
 

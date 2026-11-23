@@ -1,4 +1,4 @@
-import type { Ability, AbilityEffect, ScalarValue } from '../types/datasets'
+import type { Ability, AbilityEffect, ScalarValue, ServeStyleValue } from '../types/datasets'
 import { TERM_CATEGORIES, type AbilityBullet, type TermBook } from './types'
 import { describeEffectGeneric, renderTemplate } from './template'
 import { fmt, humanize } from './format'
@@ -121,6 +121,10 @@ function describeActivation(ability: Ability): AbilityBullet[] {
     }
 
     return bullets
+}
+
+export function unmappedStyleTags(values: ServeStyleValue[], terms: TermBook): { kind: 'param'; tag: string; uses: number }[] {
+    return values.filter(v => !terms.params.get(v.key)?.template).map(v => ({ kind: 'param' as const, tag: v.key, uses: 1 }))
 }
 
 export function unmappedTags(abilities: Ability[], terms: TermBook): { kind: 'effect' | 'param' | 'option'; tag: string; uses: number }[] {

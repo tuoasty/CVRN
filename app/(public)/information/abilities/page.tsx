@@ -5,7 +5,7 @@ import AbilitiesView from '@/app/features/information/abilities/AbilitiesView'
 
 export const metadata: Metadata = {
     title: 'Abilities',
-    description: 'Every rollable ability with its rarity and odds.',
+    description: 'Every rollable ability and serve style with its rarity and odds.',
 }
 
 type PageProps = {
@@ -26,5 +26,5 @@ export default async function AbilitiesPage({ searchParams }: PageProps) {
         }
     }
 
-    return <AbilitiesView catalog={catalog} heights={info.heights ?? []} inspectors={inspectors} />
+    return <AbilitiesView catalog={catalog} heights={info.heights ?? []} serveStyles={info.serveStyles ?? []} inspectors={inspectors} />
 }

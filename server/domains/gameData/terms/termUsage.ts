@@ -1,9 +1,11 @@
-import type { Ability, EffectOp, ScalarValue } from '../types/datasets'
+import type { Ability, EffectOp, ScalarValue, ServeStyleValue } from '../types/datasets'
 import type { TermBook, TermKind } from './types'
 import { SKIPPED_OPTIONS } from './describeAbility'
 import { termMap } from './template'
 
 const MAX_EXAMPLES = 5
+
+export const SERVE_STYLE_SOURCE = 'Serve styles'
 
 export interface TermUsage {
     kind: TermKind
@@ -19,7 +21,7 @@ export function termId(kind: TermKind, tag: string): string {
     return `${kind}:${tag}`
 }
 
-export function collectTermUsage(abilities: Ability[]): Map<string, TermUsage> {
+export function collectTermUsage(abilities: Ability[], styleValues: ServeStyleValue[] = []): Map<string, TermUsage> {
     const usage = new Map<string, TermUsage>()
     const signs = new Map<string, Set<boolean>>()
     const add = (kind: TermKind, tag: string, ability: string, value: ScalarValue, op?: EffectOp) => {
@@ -48,6 +50,7 @@ export function collectTermUsage(abilities: Ability[]): Map<string, TermUsage> {
         }
         for (const [tag, value] of Object.entries(ability.params)) add('param', tag, ability.key, value)
     }
+    for (const style of styleValues) add('param', style.key, SERVE_STYLE_SOURCE, style.value)
     return usage
 }
 

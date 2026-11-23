@@ -71,11 +71,18 @@ export interface PublicKitEntry {
     tuned?: TunedInspector
 }
 
+export interface PublicKitStyle {
+    name: string
+    text: string
+    regular: string | null
+}
+
 export interface PublicSpecKit {
     cooldown: number
     lifetime?: number
     active: PublicKitEntry[]
     passive: PublicKitEntry[]
+    styles: PublicKitStyle[]
 }
 
 export interface PublicBuildCombo {
@@ -122,10 +129,20 @@ export interface PublicBuildCatalog {
     heights: HeightRow[]
 }
 
+export interface PublicServeStyle {
+    name: string
+    slug: string
+    tunable: string | null
+    value: number | null
+    oddsPct: number
+    text: string
+}
+
 export interface PublicInformation {
     abilities: PublicAbilityCatalog
     inspectors: Record<string, InspectorData>
     heights: HeightColumn[]
     kits: Record<string, PublicSpecKit>
     builds: PublicBuildCatalog
+    serveStyles: PublicServeStyle[]
 }

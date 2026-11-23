@@ -16,6 +16,8 @@ const payloads = {
     specLoadouts: fixtureSpecLoadouts(),
     builds: fixtureDataset('builds.txt', 'builds'),
     buildPassives: fixtureDataset('build-passives.txt', 'buildPassives'),
+    serveStyles: fixtureDataset('serve-styles.txt', 'serveStyles'),
+    serveStyleValues: fixtureDataset('serve-style-values.txt', 'serveStyleValues'),
 }
 
 describe('buildPublicInformation', () => {
@@ -26,7 +28,21 @@ describe('buildPublicInformation', () => {
             heights: [],
             kits: {},
             builds: { groups: [], physicals: [], technicals: [], heights: [] },
+            serveStyles: [],
         })
+    })
+
+    it('lists every serve style with its odds', () => {
+        const info = buildPublicInformation({ payloads, terms, settings: {} })
+        expect(info.serveStyles.map(s => [s.name, s.tunable])).toEqual([
+            ['Curveball', 'CurveballSide'],
+            ['Dive Bomb', 'DiveBombTopDrop'],
+            ['Hangtime', 'HangtimeTopDrop'],
+            ['Knuckleball', 'KnuckleballFloat'],
+            ['Trapdoor', 'TrapdoorFloat'],
+            ['Long Haul', 'LongHaulFloat'],
+            ['Razor', 'RazorFloat'],
+        ])
     })
 
     it('fills abilities, heights and one inspector per rollable', () => {

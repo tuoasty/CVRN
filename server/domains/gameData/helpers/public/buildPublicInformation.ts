@@ -10,6 +10,7 @@ import { buildBuildCatalog } from './buildCatalog'
 import { buildHeightColumns } from './heightColumns'
 import { buildInspector, type InspectorContext } from './inspector'
 import { buildSpecKits } from './specKits'
+import { buildServeStyles } from './serveStyles'
 
 export interface PublicInformationInput {
     payloads: Partial<GameDatasetPayloads>
@@ -50,5 +51,7 @@ export function buildPublicInformation({ payloads, terms, settings }: PublicInfo
         for (const effect of build.effects) if (effect.kind !== 'text' && effect.target) addInspector(effect.target)
     }
 
-    return { abilities: catalog, inspectors, heights, kits, builds }
+    const serveStyles = buildServeStyles(payloads.serveStyles ?? [], payloads.serveStyleValues ?? [], ctx.context.terms)
+
+    return { abilities: catalog, inspectors, heights, kits, builds, serveStyles }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { fixtureAbilities, fixtureTerms } from '../../__tests__/fixtures/loadFixtures'
-import { collectTermUsage, termId, unhandledTerms } from '../termUsage'
+import { collectTermUsage, SERVE_STYLE_SOURCE, termId, unhandledTerms } from '../termUsage'
 
 const abilities = fixtureAbilities()
 const terms = fixtureTerms()
@@ -31,5 +31,12 @@ describe('term usage', () => {
         const unhandled = unhandledTerms(usage, book)
         expect(unhandled.map(u => termId(u.kind, u.tag))).toContain('effect:JumpSpeed')
         for (let i = 1; i < unhandled.length; i++) expect(unhandled[i - 1].uses).toBeGreaterThanOrEqual(unhandled[i].uses)
+    })
+
+    it('counts serve style values as params from Serve styles', () => {
+        const styled = collectTermUsage([], [{ key: 'CurveballSide', value: 1 }, { key: 'DiveBombTopDrop', value: 2.5 }])
+        expect(SERVE_STYLE_SOURCE).toBe('Serve styles')
+        expect(styled.get(termId('param', 'CurveballSide'))).toMatchObject({ kind: 'param', uses: 1, abilities: ['Serve styles'], examples: [1] })
+        expect(styled.get(termId('param', 'DiveBombTopDrop'))?.examples).toEqual([2.5])
     })
 })

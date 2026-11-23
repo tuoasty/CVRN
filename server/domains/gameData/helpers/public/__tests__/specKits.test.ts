@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { fixtureAbilities, fixtureDataset, fixtureSpecLoadouts, fixtureTerms } from '../../../__tests__/fixtures/loadFixtures'
 import { createAbilityLookup } from '../../../terms/describeAbility'
 import { capitalize } from '../../../terms/format'
+import { renderTemplate } from '../../../terms/template'
 import { buildAbilityIndex } from '../../abilityIndex/buildAbilityIndex'
 import { buildInspector } from '../inspector'
 import { buildSpecKits } from '../specKits'
@@ -22,7 +23,8 @@ const inspectorFor = (key: string) => {
     return ability ? buildInspector(ability, entryByKey.get(key), ctx) : undefined
 }
 
-const kits = buildSpecKits({ abilities, specLoadouts: fixtureSpecLoadouts() }, ctx, inspectorFor)
+const serveStyleValues = fixtureDataset('serve-style-values.txt', 'serveStyleValues')
+const kits = buildSpecKits({ abilities, specLoadouts: fixtureSpecLoadouts(), serveStyleValues }, ctx, inspectorFor)
 
 describe('buildSpecKits', () => {
     it('keys kits by loadout and carries cooldown and lifetime', () => {
@@ -83,5 +85,29 @@ describe('buildSpecKits', () => {
 
     it('has no kit for an unknown loadout key', () => {
         expect(kits['No Such Spec']).toBeUndefined()
+    })
+
+    it('words Wilfredo Leon styles at the spec value', () => {
+        const styles = kits['Wilfredo Leon'].styles
+        expect(styles.map(s => s.name)).toEqual(['Curveball', 'Dive Bomb'])
+        expect(styles[1].text).toBe(renderTemplate(terms.params.get('DiveBombTopDrop')!.template!, 1))
+    })
+
+    it('shows the regular roll when the spec overrides below the default', () => {
+        expect(kits['Wilfredo Leon'].styles[1].regular).toBe('2.5')
+    })
+
+    it('shows no regular roll when the spec value equals the default', () => {
+        expect(kits['Wilfredo Leon'].styles[0].regular).toBeNull()
+    })
+
+    it('gives a spec with Styles = {} no styles', () => {
+        expect(kits['Joh'].styles).toEqual([])
+    })
+
+    it('keeps a style without a known value as its name only', () => {
+        const leon = fixtureSpecLoadouts().find(l => l.key === 'Wilfredo Leon')!
+        const odd = { ...leon, key: 'Odd', styles: [{ name: 'Lob', value: 2 }] }
+        expect(buildSpecKits({ abilities, specLoadouts: [odd], serveStyleValues }, ctx, inspectorFor).Odd.styles).toEqual([{ name: 'Lob', text: '', regular: null }])
     })
 })

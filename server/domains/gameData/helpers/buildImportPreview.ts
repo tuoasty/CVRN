@@ -1,5 +1,5 @@
-import type { Ability, DatasetIssue, GameDatasetKind, GameDatasetPayloads, SpecLoadout } from '../types/datasets'
-import { unmappedTags } from '../terms/describeAbility'
+import type { Ability, DatasetIssue, GameDatasetKind, GameDatasetPayloads, ServeStyleValue, SpecLoadout } from '../types/datasets'
+import { unmappedStyleTags, unmappedTags } from '../terms/describeAbility'
 import type { TermBook } from '../terms/types'
 import type { GameDataPreview, IgnoredStatement, KindChoices, PendingStatement, PreviewDataset } from '../types/preview'
 import { parseLuaData } from './lua/parseLuaData'
@@ -80,8 +80,9 @@ export function analyzeImport(text: string, stored: Partial<GameDatasetPayloads>
             })
         }
         const { payload, issues } = normalizeDataset(kind, detection.value)
-        if (kind === 'abilities' && terms) {
-            for (const u of unmappedTags(payload as Ability[], terms)) {
+        if ((kind === 'abilities' || kind === 'serveStyleValues') && terms) {
+            const unmapped = kind === 'abilities' ? unmappedTags(payload as Ability[], terms) : unmappedStyleTags(payload as ServeStyleValue[], terms)
+            for (const u of unmapped) {
                 issues.push({
                     level: 'warning',
                     entry: u.tag,
