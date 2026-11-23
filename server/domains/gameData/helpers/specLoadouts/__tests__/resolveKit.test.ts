@@ -12,10 +12,10 @@ const kitOf = (l: SpecLoadout) => [...l.passive.map(n => resolve(n, 'Passive')),
 describe('createKitResolver', () => {
     it('resolves kit tiers over the real data', () => {
         const all = loadouts.flatMap(kitOf)
-        expect(all).toHaveLength(740)
-        expect(all.filter(e => e.tier === 'ability')).toHaveLength(684)
-        expect(all.filter(e => e.tier === 'variant')).toHaveLength(29)
-        expect(all.filter(e => e.tier === 'text')).toHaveLength(27)
+        expect(all).toHaveLength(799)
+        expect(all.filter(e => e.tier === 'ability')).toHaveLength(751)
+        expect(all.filter(e => e.tier === 'variant')).toHaveLength(20)
+        expect(all.filter(e => e.tier === 'text')).toHaveLength(28)
     })
 
     it('names each tier', () => {
@@ -31,13 +31,14 @@ describe('resolveTuning', () => {
 
     it('reads tune before values', () => {
         expect(resolveTuning(leon, kitOf(leon), byKey)).toEqual([
-            { slot: 'Passive', ability: 'Wingspan', path: 'Effects.1.Amount', value: 0.85, target: 'Wingspan', before: 0.8, label: 'Effect 1 amount' },
+            { slot: 'Passive', ability: 'Buffed Cannon', path: 'Effects.1.Amount', value: 15.8, target: 'Buffed Cannon', before: 15.6, label: 'Effect 1 amount' },
+            { slot: 'Active', ability: 'Buffed Cannon', path: 'Effects.1.Amount', value: 16, target: 'Buffed Cannon', before: 15.6, label: 'Effect 1 amount' },
         ])
     })
 
     it('reads a later effect', () => {
-        const tuned = loadouts.flatMap(l => resolveTuning(l, kitOf(l), byKey)).find(t => t.ability === 'Athletic' && t.path === 'Effects.2.Amount')!
-        expect(tuned).toMatchObject({ before: 1, value: 0.2, label: 'Effect 2 amount' })
+        const tuned = loadouts.flatMap(l => resolveTuning(l, kitOf(l), byKey)).find(t => t.ability === 'Relentless' && t.path === 'Effects.2.Amount')!
+        expect(tuned).toMatchObject({ before: 1, value: 0.5, label: 'Effect 2 amount' })
     })
 
     it('flags unsupported paths and slot mismatches', () => {
@@ -50,7 +51,9 @@ describe('resolveTuning', () => {
         ])
     })
 
-    it('raises no tune issues on the real data', () => {
-        expect(loadouts.flatMap(l => tuneIssues(l, resolveTuning(l, kitOf(l), byKey)))).toEqual([])
+    it('raises only the unsupported Params tune warnings on the real data', () => {
+        const issues = loadouts.flatMap(l => tuneIssues(l, resolveTuning(l, kitOf(l), byKey)))
+        expect(issues).toHaveLength(7)
+        expect(issues.every(i => i.level === 'warning' && /^Tune path Params\.\w+ is not supported/.test(i.message))).toBe(true)
     })
 })

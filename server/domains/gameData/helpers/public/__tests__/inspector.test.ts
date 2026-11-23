@@ -64,7 +64,7 @@ describe('buildInspector stat sheet', () => {
     })
 
     it('skips the sheet when the ability has params, an active or a toggle', () => {
-        expect(inspect(ability('Wingspan')).sheet).toBeUndefined()
+        expect(inspect(ability('Momentum')).sheet).toBeUndefined()
         const base = ability('Sprinter')
         expect(inspect({ ...base, active: { cooldown: 60 } }).sheet).toBeUndefined()
         expect(inspect({ ...base, toggle: { name: 'T', defaultOn: true } }).sheet).toBeUndefined()
@@ -73,17 +73,17 @@ describe('buildInspector stat sheet', () => {
 
 describe('buildInspector wording', () => {
     it('uses the game description for ORIGINAL', () => {
-        expect(inspect(ability('Wingspan')).text).toBe(ability('Wingspan').description)
+        expect(inspect(ability('Momentum')).text).toBe(ability('Momentum').description)
     })
 
     it('uses the top-level derived lines for DERIVED', () => {
-        const data = inspect(ability('Wingspan'), undefined, { Wingspan: 'derived' })
+        const data = inspect(ability('Momentum'), undefined, { Momentum: 'derived' })
         expect(data.text).toBeUndefined()
-        expect(data.lines).toEqual(describeAbility(ability('Wingspan'), context).map(b => b.text))
+        expect(data.lines).toEqual(describeAbility(ability('Momentum'), context).map(b => b.text))
     })
 
     it('falls back to derived lines when there is no description', () => {
-        const a: Ability = { ...ability('Wingspan'), key: 'Bare', description: undefined }
+        const a: Ability = { ...ability('Momentum'), key: 'Bare', description: undefined }
         expect(inspect(a).lines?.length).toBeGreaterThan(0)
     })
 })
@@ -121,7 +121,7 @@ describe('applyTunes', () => {
     })
 
     it('lists every other tune as a line', () => {
-        const data = applyTunes(inspect(ability('Wingspan')), [
+        const data = applyTunes(inspect(ability('Momentum')), [
             tune('Cooldown', 90, 120, 'Cooldown'),
             tune('Effects.1.Amount', 0.85, 0.8, 'Effect 1 amount'),
         ])

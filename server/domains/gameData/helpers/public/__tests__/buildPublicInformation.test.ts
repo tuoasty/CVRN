@@ -32,7 +32,7 @@ describe('buildPublicInformation', () => {
     it('fills abilities, heights and one inspector per rollable', () => {
         const info = buildPublicInformation({ payloads, terms, settings: {} })
         const rollables = [...info.abilities.physical, ...info.abilities.technical].flatMap(g => g.abilities)
-        expect(rollables).toHaveLength(65)
+        expect(rollables).toHaveLength(63)
         for (const a of rollables) expect(info.inspectors[a.key]?.kind).toBe(a.kind)
         expect(info.heights.map(c => c.foot)).toEqual([5, 6, 7])
     })
@@ -63,7 +63,7 @@ describe('buildPublicInformation', () => {
     it('fills builds and an inspector for every build effect target', () => {
         const info = buildPublicInformation({ payloads, terms, settings: {} })
         const builds = info.builds.groups.flatMap(g => g.builds)
-        expect(builds).toHaveLength(52)
+        expect(builds).toHaveLength(51)
         expect(info.builds.heights).toHaveLength(24)
         for (const build of builds) {
             for (const effect of build.effects) {

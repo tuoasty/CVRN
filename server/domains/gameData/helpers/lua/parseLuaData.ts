@@ -54,8 +54,10 @@ class Parser {
 
         if (this.isName('return')) {
             this.next()
-            if (!this.atEof() && !this.isPunct(';')) this.parseExpression()
-            return null
+            if (this.atEof() || this.isPunct(';')) return null
+            const value = this.parseExpression()
+            const last = this.tokens[this.index - 1]
+            return { target: null, value, line: first.line, source: this.text.slice(first.start, last.end) }
         }
 
         if (first.type === 'name' && UNSUPPORTED_KEYWORDS.has(first.value)) {

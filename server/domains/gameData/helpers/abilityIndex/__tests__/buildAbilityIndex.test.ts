@@ -43,8 +43,8 @@ describe('buildAbilityIndex with the real files', () => {
     })
 
     it('treats non-rollables as exclusive with no rarity', () => {
-        expect(get('Buffed Spin Control')).toMatchObject({ availability: 'exclusive', variantOf: 'Spin Control', modifier: 'Buffed' })
-        expect(get('Buffed Spin Control').rarity).toBeUndefined()
+        expect(get('Buffed Mind Reader')).toMatchObject({ availability: 'exclusive', variantOf: 'Mind Reader', modifier: 'Buffed' })
+        expect(get('Buffed Mind Reader').rarity).toBeUndefined()
         expect(get('Nerfed Bounce')).toMatchObject({ availability: 'exclusive', variantOf: 'Bounce', modifier: 'Nerfed' })
         expect(get('Team Nerfed Bounce').variantOf).toBeUndefined()
         expect(get('Captains Call - Wall').variantOf).toBeUndefined()

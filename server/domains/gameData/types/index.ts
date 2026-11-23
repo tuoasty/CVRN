@@ -13,6 +13,9 @@ export type {
     KitSlot,
     SpecTune,
     SpecLoadout,
+    SpecStyle,
+    ServeStyle,
+    ServeStyleValue,
     GameDatasetPayloads,
     IssueLevel,
     DatasetIssue,
@@ -22,7 +25,7 @@ export type {
 } from './datasets'
 export { GAME_DATASET_KINDS } from './datasets'
 export type { AbilityAvailability, AbilityGrant, AbilityIndexEntry, VariantMatch } from './abilityIndex'
-export type { PreviewDataset, IgnoredStatement, GameDataPreview, PublishGameDataResult, StoredGameDatasets } from './preview'
+export type { PreviewDataset, IgnoredStatement, PendingStatement, KindChoice, KindChoices, GameDataPreview, PublishGameDataResult, StoredGameDatasets } from './preview'
 export type { UpsertGameDatasetDto } from './stored'
 export type { GameDataTextInput, DescriptionSource, SaveGameTermInput, SetGameTermVerifiedInput, SetAbilityDescriptionSourceInput } from './schemas'
 export type { LinkSpec, SpecCandidate, SpecLinkStatus, SpecLinkItem, OrphanedSpecLink, SpecLinkPlan, SpecStars, SpecLinkDecision, SpecLinkOp, HeightChange, SpecOpsPlan } from './specLinks'

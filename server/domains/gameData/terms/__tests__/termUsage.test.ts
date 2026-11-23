@@ -10,7 +10,7 @@ describe('term usage', () => {
     it('counts JumpSpeed lines and abilities', () => {
         const jump = usage.get(termId('effect', 'JumpSpeed'))!
         expect(jump.uses).toBe(16)
-        expect(jump.abilities).toHaveLength(13)
+        expect(jump.abilities).toHaveLength(14)
         expect(jump.abilities).toContain('Bounce')
         expect(jump.examples.length).toBeLessThanOrEqual(5)
     })

@@ -5,7 +5,7 @@ import { Button } from '@/app/components/ui/button'
 import { previewGameDataImportAction, publishGameDataImportAction } from '@/app/actions/gameData.actions'
 import type { Ability, AttributeEntry, GameDatasetKind, Rarity } from '@/server/domains/gameData/types/datasets'
 import type { LuaParseError } from '@/server/domains/gameData/types/luaValue'
-import type { GameDataPreview, StoredGameDatasets } from '@/server/domains/gameData/types/preview'
+import type { GameDataPreview, KindChoice, KindChoices, StoredGameDatasets } from '@/server/domains/gameData/types/preview'
 import type { GameTerm } from '@/server/domains/gameData/terms/types'
 import type { SpecLinkDecision } from '@/server/domains/gameData/types/specLinks'
 import type { SpecWithAllRegions } from '@/server/domains/spec/types'
@@ -18,6 +18,7 @@ import DatasetPreviewCard, { diffParts } from './DatasetPreviewCard'
 import IssueList from './IssueList'
 import StoredDatasetsStrip from './StoredDatasetsStrip'
 import SavedDatasetPanel from './SavedDatasetPanel'
+import PendingStatements from './PendingStatements'
 import SpecLinkSections from './specLink/SpecLinkSections'
 import PublishSection, { type PublishDone } from './specLink/PublishSection'
 import { cn } from '@/lib/utils'
@@ -63,6 +64,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
     const [stored, setStored] = useState(initialStored)
     const [viewing, setViewing] = useState<GameDatasetKind | null>(null)
     const [text, setText] = useState('')
+    const [choices, setChoices] = useState<KindChoices>({})
     const [preview, setPreview] = useState<GameDataPreview | null>(null)
     const [previewedText, setPreviewedText] = useState<string | null>(null)
     const [busy, setBusy] = useState(false)
@@ -84,7 +86,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
 
     const stale = preview !== null && previewedText !== text
     const blocker = ok
-        ? publishBlocker({ stale, canPublish: ok.canPublish, planErrors: planErrors.length, undecided, hasChanges: ok.hasChanges, specOps })
+        ? publishBlocker({ stale, canPublish: ok.canPublish, pending: ok.pending.length, planErrors: planErrors.length, undecided, hasChanges: ok.hasChanges, specOps })
         : null
     const changedDatasets = ok
         ? ok.datasets
@@ -111,13 +113,32 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
         decide(gameKey, on ? { gameKey, action: 'leave' } : undefined)
     }
 
-    async function loadPreview(source: string) {
-        const result = await previewGameDataImportAction({ text: source })
+    function changeText(next: string) {
+        setText(next)
+        setChoices({})
+    }
+
+    async function loadPreview(source: string, kindChoices: KindChoices = choices, keepDecisions = false) {
+        const result = await previewGameDataImportAction({ text: source, kindChoices })
         if (!result.ok) { toast.error(result.error.message); return }
         setPreview(result.value)
         setPreviewedText(source)
-        setDecisions(result.value.status === 'ok' && result.value.specLinks ? seedProposalDecisions(result.value.specLinks) : {})
-        setRestored(new Set())
+        if (!keepDecisions) {
+            setDecisions(result.value.status === 'ok' && result.value.specLinks ? seedProposalDecisions(result.value.specLinks) : {})
+            setRestored(new Set())
+        }
+    }
+
+    async function choose(line: number, choice: KindChoice) {
+        if (previewedText === null) return
+        const next = { ...choices, [line]: choice }
+        setChoices(next)
+        setBusy(true)
+        try {
+            await loadPreview(previewedText, next, true)
+        } finally {
+            setBusy(false)
+        }
     }
 
     async function runPreview() {
@@ -131,7 +152,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
     }
 
     function clear() {
-        setText('')
+        changeText('')
         setPreview(null)
         setPreviewedText(null)
         setDecisions({})
@@ -143,7 +164,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
         if (previewedText === null) return
         setBusy(true)
         try {
-            const result = await publishGameDataImportAction({ text: previewedText, specLinks: Object.values(decisions) })
+            const result = await publishGameDataImportAction({ text: previewedText, specLinks: Object.values(decisions), kindChoices: choices })
             if (!result.ok) { toast.error(result.error.message); return }
             setDone({
                 at: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
@@ -163,7 +184,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
 
     async function loadFiles(files: FileList | File[]) {
         if (files.length === 0) return
-        setText(await readFiles(files))
+        changeText(await readFiles(files))
     }
 
     function onDrop(e: DragEvent<HTMLTextAreaElement>) {
@@ -178,7 +199,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
             <div>
                 <textarea
                     value={text}
-                    onChange={e => setText(e.target.value)}
+                    onChange={e => changeText(e.target.value)}
                     onDragOver={e => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragging(true) } }}
                     onDragLeave={() => setDragging(false)}
                     onDrop={onDrop}
@@ -213,7 +234,7 @@ export default function GameDataImport({ initialStored, terms, storedError, onSt
             </div>
 
             {preview?.status === 'parse_error' && <ParseError error={preview.error} />}
-            {ok && <FoundInPaste preview={ok} stored={stored} terms={terms} />}
+            {ok && <FoundInPaste preview={ok} stored={stored} terms={terms} onChoose={choose} />}
             {plan && (
                 <SpecLinkSections
                     plan={plan}
@@ -266,7 +287,14 @@ function ParseError({ error }: { error: LuaParseError }) {
     )
 }
 
-function FoundInPaste({ preview, stored, terms }: { preview: Extract<GameDataPreview, { status: 'ok' }>; stored: StoredGameDatasets; terms: GameTerm[] }) {
+interface FoundInPasteProps {
+    preview: Extract<GameDataPreview, { status: 'ok' }>
+    stored: StoredGameDatasets
+    terms: GameTerm[]
+    onChoose: (line: number, choice: KindChoice) => void
+}
+
+function FoundInPaste({ preview, stored, terms, onChoose }: FoundInPasteProps) {
     const unchecked = GAME_DATASET_KINDS.filter(k => !preview.checkedKinds.includes(k))
     const pasted = (kind: GameDatasetKind) => preview.datasets.find(d => d.kind === kind)?.payload
     const links = {
@@ -290,17 +318,18 @@ function FoundInPaste({ preview, stored, terms }: { preview: Extract<GameDataPre
                         <p>
                             Ignored:{' '}
                             {preview.ignored.map(s => (
-                                <span key={`${s.target}-${s.line}`} className="mr-3 font-mono text-xs">{s.target} <span className="tabular-nums">(line {s.line})</span></span>
+                                <span key={`${s.target}-${s.line}`} className="mr-3 font-mono text-xs">{s.target ?? 'return'} <span className="tabular-nums">(line {s.line})</span></span>
                             ))}
                         </p>
                     )}
                     <IssueList issues={preview.crossIssues} showKind />
                 </div>
             )}
+            <PendingStatements pending={preview.pending} onChoose={onChoose} />
             <div className="mt-1.5">
                 {preview.datasets.length === 0
-                    ? <p className="py-2 text-sm text-muted-foreground">No known dataset in this paste.</p>
-                    : preview.datasets.map(d => <DatasetPreviewCard key={d.kind} dataset={d} links={links} />)}
+                    ? preview.pending.length === 0 && <p className="py-2 text-sm text-muted-foreground">No known dataset in this paste.</p>
+                    : preview.datasets.map(d => <DatasetPreviewCard key={d.kind} dataset={d} links={links} onReadAs={onChoose} />)}
             </div>
         </section>
     )

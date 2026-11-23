@@ -12,7 +12,7 @@ export interface SpecWriteSummary {
     renamed: number
 }
 
-export type PublishBlocker = 'stale' | 'errors' | 'undecided' | 'nothing'
+export type PublishBlocker = 'stale' | 'pending' | 'errors' | 'undecided' | 'nothing'
 
 export function seedProposalDecisions(plan: SpecLinkPlan): Record<string, SpecLinkDecision> {
     const decisions: Record<string, SpecLinkDecision> = {}
@@ -45,8 +45,9 @@ export function summarizeSpecWrites(plan: SpecLinkPlan, decisions: Record<string
     return summary
 }
 
-export function publishBlocker(s: { stale: boolean; canPublish: boolean; planErrors: number; undecided: number; hasChanges: boolean; specOps: number }): PublishBlocker | null {
+export function publishBlocker(s: { stale: boolean; canPublish: boolean; pending: number; planErrors: number; undecided: number; hasChanges: boolean; specOps: number }): PublishBlocker | null {
     if (s.stale) return 'stale'
+    if (s.pending > 0) return 'pending'
     if (!s.canPublish || s.planErrors > 0) return 'errors'
     if (s.undecided > 0) return 'undecided'
     if (!s.hasChanges && s.specOps === 0) return 'nothing'
@@ -55,6 +56,7 @@ export function publishBlocker(s: { stale: boolean; canPublish: boolean; planErr
 
 export function publishBlockerText(blocker: PublishBlocker, undecided: number): string {
     if (blocker === 'stale') return 'Preview again first.'
+    if (blocker === 'pending') return 'Choose what each listed line is first.'
     if (blocker === 'errors') return 'Fix the errors above first.'
     if (blocker === 'undecided') return `${undecided} left`
     return 'Matches what is stored.'

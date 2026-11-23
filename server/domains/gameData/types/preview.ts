@@ -6,17 +6,26 @@ import type { SpecWithAllRegions } from '@/server/domains/spec/types'
 export type PreviewDataset = {
     [K in GameDatasetKind]: {
         kind: K
-        root: string
+        root: string | null
         line: number
         count: number
         payload: GameDatasetPayloads[K]
         issues: DatasetIssue[]
         diff: DatasetDiff | null
+        alternatives: GameDatasetKind[]
     }
 }[GameDatasetKind]
 
+export type KindChoice = GameDatasetKind | 'skip'
+export type KindChoices = Record<number, KindChoice>
+
+export interface PendingStatement {
+    line: number
+    candidates: GameDatasetKind[]
+}
+
 export interface IgnoredStatement {
-    target: string
+    target: string | null
     line: number
 }
 
@@ -26,6 +35,7 @@ export type GameDataPreview =
         status: 'ok'
         datasets: PreviewDataset[]
         ignored: IgnoredStatement[]
+        pending: PendingStatement[]
         crossIssues: DatasetIssue[]
         checkedKinds: GameDatasetKind[]
         canPublish: boolean

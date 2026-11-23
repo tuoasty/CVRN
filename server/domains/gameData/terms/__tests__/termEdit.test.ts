@@ -14,7 +14,7 @@ describe('term change preview', () => {
     it('previews a shared rewording across every ability using the tag', () => {
         const draft = { ...terms.effects.get('JumpSpeed')!, label: 'jump height' }
         const changes = previewTermChange(abilities, { terms, lookup }, draft)
-        expect(changes).toHaveLength(14)
+        expect(changes).toHaveLength(15)
         expect(changes.find(c => c.ability === 'Captains Call')!.after).toContain('  Increased jump height by 0.2 (spike mode only)')
         const athletic = changes.find(c => c.ability === 'Athletic')!
         expect(athletic.before).toContain('Increased jump speed by 0.5')

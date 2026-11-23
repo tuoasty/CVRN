@@ -1,0 +1,12 @@
+return Tunables.Define("Style", {
+    -- on top of the 1.6 sideways kick every side spin serve gets
+    CurveballSide = 1,
+    -- on top of the per-amount dip, topspin picks for dive bomb and backspin picks for hangtime. 5 becomes 7.5
+    DiveBombTopDrop = 2.5,
+    HangtimeTopDrop = 2.5,
+    -- float boost for the one float kind each style covers, the same scale the old float control used
+    KnuckleballFloat = 1,
+    TrapdoorFloat = 1,
+    LongHaulFloat = 1,
+    RazorFloat = 1,
+})

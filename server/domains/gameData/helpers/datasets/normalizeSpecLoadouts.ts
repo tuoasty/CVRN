@@ -1,9 +1,9 @@
 import type { LuaTable, LuaValue } from '../../types/luaValue'
-import type { KitSlot, NormalizeResult, PlainValue, SpecLoadout, SpecTune } from '../../types/datasets'
+import type { KitSlot, NormalizeResult, PlainValue, SpecLoadout, SpecStyle, SpecTune } from '../../types/datasets'
 import { describe, isCall, isTable, IssueLog, toPlain } from './luaRead'
 
 const KIT_SLOTS: readonly string[] = ['Passive', 'Active'] satisfies KitSlot[]
-const KNOWN_FIELDS = new Set(['Name', 'Height', 'Cooldown', 'Lifetime', 'EndOnSpike', 'MaxPower', 'ActiveMaxPower', 'Passive', 'Active', 'Tuning'])
+const KNOWN_FIELDS = new Set(['Name', 'Height', 'Cooldown', 'Lifetime', 'EndOnSpike', 'MaxPower', 'ActiveMaxPower', 'Passive', 'Active', 'Tuning', 'Styles'])
 
 export function normalizeSpecLoadouts(value: LuaValue): NormalizeResult<SpecLoadout> {
     const log = new IssueLog()
@@ -64,6 +64,7 @@ function readLoadout(key: string, table: LuaTable, log: IssueLog): SpecLoadout |
     const passive = readNames(fields.get('Passive'), 'Passive', key, log)
     const active = readNames(fields.get('Active'), 'Active', key, log)
     const tuning = readTuning(fields.get('Tuning'), key, log)
+    const styles = readStyles(fields.get('Styles'), key, log)
     if (log.issues.filter(i => i.level === 'error').length > errorsBefore) return undefined
 
     if (name !== key) log.warn(`Name "${name}" differs from its key`, key)
@@ -79,6 +80,7 @@ function readLoadout(key: string, table: LuaTable, log: IssueLog): SpecLoadout |
         passive: passive!,
         active: active!,
         tuning: tuning!,
+        styles: styles!,
     }
     if (lifetime !== undefined) loadout.lifetime = lifetime
     if (Object.keys(extra).length > 0) loadout.extra = extra
@@ -141,4 +143,30 @@ function readTuning(value: LuaValue | undefined, key: string, log: IssueLog): Sp
         tunes.push({ slot: slot as KitSlot, ability, path, value: amount })
     })
     return tunes
+}
+
+function readStyles(value: LuaValue | undefined, key: string, log: IssueLog): SpecStyle[] | undefined {
+    if (value === undefined) return []
+    if (!isTable(value) || value.fields.length > 0) {
+        log.error(`Styles should be a list of style() calls, found ${describe(value)}`, key)
+        return undefined
+    }
+    const styles: SpecStyle[] = []
+    let failed = false
+    value.items.forEach((item, i) => {
+        const where = `Style ${i + 1}`
+        if (!isCall(item) || item.callee !== 'style') {
+            log.error(`${where} should be style(), found ${describe(item)}`, key)
+            failed = true
+            return
+        }
+        const [name, amount, ...rest] = item.args
+        if (typeof name !== 'string' || typeof amount !== 'number' || rest.length > 0) {
+            log.error(`${where} should be style(name, number)`, key)
+            failed = true
+            return
+        }
+        styles.push({ name, value: amount })
+    })
+    return failed ? undefined : styles
 }

@@ -15,6 +15,7 @@ import {
     GameDataTextSchema,
     PublishGameDataSchema,
     PublishGameDataInput,
+    GameDataTextInput,
     SaveGameTermSchema,
     SetGameTermVerifiedSchema,
     SetAbilityDescriptionSourceSchema,
@@ -26,7 +27,7 @@ import {
     SetAbilityDescriptionSourceInput,
 } from '@/server/domains/gameData'
 
-export async function previewGameDataImportAction(input: { text: string }): Promise<Result<GameDataPreview>> {
+export async function previewGameDataImportAction(input: GameDataTextInput): Promise<Result<GameDataPreview>> {
     const parsed = GameDataTextSchema.safeParse(input)
     if (!parsed.success) return Err({ message: parsed.error.issues.map(i => i.message).join(', '), code: 'VALIDATION_ERROR' })
 
@@ -34,7 +35,7 @@ export async function previewGameDataImportAction(input: { text: string }): Prom
     const guard = await requireGroups(supabase, ['admin'])
     if (!guard.ok) return guard
 
-    return previewGameDataImport(supabase, parsed.data.text)
+    return previewGameDataImport(supabase, parsed.data.text, parsed.data.kindChoices)
 }
 
 export async function publishGameDataImportAction(input: PublishGameDataInput): Promise<Result<PublishGameDataResult>> {
@@ -45,7 +46,7 @@ export async function publishGameDataImportAction(input: PublishGameDataInput): 
     const guard = await requireGroups(supabase, ['admin'], { action: "publishGameDataImport", target: parsed.data })
     if (!guard.ok) return guard
 
-    const result = await publishGameDataImport(supabase, { text: parsed.data.text, specLinks: parsed.data.specLinks, userId: guard.value.userId })
+    const result = await publishGameDataImport(supabase, { text: parsed.data.text, specLinks: parsed.data.specLinks, kindChoices: parsed.data.kindChoices, userId: guard.value.userId })
     if (result.ok && (result.value.published.length > 0 || result.value.specOps > 0)) revalidatePublicData([CACHE_TAGS.gameData])
     if (result.ok && result.value.specOps > 0) {
         revalidatePublicData([CACHE_TAGS.specs])

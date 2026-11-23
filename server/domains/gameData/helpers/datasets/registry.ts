@@ -6,9 +6,11 @@ import { normalizeBuildPassives } from './normalizeBuildPassives'
 import { normalizeBuilds } from './normalizeBuilds'
 import { normalizeHeights } from './normalizeHeights'
 import { normalizeRarities } from './normalizeRarities'
+import { normalizeServeStyles } from './normalizeServeStyles'
+import { normalizeServeStyleValues } from './normalizeServeStyleValues'
 import { normalizeSpecLoadouts } from './normalizeSpecLoadouts'
 
-export const DATASET_ROOTS: Record<GameDatasetKind, string> = {
+export const DATASET_ROOTS: Partial<Record<GameDatasetKind, string>> = {
     rarities: 'RollCatalog.Rarities',
     abilities: 'AbilityCatalog.Abilities',
     physicals: 'Attributes.Physicals',
@@ -17,6 +19,7 @@ export const DATASET_ROOTS: Record<GameDatasetKind, string> = {
     builds: 'Builds.Table',
     buildPassives: 'BuildPassives.ByName',
     specLoadouts: 'SpecCatalog.Specs',
+    serveStyles: 'ServeStyle.Styles',
 }
 
 export const DATASET_LABELS: Record<GameDatasetKind, string> = {
@@ -28,6 +31,9 @@ export const DATASET_LABELS: Record<GameDatasetKind, string> = {
     builds: 'Builds',
     buildPassives: 'Build effects',
     specLoadouts: 'Spec loadouts',
+    serveStyles: 'Serve styles',
+    serveStyleValues: 'Serve style values',
+    specLoadoutsPaid: 'Spec loadouts (Custom)',
 }
 
 type EntryKeys = { [K in GameDatasetKind]: (entry: GameDatasetPayloads[K][number]) => string }
@@ -41,6 +47,9 @@ const ENTRY_KEYS: EntryKeys = {
     builds: b => b.name,
     buildPassives: p => p.build,
     specLoadouts: l => l.key,
+    serveStyles: s => s.name,
+    serveStyleValues: v => v.key,
+    specLoadoutsPaid: l => l.key,
 }
 
 export function entryKey<K extends GameDatasetKind>(kind: K, entry: GameDatasetPayloads[K][number]): string {
@@ -66,6 +75,9 @@ const NORMALIZERS: Normalizers = {
     builds: normalizeBuilds,
     buildPassives: normalizeBuildPassives,
     specLoadouts: normalizeSpecLoadouts,
+    serveStyles: normalizeServeStyles,
+    serveStyleValues: normalizeServeStyleValues,
+    specLoadoutsPaid: normalizeSpecLoadouts,
 }
 
 export function normalizeDataset<K extends GameDatasetKind>(kind: K, value: LuaValue): NormalizeResult<GameDatasetPayloads[K][number]> {

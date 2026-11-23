@@ -16,9 +16,9 @@ describe('groupLoadouts', () => {
         const groups = groupLoadouts(loadouts, linked, new Set(['Roberlandy Simon', 'Austin']), '')
         expect(groups.map(g => g.label)).toEqual(['Outside', 'Opposite', 'Not linked', 'Skipped'])
         expect(groups[0].rows.map(r => [r.label, r.stars])).toEqual([['Earvin Ngapeth', 5], ['Wilfredo León', 5], ['TJ Defalco', 4]])
-        expect(groups[2].rows).toHaveLength(51)
+        expect(groups[2].rows).toHaveLength(53)
         expect(groups[2].rows.every(r => r.state === 'unlinked' && r.stars === null)).toBe(true)
-        expect(groups[3].rows.map(r => r.label)).toEqual(['Austin', 'Roberlandy Simon'])
+        expect(groups[3].rows.map(r => r.label)).toEqual(['Austin'])
         expect(groups[1].rows.map(r => [r.label, r.vaulted])).toEqual([['Maksim Mikhaylov', true]])
         expect(groups[0].rows.every(r => !r.vaulted)).toBe(true)
         expect(groupLoadouts(loadouts, linked, new Set(), 'defalco')[0].rows.map(r => r.gameKey)).toEqual(['T.J DeFalco'])
@@ -50,7 +50,7 @@ describe('groupLoadouts', () => {
 describe('specPopLine', () => {
     it('writes the spec pop line', () => {
         const by = (k: string) => loadouts.find(l => l.key === k)!
-        expect(specPopLine(by('Wilfredo Leon'))).toBe('220s cooldown · lasts 10s · max power 15.7 → 16')
+        expect(specPopLine(by('Wilfredo Leon'))).toBe('210s cooldown · lasts 15s · max power 15.8 → 16')
         expect(specPopLine(by('Gold Ship'))).toBe('50s cooldown · ends on spike · max power 15.75 → 20')
         expect(specPopLine(by('Alessandro Michieletto'))).toBe('260s cooldown · ends on spike · max power 15.5')
     })
@@ -60,7 +60,7 @@ describe('kitSections', () => {
     it('splits plain text out of the kit', () => {
         const resolve = createKitResolver(fixtureAbilities().map(a => a.key))
         const sections = kitSections(resolveKit(loadouts.find(l => l.key === 'Gold Ship')!, resolve))
-        expect([sections.passive.length, sections.active.length, sections.text.length]).toEqual([44, 16, 6])
+        expect([sections.passive.length, sections.active.length, sections.text.length]).toEqual([67, 19, 9])
         expect(sections.text.every(e => e.tier === 'text')).toBe(true)
     })
 })

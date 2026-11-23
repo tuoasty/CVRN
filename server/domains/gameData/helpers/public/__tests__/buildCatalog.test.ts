@@ -32,8 +32,7 @@ const find = (name: string) => builds.find(b => b.name === name)!
 describe('buildBuildCatalog', () => {
     it('drops builds without effects', () => {
         expect(builds.map(b => b.name)).not.toContain('Anchor')
-        expect(builds.map(b => b.name)).not.toContain('Bulldozer')
-        expect(builds).toHaveLength(52)
+        expect(builds).toHaveLength(51)
     })
 
     it('orders groups rarest first and builds A to Z', () => {
@@ -74,8 +73,8 @@ describe('buildBuildCatalog', () => {
     })
 
     it('lists every rollable as a pick option and never None', () => {
-        expect(catalog.physicals).toHaveLength(22)
-        expect(catalog.technicals).toHaveLength(43)
+        expect(catalog.physicals).toHaveLength(23)
+        expect(catalog.technicals).toHaveLength(40)
         expect([...catalog.physicals, ...catalog.technicals].map(o => o.name)).not.toContain('None')
         expect(catalog.physicals[0]).toMatchObject({ slug: expect.any(String), rarity: 'Mythical' })
     })

@@ -17,9 +17,8 @@ describe('normalizeBuilds', () => {
     it('groups the real builds table by name', () => {
         const { payload, issues } = normalizeBuilds(parseOne(fixtureText('builds.txt')))
         expect(issues).toEqual([])
-        expect(payload).toHaveLength(54)
+        expect(payload).toHaveLength(52)
         expect(payload[0]).toEqual({ name: 'High Flyer', rarity: 'Mythical', combos: [{ physical: 'Bounce', technical: 'Swiper', minHeight: 1.375, maxHeight: 1.375 }] })
-        expect(payload.find(b => b.name === 'Bulldozer')!.combos.map(c => c.technical)).toEqual(['Spin Control', 'Float Control'])
         expect(payload.find(b => b.name === 'Bandit')!.combos).toHaveLength(2)
     })
 
