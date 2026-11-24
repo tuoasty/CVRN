@@ -57,3 +57,7 @@ export function contextHref(
     const section = pathname.startsWith(base) ? pathname.slice(base.length).split("/")[0] : "";
     return section ? `${target}/${section}` : target;
 }
+
+export function isPlainLeftClick(event: {button: number; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean}): boolean {
+    return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type {MouseEvent} from "react";
 import {useParams, usePathname} from "next/navigation";
 import {cn} from "@/lib/utils";
 import {useRegions} from "@/app/hooks/useRegions";
@@ -9,7 +10,7 @@ import {isSeasonActive} from "@/server/domains/season/helpers/isSeasonActive";
 import {contextHref, seasonGroupsFor, type IslandRegionCode} from "./islandContext";
 import {DRAWER_HEADING, drawerLabelClass, drawerRowClass, rowStyle, type DrawerSize} from "./IslandDrawer";
 
-export function SeasonsDrawer({island, size, onPick}: {island: IslandRegionCode; size: DrawerSize; onPick(): void}) {
+export function SeasonsDrawer({island, size, onPick}: {island: IslandRegionCode; size: DrawerSize; onPick(event: MouseEvent<HTMLAnchorElement>): void}) {
     const {regions} = useRegions();
     const {seasons} = useSeasons();
     const pathname = usePathname();

@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {contextHref, islandRegionFor, latestSeason, seasonGroupsFor, sortSeasonsNewestFirst} from "../islandContext";
+import {contextHref, islandRegionFor, isPlainLeftClick, latestSeason, seasonGroupsFor, sortSeasonsNewestFirst} from "../islandContext";
 
 const regions = [
     {id: "r-as", code: "AS", name: "Asia"},
@@ -79,5 +79,19 @@ describe("contextHref", () => {
     });
     it("goes to the season home with no current context", () => {
         expect(contextHref("NA", "s10", "/players", null)).toBe("/na/s10");
+    });
+});
+
+describe("isPlainLeftClick", () => {
+    const click = {button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false};
+    it("accepts an unmodified left click", () => {
+        expect(isPlainLeftClick(click)).toBe(true);
+    });
+    it("rejects clicks that open a new tab or window", () => {
+        expect(isPlainLeftClick({...click, ctrlKey: true})).toBe(false);
+        expect(isPlainLeftClick({...click, metaKey: true})).toBe(false);
+        expect(isPlainLeftClick({...click, shiftKey: true})).toBe(false);
+        expect(isPlainLeftClick({...click, altKey: true})).toBe(false);
+        expect(isPlainLeftClick({...click, button: 1})).toBe(false);
     });
 });

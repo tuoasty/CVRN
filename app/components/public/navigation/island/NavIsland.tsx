@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {useEffect, useLayoutEffect, useRef, useState} from "react";
+import {useEffect, useLayoutEffect, useRef, useState, type MouseEvent} from "react";
 import {useParams, usePathname} from "next/navigation";
 import {ChevronDown, Moon, Sun} from "lucide-react";
 import {cn} from "@/lib/utils";
@@ -9,7 +9,7 @@ import {useRegions} from "@/app/hooks/useRegions";
 import {useSeasons} from "@/app/hooks/useSeasons";
 import {useAccount, type Account} from "@/app/components/account/AccountMenu";
 import {AccountPanel} from "@/app/components/account/AccountPanel";
-import {ISLAND_REGION_CODES, contextHref, islandRegionFor, latestSeason, type IslandRegionCode} from "./islandContext";
+import {ISLAND_REGION_CODES, contextHref, islandRegionFor, isPlainLeftClick, latestSeason, type IslandRegionCode} from "./islandContext";
 import {useIslandDrawer, type DrawerKind} from "./useIslandDrawer";
 import {IslandDrawer} from "./IslandDrawer";
 import {SeasonsDrawer} from "./SeasonsDrawer";
@@ -181,7 +181,8 @@ export function NavIsland({variant}: {variant: "desktop" | "row"}) {
     });
 
     const browsing = open === "seasons" ? browse : pending;
-    const pickSeason = () => {
+    const pickSeason = (event: MouseEvent<HTMLAnchorElement>) => {
+        if (!isPlainLeftClick(event)) return;
         setPending(browse);
         close();
     };
