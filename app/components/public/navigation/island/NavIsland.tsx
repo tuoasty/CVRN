@@ -9,7 +9,7 @@ import {useRegions} from "@/app/hooks/useRegions";
 import {useSeasons} from "@/app/hooks/useSeasons";
 import {useAccount, type Account} from "@/app/components/account/AccountMenu";
 import {AccountPanel} from "@/app/components/account/AccountPanel";
-import {ISLAND_REGION_CODES, contextHref, islandRegionFor, isPlainLeftClick, latestSeason, type IslandRegionCode} from "./islandContext";
+import {ISLAND_REGION_CODES, contextHref, islandRegionFor, isPlainLeftClick, seasonForRegionSwitch, type IslandRegionCode} from "./islandContext";
 import {useIslandDrawer, type DrawerKind} from "./useIslandDrawer";
 import {IslandDrawer} from "./IslandDrawer";
 import {SeasonsDrawer} from "./SeasonsDrawer";
@@ -49,11 +49,13 @@ function RegionCodes({island, active, variant, onPreview}: {
     const pathname = usePathname();
     const params = useParams<{region?: string; season?: string}>();
     const current = params.region && params.season ? {region: params.region, season: params.season} : null;
+    const urlRegion = regions.find(r => r.code.toLowerCase() === params.region?.toLowerCase());
+    const seasonNumber = seasons.find(s => s.slug === params.season && s.region_id === urlRegion?.id)?.season_number ?? null;
 
     return (
         <div className={cn("flex items-stretch px-1", variant === "row" && "flex-1 px-0")}>
             {ISLAND_REGION_CODES.map(code => {
-                const latest = latestSeason(code, regions, seasons);
+                const target = seasonForRegionSwitch(code, regions, seasons, seasonNumber);
                 const className = cn(
                     "flex items-center px-1.5 font-mono font-semibold tracking-[0.04em] transition-colors duration-150 motion-reduce:transition-none",
                     variant === "desktop" ? "text-xs" : "flex-1 justify-center text-[13px]",
@@ -61,7 +63,7 @@ function RegionCodes({island, active, variant, onPreview}: {
                         ? "text-foreground underline decoration-2 underline-offset-[5px]"
                         : "text-muted-foreground",
                 );
-                if (latest && onPreview) {
+                if (target && onPreview) {
                     return (
                         <button
                             key={code}
@@ -74,10 +76,10 @@ function RegionCodes({island, active, variant, onPreview}: {
                         </button>
                     );
                 }
-                return latest ? (
+                return target ? (
                     <Link
                         key={code}
-                        href={contextHref(code, latest.slug, pathname, current)}
+                        href={contextHref(code, target.slug, pathname, current)}
                         aria-current={code === island ? "true" : undefined}
                         className={cn(className, "hover:text-foreground", SEGMENT_FOCUS)}
                     >

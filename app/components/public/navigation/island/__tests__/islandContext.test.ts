@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {contextHref, islandRegionFor, isPlainLeftClick, latestSeason, seasonGroupsFor, sortSeasonsNewestFirst} from "../islandContext";
+import {contextHref, islandRegionFor, isPlainLeftClick, seasonForRegionSwitch, seasonGroupsFor, sortSeasonsNewestFirst} from "../islandContext";
 
 const regions = [
     {id: "r-as", code: "AS", name: "Asia"},
@@ -57,15 +57,6 @@ describe("seasonGroupsFor", () => {
     });
 });
 
-describe("latestSeason", () => {
-    const seasons = [s("na1", "r-na", 1, "2025-01-01"), s("sa9", "r-sa", 9, "2027-01-01")];
-    it("ignores folded regions", () => {
-        expect(latestSeason("NA", regions, seasons)?.id).toBe("na1");
-    });
-    it("returns null when the region has no seasons", () => {
-        expect(latestSeason("AS", regions, seasons)).toBeNull();
-    });
-});
 
 describe("contextHref", () => {
     const cur = {region: "na", season: "s10"};
@@ -93,5 +84,31 @@ describe("isPlainLeftClick", () => {
         expect(isPlainLeftClick({...click, shiftKey: true})).toBe(false);
         expect(isPlainLeftClick({...click, altKey: true})).toBe(false);
         expect(isPlainLeftClick({...click, button: 1})).toBe(false);
+    });
+});
+
+describe("seasonForRegionSwitch", () => {
+    const seasons = [
+        s("na1", "r-na", 1, "2025-01-01"),
+        s("na2", "r-na", 2, "2025-06-01"),
+        s("na3", "r-na", 3, "2026-01-01"),
+        s("sa2", "r-sa", 2, "2025-06-01"),
+        s("as1", "r-as", 1, "2025-01-01"),
+    ];
+    it("keeps the season number when the region has it", () => {
+        expect(seasonForRegionSwitch("NA", regions, seasons, 2)?.id).toBe("na2");
+    });
+    it("falls back to the newest season when the region lacks that number", () => {
+        expect(seasonForRegionSwitch("AS", regions, seasons, 3)?.id).toBe("as1");
+    });
+    it("falls back to the newest season with no current season number", () => {
+        expect(seasonForRegionSwitch("NA", regions, seasons, null)?.id).toBe("na3");
+    });
+    it("never picks a folded region's season", () => {
+        const noNa2 = seasons.filter(x => x.id !== "na2");
+        expect(seasonForRegionSwitch("NA", regions, noNa2, 2)?.id).toBe("na3");
+    });
+    it("returns null when the region has no seasons", () => {
+        expect(seasonForRegionSwitch("EU", regions, seasons, 1)).toBeNull();
     });
 });

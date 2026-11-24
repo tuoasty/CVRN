@@ -41,9 +41,6 @@ export function seasonGroupsFor(island: IslandRegionCode, regions: IslandRegion[
         .filter((group): group is IslandSeasonGroup => group !== null);
 }
 
-export function latestSeason(island: IslandRegionCode, regions: IslandRegion[], seasons: IslandSeason[]): IslandSeason | null {
-    return groupFor(island, regions, seasons)?.seasons[0] ?? null;
-}
 
 export function contextHref(
     regionCode: string,
@@ -60,4 +57,14 @@ export function contextHref(
 
 export function isPlainLeftClick(event: {button: number; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean}): boolean {
     return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+}
+
+export function seasonForRegionSwitch(
+    island: IslandRegionCode,
+    regions: IslandRegion[],
+    seasons: IslandSeason[],
+    seasonNumber: number | null,
+): IslandSeason | null {
+    const own = groupFor(island, regions, seasons)?.seasons ?? [];
+    return own.find(season => season.season_number === seasonNumber) ?? own[0] ?? null;
 }
