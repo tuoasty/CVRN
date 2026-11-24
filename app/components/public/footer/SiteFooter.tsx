@@ -19,7 +19,7 @@ export default function SiteFooter({surface = "band"}: Props) {
     const year = new Date().getFullYear();
 
     return (
-        <footer className={cn(surface === "band" && "border-t border-border bg-card")}>
+        <footer className={cn(surface === "band" && "border-t border-border")}>
             <div className="page-wide pt-12 pb-8">
                 <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
                     <div className="sm:col-span-2 lg:col-span-1">

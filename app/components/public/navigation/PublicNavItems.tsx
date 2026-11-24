@@ -48,7 +48,7 @@ const EXTRA_ACTIVE_PATHS: Record<string, string[]> = {
 const ITEM_BASE = cn(
     "inline-flex items-center justify-center rounded-sm text-sm font-medium transition-colors",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-    "h-9 px-3"
+    "h-9 px-3 tracking-[-0.02em]"
 );
 const HORIZONTAL_ACTIVE = "text-foreground font-semibold underline decoration-2 underline-offset-[6px]";
 const HORIZONTAL_INACTIVE = "text-muted-foreground hover:text-foreground hover:underline hover:decoration-2 hover:decoration-muted-foreground hover:underline-offset-[6px]";
@@ -116,7 +116,7 @@ export default function PublicNavItems({
     const itemClass = (isActive: boolean, extra?: string) =>
         cn(
             ITEM_BASE,
-            vertical ? "w-full justify-start" : "",
+            vertical ? "w-full justify-start" : "px-2",
             isActive
                 ? vertical ? VERTICAL_ACTIVE : HORIZONTAL_ACTIVE
                 : vertical ? VERTICAL_INACTIVE : HORIZONTAL_INACTIVE,
@@ -208,7 +208,7 @@ export default function PublicNavItems({
     };
 
     return (
-        <nav className={vertical ? "flex flex-col gap-1 w-full" : "hidden lg:flex gap-1"}>
+        <nav className={vertical ? "flex flex-col gap-1 w-full" : "hidden xl:flex"}>
             {NAV_ENTRIES.map(entry => (isGroup(entry) ? renderGroup(entry) : renderLink(entry)))}
         </nav>
     );

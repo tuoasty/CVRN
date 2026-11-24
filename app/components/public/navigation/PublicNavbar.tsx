@@ -18,6 +18,7 @@ import PublicNavItems from "@/app/components/public/navigation/PublicNavItems";
 import NavbarLogo from "@/app/components/public/navigation/NavbarLogo";
 import RegionSeasonSelector from "@/app/components/ui/RegionSeasonSelector";
 import { AccountMenu } from "@/app/components/account/AccountMenu";
+import { NavIsland } from "@/app/components/public/navigation/island/NavIsland";
 
 export default function PublicNavbar() {
     const pathname = usePathname();
@@ -28,27 +29,19 @@ export default function PublicNavbar() {
     }, [pathname]);
 
     return (
-        <header className="sticky top-0 z-50 border-b border-border bg-card shadow-[0_-8px_0_0_hsl(var(--card))]">
+        <header className="sticky top-0 z-50 border-b border-border bg-background">
             <div className="page-wide">
-                {}
-                <div className="hidden lg:flex items-center justify-between py-3">
-                    <div className="flex items-center gap-8">
+                <div className="hidden xl:flex items-center justify-between py-3">
+                    <div className="flex items-center gap-6">
                         <Link href="/" aria-label="CVRN home">
                             <NavbarLogo />
                         </Link>
                         <PublicNavItems />
                     </div>
-
-                    <div className="flex items-center gap-3">
-                        <RegionSeasonSelector />
-                        <div className="h-6 w-px bg-border" />
-                        <ModeToggle />
-                        <AccountMenu variant="public" leadingDivider />
-                    </div>
+                    <NavIsland variant="desktop" />
                 </div>
 
-                {}
-                <div className="lg:hidden flex items-center justify-between py-2.5">
+                <div className="xl:hidden flex items-center justify-between py-2.5">
                     <Link href="/" aria-label="CVRN home">
                         <NavbarLogo />
                     </Link>
@@ -91,8 +84,7 @@ export default function PublicNavbar() {
                     </div>
                 </div>
             </div>
-            {}
-            <div className="lg:hidden border-t border-border">
+            <div className="xl:hidden border-t border-border">
                 <div className="page-wide py-2">
                     <RegionSeasonSelector fullWidth />
                 </div>
