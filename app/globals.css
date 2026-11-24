@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     --background: 0 0% 98%;
     --foreground: 0 0% 11%;
     --card: 0 0% 100%;
@@ -35,6 +36,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 0 0% 4%;
     --foreground: 0 0% 96%;
     --card: 0 0% 8%;
@@ -244,6 +246,38 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+  .island-row {
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 120ms ease-out, transform 120ms ease-out;
+  }
+  [data-open] .island-row {
+    opacity: 1;
+    transform: none;
+    transition: opacity 180ms ease-out var(--d, 0ms), transform 180ms ease-out var(--d, 0ms);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .island-row,
+    [data-open] .island-row {
+      transition: none;
+    }
+  }
+  .scrollbar-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-quiet::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-quiet::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-quiet::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+  }
+  .scrollbar-quiet::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
   }
 }
 

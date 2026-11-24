@@ -10,7 +10,7 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/app/components/ui/popov
 import {isAccessGroup, type AccessGroup} from "@/shared/types/accessGroup";
 import {accountMenuLink, type AccountMenuVariant} from "./accountMenuLink";
 
-type Account = {
+export type Account = {
     displayName: string;
     username: string | null;
     avatarUrl: string | null;
@@ -23,7 +23,7 @@ const ITEM = cn(
     "disabled:cursor-not-allowed disabled:opacity-60",
 );
 
-function useAccount(): Account | null {
+export function useAccount(): Account | null {
     const [account, setAccount] = useState<Account | null>(null);
 
     useEffect(() => {
