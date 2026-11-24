@@ -75,18 +75,26 @@ function RegionCodes({island, active, variant, onPreview}: {
                 const ref = (el: HTMLElement | null) => {
                     refs.current[code] = el;
                 };
+                if (latest && onPreview) {
+                    return (
+                        <button
+                            key={code}
+                            ref={ref}
+                            type="button"
+                            aria-pressed={code === active}
+                            onClick={() => onPreview(code)}
+                            className={cn(className, "hover:text-foreground", SEGMENT_FOCUS)}
+                        >
+                            {code}
+                        </button>
+                    );
+                }
                 return latest ? (
                     <Link
                         key={code}
                         ref={ref}
                         href={contextHref(code, latest.slug, pathname, current)}
                         aria-current={code === island ? "true" : undefined}
-                        aria-pressed={onPreview ? code === active : undefined}
-                        onClick={onPreview ? event => {
-                            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
-                            event.preventDefault();
-                            onPreview(code);
-                        } : undefined}
                         className={cn(className, "hover:text-foreground", SEGMENT_FOCUS)}
                     >
                         {code}
@@ -119,7 +127,12 @@ export function NavIsland({variant}: {variant: "desktop" | "row"}) {
     const {open, toggle, close, rootRef, triggerRef, drawerId} = useIslandDrawer();
     const [lastOpen, setLastOpen] = useState<DrawerKind | null>(null);
     const [browse, setBrowse] = useState<IslandRegionCode | null>(null);
+    const [pending, setPending] = useState<IslandRegionCode | null>(null);
     const body = open ?? lastOpen;
+
+    useEffect(() => {
+        setPending(null);
+    }, [params.region, params.season]);
 
     useEffect(() => {
         if (open) setLastOpen(open);
@@ -167,7 +180,11 @@ export function NavIsland({variant}: {variant: "desktop" | "row"}) {
         },
     });
 
-    const browsing = open === "seasons" ? browse : null;
+    const browsing = open === "seasons" ? browse : pending;
+    const pickSeason = () => {
+        setPending(browse);
+        close();
+    };
     const listRegion = browse ?? island;
 
     return (
@@ -230,7 +247,7 @@ export function NavIsland({variant}: {variant: "desktop" | "row"}) {
                 </>
             )}
             <IslandDrawer open={open !== null} id={drawerId} label={body ? DRAWER_LABELS[body] : "Island"} size={variant}>
-                {body === "seasons" && listRegion && <SeasonsDrawer island={listRegion} size={variant} onPick={close} />}
+                {body === "seasons" && listRegion && <SeasonsDrawer island={listRegion} size={variant} onPick={pickSeason} />}
                 {body === "theme" && <ThemeDrawer onPick={close} />}
                 {body === "account" && account && <AccountPanel account={account} size={variant} onNavigate={close} />}
             </IslandDrawer>
