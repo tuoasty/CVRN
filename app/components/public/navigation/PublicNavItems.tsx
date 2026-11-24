@@ -52,8 +52,8 @@ const ITEM_BASE = cn(
 );
 const HORIZONTAL_ACTIVE = "text-foreground font-semibold underline decoration-2 underline-offset-[6px]";
 const HORIZONTAL_INACTIVE = "text-muted-foreground hover:text-foreground hover:underline hover:decoration-2 hover:decoration-muted-foreground hover:underline-offset-[6px]";
-const VERTICAL_ACTIVE = "bg-accent text-foreground font-semibold";
-const VERTICAL_INACTIVE = "text-muted-foreground hover:bg-accent hover:text-foreground";
+const VERTICAL_ACTIVE = "text-foreground font-semibold underline decoration-2 underline-offset-[6px]";
+const VERTICAL_INACTIVE = "text-muted-foreground hover:text-foreground hover:underline hover:decoration-2 hover:decoration-muted-foreground hover:underline-offset-[6px]";
 
 function isUnder(pathname: string, path: string): boolean {
     return pathname === path || pathname.startsWith(`${path}/`);
@@ -116,7 +116,7 @@ export default function PublicNavItems({
     const itemClass = (isActive: boolean, extra?: string) =>
         cn(
             ITEM_BASE,
-            vertical ? "w-full justify-start" : "px-2",
+            vertical ? "h-11 w-full justify-start" : "px-2",
             isActive
                 ? vertical ? VERTICAL_ACTIVE : HORIZONTAL_ACTIVE
                 : vertical ? VERTICAL_INACTIVE : HORIZONTAL_INACTIVE,

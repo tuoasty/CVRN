@@ -55,7 +55,7 @@ export function SeasonsDrawer({island, size, onPick}: {island: IslandRegionCode;
                 )}
             >
                 <span className="font-mono tabular-nums">{total} seasons</span>
-                <Link href="/archive" onClick={onPick} className="text-foreground underline underline-offset-4">
+                <Link href="/archive" onClick={onPick} className="flex h-full items-center text-foreground underline underline-offset-4">
                     Archive
                 </Link>
             </div>
