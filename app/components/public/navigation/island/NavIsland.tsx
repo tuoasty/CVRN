@@ -51,12 +51,12 @@ function RegionCodes({island, active, variant, onPreview}: {
     const current = params.region && params.season ? {region: params.region, season: params.season} : null;
 
     return (
-        <div className={cn("flex items-stretch px-1", variant === "row" && "px-1.5")}>
+        <div className={cn("flex items-stretch px-1", variant === "row" && "flex-1 px-0")}>
             {ISLAND_REGION_CODES.map(code => {
                 const latest = latestSeason(code, regions, seasons);
                 const className = cn(
                     "flex items-center px-1.5 font-mono font-semibold tracking-[0.04em] transition-colors duration-150 motion-reduce:transition-none",
-                    variant === "desktop" ? "text-xs" : "px-2 text-[13px]",
+                    variant === "desktop" ? "text-xs" : "flex-1 justify-center text-[13px]",
                     code === active
                         ? "text-foreground underline decoration-2 underline-offset-[5px]"
                         : "text-muted-foreground",
@@ -223,7 +223,7 @@ export function NavIsland({variant}: {variant: "desktop" | "row"}) {
             )}
             <IslandDrawer open={open !== null} id={drawerId} label={body ? DRAWER_LABELS[body] : "Island"} size={variant}>
                 {body === "seasons" && listRegion && <SeasonsDrawer island={listRegion} size={variant} onPick={pickSeason} />}
-                {body === "theme" && <ThemeDrawer onPick={close} />}
+                {body === "theme" && <ThemeDrawer onPick={() => close({restoreFocus: true})} />}
                 {body === "account" && account && <AccountPanel account={account} size={variant} onNavigate={close} />}
             </IslandDrawer>
         </div>

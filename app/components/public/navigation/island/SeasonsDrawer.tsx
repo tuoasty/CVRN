@@ -23,7 +23,7 @@ export function SeasonsDrawer({island, size, onPick}: {island: IslandRegionCode;
 
     return (
         <>
-            <div className={cn("scrollbar-quiet overflow-y-auto py-1.5", size === "desktop" ? "max-h-[264px]" : "max-h-[308px]")}>
+            <div className={cn("scrollbar-quiet overflow-y-auto py-1.5", size === "desktop" ? "max-h-[264px]" : "max-h-[min(308px,calc(100dvh-200px))]")}>
                 {groups.map((group, groupIndex) => (
                     <div key={group.regionCode}>
                         <p className={DRAWER_HEADING} style={rowStyle(index++)}>{group.regionName}</p>

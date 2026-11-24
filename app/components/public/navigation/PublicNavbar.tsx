@@ -63,7 +63,7 @@ export default function PublicNavbar() {
     }, [pathname]);
 
     return (
-        <header className="sticky top-0 z-50 border-b border-border bg-background">
+        <header className="sticky top-0 z-50 border-b border-border bg-background shadow-[0_-8px_0_0_hsl(var(--background))]">
             <div className="page-wide">
                 <div className="hidden xl:flex items-center justify-between py-3">
                     <div className="flex items-center gap-6">
