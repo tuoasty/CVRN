@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {useEffect, useLayoutEffect, useRef, useState, type MouseEvent} from "react";
+import {useEffect, useState, type MouseEvent} from "react";
 import {useParams, usePathname} from "next/navigation";
 import {ChevronDown, Moon, Sun} from "lucide-react";
 import {cn} from "@/lib/utils";
@@ -49,37 +49,22 @@ function RegionCodes({island, active, variant, onPreview}: {
     const pathname = usePathname();
     const params = useParams<{region?: string; season?: string}>();
     const current = params.region && params.season ? {region: params.region, season: params.season} : null;
-    const refs = useRef<Partial<Record<IslandRegionCode, HTMLElement | null>>>({});
-    const [bar, setBar] = useState<{left: number; width: number} | null>(null);
-
-    useLayoutEffect(() => {
-        const measure = () => {
-            const el = refs.current[active];
-            if (el) setBar({left: el.offsetLeft, width: el.offsetWidth});
-        };
-        measure();
-        void document.fonts?.ready.then(measure);
-        window.addEventListener("resize", measure);
-        return () => window.removeEventListener("resize", measure);
-    }, [active, regions.length, seasons.length]);
 
     return (
-        <div className={cn("relative flex items-stretch px-1", variant === "row" && "px-1.5")}>
+        <div className={cn("flex items-stretch px-1", variant === "row" && "px-1.5")}>
             {ISLAND_REGION_CODES.map(code => {
                 const latest = latestSeason(code, regions, seasons);
                 const className = cn(
                     "flex items-center px-1.5 font-mono font-semibold tracking-[0.04em] transition-colors duration-150 motion-reduce:transition-none",
                     variant === "desktop" ? "text-xs" : "px-2 text-[13px]",
-                    code === active ? "text-foreground" : "text-muted-foreground",
+                    code === active
+                        ? "text-foreground underline decoration-2 underline-offset-[5px]"
+                        : "text-muted-foreground",
                 );
-                const ref = (el: HTMLElement | null) => {
-                    refs.current[code] = el;
-                };
                 if (latest && onPreview) {
                     return (
                         <button
                             key={code}
-                            ref={ref}
                             type="button"
                             aria-pressed={code === active}
                             onClick={() => onPreview(code)}
@@ -92,7 +77,6 @@ function RegionCodes({island, active, variant, onPreview}: {
                 return latest ? (
                     <Link
                         key={code}
-                        ref={ref}
                         href={contextHref(code, latest.slug, pathname, current)}
                         aria-current={code === island ? "true" : undefined}
                         className={cn(className, "hover:text-foreground", SEGMENT_FOCUS)}
@@ -100,21 +84,11 @@ function RegionCodes({island, active, variant, onPreview}: {
                         {code}
                     </Link>
                 ) : (
-                    <span key={code} ref={ref} className={className}>
+                    <span key={code} className={className}>
                         {code}
                     </span>
                 );
             })}
-            {bar && (
-                <span
-                    aria-hidden
-                    className={cn(
-                        "pointer-events-none absolute left-0 h-0.5 bg-foreground transition-[transform,width] duration-200 ease-[cubic-bezier(.22,1,.36,1)] motion-reduce:transition-none",
-                        variant === "desktop" ? "bottom-[7px]" : "bottom-[11px]",
-                    )}
-                    style={{width: Math.max(bar.width - (variant === "desktop" ? 12 : 16), 0), transform: `translateX(${bar.left + (variant === "desktop" ? 6 : 8)}px)`}}
-                />
-            )}
         </div>
     );
 }
@@ -192,7 +166,7 @@ export function NavIsland({variant}: {variant: "desktop" | "row"}) {
         <div
             ref={rootRef}
             className={cn(
-                "relative flex items-stretch rounded-[2px] border border-border bg-background",
+                "relative flex items-stretch rounded-[2px] border border-border bg-background [&_button]:[font-size-adjust:inherit]",
                 variant === "desktop" ? "h-9 shrink-0" : "h-11 w-full",
                 open
                     ? "rounded-b-none border-b-transparent"
