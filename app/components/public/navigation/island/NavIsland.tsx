@@ -221,7 +221,7 @@ export function NavIsland({variant}: {variant: "desktop" | "row"}) {
                     </button>
                 </>
             )}
-            <IslandDrawer open={open !== null} id={drawerId} label={body ? DRAWER_LABELS[body] : "Island"} size={variant}>
+            <IslandDrawer open={open !== null} id={drawerId} label={body ? DRAWER_LABELS[body] : "Island"} size={variant} matchWidth={island !== null}>
                 {body === "seasons" && listRegion && <SeasonsDrawer island={listRegion} size={variant} onPick={pickSeason} />}
                 {body === "theme" && <ThemeDrawer onPick={() => close({restoreFocus: true})} />}
                 {body === "account" && account && <AccountPanel account={account} size={variant} onNavigate={close} />}

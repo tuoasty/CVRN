@@ -26,24 +26,25 @@ export function drawerLabelClass(current = false): string {
 
 export const DRAWER_HEADING = "island-row px-3.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground";
 
-export function IslandDrawer({open, id, label, size, children}: {
+export function IslandDrawer({open, id, label, size, matchWidth, children}: {
     open: boolean;
     id: string;
     label: string;
     size: DrawerSize;
+    matchWidth: boolean;
     children: ReactNode;
 }) {
     return (
         <div
             className={cn(
                 "absolute top-full z-10 grid transition-[grid-template-rows] motion-reduce:transition-none",
-                size === "desktop" ? "right-[-1px] w-[max(calc(100%+2px),240px)]" : "left-[-1px] right-[-1px]",
+                size === "desktop" && !matchWidth ? "right-[-1px] w-[max(calc(100%+2px),240px)]" : "left-[-1px] right-[-1px]",
                 open
                     ? "grid-rows-[1fr] [transition-duration:220ms] ease-[cubic-bezier(.22,1,.36,1)]"
                     : "grid-rows-[0fr] [transition-duration:160ms] ease-[cubic-bezier(.4,0,1,1)]",
             )}
         >
-            {size === "desktop" && (
+            {size === "desktop" && !matchWidth && (
                 <span
                     aria-hidden
                     className={cn(
