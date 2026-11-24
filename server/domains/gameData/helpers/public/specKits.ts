@@ -35,8 +35,8 @@ function toStyle(style: SpecStyle, values: ServeStyleValue[], terms: TermBook): 
     const { key, value: regularValue } = matches[0]
     const template = terms.params.get(key)?.template
     const slot = template ? templateFormat(template)?.slot : undefined
-    const regular = style.value === regularValue ? null : slot ? renderValue(slot, regularValue) : fmt(regularValue)
-    return { name: style.name, text: describeStyleValue(key, style.value, terms), regular }
+    const regular = style.value === 1 ? null : slot ? renderValue(slot, regularValue) : fmt(regularValue)
+    return { name: style.name, text: describeStyleValue(key, regularValue * style.value, terms), regular }
 }
 
 export function buildSpecKits(

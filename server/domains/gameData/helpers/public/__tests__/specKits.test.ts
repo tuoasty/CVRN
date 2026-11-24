@@ -87,18 +87,20 @@ describe('buildSpecKits', () => {
         expect(kits['No Such Spec']).toBeUndefined()
     })
 
-    it('words Wilfredo Leon styles at the spec value', () => {
+    it('words a x1 spec style at the regular value', () => {
         const styles = kits['Wilfredo Leon'].styles
         expect(styles.map(s => s.name)).toEqual(['Curveball', 'Dive Bomb'])
-        expect(styles[1].text).toBe(renderTemplate(terms.params.get('DiveBombTopDrop')!.template!, 1))
+        expect(styles[1].text).toBe(renderTemplate(terms.params.get('DiveBombTopDrop')!.template!, 2.5))
+        expect(styles[1].regular).toBeNull()
+        expect(styles[0].regular).toBeNull()
     })
 
-    it('shows the regular roll when the spec overrides below the default', () => {
-        expect(kits['Wilfredo Leon'].styles[1].regular).toBe('2.5')
-    })
-
-    it('shows no regular roll when the spec value equals the default', () => {
-        expect(kits['Wilfredo Leon'].styles[0].regular).toBeNull()
+    it('multiplies the regular value by the spec value and shows the regular roll', () => {
+        const leon = fixtureSpecLoadouts().find(l => l.key === 'Wilfredo Leon')!
+        const odd = { ...leon, key: 'Odd', styles: [{ name: 'Dive Bomb', value: 1.2 }] }
+        const [style] = buildSpecKits({ abilities, specLoadouts: [odd], serveStyleValues }, ctx, inspectorFor).Odd.styles
+        expect(style.text).toBe(renderTemplate(terms.params.get('DiveBombTopDrop')!.template!, 3))
+        expect(style.regular).toBe('2.5')
     })
 
     it('gives a spec with Styles = {} no styles', () => {
