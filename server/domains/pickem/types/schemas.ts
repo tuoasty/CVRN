@@ -48,3 +48,16 @@ export const PickemMatchSchema = z.object({
     matchId: z.uuid("Pick a match"),
 });
 export type PickemMatchInput = z.infer<typeof PickemMatchSchema>;
+
+export const PICKEM_ACTIVITY_PAGE_SIZE = 50;
+
+export const PickemActivitySchema = z.object({
+    seasonId: z.uuid("Pick a season"),
+    source: z.enum(["all", "admin", "game"]),
+    before: z.object({
+        at: z.iso.datetime({offset: true}),
+        source: z.enum(["admin", "game"]),
+        id: z.number().int().positive(),
+    }).optional(),
+});
+export type PickemActivityInput = z.infer<typeof PickemActivitySchema>;

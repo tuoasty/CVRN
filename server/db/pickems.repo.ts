@@ -5,6 +5,9 @@ import {serializeError} from "@/server/utils/serializeableError";
 import type {
     PickemMarketDraft,
     PickemMatchSource,
+    PickemActivityCursor,
+    PickemActivityRowSource,
+    PickemActivitySource,
     PickemOddsSource,
     PickemSettleRowSource,
     PickemTeamView,
@@ -269,5 +272,39 @@ export async function findPicksByMarketIds(supabase: DBClient, marketIds: string
         payout: row.payout,
         claimedAt: row.claimed_at,
         updatedAt: row.updated_at,
+    })));
+}
+
+export async function rpcPickemActivity(
+    supabase: DBClient,
+    p: {seasonId: string; source: PickemActivitySource; before: PickemActivityCursor | undefined; limit: number},
+): Promise<Result<PickemActivityRowSource[]>> {
+    const {data, error} = await supabase.rpc("pickem_activity", {
+        p_season_id: p.seasonId,
+        p_source: p.source,
+        p_before_at: p.before?.at ?? undefined,
+        p_before_source: p.before?.source ?? undefined,
+        p_before_id: p.before?.id ?? undefined,
+        p_limit: p.limit,
+    });
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(row => ({
+        source: row.source === "game" ? "game" : "admin",
+        id: Number(row.id),
+        createdAt: row.created_at,
+        action: row.action,
+        actionOutcome: row.action_outcome,
+        actorName: row.actor_name,
+        target: (row.target ?? null) as Record<string, unknown> | null,
+        eventKind: row.event_kind,
+        matchId: row.match_id,
+        marketKind: row.market_kind,
+        robloxUserId: row.roblox_user_id,
+        outcomeKey: row.outcome_key,
+        previousOutcomeKey: row.previous_outcome_key,
+        stake: row.stake,
+        previousStake: row.previous_stake,
+        charged: row.charged,
+        payout: row.payout,
     })));
 }

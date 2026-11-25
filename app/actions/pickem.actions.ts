@@ -4,9 +4,11 @@ import {Err, Result} from "@/shared/types/result";
 import {createServerSupabase} from "@/server/supabase/server";
 import {requireGroups} from "@/server/domains/auth";
 import {
+    getPickemActivity,
     getPickemBoard,
     getPickemMatchDetail,
     getPickemMatchSettlement,
+    PickemActivitySchema,
     PickemMatchSchema,
     PickemSeasonSchema,
     PickemSettingsSchema,
@@ -19,7 +21,14 @@ import {
     SettlePickemsSchema,
     updatePickemSettings,
 } from "@/server/domains/pickem";
-import type {PickemBoard, PickemMatchDetail, PickemMatchSettlement, PickemSettings, PickemSettlePreview} from "@/server/domains/pickem";
+import type {
+    PickemActivityPage,
+    PickemBoard,
+    PickemMatchDetail,
+    PickemMatchSettlement,
+    PickemSettings,
+    PickemSettlePreview,
+} from "@/server/domains/pickem";
 
 export async function getPickemBoardAction(input: unknown): Promise<Result<PickemBoard>> {
     const parsed = PickemSeasonSchema.safeParse(input);
@@ -107,4 +116,15 @@ export async function getPickemMatchDetailAction(input: unknown): Promise<Result
     if (!guard.ok) return guard;
 
     return getPickemMatchDetail(supabase, parsed.data.matchId);
+}
+
+export async function getPickemActivityAction(input: unknown): Promise<Result<PickemActivityPage>> {
+    const parsed = PickemActivitySchema.safeParse(input);
+    if (!parsed.success) return Err({message: parsed.error.issues.map(i => i.message).join(", "), code: "VALIDATION_ERROR"});
+
+    const supabase = await createServerSupabase();
+    const guard = await requireGroups(supabase, ["admin"]);
+    if (!guard.ok) return guard;
+
+    return getPickemActivity(supabase, parsed.data);
 }

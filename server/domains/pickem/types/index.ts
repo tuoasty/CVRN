@@ -232,13 +232,84 @@ export interface RobloxName {
     displayName: string | null;
 }
 
+export type PickemActivitySource = "all" | "admin" | "game";
+export type PickemPickEventKind = "placed" | "changed" | "claimed";
+
+export interface PickemActivityCursor {
+    at: string;
+    source: "admin" | "game";
+    id: number;
+}
+
+export interface PickemAdminActivity {
+    source: "admin";
+    key: string;
+    createdAt: string;
+    actor: string | null;
+    summary: string;
+    denied: boolean;
+    matches: string[];
+}
+
+export interface PickemGameActivity {
+    source: "game";
+    key: string;
+    createdAt: string;
+    kind: PickemPickEventKind;
+    robloxUserId: string;
+    username: string | null;
+    matchTitle: string;
+    marketLabel: string;
+    outcomeLabel: string;
+    previousOutcomeLabel: string | null;
+    stake: number;
+    previousStake: number | null;
+    charged: number | null;
+    payout: number | null;
+}
+
+export type PickemActivityEntry = PickemAdminActivity | PickemGameActivity;
+
+export interface PickemActivityPage {
+    entries: PickemActivityEntry[];
+    nextCursor: PickemActivityCursor | null;
+}
+
+export interface PickemActivityRowSource {
+    source: "admin" | "game";
+    id: number;
+    createdAt: string;
+    action: string | null;
+    actionOutcome: string | null;
+    actorName: string | null;
+    target: Record<string, unknown> | null;
+    eventKind: PickemPickEventKind | null;
+    matchId: string | null;
+    marketKind: PickemMarketKind | null;
+    robloxUserId: string | null;
+    outcomeKey: string | null;
+    previousOutcomeKey: string | null;
+    stake: number | null;
+    previousStake: number | null;
+    charged: number | null;
+    payout: number | null;
+}
+
 export interface PickemMatchSettlement {
     open: number;
     settled: number;
     refunded: number;
 }
 
-export type {PickemSeasonInput, PublishPickemsInput, PickemSettingsInput, SettlePickemsInput, RefundPickemsInput, PickemMatchInput} from "./schemas";
+export type {
+    PickemSeasonInput,
+    PublishPickemsInput,
+    PickemSettingsInput,
+    SettlePickemsInput,
+    RefundPickemsInput,
+    PickemMatchInput,
+    PickemActivityInput,
+} from "./schemas";
 export {
     PICKEM_MARKET_KINDS,
     PICKEM_PUBLISH_LIMIT,
@@ -249,4 +320,6 @@ export {
     SettlePickemsSchema,
     RefundPickemsSchema,
     PickemMatchSchema,
+    PickemActivitySchema,
+    PICKEM_ACTIVITY_PAGE_SIZE,
 } from "./schemas";

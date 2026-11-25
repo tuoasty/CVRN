@@ -1,5 +1,7 @@
 import useSWR, {mutate as globalMutate} from "swr";
+import useSWRInfinite from "swr/infinite";
 import {
+    getPickemActivityAction,
     getPickemBoardAction,
     getPickemMatchDetailAction,
     getPickemMatchSettlementAction,
@@ -10,6 +12,9 @@ import {
     updatePickemSettingsAction,
 } from "@/app/actions/pickem.actions";
 import type {
+    PickemActivityCursor,
+    PickemActivityPage,
+    PickemActivitySource,
     PickemBoard,
     PickemMatchDetail,
     PickemMatchSettlement,
@@ -102,4 +107,36 @@ async function fetchMatchSettlement([, matchId]: readonly [string, string]): Pro
 export function usePickemMatchSettlement(matchId: string, enabled: boolean): PickemMatchSettlement | null {
     const {data} = useSWR(enabled ? ["pickem-match-settlement", matchId] as const : null, fetchMatchSettlement, {revalidateOnFocus: false});
     return data ?? null;
+}
+
+type ActivityKey = readonly ["pickem-activity", string, PickemActivitySource, PickemActivityCursor | null];
+
+async function fetchActivityPage([, seasonId, source, before]: ActivityKey): Promise<PickemActivityPage> {
+    const result = await getPickemActivityAction({seasonId, source, before: before ?? undefined});
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+export function usePickemActivity(seasonId: string, source: PickemActivitySource) {
+    const getKey = (index: number, previous: PickemActivityPage | null): ActivityKey | null => {
+        if (previous && previous.nextCursor === null) return null;
+        return ["pickem-activity", seasonId, source, index === 0 ? null : previous?.nextCursor ?? null];
+    };
+
+    const {data, error, isLoading, isValidating, size, setSize} = useSWRInfinite(getKey, fetchActivityPage, {
+        revalidateOnFocus: true,
+        revalidateFirstPage: true,
+        refreshInterval: 60 * 1000,
+    });
+
+    const pages = data ?? [];
+    const last = pages[pages.length - 1];
+    return {
+        entries: pages.flatMap(p => p.entries),
+        hasMore: !!last && last.nextCursor !== null,
+        isLoading,
+        isLoadingMore: isValidating && size > pages.length,
+        error: error?.message ?? null,
+        loadMore: () => setSize(size + 1),
+    };
 }

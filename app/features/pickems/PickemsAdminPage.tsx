@@ -21,15 +21,17 @@ import type {PickemMatchRow, PickemSettingsInput, PickemSettlePreview} from "@/s
 import {PickemMatchTable} from "./PickemMatchTable";
 import {PickemSettingsForm} from "./PickemSettingsForm";
 import {PickemSettleDialog} from "./PickemSettleDialog";
+import {PickemActivityLog} from "./PickemActivityLog";
 import {BULK_PUBLISH_DAYS, bulkPublishCandidates, matchTitle, openMarketIds, settleCandidates} from "./pickemFormat";
 
 type SettleState = {rows: PickemMatchRow[]; preview: PickemSettlePreview | null; error: string | null};
 
-type View = "matches" | "settings";
+type View = "matches" | "settings" | "log";
 
 const TABS = [
     {value: "matches" as const, label: "Matches"},
     {value: "settings" as const, label: "Settings"},
+    {value: "log" as const, label: "Log"},
 ];
 
 function useMinuteClock(): Date {
@@ -184,10 +186,10 @@ export default function PickemsAdminPage() {
             </ViewTabs>
 
             <div id="pickems-panel" role="tabpanel" aria-labelledby={`pickems-tab-${view}`}>
-                {error && (
+                {error && view !== "log" && (
                     <p className="py-16 text-center text-sm text-destructive">Pickems failed to load: {error}</p>
                 )}
-                {!error && isLoading && <BoardSkeleton />}
+                {!error && isLoading && view !== "log" && <BoardSkeleton />}
                 {!error && board && view === "matches" && (
                     board.matches.length === 0 ? (
                         <p className="py-16 text-center text-sm text-muted-foreground">
@@ -211,6 +213,7 @@ export default function PickemsAdminPage() {
                         <PickemSettingsForm settings={board.settings} onSave={handleSaveSettings} />
                     </div>
                 )}
+                {view === "log" && <PickemActivityLog seasonId={selectedSeasonId} timeZone={timeZone} now={now} />}
             </div>
 
             <ConfirmDialog
