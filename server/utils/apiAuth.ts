@@ -10,3 +10,7 @@ export function isValidBearerSecret(auth: string | null, secret: string | undefi
 export function isValidRobloxApiSecret(auth: string | null): boolean {
     return isValidBearerSecret(auth, process.env.ROBLOX_API_SECRET);
 }
+
+export function isValidPickemsApiSecret(auth: string | null): boolean {
+    return isValidBearerSecret(auth, process.env.PICKEMS_API_SECRET);
+}

@@ -1,5 +1,5 @@
 import {z} from "zod";
-import type {JsonSchema, OpenApiParameter, OpenApiResponse} from "./types";
+import type {JsonSchema, OpenApiParameter, OpenApiRequestBody, OpenApiResponse} from "./types";
 
 export function toJsonSchema(schema: z.ZodType, io: "input" | "output"): JsonSchema {
     const out: JsonSchema = {...z.toJSONSchema(schema, {io, target: "draft-2020-12"})};
@@ -11,12 +11,16 @@ export function pathParam(name: string, schema: z.ZodType, description: string, 
     return {name, in: "path", required: true, description, schema: toJsonSchema(schema, "input"), example};
 }
 
-export function queryParam(name: string, schema: z.ZodType, description: string, example: string): OpenApiParameter {
-    return {name, in: "query", required: true, description, schema: toJsonSchema(schema, "input"), example};
+export function queryParam(name: string, schema: z.ZodType, description: string, example: string, required: boolean = true): OpenApiParameter {
+    return {name, in: "query", required, description, schema: toJsonSchema(schema, "input"), example};
 }
 
 export function jsonResponse<T>(description: string, schema: z.ZodType<T>, example: T): OpenApiResponse {
     return {description, content: {"application/json": {schema: toJsonSchema(schema, "output"), example}}};
+}
+
+export function jsonRequestBody<T>(schema: z.ZodType<unknown, T>, example: T): OpenApiRequestBody {
+    return {required: true, content: {"application/json": {schema: toJsonSchema(schema, "input"), example}}};
 }
 
 export const ApiErrorSchema = z.object({

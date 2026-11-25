@@ -7,6 +7,8 @@ import type {
     PickemOddsSource,
     PickemTeamView,
 } from "@/server/domains/pickem/types";
+import {PICK_ERROR_CODES, type PickErrorCode, type PlacePickBody} from "@/server/domains/pickem/types/gameSchemas";
+import type {OpenPickemMatch, PlayerPickSource} from "@/server/domains/pickem/helpers/toOpenPickems";
 
 const MATCH_SELECT = `
     id, match_code, match_type, status, week, best_of, scheduled_at,
@@ -116,4 +118,66 @@ export async function rpcPublishPickemMarkets(supabase: DBClient, drafts: Pickem
     if (error?.code === "23505") return Err({message: "One of these matches was already published. Refresh and try again.", code: "CONFLICT"});
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []) as string[]);
+}
+
+export async function findOpenPickemMarketRows(supabase: DBClient): Promise<Result<PickemMarketRow[]>> {
+    const {data, error} = await supabase.from("pickem_markets").select("*").eq("status", "open");
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+type RegionEmbed = {season_number: number; regions: {code: string} | null} | null;
+
+export async function findOpenPickemMatchesByIds(supabase: DBClient, matchIds: string[]): Promise<Result<OpenPickemMatch[]>> {
+    if (matchIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("matches")
+        .select(`${MATCH_SELECT}, seasons (season_number, regions (code))`)
+        .in("id", matchIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(((data ?? []) as unknown as (MatchQueryRow & {seasons: RegionEmbed})[]).map(row => ({
+        ...toMatchSource(row),
+        region: row.seasons?.regions?.code ?? null,
+        seasonNumber: row.seasons?.season_number ?? null,
+    })));
+}
+
+export async function findPlayerPicksByMarketIds(supabase: DBClient, robloxUserId: string, marketIds: string[]): Promise<Result<PlayerPickSource[]>> {
+    if (marketIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("pickem_picks")
+        .select("id, market_id, outcome_key, stake")
+        .eq("roblox_user_id", robloxUserId)
+        .in("market_id", marketIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(row => ({id: row.id, marketId: row.market_id, outcomeKey: row.outcome_key, stake: row.stake})));
+}
+
+export type PlacedPick = {pickId: string; outcomeKey: string; stake: number; charged: number; replayed: boolean};
+export type PickFailure = {code: PickErrorCode | "DB_ERROR"; message: string};
+
+export async function rpcPlacePickemPick(
+    supabase: DBClient,
+    body: PlacePickBody,
+): Promise<{ok: true; value: PlacedPick} | {ok: false; error: PickFailure}> {
+    const {data, error} = await supabase.rpc("place_pickem_pick", {
+        p_request_id: body.request_id,
+        p_roblox_user_id: body.roblox_user_id,
+        p_market_id: body.market_id,
+        p_outcome_key: body.outcome,
+        p_stake: body.stake,
+    });
+    if (error) {
+        const code = (PICK_ERROR_CODES as readonly string[]).includes(error.hint ?? "") ? error.hint as PickErrorCode : "DB_ERROR";
+        return {ok: false, error: {code, message: code === "DB_ERROR" ? "Failed to save the pick" : error.message}};
+    }
+    const row = data?.[0];
+    if (!row) return {ok: false, error: {code: "DB_ERROR", message: "Failed to save the pick"}};
+    return {ok: true, value: {pickId: row.pick_id, outcomeKey: row.outcome_key, stake: row.stake, charged: row.charged, replayed: row.replayed}};
+}
+
+export async function findPickemMarketRowById(supabase: DBClient, marketId: string): Promise<Result<PickemMarketRow | null>> {
+    const {data, error} = await supabase.from("pickem_markets").select("*").eq("id", marketId).maybeSingle();
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data);
 }

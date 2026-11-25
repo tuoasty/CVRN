@@ -20,7 +20,7 @@ export function publishBlockReason(match: PickemMatchSource, now: Date): string 
 }
 
 export function isPickemLocked(match: PickemMatchSource, now: Date): boolean {
-    if (match.status === "completed" || !match.scheduledAt) return true;
+    if (match.status === "completed" || !match.scheduledAt || !match.home || !match.away) return true;
     return new Date(match.scheduledAt).getTime() <= now.getTime();
 }
 
@@ -29,14 +29,14 @@ export function matchState(match: PickemMatchSource, hasMarkets: boolean, now: D
     return publishBlockReason(match, now) ? "unpublishable" : "unpublished";
 }
 
-function compareMatches(a: PickemMatchSource, b: PickemMatchSource): number {
+export function compareMatches(a: PickemMatchSource, b: PickemMatchSource): number {
     const at = a.scheduledAt ? new Date(a.scheduledAt).getTime() : Infinity;
     const bt = b.scheduledAt ? new Date(b.scheduledAt).getTime() : Infinity;
     if (at !== bt) return at - bt;
     return (a.week ?? Infinity) - (b.week ?? Infinity) || (a.matchCode ?? "").localeCompare(b.matchCode ?? "");
 }
 
-function buildMarketViews(
+export function buildMarketViews(
     markets: PickemMarketSource[],
     outcomes: PickemOutcomeSource[],
     odds: PickemOddsSource[],

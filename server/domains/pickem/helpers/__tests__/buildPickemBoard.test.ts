@@ -44,8 +44,9 @@ describe("isPickemLocked", () => {
         expect(isPickemLocked(match({scheduledAt: NOW.toISOString()}), NOW)).toBe(true);
     });
 
-    it("locks when the time is cleared or the match is completed", () => {
+    it("locks when the time or a team is cleared, or the match is completed", () => {
         expect(isPickemLocked(match({scheduledAt: null}), NOW)).toBe(true);
+        expect(isPickemLocked(match({away: null}), NOW)).toBe(true);
         expect(isPickemLocked(match({status: "completed"}), NOW)).toBe(true);
     });
 });

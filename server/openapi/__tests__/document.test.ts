@@ -12,6 +12,8 @@ import {
 import {PlayerDetailApiResponseSchema, PlayerStatsResponseSchema, RawStatSummaryResponseSchema} from "@/server/domains/player/types/schemas";
 import {ChampionArchiveResponseSchema} from "@/server/domains/season/types/schemas";
 import {BoosterListResponseSchema} from "@/server/domains/booster/types/schemas";
+import {OPEN_PICKEMS_EXAMPLE, PLACE_PICK_BODY_EXAMPLE, PLACE_PICK_EXAMPLE} from "@/server/openapi/pickems";
+import {OpenPickemsResponseSchema, PlacePickBodySchema, PlacePickResponseSchema} from "@/server/domains/pickem/types/gameSchemas";
 
 const API_DIR = join(process.cwd(), "app", "api");
 const INTERNAL_ROUTES = [/^\/api\/cron\//, /^\/api\/health$/, /^\/api\/version$/];
@@ -79,5 +81,8 @@ describe("buildOpenApiDocument", () => {
         expect(RawStatSummaryResponseSchema.safeParse(STAT_SUMMARY_EXAMPLE).success).toBe(true);
         expect(ChampionArchiveResponseSchema.safeParse(CHAMPION_ARCHIVE_EXAMPLE).success).toBe(true);
         expect(BoosterListResponseSchema.safeParse(BOOSTERS_EXAMPLE).success).toBe(true);
+        expect(OpenPickemsResponseSchema.safeParse(OPEN_PICKEMS_EXAMPLE).success).toBe(true);
+        expect(PlacePickBodySchema.safeParse(PLACE_PICK_BODY_EXAMPLE).success).toBe(true);
+        expect(PlacePickResponseSchema.safeParse(PLACE_PICK_EXAMPLE).success).toBe(true);
     });
 });
