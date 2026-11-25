@@ -1,5 +1,5 @@
 import {getSupabaseAdmin} from "@/server/supabase/admin";
-import {isValidPickemsApiSecret} from "@/server/utils/apiAuth";
+import {isValidRobloxApiSecret} from "@/server/utils/apiAuth";
 import {placePickemPick, PlacePickBodySchema} from "@/server/domains/pickem";
 import type {PickErrorBody, PickErrorCode} from "@/server/domains/pickem";
 import {logger} from "@/server/utils/logger";
@@ -22,8 +22,8 @@ function fail(body: PickErrorBody): Response {
 }
 
 export async function PUT(req: Request) {
-    if (!isValidPickemsApiSecret(req.headers.get("authorization"))) {
-        log.warn({hasAuthHeader: req.headers.has("authorization")}, "Rejected: invalid or missing PICKEMS_API_SECRET");
+    if (!isValidRobloxApiSecret(req.headers.get("authorization"))) {
+        log.warn({hasAuthHeader: req.headers.has("authorization")}, "Rejected: invalid or missing ROBLOX_API_SECRET");
         return new Response("Unauthorized", {status: 401});
     }
 

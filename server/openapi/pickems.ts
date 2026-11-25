@@ -9,11 +9,11 @@ import {
     type PlacePickBody,
     type PlacePickResponse,
 } from "@/server/domains/pickem/types/gameSchemas";
+import {GAME_API_SECURITY} from "./gameApi";
 import type {OpenApiOperation, OpenApiPaths, OpenApiResponse} from "./types";
 import {UNAUTHORIZED_RESPONSE, jsonRequestBody, jsonResponse, queryParam} from "./zodSchema";
 
 export const PICKEMS_API_TAG = "Pickems";
-export const PICKEMS_API_SECURITY = "pickemsApiSecret";
 
 const ROBLOX_USER_ID = "4605123630";
 const WINNER_MARKET_ID = "3f6d1c2a-8b4e-4f1a-9c7d-5e2b1a0f9d31";
@@ -88,7 +88,7 @@ function pickError(description: string, example: PickErrorBody): OpenApiResponse
 }
 
 function operation(op: Omit<OpenApiOperation, "tags" | "security">): OpenApiOperation {
-    return {tags: [PICKEMS_API_TAG], security: [{[PICKEMS_API_SECURITY]: []}], ...op};
+    return {tags: [PICKEMS_API_TAG], security: [{[GAME_API_SECURITY]: []}], ...op};
 }
 
 const serverError = pickError("Database failure. Safe to retry with the same `request_id`.", {error: "Failed to save the pick", code: "DB_ERROR"});
