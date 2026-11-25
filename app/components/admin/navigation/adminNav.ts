@@ -18,6 +18,7 @@ const GROUPS: AdminNavGroup[] = [
         pages: [
             { href: "/admin/standings", label: "Standings" },
             { href: "/admin/playoffs", label: "Playoffs" },
+            { href: "/admin/pickems", label: "Pickems" },
             { href: "/admin/stats", label: "Match Stats" },
             { href: "/admin/seasons", label: "Seasons" },
         ],
@@ -61,6 +62,7 @@ const REGION_SEASON_PICKER_PATHS = new Set([
     "/admin/stats",
     "/admin/standings",
     "/admin/playoffs",
+    "/admin/pickems",
     "/admin/articles",
     "/admin/specs/qualify",
 ]);

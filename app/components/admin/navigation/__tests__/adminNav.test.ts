@@ -11,7 +11,7 @@ describe("buildAdminNav", () => {
         const nav = buildAdminNav(["super_admin"]);
         expect(nav.primary.map(p => p.label)).toEqual(["Dashboard", "Teams", "Matches", "Media"]);
         expect(nav.groups.map(g => [g.label, g.pages.map(p => p.label)])).toEqual([
-            ["League", ["Standings", "Playoffs", "Match Stats", "Seasons"]],
+            ["League", ["Standings", "Playoffs", "Pickems", "Match Stats", "Seasons"]],
             ["Content", ["Articles", "Updates", "Information"]],
             ["Ratings", ["Specs", "Spec Calibration", "Overalls", "Player Cards", "Card Groups"]],
             ["System", ["Sync", "Sync History", "Audit log", "Game API", "Cache", "Staff"]],
