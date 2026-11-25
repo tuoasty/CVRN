@@ -146,7 +146,7 @@ supabase db push                                            # apply migrations
 supabase gen types typescript --linked > database.types.ts  # regenerate types
 ```
 
-Schema changes go through `supabase/migrations/` (173 migrations); nothing is edited in the dashboard.
+Schema changes go through `supabase/migrations/`; nothing is edited in the dashboard.
 
 ---
 

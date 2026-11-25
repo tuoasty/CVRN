@@ -50,10 +50,11 @@ docs
 CLAUDE.md
 .claude
 
-/supabase
+/supabase/seed.sql
 /.superpowers/
 /learning/
 /graphify-out/
 
 *.sql
-!schema.sql
+!/supabase/migrations/*.sql
+/.agents/
