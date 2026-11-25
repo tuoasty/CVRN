@@ -112,15 +112,6 @@ export interface ArchiveSeason {
     champion_gfx: Array<{ id: string; image_url: string | null; title: string }>;
 }
 
-export interface ChampionArchiveEntry {
-    captain: string | null;
-    vice_capt: string | null;
-    court_cap: string | null;
-    members: string[];
-}
-
-export type ChampionArchiveResponse = Record<string, ChampionArchiveEntry>;
-
 export interface SeasonDetail {
     id: string;
     name: string;
@@ -190,6 +181,8 @@ export type {
     SeasonNumberQueryInput,
     AwardNameSuggestionsInput,
     AddAwardNameInput,
+    ChampionArchiveEntry,
+    ChampionArchiveResponse,
 } from "./schemas";
 
 export {
@@ -213,4 +206,5 @@ export {
     SeasonNumberQuerySchema,
     AwardNameSuggestionsSchema,
     AddAwardNameSchema,
+    ChampionArchiveResponseSchema,
 } from "./schemas";

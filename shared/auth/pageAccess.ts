@@ -26,6 +26,7 @@ export const PAGE_ACCESS: PageAccessEntry[] = [
     { prefix: "/admin/sync", groups: ["admin", "transaction"] },
     { prefix: "/admin/sync/history", groups: ["admin", "transaction"] },
     { prefix: "/admin/audit", groups: ["admin"] },
+    { prefix: "/admin/game-api", groups: ["admin"] },
     { prefix: "/admin/cache", groups: ["super_admin"] },
     { prefix: "/admin/staff", groups: ["super_admin"] },
 ];

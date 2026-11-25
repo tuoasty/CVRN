@@ -14,13 +14,13 @@ describe("buildAdminNav", () => {
             ["League", ["Standings", "Playoffs", "Match Stats", "Seasons"]],
             ["Content", ["Articles", "Updates", "Information"]],
             ["Ratings", ["Specs", "Spec Calibration", "Overalls", "Player Cards", "Card Groups"]],
-            ["System", ["Sync", "Sync History", "Audit log", "Cache", "Staff"]],
+            ["System", ["Sync", "Sync History", "Audit log", "Game API", "Cache", "Staff"]],
         ]);
     });
 
     it("hides Cache and Staff from admin", () => {
         const system = buildAdminNav(["admin"]).groups.find(g => g.label === "System");
-        expect(system?.pages.map(p => p.label)).toEqual(["Sync", "Sync History", "Audit log"]);
+        expect(system?.pages.map(p => p.label)).toEqual(["Sync", "Sync History", "Audit log", "Game API"]);
     });
 
     it("renders limited groups flat with no groups", () => {

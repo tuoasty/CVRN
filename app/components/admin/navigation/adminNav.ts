@@ -46,6 +46,7 @@ const GROUPS: AdminNavGroup[] = [
             { href: "/admin/sync", label: "Sync" },
             { href: "/admin/sync/history", label: "Sync History" },
             { href: "/admin/audit", label: "Audit log" },
+            { href: "/admin/game-api", label: "Game API" },
             { href: "/admin/cache", label: "Cache" },
             { href: "/admin/staff", label: "Staff" },
         ],

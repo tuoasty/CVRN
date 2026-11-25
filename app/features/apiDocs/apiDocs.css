@@ -1,0 +1,19 @@
+.api-docs .swagger-ui .information-container,
+.api-docs .swagger-ui .auth-wrapper {
+    display: none;
+}
+
+.api-docs .swagger-ui .wrapper {
+    padding: 0;
+    max-width: none;
+}
+
+.api-docs .swagger-ui .scheme-container {
+    padding: 0 0 1rem;
+    box-shadow: none;
+    background: transparent;
+}
+
+.dark .api-docs .swagger-ui {
+    filter: invert(0.88) hue-rotate(180deg);
+}

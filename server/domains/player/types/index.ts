@@ -311,99 +311,6 @@ export interface PlayerStatRanksRow {
     serving_rank: number | null;
 }
 
-export interface PlayerStatsResponse {
-    roblox_user_id: string;
-    sets_played: number;
-    points_per_set: number | null;
-    scoring_rank: number | null;
-    spiking_rank: number | null;
-    setting_rank: number | null;
-    receiving_rank: number | null;
-    blocking_rank: number | null;
-    serving_rank: number | null;
-    spiking: {
-        ape_kills: number;
-        ape_attempts: number;
-        delay_kills: number;
-        quick_kills: number;
-        wipes_tools: number;
-        kill_attempts: number;
-        spiking_errors: number;
-        kills_per_set: number | null;
-    };
-    setting: {
-        assists: number;
-        setting_errors: number;
-        assists_per_set: number | null;
-    };
-    blocking: {
-        kill_blocks: number;
-        block_touches: number;
-        blocks_per_set: number | null;
-    };
-    receiving: {
-        receives: number;
-        digs: number;
-        block_follows: number;
-        dives: number;
-        receive_errors: number;
-        receives_per_set: number | null;
-        digs_per_set: number | null;
-    };
-    serving: {
-        jump_serve_aces: number;
-        float_aces: number;
-        service_errors: number;
-        aces_per_set: number | null;
-        net_serve_per_set: number | null;
-    };
-}
-
-export interface PlayerAchievement {
-    season_id: string;
-    season_name: string;
-    season_slug: string;
-    place: number;
-    place_end: number;
-    team_id: string;
-    team_name: string;
-    team_slug: string;
-    is_captain: boolean;
-}
-
-export interface PlayerDetailAward {
-    award_name: string;
-    category: string;
-    season_id: string;
-    season_name: string;
-}
-
-export interface PlayerDetailSpecAward {
-    name: string;
-    position: string;
-    stars: number;
-    season_id: string;
-    season_name: string;
-}
-
-export interface PlayerDetailApiResponse {
-    achievements: PlayerAchievement[];
-    awards: PlayerDetailAward[];
-    spec_awards: PlayerDetailSpecAward[];
-}
-
-interface StatSummaryTriplet {
-    min: number;
-    max: number;
-    mean: number;
-}
-
-interface QualifiedStatSummaryTriplet {
-    min: number | null;
-    max: number | null;
-    mean: number | null;
-}
-
 export interface RawStatSummaryRow {
     sets_played_min: number; sets_played_max: number; sets_played_mean: number;
     ape_kills_min: number; ape_kills_max: number; ape_kills_mean: number;
@@ -438,49 +345,6 @@ export interface RawStatSummaryRow {
     aces_per_set_min: number | null; aces_per_set_max: number | null; aces_per_set_mean: number | null;
 }
 
-export interface RawStatSummaryResponse {
-    sets_played: StatSummaryTriplet;
-    points_per_set: QualifiedStatSummaryTriplet;
-    spiking: {
-        ape_kills: StatSummaryTriplet;
-        ape_attempts: StatSummaryTriplet;
-        delay_kills: StatSummaryTriplet;
-        quick_kills: StatSummaryTriplet;
-        wipes_tools: StatSummaryTriplet;
-        kill_attempts: StatSummaryTriplet;
-        spiking_errors: StatSummaryTriplet;
-        kills_per_set: QualifiedStatSummaryTriplet;
-        hit_pct: QualifiedStatSummaryTriplet;
-    };
-    setting: {
-        assists: StatSummaryTriplet;
-        setting_errors: StatSummaryTriplet;
-        assists_per_set: QualifiedStatSummaryTriplet;
-        set_pct: QualifiedStatSummaryTriplet;
-    };
-    blocking: {
-        kill_blocks: StatSummaryTriplet;
-        block_touches: StatSummaryTriplet;
-        blocks_per_set: QualifiedStatSummaryTriplet;
-        kb_pct: QualifiedStatSummaryTriplet;
-    };
-    receiving: {
-        receives: StatSummaryTriplet;
-        digs: StatSummaryTriplet;
-        block_follows: StatSummaryTriplet;
-        dives: StatSummaryTriplet;
-        receive_errors: StatSummaryTriplet;
-        receives_per_set: QualifiedStatSummaryTriplet;
-        rec_pct: QualifiedStatSummaryTriplet;
-    };
-    serving: {
-        jump_serve_aces: StatSummaryTriplet;
-        float_aces: StatSummaryTriplet;
-        service_errors: StatSummaryTriplet;
-        aces_per_set: QualifiedStatSummaryTriplet;
-    };
-}
-
 export interface PlayerDetail {
     player: PlayerWithCurrentTeam;
     seasonStats: PlayerSeasonStat[];
@@ -504,6 +368,12 @@ export type {
     RangedLeaderboardInput,
     RobloxIdParamInput,
     SeasonQueryInput,
+    PlayerStatsResponse,
+    PlayerAchievement,
+    PlayerDetailAward,
+    PlayerDetailSpecAward,
+    PlayerDetailApiResponse,
+    RawStatSummaryResponse,
 } from "./schemas";
 
 export {
@@ -520,4 +390,7 @@ export {
     RangedLeaderboardSchema,
     RobloxIdParamSchema,
     SeasonQuerySchema,
+    PlayerStatsResponseSchema,
+    PlayerDetailApiResponseSchema,
+    RawStatSummaryResponseSchema,
 } from "./schemas";
