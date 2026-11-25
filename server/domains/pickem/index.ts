@@ -8,6 +8,7 @@ export {refundPickemMarkets} from "./commands/refundPickemMarkets";
 export {getPickemPayouts} from "./queries/getPickemPayouts";
 export {claimPickemPayouts} from "./commands/claimPickemPayouts";
 export {getPickemMatchSettlement} from "./queries/getPickemMatchSettlement";
+export {getPickemMatchDetail} from "./queries/getPickemMatchDetail";
 
 export {OpenPickemsQuerySchema, PlacePickBodySchema, PICK_ERROR_CODES, PayoutsQuerySchema, AckPayoutsBodySchema} from "./types/gameSchemas";
 export type {
@@ -41,6 +42,11 @@ export type {
     PickemSettleMatch,
     PickemSettlePreview,
     PickemMatchSettlement,
+    PickemPickStatus,
+    PickemDetailOutcome,
+    PickemDetailMarket,
+    PickemDetailPick,
+    PickemMatchDetail,
     SettlePickemsInput,
     RefundPickemsInput,
     PickemMatchInput,

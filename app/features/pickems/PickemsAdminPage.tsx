@@ -126,7 +126,7 @@ export default function PickemsAdminPage() {
         if (!refunding) return;
         setRefundBusy(true);
         try {
-            const result = await refundPickemMarkets(selectedSeasonId, openMarketIds(refunding));
+            const result = await refundPickemMarkets(selectedSeasonId, refunding.matchId, openMarketIds(refunding));
             if (!result.ok) {
                 toast.error("Refund failed", result.error.message);
                 return;

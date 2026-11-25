@@ -1,4 +1,5 @@
 import {DBClient, PickemMarketRow, PickemOutcomeRow, PickemPickRow, PickemSettingsRow} from "@/shared/types/db";
+import type {PickemDetailPickSource} from "@/server/domains/pickem/types";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import type {
@@ -250,4 +251,23 @@ export async function markPicksClaimed(supabase: DBClient, robloxUserId: string,
         .select("id");
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok((data ?? []).map(row => row.id));
+}
+
+export async function findPicksByMarketIds(supabase: DBClient, marketIds: string[]): Promise<Result<PickemDetailPickSource[]>> {
+    if (marketIds.length === 0) return Ok([]);
+    const {data, error} = await supabase
+        .from("pickem_picks")
+        .select("id, market_id, roblox_user_id, outcome_key, stake, payout, claimed_at, updated_at")
+        .in("market_id", marketIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(row => ({
+        id: row.id,
+        marketId: row.market_id,
+        robloxUserId: row.roblox_user_id,
+        outcomeKey: row.outcome_key,
+        stake: row.stake,
+        payout: row.payout,
+        claimedAt: row.claimed_at,
+        updatedAt: row.updated_at,
+    })));
 }

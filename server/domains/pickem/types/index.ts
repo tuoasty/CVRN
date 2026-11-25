@@ -172,6 +172,66 @@ export interface PickemSettleRowSource {
     payout: number;
 }
 
+export type PickemPickStatus = "open" | "won" | "lost" | "refunded";
+
+export interface PickemDetailOutcome {
+    key: string;
+    label: string;
+    odds: number;
+    staked: number;
+    picks: number;
+    paysIfWins: number;
+}
+
+export interface PickemDetailMarket {
+    id: string;
+    kind: PickemMarketKind;
+    status: PickemMarketStatus;
+    resultOutcome: string | null;
+    pool: number;
+    outcomes: PickemDetailOutcome[];
+}
+
+export interface PickemDetailPick {
+    pickId: string;
+    robloxUserId: string;
+    username: string | null;
+    displayName: string | null;
+    marketId: string;
+    kind: PickemMarketKind;
+    outcomeKey: string;
+    outcomeLabel: string;
+    stake: number;
+    odds: number;
+    payout: number;
+    status: PickemPickStatus;
+    claimedAt: string | null;
+    updatedAt: string;
+}
+
+export interface PickemMatchDetail {
+    matchId: string;
+    markets: PickemDetailMarket[];
+    picks: PickemDetailPick[];
+    namesMissing: boolean;
+}
+
+export interface PickemDetailPickSource {
+    id: string;
+    marketId: string;
+    robloxUserId: string;
+    outcomeKey: string;
+    stake: number;
+    payout: number | null;
+    claimedAt: string | null;
+    updatedAt: string;
+}
+
+export interface RobloxName {
+    username: string | null;
+    displayName: string | null;
+}
+
 export interface PickemMatchSettlement {
     open: number;
     settled: number;

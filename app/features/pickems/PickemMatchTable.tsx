@@ -1,11 +1,14 @@
 "use client";
 
+import {Fragment, useState} from "react";
+import {ChevronDown} from "lucide-react";
 import {Button} from "@/app/components/ui/button";
 import {TodayText} from "@/app/components/ui/TodayText";
 import {formatWhen} from "@/app/(public)/home/model/format";
 import type {PickemMarketView, PickemMatchRow} from "@/server/domains/pickem";
 import {cn} from "@/lib/utils";
 import {canSettle, formatChance, formatLockIn, formatOdds, formatResult} from "./pickemFormat";
+import {PickemMatchDetail} from "./PickemMatchDetail";
 
 const HEAD = "px-4 py-2 text-left text-xs font-semibold text-muted-foreground";
 const CELL = "px-4 py-3 align-top";
@@ -98,6 +101,14 @@ export function PickemMatchTable({rows, timeZone, now, onPublish, onSettle, onRe
     onSettle: (row: PickemMatchRow) => void;
     onRefund: (row: PickemMatchRow) => void;
 }) {
+    const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
+    const toggle = (matchId: string) => setExpanded(current => {
+        const next = new Set(current);
+        if (next.has(matchId)) next.delete(matchId);
+        else next.add(matchId);
+        return next;
+    });
+
     return (
         <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] border-collapse">
@@ -117,12 +128,27 @@ export function PickemMatchTable({rows, timeZone, now, onPublish, onSettle, onRe
                         const length = row.markets.find(m => m.kind === "match_length");
                         const staked = row.markets.reduce((sum, m) => sum + m.pool, 0);
                         const when = formatWhen(row.scheduledAt, timeZone, now);
+                        const open = expanded.has(row.matchId);
+                        const detailId = `pickem-detail-${row.matchId}`;
                         return (
-                            <tr key={row.matchId} className="transition-colors duration-150 hover:bg-muted/30 motion-reduce:transition-none">
+                            <Fragment key={row.matchId}>
+                            <tr className={cn("transition-colors duration-150 hover:bg-muted/30 motion-reduce:transition-none", open && "bg-muted/20")}>
                                 <th scope="row" className={cn(CELL, "sticky left-0 bg-background text-left font-normal")}>
                                     <p className="whitespace-nowrap font-mono text-xs leading-4 text-muted-foreground">{matchLabel(row)}</p>
                                     <p className="mt-1 text-sm font-semibold leading-5 text-foreground">{row.home?.name ?? "TBD"}</p>
                                     <p className="mt-1 text-sm font-semibold leading-5 text-foreground">{row.away?.name ?? "TBD"}</p>
+                                    {row.markets.length > 0 && (
+                                        <button
+                                            type="button"
+                                            aria-expanded={open}
+                                            aria-controls={open ? detailId : undefined}
+                                            onClick={() => toggle(row.matchId)}
+                                            className="-ml-1 mt-2 inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-sm px-1 text-sm text-foreground underline underline-offset-2 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground md:min-h-0"
+                                        >
+                                            {open ? "Hide picks" : "Show picks"}
+                                            <ChevronDown aria-hidden="true" className={cn("h-4 w-4 transition-transform duration-150 motion-reduce:transition-none", open && "rotate-180")} />
+                                        </button>
+                                    )}
                                 </th>
                                 <td className={cn(CELL, "whitespace-nowrap text-sm text-foreground")}>
                                     <TodayText active={when.isToday}>{when.label}</TodayText>
@@ -140,6 +166,14 @@ export function PickemMatchTable({rows, timeZone, now, onPublish, onSettle, onRe
                                     <StatusCell row={row} now={now} onPublish={onPublish} onSettle={onSettle} onRefund={onRefund} />
                                 </td>
                             </tr>
+                            {open && (
+                                <tr id={detailId} className="border-b border-border">
+                                    <td colSpan={6} className="px-4 pb-6">
+                                        <PickemMatchDetail matchId={row.matchId} timeZone={timeZone} now={now} />
+                                    </td>
+                                </tr>
+                            )}
+                            </Fragment>
                         );
                     })}
                 </tbody>

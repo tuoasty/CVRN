@@ -1,6 +1,7 @@
 import useSWR, {mutate as globalMutate} from "swr";
 import {
     getPickemBoardAction,
+    getPickemMatchDetailAction,
     getPickemMatchSettlementAction,
     previewPickemSettlementAction,
     publishPickemMatchesAction,
@@ -8,7 +9,14 @@ import {
     settlePickemMatchesAction,
     updatePickemSettingsAction,
 } from "@/app/actions/pickem.actions";
-import type {PickemBoard, PickemMatchSettlement, PickemSettings, PickemSettingsInput, PickemSettlePreview} from "@/server/domains/pickem";
+import type {
+    PickemBoard,
+    PickemMatchDetail,
+    PickemMatchSettlement,
+    PickemSettings,
+    PickemSettingsInput,
+    PickemSettlePreview,
+} from "@/server/domains/pickem";
 import type {Result} from "@/shared/types/result";
 
 const PICKEM_BOARD_TTL = 30 * 1000;
@@ -52,16 +60,38 @@ export function previewPickemSettlement(seasonId: string, matchIds: string[]): P
     return previewPickemSettlementAction({seasonId, matchIds});
 }
 
+export const pickemDetailKey = (matchId: string) => ["pickem-match-detail", matchId] as const;
+
 export async function settlePickemMatches(seasonId: string, matchIds: string[]): Promise<Result<PickemBoard>> {
     const result = await settlePickemMatchesAction({seasonId, matchIds});
-    if (result.ok) await globalMutate(pickemBoardKey(seasonId), result.value, {revalidate: false});
+    if (result.ok) {
+        await globalMutate(pickemBoardKey(seasonId), result.value, {revalidate: false});
+        await Promise.all(matchIds.map(id => globalMutate(pickemDetailKey(id))));
+    }
     return result;
 }
 
-export async function refundPickemMarkets(seasonId: string, marketIds: string[]): Promise<Result<PickemBoard>> {
+export async function refundPickemMarkets(seasonId: string, matchId: string, marketIds: string[]): Promise<Result<PickemBoard>> {
     const result = await refundPickemMarketsAction({seasonId, marketIds});
-    if (result.ok) await globalMutate(pickemBoardKey(seasonId), result.value, {revalidate: false});
+    if (result.ok) {
+        await globalMutate(pickemBoardKey(seasonId), result.value, {revalidate: false});
+        await globalMutate(pickemDetailKey(matchId));
+    }
     return result;
+}
+
+async function fetchMatchDetail([, matchId]: readonly [string, string]): Promise<PickemMatchDetail> {
+    const result = await getPickemMatchDetailAction({matchId});
+    if (!result.ok) throw new Error(result.error.message);
+    return result.value;
+}
+
+export function usePickemMatchDetail(matchId: string) {
+    const {data, error, isLoading} = useSWR(pickemDetailKey(matchId), fetchMatchDetail, {
+        refreshInterval: 60 * 1000,
+        revalidateOnFocus: true,
+    });
+    return {detail: data ?? null, isLoading, error: error?.message ?? null};
 }
 
 async function fetchMatchSettlement([, matchId]: readonly [string, string]): Promise<PickemMatchSettlement | null> {
