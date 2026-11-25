@@ -37,6 +37,7 @@ import { Match } from "@/shared/types/db";
 import {toast} from "@/app/utils/toast";
 import {errorCodeToUserMessage} from "@/app/lib/errorMessages";
 import {Settings} from "lucide-react";
+import {PickemClosedWarning} from "@/app/features/pickems/PickemClosedWarning";
 
 interface ManageMatchDialogProps {
     matchId: string;
@@ -289,6 +290,7 @@ export default function ManageMatchDialog({
                                         <li>Match schedule</li>
                                     </ul>
                                     <p className="mt-3 font-semibold">The match will be reset to pending status. This action cannot be undone.</p>
+                                    <PickemClosedWarning matchId={matchId} enabled={voidDialogOpen} action="void" className="mt-3" />
                                 </div>
                             </AlertDialogDescription>
                         </AlertDialogHeader>

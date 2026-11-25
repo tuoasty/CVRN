@@ -30,3 +30,25 @@ export function bulkPublishCandidates(rows: PickemMatchRow[], now: Date, days: n
 export function matchTitle(row: Pick<PickemMatchRow, "home" | "away">): string {
     return `${row.home?.name ?? "TBD"} vs ${row.away?.name ?? "TBD"}`;
 }
+
+export function canSettle(row: Pick<PickemMatchRow, "state" | "result">): boolean {
+    return row.result !== null && (row.state === "awaiting_settlement" || row.state === "partly_settled");
+}
+
+export function openMarketIds(row: Pick<PickemMatchRow, "markets">): string[] {
+    return row.markets.filter(m => m.status === "open").map(m => m.id);
+}
+
+export function settleCandidates(rows: PickemMatchRow[]): PickemMatchRow[] {
+    return rows.filter(canSettle);
+}
+
+export function formatResult(row: Pick<PickemMatchRow, "result">): string | null {
+    if (!row.result) return null;
+    if (row.result.forfeit) return "Forfeit";
+    return `${row.result.homeSets}-${row.result.awaySets}`;
+}
+
+export function formatCurrency(amount: number): string {
+    return amount.toLocaleString("en-US");
+}

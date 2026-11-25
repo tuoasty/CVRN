@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {bulkPublishCandidates, formatChance, formatLockIn, formatOdds, matchTitle} from "../pickemFormat";
+import {bulkPublishCandidates, canSettle, formatChance, formatLockIn, formatOdds, formatResult, matchTitle, openMarketIds} from "../pickemFormat";
 import type {PickemMatchRow} from "@/server/domains/pickem";
 
 const NOW = new Date("2026-11-25T12:00:00Z");
@@ -15,6 +15,7 @@ function row(overrides: Partial<PickemMatchRow>): PickemMatchRow {
         lockAt: "2026-11-26T12:00:00Z",
         home: {id: "h", name: "Saints", logoUrl: null},
         away: {id: "a", name: "Mapua", logoUrl: null},
+        result: null,
         state: "unpublished",
         blockedReason: null,
         markets: [],
@@ -58,5 +59,27 @@ describe("matchTitle", () => {
     it("names both teams and falls back to TBD", () => {
         expect(matchTitle(row({}))).toBe("Saints vs Mapua");
         expect(matchTitle(row({away: null}))).toBe("Saints vs TBD");
+    });
+});
+
+describe("canSettle", () => {
+    const result = {homeSets: 2, awaySets: 0, forfeit: false};
+
+    it("needs a result and at least one open market", () => {
+        expect(canSettle(row({state: "awaiting_settlement", result}))).toBe(true);
+        expect(canSettle(row({state: "partly_settled", result}))).toBe(true);
+        expect(canSettle(row({state: "partly_settled", result: null}))).toBe(false);
+        expect(canSettle(row({state: "settled", result}))).toBe(false);
+        expect(canSettle(row({state: "locked", result: null}))).toBe(false);
+    });
+});
+
+describe("openMarketIds and formatResult", () => {
+    it("lists only open markets and prints the set score or forfeit", () => {
+        const market = (id: string, status: "open" | "settled") => ({id, kind: "winner" as const, status, resultOutcome: null, pool: 0, outcomes: []});
+        expect(openMarketIds(row({markets: [market("a", "open"), market("b", "settled")]}))).toEqual(["a"]);
+        expect(formatResult(row({result: {homeSets: 1, awaySets: 2, forfeit: false}}))).toBe("1-2");
+        expect(formatResult(row({result: {homeSets: 0, awaySets: 2, forfeit: true}}))).toBe("Forfeit");
+        expect(formatResult(row({}))).toBeNull();
     });
 });

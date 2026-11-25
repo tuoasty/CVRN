@@ -1,9 +1,16 @@
 import {
+    AckPayoutsBodySchema,
+    AckPayoutsResponseSchema,
+    PayoutsQuerySchema,
+    PayoutsResponseSchema,
     OpenPickemsQuerySchema,
     OpenPickemsResponseSchema,
     PickErrorSchema,
     PlacePickBodySchema,
     PlacePickResponseSchema,
+    type AckPayoutsBody,
+    type AckPayoutsResponse,
+    type PayoutsResponse,
     type OpenPickemsResponse,
     type PickErrorBody,
     type PlacePickBody,
@@ -83,6 +90,78 @@ export const PLACE_PICK_EXAMPLE = {
     ],
 } satisfies PlacePickResponse;
 
+const SAINTS = {id: "f1de9a5d-323c-4df6-95ba-c2204467bd24", name: "Saints", logo_url: "https://cdn.cvrn.net/public-assets/logos/saints.png"};
+const MAPUA = {id: "71fc4973-e0d6-4d87-97dc-7d010c069aef", name: "Mapua", logo_url: null};
+const WIN_PICK_ID = "5b7c9d1e-2f3a-4b5c-8d6e-7f8a9b0c1d2e";
+const LOSS_PICK_ID = "9c1d2e3f-4a5b-4c6d-8e7f-0a1b2c3d4e5f";
+const REFUND_PICK_ID = "2e4f6a8b-0c1d-4e3f-9a5b-7c9d1e3f5a7b";
+
+export const PAYOUTS_EXAMPLE = {
+    payouts: [
+        {
+            pick_id: WIN_PICK_ID,
+            match_id: "c1a2b3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+            match_code: "W4-M2",
+            home: SAINTS,
+            away: MAPUA,
+            market_id: WINNER_MARKET_ID,
+            kind: "winner",
+            label: "Winner",
+            outcome: "home",
+            outcome_label: "Saints",
+            result_outcome: "home",
+            stake: 300,
+            final_odds: 1.38,
+            result: "win",
+            payout: 414,
+        },
+        {
+            pick_id: LOSS_PICK_ID,
+            match_id: "c1a2b3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+            match_code: "W4-M2",
+            home: SAINTS,
+            away: MAPUA,
+            market_id: LENGTH_MARKET_ID,
+            kind: "match_length",
+            label: "Match length",
+            outcome: "2-0",
+            outcome_label: "2-0",
+            result_outcome: "2-1",
+            stake: 100,
+            final_odds: 1.72,
+            result: "loss",
+            payout: 0,
+        },
+        {
+            pick_id: REFUND_PICK_ID,
+            match_id: "d2b3c4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+            match_code: "W4-M3",
+            home: MAPUA,
+            away: SAINTS,
+            market_id: "4b5c6d7e-8f9a-4b0c-9d1e-2f3a4b5c6d7e",
+            kind: "winner",
+            label: "Winner",
+            outcome: "away",
+            outcome_label: "Saints",
+            result_outcome: null,
+            stake: 250,
+            final_odds: null,
+            result: "refund",
+            payout: 250,
+        },
+    ],
+    has_more: false,
+} satisfies PayoutsResponse;
+
+export const ACK_PAYOUTS_BODY_EXAMPLE = {
+    roblox_user_id: ROBLOX_USER_ID,
+    pick_ids: [WIN_PICK_ID, LOSS_PICK_ID, REFUND_PICK_ID],
+} satisfies AckPayoutsBody;
+
+export const ACK_PAYOUTS_EXAMPLE = {
+    claimed_pick_ids: [WIN_PICK_ID, LOSS_PICK_ID, REFUND_PICK_ID],
+} satisfies AckPayoutsResponse;
+
 function pickError(description: string, example: PickErrorBody): OpenApiResponse {
     return jsonResponse(description, PickErrorSchema, example);
 }
@@ -156,6 +235,57 @@ export const PICKEMS_API_PATHS: OpenApiPaths = {
                     code: "MARKET_LOCKED",
                 }),
                 "500": serverError,
+            },
+        }),
+    },
+    "/api/pickems/payouts": {
+        get: operation({
+            operationId: "getPickemPayouts",
+            summary: "Settled picks waiting to be credited",
+            description: [
+                "Every pick of this player whose market was settled or refunded and that has not been acked yet, oldest first, at most 100 per call.",
+                "",
+                "- **`payout` is the amount to credit.** `win` pays `floor(stake × final_odds)`, `loss` pays `0`, `refund` returns the stake. Losses are listed too so the game can show the result; they credit nothing.",
+                "- **Claim in two steps.** 1) Call this endpoint. 2) Credit the total `payout` and record every `pick_id` in the same DataStore write (`UpdateAsync`). 3) Call `POST /api/pickems/payouts/ack` with those ids.",
+                "- **Skip ids already recorded.** If the game crashed between the DataStore write and the ack, the same picks come back next time. Credit only ids that are not in the player's record, then ack them all again.",
+                "- `has_more: true` means more are waiting. Ack this page, then call again.",
+                "- A good moment to call: when the player joins and when they open the pickems screen.",
+            ].join("\n"),
+            parameters: [
+                queryParam("roblox_user_id", PayoutsQuerySchema.shape.roblox_user_id, "Roblox user id, digits only.", ROBLOX_USER_ID),
+            ],
+            responses: {
+                "200": jsonResponse("Unclaimed results for this player.", PayoutsResponseSchema, PAYOUTS_EXAMPLE),
+                "400": pickError("`roblox_user_id` is missing or not digits.", {
+                    error: "Invalid request",
+                    code: "INVALID_REQUEST",
+                    issues: [{field: "roblox_user_id", message: "roblox_user_id must be digits"}],
+                }),
+                "401": UNAUTHORIZED_RESPONSE,
+                "500": pickError("Database failure. Safe to retry.", {error: "Failed to read payouts", code: "DB_ERROR"}),
+            },
+        }),
+    },
+    "/api/pickems/payouts/ack": {
+        post: operation({
+            operationId: "ackPickemPayouts",
+            summary: "Mark payouts as credited",
+            description: [
+                "Marks picks as claimed so they stop coming back from `GET /api/pickems/payouts`. Call it only after the DataStore write that credited them has succeeded.",
+                "",
+                "- Send the `pick_id`s exactly as received, at most 100 per call.",
+                "- **Safe to repeat.** Ids that are already claimed, belong to another player, or are not settled yet are ignored. `claimed_pick_ids` lists only the ids this call marked, so a retry after a timeout returns fewer or none; that is not an error.",
+            ].join("\n"),
+            requestBody: jsonRequestBody(AckPayoutsBodySchema, ACK_PAYOUTS_BODY_EXAMPLE),
+            responses: {
+                "200": jsonResponse("The ids this call marked as claimed.", AckPayoutsResponseSchema, ACK_PAYOUTS_EXAMPLE),
+                "400": pickError("The body failed validation.", {
+                    error: "Invalid request",
+                    code: "INVALID_REQUEST",
+                    issues: [{field: "pick_ids", message: "pick_ids needs at least one id"}],
+                }),
+                "401": UNAUTHORIZED_RESPONSE,
+                "500": pickError("Database failure. Safe to retry with the same ids.", {error: "Failed to record the claim", code: "DB_ERROR"}),
             },
         }),
     },

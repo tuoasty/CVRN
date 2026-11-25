@@ -16,7 +16,7 @@ export function toPickemSettings(row: PickemSettingsRow): PickemSettings {
 }
 
 export function toPickemMarketSource(row: PickemMarketRow): PickemMarketSource {
-    return {id: row.id, matchId: row.match_id, kind: row.kind, status: row.status};
+    return {id: row.id, matchId: row.match_id, kind: row.kind, status: row.status, resultOutcome: row.result_outcome};
 }
 
 export function toPickemOutcomeSource(row: PickemOutcomeRow): PickemOutcomeSource {

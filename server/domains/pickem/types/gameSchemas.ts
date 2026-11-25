@@ -93,3 +93,45 @@ export const PickErrorSchema = z.object({
     issues: z.array(z.object({field: z.string(), message: z.string()})).optional(),
 });
 export type PickErrorBody = z.infer<typeof PickErrorSchema>;
+
+export const PAYOUTS_PAGE_SIZE = 100;
+
+export const PayoutsQuerySchema = z.object({
+    roblox_user_id: RobloxUserId,
+});
+
+const GamePayoutSchema = z.object({
+    pick_id: z.string(),
+    match_id: z.string(),
+    match_code: z.string().nullable(),
+    home: GameTeamSchema.nullable(),
+    away: GameTeamSchema.nullable(),
+    market_id: z.string(),
+    kind: z.string(),
+    label: z.string(),
+    outcome: z.string(),
+    outcome_label: z.string(),
+    result_outcome: z.string().nullable(),
+    stake: z.number().int(),
+    final_odds: z.number().nullable(),
+    result: z.enum(["win", "loss", "refund"]),
+    payout: z.number().int(),
+});
+export type GamePayout = z.infer<typeof GamePayoutSchema>;
+
+export const PayoutsResponseSchema = z.object({
+    payouts: z.array(GamePayoutSchema),
+    has_more: z.boolean(),
+});
+export type PayoutsResponse = z.infer<typeof PayoutsResponseSchema>;
+
+export const AckPayoutsBodySchema = z.object({
+    roblox_user_id: RobloxUserId,
+    pick_ids: z.array(z.uuid("pick_ids must be UUIDs")).min(1, "pick_ids needs at least one id").max(PAYOUTS_PAGE_SIZE, `pick_ids takes at most ${PAYOUTS_PAGE_SIZE} ids`),
+});
+export type AckPayoutsBody = z.infer<typeof AckPayoutsBodySchema>;
+
+export const AckPayoutsResponseSchema = z.object({
+    claimed_pick_ids: z.array(z.string()),
+});
+export type AckPayoutsResponse = z.infer<typeof AckPayoutsResponseSchema>;

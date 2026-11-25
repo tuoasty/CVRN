@@ -185,3 +185,6 @@ export type PickemMarketRow =
 
 export type PickemOutcomeRow =
     Database["public"]["Tables"]["pickem_outcomes"]["Row"];
+
+export type PickemPickRow =
+    Database["public"]["Tables"]["pickem_picks"]["Row"];

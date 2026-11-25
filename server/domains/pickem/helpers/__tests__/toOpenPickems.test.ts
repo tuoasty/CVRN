@@ -15,6 +15,7 @@ function match(overrides: Partial<OpenPickemMatch>): OpenPickemMatch {
         scheduledAt: "2026-11-26T18:00:00Z",
         home: {id: "t1", name: "Saints", logoUrl: "https://cdn.cvrn.net/saints.png"},
         away: {id: "t2", name: "Mapua", logoUrl: null},
+        result: null,
         region: "NA",
         seasonNumber: 3,
         ...overrides,
@@ -33,10 +34,10 @@ describe("toOpenPickems", () => {
             match({id: "no-markets"}),
         ],
         markets: [
-            {id: "w1", matchId: "m1", kind: "winner", status: "open"},
-            {id: "l1", matchId: "m1", kind: "match_length", status: "open"},
-            {id: "w2", matchId: "late", kind: "winner", status: "open"},
-            {id: "w3", matchId: "past", kind: "winner", status: "open"},
+            {id: "w1", matchId: "m1", kind: "winner", status: "open", resultOutcome: null},
+            {id: "l1", matchId: "m1", kind: "match_length", status: "open", resultOutcome: null},
+            {id: "w2", matchId: "late", kind: "winner", status: "open", resultOutcome: null},
+            {id: "w3", matchId: "past", kind: "winner", status: "open", resultOutcome: null},
         ],
         outcomes: [
             {marketId: "w1", key: "home", label: "Home", sortOrder: 0, startProb: 0.6},

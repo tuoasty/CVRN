@@ -1,17 +1,18 @@
-import {DBClient, PickemMarketRow, PickemOutcomeRow, PickemSettingsRow} from "@/shared/types/db";
+import {DBClient, PickemMarketRow, PickemOutcomeRow, PickemPickRow, PickemSettingsRow} from "@/shared/types/db";
 import {Err, Ok, Result} from "@/shared/types/result";
 import {serializeError} from "@/server/utils/serializeableError";
 import type {
     PickemMarketDraft,
     PickemMatchSource,
     PickemOddsSource,
+    PickemSettleRowSource,
     PickemTeamView,
 } from "@/server/domains/pickem/types";
 import {PICK_ERROR_CODES, type PickErrorCode, type PlacePickBody} from "@/server/domains/pickem/types/gameSchemas";
 import type {OpenPickemMatch, PlayerPickSource} from "@/server/domains/pickem/helpers/toOpenPickems";
 
 const MATCH_SELECT = `
-    id, match_code, match_type, status, week, best_of, scheduled_at,
+    id, match_code, match_type, status, week, best_of, scheduled_at, home_sets_won, away_sets_won, is_forfeit,
     home:teams!matches_home_team_id_fkey (id, name, logo_url),
     away:teams!matches_away_team_id_fkey (id, name, logo_url)
 `;
@@ -26,6 +27,9 @@ type MatchQueryRow = {
     week: number | null;
     best_of: number;
     scheduled_at: string | null;
+    home_sets_won: number | null;
+    away_sets_won: number | null;
+    is_forfeit: boolean | null;
     home: TeamEmbed;
     away: TeamEmbed;
 };
@@ -45,6 +49,9 @@ function toMatchSource(row: MatchQueryRow): PickemMatchSource {
         scheduledAt: row.scheduled_at,
         home: toTeam(row.home),
         away: toTeam(row.away),
+        result: row.status === "completed"
+            ? {homeSets: row.home_sets_won ?? 0, awaySets: row.away_sets_won ?? 0, forfeit: row.is_forfeit ?? false}
+            : null,
     };
 }
 
@@ -180,4 +187,67 @@ export async function findPickemMarketRowById(supabase: DBClient, marketId: stri
     const {data, error} = await supabase.from("pickem_markets").select("*").eq("id", marketId).maybeSingle();
     if (error) return Err(serializeError(error, "DB_ERROR"));
     return Ok(data);
+}
+
+export async function rpcSettlePickemMatches(supabase: DBClient, matchIds: string[], dryRun: boolean): Promise<Result<PickemSettleRowSource[]>> {
+    const {data, error} = await supabase.rpc("settle_pickem_matches", {p_match_ids: matchIds, p_dry_run: dryRun});
+    if (error?.code === "42501") return Err({message: error.message, code: "FORBIDDEN"});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(row => ({
+        matchId: row.match_id,
+        marketId: row.market_id,
+        kind: row.kind,
+        outcomeKey: row.outcome_key,
+        result: row.result as PickemSettleRowSource["result"],
+        forfeit: row.forfeit,
+        picks: row.picks,
+        staked: Number(row.staked),
+        finalOdds: row.final_odds === null ? null : Number(row.final_odds),
+        payout: Number(row.payout),
+    })));
+}
+
+export type RefundedMarket = {marketId: string; picks: number; refunded: number};
+
+export async function rpcRefundPickemMarkets(supabase: DBClient, marketIds: string[]): Promise<Result<RefundedMarket[]>> {
+    const {data, error} = await supabase.rpc("refund_pickem_markets", {p_market_ids: marketIds});
+    if (error?.code === "42501") return Err({message: error.message, code: "FORBIDDEN"});
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(row => ({marketId: row.market_id, picks: row.picks, refunded: Number(row.refunded)})));
+}
+
+export async function findPickemMarketRowsByIds(supabase: DBClient, marketIds: string[]): Promise<Result<PickemMarketRow[]>> {
+    if (marketIds.length === 0) return Ok([]);
+    const {data, error} = await supabase.from("pickem_markets").select("*").in("id", marketIds);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok(data ?? []);
+}
+
+export type UnclaimedPick = Pick<PickemPickRow, "id" | "market_id" | "outcome_key" | "stake" | "updated_at"> & {payout: number};
+
+export async function findUnclaimedPicks(supabase: DBClient, robloxUserId: string, limit: number): Promise<Result<UnclaimedPick[]>> {
+    const {data, error} = await supabase
+        .from("pickem_picks")
+        .select("id, market_id, outcome_key, stake, payout, updated_at")
+        .eq("roblox_user_id", robloxUserId)
+        .not("payout", "is", null)
+        .is("claimed_at", null)
+        .order("updated_at", {ascending: true})
+        .order("id", {ascending: true})
+        .limit(limit);
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(row => ({...row, payout: row.payout ?? 0})));
+}
+
+export async function markPicksClaimed(supabase: DBClient, robloxUserId: string, pickIds: string[]): Promise<Result<string[]>> {
+    const {data, error} = await supabase
+        .from("pickem_picks")
+        .update({claimed_at: new Date().toISOString()})
+        .eq("roblox_user_id", robloxUserId)
+        .in("id", pickIds)
+        .not("payout", "is", null)
+        .is("claimed_at", null)
+        .select("id");
+    if (error) return Err(serializeError(error, "DB_ERROR"));
+    return Ok((data ?? []).map(row => row.id));
 }

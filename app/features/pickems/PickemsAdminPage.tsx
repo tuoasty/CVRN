@@ -7,13 +7,23 @@ import ConfirmDialog from "@/app/features/spec/catalog/ConfirmDialog";
 import {useAdminContextStore} from "@/app/stores/adminContextStore";
 import {useSeasons} from "@/app/hooks/useSeasons";
 import {useRegions} from "@/app/hooks/useRegions";
-import {publishPickemMatches, updatePickemSettings, usePickemBoard} from "@/app/hooks/usePickemBoard";
+import {
+    previewPickemSettlement,
+    publishPickemMatches,
+    refundPickemMarkets,
+    settlePickemMatches,
+    updatePickemSettings,
+    usePickemBoard,
+} from "@/app/hooks/usePickemBoard";
 import {getRegionTimezone} from "@/app/utils/timezoneOptions";
 import {toast} from "@/app/utils/toast";
-import type {PickemMatchRow, PickemSettingsInput} from "@/server/domains/pickem";
+import type {PickemMatchRow, PickemSettingsInput, PickemSettlePreview} from "@/server/domains/pickem";
 import {PickemMatchTable} from "./PickemMatchTable";
 import {PickemSettingsForm} from "./PickemSettingsForm";
-import {BULK_PUBLISH_DAYS, bulkPublishCandidates, matchTitle} from "./pickemFormat";
+import {PickemSettleDialog} from "./PickemSettleDialog";
+import {BULK_PUBLISH_DAYS, bulkPublishCandidates, matchTitle, openMarketIds, settleCandidates} from "./pickemFormat";
+
+type SettleState = {rows: PickemMatchRow[]; preview: PickemSettlePreview | null; error: string | null};
 
 type View = "matches" | "settings";
 
@@ -53,8 +63,13 @@ export default function PickemsAdminPage() {
     const [view, setView] = useState<View>("matches");
     const [pending, setPending] = useState<PickemMatchRow[] | null>(null);
     const [publishing, setPublishing] = useState(false);
+    const [settling, setSettling] = useState<SettleState | null>(null);
+    const [settleBusy, setSettleBusy] = useState(false);
+    const [refunding, setRefunding] = useState<PickemMatchRow | null>(null);
+    const [refundBusy, setRefundBusy] = useState(false);
 
     const candidates = useMemo(() => (board ? bulkPublishCandidates(board.matches, now) : []), [board, now]);
+    const settleable = useMemo(() => (board ? settleCandidates(board.matches) : []), [board]);
 
     if (!selectedSeasonId) {
         return (
@@ -81,6 +96,48 @@ export default function PickemsAdminPage() {
         }
     };
 
+    const openSettle = async (rows: PickemMatchRow[]) => {
+        const matchIds = rows.map(r => r.matchId);
+        setSettling({rows, preview: null, error: null});
+        const result = await previewPickemSettlement(selectedSeasonId, matchIds);
+        setSettling(current => {
+            if (!current || current.rows !== rows) return current;
+            return result.ok ? {...current, preview: result.value} : {...current, error: result.error.message};
+        });
+    };
+
+    const handleSettle = async () => {
+        if (!settling) return;
+        setSettleBusy(true);
+        try {
+            const result = await settlePickemMatches(selectedSeasonId, settling.rows.map(r => r.matchId));
+            if (!result.ok) {
+                toast.error("Settle failed", result.error.message);
+                return;
+            }
+            toast.success(settling.rows.length === 1 ? `Settled ${matchTitle(settling.rows[0])}` : `Settled ${settling.rows.length} matches`);
+            setSettling(null);
+        } finally {
+            setSettleBusy(false);
+        }
+    };
+
+    const handleRefund = async () => {
+        if (!refunding) return;
+        setRefundBusy(true);
+        try {
+            const result = await refundPickemMarkets(selectedSeasonId, openMarketIds(refunding));
+            if (!result.ok) {
+                toast.error("Refund failed", result.error.message);
+                return;
+            }
+            toast.success(`Refunded ${matchTitle(refunding)}`);
+            setRefunding(null);
+        } finally {
+            setRefundBusy(false);
+        }
+    };
+
     const handleSaveSettings = async (input: PickemSettingsInput): Promise<boolean> => {
         const result = await updatePickemSettings(selectedSeasonId, input);
         if (!result.ok) {
@@ -102,15 +159,27 @@ export default function PickemsAdminPage() {
 
             <ViewTabs label="Pickems view" idBase="pickems" tabs={TABS} value={view} onChange={setView} className="mt-5">
                 {view === "matches" && board && (
-                    <Button
-                        type="button"
-                        size="sm"
-                        className="mb-1.5 h-11 rounded-sm md:h-8"
-                        disabled={candidates.length === 0}
-                        onClick={() => setPending(candidates)}
-                    >
-                        Publish next {BULK_PUBLISH_DAYS} days ({candidates.length})
-                    </Button>
+                    <div className="mb-1.5 flex flex-wrap gap-2">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-11 rounded-sm md:h-8"
+                            disabled={settleable.length === 0}
+                            onClick={() => openSettle(settleable)}
+                        >
+                            Settle completed ({settleable.length})
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            className="h-11 rounded-sm md:h-8"
+                            disabled={candidates.length === 0}
+                            onClick={() => setPending(candidates)}
+                        >
+                            Publish next {BULK_PUBLISH_DAYS} days ({candidates.length})
+                        </Button>
+                    </div>
                 )}
             </ViewTabs>
 
@@ -126,7 +195,14 @@ export default function PickemsAdminPage() {
                         </p>
                     ) : (
                         <div className="mt-4">
-                            <PickemMatchTable rows={board.matches} timeZone={timeZone} now={now} onPublish={row => setPending([row])} />
+                            <PickemMatchTable
+                                rows={board.matches}
+                                timeZone={timeZone}
+                                now={now}
+                                onPublish={row => setPending([row])}
+                                onSettle={row => openSettle([row])}
+                                onRefund={setRefunding}
+                            />
                         </div>
                     )
                 )}
@@ -153,6 +229,32 @@ export default function PickemsAdminPage() {
                 busy={publishing}
                 onCancel={() => setPending(null)}
                 onConfirm={handlePublish}
+            />
+
+            <PickemSettleDialog
+                open={settling !== null}
+                count={settling?.rows.length ?? 0}
+                preview={settling?.preview ?? null}
+                error={settling?.error ?? null}
+                busy={settleBusy}
+                onCancel={() => setSettling(null)}
+                onConfirm={handleSettle}
+            />
+
+            <ConfirmDialog
+                open={refunding !== null}
+                title="Refund this match?"
+                description={
+                    <>
+                        Every pick on <strong>{refunding ? matchTitle(refunding) : ""}</strong> gets its stake back. Its open markets close for good, and the match cannot be published again.
+                    </>
+                }
+                cancelLabel="Cancel"
+                confirmLabel={refundBusy ? "Refunding..." : "Refund stakes"}
+                destructive
+                busy={refundBusy}
+                onCancel={() => setRefunding(null)}
+                onConfirm={handleRefund}
             />
         </div>
     );

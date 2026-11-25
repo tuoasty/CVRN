@@ -39,11 +39,26 @@ export interface PickemMarketView {
     id: string;
     kind: PickemMarketKind;
     status: PickemMarketStatus;
+    resultOutcome: string | null;
     pool: number;
     outcomes: PickemOutcomeView[];
 }
 
-export type PickemMatchState = "unpublishable" | "unpublished" | "open" | "locked";
+export type PickemMatchState =
+    | "unpublishable"
+    | "unpublished"
+    | "open"
+    | "locked"
+    | "awaiting_settlement"
+    | "partly_settled"
+    | "settled"
+    | "refunded";
+
+export interface PickemMatchResult {
+    homeSets: number;
+    awaySets: number;
+    forfeit: boolean;
+}
 
 export interface PickemTeamView {
     id: string;
@@ -61,6 +76,7 @@ export interface PickemMatchRow {
     lockAt: string | null;
     home: PickemTeamView | null;
     away: PickemTeamView | null;
+    result: PickemMatchResult | null;
     state: PickemMatchState;
     blockedReason: string | null;
     markets: PickemMarketView[];
@@ -81,6 +97,7 @@ export interface PickemMatchSource {
     scheduledAt: string | null;
     home: PickemTeamView | null;
     away: PickemTeamView | null;
+    result: PickemMatchResult | null;
 }
 
 export interface PickemMarketSource {
@@ -88,6 +105,7 @@ export interface PickemMarketSource {
     matchId: string;
     kind: PickemMarketKind;
     status: PickemMarketStatus;
+    resultOutcome: string | null;
 }
 
 export interface PickemOutcomeSource {
@@ -106,5 +124,69 @@ export interface PickemOddsSource {
     odds: number;
 }
 
-export type {PickemSeasonInput, PublishPickemsInput, PickemSettingsInput} from "./schemas";
-export {PICKEM_MARKET_KINDS, PICKEM_PUBLISH_LIMIT, PickemSeasonSchema, PublishPickemsSchema, PickemSettingsSchema} from "./schemas";
+export type PickemSettleResult = "win" | "loss" | "refund";
+
+export interface PickemSettleOutcome {
+    key: string;
+    label: string;
+    result: PickemSettleResult;
+    picks: number;
+    staked: number;
+    finalOdds: number | null;
+    payout: number;
+}
+
+export interface PickemSettleMarket {
+    marketId: string;
+    kind: PickemMarketKind;
+    staked: number;
+    paid: number;
+    outcomes: PickemSettleOutcome[];
+}
+
+export interface PickemSettleMatch {
+    matchId: string;
+    matchCode: string | null;
+    home: PickemTeamView | null;
+    away: PickemTeamView | null;
+    forfeit: boolean;
+    markets: PickemSettleMarket[];
+}
+
+export interface PickemSettlePreview {
+    matches: PickemSettleMatch[];
+    staked: number;
+    paid: number;
+}
+
+export interface PickemSettleRowSource {
+    matchId: string;
+    marketId: string;
+    kind: PickemMarketKind;
+    outcomeKey: string;
+    result: PickemSettleResult;
+    forfeit: boolean;
+    picks: number;
+    staked: number;
+    finalOdds: number | null;
+    payout: number;
+}
+
+export interface PickemMatchSettlement {
+    open: number;
+    settled: number;
+    refunded: number;
+}
+
+export type {PickemSeasonInput, PublishPickemsInput, PickemSettingsInput, SettlePickemsInput, RefundPickemsInput, PickemMatchInput} from "./schemas";
+export {
+    PICKEM_MARKET_KINDS,
+    PICKEM_PUBLISH_LIMIT,
+    PICKEM_SETTLE_LIMIT,
+    PickemSeasonSchema,
+    PublishPickemsSchema,
+    PickemSettingsSchema,
+    SettlePickemsSchema,
+    RefundPickemsSchema,
+    PickemMatchSchema,
+} from "./schemas";

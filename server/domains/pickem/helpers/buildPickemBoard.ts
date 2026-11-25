@@ -2,6 +2,7 @@ import {PICKEM_MARKET_KINDS} from "../types/schemas";
 import type {
     PickemBoard,
     PickemMarketSource,
+    PickemMarketStatus,
     PickemMarketView,
     PickemMatchRow,
     PickemMatchSource,
@@ -24,9 +25,13 @@ export function isPickemLocked(match: PickemMatchSource, now: Date): boolean {
     return new Date(match.scheduledAt).getTime() <= now.getTime();
 }
 
-export function matchState(match: PickemMatchSource, hasMarkets: boolean, now: Date): PickemMatchState {
-    if (hasMarkets) return isPickemLocked(match, now) ? "locked" : "open";
-    return publishBlockReason(match, now) ? "unpublishable" : "unpublished";
+export function matchState(match: PickemMatchSource, statuses: PickemMarketStatus[], now: Date): PickemMatchState {
+    if (statuses.length === 0) return publishBlockReason(match, now) ? "unpublishable" : "unpublished";
+    const open = statuses.filter(s => s === "open").length;
+    if (open === 0) return statuses.every(s => s === "refunded") ? "refunded" : "settled";
+    if (open < statuses.length) return "partly_settled";
+    if (match.status === "completed") return "awaiting_settlement";
+    return isPickemLocked(match, now) ? "locked" : "open";
 }
 
 export function compareMatches(a: PickemMatchSource, b: PickemMatchSource): number {
@@ -58,7 +63,7 @@ export function buildMarketViews(
                 };
             });
         const pool = own.reduce((sum, o) => sum + o.staked, 0);
-        return {id: market.id, kind: market.kind, status: market.status, pool, outcomes: own};
+        return {id: market.id, kind: market.kind, status: market.status, resultOutcome: market.resultOutcome, pool, outcomes: own};
     }).sort((a, b) => PICKEM_MARKET_KINDS.indexOf(a.kind) - PICKEM_MARKET_KINDS.indexOf(b.kind));
 }
 
@@ -80,7 +85,7 @@ export function buildPickemBoard(p: {
         .sort(compareMatches)
         .map(match => {
             const markets = marketsByMatch.get(match.id) ?? [];
-            const state = matchState(match, markets.length > 0, p.now);
+            const state = matchState(match, markets.map(m => m.status), p.now);
             const teamLabel = (key: string) => key === "home" ? match.home?.name ?? null : key === "away" ? match.away?.name ?? null : null;
             return {
                 matchId: match.id,
@@ -92,6 +97,7 @@ export function buildPickemBoard(p: {
                 lockAt: match.scheduledAt,
                 home: match.home,
                 away: match.away,
+                result: match.result,
                 state,
                 blockedReason: state === "unpublishable" ? publishBlockReason(match, p.now) : null,
                 markets: buildMarketViews(markets, p.outcomes, p.odds, teamLabel),

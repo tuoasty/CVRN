@@ -15,6 +15,7 @@ function match(id: string, homeId: string, awayId: string, bestOf: number): Pick
         scheduledAt: "2026-11-26T18:00:00Z",
         home: {id: homeId, name: homeId, logoUrl: null},
         away: {id: awayId, name: awayId, logoUrl: null},
+        result: null,
     };
 }
 

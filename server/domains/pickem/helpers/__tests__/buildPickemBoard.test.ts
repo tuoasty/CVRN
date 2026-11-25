@@ -21,6 +21,7 @@ function match(overrides: Partial<PickemMatchSource> = {}): PickemMatchSource {
         scheduledAt: LATER,
         home: HOME,
         away: AWAY,
+        result: null,
         ...overrides,
     };
 }
@@ -52,11 +53,25 @@ describe("isPickemLocked", () => {
 });
 
 describe("matchState", () => {
+    const completed = match({status: "completed", scheduledAt: EARLIER, result: {homeSets: 2, awaySets: 1, forfeit: false}});
+
     it("separates published from unpublished matches", () => {
-        expect(matchState(match(), false, NOW)).toBe("unpublished");
-        expect(matchState(match({away: null}), false, NOW)).toBe("unpublishable");
-        expect(matchState(match(), true, NOW)).toBe("open");
-        expect(matchState(match({scheduledAt: EARLIER}), true, NOW)).toBe("locked");
+        expect(matchState(match(), [], NOW)).toBe("unpublished");
+        expect(matchState(match({away: null}), [], NOW)).toBe("unpublishable");
+        expect(matchState(match(), ["open", "open"], NOW)).toBe("open");
+        expect(matchState(match({scheduledAt: EARLIER}), ["open", "open"], NOW)).toBe("locked");
+    });
+
+    it("waits for settlement once the match has a result", () => {
+        expect(matchState(completed, ["open", "open"], NOW)).toBe("awaiting_settlement");
+    });
+
+    it("derives settled, refunded and partly settled from the market statuses", () => {
+        expect(matchState(completed, ["settled", "settled"], NOW)).toBe("settled");
+        expect(matchState(completed, ["refunded", "refunded"], NOW)).toBe("refunded");
+        expect(matchState(completed, ["settled", "refunded"], NOW)).toBe("settled");
+        expect(matchState(completed, ["settled", "open"], NOW)).toBe("partly_settled");
+        expect(matchState(match(), ["refunded", "open"], NOW)).toBe("partly_settled");
     });
 });
 
@@ -73,8 +88,8 @@ describe("buildPickemBoard", () => {
             match({id: "m4", matchCode: null, scheduledAt: null, home: null, away: null}),
         ],
         markets: [
-            {id: "len", matchId: "m2", kind: "match_length", status: "open"},
-            {id: "win", matchId: "m2", kind: "winner", status: "open"},
+            {id: "len", matchId: "m2", kind: "match_length", status: "open", resultOutcome: null},
+            {id: "win", matchId: "m2", kind: "winner", status: "open", resultOutcome: null},
         ],
         outcomes: [
             {marketId: "win", key: "away", label: "Away", sortOrder: 1, startProb: 0.23606},
