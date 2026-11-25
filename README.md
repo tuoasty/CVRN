@@ -36,7 +36,7 @@ CVRN pulls all of that into one place without asking staff to change how they wo
 
 **Moving off serverless.** The app moved from Vercel to a Linode VPS behind Cloudflare: CI builds a standalone artifact, deploys are gated on a health check plus real route checks, origin pulls are authenticated so only Cloudflare can reach the box, and cron jobs became systemd timers. Bad config at boot exits with code 78 so systemd stops instead of crash-looping.
 
-**Permissions come from Discord, resolved in SQL.** Sign-in is Discord OAuth. A zero-permission bot reads each member's Discord roles, an admin-managed table maps those roles to eleven permission groups, and a user's effective groups are computed in Postgres (`current_groups()`) minus any per-user blocks. Roles refresh every five minutes, and `super_admin`, `admin`, and the scoped groups all come from that one chain, so there's no second source of truth in application code. Every guarded mutation records itself in an audit log.
+**Permissions come from Discord, resolved in SQL.** Sign-in is Discord OAuth. A zero-permission bot reads each member's Discord roles, an admin-managed table maps those roles to a fixed set of permission groups, and a user's effective groups are computed in Postgres (`current_groups()`) minus any per-user blocks. Roles refresh every five minutes, and `super_admin`, `admin`, and the scoped groups all come from that one chain, so there's no second source of truth in application code. Every guarded mutation records itself in an audit log.
 
 **Security at the database.** Row-level security is the enforcement boundary, not application code. Public reads go to `anon`; writes are checked against those same permission groups, so a stat tracker can write only stat tables and batch-destructive actions require `super_admin` both at the action layer and in the UI. Spec thresholds have no public read; the public page renders from an admin-published snapshot that masks them as difficulty tiers.
 
@@ -91,7 +91,7 @@ flowchart LR
     Storage[(Supabase Storage)] --> CDN[Cloudflare Worker CDN] --> Browser
 ```
 
-**Vertical slices with command/query separation.** Twenty-three domains under `server/domains/` (match, playoff, sheets, matchStats, spec, gameData, record, auth, staff, audit, and more) each own their `commands/`, `queries/`, `helpers/`, and `types/`. There's no shared service layer. Server Actions validate input with Zod and call a command or query directly, and repositories in `server/db/` are plain Supabase queries.
+**Vertical slices with command/query separation.** The domains under `server/domains/` (match, playoff, sheets, matchStats, spec, gameData, record, auth, staff, audit, and more) each own their `commands/`, `queries/`, `helpers/`, and `types/`. There's no shared service layer. Server Actions validate input with Zod and call a command or query directly, and repositories in `server/db/` are plain Supabase queries.
 
 **Errors are values.** Every command, query, and action returns `Result<T, E>`. A closed `ErrorCode` union crosses the wire, and the client maps it to user-facing copy, so nothing throws across a boundary.
 
@@ -111,7 +111,7 @@ flowchart LR
 | UI | Tailwind CSS, shadcn/ui (Radix), IBM Plex Sans / Mono |
 | Imaging | sharp (logo trim and background removal, previews), Satori via `next/og` (card rendering) |
 | Integrations | Google Sheets API, Roblox Users and Thumbnails APIs, Discord (OAuth and a role-sync bot) |
-| Testing | Vitest (228 test files) |
+| Testing | Vitest |
 | Infra | Linode VPS, nginx, systemd timers, Cloudflare (DNS, caching, authenticated origin pulls), GitHub Actions |
 
 ---
@@ -161,7 +161,7 @@ app/
   hooks/           SWR hooks
   features/        feature UI (dialogs, forms, tables)
 server/
-  domains/         23 vertical slices: commands/ queries/ helpers/ types/
+  domains/         vertical slices: commands/ queries/ helpers/ types/
   db/              repositories (Supabase queries returning Result)
   cache/           tagged unstable_cache reads, revalidation, cache versions
   roblox/          Roblox client with retry and circuit breaker
