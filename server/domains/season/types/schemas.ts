@@ -141,3 +141,14 @@ export const ReorderSeasonAwardsSchema = z.object({
     })).min(1),
 })
 export type ReorderSeasonAwardsInput = z.infer<typeof ReorderSeasonAwardsSchema>
+
+export const ChampionArchiveEntrySchema = z.object({
+    captain: z.string().nullable(),
+    vice_capt: z.string().nullable(),
+    court_cap: z.string().nullable(),
+    members: z.array(z.string()),
+})
+export type ChampionArchiveEntry = z.infer<typeof ChampionArchiveEntrySchema>
+
+export const ChampionArchiveResponseSchema = z.record(z.string(), ChampionArchiveEntrySchema)
+export type ChampionArchiveResponse = z.infer<typeof ChampionArchiveResponseSchema>

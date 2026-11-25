@@ -8,7 +8,7 @@ export {createSeason} from "./commands/createSeason";
 export {updateSeason} from "./commands/updateSeason";
 export {deleteSeason} from "./commands/deleteSeason";
 export type {CreateSeasonInput, UpdateSeasonInput, InsertSeasonDto, SeasonIdInput, SeasonSlugRegionInput, SeasonWithPlayoffConfig, CreateSeasonSchemaInput, UpdateSeasonSchemaInput, SeasonNumberQueryInput, ChampionArchiveEntry, ChampionArchiveResponse} from "./types";
-export {SeasonIdSchema, SeasonSlugRegionSchema, CreateSeasonSchema, UpdateSeasonSchema, SeasonNumberQuerySchema} from "./types";
+export {SeasonIdSchema, SeasonSlugRegionSchema, CreateSeasonSchema, UpdateSeasonSchema, SeasonNumberQuerySchema, ChampionArchiveResponseSchema} from "./types";
 
 export {getSeasonPodium} from "./queries/getSeasonPodium";
 export {getSeasonFinalsSlots} from "./queries/getSeasonFinalsSlots";

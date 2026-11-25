@@ -11,6 +11,7 @@ export const PAGE_ACCESS: PageAccessEntry[] = [
     { prefix: "/admin/media", groups: ["admin", "graphics", "media"] },
     { prefix: "/admin/standings", groups: ["admin"] },
     { prefix: "/admin/playoffs", groups: ["admin"] },
+    { prefix: "/admin/pickems", groups: ["admin"] },
     { prefix: "/admin/seasons", groups: ["admin", "awards"] },
     { prefix: "/admin/seasons/*/results", groups: ["admin", "awards"] },
     { prefix: "/admin/stats", groups: ["admin", "statistics"] },
@@ -26,6 +27,7 @@ export const PAGE_ACCESS: PageAccessEntry[] = [
     { prefix: "/admin/sync", groups: ["admin", "transaction"] },
     { prefix: "/admin/sync/history", groups: ["admin", "transaction"] },
     { prefix: "/admin/audit", groups: ["admin"] },
+    { prefix: "/admin/game-api", groups: ["admin"] },
     { prefix: "/admin/cache", groups: ["super_admin"] },
     { prefix: "/admin/staff", groups: ["super_admin"] },
 ];

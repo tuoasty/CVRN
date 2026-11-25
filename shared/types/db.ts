@@ -176,3 +176,15 @@ export type AuditLogInsert =
 
 export type GameAbilitySettingRow =
     Database["public"]["Tables"]["game_ability_settings"]["Row"];
+
+export type PickemSettingsRow =
+    Database["public"]["Tables"]["pickem_settings"]["Row"];
+
+export type PickemMarketRow =
+    Database["public"]["Tables"]["pickem_markets"]["Row"];
+
+export type PickemOutcomeRow =
+    Database["public"]["Tables"]["pickem_outcomes"]["Row"];
+
+export type PickemPickRow =
+    Database["public"]["Tables"]["pickem_picks"]["Row"];

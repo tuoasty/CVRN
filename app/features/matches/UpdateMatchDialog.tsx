@@ -28,6 +28,7 @@ import {toast} from "@/app/utils/toast";
 import {errorCodeToUserMessage} from "@/app/lib/errorMessages";
 import {PlayerWithRole} from "@/server/domains/player";
 import {Pencil} from "lucide-react";
+import {PickemClosedWarning} from "@/app/features/pickems/PickemClosedWarning";
 
 interface UpdateMatchDialogProps {
     matchId: string;
@@ -316,6 +317,7 @@ export default function UpdateMatchDialog({
                     <p className="text-sm text-muted-foreground mt-1">
                         Modify scores and MVPs
                     </p>
+                    <PickemClosedWarning matchId={matchId} enabled={open} action="edit" />
                 </DialogHeader>
 
                 {loadingPlayers ? (
